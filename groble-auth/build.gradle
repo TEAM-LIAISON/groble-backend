@@ -7,5 +7,26 @@ tasks.named('jar') {
 
 
 dependencies {
+    // groble-core 모듈 의존성
+    implementation project(':groble-core')
 
+    // Spring Web
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+
+    // Spring Security
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+
+    // Spring OAuth2 Client (소셜 로그인)
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+
+    // JWT
+    implementation 'io.jsonwebtoken:jjwt-api:0.12.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.5'
+
+    // Spring Data Redis (토큰 저장, 세션 관리)
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
+    // Spring Boot 기본
+    implementation 'org.springframework.boot:spring-boot-starter'
 }
