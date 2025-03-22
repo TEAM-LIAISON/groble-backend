@@ -1,13 +1,11 @@
-package com.liaison.groble;
+package liaison.grobleapi;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class GrobleApplicationTests {
+class GrobleApiApplicationTests {
 
-	@Test
-	void contextLoads() {
-	}
-
+  @Test
+  void contextLoads() {}
 }

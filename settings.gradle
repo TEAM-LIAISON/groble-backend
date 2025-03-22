@@ -1,1 +1,5 @@
 rootProject.name = 'groble'
+
+include 'groble-core'
+include 'groble-auth'
+include 'groble-api'
