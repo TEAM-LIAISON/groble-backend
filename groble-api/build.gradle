@@ -12,5 +12,17 @@ dependencies {
 
     // groble-auth 모듈 의존성
     implementation project(':groble-auth')
+
+    // Spring Web
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+
+    // Swagger/OpenAPI
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.4.0'
+
+    // MySQL Driver
+    runtimeOnly 'com.mysql:mysql-connector-j'
+
+    // DevTools
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
 }
 
