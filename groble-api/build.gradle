@@ -7,6 +7,10 @@ tasks.named('jar') {
 
 
 dependencies {
+    // groble-core 모듈 의존성
+    implementation project(':groble-core')
 
+    // groble-auth 모듈 의존성
+    implementation project(':groble-auth')
 }
 
