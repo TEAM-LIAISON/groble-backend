@@ -27,6 +27,15 @@ dependencies {
     // Spring Data Redis (토큰 저장, 세션 관리)
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
+    // Spring Validation
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+    // MySQL Driver
+    runtimeOnly 'com.mysql:mysql-connector-j'
+
     // Spring Boot 기본
     implementation 'org.springframework.boot:spring-boot-starter'
+
+    // DevTools
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
 }
