@@ -1,0 +1,15 @@
+tasks.named('bootJar') {
+    enabled = false
+}
+tasks.named('jar') {
+    enabled = true
+}
+
+
+dependencies {
+    implementation project(':groble-api')
+    implementation project(':groble-auth')
+    implementation project(':groble-core')
+    implementation project(':groble-payment')
+    implementation project(':groble-common')
+}
