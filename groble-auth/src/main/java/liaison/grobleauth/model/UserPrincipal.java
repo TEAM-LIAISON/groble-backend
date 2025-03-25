@@ -47,7 +47,7 @@ public class UserPrincipal implements UserDetails, OAuth2User {
   public static UserPrincipal create(User user) {
     List<GrantedAuthority> authorities =
         user.getRoles().stream()
-            .map(role -> new SimpleGrantedAuthority(role.getName().toString()))
+            .map(role -> new SimpleGrantedAuthority(role.getName()))
             .collect(Collectors.toList());
 
     return UserPrincipal.builder()
