@@ -143,7 +143,7 @@ public class OAuth2AuthService extends DefaultOAuth2UserService {
     // 기본 역할 설정 (ROLE_USER)
     Role userRole =
         roleRepository
-            .findByName(RoleType.ROLE_USER)
+            .findByName(RoleType.ROLE_USER.name())
             .orElseThrow(() -> new RuntimeException("기본 역할(ROLE_USER)을 찾을 수 없습니다."));
     user.addRole(userRole);
 

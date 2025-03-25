@@ -43,15 +43,56 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
   public void onAuthenticationSuccess(
       HttpServletRequest request, HttpServletResponse response, Authentication authentication)
       throws IOException {
-    String targetUrl = determineTargetUrl(request, response, authentication);
 
-    if (response.isCommitted()) {
-      log.debug("응답이 이미 커밋되었습니다. '{}' 로 리다이렉트할 수 없습니다.", targetUrl);
-      return;
+    log.info("OAuth2 인증 성공 - 리다이렉트 처리 시작");
+
+    // 로그 출력을 통한 디버깅
+    if (request.getCookies() != null) {
+      for (Cookie cookie : request.getCookies()) {
+        log.info("쿠키 정보: {} = {}", cookie.getName(), cookie.getValue());
+      }
     }
 
+    // redirect_uri 쿠키에서 URI 추출 시도
+    Optional<String> redirectUri =
+        CookieUtils.getCookie(request, "redirect_uri").map(Cookie::getValue);
+
+    // 쿠키가 없으면 기본 URI 사용
+    String targetUrl;
+    if (redirectUri.isPresent()) {
+      log.info("쿠키에서 리다이렉트 URI 찾음: {}", redirectUri.get());
+      targetUrl = redirectUri.get();
+    } else {
+      log.info("리다이렉트 URI 쿠키 없음, 기본 URI 사용");
+      targetUrl = getDefaultTargetUrl();
+    }
+
+    // 일단 리다이렉트 URI 승인 검사 비활성화 (개발 중에만)
+    // if (!isAuthorizedRedirectUri(targetUrl)) {
+    //    log.error("승인되지 않은 리다이렉트 URI: {}", targetUrl);
+    //    targetUrl = getDefaultTargetUrl();
+    // }
+
+    // OAuth2 사용자 정보 가져오기
+    CustomOAuth2User oAuth2User = (CustomOAuth2User) authentication.getPrincipal();
+    String email = oAuth2User.getEmail();
+
+    // 토큰 생성
+    TokenResponse tokenResponse = oAuth2AuthService.createTokens(email);
+
+    // 프론트엔드로 토큰 정보와 함께 리다이렉트 URL 생성
+    String finalRedirectUrl =
+        UriComponentsBuilder.fromUriString(targetUrl)
+            .queryParam("token", tokenResponse.getAccessToken())
+            .queryParam("refresh_token", tokenResponse.getRefreshToken())
+            .queryParam("expires_in", tokenResponse.getExpiresIn())
+            .build()
+            .toUriString();
+
+    log.info("최종 리다이렉트 URL: {}", finalRedirectUrl);
+
     clearAuthenticationAttributes(request, response);
-    getRedirectStrategy().sendRedirect(request, response, targetUrl);
+    getRedirectStrategy().sendRedirect(request, response, finalRedirectUrl);
   }
 
   /** 인증 성공 후 리다이렉트 URL 결정 */

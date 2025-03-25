@@ -42,7 +42,12 @@ public class CookieUtils {
     cookie.setPath("/");
     cookie.setHttpOnly(true);
     cookie.setMaxAge(maxAge);
-    response.addCookie(cookie);
+
+    // SameSite 속성을 헤더로 직접 설정
+    String cookieHeader =
+        String.format(
+            "%s=%s; Path=%s; Max-Age=%d; HttpOnly; SameSite=Lax", name, value, "/", maxAge);
+    response.addHeader("Set-Cookie", cookieHeader);
   }
 
   /**

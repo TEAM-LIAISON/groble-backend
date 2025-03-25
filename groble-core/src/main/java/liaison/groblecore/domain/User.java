@@ -45,7 +45,7 @@ public class User {
   @Column(nullable = false)
   private String name;
 
-  @Column(name = "profile_image_url")
+  @Column(name = "profile_image_url", length = 5000)
   private String profileImageUrl;
 
   @Column(name = "provider_type")
@@ -76,7 +76,7 @@ public class User {
       inverseJoinColumns = @JoinColumn(name = "role_id"))
   private Set<Role> roles = new HashSet<>();
 
-  @Column(name = "refresh_token")
+  @Column(name = "refresh_token", length = 500)
   private String refreshToken;
 
   // 통합 계정 ID (다른 서비스와 연동 시 사용)
