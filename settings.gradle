@@ -1,5 +1,6 @@
 rootProject.name = 'groble'
 
+include 'groble-app'
 include 'groble-core'
 include 'groble-common'
 include 'groble-auth'
