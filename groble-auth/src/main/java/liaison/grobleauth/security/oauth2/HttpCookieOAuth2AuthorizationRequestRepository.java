@@ -5,7 +5,6 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import org.springframework.security.oauth2.client.web.AuthorizationRequestRepository;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
-import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -16,7 +15,6 @@ import lombok.extern.slf4j.Slf4j;
 
 /** OAuth2 인증 요청을 쿠키에 저장하는 리포지토리 */
 @Slf4j
-@Component
 @RequiredArgsConstructor
 public class HttpCookieOAuth2AuthorizationRequestRepository
     implements AuthorizationRequestRepository<OAuth2AuthorizationRequest> {
