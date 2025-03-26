@@ -34,14 +34,14 @@ public class OAuth2Controller {
 
     log.info("OAuth2 로그인 시작: provider={}, redirect_uri={}", provider, redirectUri);
 
-    // 리다이렉트 URI를 쿠키에 저장
+    // Set secure cookie attributes
     CookieUtils.addCookie(
         response,
         HttpCookieOAuth2AuthorizationRequestRepository.REDIRECT_URI_PARAM_COOKIE_NAME,
         redirectUri,
         180);
 
-    // 소셜 로그인 제공자 페이지로 리다이렉트
+    // Redirect to OAuth2 provider
     response.sendRedirect("/oauth2/authorize/" + provider);
   }
 }

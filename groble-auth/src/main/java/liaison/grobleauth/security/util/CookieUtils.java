@@ -43,7 +43,10 @@ public class CookieUtils {
     cookie.setHttpOnly(true);
     cookie.setMaxAge(maxAge);
 
-    // SameSite 속성을 헤더로 직접 설정
+    // For local development, don't set Secure flag
+    // cookie.setSecure(true); // Uncomment for production with HTTPS
+
+    // Set SameSite attribute (newer browsers)
     String cookieHeader =
         String.format(
             "%s=%s; Path=%s; Max-Age=%d; HttpOnly; SameSite=Lax", name, value, "/", maxAge);
