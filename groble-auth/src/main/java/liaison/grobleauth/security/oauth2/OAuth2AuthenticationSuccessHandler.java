@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import liaison.grobleauth.dto.AuthDto.TokenResponse;
@@ -28,13 +29,13 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
-  @Value("${app.oauth2.redirectUri}")
+  @Value("${app.oauth2.redirect_uri}")
   private String redirectUri;
 
-  @Value("${app.oauth2.cookieName}")
+  @Value("${app.oauth2.cookie_name}")
   private String cookieName;
 
-  @Value("${app.oauth2.cookieExpireSeconds}")
+  @Value("${app.oauth2.cookie_expire_seconds}")
   private int cookieExpireSeconds;
 
   private final OAuth2AuthService oAuth2AuthService;
@@ -54,18 +55,20 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     }
 
     // redirect_uri 쿠키에서 URI 추출 시도
-    Optional<String> redirectUri =
-        CookieUtils.getCookie(request, "redirect_uri").map(Cookie::getValue);
+    String targetUrl =
+        CookieUtils.getCookie(request, "redirect_uri")
+            .map(Cookie::getValue)
+            .filter(StringUtils::hasText) // 비어있는 값 필터링
+            .orElse(getDefaultTargetUrl()); // 기본 URL 사용
 
-    // 쿠키가 없으면 기본 URI 사용
-    String targetUrl;
-    if (redirectUri.isPresent()) {
-      log.info("쿠키에서 리다이렉트 URI 찾음: {}", redirectUri.get());
-      targetUrl = redirectUri.get();
-    } else {
-      log.info("리다이렉트 URI 쿠키 없음, 기본 URI 사용");
+    // 기본 URL이 사용되는 경우 로그
+    if (!StringUtils.hasText(targetUrl) || targetUrl.equals(getDefaultTargetUrl())) {
+      log.info("유효한 리다이렉트 URI가 없어 기본 URL 사용: {}", getDefaultTargetUrl());
+      setDefaultTargetUrl(redirectUri); // 설정된 기본 URI 사용
       targetUrl = getDefaultTargetUrl();
     }
+
+    log.info("사용할 리다이렉트 URI: {}", targetUrl);
 
     // 일단 리다이렉트 URI 승인 검사 비활성화 (개발 중에만)
     // if (!isAuthorizedRedirectUri(targetUrl)) {
@@ -76,16 +79,22 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     // OAuth2 사용자 정보 가져오기
     CustomOAuth2User oAuth2User = (CustomOAuth2User) authentication.getPrincipal();
     String email = oAuth2User.getEmail();
-
     // 토큰 생성
     TokenResponse tokenResponse = oAuth2AuthService.createTokens(email);
 
-    // 프론트엔드로 토큰 정보와 함께 리다이렉트 URL 생성
+    // URI 구성 시 absolute URL 확인
+    if (!targetUrl.startsWith("http://") && !targetUrl.startsWith("https://")) {
+      // 상대 경로인 경우 절대 경로로 변환
+      targetUrl = redirectUri; // 설정된 기본 URI 사용
+    }
+
+    // URL 인코딩 적용하여 생성
     String finalRedirectUrl =
         UriComponentsBuilder.fromUriString(targetUrl)
             .queryParam("token", tokenResponse.getAccessToken())
             .queryParam("refresh_token", tokenResponse.getRefreshToken())
             .queryParam("expires_in", tokenResponse.getExpiresIn())
+            .encode() // URL 인코딩 추가
             .build()
             .toUriString();
 

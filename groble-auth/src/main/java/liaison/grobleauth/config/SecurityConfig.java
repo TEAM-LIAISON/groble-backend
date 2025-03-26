@@ -155,8 +155,7 @@ public class SecurityConfig {
                                 .baseUri("/oauth2/authorize")
                                 .authorizationRequestRepository(
                                     cookieOAuth2AuthorizationRequestRepository()))
-                    .redirectionEndpoint(
-                        redirection -> redirection.baseUri("/login/oauth2/callback/*"))
+                    .redirectionEndpoint(redirection -> redirection.baseUri("/login/oauth2/code/*"))
                     .userInfoEndpoint(userInfo -> userInfo.userService(oAuth2UserService))
                     .successHandler(oAuth2AuthenticationSuccessHandler)
                     .failureHandler(failureHandler))
