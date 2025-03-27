@@ -1,6 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>이메일 인증 완료</title>
     <script type="text/javascript">
         window.onload = function() {
@@ -13,10 +15,10 @@
                     // Base64 디코딩
                     const email = atob(encodedEmail);
 
-                    // localStorage에 저장 (이 부분이 중요함)
+                    // localStorage에 저장
                     localStorage.setItem('email_verified_' + email, 'true');
 
-                    // 현재 시간도 함께 저장 (필요시)
+                    // 현재 시간도 함께 저장
                     localStorage.setItem('email_verified_time_' + email, new Date().toISOString());
 
                     // 메시지 표시

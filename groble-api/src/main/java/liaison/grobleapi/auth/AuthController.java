@@ -1,5 +1,6 @@
 package liaison.grobleapi.auth;
 
+import java.util.Base64;
 import java.util.Map;
 
 import jakarta.validation.Valid;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.view.RedirectView;
 
 import liaison.grobleauth.dto.AuthDto;
 import liaison.grobleauth.service.AuthService;
@@ -59,28 +61,28 @@ public class AuthController {
     return ResponseEntity.ok().body(Map.of("verified", verified));
   }
 
-  /** 이메일 인증 처리 API */
   @GetMapping("/verify")
-  public String verifyEmail(
+  public RedirectView verifyEmail(
       @RequestParam("token") String token, @RequestParam("email") String encodedEmail) {
 
     try {
-      // 이메일 디코딩
-      byte[] decodedBytes = java.util.Base64.getDecoder().decode(encodedEmail);
-      String email = new String(decodedBytes);
-
-      // 인증 처리
       boolean verified = emailVerificationService.verifyEmail(token);
 
       if (verified) {
-        // 인증 성공 페이지로 리다이렉트 (이메일 정보 포함)
-        return "redirect:/verification-success.html?email=" + encodedEmail;
+        return new RedirectView("/verification-success.html?email=" + encodedEmail);
       } else {
-        return "redirect:/verification-failed.html";
+        return new RedirectView("/verification-failed.html");
       }
     } catch (Exception e) {
-      log.error("이메일 인증 실패", e);
-      return "redirect:/verification-failed.html?error=" + e.getMessage();
+      return new RedirectView("/verification-failed.html?error=" + e.getMessage());
     }
+  }
+
+  // 테스트용 컨트롤러 (개발 완료 후 제거)
+  @GetMapping("/test-verification-success")
+  public String testVerificationSuccess(@RequestParam("email") String email) {
+    // 이메일을 Base64로 인코딩
+    String encodedEmail = Base64.getEncoder().encodeToString(email.getBytes());
+    return "redirect:/verification-success.html?email=" + encodedEmail;
   }
 }
