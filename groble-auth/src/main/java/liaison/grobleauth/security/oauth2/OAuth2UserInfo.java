@@ -18,9 +18,6 @@ public abstract class OAuth2UserInfo {
   /** 소셜 로그인 제공자의 사용자 ID를 반환합니다. */
   public abstract String getId();
 
-  /** 사용자 이름을 반환합니다. */
-  public abstract String getName();
-
   /** 사용자 이메일을 반환합니다. */
   public abstract String getEmail();
 }
