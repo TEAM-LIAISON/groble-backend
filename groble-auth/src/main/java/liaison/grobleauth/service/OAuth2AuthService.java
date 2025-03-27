@@ -25,10 +25,12 @@ import liaison.grobleauth.exception.OAuth2AuthenticationProcessingException;
 import liaison.grobleauth.security.jwt.JwtTokenProvider;
 import liaison.grobleauth.security.oauth2.OAuth2UserInfo;
 import liaison.grobleauth.security.oauth2.OAuth2UserInfoFactory;
+import liaison.groblecore.domain.AuthMethod;
 import liaison.groblecore.domain.AuthType;
 import liaison.groblecore.domain.Role;
 import liaison.groblecore.domain.RoleType;
 import liaison.groblecore.domain.User;
+import liaison.groblecore.repository.AuthMethodRepository;
 import liaison.groblecore.repository.RoleRepository;
 import liaison.groblecore.repository.UserRepository;
 
@@ -49,6 +51,7 @@ public class OAuth2AuthService extends DefaultOAuth2UserService {
   // Redis에 토큰 저장 시 사용할 키 접두사
   private static final String REFRESH_TOKEN_KEY_PREFIX = "refresh_token:";
   private final ObjectMapper objectMapper;
+  private final AuthMethodRepository authMethodRepository;
 
   /**
    * OAuth2 사용자 정보 로드 및 처리
@@ -129,6 +132,15 @@ public class OAuth2AuthService extends DefaultOAuth2UserService {
     } else {
       // 신규 사용자 등록
       user = registerNewUser(userInfo, authType);
+      AuthMethod authMethod =
+          AuthMethod.builder()
+              .user(user)
+              .authType(authType)
+              .authId(userInfo.getId())
+              .authData(userRequest.getAccessToken().toString())
+              .build();
+
+      authMethodRepository.save(authMethod);
     }
 
     log.info("OAuth2 로그인 성공: {}, 제공자: {}", userInfo.getEmail(), authType);

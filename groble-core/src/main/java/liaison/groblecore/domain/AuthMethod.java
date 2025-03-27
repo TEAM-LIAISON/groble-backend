@@ -15,15 +15,19 @@ import jakarta.persistence.UniqueConstraint;
 
 import liaison.groblecommon.domain.base.BaseTimeEntity;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(
     name = "auth_methods",
     uniqueConstraints = {@UniqueConstraint(columnNames = {"user_id", "auth_type"})})
 @Getter
-@RequiredArgsConstructor
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class AuthMethod extends BaseTimeEntity {
 
   @Id
