@@ -10,7 +10,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import liaison.groblecore.domain.ProviderType;
+import liaison.groblecore.domain.AuthMethod;
+import liaison.groblecore.domain.AuthType;
 import liaison.groblecore.domain.User;
 
 import lombok.Getter;
@@ -24,35 +25,31 @@ public class UserDetailsImpl implements UserDetails {
 
   @Getter private final String email;
 
-  @Getter private final String name;
+  @Getter private final String userName;
 
-  @JsonIgnore private final String password;
+  @JsonIgnore private final String authData; // 인증 데이터 (비밀번호 또는 토큰)
 
-  @Getter private final String profileImageUrl;
+  @Getter private final AuthType authType; // 인증 방식 (GROBLE, GOOGLE, KAKAO, NAVER)
 
-  @Getter private final ProviderType providerType;
-
-  @Getter private final String providerId;
+  @Getter private final String authId; // 외부 인증 제공자 ID (소셜 로그인용)
 
   private final Collection<? extends GrantedAuthority> authorities;
 
   public UserDetailsImpl(
       Long id,
       String email,
-      String password,
-      String name,
-      String profileImageUrl,
-      ProviderType providerType,
-      String providerId,
+      String userName,
+      String authData,
+      AuthType authType,
+      String authId,
       Collection<? extends GrantedAuthority> authorities) {
     this.id = id;
     this.username = email; // 이메일을 username으로 사용
     this.email = email;
-    this.password = password;
-    this.name = name;
-    this.profileImageUrl = profileImageUrl;
-    this.providerType = providerType;
-    this.providerId = providerId;
+    this.userName = userName;
+    this.authData = authData;
+    this.authType = authType;
+    this.authId = authId;
     this.authorities = authorities;
   }
 
@@ -68,15 +65,14 @@ public class UserDetailsImpl implements UserDetails {
             .map(role -> new SimpleGrantedAuthority(role.getName()))
             .collect(Collectors.toList());
 
+    // AuthMethod에서 인증 관련 정보 추출
+    AuthMethod authMethod = user.getAuthMethod();
+    String authData = authMethod != null ? authMethod.getAuthData() : null;
+    AuthType authType = authMethod != null ? authMethod.getAuthType() : null;
+    String authId = authMethod != null ? authMethod.getAuthId() : null;
+
     return new UserDetailsImpl(
-        user.getId(),
-        user.getEmail(),
-        user.getPassword(),
-        user.getName(),
-        user.getProfileImageUrl(),
-        user.getProviderType(),
-        user.getProviderId(),
-        authorities);
+        user.getId(), user.getEmail(), user.getUserName(), authData, authType, authId, authorities);
   }
 
   @Override
@@ -86,7 +82,7 @@ public class UserDetailsImpl implements UserDetails {
 
   @Override
   public String getPassword() {
-    return password;
+    return authData; // authData를 비밀번호로 사용
   }
 
   @Override

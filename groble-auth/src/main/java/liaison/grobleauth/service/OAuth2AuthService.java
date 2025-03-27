@@ -25,7 +25,7 @@ import liaison.grobleauth.exception.OAuth2AuthenticationProcessingException;
 import liaison.grobleauth.security.jwt.JwtTokenProvider;
 import liaison.grobleauth.security.oauth2.OAuth2UserInfo;
 import liaison.grobleauth.security.oauth2.OAuth2UserInfoFactory;
-import liaison.groblecore.domain.ProviderType;
+import liaison.groblecore.domain.AuthType;
 import liaison.groblecore.domain.Role;
 import liaison.groblecore.domain.RoleType;
 import liaison.groblecore.domain.User;
@@ -95,15 +95,16 @@ public class OAuth2AuthService extends DefaultOAuth2UserService {
   public OAuth2User processOAuth2User(OAuth2UserRequest userRequest, OAuth2User oAuth2User) {
     // 소셜 로그인 제공자 ID (google, kakao, naver)
     String registrationId = userRequest.getClientRegistration().getRegistrationId();
-    ProviderType providerType = getProviderType(registrationId);
+    AuthType authType = getAuthType(registrationId);
 
     // OAuth2UserInfo 객체 생성
     OAuth2UserInfo userInfo =
         OAuth2UserInfoFactory.getOAuth2UserInfo(registrationId, oAuth2User.getAttributes());
 
+    // 해당 객체가 email 정보를 가지고 있지 않을 떄 발생하는 예외 처리
     if (!StringUtils.hasText(userInfo.getEmail())) {
       throw new OAuth2AuthenticationProcessingException(
-          "소셜 계정에서 이메일을 찾을 수 없습니다. " + providerType + " 계정에 연결된 이메일이 있는지 확인해주세요.");
+          "소셜 계정에서 이메일을 찾을 수 없습니다. " + authType + " 계정에 연결된 이메일이 있는지 확인해주세요.");
     }
 
     // 기존 사용자 조회 (이메일 기준)
@@ -115,25 +116,22 @@ public class OAuth2AuthService extends DefaultOAuth2UserService {
       user = userOptional.get();
 
       // 다른 소셜 로그인 제공자로 가입한 경우 처리
-      if (!user.getProviderType().equals(providerType)) {
+      if (!user.getAuthMethod().getAuthType().equals(authType)) {
         log.warn(
-            "이미 다른 제공자로 가입한 계정: {} (기존: {}, 신규: {})",
+            "이미 다른 Provider 가입한 계정: {} (기존: {}, 신규: {})",
             userInfo.getEmail(),
-            user.getProviderType(),
-            providerType);
+            user.getAuthMethod().getAuthType(),
+            authType);
 
         throw new OAuth2AuthenticationProcessingException(
-            "이미 " + user.getProviderType().name() + " 계정으로 가입하셨습니다. 해당 계정으로 로그인해주세요.");
+            "이미 " + user.getAuthMethod().getAuthType().name() + " 계정으로 가입하셨습니다. 해당 계정으로 로그인해주세요.");
       }
-
-      // 사용자 정보 업데이트
-      user.update(userInfo.getAttributes().toString());
     } else {
       // 신규 사용자 등록
-      user = registerNewUser(userInfo, providerType);
+      user = registerNewUser(userInfo, authType);
     }
 
-    log.info("OAuth2 로그인 성공: {}, 제공자: {}", userInfo.getEmail(), providerType);
+    log.info("OAuth2 로그인 성공: {}, 제공자: {}", userInfo.getEmail(), authType);
 
     return CustomOAuth2User.create(user, oAuth2User.getAttributes());
   }
@@ -142,18 +140,13 @@ public class OAuth2AuthService extends DefaultOAuth2UserService {
    * 신규 사용자 등록
    *
    * @param userInfo OAuth2 사용자 정보
-   * @param providerType 소셜 로그인 제공자 유형
+   * @param authType 소셜 로그인 제공자 유형
    * @return 등록된 User 객체
    */
   @Transactional
-  public User registerNewUser(OAuth2UserInfo userInfo, ProviderType providerType) {
+  public User registerNewUser(OAuth2UserInfo userInfo, AuthType authType) {
     // 새 사용자 생성
-    User user =
-        User.createOAuth2User(
-            userInfo.getEmail(),
-            null, // 프로필 이미지 URL
-            providerType,
-            userInfo.getId());
+    User user = User.createOAuth2User(userInfo.getEmail());
 
     // 기본 역할 설정 (ROLE_USER)
     Role userRole =
@@ -162,7 +155,7 @@ public class OAuth2AuthService extends DefaultOAuth2UserService {
             .orElseThrow(() -> new RuntimeException("기본 역할(ROLE_USER)을 찾을 수 없습니다."));
     user.addRole(userRole);
 
-    log.info("OAuth2 신규 사용자 등록: {}, 제공자: {}", userInfo.getEmail(), providerType);
+    log.info("OAuth2 신규 사용자 등록: {}, 제공자: {}", userInfo.getEmail(), authType);
     return userRepository.save(user);
   }
 
@@ -172,11 +165,11 @@ public class OAuth2AuthService extends DefaultOAuth2UserService {
    * @param registrationId 소셜 로그인 제공자 ID
    * @return ProviderType
    */
-  private ProviderType getProviderType(String registrationId) {
+  private AuthType getAuthType(String registrationId) {
     return switch (registrationId.toLowerCase()) {
-      case "google" -> ProviderType.GOOGLE;
-      case "kakao" -> ProviderType.KAKAO;
-      case "naver" -> ProviderType.NAVER;
+      case "google" -> AuthType.GOOGLE;
+      case "kakao" -> AuthType.KAKAO;
+      case "naver" -> AuthType.NAVER;
       default -> throw new OAuth2AuthenticationProcessingException(
           "지원하지 않는 소셜 로그인 제공자입니다: " + registrationId);
     };
