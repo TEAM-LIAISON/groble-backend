@@ -22,12 +22,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
       "liaison.grobleapi.domain",
       "liaison.groblepayment.domain"
     })
-@EnableJpaRepositories(
-    basePackages = {"liaison.groblecore.repository"
-      //                "liaison.grobleauth.repository",
-      //                "liaison.grobleapi.repository",
-      //                "liaison.groblepayment.repository"
-    })
+@EnableJpaRepositories(basePackages = {"liaison.groblecore.repository"})
 public class GrobleAppApplication {
   public static void main(String[] args) {
     SpringApplication.run(GrobleAppApplication.class, args);
