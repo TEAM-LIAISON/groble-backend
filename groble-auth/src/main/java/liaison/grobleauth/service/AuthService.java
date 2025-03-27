@@ -3,14 +3,11 @@ package liaison.grobleauth.service;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import liaison.grobleauth.dto.AuthDto;
-import liaison.grobleauth.security.jwt.JwtTokenProvider;
 import liaison.groblecore.domain.Role;
 import liaison.groblecore.domain.RoleType;
 import liaison.groblecore.domain.User;
@@ -26,16 +23,9 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class AuthService {
 
-  private final AuthenticationManager authenticationManager;
-  private final JwtTokenProvider jwtTokenProvider;
   private final PasswordEncoder passwordEncoder;
   private final UserRepository userRepository;
   private final RoleRepository roleRepository;
-  private final RedisTemplate<String, Object> redisTemplate;
-
-  // Redis에 토큰 저장 시 사용할 키 접두사
-  private static final String REFRESH_TOKEN_KEY_PREFIX = "refresh_token:";
-  private static final String BLACKLIST_KEY_PREFIX = "blacklist:";
 
   /**
    * 회원가입 처리
@@ -55,7 +45,7 @@ public class AuthService {
     String encodedPassword = passwordEncoder.encode(request.getPassword());
 
     // 사용자 생성
-    User user = User.createUser(request.getEmail(), encodedPassword, request.getName());
+    User user = User.createUser(request.getEmail(), encodedPassword);
 
     // 기본 역할 설정 (ROLE_USER)
     Role userRole =

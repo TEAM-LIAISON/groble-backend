@@ -42,7 +42,6 @@ public class User {
   @Column(nullable = true) // OAuth2 로그인 시에는 비밀번호가 없을 수 있음
   private String password;
 
-  @Column(nullable = false)
   private String name;
 
   @Column(name = "profile_image_url", length = 5000)
@@ -106,11 +105,10 @@ public class User {
   }
 
   // 일반 회원가입 유저 생성 메서드
-  public static User createUser(String email, String password, String name) {
+  public static User createUser(String email, String password) {
     return User.builder()
         .email(email)
         .password(password) // 서비스 레이어에서 암호화하여 전달해야 함
-        .name(name)
         .providerType(ProviderType.LOCAL)
         .emailVerified(false)
         .build();
@@ -118,14 +116,9 @@ public class User {
 
   // OAuth2 회원가입 유저 생성 메서드
   public static User createOAuth2User(
-      String email,
-      String name,
-      String profileImageUrl,
-      ProviderType providerType,
-      String providerId) {
+      String email, String profileImageUrl, ProviderType providerType, String providerId) {
     return User.builder()
         .email(email)
-        .name(name)
         .profileImageUrl(profileImageUrl)
         .providerType(providerType)
         .providerId(providerId)
@@ -134,8 +127,7 @@ public class User {
   }
 
   // 사용자 정보 업데이트
-  public void update(String name, String profileImageUrl) {
-    this.name = name;
+  public void update(String profileImageUrl) {
     this.profileImageUrl = profileImageUrl;
     this.updatedAt = LocalDateTime.now();
   }

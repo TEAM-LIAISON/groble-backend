@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import liaison.grobleauth.dto.AuthDto;
-import liaison.grobleauth.security.jwt.JwtTokenProvider;
 import liaison.grobleauth.service.AuthService;
 
 import lombok.RequiredArgsConstructor;
@@ -23,7 +22,6 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class AuthController {
   private final AuthService authService;
-  private final JwtTokenProvider jwtTokenProvider;
 
   /** 회원가입 API */
   @PostMapping("/signup")

@@ -7,5 +7,5 @@ tasks.named('jar') {
 
 
 dependencies {
-
+    api 'org.springframework.boot:spring-boot-starter-data-jpa'
 }

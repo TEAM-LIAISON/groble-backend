@@ -18,6 +18,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import liaison.grobleauth.dto.AuthDto.TokenResponse;
 import liaison.grobleauth.exception.OAuth2AuthenticationProcessingException;
 import liaison.grobleauth.security.jwt.JwtTokenProvider;
@@ -46,6 +48,7 @@ public class OAuth2AuthService extends DefaultOAuth2UserService {
 
   // Redis에 토큰 저장 시 사용할 키 접두사
   private static final String REFRESH_TOKEN_KEY_PREFIX = "refresh_token:";
+  private final ObjectMapper objectMapper;
 
   /**
    * OAuth2 사용자 정보 로드 및 처리
@@ -59,6 +62,19 @@ public class OAuth2AuthService extends DefaultOAuth2UserService {
   public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
     try {
       OAuth2User oAuth2User = super.loadUser(userRequest);
+
+      // 네이버 로그인인 경우 응답 로깅
+      if ("naver".equals(userRequest.getClientRegistration().getRegistrationId())) {
+        try {
+          log.info("=== 네이버 OAuth2 응답 시작 ===");
+          log.info(
+              "네이버 OAuth2 응답 전체: {}", objectMapper.writeValueAsString(oAuth2User.getAttributes()));
+          log.info("=== 네이버 OAuth2 응답 끝 ===");
+        } catch (Exception e) {
+          log.error("네이버 응답 로깅 중 오류 발생", e);
+        }
+      }
+
       return processOAuth2User(userRequest, oAuth2User);
     } catch (AuthenticationException ex) {
       throw ex;
@@ -111,7 +127,7 @@ public class OAuth2AuthService extends DefaultOAuth2UserService {
       }
 
       // 사용자 정보 업데이트
-      user.update(userInfo.getName(), userInfo.getAttributes().toString());
+      user.update(userInfo.getAttributes().toString());
     } else {
       // 신규 사용자 등록
       user = registerNewUser(userInfo, providerType);
@@ -135,7 +151,6 @@ public class OAuth2AuthService extends DefaultOAuth2UserService {
     User user =
         User.createOAuth2User(
             userInfo.getEmail(),
-            userInfo.getName(),
             null, // 프로필 이미지 URL
             providerType,
             userInfo.getId());
