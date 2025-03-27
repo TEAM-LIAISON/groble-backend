@@ -80,4 +80,16 @@ public class AuthDto {
     private String providerType;
     private String providerId;
   }
+
+  /** 이메일 인증 요청 DTO */
+  @Getter
+  @Setter
+  @Builder
+  @NoArgsConstructor
+  @AllArgsConstructor
+  public static class EmailVerificationRequest {
+    @NotBlank(message = "이메일은 필수 입력값입니다.")
+    @Email(message = "유효한 이메일 형식이 아닙니다.")
+    private String email;
+  }
 }

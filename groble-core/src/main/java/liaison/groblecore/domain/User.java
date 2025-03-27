@@ -68,15 +68,20 @@ public class User extends BaseTimeEntity {
   @Column(name = "refresh_token", length = 500)
   private String refreshToken;
 
+  // 이메일 인증 여부
+  @Column(name = "email_verified", nullable = false)
+  private boolean emailVerified = false;
+
   @Builder
-  public User(String email, String userName) {
+  public User(String email, String password, String userName) {
     this.email = email;
+    this.password = password;
     this.userName = userName;
   }
 
   // 일반 회원가입 유저 생성 메서드
-  public static User createUser(String email) {
-    return User.builder().email(email).build();
+  public static User createUser(String email, String password) {
+    return User.builder().email(email).password(password).build();
   }
 
   // OAuth2 회원가입 유저 생성 메서드

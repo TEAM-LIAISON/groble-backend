@@ -25,9 +25,9 @@ public class UserDetailsImpl implements UserDetails {
 
   @Getter private final String email;
 
-  @Getter private final String userName;
+  @JsonIgnore private final String password;
 
-  @JsonIgnore private final String authData; // 인증 데이터 (비밀번호 또는 토큰)
+  @Getter private final String userName;
 
   @Getter private final AuthType authType; // 인증 방식 (GROBLE, GOOGLE, KAKAO, NAVER)
 
@@ -38,16 +38,16 @@ public class UserDetailsImpl implements UserDetails {
   public UserDetailsImpl(
       Long id,
       String email,
+      String password,
       String userName,
-      String authData,
       AuthType authType,
       String authId,
       Collection<? extends GrantedAuthority> authorities) {
     this.id = id;
     this.username = email; // 이메일을 username으로 사용
     this.email = email;
+    this.password = password;
     this.userName = userName;
-    this.authData = authData;
     this.authType = authType;
     this.authId = authId;
     this.authorities = authorities;
@@ -65,14 +65,15 @@ public class UserDetailsImpl implements UserDetails {
             .map(role -> new SimpleGrantedAuthority(role.getName()))
             .collect(Collectors.toList());
 
+    String password = user.getPassword(); // 비밀번호
+
     // AuthMethod에서 인증 관련 정보 추출
     AuthMethod authMethod = user.getAuthMethod();
-    String authData = authMethod != null ? authMethod.getAuthData() : null;
     AuthType authType = authMethod != null ? authMethod.getAuthType() : null;
     String authId = authMethod != null ? authMethod.getAuthId() : null;
 
     return new UserDetailsImpl(
-        user.getId(), user.getEmail(), user.getUserName(), authData, authType, authId, authorities);
+        user.getId(), user.getEmail(), user.getUserName(), password, authType, authId, authorities);
   }
 
   @Override
@@ -82,7 +83,7 @@ public class UserDetailsImpl implements UserDetails {
 
   @Override
   public String getPassword() {
-    return authData; // authData를 비밀번호로 사용
+    return password; // authData를 비밀번호로 사용
   }
 
   @Override

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>이메일 인증 완료</title>
+    <script type="text/javascript">
+        window.onload = function() {
+            // URL에서 이메일 파라미터 추출
+            const urlParams = new URLSearchParams(window.location.search);
+            const encodedEmail = urlParams.get('email');
+
+            if (encodedEmail) {
+                try {
+                    // Base64 디코딩
+                    const email = atob(encodedEmail);
+
+                    // localStorage에 저장 (이 부분이 중요함)
+                    localStorage.setItem('email_verified_' + email, 'true');
+
+                    // 현재 시간도 함께 저장 (필요시)
+                    localStorage.setItem('email_verified_time_' + email, new Date().toISOString());
+
+                    // 메시지 표시
+                    document.getElementById('message').textContent =
+                        '이메일 인증이 완료되었습니다! 회원가입 페이지로 돌아가 진행해주세요.';
+                } catch (e) {
+                    console.error('이메일 파싱 중 오류:', e);
+                }
+            }
+        };
+    </script>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; text-align: center; }
+        h1 { color: #4CAF50; }
+        .message { margin: 20px 0; line-height: 1.5; }
+    </style>
+</head>
+<body>
+<h1>이메일 인증 완료</h1>
+<div id="message" class="message">처리 중...</div>
+<p>이 창은 닫으셔도 됩니다.</p>
+</body>
+</html>

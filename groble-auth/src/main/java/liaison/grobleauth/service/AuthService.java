@@ -45,7 +45,7 @@ public class AuthService {
     String encodedPassword = passwordEncoder.encode(request.getPassword());
 
     // 사용자 생성
-    User user = User.createUser(request.getEmail());
+    User user = User.createUser(request.getEmail(), encodedPassword);
 
     // 기본 역할 설정 (ROLE_USER)
     Role userRole =

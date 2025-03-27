@@ -77,7 +77,7 @@ public class SecurityConfig {
   @Bean
   public CorsConfigurationSource corsConfigurationSource() {
     CorsConfiguration configuration = new CorsConfiguration();
-    configuration.setAllowedOrigins(List.of("http://localhost:3000", "https://yourdomain.com"));
+    configuration.setAllowedOrigins(List.of("http://localhost:3000", "https://groble.im"));
     configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
     configuration.setAllowedHeaders(
         Arrays.asList("Authorization", "Cache-Control", "Content-Type"));
@@ -140,6 +140,8 @@ public class SecurityConfig {
                     .requestMatchers("/api/public/**")
                     .permitAll()
                     .requestMatchers("/actuator/**")
+                    .permitAll()
+                    .requestMatchers("/api/v1/auth/**")
                     .permitAll()
                     // 그 외 모든 요청은 인증 필요
                     .anyRequest()

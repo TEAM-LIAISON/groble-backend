@@ -120,12 +120,7 @@ public class OAuth2AuthService extends DefaultOAuth2UserService {
       // 신규 사용자 등록
       user = registerNewUser(userInfo, authType);
       AuthMethod authMethod =
-          AuthMethod.builder()
-              .user(user)
-              .authType(authType)
-              .authId(userInfo.getId())
-              .authData(userRequest.getAccessToken().toString())
-              .build();
+          AuthMethod.builder().user(user).authType(authType).authId(userInfo.getId()).build();
 
       authMethodRepository.save(authMethod);
     }

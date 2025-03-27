@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>이메일 인증 실패</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; text-align: center; }
+        h1 { color: #d9534f; }
+        .message { margin: 20px 0; line-height: 1.5; }
+    </style>
+</head>
+<body>
+<h1>이메일 인증 실패</h1>
+<div id="message" class="message">
+    이메일 인증 처리 중 오류가 발생했습니다.
+    <script>
+        // URL에서 오류 메시지 추출
+        const urlParams = new URLSearchParams(window.location.search);
+        const error = urlParams.get('error');
+        if (error) {
+            document.write('<p>오류 내용: ' + error + '</p>');
+        }
+    </script>
+</div>
+<p>다시 시도해주세요.</p>
+</body>
+</html>
