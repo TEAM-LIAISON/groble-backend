@@ -47,10 +47,4 @@ public class AuthMethod extends BaseTimeEntity {
   // 이메일 로그인의 경우 null
   @Column(name = "auth_id")
   private String authId;
-
-  // 인증 관련 데이터
-  // 이메일 로그인: 암호화된 비밀번호
-  // 소셜 로그인: 인증 토큰 또는 추가 정보
-  @Column(name = "auth_data")
-  private String authData;
 }

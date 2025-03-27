@@ -65,19 +65,6 @@ public class OAuth2AuthService extends DefaultOAuth2UserService {
   public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
     try {
       OAuth2User oAuth2User = super.loadUser(userRequest);
-
-      // 네이버 로그인인 경우 응답 로깅
-      if ("naver".equals(userRequest.getClientRegistration().getRegistrationId())) {
-        try {
-          log.info("=== 네이버 OAuth2 응답 시작 ===");
-          log.info(
-              "네이버 OAuth2 응답 전체: {}", objectMapper.writeValueAsString(oAuth2User.getAttributes()));
-          log.info("=== 네이버 OAuth2 응답 끝 ===");
-        } catch (Exception e) {
-          log.error("네이버 응답 로깅 중 오류 발생", e);
-        }
-      }
-
       return processOAuth2User(userRequest, oAuth2User);
     } catch (AuthenticationException ex) {
       throw ex;

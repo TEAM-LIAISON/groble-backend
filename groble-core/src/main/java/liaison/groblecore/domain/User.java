@@ -40,6 +40,9 @@ public class User extends BaseTimeEntity {
   @Column(unique = true, nullable = false)
   private String email;
 
+  @Column(unique = true, nullable = true)
+  private String password;
+
   @Column(name = "user_name", length = 50)
   private String userName;
 
