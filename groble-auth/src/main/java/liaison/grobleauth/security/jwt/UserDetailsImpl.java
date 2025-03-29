@@ -20,39 +20,32 @@ public class UserDetailsImpl implements UserDetails {
 
   @Getter private final Long id;
 
-  private final String username; // email을 username으로 사용
+  private final String username; // 인증에 사용되는 이메일
 
-  @Getter private final String email;
+  @JsonIgnore private final String password; // 인증에 사용되는 비밀번호
 
-  @Getter private final String name;
+  @Getter private final String userName; // 사용자 이름 (표시명)
 
-  @JsonIgnore private final String password;
+  @Getter private final boolean isSocialLogin; // 소셜 로그인 여부
 
-  @Getter private final String profileImageUrl;
-
-  @Getter private final ProviderType providerType;
-
-  @Getter private final String providerId;
+  @Getter private final ProviderType providerType; // 소셜 로그인 프로바이더 타입 (소셜 로그인일 경우만)
 
   private final Collection<? extends GrantedAuthority> authorities;
 
   public UserDetailsImpl(
       Long id,
-      String email,
+      String username,
       String password,
-      String name,
-      String profileImageUrl,
+      String userName,
+      boolean isSocialLogin,
       ProviderType providerType,
-      String providerId,
       Collection<? extends GrantedAuthority> authorities) {
     this.id = id;
-    this.username = email; // 이메일을 username으로 사용
-    this.email = email;
+    this.username = username;
     this.password = password;
-    this.name = name;
-    this.profileImageUrl = profileImageUrl;
+    this.userName = userName;
+    this.isSocialLogin = isSocialLogin;
     this.providerType = providerType;
-    this.providerId = providerId;
     this.authorities = authorities;
   }
 
@@ -65,18 +58,31 @@ public class UserDetailsImpl implements UserDetails {
   public static UserDetailsImpl build(User user) {
     List<GrantedAuthority> authorities =
         user.getRoles().stream()
-            .map(role -> new SimpleGrantedAuthority(role.getName().name()))
+            .map(role -> new SimpleGrantedAuthority(role.getName()))
             .collect(Collectors.toList());
 
+    // 사용자 이름
+    String userName = user.getUserName();
+
+    // 로그인 유형 및 정보 확인
+    boolean isSocialLogin = user.getSocialAccount() != null;
+    String username;
+    String password;
+    ProviderType providerType = null;
+
+    if (isSocialLogin) {
+      // 소셜 로그인인 경우
+      username = user.getSocialAccount().getSocialAccountEmail();
+      password = ""; // 소셜 로그인은 비밀번호가 없음
+      providerType = user.getSocialAccount().getProviderType();
+    } else {
+      // 통합 계정인 경우
+      username = user.getIntegratedAccount().getIntegratedAccountEmail();
+      password = user.getIntegratedAccount().getPassword();
+    }
+
     return new UserDetailsImpl(
-        user.getId(),
-        user.getEmail(),
-        user.getPassword(),
-        user.getName(),
-        user.getProfileImageUrl(),
-        user.getProviderType(),
-        user.getProviderId(),
-        authorities);
+        user.getId(), username, password, userName, isSocialLogin, providerType, authorities);
   }
 
   @Override

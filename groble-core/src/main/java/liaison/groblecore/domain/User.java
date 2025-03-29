@@ -2,15 +2,13 @@ package liaison.groblecore.domain;
 
 import static lombok.AccessLevel.PROTECTED;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -18,8 +16,12 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
+import liaison.groblecommon.domain.base.BaseTimeEntity;
+
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -28,44 +30,27 @@ import lombok.ToString;
 @Entity
 @Table(name = "users")
 @Getter
+@Builder
 @NoArgsConstructor(access = PROTECTED)
-@ToString(exclude = {"password", "roles"})
-public class User {
+@AllArgsConstructor
+@ToString(exclude = {"roles"})
+public class User extends BaseTimeEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @Column(unique = true, nullable = false)
-  private String email;
+  @Column(name = "user_name", length = 50)
+  private String userName;
 
-  @Column(nullable = true) // OAuth2 로그인 시에는 비밀번호가 없을 수 있음
-  private String password;
+  @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+  private IntegratedAccount integratedAccount;
 
-  @Column(nullable = false)
-  private String name;
-
-  @Column(name = "profile_image_url")
-  private String profileImageUrl;
-
-  @Column(name = "provider_type")
-  @Enumerated(EnumType.STRING)
-  private ProviderType providerType; // 일반, GOOGLE, KAKAO, NAVER
-
-  @Column(name = "provider_id")
-  private String providerId; // OAuth2 제공자의 고유 ID
-
-  @Column(name = "is_email_verified")
-  private boolean emailVerified;
-
-  @Column(name = "created_at")
-  private LocalDateTime createdAt;
-
-  @Column(name = "updated_at")
-  private LocalDateTime updatedAt;
+  @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+  private SocialAccount socialAccount;
 
   @Column(name = "last_login_at")
-  private LocalDateTime lastLoginAt;
+  private Instant lastLoginAt;
 
   @ManyToMany(
       fetch = FetchType.EAGER,
@@ -76,74 +61,35 @@ public class User {
       inverseJoinColumns = @JoinColumn(name = "role_id"))
   private Set<Role> roles = new HashSet<>();
 
-  @Column(name = "refresh_token")
+  @Column(name = "refresh_token", length = 500)
   private String refreshToken;
 
-  // 통합 계정 ID (다른 서비스와 연동 시 사용)
-  @Column(name = "integrated_account_id")
-  private String integratedAccountId;
-
-  @Builder
-  public User(
-      String email,
-      String password,
-      String name,
-      String profileImageUrl,
-      ProviderType providerType,
-      String providerId,
-      boolean emailVerified,
-      String integratedAccountId) {
-    this.email = email;
-    this.password = password;
-    this.name = name;
-    this.profileImageUrl = profileImageUrl;
-    this.providerType = providerType;
-    this.providerId = providerId;
-    this.emailVerified = emailVerified;
-    this.integratedAccountId = integratedAccountId;
-    this.createdAt = LocalDateTime.now();
-    this.updatedAt = this.createdAt;
-  }
-
   // 일반 회원가입 유저 생성 메서드
-  public static User createUser(String email, String password, String name) {
-    return User.builder()
-        .email(email)
-        .password(password) // 서비스 레이어에서 암호화하여 전달해야 함
-        .name(name)
-        .providerType(ProviderType.LOCAL)
-        .emailVerified(false)
-        .build();
+  public static User createIntegratedUser(String email, String password) {
+    User user = User.builder().build();
+    IntegratedAccount integratedAccount =
+        IntegratedAccount.createIntegratedAccount(user, email, password);
+    user.setIntegratedAccount(integratedAccount);
+    return user;
   }
 
   // OAuth2 회원가입 유저 생성 메서드
-  public static User createOAuth2User(
-      String email,
-      String name,
-      String profileImageUrl,
-      ProviderType providerType,
-      String providerId) {
-    return User.builder()
-        .email(email)
-        .name(name)
-        .profileImageUrl(profileImageUrl)
-        .providerType(providerType)
-        .providerId(providerId)
-        .emailVerified(true) // OAuth2 로그인은 이메일 인증 완료로 간주
-        .build();
+  public static User createSocialUser(String email, String providerId, ProviderType providerType) {
+    User user = User.builder().build();
+    SocialAccount socialAccount =
+        SocialAccount.createSocialAccount(user, providerId, providerType, email);
+    user.setSocialAccount(socialAccount);
+    return user;
   }
 
-  // 사용자 정보 업데이트
-  public void update(String name, String profileImageUrl) {
-    this.name = name;
-    this.profileImageUrl = profileImageUrl;
-    this.updatedAt = LocalDateTime.now();
+  // IntegratedAccount 설정 (양방향 관계)
+  public void setIntegratedAccount(IntegratedAccount integratedAccount) {
+    this.integratedAccount = integratedAccount;
   }
 
-  // 비밀번호 변경
-  public void updatePassword(String password) {
-    this.password = password; // 서비스 레이어에서 암호화하여 전달해야 함
-    this.updatedAt = LocalDateTime.now();
+  // SocialAccount 설정 (양방향 관계)
+  public void setSocialAccount(SocialAccount socialAccount) {
+    this.socialAccount = socialAccount;
   }
 
   // 역할 추가
@@ -151,14 +97,13 @@ public class User {
     this.roles.add(role);
   }
 
-  // 로그인 시간 업데이트
+  // 로그인 시간 업데이트 (UTC 기준)
   public void updateLoginTime() {
-    this.lastLoginAt = LocalDateTime.now();
+    this.lastLoginAt = Instant.now();
   }
 
   // 리프레시 토큰 업데이트
   public void updateRefreshToken(String refreshToken) {
     this.refreshToken = refreshToken;
-    this.updatedAt = LocalDateTime.now();
   }
 }

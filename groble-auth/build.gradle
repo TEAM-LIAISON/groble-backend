@@ -13,8 +13,8 @@ dependencies {
     // Spring Web
     implementation 'org.springframework.boot:spring-boot-starter-web'
 
-    // Spring Security
-    implementation 'org.springframework.boot:spring-boot-starter-security'
+    // Spring Email
+    api 'org.springframework.boot:spring-boot-starter-mail'
 
     // Spring OAuth2 Client (소셜 로그인)
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'

@@ -3,17 +3,16 @@ package liaison.grobleauth.service;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import liaison.grobleauth.dto.AuthDto;
-import liaison.grobleauth.security.jwt.JwtTokenProvider;
+import liaison.groblecore.domain.IntegratedAccount;
 import liaison.groblecore.domain.Role;
 import liaison.groblecore.domain.RoleType;
 import liaison.groblecore.domain.User;
+import liaison.groblecore.repository.IntegratedAccountRepository;
 import liaison.groblecore.repository.RoleRepository;
 import liaison.groblecore.repository.UserRepository;
 
@@ -26,16 +25,10 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class AuthService {
 
-  private final AuthenticationManager authenticationManager;
-  private final JwtTokenProvider jwtTokenProvider;
   private final PasswordEncoder passwordEncoder;
   private final UserRepository userRepository;
   private final RoleRepository roleRepository;
-  private final RedisTemplate<String, Object> redisTemplate;
-
-  // Redis에 토큰 저장 시 사용할 키 접두사
-  private static final String REFRESH_TOKEN_KEY_PREFIX = "refresh_token:";
-  private static final String BLACKLIST_KEY_PREFIX = "blacklist:";
+  private final IntegratedAccountRepository integratedAccountRepository;
 
   /**
    * 회원가입 처리
@@ -46,7 +39,8 @@ public class AuthService {
   @Transactional
   public boolean signup(AuthDto.SignupRequest request) {
     // 이메일 중복 검사
-    if (userRepository.existsByEmail(request.getEmail())) {
+    if (integratedAccountRepository.existsIntegratedAccountByIntegratedAccountEmail(
+        request.getEmail())) {
       log.warn("이메일 중복: {}", request.getEmail());
       return false;
     }
@@ -55,12 +49,12 @@ public class AuthService {
     String encodedPassword = passwordEncoder.encode(request.getPassword());
 
     // 사용자 생성
-    User user = User.createUser(request.getEmail(), encodedPassword, request.getName());
+    User user = User.createIntegratedUser(request.getEmail(), encodedPassword);
 
     // 기본 역할 설정 (ROLE_USER)
     Role userRole =
         roleRepository
-            .findByName(RoleType.ROLE_USER)
+            .findByName(RoleType.ROLE_USER.name())
             .orElseThrow(() -> new RuntimeException("기본 역할(ROLE_USER)을 찾을 수 없습니다."));
 
     Set<Role> roles = new HashSet<>();
@@ -73,5 +67,20 @@ public class AuthService {
     log.info("회원가입 완료: {}", request.getEmail());
 
     return true;
+  }
+
+  /**
+   * 로그인 처리
+   *
+   * @param request 로그인 요청 정보
+   * @return 인증 토큰
+   */
+  public String login(AuthDto.LoginRequest request) {
+    IntegratedAccount integratedAccount =
+        integratedAccountRepository
+            .findByIntegratedAccountEmail(request.getEmail())
+            .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+
+    return "token";
   }
 }
