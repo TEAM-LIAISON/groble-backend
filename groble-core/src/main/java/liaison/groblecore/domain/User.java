@@ -53,6 +53,12 @@ public class User extends BaseTimeEntity {
   @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
   private AuthMethod authMethod;
 
+  @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+  private IntegratedAccount integratedAccount;
+
+  @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+  private SocialAccount socialAccount;
+
   @Column(name = "last_login_at")
   private LocalDateTime lastLoginAt;
 

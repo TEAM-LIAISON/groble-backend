@@ -41,7 +41,7 @@ public class AuthMethod extends BaseTimeEntity {
   // 인증 방식 유형 (GROBLE, GOOGLE, KAKAO, NAVER)
   @Enumerated(value = STRING)
   @Column(name = "auth_type", nullable = false)
-  private AuthType authType;
+  private ProviderType providerType;
 
   // 외부 인증 제공자의 고유 식별자 (소셜 로그인의 경우) : provider_id
   // 이메일 로그인의 경우 null

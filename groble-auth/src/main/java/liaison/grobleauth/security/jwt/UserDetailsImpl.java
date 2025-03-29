@@ -11,7 +11,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import liaison.groblecore.domain.AuthMethod;
-import liaison.groblecore.domain.AuthType;
+import liaison.groblecore.domain.ProviderType;
 import liaison.groblecore.domain.User;
 
 import lombok.Getter;
@@ -29,7 +29,7 @@ public class UserDetailsImpl implements UserDetails {
 
   @Getter private final String userName;
 
-  @Getter private final AuthType authType; // 인증 방식 (GROBLE, GOOGLE, KAKAO, NAVER)
+  @Getter private final ProviderType providerType; // 인증 방식 (GROBLE, GOOGLE, KAKAO, NAVER)
 
   @Getter private final String authId; // 외부 인증 제공자 ID (소셜 로그인용)
 
@@ -40,7 +40,7 @@ public class UserDetailsImpl implements UserDetails {
       String email,
       String password,
       String userName,
-      AuthType authType,
+      ProviderType providerType,
       String authId,
       Collection<? extends GrantedAuthority> authorities) {
     this.id = id;
@@ -48,7 +48,7 @@ public class UserDetailsImpl implements UserDetails {
     this.email = email;
     this.password = password;
     this.userName = userName;
-    this.authType = authType;
+    this.providerType = providerType;
     this.authId = authId;
     this.authorities = authorities;
   }
@@ -69,11 +69,17 @@ public class UserDetailsImpl implements UserDetails {
 
     // AuthMethod에서 인증 관련 정보 추출
     AuthMethod authMethod = user.getAuthMethod();
-    AuthType authType = authMethod != null ? authMethod.getAuthType() : null;
+    ProviderType providerType = authMethod != null ? authMethod.getProviderType() : null;
     String authId = authMethod != null ? authMethod.getAuthId() : null;
 
     return new UserDetailsImpl(
-        user.getId(), user.getEmail(), user.getUserName(), password, authType, authId, authorities);
+        user.getId(),
+        user.getEmail(),
+        user.getUserName(),
+        password,
+        providerType,
+        authId,
+        authorities);
   }
 
   @Override
