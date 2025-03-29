@@ -10,6 +10,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 
+import liaison.groblecore.domain.ProviderType;
 import liaison.groblecore.domain.User;
 
 import lombok.AllArgsConstructor;
@@ -24,27 +25,70 @@ public class UserPrincipal implements UserDetails, OAuth2User {
   private Long id;
   private String email;
   private String password;
+  private String userName;
+  private boolean isSocialLogin;
+  private ProviderType providerType;
   private Collection<? extends GrantedAuthority> authorities;
   private Map<String, Object> attributes;
 
-  /** User 엔티티로부터 UserPrincipal 생성 (일반 로그인용) */
-  public static UserPrincipal create(User user, String password) {
+  /** User 엔티티로부터 UserPrincipal 생성 (통합 계정 로그인용) */
+  public static UserPrincipal createForIntegrated(User user) {
     List<GrantedAuthority> authorities =
         Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"));
 
+    // 통합 계정이 없는 경우 예외 처리
+    if (user.getIntegratedAccount() == null) {
+      throw new IllegalArgumentException("User does not have an integrated account");
+    }
+
     return UserPrincipal.builder()
         .id(user.getId())
-        .email(user.getEmail())
-        .password(password)
+        .email(user.getIntegratedAccount().getIntegratedAccountEmail())
+        .password(user.getIntegratedAccount().getPassword())
+        .userName(user.getUserName())
+        .isSocialLogin(false)
         .authorities(authorities)
         .build();
   }
 
-  /** User 엔티티와 OAuth2 속성으로부터 UserPrincipal 생성 (OAuth2 로그인용) */
-  public static UserPrincipal createOAuth(User user, Map<String, Object> attributes) {
-    UserPrincipal userPrincipal = create(user, null);
-    userPrincipal.attributes = attributes;
-    return userPrincipal;
+  /** User 엔티티로부터 UserPrincipal 생성 (소셜 계정 로그인용) */
+  public static UserPrincipal createForSocial(User user, Map<String, Object> attributes) {
+    List<GrantedAuthority> authorities =
+        Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"));
+
+    // 소셜 계정이 없는 경우 예외 처리
+    if (user.getSocialAccount() == null) {
+      throw new IllegalArgumentException("User does not have a social account");
+    }
+
+    return UserPrincipal.builder()
+        .id(user.getId())
+        .email(user.getSocialAccount().getSocialAccountEmail())
+        .password("") // 소셜 로그인은 비밀번호가 없음
+        .userName(user.getUserName())
+        .isSocialLogin(true)
+        .providerType(user.getSocialAccount().getProviderType())
+        .authorities(authorities)
+        .attributes(attributes)
+        .build();
+  }
+
+  /**
+   * 계정 유형에 따라 적절한 UserPrincipal 객체 생성
+   *
+   * @param user User 엔티티
+   * @param attributes OAuth2 로그인시 속성 (소셜 로그인인 경우)
+   * @return UserPrincipal 객체
+   */
+  public static UserPrincipal create(User user, Map<String, Object> attributes) {
+    // 소셜 계정과 통합 계정 중 어떤 것을 사용할지 결정
+    boolean isSocialLogin = user.getSocialAccount() != null && attributes != null;
+
+    if (isSocialLogin) {
+      return createForSocial(user, attributes);
+    } else {
+      return createForIntegrated(user);
+    }
   }
 
   @Override

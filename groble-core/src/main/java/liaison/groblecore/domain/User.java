@@ -21,6 +21,7 @@ import jakarta.persistence.Table;
 
 import liaison.groblecommon.domain.base.BaseTimeEntity;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -29,7 +30,9 @@ import lombok.ToString;
 @Entity
 @Table(name = "users")
 @Getter
+@Builder
 @NoArgsConstructor(access = PROTECTED)
+@AllArgsConstructor
 @ToString(exclude = {"roles"})
 public class User extends BaseTimeEntity {
 
@@ -61,14 +64,9 @@ public class User extends BaseTimeEntity {
   @Column(name = "refresh_token", length = 500)
   private String refreshToken;
 
-  @Builder
-  public User(String userName) {
-    this.userName = userName;
-  }
-
   // 일반 회원가입 유저 생성 메서드
-  public static User createIntegratedUser(String email, String password, String userName) {
-    User user = User.builder().userName(userName).build();
+  public static User createIntegratedUser(String email, String password) {
+    User user = User.builder().build();
     IntegratedAccount integratedAccount =
         IntegratedAccount.createIntegratedAccount(user, email, password);
     user.setIntegratedAccount(integratedAccount);
@@ -76,9 +74,8 @@ public class User extends BaseTimeEntity {
   }
 
   // OAuth2 회원가입 유저 생성 메서드
-  public static User createSocialUser(
-      String email, String providerId, ProviderType providerType, String userName) {
-    User user = User.builder().userName(userName).build();
+  public static User createSocialUser(String email, String providerId, ProviderType providerType) {
+    User user = User.builder().build();
     SocialAccount socialAccount =
         SocialAccount.createSocialAccount(user, providerId, providerType, email);
     user.setSocialAccount(socialAccount);

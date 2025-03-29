@@ -8,9 +8,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import liaison.grobleauth.dto.AuthDto;
+import liaison.groblecore.domain.IntegratedAccount;
 import liaison.groblecore.domain.Role;
 import liaison.groblecore.domain.RoleType;
 import liaison.groblecore.domain.User;
+import liaison.groblecore.repository.IntegratedAccountRepository;
 import liaison.groblecore.repository.RoleRepository;
 import liaison.groblecore.repository.UserRepository;
 
@@ -26,6 +28,7 @@ public class AuthService {
   private final PasswordEncoder passwordEncoder;
   private final UserRepository userRepository;
   private final RoleRepository roleRepository;
+  private final IntegratedAccountRepository integratedAccountRepository;
 
   /**
    * 회원가입 처리
@@ -36,7 +39,8 @@ public class AuthService {
   @Transactional
   public boolean signup(AuthDto.SignupRequest request) {
     // 이메일 중복 검사
-    if (userRepository.existsByEmail(request.getEmail())) {
+    if (integratedAccountRepository.existsIntegratedAccountByIntegratedAccountEmail(
+        request.getEmail())) {
       log.warn("이메일 중복: {}", request.getEmail());
       return false;
     }
@@ -45,7 +49,7 @@ public class AuthService {
     String encodedPassword = passwordEncoder.encode(request.getPassword());
 
     // 사용자 생성
-    User user = User.createUser(request.getEmail(), encodedPassword);
+    User user = User.createIntegratedUser(request.getEmail(), encodedPassword);
 
     // 기본 역할 설정 (ROLE_USER)
     Role userRole =
@@ -72,15 +76,10 @@ public class AuthService {
    * @return 인증 토큰
    */
   public String login(AuthDto.LoginRequest request) {
-    User user =
-        userRepository
-            .findByEmail(request.getEmail())
+    IntegratedAccount integratedAccount =
+        integratedAccountRepository
+            .findByIntegratedAccountEmail(request.getEmail())
             .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
-
-    if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-      log.warn("비밀번호 불일치: {}", request.getEmail());
-      return null;
-    }
 
     return "token";
   }

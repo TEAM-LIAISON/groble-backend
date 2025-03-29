@@ -35,7 +35,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
     // OAuth2 사용자 정보 가져오기
     CustomOAuth2User oAuth2User = (CustomOAuth2User) authentication.getPrincipal();
-    String email = oAuth2User.getEmail();
+    String email = oAuth2User.getName();
 
     // 토큰 생성
     TokenResponse tokenResponse = oAuth2AuthService.createTokens(email);

@@ -31,6 +31,7 @@ import liaison.groblecore.domain.RoleType;
 import liaison.groblecore.domain.SocialAccount;
 import liaison.groblecore.domain.User;
 import liaison.groblecore.repository.RoleRepository;
+import liaison.groblecore.repository.SocialAccountRepository;
 import liaison.groblecore.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -50,6 +51,7 @@ public class OAuth2AuthService extends DefaultOAuth2UserService {
   // Redis에 토큰 저장 시 사용할 키 접두사
   private static final String REFRESH_TOKEN_KEY_PREFIX = "refresh_token:";
   private final ObjectMapper objectMapper;
+  private final SocialAccountRepository socialAccountRepository;
 
   /**
    * OAuth2 사용자 정보 로드 및 처리
@@ -96,12 +98,13 @@ public class OAuth2AuthService extends DefaultOAuth2UserService {
     }
 
     // 기존 사용자 조회 (이메일 기준)
-    Optional<User> userOptional = userRepository.findByEmail(userInfo.getEmail());
+    Optional<SocialAccount> socialAccountOptional =
+        socialAccountRepository.findBySocialAccountEmail(userInfo.getEmail());
     User user;
 
-    if (userOptional.isPresent()) {
+    if (socialAccountOptional.isPresent()) {
       // 기존 사용자가 있는 경우
-      user = userOptional.get();
+      user = socialAccountOptional.get().getUser();
 
       // 다른 소셜 로그인 제공자로 가입한 경우 처리
       //      if (!user.getAuthMethod().getProviderType().equals(providerType)) {
@@ -136,7 +139,7 @@ public class OAuth2AuthService extends DefaultOAuth2UserService {
   @Transactional
   public User registerNewUser(OAuth2UserInfo userInfo, ProviderType providerType) {
     // 새 사용자 생성
-    User user = User.createOAuth2User(userInfo.getEmail());
+    User user = User.createSocialUser(userInfo.getEmail(), userInfo.getId(), providerType);
 
     // 기본 역할 설정 (ROLE_USER)
     Role userRole =
@@ -178,10 +181,12 @@ public class OAuth2AuthService extends DefaultOAuth2UserService {
     String refreshToken = jwtTokenProvider.generateRefreshToken(email);
 
     // 사용자 조회
-    User user =
-        userRepository
-            .findByEmail(email)
+    SocialAccount socialAccount =
+        socialAccountRepository
+            .findBySocialAccountEmail(email)
             .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+
+    User user = socialAccount.getUser();
 
     // 리프레시 토큰 저장 (DB + Redis)
     user.updateRefreshToken(refreshToken);
@@ -209,14 +214,11 @@ public class OAuth2AuthService extends DefaultOAuth2UserService {
   /** 커스텀 OAuth2User 구현 OAuth2User 인터페이스를 구현하고 사용자 정보를 관리 */
   public static class CustomOAuth2User implements OAuth2User {
     private final User user;
-    private final SocialAccount socialAccount;
     private final Map<String, Object> attributes;
     private final Collection<? extends GrantedAuthority> authorities;
 
-    private CustomOAuth2User(
-        User user, SocialAccount socialAccount, Map<String, Object> attributes) {
+    private CustomOAuth2User(User user, Map<String, Object> attributes) {
       this.user = user;
-      this.socialAccount = socialAccount;
       this.attributes = attributes;
       this.authorities = new HashSet<>(user.getRoles()); // Role은 이미 GrantedAuthority를 구현
     }
@@ -237,7 +239,7 @@ public class OAuth2AuthService extends DefaultOAuth2UserService {
 
     @Override
     public String getName() {
-      return socialAccount.getSocialAccountEmail();
+      return user.getSocialAccount().getSocialAccountEmail();
     }
 
     public Long getId() {

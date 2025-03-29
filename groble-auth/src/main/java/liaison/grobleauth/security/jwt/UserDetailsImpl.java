@@ -20,35 +20,32 @@ public class UserDetailsImpl implements UserDetails {
 
   @Getter private final Long id;
 
-  private final String username; // email을 username으로 사용
+  private final String username; // 인증에 사용되는 이메일
 
-  @Getter private final String email;
+  @JsonIgnore private final String password; // 인증에 사용되는 비밀번호
 
-  @JsonIgnore private final String password;
+  @Getter private final String userName; // 사용자 이름 (표시명)
 
-  @Getter private final String userName;
+  @Getter private final boolean isSocialLogin; // 소셜 로그인 여부
 
-  @Getter private final ProviderType providerType; // 인증 방식 (GROBLE, GOOGLE, KAKAO, NAVER)
-
-  @Getter private final String authId; // 외부 인증 제공자 ID (소셜 로그인용)
+  @Getter private final ProviderType providerType; // 소셜 로그인 프로바이더 타입 (소셜 로그인일 경우만)
 
   private final Collection<? extends GrantedAuthority> authorities;
 
   public UserDetailsImpl(
       Long id,
-      String email,
+      String username,
       String password,
       String userName,
+      boolean isSocialLogin,
       ProviderType providerType,
-      String authId,
       Collection<? extends GrantedAuthority> authorities) {
     this.id = id;
-    this.username = email; // 이메일을 username으로 사용
-    this.email = email;
+    this.username = username;
     this.password = password;
     this.userName = userName;
+    this.isSocialLogin = isSocialLogin;
     this.providerType = providerType;
-    this.authId = authId;
     this.authorities = authorities;
   }
 
@@ -64,21 +61,28 @@ public class UserDetailsImpl implements UserDetails {
             .map(role -> new SimpleGrantedAuthority(role.getName()))
             .collect(Collectors.toList());
 
-    String password = user.getPassword(); // 비밀번호
+    // 사용자 이름
+    String userName = user.getUserName();
 
-    // AuthMethod에서 인증 관련 정보 추출
-    AuthMethod authMethod = user.getAuthMethod();
-    ProviderType providerType = authMethod != null ? authMethod.getProviderType() : null;
-    String authId = authMethod != null ? authMethod.getAuthId() : null;
+    // 로그인 유형 및 정보 확인
+    boolean isSocialLogin = user.getSocialAccount() != null;
+    String username;
+    String password;
+    ProviderType providerType = null;
+
+    if (isSocialLogin) {
+      // 소셜 로그인인 경우
+      username = user.getSocialAccount().getSocialAccountEmail();
+      password = ""; // 소셜 로그인은 비밀번호가 없음
+      providerType = user.getSocialAccount().getProviderType();
+    } else {
+      // 통합 계정인 경우
+      username = user.getIntegratedAccount().getIntegratedAccountEmail();
+      password = user.getIntegratedAccount().getPassword();
+    }
 
     return new UserDetailsImpl(
-        user.getId(),
-        user.getEmail(),
-        user.getUserName(),
-        password,
-        providerType,
-        authId,
-        authorities);
+        user.getId(), username, password, userName, isSocialLogin, providerType, authorities);
   }
 
   @Override
@@ -88,7 +92,7 @@ public class UserDetailsImpl implements UserDetails {
 
   @Override
   public String getPassword() {
-    return password; // authData를 비밀번호로 사용
+    return password;
   }
 
   @Override
