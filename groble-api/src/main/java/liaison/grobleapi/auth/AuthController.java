@@ -39,6 +39,17 @@ public class AuthController {
     }
   }
 
+  /** 로그인 API */
+  @PostMapping("/login")
+  public ResponseEntity<?> login(@Valid @RequestBody AuthDto.LoginRequest request) {
+    String token = authService.login(request);
+    if (token != null) {
+      return ResponseEntity.ok().body(Map.of("token", token));
+    } else {
+      return ResponseEntity.badRequest().body(Map.of("message", "이메일 또는 비밀번호가 일치하지 않습니다."));
+    }
+  }
+
   /** 이메일 인증 요청 API */
   @PostMapping("/email/verification-request")
   public ResponseEntity<?> requestVerification(

@@ -64,4 +64,24 @@ public class AuthService {
 
     return true;
   }
+
+  /**
+   * 로그인 처리
+   *
+   * @param request 로그인 요청 정보
+   * @return 인증 토큰
+   */
+  public String login(AuthDto.LoginRequest request) {
+    User user =
+        userRepository
+            .findByEmail(request.getEmail())
+            .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+
+    if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+      log.warn("비밀번호 불일치: {}", request.getEmail());
+      return null;
+    }
+
+    return "token";
+  }
 }
