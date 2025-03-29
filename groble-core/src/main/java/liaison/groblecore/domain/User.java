@@ -37,21 +37,8 @@ public class User extends BaseTimeEntity {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @Column(unique = true, nullable = false)
-  private String email;
-
-  @Column(unique = true, nullable = true)
-  private String password;
-
   @Column(name = "user_name", length = 50)
   private String userName;
-
-  @Column(name = "user_id", length = 50)
-  private String userId;
-
-  // 사용자 삭제 시 관련 인증 방식도 함께 삭제 (cascade)
-  @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-  private AuthMethod authMethod;
 
   @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
   private IntegratedAccount integratedAccount;
@@ -74,14 +61,8 @@ public class User extends BaseTimeEntity {
   @Column(name = "refresh_token", length = 500)
   private String refreshToken;
 
-  // 이메일 인증 여부
-  @Column(name = "email_verified", nullable = false)
-  private boolean emailVerified = false;
-
   @Builder
   public User(String email, String password, String userName) {
-    this.email = email;
-    this.password = password;
     this.userName = userName;
   }
 

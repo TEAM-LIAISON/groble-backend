@@ -2,10 +2,13 @@ package liaison.groblecore.domain;
 
 import static lombok.AccessLevel.PROTECTED;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
 import lombok.Getter;
@@ -22,4 +25,14 @@ public class IntegratedAccount {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
+
+  @OneToOne
+  @JoinColumn(name = "user_id", unique = true, nullable = false)
+  private User user;
+
+  @Column(nullable = false, unique = true)
+  private String integratedAccountEmail;
+
+  @Column(nullable = false)
+  private String password;
 }

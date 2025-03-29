@@ -25,12 +25,11 @@ import liaison.grobleauth.exception.OAuth2AuthenticationProcessingException;
 import liaison.grobleauth.security.jwt.JwtTokenProvider;
 import liaison.grobleauth.security.oauth2.OAuth2UserInfo;
 import liaison.grobleauth.security.oauth2.OAuth2UserInfoFactory;
-import liaison.groblecore.domain.AuthMethod;
 import liaison.groblecore.domain.ProviderType;
 import liaison.groblecore.domain.Role;
 import liaison.groblecore.domain.RoleType;
+import liaison.groblecore.domain.SocialAccount;
 import liaison.groblecore.domain.User;
-import liaison.groblecore.repository.AuthMethodRepository;
 import liaison.groblecore.repository.RoleRepository;
 import liaison.groblecore.repository.UserRepository;
 
@@ -51,7 +50,6 @@ public class OAuth2AuthService extends DefaultOAuth2UserService {
   // Redis에 토큰 저장 시 사용할 키 접두사
   private static final String REFRESH_TOKEN_KEY_PREFIX = "refresh_token:";
   private final ObjectMapper objectMapper;
-  private final AuthMethodRepository authMethodRepository;
 
   /**
    * OAuth2 사용자 정보 로드 및 처리
@@ -106,29 +104,21 @@ public class OAuth2AuthService extends DefaultOAuth2UserService {
       user = userOptional.get();
 
       // 다른 소셜 로그인 제공자로 가입한 경우 처리
-      if (!user.getAuthMethod().getProviderType().equals(providerType)) {
-        log.warn(
-            "이미 다른 Provider 가입한 계정: {} (기존: {}, 신규: {})",
-            userInfo.getEmail(),
-            user.getAuthMethod().getProviderType(),
-            providerType);
-
-        throw new OAuth2AuthenticationProcessingException(
-            "이미 "
-                + user.getAuthMethod().getProviderType().name()
-                + " 계정으로 가입하셨습니다. 해당 계정으로 로그인해주세요.");
-      }
+      //      if (!user.getAuthMethod().getProviderType().equals(providerType)) {
+      //        log.warn(
+      //            "이미 다른 Provider 가입한 계정: {} (기존: {}, 신규: {})",
+      //            userInfo.getEmail(),
+      //            user.getAuthMethod().getProviderType(),
+      //            providerType);
+      //
+      //        throw new OAuth2AuthenticationProcessingException(
+      //            "이미 "
+      //                + user.getAuthMethod().getProviderType().name()
+      //                + " 계정으로 가입하셨습니다. 해당 계정으로 로그인해주세요.");
+      //      }
     } else {
       // 신규 사용자 등록
       user = registerNewUser(userInfo, providerType);
-      AuthMethod authMethod =
-          AuthMethod.builder()
-              .user(user)
-              .providerType(providerType)
-              .authId(userInfo.getId())
-              .build();
-
-      authMethodRepository.save(authMethod);
     }
 
     log.info("OAuth2 로그인 성공: {}, 제공자: {}", userInfo.getEmail(), providerType);
@@ -219,11 +209,14 @@ public class OAuth2AuthService extends DefaultOAuth2UserService {
   /** 커스텀 OAuth2User 구현 OAuth2User 인터페이스를 구현하고 사용자 정보를 관리 */
   public static class CustomOAuth2User implements OAuth2User {
     private final User user;
+    private final SocialAccount socialAccount;
     private final Map<String, Object> attributes;
     private final Collection<? extends GrantedAuthority> authorities;
 
-    private CustomOAuth2User(User user, Map<String, Object> attributes) {
+    private CustomOAuth2User(
+        User user, SocialAccount socialAccount, Map<String, Object> attributes) {
       this.user = user;
+      this.socialAccount = socialAccount;
       this.attributes = attributes;
       this.authorities = new HashSet<>(user.getRoles()); // Role은 이미 GrantedAuthority를 구현
     }
@@ -244,15 +237,11 @@ public class OAuth2AuthService extends DefaultOAuth2UserService {
 
     @Override
     public String getName() {
-      return user.getEmail();
+      return socialAccount.getSocialAccountEmail();
     }
 
     public Long getId() {
       return user.getId();
-    }
-
-    public String getEmail() {
-      return user.getEmail();
     }
   }
 }

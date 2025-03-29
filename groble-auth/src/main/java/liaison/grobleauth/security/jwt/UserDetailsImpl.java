@@ -10,7 +10,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import liaison.groblecore.domain.AuthMethod;
 import liaison.groblecore.domain.ProviderType;
 import liaison.groblecore.domain.User;
 

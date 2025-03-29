@@ -30,6 +30,9 @@ public class SocialAccount {
   @JoinColumn(name = "user_id", unique = true, nullable = false)
   private User user;
 
+  @Column(nullable = false, unique = true)
+  private String providerId;
+
   // 인증 방식 유형 (GOOGLE, KAKAO, NAVER)
   @Enumerated(value = STRING)
   @Column(name = "provider_type", nullable = false)
