@@ -21,7 +21,6 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = PROTECTED)
 public class SocialAccount {
-
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
@@ -40,4 +39,18 @@ public class SocialAccount {
 
   @Column(nullable = false, unique = true)
   private String socialAccountEmail;
+
+  private SocialAccount(
+      User user, String providerId, ProviderType providerType, String socialAccountEmail) {
+    this.user = user;
+    this.providerId = providerId;
+    this.providerType = providerType;
+    this.socialAccountEmail = socialAccountEmail;
+  }
+
+  // 소셜 계정 생성 메서드
+  public static SocialAccount createSocialAccount(
+      User user, String providerId, ProviderType providerType, String email) {
+    return new SocialAccount(user, providerId, providerType, email);
+  }
 }

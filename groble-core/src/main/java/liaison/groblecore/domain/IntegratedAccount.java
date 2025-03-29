@@ -35,4 +35,21 @@ public class IntegratedAccount {
 
   @Column(nullable = false)
   private String password;
+
+  private IntegratedAccount(User user, String integratedAccountEmail, String password) {
+    this.user = user;
+    this.integratedAccountEmail = integratedAccountEmail;
+    this.password = password;
+  }
+
+  // 통합 계정 생성 메서드
+  public static IntegratedAccount createIntegratedAccount(
+      User user, String email, String password) {
+    return new IntegratedAccount(user, email, password);
+  }
+
+  // 비밀번호 업데이트
+  public void updatePassword(String newPassword) {
+    this.password = newPassword;
+  }
 }

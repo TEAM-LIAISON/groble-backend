@@ -2,7 +2,7 @@ package liaison.groblecore.domain;
 
 import static lombok.AccessLevel.PROTECTED;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -47,7 +47,7 @@ public class User extends BaseTimeEntity {
   private SocialAccount socialAccount;
 
   @Column(name = "last_login_at")
-  private LocalDateTime lastLoginAt;
+  private Instant lastLoginAt;
 
   @ManyToMany(
       fetch = FetchType.EAGER,
@@ -62,18 +62,37 @@ public class User extends BaseTimeEntity {
   private String refreshToken;
 
   @Builder
-  public User(String email, String password, String userName) {
+  public User(String userName) {
     this.userName = userName;
   }
 
   // 일반 회원가입 유저 생성 메서드
-  public static User createUser(String email, String password) {
-    return User.builder().email(email).password(password).build();
+  public static User createIntegratedUser(String email, String password, String userName) {
+    User user = User.builder().userName(userName).build();
+    IntegratedAccount integratedAccount =
+        IntegratedAccount.createIntegratedAccount(user, email, password);
+    user.setIntegratedAccount(integratedAccount);
+    return user;
   }
 
   // OAuth2 회원가입 유저 생성 메서드
-  public static User createOAuth2User(String email) {
-    return User.builder().email(email).build();
+  public static User createSocialUser(
+      String email, String providerId, ProviderType providerType, String userName) {
+    User user = User.builder().userName(userName).build();
+    SocialAccount socialAccount =
+        SocialAccount.createSocialAccount(user, providerId, providerType, email);
+    user.setSocialAccount(socialAccount);
+    return user;
+  }
+
+  // IntegratedAccount 설정 (양방향 관계)
+  public void setIntegratedAccount(IntegratedAccount integratedAccount) {
+    this.integratedAccount = integratedAccount;
+  }
+
+  // SocialAccount 설정 (양방향 관계)
+  public void setSocialAccount(SocialAccount socialAccount) {
+    this.socialAccount = socialAccount;
   }
 
   // 역할 추가
@@ -81,9 +100,9 @@ public class User extends BaseTimeEntity {
     this.roles.add(role);
   }
 
-  // 로그인 시간 업데이트
+  // 로그인 시간 업데이트 (UTC 기준)
   public void updateLoginTime() {
-    this.lastLoginAt = LocalDateTime.now();
+    this.lastLoginAt = Instant.now();
   }
 
   // 리프레시 토큰 업데이트
