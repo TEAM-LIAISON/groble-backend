@@ -5,6 +5,7 @@ import static lombok.AccessLevel.PROTECTED;
 import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -13,6 +14,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
@@ -28,20 +30,32 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 @Entity
-@Table(name = "users")
+@Table(
+    name = "users",
+    indexes = {
+      @Index(name = "idx_user_email", columnList = "email"),
+      @Index(name = "idx_user_username", columnList = "username")
+    })
 @Getter
 @Builder
 @NoArgsConstructor(access = PROTECTED)
 @AllArgsConstructor
-@ToString(exclude = {"roles"})
+@ToString(exclude = {"roles", "refreshTokens"})
 public class User extends BaseTimeEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
+  @Builder.Default
+  @Column(name = "uuid", nullable = false, unique = true, updatable = false)
+  private String uuid = UUID.randomUUID().toString();
+
   @Column(name = "user_name", length = 50)
   private String userName;
+
+  @Column(name = "user_id", length = 50)
+  private String userId;
 
   @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
   private IntegratedAccount integratedAccount;
