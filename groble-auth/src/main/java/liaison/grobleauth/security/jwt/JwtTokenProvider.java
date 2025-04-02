@@ -302,4 +302,53 @@ public class JwtTokenProvider {
   public long getRefreshTokenExpirationMs() {
     return refreshTokenExpirationMs;
   }
+
+  /**
+   * User 객체로부터 액세스 토큰 생성
+   *
+   * @param user 사용자 객체
+   * @return 생성된 액세스 토큰
+   */
+  public String createAccessToken(liaison.groblecore.domain.User user) {
+    return generateAccessToken(user.getEmail());
+  }
+
+  /**
+   * User 객체로부터 리프레시 토큰 생성
+   *
+   * @param user 사용자 객체
+   * @return 생성된 리프레시 토큰
+   */
+  public String createRefreshToken(liaison.groblecore.domain.User user) {
+    return generateRefreshToken(user.getEmail());
+  }
+
+  /**
+   * 토큰 유효성 검증 (간편 버전) 기본적으로 액세스 토큰으로 간주하고 검증
+   *
+   * @param token 검증할 토큰
+   * @return 토큰 유효 여부
+   */
+  public boolean validateToken(String token) {
+    return validateToken(token, TokenType.ACCESS);
+  }
+
+  /**
+   * 토큰에서 사용자 ID 추출 (간편 버전) 기본적으로 액세스 토큰으로 간주하고 추출
+   *
+   * @param token 토큰
+   * @return 사용자 ID
+   */
+  public Long getUserIdFromToken(String token) {
+    return getUserIdFromToken(token, TokenType.ACCESS);
+  }
+
+  /**
+   * 액세스 토큰 유효 기간을 초 단위로 반환
+   *
+   * @return 액세스 토큰 유효 기간(초)
+   */
+  public long getAccessTokenValidityInSeconds() {
+    return accessTokenExpirationMs / 1000;
+  }
 }

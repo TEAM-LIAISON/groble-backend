@@ -13,6 +13,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -40,6 +41,7 @@ public class SocialAccount {
   @Column(nullable = false, unique = true)
   private String socialAccountEmail;
 
+  @Builder
   private SocialAccount(
       User user, String providerId, ProviderType providerType, String socialAccountEmail) {
     this.user = user;
@@ -51,6 +53,11 @@ public class SocialAccount {
   // 소셜 계정 생성 메서드
   public static SocialAccount createSocialAccount(
       User user, String providerId, ProviderType providerType, String email) {
-    return new SocialAccount(user, providerId, providerType, email);
+    return SocialAccount.builder()
+        .user(user)
+        .providerId(providerId)
+        .providerType(providerType)
+        .socialAccountEmail(email)
+        .build();
   }
 }

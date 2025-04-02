@@ -17,6 +17,9 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
+import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -30,9 +33,7 @@ import liaison.grobleauth.security.oauth2.HttpCookieOAuth2AuthorizationRequestRe
 import liaison.grobleauth.security.oauth2.OAuth2AuthenticationFailureHandler;
 import liaison.grobleauth.security.oauth2.OAuth2AuthenticationSuccessHandler;
 import liaison.grobleauth.security.service.UserDetailsServiceImpl;
-import liaison.grobleauth.service.OAuth2AuthService;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /** Spring Security 설정 클래스 */
@@ -40,16 +41,32 @@ import lombok.extern.slf4j.Slf4j;
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
-@RequiredArgsConstructor
 public class SecurityConfig {
 
   private final UserDetailsServiceImpl userDetailsService;
   private final JwtAuthenticationFilter jwtAuthenticationFilter;
-  private final OAuth2AuthService oAuth2UserService;
   private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
   private final JwtTokenAuthenticationEntryPoint jwtTokenAuthenticationEntryPoint;
   private final JwtTokenAccessDeniedHandler jwtTokenAccessDeniedHandler;
   private final ObjectMapper objectMapper;
+  private final OAuth2UserService<OAuth2UserRequest, OAuth2User> oAuth2UserService;
+
+  public SecurityConfig(
+      UserDetailsServiceImpl userDetailsService,
+      JwtAuthenticationFilter jwtAuthenticationFilter,
+      OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler,
+      JwtTokenAuthenticationEntryPoint jwtTokenAuthenticationEntryPoint,
+      JwtTokenAccessDeniedHandler jwtTokenAccessDeniedHandler,
+      ObjectMapper objectMapper,
+      OAuth2UserService<OAuth2UserRequest, OAuth2User> oAuth2UserService) {
+    this.userDetailsService = userDetailsService;
+    this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+    this.oAuth2AuthenticationSuccessHandler = oAuth2AuthenticationSuccessHandler;
+    this.jwtTokenAuthenticationEntryPoint = jwtTokenAuthenticationEntryPoint;
+    this.jwtTokenAccessDeniedHandler = jwtTokenAccessDeniedHandler;
+    this.objectMapper = objectMapper;
+    this.oAuth2UserService = oAuth2UserService;
+  }
 
   /** 비밀번호 인코더 빈 설정 */
   @Bean

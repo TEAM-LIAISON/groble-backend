@@ -11,6 +11,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -36,6 +37,7 @@ public class IntegratedAccount {
   @Column(nullable = false)
   private String password;
 
+  @Builder
   private IntegratedAccount(User user, String integratedAccountEmail, String password) {
     this.user = user;
     this.integratedAccountEmail = integratedAccountEmail;
@@ -45,7 +47,11 @@ public class IntegratedAccount {
   // 통합 계정 생성 메서드
   public static IntegratedAccount createIntegratedAccount(
       User user, String email, String password) {
-    return new IntegratedAccount(user, email, password);
+    return IntegratedAccount.builder()
+        .user(user)
+        .integratedAccountEmail(email)
+        .password(password)
+        .build();
   }
 
   // 비밀번호 업데이트

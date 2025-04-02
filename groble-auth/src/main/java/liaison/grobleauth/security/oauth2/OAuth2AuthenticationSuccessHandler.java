@@ -12,8 +12,10 @@ import org.springframework.stereotype.Component;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import liaison.grobleauth.dto.AuthDto.TokenResponse;
-import liaison.grobleauth.service.OAuth2AuthService;
+import liaison.grobleauth.security.jwt.JwtTokenProvider;
 import liaison.grobleauth.service.OAuth2AuthService.CustomOAuth2User;
+import liaison.groblecore.domain.User;
+import liaison.groblecore.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,8 +25,9 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
-  private final OAuth2AuthService oAuth2AuthService;
+  private final JwtTokenProvider jwtTokenProvider;
   private final ObjectMapper objectMapper;
+  private final UserRepository userRepository;
 
   @Override
   public void onAuthenticationSuccess(
@@ -35,12 +38,32 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
     // OAuth2 사용자 정보 가져오기
     CustomOAuth2User oAuth2User = (CustomOAuth2User) authentication.getPrincipal();
-    String email = oAuth2User.getName();
+    Long userId = oAuth2User.getId();
 
-    // 토큰 생성
-    TokenResponse tokenResponse = oAuth2AuthService.createTokens(email);
+    // 사용자 조회
+    User user =
+        userRepository
+            .findById(userId)
+            .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + userId));
 
-    log.info("사용자 인증 완료: {}, 토큰 발급 완료", email);
+    // 직접 토큰 생성 (OAuth2AuthService에 의존하지 않음)
+    String accessToken = jwtTokenProvider.createAccessToken(user);
+    String refreshToken = jwtTokenProvider.createRefreshToken(user);
+
+    // 리프레시 토큰 저장
+    user.updateRefreshToken(refreshToken);
+    userRepository.save(user);
+
+    // 토큰 응답 객체 생성
+    TokenResponse tokenResponse =
+        TokenResponse.builder()
+            .accessToken(accessToken)
+            .refreshToken(refreshToken)
+            .tokenType("Bearer")
+            .expiresIn(jwtTokenProvider.getAccessTokenValidityInSeconds())
+            .build();
+
+    log.info("사용자 인증 완료: {}, 토큰 발급 완료", oAuth2User.getEmail());
 
     // 응답에 토큰 정보 직접 포함
     response.setStatus(HttpStatus.OK.value());

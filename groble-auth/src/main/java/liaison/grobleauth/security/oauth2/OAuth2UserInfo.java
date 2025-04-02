@@ -20,4 +20,10 @@ public abstract class OAuth2UserInfo {
 
   /** 사용자 이메일을 반환합니다. */
   public abstract String getEmail();
+
+  /** 사용자 이름을 반환합니다. */
+  public abstract String getName();
+
+  /** 프로필 이미지 URL을 반환합니다. */
+  public abstract String getImageUrl();
 }
