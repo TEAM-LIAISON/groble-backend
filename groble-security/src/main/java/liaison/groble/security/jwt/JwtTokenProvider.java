@@ -67,9 +67,19 @@ public class JwtTokenProvider {
     return generateToken(userPrincipal, TokenType.ACCESS, accessTokenKey, accessTokenExpirationMs);
   }
 
-  /** 이메일로부터 액세스 토큰 생성 */
+  /**
+   * 사용하지 않는 메소드 제거 또는 Deprecated 처리
+   *
+   * @deprecated 이메일 중복 시 보안 문제 발생 가능
+   */
+  @Deprecated
   public String generateAccessToken(String email) {
-    return generateToken(email, null, TokenType.ACCESS, accessTokenKey, accessTokenExpirationMs);
+    throw new UnsupportedOperationException("이메일만으로 토큰을 생성하는 것은 안전하지 않습니다. User 객체를 사용하세요.");
+  }
+
+  @Deprecated
+  public String generateRefreshToken(String email) {
+    throw new UnsupportedOperationException("이메일만으로 토큰을 생성하는 것은 안전하지 않습니다. User 객체를 사용하세요.");
   }
 
   /** 리프레시 토큰 생성 */
@@ -78,21 +88,21 @@ public class JwtTokenProvider {
         userPrincipal, TokenType.REFRESH, refreshTokenKey, refreshTokenExpirationMs);
   }
 
-  /** 이메일로부터 리프레시 토큰 생성 */
-  public String generateRefreshToken(String email) {
-    return generateToken(email, null, TokenType.REFRESH, refreshTokenKey, refreshTokenExpirationMs);
-  }
-
   /** 토큰 생성 공통 메서드 (UserPrincipal 기반) */
   private String generateToken(
       UserPrincipal userPrincipal, TokenType tokenType, Key key, long expirationMs) {
     return generateToken(
-        userPrincipal.getEmail(), userPrincipal.getId(), tokenType, key, expirationMs);
+        userPrincipal.getId(), userPrincipal.getEmail(), tokenType, key, expirationMs);
   }
 
-  /** 토큰 생성 공통 메서드 (이메일, ID 기반) */
+  /** 토큰 생성 공통 메서드 (이메일, ID 기반) userId는 이제 null이 될 수 없음 */
   private String generateToken(
-      String email, Long userId, TokenType tokenType, Key key, long expirationMs) {
+      Long userId, String email, TokenType tokenType, Key key, long expirationMs) {
+
+    if (userId == null) {
+      throw new IllegalArgumentException("토큰 생성 시 사용자 ID는 null이 될 수 없습니다");
+    }
+
     Instant now = Instant.now();
     Instant expiryDate = now.plusMillis(expirationMs);
     String tokenId = UUID.randomUUID().toString();
@@ -100,25 +110,28 @@ public class JwtTokenProvider {
     Map<String, Object> claims = new HashMap<>();
     claims.put("type", tokenType.name());
     claims.put("jti", tokenId);
-
-    if (userId != null) {
-      claims.put("userId", userId);
-    }
+    claims.put("userId", userId); // ID는 항상 포함
+    claims.put("email", email); // 이메일은 Subject가 아닌 claim으로 포함
 
     String token =
         Jwts.builder()
-            .setHeaderParam("typ", Header.JWT_TYPE) // header().type() 대신 setHeaderParam 사용
-            .setClaims(claims) // claims() 대신 setClaims 사용
-            .setSubject(email) // subject() 대신 setSubject 사용
-            .setIssuedAt(Date.from(now)) // issuedAt() 대신 setIssuedAt 사용
-            .setExpiration(Date.from(expiryDate)) // expiration() 대신 setExpiration 사용
-            .setIssuer(issuer) // issuer() 대신 setIssuer 사용
-            .setId(tokenId) // id() 대신 setId 사용
-            .signWith(key) // 이 부분은 그대로 유지
+            .setHeaderParam("typ", Header.JWT_TYPE)
+            .setClaims(claims)
+            .setSubject(userId.toString()) // Subject를 userId로 변경
+            .setIssuedAt(Date.from(now))
+            .setExpiration(Date.from(expiryDate))
+            .setIssuer(issuer)
+            .setId(tokenId)
+            .signWith(key)
             .compact();
 
     log.debug(
-        "토큰 생성 완료 - 유형: {}, 사용자: {}, 토큰 ID: {}, 만료: {}", tokenType, email, tokenId, expiryDate);
+        "토큰 생성 완료 - 유형: {}, 사용자 ID: {}, 이메일: {}, 토큰 ID: {}, 만료: {}",
+        tokenType,
+        userId,
+        email,
+        tokenId,
+        expiryDate);
 
     return token;
   }
@@ -127,9 +140,9 @@ public class JwtTokenProvider {
   public String getUserEmailFromToken(String token, TokenType tokenType) {
     try {
       Claims claims = parseToken(token, getKeyForTokenType(tokenType));
-      return claims.getSubject();
+      return claims.get("email", String.class); // Subject 대신 email claim 사용
     } catch (ExpiredJwtException e) {
-      return e.getClaims().getSubject();
+      return e.getClaims().get("email", String.class);
     } catch (Exception e) {
       throw new TokenException("토큰에서 사용자 이메일을 추출할 수 없습니다", e);
     }
@@ -262,23 +275,28 @@ public class JwtTokenProvider {
   }
 
   /**
-   * User 객체로부터 액세스 토큰 생성
+   * User 객체로부터 액세스 토큰 생성 (이메일 중복 시 대비)
    *
-   * @param user 사용자 객체
+   * @param email 사용자 이메일
+   * @param userId 사용자 ID
    * @return 생성된 액세스 토큰
    */
-  public String createAccessToken(liaison.groble.domain.user.entity.User user) {
-    return generateAccessToken(user.getEmail());
+  public String createAccessToken(Long userId, String email) {
+    // userId를 반드시 포함하고 고유 식별자로 사용
+    return generateToken(userId, email, TokenType.ACCESS, accessTokenKey, accessTokenExpirationMs);
   }
 
   /**
    * User 객체로부터 리프레시 토큰 생성
    *
-   * @param user 사용자 객체
+   * @param email 사용자 이메일
+   * @param userId 사용자 ID
    * @return 생성된 리프레시 토큰
    */
-  public String createRefreshToken(liaison.groble.domain.user.entity.User user) {
-    return generateRefreshToken(user.getEmail());
+  public String createRefreshToken(Long userId, String email) {
+    // userId를 반드시 포함하고 고유 식별자로 사용
+    return generateToken(
+        userId, email, TokenType.REFRESH, refreshTokenKey, refreshTokenExpirationMs);
   }
 
   /**

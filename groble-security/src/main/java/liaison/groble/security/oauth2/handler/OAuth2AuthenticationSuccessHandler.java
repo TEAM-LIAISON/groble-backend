@@ -55,8 +55,8 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + userId));
 
     // 직접 토큰 생성 (OAuth2AuthService에 의존하지 않음)
-    String accessToken = jwtTokenProvider.createAccessToken(user);
-    String refreshToken = jwtTokenProvider.createRefreshToken(user);
+    String accessToken = jwtTokenProvider.createAccessToken(user.getId(), user.getEmail());
+    String refreshToken = jwtTokenProvider.createRefreshToken(user.getId(), user.getEmail());
 
     // 리프레시 토큰 저장
     user.updateRefreshToken(refreshToken);

@@ -1,7 +1,9 @@
 package liaison.groble.api.server.auth;
 
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -9,9 +11,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import liaison.groble.api.model.auth.request.SignupRequest;
-import liaison.groble.api.model.auth.response.TokenResponse;
+import liaison.groble.api.model.auth.response.SignupResponse;
+import liaison.groble.api.server.auth.mapper.AuthDtoMapper;
+import liaison.groble.application.auth.dto.SignupDto;
+import liaison.groble.application.auth.dto.TokenDto;
 import liaison.groble.application.auth.service.AuthService;
-import liaison.groble.application.auth.service.EmailVerificationService;
+import liaison.groble.common.response.ApiResponse;
+import liaison.groble.common.utils.CookieUtils;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,36 +25,42 @@ import lombok.extern.slf4j.Slf4j;
 /** 인증 관련 API 컨트롤러 회원가입, 로그인, 이메일 인증, 토큰 갱신 등의 엔드포인트 제공 */
 @Slf4j
 @RestController
-@RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
+@RequestMapping("/api/v1/auth")
 public class AuthController {
   private final AuthService authService;
-  private final EmailVerificationService emailVerificationService;
+  private final AuthDtoMapper mapper;
 
-  /**
-   * 회원가입 API 이메일 인증 후 회원가입 처리
-   *
-   * @param request 회원가입 요청 정보
-   * @return 회원가입 결과 (액세스 토큰, 리프레시 토큰 포함)
-   */
+  // 쿠키 설정값
+  private static final int ACCESS_TOKEN_MAX_AGE = 60 * 30; // 30분
+  private static final int REFRESH_TOKEN_MAX_AGE = 60 * 60 * 24 * 7; // 7일
+  private static final String ACCESS_TOKEN_COOKIE_NAME = "accessToken";
+  private static final String REFRESH_TOKEN_COOKIE_NAME = "refreshToken";
+
+  /** 회원가입 API */
   @PostMapping("/signup")
-  public ResponseEntity<?> signup(@Valid @RequestBody SignupRequest request) {
-    try {
-      // 이메일 인증 상태 확인 및 회원가입 처리
-      TokenResponse tokenResponse = authService.signup(request);
+  public ResponseEntity<ApiResponse<SignupResponse>> signup(
+      @Valid @RequestBody SignupRequest request, HttpServletResponse response) {
 
-      return ResponseEntity.ok().body(Map.of("message", "회원가입이 완료되었습니다.", "token", tokenResponse));
-    } catch (EmailAlreadyExistsException e) {
-      log.warn("회원가입 실패 - 이메일 중복: {}", request.getEmail());
-      return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
-    } catch (EmailNotVerifiedException e) {
-      log.warn("회원가입 실패 - 이메일 미인증: {}", request.getEmail());
-      return ResponseEntity.badRequest().body(Map.of("message", e.getMessage(), "verified", false));
-    } catch (Exception e) {
-      log.error("회원가입 처리 중 오류 발생", e);
-      return ResponseEntity.internalServerError().body(Map.of("message", "회원가입 처리 중 오류가 발생했습니다."));
-    }
+    log.info("회원가입 요청: {}", request.getEmail());
+
+    // 1. API DTO → 서비스 DTO 변환
+    SignupDto signupDto = mapper.toServiceDto(request);
+
+    // 2. 서비스 호출
+    TokenDto tokenDto = authService.signup(signupDto);
+
+    // 3. 토큰을 쿠키로 설정
+    addTokenCookies(response, tokenDto.getAccessToken(), tokenDto.getRefreshToken());
+
+    // 4. 사용자 정보만 응답 본문에 포함
+    SignupResponse signupResponse = SignupResponse.of(request.getEmail());
+
+    // 5. API 응답 생성
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(ApiResponse.success(signupResponse, "회원가입이 성공적으로 완료되었습니다.", 201));
   }
+
   //
   //  /**
   //   * 로그인 API 이메일과 비밀번호로 로그인 처리
@@ -245,4 +257,41 @@ public class AuthController {
   //      return new RedirectView("/verification-failed.html?error=" + e.getMessage());
   //    }
   //  }
+
+  /** 액세스 토큰과 리프레시 토큰을 쿠키에 저장 */
+  private void addTokenCookies(
+      HttpServletResponse response, String accessToken, String refreshToken) {
+    // Access Token - HttpOnly 설정 (JS에서 접근 불가)
+    CookieUtils.addCookie(
+        response,
+        ACCESS_TOKEN_COOKIE_NAME,
+        accessToken,
+        ACCESS_TOKEN_MAX_AGE,
+        "/",
+        true,
+        isSecureEnvironment(),
+        "Lax");
+
+    // Refresh Token - HttpOnly 설정 (JS에서 접근 불가, 보안 강화)
+    CookieUtils.addCookie(
+        response,
+        REFRESH_TOKEN_COOKIE_NAME,
+        refreshToken,
+        REFRESH_TOKEN_MAX_AGE,
+        "/",
+        true,
+        isSecureEnvironment(),
+        "Lax");
+
+    log.debug(
+        "토큰 쿠키 추가 완료: accessToken({}초), refreshToken({}초)",
+        ACCESS_TOKEN_MAX_AGE,
+        REFRESH_TOKEN_MAX_AGE);
+  }
+
+  /** 보안 환경(운영)인지 확인 */
+  private boolean isSecureEnvironment() {
+    String env = System.getProperty("spring.profiles.active", "dev");
+    return env.equalsIgnoreCase("prod") || env.equalsIgnoreCase("production");
+  }
 }

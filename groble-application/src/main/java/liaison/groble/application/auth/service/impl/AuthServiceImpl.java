@@ -1,19 +1,70 @@
 package liaison.groble.application.auth.service.impl;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import liaison.groble.application.auth.dto.SignupDto;
+import liaison.groble.application.auth.dto.TokenDto;
 import liaison.groble.application.auth.service.AuthService;
+import liaison.groble.common.port.security.SecurityPort;
+import liaison.groble.domain.user.entity.Role;
+import liaison.groble.domain.user.entity.User;
+import liaison.groble.domain.user.enums.RoleType;
+import liaison.groble.domain.user.repository.RoleRepository;
+import liaison.groble.domain.user.repository.UserRepository;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Service
+@RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
+  private final UserRepository userRepository;
+  private final RoleRepository roleRepository;
+  private final SecurityPort securityPort;
 
-  //    private final PasswordEncoder passwordEncoder;
-  //    private final UserRepository userRepository;
-  //    private final RoleRepository roleRepository;
-  //    private final IntegratedAccountRepository integratedAccountRepository;
-  //    private final SocialAccountRepository socialAccountRepository;
-  //    private final EmailVerificationService emailVerificationService;
-  //    private final JwtTokenProvider jwtTokenProvider;
+  @Override
+  @Transactional
+  public TokenDto signup(SignupDto signupDto) {
+    // 이메일 중복 확인
+    if (userRepository.existsByEmail(signupDto.getEmail())) {
+      throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
+    }
+
+    // 사용자 기본 역할 조회
+    Role userRole =
+        roleRepository
+            .findByName(RoleType.ROLE_USER.toString())
+            .orElseThrow(() -> new RuntimeException("기본 역할이 없습니다."));
+
+    // 사용자 생성
+    User user =
+        User.builder()
+            .email(signupDto.getEmail())
+            .password(securityPort.encodePassword(signupDto.getPassword()))
+            .build();
+
+    user.addRole(userRole);
+    User savedUser = userRepository.save(user);
+
+    log.info("회원가입 완료: {}", savedUser.getEmail());
+
+    // 토큰 생성
+    String accessToken = securityPort.createAccessToken(savedUser.getId(), savedUser.getEmail());
+    String refreshToken = securityPort.createRefreshToken(savedUser.getId(), savedUser.getEmail());
+
+    // 리프레시 토큰 저장
+    savedUser.updateRefreshToken(refreshToken);
+    userRepository.save(savedUser);
+
+    return TokenDto.builder()
+        .accessToken(accessToken)
+        .refreshToken(refreshToken)
+        .accessTokenExpiresIn(securityPort.getAccessTokenExpirationTime())
+        .build();
+  }
+
   //
   //    // AuthenticationManager를 필드로 선언하되 생성자 주입은 하지 않음
   //    private AuthenticationManager authenticationManager;
