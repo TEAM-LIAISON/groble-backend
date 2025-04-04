@@ -17,13 +17,13 @@ import lombok.extern.slf4j.Slf4j;
 public class AuthController {
   private final AuthService authService;
   private final EmailVerificationService emailVerificationService;
-  //
-  //  /**
-  //   * 회원가입 API 이메일 인증 후 회원가입 처리
-  //   *
-  //   * @param request 회원가입 요청 정보
-  //   * @return 회원가입 결과 (액세스 토큰, 리프레시 토큰 포함)
-  //   */
+
+  /**
+   * 회원가입 API 이메일 인증 후 회원가입 처리
+   *
+   * @param request 회원가입 요청 정보
+   * @return 회원가입 결과 (액세스 토큰, 리프레시 토큰 포함)
+   */
   //  @PostMapping("/signup")
   //  public ResponseEntity<?> signup(@Valid @RequestBody SignupRequest request) {
   //    try {
