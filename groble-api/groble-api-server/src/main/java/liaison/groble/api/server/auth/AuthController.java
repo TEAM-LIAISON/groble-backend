@@ -1,8 +1,15 @@
 package liaison.groble.api.server.auth;
 
+import jakarta.validation.Valid;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import liaison.groble.api.model.auth.request.SignupRequest;
+import liaison.groble.api.model.auth.response.TokenResponse;
 import liaison.groble.application.auth.service.AuthService;
 import liaison.groble.application.auth.service.EmailVerificationService;
 
@@ -24,27 +31,24 @@ public class AuthController {
    * @param request 회원가입 요청 정보
    * @return 회원가입 결과 (액세스 토큰, 리프레시 토큰 포함)
    */
-  //  @PostMapping("/signup")
-  //  public ResponseEntity<?> signup(@Valid @RequestBody SignupRequest request) {
-  //    try {
-  //      // 이메일 인증 상태 확인 및 회원가입 처리
-  //      TokenResponse tokenResponse = authService.signup(request);
-  //
-  //      return ResponseEntity.ok().body(Map.of("message", "회원가입이 완료되었습니다.", "token",
-  // tokenResponse));
-  //    } catch (EmailAlreadyExistsException e) {
-  //      log.warn("회원가입 실패 - 이메일 중복: {}", request.getEmail());
-  //      return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
-  //    } catch (EmailNotVerifiedException e) {
-  //      log.warn("회원가입 실패 - 이메일 미인증: {}", request.getEmail());
-  //      return ResponseEntity.badRequest().body(Map.of("message", e.getMessage(), "verified",
-  // false));
-  //    } catch (Exception e) {
-  //      log.error("회원가입 처리 중 오류 발생", e);
-  //      return ResponseEntity.internalServerError().body(Map.of("message", "회원가입 처리 중 오류가
-  // 발생했습니다."));
-  //    }
-  //  }
+  @PostMapping("/signup")
+  public ResponseEntity<?> signup(@Valid @RequestBody SignupRequest request) {
+    try {
+      // 이메일 인증 상태 확인 및 회원가입 처리
+      TokenResponse tokenResponse = authService.signup(request);
+
+      return ResponseEntity.ok().body(Map.of("message", "회원가입이 완료되었습니다.", "token", tokenResponse));
+    } catch (EmailAlreadyExistsException e) {
+      log.warn("회원가입 실패 - 이메일 중복: {}", request.getEmail());
+      return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+    } catch (EmailNotVerifiedException e) {
+      log.warn("회원가입 실패 - 이메일 미인증: {}", request.getEmail());
+      return ResponseEntity.badRequest().body(Map.of("message", e.getMessage(), "verified", false));
+    } catch (Exception e) {
+      log.error("회원가입 처리 중 오류 발생", e);
+      return ResponseEntity.internalServerError().body(Map.of("message", "회원가입 처리 중 오류가 발생했습니다."));
+    }
+  }
   //
   //  /**
   //   * 로그인 API 이메일과 비밀번호로 로그인 처리
