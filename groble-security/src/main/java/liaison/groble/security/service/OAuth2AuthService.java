@@ -9,6 +9,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
@@ -22,7 +23,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import liaison.groble.domain.user.entity.Role;
 import liaison.groble.domain.user.entity.SocialAccount;
 import liaison.groble.domain.user.entity.User;
-import liaison.groble.domain.user.entity.UserRole;
 import liaison.groble.domain.user.enums.ProviderType;
 import liaison.groble.domain.user.enums.RoleType;
 import liaison.groble.domain.user.enums.UserStatus;
@@ -216,10 +216,10 @@ public class OAuth2AuthService extends DefaultOAuth2UserService {
     private CustomOAuth2User(User user, Map<String, Object> attributes) {
       this.user = user;
       this.attributes = attributes;
-
-      // UserRole에서 Role을 추출하여 GrantedAuthority 컬렉션으로 변환
       this.authorities =
-          user.getUserRoles().stream().map(UserRole::getRole).collect(Collectors.toSet());
+          user.getUserRoles().stream()
+              .map(userRole -> new SimpleGrantedAuthority(userRole.getRole().getName()))
+              .collect(Collectors.toSet());
     }
 
     public static CustomOAuth2User create(User user, Map<String, Object> attributes) {

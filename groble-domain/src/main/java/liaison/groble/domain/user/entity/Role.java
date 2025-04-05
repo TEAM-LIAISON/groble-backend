@@ -7,8 +7,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
-import org.springframework.security.core.GrantedAuthority;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -21,10 +19,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Role implements GrantedAuthority {
-
-  private static final long serialVersionUID = 1L;
-
+public class Role {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
@@ -34,11 +29,5 @@ public class Role implements GrantedAuthority {
 
   public Role(String name) {
     this.name = name;
-  }
-
-  /** GrantedAuthority 인터페이스의 getAuthority 메서드 구현 역할 이름을 권한 문자열로 반환 */
-  @Override
-  public String getAuthority() {
-    return name;
   }
 }

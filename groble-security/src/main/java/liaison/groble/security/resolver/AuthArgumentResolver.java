@@ -56,8 +56,6 @@ public class AuthArgumentResolver implements HandlerMethodArgumentResolver {
 
     String userType = "BUYER"; // 기본값
     if (roles.contains("ROLE_SELLER")) {
-      // User 엔티티에서 lastUserType 값을 이용해 설정
-      // 여기서는 UserDetailsImpl에 이 정보가 추가되어 있다고 가정
       userType = userDetails.getLastUserType() != null ? userDetails.getLastUserType() : "BUYER";
     }
 

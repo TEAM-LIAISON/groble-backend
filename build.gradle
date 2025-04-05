@@ -223,6 +223,9 @@ project(':groble-security') {
         // Spring OAuth2 Client (소셜 로그인)
         implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
 
+        // Spring AOP
+        implementation 'org.springframework.boot:spring-boot-starter-aop'
+
         // JWT
         implementation "io.jsonwebtoken:jjwt-api:${jwtVersion}"
         runtimeOnly "io.jsonwebtoken:jjwt-impl:${jwtVersion}"

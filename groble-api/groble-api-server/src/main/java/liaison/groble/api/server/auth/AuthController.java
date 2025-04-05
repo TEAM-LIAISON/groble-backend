@@ -84,7 +84,7 @@ public class AuthController {
     TokenDto tokenDto = authService.signIn(signInDto);
 
     // 사용자 역할 및 정보 상태 확인
-    String userType = authService.getUserType(signInDto.getEmail());
+    String userType = userService.getUserType(signInDto.getEmail());
 
     // 3. 토큰을 쿠키로 설정
     addTokenCookies(response, tokenDto.getAccessToken(), tokenDto.getRefreshToken());

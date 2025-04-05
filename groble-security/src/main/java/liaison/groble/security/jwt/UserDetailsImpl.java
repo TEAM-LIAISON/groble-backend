@@ -3,12 +3,13 @@ package liaison.groble.security.jwt;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import liaison.groble.domain.user.entity.User;
+import liaison.groble.security.adapter.RoleAdapter;
 
 import lombok.Getter;
 
@@ -46,10 +47,10 @@ public class UserDetailsImpl implements UserDetails {
    * @return UserDetailsImpl 객체
    */
   public static UserDetailsImpl build(User user) {
-    List<SimpleGrantedAuthority> authorities =
+    List<GrantedAuthority> authorities =
         user.getUserRoles().stream()
-            .map(userRole -> new SimpleGrantedAuthority(userRole.getRole().getName()))
-            .toList();
+            .map(userRole -> new RoleAdapter(userRole.getRole()))
+            .collect(Collectors.toList());
 
     return new UserDetailsImpl(
         user.getId(), user.getEmail(), user.getPassword(), authorities, user.getLastUserType());
