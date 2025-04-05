@@ -20,6 +20,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
+import liaison.groble.domain.common.entity.BaseTimeEntity;
 import liaison.groble.domain.user.enums.AccountType;
 import liaison.groble.domain.user.enums.UserStatus;
 
@@ -39,7 +40,7 @@ import lombok.ToString;
 @NoArgsConstructor(access = PROTECTED)
 @AllArgsConstructor
 @ToString(exclude = {"integratedAccount", "socialAccount", "userRoles"})
-public class User {
+public class User extends BaseTimeEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -191,9 +192,9 @@ public class User {
   }
 
   /**
-   * 이메일 조회 메서드 계정 타입에 따라 적절한 이메일 반환
+   * 사용자 비밀번호 메서드
    *
-   * @return 사용자 이메일
+   * @return 사용자 비밀번호
    */
   public String getPassword() {
     if (accountType == AccountType.INTEGRATED && integratedAccount != null) {
