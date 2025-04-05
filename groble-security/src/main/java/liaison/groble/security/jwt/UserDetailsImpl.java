@@ -8,8 +8,6 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import liaison.groble.domain.user.entity.User;
 
 import lombok.Getter;
@@ -19,19 +17,26 @@ import lombok.Getter;
 public class UserDetailsImpl implements UserDetails {
   private static final long serialVersionUID = 1L;
 
-  private final Long id; // 사용자 ID
-  private final String email; // 이메일
+  // 기존 필드 유지
+  private final Long id;
+  private final String email;
+  private final String password;
+  private final Collection<? extends GrantedAuthority> authorities;
 
-  @JsonIgnore private final String password; // 비밀번호
-
-  private final Collection<? extends GrantedAuthority> authorities; // 권한 목록
+  // 새로 추가된 필드
+  private final String lastUserType;
 
   public UserDetailsImpl(
-      Long id, String email, String password, Collection<? extends GrantedAuthority> authorities) {
+      Long id,
+      String email,
+      String password,
+      Collection<? extends GrantedAuthority> authorities,
+      String lastUserType) {
     this.id = id;
     this.email = email;
     this.password = password;
     this.authorities = authorities;
+    this.lastUserType = lastUserType;
   }
 
   /**
@@ -46,7 +51,8 @@ public class UserDetailsImpl implements UserDetails {
             .map(userRole -> new SimpleGrantedAuthority(userRole.getRole().getName()))
             .toList();
 
-    return new UserDetailsImpl(user.getId(), user.getEmail(), user.getPassword(), authorities);
+    return new UserDetailsImpl(
+        user.getId(), user.getEmail(), user.getPassword(), authorities, user.getLastUserType());
   }
 
   @Override
