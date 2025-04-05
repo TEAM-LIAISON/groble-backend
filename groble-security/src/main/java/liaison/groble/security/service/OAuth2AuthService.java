@@ -1,9 +1,9 @@
 package liaison.groble.security.service;
 
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
@@ -22,7 +22,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import liaison.groble.domain.user.entity.Role;
 import liaison.groble.domain.user.entity.SocialAccount;
 import liaison.groble.domain.user.entity.User;
-import liaison.groble.domain.user.enums.AccountType;
+import liaison.groble.domain.user.entity.UserRole;
 import liaison.groble.domain.user.enums.ProviderType;
 import liaison.groble.domain.user.enums.RoleType;
 import liaison.groble.domain.user.enums.UserStatus;
@@ -121,43 +121,9 @@ public class OAuth2AuthService extends DefaultOAuth2UserService {
       // 소셜 계정 정보 업데이트 필요 시 처리 (예: 프로필 이미지 변경)
       updateExistingSocialUser(user, userInfo);
     } else {
-      // 이메일로 기존 사용자 조회 (통합 계정일 수도 있음)
-      Optional<User> userOptional = userRepository.findByEmail(userInfo.getEmail());
-
-      if (userOptional.isPresent()) {
-        // 이메일은 존재하지만 다른 계정 유형인 경우
-        user = userOptional.get();
-
-        if (user.getAccountType() == AccountType.INTEGRATED) {
-          // 통합 계정이 이미 존재하는 경우 - 계정 연동 필요
-          log.info("기존 통합 계정에 소셜 계정 연동 필요: {}, 제공자: {}", userInfo.getEmail(), providerType);
-
-          // 소셜 계정 정보 생성 및 연결
-          SocialAccount socialAccount =
-              SocialAccount.createSocialAccount(
-                  user, userInfo.getId(), providerType, userInfo.getEmail());
-          user.setSocialAccount(socialAccount);
-
-          // 변경 사항 저장
-          user = userRepository.save(user);
-        } else {
-          // 이미 소셜 계정이지만 다른 제공자로 등록된 경우
-          log.warn(
-              "다른 소셜 제공자로 이미 가입된 계정: {}, 현재: {}, 기존: {}",
-              userInfo.getEmail(),
-              providerType,
-              user.getSocialAccount().getProviderType());
-
-          throw new OAuth2AuthenticationProcessingException(
-              "이미 "
-                  + user.getSocialAccount().getProviderType().name()
-                  + " 계정으로 가입하셨습니다. 해당 계정으로 로그인해주세요.");
-        }
-      } else {
-        // 신규 사용자 등록 (새 소셜 계정)
-        user = registerNewUser(userInfo, providerType);
-        log.info("신규 소셜 사용자 등록 완료: {}, 제공자: {}", userInfo.getEmail(), providerType);
-      }
+      // 신규 사용자 등록 (새 소셜 계정)
+      user = registerNewUser(userInfo, providerType);
+      log.info("신규 소셜 사용자 등록 완료: {}, 제공자: {}", userInfo.getEmail(), providerType);
     }
 
     // 로그인 시간 업데이트
@@ -193,7 +159,7 @@ public class OAuth2AuthService extends DefaultOAuth2UserService {
     // 기본 역할 설정 (ROLE_USER)
     Role userRole =
         roleRepository
-            .findByName(RoleType.ROLE_USER.name())
+            .findByName(RoleType.ROLE_USER.toString())
             .orElseThrow(() -> new RuntimeException("기본 역할(ROLE_USER)을 찾을 수 없습니다."));
     savedUser.addRole(userRole);
 
@@ -211,14 +177,6 @@ public class OAuth2AuthService extends DefaultOAuth2UserService {
    */
   private void updateExistingSocialUser(User user, OAuth2UserInfo userInfo) {
     boolean isChanged = false;
-
-    // 프로필 이미지 변경 여부 확인
-    if (StringUtils.hasText(userInfo.getImageUrl())
-        && (user.getProfileImageUrl() == null
-            || !user.getProfileImageUrl().equals(userInfo.getImageUrl()))) {
-      user.updateProfileImage(userInfo.getImageUrl());
-      isChanged = true;
-    }
 
     // 사용자 이름이 없는 경우 업데이트
     if (user.getUserName() == null && StringUtils.hasText(userInfo.getName())) {
@@ -258,7 +216,10 @@ public class OAuth2AuthService extends DefaultOAuth2UserService {
     private CustomOAuth2User(User user, Map<String, Object> attributes) {
       this.user = user;
       this.attributes = attributes;
-      this.authorities = new HashSet<>(user.getRoles()); // Role은 이미 GrantedAuthority를 구현
+
+      // UserRole에서 Role을 추출하여 GrantedAuthority 컬렉션으로 변환
+      this.authorities =
+          user.getUserRoles().stream().map(UserRole::getRole).collect(Collectors.toSet());
     }
 
     public static CustomOAuth2User create(User user, Map<String, Object> attributes) {
@@ -272,7 +233,7 @@ public class OAuth2AuthService extends DefaultOAuth2UserService {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-      return authorities; // GrantedAuthority 호환 컬렉션 반환
+      return authorities;
     }
 
     @Override

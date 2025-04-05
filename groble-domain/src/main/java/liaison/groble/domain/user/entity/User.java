@@ -12,14 +12,11 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
@@ -41,7 +38,7 @@ import lombok.ToString;
 @Builder
 @NoArgsConstructor(access = PROTECTED)
 @AllArgsConstructor
-@ToString(exclude = {"roles", "refreshToken"})
+@ToString(exclude = {"integratedAccount", "socialAccount", "userRoles"})
 public class User {
 
   @Id
@@ -57,10 +54,6 @@ public class User {
   @Column(name = "user_name", length = 50)
   private String userName;
 
-  /** 사용자 ID 로그인에 사용되는 ID (소셜 로그인의 경우 자동 생성) */
-  @Column(name = "user_id", length = 50)
-  private String userId;
-
   /** 통합 계정 정보 (일반 로그인) 양방향 관계로 IntegratedAccount와 연결 */
   @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
   private IntegratedAccount integratedAccount;
@@ -73,15 +66,9 @@ public class User {
   @Column(name = "last_login_at")
   private Instant lastLoginAt;
 
-  /** 사용자 역할 정보 ROLE_USER, ROLE_ADMIN 등 권한 관리에 사용 */
-  @ManyToMany(
-      fetch = FetchType.EAGER,
-      cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-  @JoinTable(
-      name = "user_roles",
-      joinColumns = @JoinColumn(name = "user_id"),
-      inverseJoinColumns = @JoinColumn(name = "role_id"))
-  private Set<Role> roles = new HashSet<>();
+  @Builder.Default // 이 애노테이션 추가
+  @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+  private Set<UserRole> userRoles = new HashSet<>();
 
   /** 리프레시 토큰 JWT 인증에서 재발급에 사용되는 토큰 */
   @Column(name = "refresh_token", length = 500)
@@ -106,10 +93,6 @@ public class User {
   @Column(name = "status_changed_at")
   private Instant statusChangedAt;
 
-  /** 프로필 이미지 URL */
-  @Column(name = "profile_image_url", length = 255)
-  private String profileImageUrl;
-
   /** 마케팅 수신 동의 여부 */
   @Builder.Default
   @Column(name = "marketing_consent", nullable = false)
@@ -118,16 +101,6 @@ public class User {
   /** 마케팅 수신 동의 시간 */
   @Column(name = "marketing_consent_at")
   private Instant marketingConsentAt;
-
-  /** 사용자 이메일 */
-  @Column(unique = true)
-  private String email;
-
-  /** 사용자 패스워드 */
-  private String password;
-
-  /** 사용자 이름 */
-  private String username;
 
   /**
    * 통합 계정으로부터 유저 생성 메서드 IntegratedAccount를 먼저 생성하고 그로부터 User를 생성
@@ -175,13 +148,17 @@ public class User {
     this.socialAccount = socialAccount;
   }
 
-  /**
-   * 역할 추가
-   *
-   * @param role 추가할 역할
-   */
+  // User.java - addRole 메서드만 변경
   public void addRole(Role role) {
-    this.roles.add(role);
+    // null 체크와 초기화 추가
+    if (this.userRoles == null) {
+      this.userRoles = new HashSet<>();
+    }
+
+    UserRole userRole = new UserRole();
+    userRole.setUser(this);
+    userRole.setRole(role);
+    this.userRoles.add(userRole);
   }
 
   /** 로그인 시간 업데이트 */
@@ -208,6 +185,19 @@ public class User {
       return integratedAccount.getIntegratedAccountEmail();
     } else if (accountType == AccountType.SOCIAL && socialAccount != null) {
       return socialAccount.getSocialAccountEmail();
+    }
+
+    return null;
+  }
+
+  /**
+   * 이메일 조회 메서드 계정 타입에 따라 적절한 이메일 반환
+   *
+   * @return 사용자 이메일
+   */
+  public String getPassword() {
+    if (accountType == AccountType.INTEGRATED && integratedAccount != null) {
+      return integratedAccount.getPassword();
     }
 
     return null;
@@ -262,7 +252,6 @@ public class User {
     }
 
     this.userName = "탈퇴한 사용자";
-    this.profileImageUrl = null;
     this.refreshToken = null;
   }
 
@@ -307,29 +296,11 @@ public class User {
   }
 
   /**
-   * 프로필 이미지 URL 업데이트
-   *
-   * @param imageUrl 이미지 URL
-   */
-  public void updateProfileImage(String imageUrl) {
-    this.profileImageUrl = imageUrl;
-  }
-
-  /**
    * 사용자 이름 업데이트
    *
    * @param userName 새 사용자 이름
    */
   public void updateUserName(String userName) {
     this.userName = userName;
-  }
-
-  /**
-   * 사용자 ID 업데이트
-   *
-   * @param userId 새 사용자 ID
-   */
-  public void updateUserId(String userId) {
-    this.userId = userId;
   }
 }

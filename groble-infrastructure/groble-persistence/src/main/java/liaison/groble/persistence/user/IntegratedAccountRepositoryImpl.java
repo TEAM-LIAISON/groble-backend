@@ -18,4 +18,9 @@ public class IntegratedAccountRepositoryImpl implements IntegratedAccountReposit
   public Optional<IntegratedAccount> findByIntegratedAccountEmail(String integratedAccountEmail) {
     return jpaIntegratedAccountRepository.findByIntegratedAccountEmail(integratedAccountEmail);
   }
+
+  @Override
+  public boolean existsByIntegratedAccountEmail(String integratedAccountEmail) {
+    return jpaIntegratedAccountRepository.existsByIntegratedAccountEmail(integratedAccountEmail);
+  }
 }

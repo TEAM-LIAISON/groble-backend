@@ -8,4 +8,6 @@ import liaison.groble.domain.user.entity.IntegratedAccount;
 
 public interface JpaIntegratedAccountRepository extends JpaRepository<IntegratedAccount, Long> {
   Optional<IntegratedAccount> findByIntegratedAccountEmail(String email);
+
+  boolean existsByIntegratedAccountEmail(String email);
 }
