@@ -20,4 +20,12 @@ public interface AuthService {
    * @return 발급된 토큰 정보
    */
   TokenDto signIn(SignInDto signInDto);
+
+  /**
+   * 사용자 유형 조회 "SELLER", "BUYER", "NONE" 등의 값을 반환
+   *
+   * @param email 사용자 이메일
+   * @return 사용자 유형
+   */
+  String getUserType(String email);
 }

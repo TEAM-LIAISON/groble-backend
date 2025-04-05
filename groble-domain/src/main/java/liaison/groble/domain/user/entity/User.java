@@ -103,6 +103,10 @@ public class User extends BaseTimeEntity {
   @Column(name = "marketing_consent_at")
   private Instant marketingConsentAt;
 
+  /** 마지막으로 사용한 사용자 유형 (SELLER 또는 BUYER) */
+  @Column(name = "last_user_type", length = 20)
+  private String lastUserType;
+
   /**
    * 통합 계정으로부터 유저 생성 메서드 IntegratedAccount를 먼저 생성하고 그로부터 User를 생성
    *
@@ -115,6 +119,7 @@ public class User extends BaseTimeEntity {
             .accountType(AccountType.INTEGRATED)
             .status(UserStatus.PENDING_VERIFICATION) // 이메일 인증 대기 상태로 설정
             .statusChangedAt(Instant.now())
+            .lastUserType("BUYER") // 기본값으로 BUYER 설정
             .build();
 
     user.setIntegratedAccount(integratedAccount);
@@ -133,6 +138,7 @@ public class User extends BaseTimeEntity {
             .accountType(AccountType.SOCIAL)
             .status(UserStatus.ACTIVE) // 소셜 로그인은 즉시 활성화
             .statusChangedAt(Instant.now())
+            .lastUserType("BUYER") // 기본값으로 BUYER 설정
             .build();
 
     user.setSocialAccount(socialAccount);
@@ -174,6 +180,15 @@ public class User extends BaseTimeEntity {
    */
   public void updateRefreshToken(String refreshToken) {
     this.refreshToken = refreshToken;
+  }
+
+  /**
+   * 마지막 사용자 유형 업데이트
+   *
+   * @param userType 사용자 유형 (SELLER 또는 BUYER)
+   */
+  public void updateLastUserType(String userType) {
+    this.lastUserType = userType;
   }
 
   /**
