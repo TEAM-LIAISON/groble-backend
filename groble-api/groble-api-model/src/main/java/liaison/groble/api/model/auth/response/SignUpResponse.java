@@ -12,11 +12,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class SignupResponse {
+public class SignUpResponse {
   private String email;
   private boolean authenticated;
 
-  public static SignupResponse of(String email) {
-    return SignupResponse.builder().email(email).authenticated(true).build();
+  public static SignUpResponse of(String email) {
+    return SignUpResponse.builder().email(email).authenticated(true).build();
   }
 }

@@ -33,4 +33,9 @@ public class SecurityAdapter implements SecurityPort {
   public long getAccessTokenExpirationTime() {
     return jwtTokenProvider.getAccessTokenValidityInSeconds();
   }
+
+  @Override
+  public boolean matches(String rawPassword, String encodedPassword) {
+    return passwordEncoder.matches(rawPassword, encodedPassword);
+  }
 }

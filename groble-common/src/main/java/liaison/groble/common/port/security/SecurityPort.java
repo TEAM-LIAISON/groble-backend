@@ -8,4 +8,6 @@ public interface SecurityPort {
   String createRefreshToken(Long userId, String email);
 
   long getAccessTokenExpirationTime();
+
+  boolean matches(String rawPassword, String encodedPassword);
 }

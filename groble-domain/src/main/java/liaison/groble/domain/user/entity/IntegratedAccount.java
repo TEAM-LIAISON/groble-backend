@@ -46,10 +46,9 @@ public class IntegratedAccount {
 
   // 통합 계정 생성 메서드 - 개선된 버전 (User 생성 전)
   public static IntegratedAccount createAccount(String email, String password) {
-    // 임시 빌더로 객체 생성 (User는 나중에 설정)
     IntegratedAccount account =
         IntegratedAccount.builder()
-            .user(null) // 일단 null로 설정
+            .user(null)
             .integratedAccountEmail(email)
             .password(password)
             .build();

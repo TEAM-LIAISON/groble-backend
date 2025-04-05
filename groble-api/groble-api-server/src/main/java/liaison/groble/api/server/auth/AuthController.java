@@ -10,10 +10,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import liaison.groble.api.model.auth.request.SignupRequest;
-import liaison.groble.api.model.auth.response.SignupResponse;
+import liaison.groble.api.model.auth.request.SignInRequest;
+import liaison.groble.api.model.auth.request.SignUpRequest;
+import liaison.groble.api.model.auth.response.SignInResponse;
+import liaison.groble.api.model.auth.response.SignUpResponse;
 import liaison.groble.api.server.auth.mapper.AuthDtoMapper;
-import liaison.groble.application.auth.dto.SignupDto;
+import liaison.groble.application.auth.dto.SignInDto;
+import liaison.groble.application.auth.dto.SignUpDto;
 import liaison.groble.application.auth.dto.TokenDto;
 import liaison.groble.application.auth.service.AuthService;
 import liaison.groble.common.response.ApiResponse;
@@ -39,37 +42,58 @@ public class AuthController {
 
   /** 회원가입 API */
   @PostMapping("/signup")
-  public ResponseEntity<ApiResponse<SignupResponse>> signup(
-      @Valid @RequestBody SignupRequest request, HttpServletResponse response) {
+  public ResponseEntity<ApiResponse<SignUpResponse>> signUp(
+      @Valid @RequestBody SignUpRequest request, HttpServletResponse response) {
 
     log.info("회원가입 요청: {}", request.getEmail());
 
     // 1. API DTO → 서비스 DTO 변환
-    SignupDto signupDto = mapper.toServiceDto(request);
+    SignUpDto signUpDto = mapper.toServiceSignUpDto(request);
 
     // 2. 서비스 호출
-    TokenDto tokenDto = authService.signup(signupDto);
+    TokenDto tokenDto = authService.signUp(signUpDto);
 
     // 3. 토큰을 쿠키로 설정
     addTokenCookies(response, tokenDto.getAccessToken(), tokenDto.getRefreshToken());
 
     // 4. 사용자 정보만 응답 본문에 포함
-    SignupResponse signupResponse = SignupResponse.of(request.getEmail());
+    SignUpResponse signUpResponse = SignUpResponse.of(request.getEmail());
 
     // 5. API 응답 생성
     return ResponseEntity.status(HttpStatus.CREATED)
-        .body(ApiResponse.success(signupResponse, "회원가입이 성공적으로 완료되었습니다.", 201));
+        .body(ApiResponse.success(signUpResponse, "회원가입이 성공적으로 완료되었습니다.", 201));
   }
 
-  //
-  //  /**
-  //   * 로그인 API 이메일과 비밀번호로 로그인 처리
-  //   *
-  //   * @param request 로그인 요청 정보
-  //   * @return 로그인 결과 (액세스 토큰, 리프레시 토큰 포함)
-  //   */
+  /**
+   * 로그인 API 이메일과 비밀번호로 로그인 처리
+   *
+   * @param request 로그인 요청 정보
+   * @return 로그인 결과 (액세스 토큰, 리프레시 토큰 포함)
+   */
+  @PostMapping("/sign-in")
+  public ResponseEntity<ApiResponse<SignInResponse>> signIn(
+      @Valid @RequestBody SignInRequest request, HttpServletResponse response) {
+    log.info("로그인 요청: {}", request.getEmail());
+
+    // 1. API DTO → 서비스 DTO 변환
+    SignInDto signInDto = mapper.toServiceSignInDto(request);
+
+    // 2. 서비스 호출
+    TokenDto tokenDto = authService.signIn(signInDto);
+
+    // 3. 토큰을 쿠키로 설정
+    addTokenCookies(response, tokenDto.getAccessToken(), tokenDto.getRefreshToken());
+
+    // 4. 사용자 정보만 응답 본문에 포함
+    SignInResponse signInResponse = SignInResponse.of(request.getEmail());
+
+    // 5. API 응답 생성
+    return ResponseEntity.status(HttpStatus.OK)
+        .body(ApiResponse.success(signInResponse, "로그인이 성공적으로 완료되었습니다.", 200));
+  }
+
   //  @PostMapping("/login")
-  //  public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
+  //  public ResponseEntity<?> login(@Valid @RequestBody SignInRequest request) {
   //    try {
   //      TokenResponse tokenResponse = authService.login(request);
   //
@@ -182,13 +206,7 @@ public class AuthController {
   //    }
   //  }
   //
-  //  /**
-  //   * 이메일 인증 요청 API 인증 이메일 발송
-  //   *
-  //   * @param request 이메일 인증 요청 정보
-  //   * @return 이메일 발송 결과
-  //   */
-  //  @PostMapping("/email/verification-request")
+
   //  public ResponseEntity<?> requestVerification(
   //      @Valid @RequestBody AuthDTO.EmailVerificationRequest request) throws MessagingException {
   //    try {

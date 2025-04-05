@@ -3,7 +3,8 @@ package liaison.groble.application.auth.service.impl;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import liaison.groble.application.auth.dto.SignupDto;
+import liaison.groble.application.auth.dto.SignInDto;
+import liaison.groble.application.auth.dto.SignUpDto;
 import liaison.groble.application.auth.dto.TokenDto;
 import liaison.groble.application.auth.service.AuthService;
 import liaison.groble.common.port.security.SecurityPort;
@@ -29,19 +30,19 @@ public class AuthServiceImpl implements AuthService {
 
   @Override
   @Transactional
-  public TokenDto signup(SignupDto signupDto) {
-    // 이메일 중복 확인
-    if (integratedAccountRepository.existsByIntegratedAccountEmail(signupDto.getEmail())) {
+  public TokenDto signUp(SignUpDto signUpDto) {
+    // 통합 계정 이메일 중복 검사
+    if (integratedAccountRepository.existsByIntegratedAccountEmail(signUpDto.getEmail())) {
       throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
     }
 
     // 비밀번호 암호화
-    String encodedPassword = securityPort.encodePassword(signupDto.getPassword());
+    String encodedPassword = securityPort.encodePassword(signUpDto.getPassword());
 
     // IntegratedAccount 생성 (내부적으로 User 객체 생성 및 연결)
     IntegratedAccount integratedAccount =
-        IntegratedAccount.createAccount(signupDto.getEmail(), encodedPassword);
-    // User 객체 참조
+        IntegratedAccount.createAccount(signUpDto.getEmail(), encodedPassword);
+
     User user = integratedAccount.getUser();
 
     // 기본 사용자 역할 추가
@@ -74,7 +75,46 @@ public class AuthServiceImpl implements AuthService {
         .build();
   }
 
-  //
+  @Override
+  @Transactional
+  public TokenDto signIn(SignInDto signInDto) {
+    // 이메일로 IntegratedAccount 찾기
+    IntegratedAccount account =
+        integratedAccountRepository
+            .findByIntegratedAccountEmail(signInDto.getEmail())
+            .orElseThrow(() -> new IllegalArgumentException("등록되지 않은 이메일입니다."));
+
+    // 비밀번호 일치 여부 확인
+    if (!securityPort.matches(signInDto.getPassword(), account.getPassword())) {
+      throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
+    }
+
+    User user = account.getUser();
+    // 사용자 상태 확인 (로그인 가능 상태인지)
+    if (!user.isLoginable()) {
+      throw new IllegalArgumentException("로그인할 수 없는 계정 상태입니다: " + user.getStatus());
+    }
+
+    // 로그인 시간 업데이트
+    user.updateLoginTime();
+    userRepository.save(user);
+
+    log.info("로그인 성공: {}", user.getEmail());
+
+    // 토큰 생성
+    String accessToken = securityPort.createAccessToken(user.getId(), user.getEmail());
+    String refreshToken = securityPort.createRefreshToken(user.getId(), user.getEmail());
+
+    // 리프레시 토큰 저장
+    user.updateRefreshToken(refreshToken);
+    userRepository.save(user);
+
+    return TokenDto.builder()
+        .accessToken(accessToken)
+        .refreshToken(refreshToken)
+        .accessTokenExpiresIn(securityPort.getAccessTokenExpirationTime())
+        .build();
+  }
   // // AuthenticationManager를 필드로 선언하되 생성자 주입은 하지 않음
   // private AuthenticationManager authenticationManager;
   //
