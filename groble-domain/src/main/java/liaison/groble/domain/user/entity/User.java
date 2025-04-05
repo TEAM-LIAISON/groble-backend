@@ -34,7 +34,7 @@ import lombok.ToString;
 @Entity
 @Table(
     name = "users",
-    indexes = {@Index(name = "idx_user_username", columnList = "username")})
+    indexes = {@Index(name = "idx_user_user_name", columnList = "user_name")})
 @Getter
 @Builder
 @NoArgsConstructor(access = PROTECTED)

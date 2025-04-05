@@ -32,7 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequestMapping("/api/v1/auth")
 public class AuthController {
   private final AuthService authService;
-  private final AuthDtoMapper mapper;
+  private final AuthDtoMapper authDtoMapper;
 
   // 쿠키 설정값
   private static final int ACCESS_TOKEN_MAX_AGE = 60 * 30; // 30분
@@ -41,14 +41,14 @@ public class AuthController {
   private static final String REFRESH_TOKEN_COOKIE_NAME = "refreshToken";
 
   /** 회원가입 API */
-  @PostMapping("/signup")
+  @PostMapping("/sign-up")
   public ResponseEntity<ApiResponse<SignUpResponse>> signUp(
       @Valid @RequestBody SignUpRequest request, HttpServletResponse response) {
 
     log.info("회원가입 요청: {}", request.getEmail());
 
     // 1. API DTO → 서비스 DTO 변환
-    SignUpDto signUpDto = mapper.toServiceSignUpDto(request);
+    SignUpDto signUpDto = authDtoMapper.toServiceSignUpDto(request);
 
     // 2. 서비스 호출
     TokenDto tokenDto = authService.signUp(signUpDto);
@@ -76,7 +76,7 @@ public class AuthController {
     log.info("로그인 요청: {}", request.getEmail());
 
     // 1. API DTO → 서비스 DTO 변환
-    SignInDto signInDto = mapper.toServiceSignInDto(request);
+    SignInDto signInDto = authDtoMapper.toServiceSignInDto(request);
 
     // 2. 서비스 호출
     TokenDto tokenDto = authService.signIn(signInDto);
@@ -92,21 +92,6 @@ public class AuthController {
         .body(ApiResponse.success(signInResponse, "로그인이 성공적으로 완료되었습니다.", 200));
   }
 
-  //  @PostMapping("/login")
-  //  public ResponseEntity<?> login(@Valid @RequestBody SignInRequest request) {
-  //    try {
-  //      TokenResponse tokenResponse = authService.login(request);
-  //
-  //      return ResponseEntity.ok().body(Map.of("message", "로그인에 성공했습니다.", "token",
-  // tokenResponse));
-  //    } catch (AuthenticationFailedException e) {
-  //      log.warn("로그인 실패: {}", request.getEmail());
-  //      return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
-  //    } catch (Exception e) {
-  //      log.error("로그인 처리 중 오류 발생", e);
-  //      return ResponseEntity.badRequest().body(Map.of("message", "이메일 또는 비밀번호가 일치하지 않습니다."));
-  //    }
-  //  }
   //
   //  /**
   //   * 로그아웃 API 리프레시 토큰 무효화

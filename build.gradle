@@ -202,7 +202,6 @@ project(':groble-infrastructure:groble-external') {
         implementation project(':groble-common')
 
         // 외부 API 연동을 위한 의존성
-        implementation 'org.springframework.boot:spring-boot-starter-webflux'
         implementation 'io.projectreactor:reactor-core'
         implementation 'com.fasterxml.jackson.core:jackson-databind'
         implementation 'org.springframework.boot:spring-boot-starter-cache'
