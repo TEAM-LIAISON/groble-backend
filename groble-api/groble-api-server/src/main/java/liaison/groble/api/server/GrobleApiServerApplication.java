@@ -6,6 +6,8 @@ import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
+import io.swagger.v3.oas.annotations.OpenAPIDefinition;
+
 @SpringBootApplication(
     scanBasePackages = {
       "liaison.groble.api", // API 서버 모듈
@@ -20,6 +22,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 @EnableJpaRepositories(
     basePackages = {"liaison.groble.persistence", "liaison.groble.domain.user.repository"})
 @EnableJpaAuditing
+@OpenAPIDefinition
 public class GrobleApiServerApplication {
 
   public static void main(String[] args) {

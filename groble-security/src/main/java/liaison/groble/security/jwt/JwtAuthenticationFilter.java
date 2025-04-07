@@ -35,7 +35,39 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
   private final UserCacheService userCacheService;
 
   // 인증이 필요없는 경로 패턴 목록
-  private static final List<String> PUBLIC_PATHS = List.of("/api/v1/home");
+  private static final List<String> PUBLIC_PATHS =
+      List.of(
+          "/api/v1/home",
+          "/api/v1/auth/**",
+          "/swagger-ui/**",
+          "/swagger-ui.html",
+          "/v3/api-docs/**",
+          "/swagger-resources/**",
+          "/webjars/**",
+          "/favicon.ico");
+
+  // Swagger 관련 경로인지 확인하는 메소드
+  private boolean isSwaggerRequest(String path) {
+    return path.startsWith("/swagger-ui")
+        || path.equals("/swagger-ui.html")
+        || path.startsWith("/v3/api-docs")
+        || path.startsWith("/swagger-resources")
+        || path.startsWith("/webjars")
+        || path.equals("/favicon.ico");
+  }
+
+  /** 이 필터를 적용할지 결정하는 메소드 Swagger UI 관련 요청은 필터링하지 않음 */
+  @Override
+  protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+    String path = request.getRequestURI();
+    boolean isSwagger = isSwaggerRequest(path);
+
+    if (isSwagger) {
+      log.debug("Swagger 관련 요청은 JWT 필터를 건너뜁니다: {}", path);
+    }
+
+    return isSwagger;
+  }
 
   /** 인증 필터 처리 */
   @Override

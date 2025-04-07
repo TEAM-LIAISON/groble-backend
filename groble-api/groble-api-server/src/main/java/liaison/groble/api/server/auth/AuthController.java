@@ -23,6 +23,12 @@ import liaison.groble.application.user.service.UserService;
 import liaison.groble.common.response.ApiResponse;
 import liaison.groble.common.utils.CookieUtils;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -31,6 +37,7 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/auth")
+@Tag(name = "인증 API", description = "통합 회원가입, 통합 로그인, 이메일 인증, 토큰 갱신 등의 인증 관련 API")
 public class AuthController {
   private final AuthService authService;
   private final UserService userService;
@@ -43,9 +50,24 @@ public class AuthController {
   private static final String REFRESH_TOKEN_COOKIE_NAME = "refreshToken";
 
   /** 회원가입 API */
+  @Operation(summary = "회원가입", description = "새로운 사용자를 등록하고 인증 토큰을 발급합니다.")
+  @ApiResponses({
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        responseCode = "201",
+        description = "회원가입 성공",
+        content = @Content(schema = @Schema(implementation = ApiResponse.class))),
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        responseCode = "400",
+        description = "잘못된 요청 데이터"),
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        responseCode = "409",
+        description = "이미 존재하는 이메일")
+  })
   @PostMapping("/sign-up")
   public ResponseEntity<ApiResponse<SignUpResponse>> signUp(
-      @Valid @RequestBody SignUpRequest request, HttpServletResponse response) {
+      @Parameter(description = "회원가입 정보", required = true) @Valid @RequestBody
+          SignUpRequest request,
+      HttpServletResponse response) {
 
     log.info("회원가입 요청: {}", request.getEmail());
 
@@ -72,9 +94,23 @@ public class AuthController {
    * @param request 로그인 요청 정보
    * @return 로그인 결과 (액세스 토큰, 리프레시 토큰 포함)
    */
+  @Operation(summary = "로그인", description = "이메일과 비밀번호로 로그인하고 인증 토큰을 발급합니다.")
+  @ApiResponses({
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        responseCode = "200",
+        description = "로그인 성공",
+        content = @Content(schema = @Schema(implementation = ApiResponse.class))),
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        responseCode = "400",
+        description = "잘못된 요청 데이터"),
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        responseCode = "401",
+        description = "인증 실패")
+  })
   @PostMapping("/sign-in")
   public ResponseEntity<ApiResponse<SignInResponse>> signIn(
-      @Valid @RequestBody SignInRequest request, HttpServletResponse response) {
+      @Parameter(description = "로그인 정보", required = true) @Valid @RequestBody SignInRequest request,
+      HttpServletResponse response) {
     log.info("로그인 요청: {}", request.getEmail());
 
     // 1. API DTO → 서비스 DTO 변환
