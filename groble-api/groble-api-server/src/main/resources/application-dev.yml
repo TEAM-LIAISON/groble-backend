@@ -1,0 +1,113 @@
+spring:
+  profiles:
+    group:
+      blue: blue, common, secret-dev
+      green: green, common, secret-dev
+
+server:
+  env: blue
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: blue
+
+server:
+  port: 8080
+  servlet:
+    context-path: /
+  error:
+    include-message: always
+    include-binding-errors: always
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: green
+
+server:
+  port: 8081
+  servlet:
+    context-path: /
+  error:
+    include-message: always
+    include-binding-errors: always
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: common
+
+  application:
+    name: groble
+  jpa:
+    database-platform: org.hibernate.dialect.MySQL8Dialect
+    properties:
+      hibernate:
+        format_sql: false
+        show_sql: false
+        use_sql_comments: false
+        default_batch_fetch_size: 100
+        generate_statistics: false   # 성능 모니터링 설정
+        jdbc:
+          batch_size: 50
+          time_zone: Asia/Seoul
+        order_inserts: true
+        order_updates: true
+    hibernate:
+      ddl-auto: validate
+  mvc:
+    path match:
+      matching-strategy: ant_path_matcher
+
+app:
+  jwt:
+    access-token:
+      secret: 6M1boNRsyYPgKuR197f4w2uuh8DXfYyjxgPJKmINtHo=
+      expiration-ms: 3600000 # 1 hour
+    refresh-token:
+      secret: bZvf0E0wsJXugzxv2m25c5zHvJrNfvsQIjzU6eBScbk=
+      expiration-ms: 604800000 # 7 days
+    issuer: groble-auth-service
+  frontend-url: https://groble.im
+  backend-url: https://dev.groble.im
+
+# Springdoc OpenAPI Configuration
+springdoc:
+  swagger-ui:
+    path: /swagger-ui
+    tags-sorter: alpha
+    operations-sorter: alpha
+    doc-expansion: none
+    disable-swagger-default-url: true
+  api-docs:
+    path: /v3/api-docs
+  default-consumes-media-type: application/json
+  default-produces-media-type: application/json
+  paths-to-match:
+    - /api/**
+  packages-to-scan:
+    - liaison.groble.api.server.auth
+  show-actuator: false
+  model-and-view-allowed: true
+
+# Actuator Configuration
+# management:
+#  endpoints:
+#    web:
+#      exposure:
+#        include: health,info,metrics,prometheus
+
+# Logging
+logging:
+  level:
+    root: INFO
+    liaison: DEBUG
+    org.springdoc: DEBUG
+    io.swagger.v3: DEBUG

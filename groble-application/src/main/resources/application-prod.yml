@@ -1,0 +1,43 @@
+spring:
+  config:
+    activate:
+      on-profile: prod
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  datasource:
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:groble}?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:root}
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+  # Production environment-specific OAuth2 settings
+  security:
+    oauth2:
+      client:
+        registration:
+          kakao:
+            redirect-uri: https://groble.im/login/oauth2/callback/kakao
+          naver:
+            redirect-uri: https://groble.im/login/oauth2/callback/naver
+          google:
+            redirect-uri: https://groble.im/login/oauth2/callback/google
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: linkit@linkit.im
+    password: fatu mxkw wcuy pkdf
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+      mail.smtp.connectiontimeout: 5000
+      mail.smtp.timeout: 5000
+      mail.smtp.writetimeout: 5000
+logging:
+  level:
+    root: WARN
+    liaison: INFO
+    org.springframework: WARN
