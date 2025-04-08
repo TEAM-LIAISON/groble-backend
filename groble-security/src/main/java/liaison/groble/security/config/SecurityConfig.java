@@ -145,6 +145,8 @@ public class SecurityConfig {
                     .permitAll()
                     .requestMatchers("/oauth2/**")
                     .permitAll()
+                    .requestMatchers("/env")
+                    .permitAll()
 
                     // Swagger UI 관련 경로 모두 허용
                     .requestMatchers("/swagger-ui.html")
