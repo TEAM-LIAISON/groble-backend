@@ -169,7 +169,6 @@ public class SecurityConfig {
                     .permitAll()
                     .requestMatchers("/api/v1/auth/**")
                     .permitAll()
-                    // 그 외 모든 요청은 인증 필요
                     .anyRequest()
                     .authenticated())
 
