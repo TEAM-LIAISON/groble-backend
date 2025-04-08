@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping
 public class HealthController {
 
-  @Value("${server.env")
+  @Value("${server.env}")
   private String env;
 
   @GetMapping("/hc")
