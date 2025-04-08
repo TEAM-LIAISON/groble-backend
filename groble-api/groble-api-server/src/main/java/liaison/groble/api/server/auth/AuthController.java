@@ -20,13 +20,14 @@ import liaison.groble.application.auth.dto.SignUpDto;
 import liaison.groble.application.auth.dto.TokenDto;
 import liaison.groble.application.auth.service.AuthService;
 import liaison.groble.application.user.service.UserService;
-import liaison.groble.common.response.ApiResponse;
+import liaison.groble.common.response.GrobleResponse;
 import liaison.groble.common.utils.CookieUtils;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -52,19 +53,15 @@ public class AuthController {
   /** 회원가입 API */
   @Operation(summary = "회원가입", description = "새로운 사용자를 등록하고 인증 토큰을 발급합니다.")
   @ApiResponses({
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+    @ApiResponse(
         responseCode = "201",
         description = "회원가입 성공",
-        content = @Content(schema = @Schema(implementation = ApiResponse.class))),
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-        responseCode = "400",
-        description = "잘못된 요청 데이터"),
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-        responseCode = "409",
-        description = "이미 존재하는 이메일")
+        content = @Content(schema = @Schema(implementation = GrobleResponse.class))),
+    @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터"),
+    @ApiResponse(responseCode = "409", description = "이미 존재하는 이메일")
   })
   @PostMapping("/sign-up")
-  public ResponseEntity<ApiResponse<SignUpResponse>> signUp(
+  public ResponseEntity<GrobleResponse<SignUpResponse>> signUp(
       @Parameter(description = "회원가입 정보", required = true) @Valid @RequestBody
           SignUpRequest request,
       HttpServletResponse response) {
@@ -85,7 +82,7 @@ public class AuthController {
 
     // 5. API 응답 생성
     return ResponseEntity.status(HttpStatus.CREATED)
-        .body(ApiResponse.success(signUpResponse, "회원가입이 성공적으로 완료되었습니다.", 201));
+        .body(GrobleResponse.success(signUpResponse, "회원가입이 성공적으로 완료되었습니다.", 201));
   }
 
   /**
@@ -96,19 +93,15 @@ public class AuthController {
    */
   @Operation(summary = "로그인", description = "이메일과 비밀번호로 로그인하고 인증 토큰을 발급합니다.")
   @ApiResponses({
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+    @ApiResponse(
         responseCode = "200",
         description = "로그인 성공",
-        content = @Content(schema = @Schema(implementation = ApiResponse.class))),
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-        responseCode = "400",
-        description = "잘못된 요청 데이터"),
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-        responseCode = "401",
-        description = "인증 실패")
+        content = @Content(schema = @Schema(implementation = GrobleResponse.class))),
+    @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터"),
+    @ApiResponse(responseCode = "401", description = "인증 실패")
   })
   @PostMapping("/sign-in")
-  public ResponseEntity<ApiResponse<SignInResponse>> signIn(
+  public ResponseEntity<GrobleResponse<SignInResponse>> signIn(
       @Parameter(description = "로그인 정보", required = true) @Valid @RequestBody SignInRequest request,
       HttpServletResponse response) {
     log.info("로그인 요청: {}", request.getEmail());
@@ -130,7 +123,7 @@ public class AuthController {
 
     // 5. API 응답 생성
     return ResponseEntity.status(HttpStatus.OK)
-        .body(ApiResponse.success(signInResponse, "로그인이 성공적으로 완료되었습니다.", 200));
+        .body(GrobleResponse.success(signInResponse, "로그인이 성공적으로 완료되었습니다.", 200));
   }
 
   //

@@ -20,7 +20,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL) // null 값은 JSON에 포함하지 않음
-public class ApiResponse<T> {
+public class GrobleResponse<T> {
   private ResponseStatus status; // 응답 상태 (SUCCESS, ERROR)
   private int code; // HTTP 상태 코드 또는 커스텀 코드
   private String message; // 응답 메시지
@@ -39,8 +39,8 @@ public class ApiResponse<T> {
    *
    * @return 성공 상태의 API 응답
    */
-  public static ApiResponse<Void> success() {
-    return ApiResponse.<Void>builder()
+  public static GrobleResponse<Void> success() {
+    return GrobleResponse.<Void>builder()
         .status(ResponseStatus.SUCCESS)
         .code(200)
         .message("요청이 성공적으로 처리되었습니다.")
@@ -55,8 +55,8 @@ public class ApiResponse<T> {
    * @param data 응답 데이터
    * @return 성공 상태의 API 응답 (데이터 포함)
    */
-  public static <T> ApiResponse<T> success(T data) {
-    return ApiResponse.<T>builder()
+  public static <T> GrobleResponse<T> success(T data) {
+    return GrobleResponse.<T>builder()
         .status(ResponseStatus.SUCCESS)
         .code(200)
         .message("요청이 성공적으로 처리되었습니다.")
@@ -73,8 +73,8 @@ public class ApiResponse<T> {
    * @param message 응답 메시지
    * @return 성공 상태의 API 응답 (데이터 및 메시지 포함)
    */
-  public static <T> ApiResponse<T> success(T data, String message) {
-    return ApiResponse.<T>builder()
+  public static <T> GrobleResponse<T> success(T data, String message) {
+    return GrobleResponse.<T>builder()
         .status(ResponseStatus.SUCCESS)
         .code(200)
         .message(message)
@@ -92,8 +92,8 @@ public class ApiResponse<T> {
    * @param code HTTP 상태 코드
    * @return 성공 상태의 API 응답 (데이터, 메시지, 코드 포함)
    */
-  public static <T> ApiResponse<T> success(T data, String message, int code) {
-    return ApiResponse.<T>builder()
+  public static <T> GrobleResponse<T> success(T data, String message, int code) {
+    return GrobleResponse.<T>builder()
         .status(ResponseStatus.SUCCESS)
         .code(code)
         .message(message)
@@ -109,8 +109,8 @@ public class ApiResponse<T> {
    * @param code HTTP 에러 코드
    * @return 에러 상태의 API 응답
    */
-  public static ApiResponse<Void> error(String message, int code) {
-    return ApiResponse.<Void>builder()
+  public static GrobleResponse<Void> error(String message, int code) {
+    return GrobleResponse.<Void>builder()
         .status(ResponseStatus.ERROR)
         .code(code)
         .message(message)
@@ -126,8 +126,8 @@ public class ApiResponse<T> {
    * @param errorDetail 에러 상세 정보
    * @return 에러 상태의 API 응답 (상세 정보 포함)
    */
-  public static ApiResponse<Void> error(String message, int code, ErrorDetail errorDetail) {
-    return ApiResponse.<Void>builder()
+  public static GrobleResponse<Void> error(String message, int code, ErrorDetail errorDetail) {
+    return GrobleResponse.<Void>builder()
         .status(ResponseStatus.ERROR)
         .code(code)
         .message(message)
@@ -144,7 +144,7 @@ public class ApiResponse<T> {
    * @param exception 발생한 예외
    * @return 에러 상태의 API 응답 (예외 정보 포함)
    */
-  public static ApiResponse<Void> error(String message, int code, Exception exception) {
+  public static GrobleResponse<Void> error(String message, int code, Exception exception) {
     ErrorDetail errorDetail =
         ErrorDetail.builder()
             .exception(exception.getClass().getName())
@@ -161,8 +161,8 @@ public class ApiResponse<T> {
    * @param code 상태 코드
    * @return 실패 상태의 API 응답
    */
-  public static ApiResponse<Void> fail(String message, int code) {
-    return ApiResponse.<Void>builder()
+  public static GrobleResponse<Void> fail(String message, int code) {
+    return GrobleResponse.<Void>builder()
         .status(ResponseStatus.FAIL)
         .code(code)
         .message(message)
