@@ -50,7 +50,14 @@ public class AuthController {
   private static final String ACCESS_TOKEN_COOKIE_NAME = "accessToken";
   private static final String REFRESH_TOKEN_COOKIE_NAME = "refreshToken";
 
-  /** 회원가입 API */
+  /**
+   * 회원가입 API
+   *
+   * <p>이메일과 비밀번호로 회원가입 처리
+   *
+   * @param request 회원가입 요청 정보
+   * @return 회원가입 결과 (액세스 토큰, 리프레시 토큰 포함)
+   */
   @Operation(summary = "회원가입", description = "새로운 사용자를 등록하고 인증 토큰을 발급합니다.")
   @ApiResponses({
     @ApiResponse(
@@ -86,7 +93,9 @@ public class AuthController {
   }
 
   /**
-   * 로그인 API 이메일과 비밀번호로 로그인 처리
+   * 로그인 API
+   *
+   * <p>이메일과 비밀번호로 로그인 처리
    *
    * @param request 로그인 요청 정보
    * @return 로그인 결과 (액세스 토큰, 리프레시 토큰 포함)
