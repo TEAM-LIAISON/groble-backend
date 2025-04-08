@@ -135,7 +135,6 @@ public class AuthController {
         .body(GrobleResponse.success(signInResponse, "로그인이 성공적으로 완료되었습니다.", 200));
   }
 
-  //
   // /**
   // * 로그아웃 API 리프레시 토큰 무효화
   // *
