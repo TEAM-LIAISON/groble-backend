@@ -38,7 +38,7 @@ jobs:
 
       - name: Build Project with Gradle
         run: |
-          echo ${{ secrets.APPLICATION_SECRET_DEV }} | base64 --decode > .groble-api/groble-api-server/src/main/resources/application-secret-dev.yml
+          echo ${{ secrets.APPLICATION_SECRET_DEV }} | base64 --decode > groble-api/groble-api-server/src/main/resources/application-secret-dev.yml
           ./gradlew bootJar
 
       - name: Login to DockerHub
