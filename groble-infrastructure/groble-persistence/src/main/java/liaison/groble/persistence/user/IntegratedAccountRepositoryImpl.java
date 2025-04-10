@@ -23,4 +23,9 @@ public class IntegratedAccountRepositoryImpl implements IntegratedAccountReposit
   public boolean existsByIntegratedAccountEmail(String integratedAccountEmail) {
     return jpaIntegratedAccountRepository.existsByIntegratedAccountEmail(integratedAccountEmail);
   }
+
+  @Override
+  public IntegratedAccount save(IntegratedAccount integratedAccount) {
+    return jpaIntegratedAccountRepository.save(integratedAccount);
+  }
 }

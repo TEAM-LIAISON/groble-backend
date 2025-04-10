@@ -8,4 +8,6 @@ public interface IntegratedAccountRepository {
   Optional<IntegratedAccount> findByIntegratedAccountEmail(String email);
 
   boolean existsByIntegratedAccountEmail(String email);
+
+  IntegratedAccount save(IntegratedAccount integratedAccount);
 }

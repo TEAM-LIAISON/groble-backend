@@ -35,4 +35,20 @@ public interface AuthService {
    * @param userId 사용자 식별 PK
    */
   void logout(Long userId);
+
+  /**
+   * 비밀번호 재설정 이메일 발송
+   *
+   * @param email 비밀번호를 재설정할 이메일
+   */
+  void sendPasswordResetEmail(String email);
+
+  /**
+   * 비밀번호 재설정
+   *
+   * @param email 사용자 이메일
+   * @param token 비밀번호 재설정 토큰
+   * @param newPassword 새로운 비밀번호
+   */
+  void resetPassword(String email, String token, String newPassword);
 }
