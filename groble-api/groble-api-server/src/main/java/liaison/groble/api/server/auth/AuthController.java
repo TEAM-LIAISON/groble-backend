@@ -1,5 +1,6 @@
 package liaison.groble.api.server.auth;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 
@@ -10,16 +11,22 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import liaison.groble.api.model.auth.request.EmailVerificationRequest;
 import liaison.groble.api.model.auth.request.SignInRequest;
 import liaison.groble.api.model.auth.request.SignUpRequest;
 import liaison.groble.api.model.auth.response.SignInResponse;
 import liaison.groble.api.model.auth.response.SignUpResponse;
 import liaison.groble.api.server.auth.mapper.AuthDtoMapper;
+import liaison.groble.application.auth.dto.EmailVerificationDto;
 import liaison.groble.application.auth.dto.SignInDto;
 import liaison.groble.application.auth.dto.SignUpDto;
 import liaison.groble.application.auth.dto.TokenDto;
 import liaison.groble.application.auth.service.AuthService;
 import liaison.groble.application.user.service.UserService;
+import liaison.groble.common.annotation.Auth;
+import liaison.groble.common.annotation.Logging;
+import liaison.groble.common.annotation.RequireRole;
+import liaison.groble.common.model.Accessor;
 import liaison.groble.common.response.GrobleResponse;
 import liaison.groble.common.utils.CookieUtils;
 
@@ -127,37 +134,52 @@ public class AuthController {
     // 4. 사용자 라우팅 경로 설정
     String nextRoutePath = userService.getNextRoutePath(signInDto.getEmail());
 
-    // 4. 토큰을 쿠키로 설정
+    // 5. 토큰을 쿠키로 설정
     addTokenCookies(response, tokenDto.getAccessToken(), tokenDto.getRefreshToken());
 
-    // 5. 사용자 정보와 역할 정보를 응답 본문에 포함
+    // 6. 사용자 정보와 역할 정보를 응답 본문에 포함
     SignInResponse signInResponse = SignInResponse.of(request.getEmail(), userType, nextRoutePath);
 
-    // 6. API 응답 생성
+    // 7. API 응답 생성
     return ResponseEntity.status(HttpStatus.OK)
         .body(GrobleResponse.success(signInResponse, "로그인이 성공적으로 완료되었습니다.", 200));
   }
 
-  // /**
-  // * 로그아웃 API 리프레시 토큰 무효화
-  // *
-  // * @param userDetails 인증된 사용자 정보
-  // * @return 로그아웃 결과
-  // */
-  // @PostMapping("/logout")
-  // @PreAuthorize("isAuthenticated()")
-  // public ResponseEntity<?> logout(@AuthenticationPrincipal UserDetailsImpl
-  // userDetails) {
-  // try {
-  // authService.logout(userDetails.getId());
-  // return ResponseEntity.ok().body(Map.of("message", "로그아웃되었습니다."));
-  // } catch (Exception e) {
-  // log.error("로그아웃 처리 중 오류 발생", e);
-  // return ResponseEntity.internalServerError().body(Map.of("message", "로그아웃 처리 중
-  // 오류가
-  // 발생했습니다."));
-  // }
-  // }
+  /**
+   * 이메일 인증 API
+   *
+   * <p>사용자가 기입한 이메일에 인증 코드를 발송
+   *
+   * @param request 인증 코드를 보낼 이메일 정보
+   * @return 이메일 발송 결과
+   */
+  @Operation(summary = "회원가입 인증", description = "회원가입할 이메일에게 인증 코드를 발급합니다.")
+  @ApiResponses({
+    @ApiResponse(
+        responseCode = "200",
+        description = "회원가입 인증 성공",
+        content = @Content(schema = @Schema(implementation = GrobleResponse.class))),
+    @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터"),
+    @ApiResponse(responseCode = "401", description = "인증 실패")
+  })
+  @PostMapping("/email-verification")
+  public ResponseEntity<GrobleResponse<Void>> sendEmailVerification(
+      @Parameter(description = "이메일 인증 정보", required = true) @Valid @RequestBody
+          EmailVerificationRequest request) {
+    log.info("이메일 인증 요청: {}", request.getEmail());
+
+    // 1. API DTO → 서비스 DTO 변환
+    EmailVerificationDto emailVerificationDto =
+        authDtoMapper.toServiceEmailVerificationDto(request);
+
+    // 2. 서비스 호출
+    authService.sendEmailVerification(emailVerificationDto);
+
+    // 3. API 응답 생성
+    return ResponseEntity.status(HttpStatus.OK)
+        .body(GrobleResponse.success(null, "인증 이메일이 발송되었습니다.", 200));
+  }
+
   //
   // /**
   // * 토큰 갱신 API 리프레시 토큰을 사용해 새 액세스 토큰 발급
@@ -322,6 +344,33 @@ public class AuthController {
   // return new RedirectView("/verification-failed.html?error=" + e.getMessage());
   // }
   // }
+
+  /** 로그아웃 API - 토큰 무효화 및 쿠키 삭제 */
+  @PostMapping("/logout")
+  @RequireRole({"ROLE_USER", "ROLE_SELLER"})
+  @Logging(item = "User", action = "LOGOUT", includeParam = false)
+  public ResponseEntity<GrobleResponse<Void>> logout(
+      @Auth Accessor accessor, HttpServletRequest request, HttpServletResponse response) {
+
+    log.info("로그아웃 요청: {}", accessor.getEmail());
+
+    try {
+      // 1. 리프레시 토큰 무효화
+      authService.logout(accessor.getUserId());
+
+      // 2. 쿠키 삭제
+      CookieUtils.deleteCookie(request, response, ACCESS_TOKEN_COOKIE_NAME);
+      CookieUtils.deleteCookie(request, response, REFRESH_TOKEN_COOKIE_NAME);
+
+      // 3. 응답 반환
+      return ResponseEntity.ok().body(GrobleResponse.success(null, "로그아웃이 성공적으로 처리되었습니다.", 200));
+
+    } catch (Exception e) {
+      log.error("로그아웃 처리 중 오류 발생", e);
+      return ResponseEntity.internalServerError()
+          .body(GrobleResponse.error("로그아웃 처리 중 오류가 발생했습니다.", 500));
+    }
+  }
 
   /** 액세스 토큰과 리프레시 토큰을 쿠키에 저장 */
   private void addTokenCookies(

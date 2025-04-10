@@ -3,6 +3,7 @@ package liaison.groble.application.auth.service.impl;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import liaison.groble.application.auth.dto.EmailVerificationDto;
 import liaison.groble.application.auth.dto.SignInDto;
 import liaison.groble.application.auth.dto.SignUpDto;
 import liaison.groble.application.auth.dto.TokenDto;
@@ -114,5 +115,30 @@ public class AuthServiceImpl implements AuthService {
         .refreshToken(refreshToken)
         .accessTokenExpiresIn(securityPort.getAccessTokenExpirationTime())
         .build();
+  }
+
+  @Override
+  @Transactional
+  public void sendEmailVerification(EmailVerificationDto emailVerificationDto) {
+    if (!integratedAccountRepository.existsByIntegratedAccountEmail(
+        emailVerificationDto.getEmail())) {
+      log.info("이메일 인증 메일 발송: {}", emailVerificationDto.getEmail());
+    }
+  }
+
+  @Override
+  @Transactional
+  public void logout(Long userId) {
+    // 사용자 조회
+    User user =
+        userRepository
+            .findById(userId)
+            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+
+    // RefreshToken 무효화
+    user.updateRefreshToken(null);
+    userRepository.save(user);
+
+    log.info("로그아웃 완료: {}", user.getEmail());
   }
 }

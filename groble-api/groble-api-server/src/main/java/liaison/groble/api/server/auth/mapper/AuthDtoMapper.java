@@ -2,9 +2,11 @@ package liaison.groble.api.server.auth.mapper;
 
 import org.springframework.stereotype.Component;
 
+import liaison.groble.api.model.auth.request.EmailVerificationRequest;
 import liaison.groble.api.model.auth.request.SignInRequest;
 import liaison.groble.api.model.auth.request.SignUpRequest;
 import liaison.groble.api.model.auth.response.SignUpResponse;
+import liaison.groble.application.auth.dto.EmailVerificationDto;
 import liaison.groble.application.auth.dto.SignInDto;
 import liaison.groble.application.auth.dto.SignUpDto;
 
@@ -22,5 +24,9 @@ public class AuthDtoMapper {
 
   public SignInDto toServiceSignInDto(SignInRequest request) {
     return SignInDto.builder().email(request.getEmail()).password(request.getPassword()).build();
+  }
+
+  public EmailVerificationDto toServiceEmailVerificationDto(EmailVerificationRequest request) {
+    return EmailVerificationDto.builder().email(request.getEmail()).build();
   }
 }
