@@ -349,6 +349,13 @@ public class AuthController {
   @PostMapping("/logout")
   @RequireRole({"ROLE_USER", "ROLE_SELLER"})
   @Logging(item = "User", action = "LOGOUT", includeParam = false)
+  @Operation(summary = "로그아웃", description = "로그아웃을 통해 쿠키와 토큰을 무효화합니다.")
+  @ApiResponses({
+    @ApiResponse(
+        responseCode = "200",
+        description = "로그아웃 성공",
+        content = @Content(schema = @Schema(implementation = GrobleResponse.class)))
+  })
   public ResponseEntity<GrobleResponse<Void>> logout(
       @Auth Accessor accessor, HttpServletRequest request, HttpServletResponse response) {
 
