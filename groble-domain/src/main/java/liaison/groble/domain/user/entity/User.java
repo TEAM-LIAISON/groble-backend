@@ -94,6 +94,21 @@ public class User extends BaseTimeEntity {
   @Column(name = "status_changed_at")
   private Instant statusChangedAt;
 
+  @Column(name = "agreed_age_policy", nullable = false)
+  private boolean agreedAgePolicy;
+
+  @Column(name = "agreed_privacy_policy", nullable = false)
+  private boolean agreedPrivacyPolicy;
+
+  @Column(name = "agreed_service_terms", nullable = false)
+  private boolean agreedServiceTerms;
+
+  @Column(name = "agreed_sales_terms", nullable = false)
+  private boolean agreedSalesTerms;
+
+  private boolean agreedMarketing;
+  private boolean agreedAdvertising;
+
   /** 마케팅 수신 동의 여부 */
   @Builder.Default
   @Column(name = "marketing_consent", nullable = false)

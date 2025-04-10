@@ -90,4 +90,18 @@ public class UserServiceImpl implements UserService {
       return "BUYER";
     }
   }
+
+  @Override
+  @Transactional(readOnly = true)
+  public String getNextRoutePath(String email) {
+    IntegratedAccount account =
+        integratedAccountRepository
+            .findByIntegratedAccountEmail(email)
+            .orElseThrow(() -> new IllegalArgumentException("등록되지 않은 이메일입니다."));
+
+    User user = account.getUser();
+
+    // 약관동의를 진행하지 않은 경우
+    return null;
+  }
 }

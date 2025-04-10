@@ -16,8 +16,14 @@ public class SignInResponse {
   private String email;
   private boolean authenticated;
   private String userType;
+  private String nextRoutePath;
 
-  public static SignInResponse of(String email, String userType) {
-    return SignInResponse.builder().email(email).authenticated(true).userType(userType).build();
+  public static SignInResponse of(String email, String userType, String nextRoutePath) {
+    return SignInResponse.builder()
+        .email(email)
+        .authenticated(true)
+        .userType(userType)
+        .nextRoutePath(nextRoutePath)
+        .build();
   }
 }

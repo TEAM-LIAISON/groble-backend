@@ -121,16 +121,19 @@ public class AuthController {
     // 2. 서비스 호출
     TokenDto tokenDto = authService.signIn(signInDto);
 
-    // 사용자 역할 및 정보 상태 확인
+    // 3. 사용자 역할 및 정보 상태 확인
     String userType = userService.getUserType(signInDto.getEmail());
 
-    // 3. 토큰을 쿠키로 설정
+    // 4. 사용자 라우팅 경로 설정
+    String nextRoutePath = userService.getNextRoutePath(signInDto.getEmail());
+
+    // 4. 토큰을 쿠키로 설정
     addTokenCookies(response, tokenDto.getAccessToken(), tokenDto.getRefreshToken());
 
-    // 4. 사용자 정보와 역할 정보를 응답 본문에 포함
-    SignInResponse signInResponse = SignInResponse.of(request.getEmail(), userType);
+    // 5. 사용자 정보와 역할 정보를 응답 본문에 포함
+    SignInResponse signInResponse = SignInResponse.of(request.getEmail(), userType, nextRoutePath);
 
-    // 5. API 응답 생성
+    // 6. API 응답 생성
     return ResponseEntity.status(HttpStatus.OK)
         .body(GrobleResponse.success(signInResponse, "로그인이 성공적으로 완료되었습니다.", 200));
   }
