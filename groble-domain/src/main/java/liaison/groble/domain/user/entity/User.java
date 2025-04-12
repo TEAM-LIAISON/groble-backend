@@ -38,7 +38,7 @@ import lombok.ToString;
 @Entity
 @Table(
     name = "users",
-    indexes = {@Index(name = "idx_user_user_name", columnList = "user_name")})
+    indexes = {@Index(name = "idx_user_nick_name", columnList = "nick_name")})
 @Getter
 @Builder
 @NoArgsConstructor(access = PROTECTED)
@@ -56,8 +56,8 @@ public class User extends BaseTimeEntity {
   private String uuid = UUID.randomUUID().toString();
 
   /** 사용자 이름 (닉네임) */
-  @Column(name = "user_name", length = 50)
-  private String userName;
+  @Column(name = "nick_name", length = 50)
+  private String nickName;
 
   /** 통합 계정 정보 (일반 로그인) 양방향 관계로 IntegratedAccount와 연결 */
   @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -274,7 +274,7 @@ public class User extends BaseTimeEntity {
       // socialAccount.updateEmail(anonymizedEmail);
     }
 
-    this.userName = "탈퇴한 사용자";
+    this.nickName = "탈퇴한 사용자";
     this.refreshToken = null;
   }
 
@@ -321,10 +321,10 @@ public class User extends BaseTimeEntity {
   /**
    * 사용자 이름 업데이트
    *
-   * @param userName 새 사용자 이름
+   * @param nickName 새 닉네임
    */
-  public void updateUserName(String userName) {
-    this.userName = userName;
+  public void updateNickName(String nickName) {
+    this.nickName = nickName;
   }
 
   public void agreeToTerms(Terms terms, String agreedIp, String agreedUserAgent) {

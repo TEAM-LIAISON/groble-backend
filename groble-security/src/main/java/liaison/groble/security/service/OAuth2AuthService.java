@@ -149,13 +149,6 @@ public class OAuth2AuthService extends DefaultOAuth2UserService {
 
     User savedUser = socialAccount.getUser();
 
-    // 사용자 이름 설정 (소셜 제공자로부터 받은 이름 또는 이메일 ID)
-    String name = userInfo.getName();
-    if (!StringUtils.hasText(name)) {
-      name = userInfo.getEmail().split("@")[0]; // 이메일 ID 부분 사용
-    }
-    savedUser.updateUserName(name);
-
     // 기본 역할 설정 (ROLE_USER)
     Role userRole =
         roleRepository
@@ -177,12 +170,6 @@ public class OAuth2AuthService extends DefaultOAuth2UserService {
    */
   private void updateExistingSocialUser(User user, OAuth2UserInfo userInfo) {
     boolean isChanged = false;
-
-    // 사용자 이름이 없는 경우 업데이트
-    if (user.getUserName() == null && StringUtils.hasText(userInfo.getName())) {
-      user.updateUserName(userInfo.getName());
-      isChanged = true;
-    }
 
     // 변경 사항이 있는 경우만 저장
     if (isChanged) {

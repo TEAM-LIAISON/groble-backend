@@ -67,7 +67,7 @@ public class UserServiceImpl implements UserService {
     User user = account.getUser();
 
     // 기본 정보가 없는 경우
-    if (user.getUserName() == null || user.getUserName().isEmpty()) {
+    if (user.getNickName() == null || user.getNickName().isEmpty()) {
       return "NONE";
     }
 
@@ -102,5 +102,23 @@ public class UserServiceImpl implements UserService {
     User user = account.getUser();
 
     return null;
+  }
+
+  @Override
+  public boolean isNickNameTaken(String nickName) {
+    return userRepository.existsByNickName(nickName);
+  }
+
+  @Override
+  public String setOrUpdateNickname(Long userId, String nickName) {
+    User user =
+        userRepository
+            .findById(userId)
+            .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
+
+    user.updateNickName(nickName);
+    userRepository.save(user);
+
+    return nickName;
   }
 }

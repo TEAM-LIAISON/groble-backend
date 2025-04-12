@@ -26,4 +26,20 @@ public interface UserService {
    * @return 라우팅 경로
    */
   String getNextRoutePath(String email);
+
+  /**
+   * 닉네임 중복 확인
+   *
+   * @param nickName 확인할 닉네임
+   * @return 중복 여부
+   */
+  boolean isNickNameTaken(String nickName);
+
+  /**
+   * 닉네임 설정 또는 업데이트
+   *
+   * @param nickName 설정할 닉네임
+   * @return 설정된 닉네임
+   */
+  String setOrUpdateNickname(Long userId, String nickName);
 }
