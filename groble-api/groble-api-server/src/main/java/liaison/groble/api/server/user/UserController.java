@@ -58,15 +58,16 @@ public class UserController {
     }
   }
 
+  @Operation(summary = "닉네임 중복 확인", description = "닉네임이 이미 사용 중인지 확인합니다. 회원가입 및 닉네임 수정 시 사용됩니다.")
+  @ApiResponses(
+      value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "중복 여부 조회 성공",
+            content = @Content(schema = @Schema(implementation = GrobleResponse.class))),
+        @ApiResponse(responseCode = "400", description = "잘못된 요청 (닉네임 누락 또는 공백)")
+      })
   @GetMapping("/users/nickname/check")
-  @Operation(summary = "닉네임 중복 확인", description = "닉네임 중복 여부를 확인합니다.")
-  @ApiResponses({
-    @ApiResponse(
-        responseCode = "200",
-        description = "중복 여부 조회 성공",
-        content = @Content(schema = @Schema(implementation = GrobleResponse.class))),
-    @ApiResponse(responseCode = "400", description = "닉네임 값 누락 또는 잘못된 형식")
-  })
   public ResponseEntity<GrobleResponse<NicknameDuplicateCheckResponse>> checkNicknameDuplicate(
       @RequestParam("value") @NotBlank String nickname) {
 
