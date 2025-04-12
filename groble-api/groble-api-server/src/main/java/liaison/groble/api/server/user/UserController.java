@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import liaison.groble.api.model.user.request.NicknameRequest;
+import liaison.groble.api.model.user.request.PasswordRequest;
 import liaison.groble.api.model.user.request.RoleTypeRequest;
 import liaison.groble.api.model.user.response.NicknameDuplicateCheckResponse;
 import liaison.groble.api.model.user.response.NicknameResponse;
@@ -58,6 +59,22 @@ public class UserController {
     }
   }
 
+  @Operation(summary = "비밀번호 생성/수정", description = "비밀번호를 생성 또는 수정합니다.")
+  @ApiResponses({
+    @ApiResponse(
+        responseCode = "200",
+        description = "비밀번호 생성/수정 성공",
+        content = @Content(schema = @Schema(implementation = GrobleResponse.class))),
+    @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터")
+  })
+  @PostMapping("/users/password")
+  public ResponseEntity<GrobleResponse<Void>> setPassword(
+      @Auth Accessor accessor, @Valid @RequestBody PasswordRequest request) {
+
+    userService.setOrUpdatePassword(accessor.getUserId(), request.getPassword());
+    return ResponseEntity.ok(GrobleResponse.success(null, "비밀번호가 설정되었습니다."));
+  }
+
   @Operation(summary = "닉네임 중복 확인", description = "닉네임이 이미 사용 중인지 확인합니다. 회원가입 및 닉네임 수정 시 사용됩니다.")
   @ApiResponses(
       value = {
@@ -76,14 +93,6 @@ public class UserController {
         GrobleResponse.success(new NicknameDuplicateCheckResponse(nickname, exists)));
   }
 
-  /**
-   * 닉네임 생성/수정 API
-   *
-   * <p>닉네임을 생성하거나 수정합니다.
-   *
-   * @param request 닉네임 요청 정보
-   * @return 닉네임/생성 수정 결과
-   */
   @Operation(summary = "닉네임 생성/수정", description = "닉네임을 생성 또는 수정합니다.")
   @ApiResponses({
     @ApiResponse(

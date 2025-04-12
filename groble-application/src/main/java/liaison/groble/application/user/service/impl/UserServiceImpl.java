@@ -5,6 +5,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import liaison.groble.application.user.service.UserService;
 import liaison.groble.common.exception.EntityNotFoundException;
+import liaison.groble.common.port.security.SecurityPort;
 import liaison.groble.domain.user.entity.IntegratedAccount;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.repository.IntegratedAccountRepository;
@@ -19,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 public class UserServiceImpl implements UserService {
   private final UserRepository userRepository;
   private final IntegratedAccountRepository integratedAccountRepository;
+  private final SecurityPort securityPort;
 
   /**
    * 사용자 역할 전환 (판매자/구매자 모드 전환)
@@ -102,6 +104,20 @@ public class UserServiceImpl implements UserService {
     User user = account.getUser();
 
     return null;
+  }
+
+  @Override
+  public void setOrUpdatePassword(Long userId, String password) {
+    User user =
+        userRepository
+            .findById(userId)
+            .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
+
+    // 1. 비밀번호 인코딩
+    String encodedPassword = securityPort.encodePassword(password);
+
+    user.getIntegratedAccount().updatePassword(encodedPassword);
+    userRepository.save(user);
   }
 
   @Override

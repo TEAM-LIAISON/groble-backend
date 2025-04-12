@@ -28,6 +28,14 @@ public interface UserService {
   String getNextRoutePath(String email);
 
   /**
+   * 비밀번호 생성/수정
+   *
+   * @param userId 사용자 ID
+   * @param password 설정할 비밀번호
+   */
+  void setOrUpdatePassword(Long userId, String password);
+
+  /**
    * 닉네임 중복 확인
    *
    * @param nickName 확인할 닉네임

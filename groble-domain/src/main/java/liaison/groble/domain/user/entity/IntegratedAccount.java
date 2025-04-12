@@ -76,8 +76,8 @@ public class IntegratedAccount {
   }
 
   // 비밀번호 업데이트
-  public void updatePassword(String newPassword) {
-    this.password = newPassword;
+  public void updatePassword(String encodedPassword) {
+    this.password = encodedPassword;
   }
 
   // 이메일 업데이트 (계정 탈퇴 등의 경우)
