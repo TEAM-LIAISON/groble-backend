@@ -144,6 +144,38 @@ public class AuthController {
         .body(GrobleResponse.success(signInResponse, "로그인이 성공적으로 완료되었습니다.", 200));
   }
 
+  /** 로그아웃 API - 토큰 무효화 및 쿠키 삭제 */
+  @PostMapping("/logout")
+  @Operation(summary = "로그아웃", description = "로그아웃을 통해 쿠키와 토큰을 무효화합니다.")
+  @ApiResponses({
+    @ApiResponse(
+        responseCode = "200",
+        description = "로그아웃 성공",
+        content = @Content(schema = @Schema(implementation = GrobleResponse.class)))
+  })
+  public ResponseEntity<GrobleResponse<Void>> logout(
+      @Auth Accessor accessor, HttpServletRequest request, HttpServletResponse response) {
+
+    log.info("로그아웃 요청: {}", accessor.getEmail());
+
+    try {
+      // 1. 리프레시 토큰 무효화
+      authService.logout(accessor.getUserId());
+
+      // 2. 쿠키 삭제
+      CookieUtils.deleteCookie(request, response, ACCESS_TOKEN_COOKIE_NAME);
+      CookieUtils.deleteCookie(request, response, REFRESH_TOKEN_COOKIE_NAME);
+
+      // 3. 응답 반환
+      return ResponseEntity.ok().body(GrobleResponse.success(null, "로그아웃이 성공적으로 처리되었습니다.", 200));
+
+    } catch (Exception e) {
+      log.error("로그아웃 처리 중 오류 발생", e);
+      return ResponseEntity.internalServerError()
+          .body(GrobleResponse.error("로그아웃 처리 중 오류가 발생했습니다.", 500));
+    }
+  }
+
   /**
    * 이메일 인증 API
    *
@@ -221,38 +253,6 @@ public class AuthController {
     authService.resetPassword(request.getEmail(), request.getToken(), request.getNewPassword());
 
     return ResponseEntity.ok().body(GrobleResponse.success(null, "비밀번호가 성공적으로 재설정되었습니다.", 200));
-  }
-
-  /** 로그아웃 API - 토큰 무효화 및 쿠키 삭제 */
-  @PostMapping("/logout")
-  @Operation(summary = "로그아웃", description = "로그아웃을 통해 쿠키와 토큰을 무효화합니다.")
-  @ApiResponses({
-    @ApiResponse(
-        responseCode = "200",
-        description = "로그아웃 성공",
-        content = @Content(schema = @Schema(implementation = GrobleResponse.class)))
-  })
-  public ResponseEntity<GrobleResponse<Void>> logout(
-      @Auth Accessor accessor, HttpServletRequest request, HttpServletResponse response) {
-
-    log.info("로그아웃 요청: {}", accessor.getEmail());
-
-    try {
-      // 1. 리프레시 토큰 무효화
-      authService.logout(accessor.getUserId());
-
-      // 2. 쿠키 삭제
-      CookieUtils.deleteCookie(request, response, ACCESS_TOKEN_COOKIE_NAME);
-      CookieUtils.deleteCookie(request, response, REFRESH_TOKEN_COOKIE_NAME);
-
-      // 3. 응답 반환
-      return ResponseEntity.ok().body(GrobleResponse.success(null, "로그아웃이 성공적으로 처리되었습니다.", 200));
-
-    } catch (Exception e) {
-      log.error("로그아웃 처리 중 오류 발생", e);
-      return ResponseEntity.internalServerError()
-          .body(GrobleResponse.error("로그아웃 처리 중 오류가 발생했습니다.", 500));
-    }
   }
 
   /** 액세스 토큰과 리프레시 토큰을 쿠키에 저장 */

@@ -101,11 +101,6 @@ public class UserServiceImpl implements UserService {
 
     User user = account.getUser();
 
-    // 약관동의를 진행하지 않은 경우
-    if (!user.isAgreedAgePolicy()) {
-      return "/agreed";
-    } else {
-      return null;
-    }
+    return null;
   }
 }

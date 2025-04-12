@@ -3,9 +3,12 @@ package liaison.groble.domain.user.entity;
 import static lombok.AccessLevel.PROTECTED;
 
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -22,6 +25,7 @@ import jakarta.persistence.Table;
 
 import liaison.groble.domain.common.entity.BaseTimeEntity;
 import liaison.groble.domain.user.enums.AccountType;
+import liaison.groble.domain.user.enums.TermsType;
 import liaison.groble.domain.user.enums.UserStatus;
 
 import lombok.AllArgsConstructor;
@@ -94,24 +98,6 @@ public class User extends BaseTimeEntity {
   @Column(name = "status_changed_at")
   private Instant statusChangedAt;
 
-  @Column(name = "agreed_age_policy")
-  private boolean agreedAgePolicy;
-
-  @Column(name = "agreed_privacy_policy")
-  private boolean agreedPrivacyPolicy;
-
-  @Column(name = "agreed_service_terms")
-  private boolean agreedServiceTerms;
-
-  @Column(name = "agreed_sales_terms")
-  private boolean agreedSalesTerms;
-
-  @Column(name = "agreed_marketing")
-  private boolean agreedMarketing;
-
-  @Column(name = "agreed_advertising")
-  private boolean agreedAdvertising;
-
   /** 마케팅 수신 동의 여부 */
   @Builder.Default
   @Column(name = "marketing_consent", nullable = false)
@@ -124,6 +110,9 @@ public class User extends BaseTimeEntity {
   /** 마지막으로 사용한 사용자 유형 (SELLER 또는 BUYER) */
   @Column(name = "last_user_type", length = 20)
   private String lastUserType;
+
+  @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+  private Set<UserTermsAgreement> termsAgreements = new HashSet<>();
 
   /**
    * 통합 계정으로부터 유저 생성 메서드 IntegratedAccount를 먼저 생성하고 그로부터 User를 생성
@@ -336,5 +325,40 @@ public class User extends BaseTimeEntity {
    */
   public void updateUserName(String userName) {
     this.userName = userName;
+  }
+
+  public void agreeToTerms(Terms terms, String agreedIp, String agreedUserAgent) {
+    UserTermsAgreement agreement =
+        UserTermsAgreement.builder()
+            .user(this)
+            .terms(terms)
+            .agreed(true)
+            .agreedIp(agreedIp)
+            .agreedUserAgent(agreedUserAgent)
+            .build();
+
+    termsAgreements.add(agreement);
+  }
+
+  public boolean hasAgreedTo(TermsType termsType) {
+    return termsAgreements.stream()
+        .anyMatch(
+            agreement ->
+                agreement.getTerms().getType() == termsType
+                    && agreement.isAgreed()
+                    && agreement.getTerms().getEffectiveTo() == null);
+  }
+
+  public boolean hasAgreedToAllRequiredTerms() {
+    return Arrays.stream(TermsType.values())
+        .filter(TermsType::isRequired)
+        .allMatch(this::hasAgreedTo);
+  }
+
+  public List<TermsType> getMissingRequiredTerms() {
+    return Arrays.stream(TermsType.values())
+        .filter(TermsType::isRequired)
+        .filter(type -> !hasAgreedTo(type))
+        .collect(Collectors.toList());
   }
 }
