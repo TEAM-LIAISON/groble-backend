@@ -50,9 +50,6 @@ public class Terms extends BaseTimeEntity {
   @Column(nullable = false)
   private String version; // ex: 20240410.173000
 
-  @Column(nullable = false)
-  private boolean required;
-
   private String contentUrl; // 외부 Notion, PDF, CMS 링크 등
 
   @Column(nullable = false)
@@ -68,13 +65,11 @@ public class Terms extends BaseTimeEntity {
       String title,
       TermsType type,
       String version,
-      boolean required,
       String contentUrl,
       LocalDateTime effectiveFrom) {
     this.title = title;
     this.type = type;
     this.version = version;
-    this.required = required;
     this.contentUrl = contentUrl;
     this.effectiveFrom = effectiveFrom;
   }
