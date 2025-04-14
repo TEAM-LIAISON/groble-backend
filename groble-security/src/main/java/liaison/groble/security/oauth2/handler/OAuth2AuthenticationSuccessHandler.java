@@ -35,7 +35,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
   private final UserRepository userRepository;
 
   // 프론트엔드 redirect URI (환경에 따라 설정 필요)
-  private final String frontendRedirectUri = "http://localhost:3000/oauth2/redirect";
+  private final String frontendRedirectUri = "https://dev.groble.im/oauth2/redirect";
 
   @Override
   public void onAuthenticationSuccess(
