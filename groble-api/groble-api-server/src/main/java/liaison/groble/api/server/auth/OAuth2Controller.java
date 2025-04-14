@@ -31,14 +31,20 @@ public class OAuth2Controller {
   @Operation(summary = "OAuth2 로그인 시작", description = "소셜 로그인 시작 전 리다이렉트 URI를 설정합니다.")
   @GetMapping("/authorize")
   public void authorize(
-      @RequestParam("redirect_uri") String redirectUri,
+      @RequestParam(value = "redirect_uri", defaultValue = "/auth/sign-in") String redirectUri,
       @RequestParam("provider") String provider,
       HttpServletRequest request,
       HttpServletResponse response)
       throws Exception {
 
+    // 상대 경로인 경우 프론트엔드 도메인을 앞에 추가
+    if (redirectUri.startsWith("/")) {
+      redirectUri = frontendDomain + redirectUri;
+    }
+
     log.info("OAuth2 로그인 시작: provider={}, redirect_uri={}", provider, redirectUri);
-    // 쿠키 세팅 - 수정: redirectUri를 쿠키 이름이 아닌 값으로 사용
+
+    // 쿠키 세팅 - frontend redirect URI를 저장
     CookieUtils.addCookie(
         response,
         HttpCookieOAuth2AuthorizationRequestRepository.REDIRECT_URI_PARAM_COOKIE_NAME,
@@ -64,9 +70,18 @@ public class OAuth2Controller {
 
     log.info("OAuth2 로그인 성공 처리: 토큰 있음={}", token != null);
 
-    // 프론트엔드 응용 프로그램으로 리다이렉트
+    // 기본 리다이렉트 URL
+    String redirectUrl = frontendDomain + "/auth/sign-in";
+
     // 토큰이 쿠키에 저장되어 있으므로 프론트엔드에서 쿠키를 읽을 수 있음
-    String redirectUrl = frontendDomain + "/auth/login/success";
+    log.debug("프론트엔드로 리다이렉트: {}", redirectUrl);
     response.sendRedirect(redirectUrl);
+  }
+
+  /** 로그인 페이지 대체용 임시 핸들러 로그인 페이지로 직접 접근 시 프론트엔드로 리다이렉트 */
+  @GetMapping("/login-redirect")
+  public void loginRedirect(HttpServletResponse response) throws Exception {
+    log.info("로그인 페이지 리다이렉트: 프론트엔드 로그인 페이지로 이동");
+    response.sendRedirect(frontendDomain + "/login");
   }
 }

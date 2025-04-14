@@ -38,6 +38,11 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
   private final String frontendRedirectUri =
       "https://api.dev.groble.im/api/v1/oauth2/login/success";
 
+  // 허용된 리다이렉트 URI 목록
+  private static final String[] ALLOWED_REDIRECT_URIS = {
+    "http://localhost:3000/auth/sign-in", "https://dev.groble.im/auth/sign-in"
+  };
+
   @Override
   public void onAuthenticationSuccess(
       HttpServletRequest request, HttpServletResponse response, Authentication authentication)
@@ -120,8 +125,16 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
   private boolean isValidRedirectUri(String uri) {
     try {
       URI redirectUri = new URI(uri);
-      // 여기서 추가 검증 로직 구현 가능
-      return true;
+
+      // 화이트리스트 기반 URI 검증
+      for (String allowedUri : ALLOWED_REDIRECT_URIS) {
+        if (uri.startsWith(allowedUri)) {
+          return true;
+        }
+      }
+
+      // 기본 리다이렉트 URI인 경우도 허용
+      return uri.equals(frontendRedirectUri);
     } catch (Exception e) {
       return false;
     }
