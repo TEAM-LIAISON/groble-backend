@@ -75,9 +75,26 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     int refreshTokenExpiry = 7 * 24 * 3600; // 7일 (JwtTokenProvider와 일치하게 설정)
 
     CookieUtils.addCookie(
-        response, "access_token", accessToken, accessTokenExpiry, "/", true, false, "Lax");
+        response,
+        "access_token",
+        accessToken,
+        accessTokenExpiry,
+        "/",
+        true,
+        false,
+        "Lax",
+        ".groble.im" // 부모 도메인 설정
+        );
     CookieUtils.addCookie(
-        response, "refresh_token", refreshToken, refreshTokenExpiry, "/", true, false, "Lax");
+        response,
+        "refresh_token",
+        refreshToken,
+        refreshTokenExpiry,
+        "/",
+        true,
+        false,
+        "Lax",
+        ".groble.im");
 
     // 쿠키에서 redirect_uri 가져오기
     String targetUrl =

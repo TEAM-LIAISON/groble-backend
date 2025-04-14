@@ -323,7 +323,8 @@ public class AuthController {
         "/",
         true,
         isSecureEnvironment(),
-        "Lax");
+        "Lax",
+        ".groble.im"); // 부모 도메인 설정
 
     // Refresh Token - HttpOnly 설정 (JS에서 접근 불가, 보안 강화)
     CookieUtils.addCookie(
@@ -334,7 +335,8 @@ public class AuthController {
         "/",
         true,
         isSecureEnvironment(),
-        "Lax");
+        "Lax",
+        ".groble.im");
 
     log.debug(
         "토큰 쿠키 추가 완료: accessToken({}초), refreshToken({}초)",

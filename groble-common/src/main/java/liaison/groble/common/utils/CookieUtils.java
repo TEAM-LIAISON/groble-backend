@@ -55,7 +55,8 @@ public class CookieUtils {
         DEFAULT_PATH,
         DEFAULT_HTTP_ONLY,
         isSecureEnvironment(),
-        DEFAULT_SAME_SITE);
+        DEFAULT_SAME_SITE,
+        null);
   }
 
   /**
@@ -78,7 +79,8 @@ public class CookieUtils {
       String path,
       boolean httpOnly,
       boolean secure,
-      String sameSite) {
+      String sameSite,
+      String domain) {
 
     // 기본 쿠키 생성
     Cookie cookie = new Cookie(name, value);
@@ -86,6 +88,9 @@ public class CookieUtils {
     cookie.setHttpOnly(httpOnly);
     cookie.setMaxAge(maxAge);
     cookie.setSecure(secure);
+    if (domain != null) {
+      cookie.setDomain(domain);
+    }
 
     // jakarta.servlet.http.Cookie에는 SameSite 설정이 없으므로 헤더로 추가
     StringBuilder cookieHeader = new StringBuilder();

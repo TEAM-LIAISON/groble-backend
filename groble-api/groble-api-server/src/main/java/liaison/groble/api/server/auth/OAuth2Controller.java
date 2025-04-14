@@ -71,10 +71,8 @@ public class OAuth2Controller {
     log.info("OAuth2 로그인 성공 처리: 토큰 있음={}", token != null);
 
     // 기본 리다이렉트 URL
-    String redirectUrl = frontendDomain + "/auth/sign-in";
-
-    // 토큰이 쿠키에 저장되어 있으므로 프론트엔드에서 쿠키를 읽을 수 있음
-    log.debug("프론트엔드로 리다이렉트: {}", redirectUrl);
+    String redirectUrl =
+        frontendDomain + "/auth/sign-in?token=" + token + "&refresh_token=" + refreshToken;
     response.sendRedirect(redirectUrl);
   }
 
