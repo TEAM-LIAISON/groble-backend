@@ -40,4 +40,5 @@ out/
 .DS_Store
 
 ### .yml ###
-*.yml
+application-secret.yml
+application-secret-dev.yml
