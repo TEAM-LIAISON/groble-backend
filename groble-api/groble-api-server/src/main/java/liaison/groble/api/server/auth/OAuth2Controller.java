@@ -33,11 +33,11 @@ public class OAuth2Controller {
       throws Exception {
 
     log.info("OAuth2 로그인 시작: provider={}, redirect_uri={}", provider, redirectUri);
-    // 쿠키 세팅
+    // 쿠키 세팅 - 수정: redirectUri를 쿠키 이름이 아닌 값으로 사용
     CookieUtils.addCookie(
         response,
-        redirectUri,
         HttpCookieOAuth2AuthorizationRequestRepository.REDIRECT_URI_PARAM_COOKIE_NAME,
+        redirectUri,
         180);
 
     // Redirect to OAuth2 provider
