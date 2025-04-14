@@ -74,27 +74,18 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     int accessTokenExpiry = 3600; // 1시간 (JwtTokenProvider와 일치하게 설정)
     int refreshTokenExpiry = 7 * 24 * 3600; // 7일 (JwtTokenProvider와 일치하게 설정)
 
-    CookieUtils.addCookie(
-        response,
-        "access_token",
-        accessToken,
-        accessTokenExpiry,
-        "/",
-        true,
-        false,
-        "Lax",
-        ".groble.im" // 부모 도메인 설정
-        );
-    CookieUtils.addCookie(
-        response,
-        "refresh_token",
-        refreshToken,
-        refreshTokenExpiry,
-        "/",
-        true,
-        false,
-        "Lax",
-        ".groble.im");
+    try {
+      // 쿠키에 토큰 저장 (도메인 지정 없이)
+      CookieUtils.addCookie(
+          response, "access_token", accessToken, accessTokenExpiry, "/", true, false, "Lax");
+      CookieUtils.addCookie(
+          response, "refresh_token", refreshToken, refreshTokenExpiry, "/", true, false, "Lax");
+
+      log.info("토큰 쿠키 설정 완료");
+    } catch (Exception e) {
+      log.error("쿠키 설정 중 오류 발생: {}", e.getMessage());
+      // 쿠키 오류가 발생해도 리다이렉트는 계속 진행
+    }
 
     // 쿠키에서 redirect_uri 가져오기
     String targetUrl =

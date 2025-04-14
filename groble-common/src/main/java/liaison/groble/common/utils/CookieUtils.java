@@ -79,6 +79,32 @@ public class CookieUtils {
       String path,
       boolean httpOnly,
       boolean secure,
+      String sameSite) {
+    // 도메인 없이 쿠키 추가
+    addCookie(response, name, value, maxAge, path, httpOnly, secure, sameSite, null);
+  }
+
+  /**
+   * 응답에 쿠키 추가 (상세 설정 사용)
+   *
+   * @param response HTTP 응답
+   * @param name 쿠키 이름
+   * @param value 쿠키 값
+   * @param maxAge 쿠키 유효 시간(초)
+   * @param path 쿠키 경로
+   * @param httpOnly HttpOnly 플래그 설정
+   * @param secure Secure 플래그 설정
+   * @param sameSite SameSite 속성 (Lax, Strict, None)
+   * @param domain 쿠키 도메인 (null인 경우 현재 도메인)
+   */
+  public static void addCookie(
+      HttpServletResponse response,
+      String name,
+      String value,
+      int maxAge,
+      String path,
+      boolean httpOnly,
+      boolean secure,
       String sameSite,
       String domain) {
 

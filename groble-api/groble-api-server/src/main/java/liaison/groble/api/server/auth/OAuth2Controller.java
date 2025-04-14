@@ -70,9 +70,11 @@ public class OAuth2Controller {
 
     log.info("OAuth2 로그인 성공 처리: 토큰 있음={}", token != null);
 
-    // 기본 리다이렉트 URL
+    // 프론트엔드로 리다이렉트 (토큰 정보를 URL 파라미터로 전달)
     String redirectUrl =
         frontendDomain + "/auth/sign-in?token=" + token + "&refresh_token=" + refreshToken;
+
+    log.debug("프론트엔드로 리다이렉트: {}", redirectUrl);
     response.sendRedirect(redirectUrl);
   }
 
