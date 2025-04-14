@@ -5,10 +5,11 @@ import org.springframework.stereotype.Component;
 import liaison.groble.api.model.auth.request.EmailVerificationRequest;
 import liaison.groble.api.model.auth.request.SignInRequest;
 import liaison.groble.api.model.auth.request.SignUpRequest;
-import liaison.groble.api.model.auth.response.SignUpResponse;
+import liaison.groble.api.model.auth.request.VerifyEmailCodeRequest;
 import liaison.groble.application.auth.dto.EmailVerificationDto;
 import liaison.groble.application.auth.dto.SignInDto;
 import liaison.groble.application.auth.dto.SignUpDto;
+import liaison.groble.application.auth.dto.VerifyEmailCodeDto;
 
 @Component
 public class AuthDtoMapper {
@@ -17,16 +18,19 @@ public class AuthDtoMapper {
     return SignUpDto.builder().email(request.getEmail()).password(request.getPassword()).build();
   }
 
-  /** 서비스 레이어에서 API 응답 DTO로 변환 */
-  public SignUpResponse toResponseDto(String email) {
-    return SignUpResponse.of(email);
-  }
-
   public SignInDto toServiceSignInDto(SignInRequest request) {
     return SignInDto.builder().email(request.getEmail()).password(request.getPassword()).build();
   }
 
   public EmailVerificationDto toServiceEmailVerificationDto(EmailVerificationRequest request) {
     return EmailVerificationDto.builder().email(request.getEmail()).build();
+  }
+
+  // 추가된 매퍼 메서드
+  public VerifyEmailCodeDto toServiceVerifyEmailCodeDto(VerifyEmailCodeRequest request) {
+    return VerifyEmailCodeDto.builder()
+        .email(request.getEmail())
+        .verificationCode(request.getVerificationCode())
+        .build();
   }
 }

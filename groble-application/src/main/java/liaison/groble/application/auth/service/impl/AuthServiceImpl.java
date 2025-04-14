@@ -9,8 +9,14 @@ import liaison.groble.application.auth.dto.EmailVerificationDto;
 import liaison.groble.application.auth.dto.SignInDto;
 import liaison.groble.application.auth.dto.SignUpDto;
 import liaison.groble.application.auth.dto.TokenDto;
+import liaison.groble.application.auth.dto.VerifyEmailCodeDto;
+import liaison.groble.application.auth.exception.AuthenticationFailedException;
+import liaison.groble.application.auth.exception.EmailAlreadyExistsException;
 import liaison.groble.application.auth.service.AuthService;
 import liaison.groble.common.port.security.SecurityPort;
+import liaison.groble.common.utils.CodeGenerator;
+import liaison.groble.domain.port.EmailSenderPort;
+import liaison.groble.domain.port.VerificationCodePort;
 import liaison.groble.domain.user.entity.IntegratedAccount;
 import liaison.groble.domain.user.entity.Role;
 import liaison.groble.domain.user.entity.User;
@@ -28,6 +34,8 @@ import lombok.extern.slf4j.Slf4j;
 public class AuthServiceImpl implements AuthService {
   private final UserRepository userRepository;
   private final SecurityPort securityPort;
+  private final EmailSenderPort emailSenderPort;
+  private final VerificationCodePort verificationCodePort;
   private final RoleRepository roleRepository;
   private final IntegratedAccountRepository integratedAccountRepository;
 
@@ -113,15 +121,6 @@ public class AuthServiceImpl implements AuthService {
 
   @Override
   @Transactional
-  public void sendEmailVerification(EmailVerificationDto emailVerificationDto) {
-    if (!integratedAccountRepository.existsByIntegratedAccountEmail(
-        emailVerificationDto.getEmail())) {
-      log.info("이메일 인증 메일 발송: {}", emailVerificationDto.getEmail());
-    }
-  }
-
-  @Override
-  @Transactional
   public void logout(Long userId) {
     // 사용자 조회
     User user =
@@ -179,5 +178,49 @@ public class AuthServiceImpl implements AuthService {
     integratedAccountRepository.save(account);
 
     log.info("비밀번호 재설정 완료: {}", email);
+  }
+
+  @Override
+  @Transactional
+  public void sendEmailVerification(EmailVerificationDto emailVerificationDto) {
+    String email = emailVerificationDto.getEmail();
+
+    // 이미 가입된 이메일인지 확인
+    if (integratedAccountRepository.existsByIntegratedAccountEmail(email)) {
+      throw new EmailAlreadyExistsException("이미 가입된 이메일입니다.");
+    }
+
+    // 인증 코드 생성 (6자리 숫자)
+    String verificationCode = generateRandomCode();
+
+    // 인증 코드 저장 (15분 유효) - 인터페이스 사용
+    verificationCodePort.saveVerificationCode(email, verificationCode, 15);
+
+    // 이메일 발송
+    emailSenderPort.sendVerificationEmail(email, verificationCode);
+
+    log.info("이메일 인증 코드 발송 완료: {}", email);
+  }
+
+  // 인증 코드 검증 메서드
+  @Override
+  @Transactional
+  public void verifyEmailCode(VerifyEmailCodeDto verifyEmailCodeDto) {
+    String email = verifyEmailCodeDto.getEmail();
+    String code = verifyEmailCodeDto.getVerificationCode();
+
+    // 인터페이스를 통한 인증 코드 검증
+    boolean isValid = verificationCodePort.validateVerificationCode(email, code);
+
+    if (!isValid) {
+      throw new AuthenticationFailedException("인증 코드가 일치하지 않거나 만료되었습니다.");
+    }
+
+    // 인증 코드 삭제
+    verificationCodePort.removeVerificationCode(email);
+  }
+
+  private String generateRandomCode() {
+    return CodeGenerator.generateVerificationCode(6);
   }
 }

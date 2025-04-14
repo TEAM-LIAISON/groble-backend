@@ -4,6 +4,7 @@ import liaison.groble.application.auth.dto.EmailVerificationDto;
 import liaison.groble.application.auth.dto.SignInDto;
 import liaison.groble.application.auth.dto.SignUpDto;
 import liaison.groble.application.auth.dto.TokenDto;
+import liaison.groble.application.auth.dto.VerifyEmailCodeDto;
 
 public interface AuthService {
   /**
@@ -51,4 +52,11 @@ public interface AuthService {
    * @param newPassword 새로운 비밀번호
    */
   void resetPassword(String email, String token, String newPassword);
+
+  /**
+   * 이메일 인증 코드 검증
+   *
+   * @param verifyEmailCodeDto 이메일 인증 코드 정보
+   */
+  void verifyEmailCode(VerifyEmailCodeDto verifyEmailCodeDto);
 }

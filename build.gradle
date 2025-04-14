@@ -201,6 +201,12 @@ project(':groble-infrastructure:groble-external') {
         implementation project(':groble-domain')
         implementation project(':groble-common')
 
+        // 이메일 발송 의존성 추가
+        implementation 'org.springframework.boot:spring-boot-starter-mail'
+
+        // Redis 의존성 추가
+        implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
         // 외부 API 연동을 위한 의존성
         implementation 'io.projectreactor:reactor-core'
         implementation 'com.fasterxml.jackson.core:jackson-databind'
