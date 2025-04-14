@@ -38,4 +38,14 @@ public class SecurityAdapter implements SecurityPort {
   public boolean matches(String rawPassword, String encodedPassword) {
     return passwordEncoder.matches(rawPassword, encodedPassword);
   }
+
+  @Override
+  public String createPasswordResetToken(String email, String passwordSecret, long expirationTime) {
+    return jwtTokenProvider.createPasswordResetToken(email, passwordSecret, expirationTime);
+  }
+
+  @Override
+  public String validatePasswordResetTokenAndGetEmail(String token, String secretKey) {
+    return jwtTokenProvider.validatePasswordResetTokenAndGetEmail(token, secretKey);
+  }
 }

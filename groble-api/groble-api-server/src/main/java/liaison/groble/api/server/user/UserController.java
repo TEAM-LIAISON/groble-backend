@@ -12,7 +12,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import liaison.groble.api.model.user.request.NicknameRequest;
+import liaison.groble.api.model.user.request.PasswordChangeRequest;
 import liaison.groble.api.model.user.request.PasswordRequest;
+import liaison.groble.api.model.user.request.PasswordResetRequest;
 import liaison.groble.api.model.user.request.RoleTypeRequest;
 import liaison.groble.api.model.user.response.NicknameDuplicateCheckResponse;
 import liaison.groble.api.model.user.response.NicknameResponse;
@@ -114,5 +116,23 @@ public class UserController {
     NicknameResponse response = NicknameResponse.of(setOrUpdateNickname);
 
     return ResponseEntity.ok(GrobleResponse.success(response, "닉네임이 설정되었습니다."));
+  }
+
+  @Operation(summary = "비밀번호 재설정 이메일 요청", description = "등록된 이메일로 비밀번호 재설정 링크를 보냅니다.")
+  @PostMapping("/users/password/reset-request")
+  public ResponseEntity<GrobleResponse<Void>> requestPasswordReset(
+      @Valid @RequestBody PasswordResetRequest request) {
+
+    userService.sendPasswordResetToken(request.getEmail());
+    return ResponseEntity.ok(GrobleResponse.success(null, "비밀번호 재설정 링크를 이메일로 전송했습니다."));
+  }
+
+  @Operation(summary = "비밀번호 재설정", description = "토큰을 통해 새로운 비밀번호를 설정합니다.")
+  @PostMapping("/users/password/reset")
+  public ResponseEntity<GrobleResponse<Void>> resetPassword(
+      @Valid @RequestBody PasswordChangeRequest request) {
+
+    userService.resetPasswordWithToken(request.getToken(), request.getNewPassword());
+    return ResponseEntity.ok(GrobleResponse.success(null, "비밀번호가 성공적으로 변경되었습니다."));
   }
 }

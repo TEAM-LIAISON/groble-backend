@@ -50,4 +50,19 @@ public interface UserService {
    * @return 설정된 닉네임
    */
   String setOrUpdateNickname(Long userId, String nickName);
+
+  /**
+   * 비밀번호 재설정 토큰 발송
+   *
+   * @param email 비밀번호를 재설정할 이메일
+   */
+  void sendPasswordResetToken(String email);
+
+  /**
+   * 비밀번호 재설정
+   *
+   * @param token 비밀번호 재설정 토큰
+   * @param newPassword 새로운 비밀번호
+   */
+  void resetPasswordWithToken(String token, String newPassword);
 }

@@ -1,11 +1,13 @@
 package liaison.groble.application.user.service.impl;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import liaison.groble.application.user.service.UserService;
 import liaison.groble.common.exception.EntityNotFoundException;
 import liaison.groble.common.port.security.SecurityPort;
+import liaison.groble.domain.port.EmailSenderPort;
 import liaison.groble.domain.user.entity.IntegratedAccount;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.repository.IntegratedAccountRepository;
@@ -21,6 +23,16 @@ public class UserServiceImpl implements UserService {
   private final UserRepository userRepository;
   private final IntegratedAccountRepository integratedAccountRepository;
   private final SecurityPort securityPort;
+  private final EmailSenderPort emailSenderPort;
+
+  // 변경: 24시간 (24 * 60 = 1440분)
+  private final long PASSWORD_RESET_EXPIRATION_MINUTES = 1440;
+
+  @Value("${app.frontend-url}")
+  private String frontendUrl;
+
+  @Value("${app.security.password-reset-secret}")
+  private String passwordResetSecret;
 
   /**
    * 사용자 역할 전환 (판매자/구매자 모드 전환)
@@ -136,5 +148,40 @@ public class UserServiceImpl implements UserService {
     userRepository.save(user);
 
     return nickName;
+  }
+
+  @Override
+  public void sendPasswordResetToken(String email) {
+    IntegratedAccount integratedAccount =
+        integratedAccountRepository
+            .findByIntegratedAccountEmail(email)
+            .orElseThrow(() -> new IllegalArgumentException("해당 이메일로 가입된 사용자가 없습니다."));
+
+    // 2. 토큰 생성 (이메일 기반 JWT)
+    String token =
+        securityPort.createPasswordResetToken(
+            email, passwordResetSecret, PASSWORD_RESET_EXPIRATION_MINUTES);
+
+    // 메일 발송
+    String resetUrl = frontendUrl + "/reset-password?token=" + token;
+
+    emailSenderPort.sendPasswordResetEmail(email, token, resetUrl);
+  }
+
+  @Override
+  public void resetPasswordWithToken(String token, String newPassword) {
+    // 토큰 검증 및 이메일 추출
+    String email = securityPort.validatePasswordResetTokenAndGetEmail(token, passwordResetSecret);
+
+    // 이메일로 사용자 계정 찾기
+    IntegratedAccount integratedAccount =
+        integratedAccountRepository
+            .findByIntegratedAccountEmail(email)
+            .orElseThrow(() -> new IllegalArgumentException("해당 이메일로 가입된 사용자가 없습니다."));
+
+    // 비밀번호 인코딩 후 저장
+    String encodedPassword = securityPort.encodePassword(newPassword);
+    integratedAccount.updatePassword(encodedPassword);
+    userRepository.save(integratedAccount.getUser());
   }
 }

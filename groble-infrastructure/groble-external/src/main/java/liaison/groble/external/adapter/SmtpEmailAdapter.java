@@ -60,7 +60,38 @@ public class SmtpEmailAdapter implements EmailSenderPort {
 
   @Override
   public void sendPasswordResetEmail(String to, String resetToken, String resetUrl) {
-    // 비밀번호 재설정 이메일 구현
-    // ...
+    try {
+      MimeMessage message = emailSender.createMimeMessage();
+      MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+      helper.setFrom(fromEmail);
+      helper.setTo(to);
+      helper.setSubject("[Groble] 비밀번호 재설정 안내");
+
+      String htmlContent =
+          "<div style='margin:20px;'>"
+              + "<h2>Groble 비밀번호 재설정</h2>"
+              + "<p>안녕하세요, 비밀번호 재설정을 요청하셨습니다.</p>"
+              + "<p>아래 링크를 클릭하여 새 비밀번호를 설정해주세요:</p>"
+              + "<p><a href='"
+              + resetUrl
+              + "' style='display:inline-block;background-color:#4CAF50;color:white;padding:10px 20px;text-decoration:none;border-radius:5px;'>비밀번호 재설정</a></p>"
+              + "<p>또는 아래 링크를 브라우저에 복사하여 접속하세요:</p>"
+              + "<p style='word-break:break-all;'>"
+              + resetUrl
+              + "</p>"
+              + "<p>이 링크는 24시간 동안 유효합니다.</p>"
+              + "<p>비밀번호 재설정을 요청하지 않으셨다면 이 이메일을 무시하셔도 됩니다.</p>"
+              + "<p>감사합니다.</p>"
+              + "</div>";
+
+      helper.setText(htmlContent, true);
+
+      emailSender.send(message);
+      log.info("비밀번호 재설정 이메일 발송 완료: {}", to);
+    } catch (MessagingException e) {
+      log.error("비밀번호 재설정 이메일 발송 실패: {}", e.getMessage(), e);
+      throw new RuntimeException("이메일 발송 중 오류가 발생했습니다.", e);
+    }
   }
 }
