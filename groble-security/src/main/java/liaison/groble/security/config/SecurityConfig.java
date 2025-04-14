@@ -95,7 +95,11 @@ public class SecurityConfig {
   @Bean
   public CorsConfigurationSource corsConfigurationSource() {
     CorsConfiguration configuration = new CorsConfiguration();
-    configuration.setAllowedOrigins(List.of("http://localhost:3000")); // 프론트엔드 URL
+    configuration.setAllowedOrigins(
+        List.of(
+            "http://localhost:3000",
+            "https://dev.groble.im",
+            "https://api.dev.groble.im")); // 프론트엔드 URL 및 API URL
     configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
     configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Auth-Token"));
     configuration.setExposedHeaders(Arrays.asList("X-Auth-Token"));
@@ -141,9 +145,15 @@ public class SecurityConfig {
                     // 인증 없이 접근 가능한 경로 설정
                     .requestMatchers("/api/auth/**")
                     .permitAll()
+                    .requestMatchers("/api/v1/auth/**")
+                    .permitAll()
                     .requestMatchers("/api/v1/oauth2/**")
                     .permitAll()
                     .requestMatchers("/oauth2/**")
+                    .permitAll()
+                    .requestMatchers("/login/**")
+                    .permitAll()
+                    .requestMatchers("/login")
                     .permitAll()
                     .requestMatchers("/env")
                     .permitAll()
@@ -166,8 +176,6 @@ public class SecurityConfig {
                     .requestMatchers("/verification-failed.html")
                     .permitAll()
                     .requestMatchers("/actuator/**")
-                    .permitAll()
-                    .requestMatchers("/api/v1/auth/**")
                     .permitAll()
                     .anyRequest()
                     .authenticated())

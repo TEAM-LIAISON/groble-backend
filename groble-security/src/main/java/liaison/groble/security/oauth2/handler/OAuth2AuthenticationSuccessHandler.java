@@ -35,7 +35,8 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
   private final UserRepository userRepository;
 
   // 프론트엔드 redirect URI (환경에 따라 설정 필요)
-  private final String frontendRedirectUri = "https://dev.groble.im/oauth2/redirect";
+  private final String frontendRedirectUri =
+      "https://api.dev.groble.im/api/v1/oauth2/login/success";
 
   @Override
   public void onAuthenticationSuccess(
@@ -64,8 +65,18 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
     log.info("사용자 인증 완료: {}, 토큰 발급 완료", oAuth2User.getEmail());
 
+    // 토큰을 쿠키에 저장 (보안을 위해 httpOnly 설정)
+    int accessTokenExpiry = 3600; // 1시간 (JwtTokenProvider와 일치하게 설정)
+    int refreshTokenExpiry = 7 * 24 * 3600; // 7일 (JwtTokenProvider와 일치하게 설정)
+
+    CookieUtils.addCookie(
+        response, "access_token", accessToken, accessTokenExpiry, "/", true, false, "Lax");
+    CookieUtils.addCookie(
+        response, "refresh_token", refreshToken, refreshTokenExpiry, "/", true, false, "Lax");
+
     // 쿠키에서 redirect_uri 가져오기
-    String targetUrl = determineTargetUrl(request, response, authentication, accessToken);
+    String targetUrl =
+        determineTargetUrl(request, response, authentication, accessToken, refreshToken);
 
     // 인증 속성 정리
     clearAuthenticationAttributes(request);
@@ -79,7 +90,8 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
       HttpServletRequest request,
       HttpServletResponse response,
       Authentication authentication,
-      String accessToken) {
+      String accessToken,
+      String refreshToken) {
 
     // 쿠키에서 redirect_uri 값 확인
     Optional<String> redirectUri =
@@ -99,6 +111,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     // URI에 토큰 파라미터 추가
     return UriComponentsBuilder.fromUriString(targetUrl)
         .queryParam("token", accessToken)
+        .queryParam("refresh_token", refreshToken)
         .build()
         .toUriString();
   }
