@@ -15,6 +15,7 @@ import liaison.groble.api.model.auth.request.EmailVerificationRequest;
 import liaison.groble.api.model.auth.request.ResetPasswordRequest;
 import liaison.groble.api.model.auth.request.SignInRequest;
 import liaison.groble.api.model.auth.request.SignUpRequest;
+import liaison.groble.api.model.auth.request.VerifyEmailCodeRequest;
 import liaison.groble.api.model.auth.response.SignInResponse;
 import liaison.groble.api.model.auth.response.SignUpResponse;
 import liaison.groble.api.server.auth.mapper.AuthDtoMapper;
@@ -22,6 +23,7 @@ import liaison.groble.application.auth.dto.EmailVerificationDto;
 import liaison.groble.application.auth.dto.SignInDto;
 import liaison.groble.application.auth.dto.SignUpDto;
 import liaison.groble.application.auth.dto.TokenDto;
+import liaison.groble.application.auth.dto.VerifyEmailCodeDto;
 import liaison.groble.application.auth.service.AuthService;
 import liaison.groble.application.user.service.UserService;
 import liaison.groble.common.annotation.Auth;
@@ -253,6 +255,38 @@ public class AuthController {
     authService.resetPassword(request.getEmail(), request.getToken(), request.getNewPassword());
 
     return ResponseEntity.ok().body(GrobleResponse.success(null, "비밀번호가 성공적으로 재설정되었습니다.", 200));
+  }
+
+  /**
+   * 이메일 인증 코드 확인 API
+   *
+   * <p>사용자가 이메일로 받은 인증 코드의 유효성을 검증합니다.
+   *
+   * @param request 인증 코드 검증 요청
+   * @return 인증 코드 검증 결과
+   */
+  @Operation(summary = "이메일 인증 코드 확인", description = "이메일로 발송된 인증 코드의 유효성을 검증합니다.")
+  @ApiResponses({
+    @ApiResponse(
+        responseCode = "200",
+        description = "인증 성공",
+        content = @Content(schema = @Schema(implementation = GrobleResponse.class))),
+    @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터 또는 유효하지 않은 인증 코드"),
+    @ApiResponse(responseCode = "404", description = "존재하지 않는 이메일 또는 만료된 인증 코드")
+  })
+  @PostMapping("/verify-code")
+  public ResponseEntity<GrobleResponse<Void>> verifyEmailCode(
+      @Valid @RequestBody VerifyEmailCodeRequest request) {
+    log.info("이메일 인증 코드 검증 요청: {}", request.getEmail());
+
+    // API DTO → 서비스 DTO 변환
+    VerifyEmailCodeDto verifyEmailCodeDto = authDtoMapper.toServiceVerifyEmailCodeDto(request);
+
+    // 서비스 호출
+    authService.verifyEmailCode(verifyEmailCodeDto);
+
+    // API 응답 생성
+    return ResponseEntity.ok().body(GrobleResponse.success(null, "이메일 인증이 성공적으로 완료되었습니다.", 200));
   }
 
   /** 액세스 토큰과 리프레시 토큰을 쿠키에 저장 */
