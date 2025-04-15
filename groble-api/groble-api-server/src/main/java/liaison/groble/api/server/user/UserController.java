@@ -15,13 +15,13 @@ import liaison.groble.api.model.user.request.NicknameRequest;
 import liaison.groble.api.model.user.request.PasswordChangeRequest;
 import liaison.groble.api.model.user.request.PasswordRequest;
 import liaison.groble.api.model.user.request.PasswordResetRequest;
-import liaison.groble.api.model.user.request.RoleTypeRequest;
 import liaison.groble.api.model.user.response.NicknameDuplicateCheckResponse;
 import liaison.groble.api.model.user.response.NicknameResponse;
+import liaison.groble.api.model.user.response.UserMyPageResponse;
+import liaison.groble.api.server.user.mapper.UserDtoMapper;
+import liaison.groble.application.user.dto.UserMyPageDto;
 import liaison.groble.application.user.service.UserService;
 import liaison.groble.common.annotation.Auth;
-import liaison.groble.common.annotation.Logging;
-import liaison.groble.common.annotation.RequireRole;
 import liaison.groble.common.model.Accessor;
 import liaison.groble.common.response.GrobleResponse;
 
@@ -42,26 +42,26 @@ import lombok.extern.slf4j.Slf4j;
 @Tag(name = "사용자 정보 API", description = "닉네임, 비밀번호 설정 및 계정 전환 API")
 public class UserController {
   private final UserService userService;
+  private final UserDtoMapper userDtoMapper;
 
-  /** 역할 전환 API 판매자/구매자 모드 전환 */
-  @PostMapping("/switch-role")
-  @RequireRole({"ROLE_USER", "ROLE_SELLER"})
-  @Logging(item = "User", action = "SWITCH_ROLE", includeParam = true)
-  public ResponseEntity<GrobleResponse<Void>> switchRole(
-      @Auth Accessor accessor, @Valid @RequestBody RoleTypeRequest request) {
-
-    log.info("역할 전환 요청: {} -> {}", accessor.getEmail(), request.getUserType());
-
-    boolean success = userService.switchUserType(accessor.getUserId(), request.getUserType());
-
-    if (success) {
-      return ResponseEntity.ok()
-          .body(GrobleResponse.success(null, "역할이 " + request.getUserType() + "로 전환되었습니다.", 200));
-    } else {
-      return ResponseEntity.badRequest()
-          .body(GrobleResponse.error("역할 전환에 실패했습니다. 해당 역할이 할당되어 있는지 확인하세요.", 400));
-    }
-  }
+  //  /** 역할 전환 API 판매자/구매자 모드 전환 */
+  //  @PostMapping("/switch-role")
+  //  @RequireRole({"ROLE_USER", "ROLE_SELLER"})
+  //  @Logging(item = "User", action = "SWITCH_ROLE", includeParam = true)
+  //  public ResponseEntity<GrobleResponse<Void>> switchRole(
+  //      @Auth Accessor accessor, @Valid @RequestBody RoleTypeRequest request) {
+  //
+  //    boolean success = userService.switchUserType(accessor.getUserId(), request.getUserType());
+  //
+  //    if (success) {
+  //      return ResponseEntity.ok()
+  //          .body(GrobleResponse.success(null, "역할이 " + request.getUserType() + "로 전환되었습니다.",
+  // 200));
+  //    } else {
+  //      return ResponseEntity.badRequest()
+  //          .body(GrobleResponse.error("역할 전환에 실패했습니다. 해당 역할이 할당되어 있는지 확인하세요.", 400));
+  //    }
+  //  }
 
   @Operation(summary = "비밀번호 생성/수정", description = "비밀번호를 생성 또는 수정합니다.")
   @ApiResponses({
@@ -134,5 +134,15 @@ public class UserController {
 
     userService.resetPasswordWithToken(request.getToken(), request.getNewPassword());
     return ResponseEntity.ok(GrobleResponse.success(null, "비밀번호가 성공적으로 변경되었습니다."));
+  }
+
+  @Operation(summary = "마이페이지 조회", description = "마이페이지 화면을 조회합니다.")
+  @GetMapping("/users/mypage")
+  public ResponseEntity<GrobleResponse<UserMyPageResponse>> getUserMyPage(@Auth Accessor accessor) {
+    UserMyPageDto userMyPageDto = userService.getUserMyPage(accessor.getUserId());
+
+    UserMyPageResponse response = userDtoMapper.toApiMyPageResponse(userMyPageDto);
+
+    return ResponseEntity.ok(GrobleResponse.success(response, "마이페이지 조회 성공"));
   }
 }

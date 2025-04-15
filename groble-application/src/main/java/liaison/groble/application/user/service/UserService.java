@@ -1,5 +1,8 @@
 package liaison.groble.application.user.service;
 
+import liaison.groble.application.user.dto.UserMyPageDto;
+import liaison.groble.domain.user.enums.UserType;
+
 public interface UserService {
 
   /**
@@ -17,7 +20,7 @@ public interface UserService {
    * @param userType 전환할 유형 (SELLER 또는 BUYER)
    * @return 전환 성공 여부
    */
-  boolean switchUserType(Long userId, String userType);
+  boolean switchUserType(Long userId, UserType userType);
 
   /**
    * 사용자 로그인 이후 라우팅 경로 조회 "/home", "/select/type" 등의 값을 반환
@@ -65,4 +68,12 @@ public interface UserService {
    * @param newPassword 새로운 비밀번호
    */
   void resetPasswordWithToken(String token, String newPassword);
+
+  /**
+   * 사용자 마이페이지 정보 조회
+   *
+   * @param userId 사용자 ID
+   * @return UserMyPageDto 사용자 마이페이지 정보
+   */
+  UserMyPageDto getUserMyPage(Long userId);
 }

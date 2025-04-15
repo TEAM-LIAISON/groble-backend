@@ -4,12 +4,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import liaison.groble.application.user.dto.UserMyPageDto;
 import liaison.groble.application.user.service.UserService;
 import liaison.groble.common.exception.EntityNotFoundException;
 import liaison.groble.common.port.security.SecurityPort;
 import liaison.groble.domain.port.EmailSenderPort;
 import liaison.groble.domain.user.entity.IntegratedAccount;
 import liaison.groble.domain.user.entity.User;
+import liaison.groble.domain.user.enums.UserType;
 import liaison.groble.domain.user.repository.IntegratedAccountRepository;
 import liaison.groble.domain.user.repository.UserRepository;
 
@@ -43,7 +45,8 @@ public class UserServiceImpl implements UserService {
    */
   @Override
   @Transactional
-  public boolean switchUserType(Long userId, String userType) {
+  public boolean switchUserType(Long userId, UserType userType) {
+
     User user =
         userRepository
             .findById(userId)
@@ -95,7 +98,7 @@ public class UserServiceImpl implements UserService {
 
     // 둘 다 가진 경우 마지막 사용 역할 반환
     if (isSeller && isBuyer) {
-      String lastUserType = user.getLastUserType();
+      String lastUserType = user.getLastUserType().getDescription();
       // 마지막 사용 역할이 없는 경우 기본값으로 BUYER 반환
       return lastUserType != null ? lastUserType : "BUYER";
     } else if (isSeller) {
@@ -183,5 +186,20 @@ public class UserServiceImpl implements UserService {
     String encodedPassword = securityPort.encodePassword(newPassword);
     integratedAccount.updatePassword(encodedPassword);
     userRepository.save(integratedAccount.getUser());
+  }
+
+  @Override
+  public UserMyPageDto getUserMyPage(Long userId) {
+    User user =
+        userRepository
+            .findById(userId)
+            .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
+
+    return UserMyPageDto.builder()
+        .id(user.getId())
+        .nickName(user.getNickName())
+        .profileImageUrl(user.getProfileImageUrl())
+        .userTypeDescription(user.getLastUserType().getDescription())
+        .build();
   }
 }

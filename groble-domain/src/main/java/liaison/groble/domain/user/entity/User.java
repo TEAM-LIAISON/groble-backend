@@ -1,5 +1,6 @@
 package liaison.groble.domain.user.entity;
 
+import static liaison.groble.domain.user.enums.UserType.BUYER;
 import static lombok.AccessLevel.PROTECTED;
 
 import java.time.Instant;
@@ -27,6 +28,7 @@ import liaison.groble.domain.common.entity.BaseTimeEntity;
 import liaison.groble.domain.user.enums.AccountType;
 import liaison.groble.domain.user.enums.TermsType;
 import liaison.groble.domain.user.enums.UserStatus;
+import liaison.groble.domain.user.enums.UserType;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -58,6 +60,10 @@ public class User extends BaseTimeEntity {
   /** 사용자 이름 (닉네임) */
   @Column(name = "nick_name", length = 50)
   private String nickName;
+
+  /** 사용자 프로필 이미지 URL */
+  @Column(name = "profile_image_url", columnDefinition = "TEXT")
+  private String profileImageUrl;
 
   /** 통합 계정 정보 (일반 로그인) 양방향 관계로 IntegratedAccount와 연결 */
   @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -109,7 +115,7 @@ public class User extends BaseTimeEntity {
 
   /** 마지막으로 사용한 사용자 유형 (SELLER 또는 BUYER) */
   @Column(name = "last_user_type", length = 20)
-  private String lastUserType;
+  private UserType lastUserType;
 
   @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
   private Set<UserTermsAgreement> termsAgreements = new HashSet<>();
@@ -126,7 +132,7 @@ public class User extends BaseTimeEntity {
             .accountType(AccountType.INTEGRATED)
             .status(UserStatus.PENDING_VERIFICATION) // 이메일 인증 대기 상태로 설정
             .statusChangedAt(Instant.now())
-            .lastUserType("BUYER") // 기본값으로 BUYER 설정
+            .lastUserType(BUYER) // 기본값으로 BUYER 설정
             .build();
 
     user.setIntegratedAccount(integratedAccount);
@@ -145,7 +151,7 @@ public class User extends BaseTimeEntity {
             .accountType(AccountType.SOCIAL)
             .status(UserStatus.ACTIVE) // 소셜 로그인은 즉시 활성화
             .statusChangedAt(Instant.now())
-            .lastUserType("BUYER") // 기본값으로 BUYER 설정
+            .lastUserType(BUYER) // 기본값으로 BUYER 설정
             .build();
 
     user.setSocialAccount(socialAccount);
@@ -194,7 +200,7 @@ public class User extends BaseTimeEntity {
    *
    * @param userType 사용자 유형 (SELLER 또는 BUYER)
    */
-  public void updateLastUserType(String userType) {
+  public void updateLastUserType(UserType userType) {
     this.lastUserType = userType;
   }
 

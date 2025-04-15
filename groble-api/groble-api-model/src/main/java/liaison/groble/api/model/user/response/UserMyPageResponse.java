@@ -1,17 +1,18 @@
-package liaison.groble.api.model.user.request;
-
-import jakarta.validation.constraints.NotNull;
+package liaison.groble.api.model.user.response;
 
 import liaison.groble.api.model.user.enums.UserTypeDto;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Getter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class RoleTypeRequest {
-  @NotNull(message = "사용자 유형은 필수 입력값입니다.")
+public class UserMyPageResponse {
+  private String nickName;
+  private String profileImageUrl;
   private UserTypeDto userType;
 }
