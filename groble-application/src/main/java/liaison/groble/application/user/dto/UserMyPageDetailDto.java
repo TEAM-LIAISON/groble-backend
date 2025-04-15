@@ -11,9 +11,12 @@ import lombok.Setter;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserMyPageDto {
-  private Long id;
+public class UserMyPageDetailDto {
   private String nickName;
+  private String accountTypeName;
+  private String providerTypeName;
+  private String email;
   private String profileImageUrl;
-  private String userTypeDescription;
+  private String phoneNumber;
+  private boolean sellerAccountNotCreated;
 }

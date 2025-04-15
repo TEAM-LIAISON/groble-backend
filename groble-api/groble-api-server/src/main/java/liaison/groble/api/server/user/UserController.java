@@ -17,9 +17,11 @@ import liaison.groble.api.model.user.request.PasswordRequest;
 import liaison.groble.api.model.user.request.PasswordResetRequest;
 import liaison.groble.api.model.user.response.NicknameDuplicateCheckResponse;
 import liaison.groble.api.model.user.response.NicknameResponse;
-import liaison.groble.api.model.user.response.UserMyPageResponse;
+import liaison.groble.api.model.user.response.UserMyPageDetailResponse;
+import liaison.groble.api.model.user.response.UserMyPageSummaryResponse;
 import liaison.groble.api.server.user.mapper.UserDtoMapper;
-import liaison.groble.application.user.dto.UserMyPageDto;
+import liaison.groble.application.user.dto.UserMyPageDetailDto;
+import liaison.groble.application.user.dto.UserMyPageSummaryDto;
 import liaison.groble.application.user.service.UserService;
 import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.model.Accessor;
@@ -136,13 +138,28 @@ public class UserController {
     return ResponseEntity.ok(GrobleResponse.success(null, "비밀번호가 성공적으로 변경되었습니다."));
   }
 
-  @Operation(summary = "마이페이지 조회", description = "마이페이지 화면을 조회합니다.")
-  @GetMapping("/users/mypage")
-  public ResponseEntity<GrobleResponse<UserMyPageResponse>> getUserMyPage(@Auth Accessor accessor) {
-    UserMyPageDto userMyPageDto = userService.getUserMyPage(accessor.getUserId());
+  @Operation(summary = "마이페이지 요약 정보 조회", description = "마이페이지 첫 화면에서 요약 정보를 조회합니다.")
+  @GetMapping("/users/me/summary")
+  public ResponseEntity<GrobleResponse<UserMyPageSummaryResponse>> getUserMyPageSummary(
+      @Auth Accessor accessor) {
+    UserMyPageSummaryDto userMyPageSummaryDto =
+        userService.getUserMyPageSummary(accessor.getUserId());
 
-    UserMyPageResponse response = userDtoMapper.toApiMyPageResponse(userMyPageDto);
+    UserMyPageSummaryResponse response =
+        userDtoMapper.toApiMyPageSummaryResponse(userMyPageSummaryDto);
 
     return ResponseEntity.ok(GrobleResponse.success(response, "마이페이지 조회 성공"));
+  }
+
+  @Operation(summary = "마이페이지 상세 정보 조회", description = "마이페이지에서 사용자 상세 정보를 조회합니다.")
+  @GetMapping("/users/me/detail")
+  public ResponseEntity<GrobleResponse<UserMyPageDetailResponse>> getUserMyPageDetail(
+      @Auth Accessor accessor) {
+    UserMyPageDetailDto userMyPageDetailDto = userService.getUserMyPageDetail(accessor.getUserId());
+
+    UserMyPageDetailResponse response =
+        userDtoMapper.toApiMyPageDetailResponse(userMyPageDetailDto);
+
+    return ResponseEntity.ok(GrobleResponse.success(response, "마이페이지 상세 조회 성공"));
   }
 }

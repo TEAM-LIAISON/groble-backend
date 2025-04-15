@@ -65,6 +65,10 @@ public class User extends BaseTimeEntity {
   @Column(name = "profile_image_url", columnDefinition = "TEXT")
   private String profileImageUrl;
 
+  /** 사용자 전화번호 */
+  @Column(name = "phone_number", length = 20)
+  private String phoneNumber;
+
   /** 통합 계정 정보 (일반 로그인) 양방향 관계로 IntegratedAccount와 연결 */
   @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
   private IntegratedAccount integratedAccount;

@@ -4,12 +4,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import liaison.groble.application.user.dto.UserMyPageDto;
+import liaison.groble.application.user.dto.UserMyPageDetailDto;
+import liaison.groble.application.user.dto.UserMyPageSummaryDto;
 import liaison.groble.application.user.service.UserService;
 import liaison.groble.common.exception.EntityNotFoundException;
 import liaison.groble.common.port.security.SecurityPort;
 import liaison.groble.domain.port.EmailSenderPort;
 import liaison.groble.domain.user.entity.IntegratedAccount;
+import liaison.groble.domain.user.entity.SocialAccount;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.enums.UserType;
 import liaison.groble.domain.user.repository.IntegratedAccountRepository;
@@ -189,17 +191,62 @@ public class UserServiceImpl implements UserService {
   }
 
   @Override
-  public UserMyPageDto getUserMyPage(Long userId) {
+  public UserMyPageSummaryDto getUserMyPageSummary(Long userId) {
     User user =
         userRepository
             .findById(userId)
             .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
 
-    return UserMyPageDto.builder()
+    return UserMyPageSummaryDto.builder()
         .id(user.getId())
         .nickName(user.getNickName())
         .profileImageUrl(user.getProfileImageUrl())
         .userTypeDescription(user.getLastUserType().getDescription())
         .build();
   }
+
+  @Override
+  public UserMyPageDetailDto getUserMyPageDetail(Long userId) {
+    User user =
+        userRepository
+            .findById(userId)
+            .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
+
+    String email = null;
+    String phoneNumber = null;
+    String providerTypeName = null;
+
+    if (user.getIntegratedAccount() != null) {
+      IntegratedAccount account = user.getIntegratedAccount();
+      email = account.getIntegratedAccountEmail();
+      phoneNumber = user.getPhoneNumber();
+    } else if (user.getSocialAccount() != null) {
+      SocialAccount account = user.getSocialAccount();
+      email = account.getSocialAccountEmail();
+      phoneNumber = user.getPhoneNumber();
+      providerTypeName = account.getProviderType().name();
+    }
+
+    boolean sellerAccountNotCreated = true;
+
+    return UserMyPageDetailDto.builder()
+        .nickName(user.getNickName())
+        .accountTypeName(user.getAccountType().name())
+        .providerTypeName(providerTypeName)
+        .email(email)
+        .profileImageUrl(user.getProfileImageUrl())
+        .phoneNumber(phoneNumber)
+        .sellerAccountNotCreated(sellerAccountNotCreated)
+        .build();
+  }
+
+  //    private boolean isSellerAccountNotCreated(User user) {
+  //        boolean hasSellerRole = user.getUserRoles().stream()
+  //                .anyMatch(role -> role.getRole().getName().equals("ROLE_SELLER"));
+  //
+  //        boolean hasSellerProfile = sellerProfileRepository.existsByUserId(user.getId());
+  //
+  //        // 판매자 권한은 있지만, 판매자 계정이 없는 경우
+  //        return hasSellerRole && !hasSellerProfile;
+  //    }
 }

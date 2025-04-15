@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserMyPageResponse {
+public class UserMyPageSummaryResponse {
   private String nickName;
   private String profileImageUrl;
   private UserTypeDto userType;

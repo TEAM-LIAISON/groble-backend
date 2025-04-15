@@ -1,6 +1,7 @@
 package liaison.groble.application.user.service;
 
-import liaison.groble.application.user.dto.UserMyPageDto;
+import liaison.groble.application.user.dto.UserMyPageDetailDto;
+import liaison.groble.application.user.dto.UserMyPageSummaryDto;
 import liaison.groble.domain.user.enums.UserType;
 
 public interface UserService {
@@ -73,7 +74,15 @@ public interface UserService {
    * 사용자 마이페이지 정보 조회
    *
    * @param userId 사용자 ID
-   * @return UserMyPageDto 사용자 마이페이지 정보
+   * @return UserMyPageSummaryDto 사용자 마이페이지 정보
    */
-  UserMyPageDto getUserMyPage(Long userId);
+  UserMyPageSummaryDto getUserMyPageSummary(Long userId);
+
+  /**
+   * 사용자 마이페이지 상세 정보 조회
+   *
+   * @param userId 사용자 ID
+   * @return UserMyPageDetailDto 사용자 마이페이지 상세 정보
+   */
+  UserMyPageDetailDto getUserMyPageDetail(Long userId);
 }
