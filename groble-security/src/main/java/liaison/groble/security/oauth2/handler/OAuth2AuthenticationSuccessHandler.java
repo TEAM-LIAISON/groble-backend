@@ -126,12 +126,15 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
   private void addTokenCookies(
       HttpServletResponse response, String accessToken, String refreshToken) {
 
-    boolean isSecure = isLocalEnvironment();
+    boolean isSecure = !isLocalEnvironment();
 
-    // 개발 환경인지 확인하여 도메인 설정
-    String domain = null; // localhost에서는 도메인을 지정하지 않음 (null로 설정)
-    if (!isLocalEnvironment()) {
-      domain = cookieDomain; // 운영환경에서만 도메인 사용 (groble.im)
+    // 리다이렉트 URI의 도메인을 분석하여 쿠키 도메인 설정
+    String domain = null;
+
+    // 운영 환경에서는 브라우저와 공유할 수 있도록 상위 도메인 설정
+    // 예: dev.groble.im, groble.im 등
+    if (isProduction() || isDevelopment()) {
+      domain = cookieDomain; // 설정에서 가져오기
     }
 
     // Access Token - HttpOnly 설정
@@ -165,9 +168,42 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         REFRESH_TOKEN_MAX_AGE);
   }
 
-  /** 로컬 환경인지 확인 */
+  /**
+   * 로컬 환경인지 확인
+   *
+   * @return 로컬 환경이면 true
+   */
   private boolean isLocalEnvironment() {
-    String env = System.getProperty("spring.profiles.active", "dev");
-    return env.equalsIgnoreCase("local") || env.equalsIgnoreCase("dev");
+    String activeProfile = getActiveProfile();
+    return activeProfile.equals("local") || activeProfile.isEmpty();
+  }
+
+  /**
+   * 운영 환경인지 확인
+   *
+   * @return 운영 환경이면 true
+   */
+  private boolean isProduction() {
+    String activeProfile = getActiveProfile();
+    return activeProfile.equals("prod") || activeProfile.equals("production");
+  }
+
+  /**
+   * 개발 환경인지 확인
+   *
+   * @return 개발 환경이면 true
+   */
+  private boolean isDevelopment() {
+    String activeProfile = getActiveProfile();
+    return activeProfile.equals("dev") || activeProfile.equals("development");
+  }
+
+  /**
+   * 현재 활성화된 프로필 가져오기
+   *
+   * @return 활성화된 프로필 (기본값: "")
+   */
+  private String getActiveProfile() {
+    return System.getProperty("spring.profiles.active", "");
   }
 }

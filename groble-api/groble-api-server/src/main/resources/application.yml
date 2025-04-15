@@ -63,7 +63,7 @@ app:
   frontend-url: http://localhost:3000
   backend-url: http://localhost:8080
   cookie:
-    domain: groble.im
+    domain: localhost
 
 # Springdoc OpenAPI Configuration
 springdoc:

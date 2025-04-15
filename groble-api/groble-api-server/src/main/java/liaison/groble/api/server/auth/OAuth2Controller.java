@@ -4,6 +4,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -25,8 +26,9 @@ import lombok.extern.slf4j.Slf4j;
 @Tag(name = "OAuth2", description = "OAuth2 소셜 로그인 관련 API")
 public class OAuth2Controller {
 
-  // 프론트엔드 도메인 설정
-  private final String frontendDomain = "https://dev.groble.im";
+  // 환경별 프론트엔드 도메인 설정
+  @Value("${app.frontend-url}")
+  private String frontendDomain; // 환경별로 설정 가능하도록 변경
 
   /** OAuth2 인증 페이지로 리다이렉트하기 전에 리다이렉트 URI를 쿠키에 저장 */
   @Operation(summary = "OAuth2 로그인 시작", description = "소셜 로그인 시작 전 리다이렉트 URI를 설정합니다.")
