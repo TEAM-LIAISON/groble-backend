@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -57,6 +58,9 @@ public class AuthController {
   private static final int REFRESH_TOKEN_MAX_AGE = 60 * 60 * 24 * 7; // 7일
   private static final String ACCESS_TOKEN_COOKIE_NAME = "accessToken";
   private static final String REFRESH_TOKEN_COOKIE_NAME = "refreshToken";
+
+  @Value("${app.cookie.domain}")
+  private String cookieDomain; // 쿠키 도메인 설정
 
   /**
    * 회원가입 API
@@ -323,8 +327,8 @@ public class AuthController {
         "/",
         true,
         isSecureEnvironment(),
-        "Lax",
-        ".groble.im"); // 부모 도메인 설정
+        "None", // SameSite 설정을 None으로 변경 (크로스 사이트 요청 허용)
+        cookieDomain); // 도메인 설정 추가
 
     // Refresh Token - HttpOnly 설정 (JS에서 접근 불가, 보안 강화)
     CookieUtils.addCookie(
@@ -335,11 +339,12 @@ public class AuthController {
         "/",
         true,
         isSecureEnvironment(),
-        "Lax",
-        ".groble.im");
+        "None", // SameSite 설정을 None으로 변경
+        cookieDomain); // 도메인 설정 추가
 
     log.debug(
-        "토큰 쿠키 추가 완료: accessToken({}초), refreshToken({}초)",
+        "토큰 쿠키 추가 완료: domain={}, accessToken({}초), refreshToken({}초)",
+        cookieDomain,
         ACCESS_TOKEN_MAX_AGE,
         REFRESH_TOKEN_MAX_AGE);
   }

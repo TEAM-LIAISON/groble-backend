@@ -114,7 +114,9 @@ public class CookieUtils {
     cookie.setHttpOnly(httpOnly);
     cookie.setMaxAge(maxAge);
     cookie.setSecure(secure);
-    if (domain != null) {
+
+    // 도메인 설정 (null이 아닌 경우에만)
+    if (domain != null && !domain.isEmpty()) {
       cookie.setDomain(domain);
     }
 
@@ -132,6 +134,10 @@ public class CookieUtils {
       cookieHeader.append("; Secure");
     }
 
+    if (domain != null && !domain.isEmpty()) {
+      cookieHeader.append(String.format("; Domain=%s", domain));
+    }
+
     if (sameSite != null && !sameSite.isEmpty()) {
       cookieHeader.append(String.format("; SameSite=%s", sameSite));
     }
@@ -140,7 +146,13 @@ public class CookieUtils {
     response.addCookie(cookie);
     response.addHeader("Set-Cookie", cookieHeader.toString());
 
-    log.debug("쿠키 추가: {}, maxAge={}, secure={}, sameSite={}", name, maxAge, secure, sameSite);
+    log.debug(
+        "쿠키 추가: {}, domain={}, maxAge={}, secure={}, sameSite={}",
+        name,
+        domain,
+        maxAge,
+        secure,
+        sameSite);
   }
 
   /**

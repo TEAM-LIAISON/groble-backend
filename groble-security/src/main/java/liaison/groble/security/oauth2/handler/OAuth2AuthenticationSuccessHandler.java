@@ -8,12 +8,10 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
-import org.springframework.web.util.UriComponentsBuilder;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import liaison.groble.common.utils.CookieUtils;
 import liaison.groble.domain.user.entity.User;
@@ -22,26 +20,32 @@ import liaison.groble.security.jwt.JwtTokenProvider;
 import liaison.groble.security.oauth2.repository.HttpCookieOAuth2AuthorizationRequestRepository;
 import liaison.groble.security.service.OAuth2AuthService.CustomOAuth2User;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
   private final JwtTokenProvider jwtTokenProvider;
-  private final ObjectMapper objectMapper;
   private final UserRepository userRepository;
 
-  // 프론트엔드 redirect URI (환경에 따라 설정 필요)
-  private final String frontendRedirectUri =
-      "https://api.dev.groble.im/api/v1/oauth2/login/success";
+  @Value("${app.frontend-url}")
+  private String frontendUrl;
 
-  // 허용된 리다이렉트 URI 목록
-  private static final String[] ALLOWED_REDIRECT_URIS = {
-    "http://localhost:3000/auth/sign-in", "https://dev.groble.im/auth/sign-in"
-  };
+  @Value("${app.cookie.domain}")
+  private String cookieDomain;
+
+  // 쿠키 설정값
+  private static final int ACCESS_TOKEN_MAX_AGE = 60 * 30; // 30분
+  private static final int REFRESH_TOKEN_MAX_AGE = 60 * 60 * 24 * 7; // 7일
+  private static final String ACCESS_TOKEN_COOKIE_NAME = "accessToken";
+  private static final String REFRESH_TOKEN_COOKIE_NAME = "refreshToken";
+
+  public OAuth2AuthenticationSuccessHandler(
+      JwtTokenProvider jwtTokenProvider, UserRepository userRepository) {
+    this.jwtTokenProvider = jwtTokenProvider;
+    this.userRepository = userRepository;
+  }
 
   @Override
   public void onAuthenticationSuccess(
@@ -60,7 +64,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             .findById(userId)
             .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + userId));
 
-    // 직접 토큰 생성 (OAuth2AuthService에 의존하지 않음)
+    // 직접 토큰 생성
     String accessToken = jwtTokenProvider.createAccessToken(user.getId(), user.getEmail());
     String refreshToken = jwtTokenProvider.createRefreshToken(user.getId(), user.getEmail());
 
@@ -70,26 +74,11 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
     log.info("사용자 인증 완료: {}, 토큰 발급 완료", oAuth2User.getEmail());
 
-    // 토큰을 쿠키에 저장 (보안을 위해 httpOnly 설정)
-    int accessTokenExpiry = 3600; // 1시간 (JwtTokenProvider와 일치하게 설정)
-    int refreshTokenExpiry = 7 * 24 * 3600; // 7일 (JwtTokenProvider와 일치하게 설정)
-
-    try {
-      // 쿠키에 토큰 저장 (도메인 지정 없이)
-      CookieUtils.addCookie(
-          response, "access_token", accessToken, accessTokenExpiry, "/", true, false, "Lax");
-      CookieUtils.addCookie(
-          response, "refresh_token", refreshToken, refreshTokenExpiry, "/", true, false, "Lax");
-
-      log.info("토큰 쿠키 설정 완료");
-    } catch (Exception e) {
-      log.error("쿠키 설정 중 오류 발생: {}", e.getMessage());
-      // 쿠키 오류가 발생해도 리다이렉트는 계속 진행
-    }
-
     // 쿠키에서 redirect_uri 가져오기
-    String targetUrl =
-        determineTargetUrl(request, response, authentication, accessToken, refreshToken);
+    String targetUrl = determineTargetUrl(request, response);
+
+    // 토큰을 쿠키에 저장
+    addTokenCookies(response, accessToken, refreshToken);
 
     // 인증 속성 정리
     clearAuthenticationAttributes(request);
@@ -99,13 +88,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
   }
 
   /** 리다이렉트 URL 결정 */
-  protected String determineTargetUrl(
-      HttpServletRequest request,
-      HttpServletResponse response,
-      Authentication authentication,
-      String accessToken,
-      String refreshToken) {
-
+  protected String determineTargetUrl(HttpServletRequest request, HttpServletResponse response) {
     // 쿠키에서 redirect_uri 값 확인
     Optional<String> redirectUri =
         CookieUtils.getCookie(
@@ -113,38 +96,71 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                 HttpCookieOAuth2AuthorizationRequestRepository.REDIRECT_URI_PARAM_COOKIE_NAME)
             .map(Cookie::getValue);
 
-    String targetUrl = redirectUri.orElse(frontendRedirectUri);
+    String targetUrl = redirectUri.orElse(frontendUrl + "/oauth2/redirect");
 
     // 올바른 URI인지 검증 (필요시 화이트리스트 로직 추가)
     if (!isValidRedirectUri(targetUrl)) {
       log.error("유효하지 않은 리다이렉트 URI: {}", targetUrl);
-      targetUrl = frontendRedirectUri;
+      targetUrl = frontendUrl + "/oauth2/redirect";
     }
 
-    // URI에 토큰 파라미터 추가
-    return UriComponentsBuilder.fromUriString(targetUrl)
-        .queryParam("token", accessToken)
-        .queryParam("refresh_token", refreshToken)
-        .build()
-        .toUriString();
+    return targetUrl;
   }
 
-  /** 리다이렉트 URI 유효성 검증 필요시 화이트리스트 로직을 추가할 수 있음 */
+  /** 리다이렉트 URI 유효성 검증 */
   private boolean isValidRedirectUri(String uri) {
     try {
       URI redirectUri = new URI(uri);
 
-      // 화이트리스트 기반 URI 검증
-      for (String allowedUri : ALLOWED_REDIRECT_URIS) {
-        if (uri.startsWith(allowedUri)) {
-          return true;
-        }
-      }
+      // 프론트엔드 도메인에 속하는지 검증
+      String host = redirectUri.getHost();
+      return host != null && (host.equals("localhost") || host.endsWith("groble.im"));
 
-      // 기본 리다이렉트 URI인 경우도 허용
-      return uri.equals(frontendRedirectUri);
     } catch (Exception e) {
       return false;
     }
+  }
+
+  /** 액세스 토큰과 리프레시 토큰을 쿠키에 저장 */
+  private void addTokenCookies(
+      HttpServletResponse response, String accessToken, String refreshToken) {
+
+    boolean isSecure = isSecureEnvironment();
+
+    // Access Token - HttpOnly 설정 (JS에서 접근 불가)
+    CookieUtils.addCookie(
+        response,
+        ACCESS_TOKEN_COOKIE_NAME,
+        accessToken,
+        ACCESS_TOKEN_MAX_AGE,
+        "/",
+        true,
+        isSecure,
+        "None",
+        cookieDomain);
+
+    // Refresh Token - HttpOnly 설정 (JS에서 접근 불가, 보안 강화)
+    CookieUtils.addCookie(
+        response,
+        REFRESH_TOKEN_COOKIE_NAME,
+        refreshToken,
+        REFRESH_TOKEN_MAX_AGE,
+        "/",
+        true,
+        isSecure,
+        "None",
+        cookieDomain);
+
+    log.debug(
+        "토큰 쿠키 추가 완료: domain={}, accessToken({}초), refreshToken({}초)",
+        cookieDomain,
+        ACCESS_TOKEN_MAX_AGE,
+        REFRESH_TOKEN_MAX_AGE);
+  }
+
+  /** 보안 환경(운영)인지 확인 */
+  private boolean isSecureEnvironment() {
+    String env = System.getProperty("spring.profiles.active", "dev");
+    return env.equalsIgnoreCase("prod") || env.equalsIgnoreCase("production");
   }
 }
