@@ -7,7 +7,6 @@ import java.util.stream.Collectors;
 
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
@@ -64,13 +63,18 @@ public class OAuth2AuthService extends DefaultOAuth2UserService {
   @Transactional
   public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
     try {
-      // 상위 클래스의 loadUser 메서드 호출하여 기본 OAuth2User 객체 가져오기
+      // 상위 클래스의 loadUser 메서드 호출하기 전에 로깅 추가
+      log.info(
+          "OAuth2 요청 정보: clientId={}, registrationId={}",
+          userRequest.getClientRegistration().getClientId(),
+          userRequest.getClientRegistration().getRegistrationId());
+
       OAuth2User oAuth2User = super.loadUser(userRequest);
 
-      // OAuth2User 처리 및 커스텀 OAuth2User 객체 반환
+      // 속성 로깅 추가
+      log.info("OAuth2 사용자 속성: {}", oAuth2User.getAttributes());
+
       return processOAuth2User(userRequest, oAuth2User);
-    } catch (AuthenticationException ex) {
-      throw ex;
     } catch (Exception ex) {
       log.error("OAuth2 인증 처리 중 오류 발생", ex);
       throw new InternalAuthenticationServiceException(ex.getMessage(), ex);
