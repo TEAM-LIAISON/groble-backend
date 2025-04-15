@@ -18,7 +18,7 @@ public class CookieUtils {
   private static final boolean DEFAULT_HTTP_ONLY = true;
   private static final boolean DEFAULT_SECURE_DEV = false; // 개발 환경
   private static final boolean DEFAULT_SECURE_PROD = true; // 운영 환경
-  private static final String DEFAULT_SAME_SITE = "Lax"; // Lax, Strict, None
+  private static final String DEFAULT_SAME_SITE = "None"; // Lax, Strict, None
 
   /**
    * 요청에서 특정 이름의 쿠키 가져오기

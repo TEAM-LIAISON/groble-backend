@@ -1,5 +1,6 @@
 package liaison.groble.api.server.auth;
 
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -44,7 +45,7 @@ public class OAuth2Controller {
 
     log.info("OAuth2 로그인 시작: provider={}, redirect_uri={}", provider, redirectUri);
 
-    // 쿠키 세팅 - frontend redirect URI를 저장
+    // 쿠키 세팅 - frontend redirect URI를 저장 (여기서 값이 제대로 저장되는지 확인)
     CookieUtils.addCookie(
         response,
         HttpCookieOAuth2AuthorizationRequestRepository.REDIRECT_URI_PARAM_COOKIE_NAME,
@@ -70,9 +71,27 @@ public class OAuth2Controller {
 
     log.info("OAuth2 로그인 성공 처리: 토큰 있음={}", token != null);
 
-    // 프론트엔드로 리다이렉트 (토큰 정보를 URL 파라미터로 전달)
-    String redirectUrl =
-        frontendDomain + "/auth/sign-in?token=" + token + "&refresh_token=" + refreshToken;
+    // 쿠키에서 원래 저장해둔 redirect_uri를 가져옴
+    String redirectUri =
+        CookieUtils.getCookie(
+                request,
+                HttpCookieOAuth2AuthorizationRequestRepository.REDIRECT_URI_PARAM_COOKIE_NAME)
+            .map(Cookie::getValue)
+            .orElse(frontendDomain + "/auth/sign-in");
+
+    // 쿠키 삭제
+    CookieUtils.deleteCookie(
+        request,
+        response,
+        HttpCookieOAuth2AuthorizationRequestRepository.REDIRECT_URI_PARAM_COOKIE_NAME);
+
+    // 토큰 정보를 URL 파라미터로 추가하여 원래 redirect_uri로 리다이렉트
+    String redirectUrl = redirectUri;
+    if (redirectUrl.contains("?")) {
+      redirectUrl += "&token=" + token + "&refresh_token=" + refreshToken;
+    } else {
+      redirectUrl += "?token=" + token + "&refresh_token=" + refreshToken;
+    }
 
     log.debug("프론트엔드로 리다이렉트: {}", redirectUrl);
     response.sendRedirect(redirectUrl);

@@ -66,7 +66,13 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
   public OAuth2AuthorizationRequest removeAuthorizationRequest(
       HttpServletRequest request, HttpServletResponse response) {
     OAuth2AuthorizationRequest authRequest = loadAuthorizationRequest(request);
-    removeAuthorizationRequestCookies(request, response);
+
+    // 여기서 removeAuthorizationRequestCookies 대신 직접 oauth2_auth_request 쿠키만 삭제
+    if (response != null) {
+      CookieUtils.deleteCookie(request, response, OAUTH2_AUTHORIZATION_REQUEST_COOKIE_NAME);
+      // redirect_uri 쿠키는 유지 (삭제하지 않음)
+    }
+
     return authRequest;
   }
 
