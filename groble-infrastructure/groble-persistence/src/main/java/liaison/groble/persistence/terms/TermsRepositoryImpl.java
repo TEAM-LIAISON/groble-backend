@@ -44,4 +44,9 @@ public class TermsRepositoryImpl implements TermsRepository {
   public Optional<Terms> findById(Long id) {
     return jpaTermsRepository.findById(id);
   }
+
+  @Override
+  public Optional<Terms> findTopByTypeAndEffectiveToIsNullOrderByEffectiveFromDesc(TermsType type) {
+    return jpaTermsRepository.findTopByTypeAndEffectiveToIsNullOrderByEffectiveFromDesc(type);
+  }
 }

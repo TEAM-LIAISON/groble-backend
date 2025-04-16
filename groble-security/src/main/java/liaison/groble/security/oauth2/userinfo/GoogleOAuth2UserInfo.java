@@ -9,7 +9,14 @@ public class GoogleOAuth2UserInfo extends OAuth2UserInfo {
 
   @Override
   public String getId() {
-    return (String) attributes.get("sub");
+    // 'sub' 필드가 없으면 'id' 필드를 시도
+    String sub = (String) attributes.get("sub");
+    if (sub != null) {
+      return sub;
+    }
+
+    // 'id' 필드 확인
+    return (String) attributes.get("id");
   }
 
   @Override

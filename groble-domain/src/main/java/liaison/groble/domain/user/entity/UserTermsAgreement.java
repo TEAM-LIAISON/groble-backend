@@ -2,7 +2,7 @@ package liaison.groble.domain.user.entity;
 
 import static lombok.AccessLevel.PROTECTED;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -51,7 +51,7 @@ public class UserTermsAgreement {
 
   /** 동의한 시점 */
   @Column(nullable = false)
-  private LocalDateTime agreedAt;
+  private Instant agreedAt;
 
   /** 동의한 IP 주소 */
   @Column(length = 45) // IPv6 대응
@@ -66,7 +66,7 @@ public class UserTermsAgreement {
       User user,
       Terms terms,
       boolean agreed,
-      LocalDateTime agreedAt,
+      Instant agreedAt,
       String agreedIp,
       String agreedUserAgent) {
     this.user = user;
@@ -77,7 +77,7 @@ public class UserTermsAgreement {
     this.agreedUserAgent = agreedUserAgent;
   }
 
-  public void updateAgreement(boolean agreed, LocalDateTime agreedAt, String ip, String userAgent) {
+  public void updateAgreement(boolean agreed, Instant agreedAt, String ip, String userAgent) {
     this.agreed = agreed;
     this.agreedAt = agreedAt;
     this.agreedIp = ip;

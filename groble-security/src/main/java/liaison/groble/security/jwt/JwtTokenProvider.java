@@ -327,4 +327,29 @@ public class JwtTokenProvider {
   public long getAccessTokenValidityInSeconds() {
     return accessTokenExpirationMs / 1000;
   }
+
+  public String createPasswordResetToken(String email, String secretKey, long expirationMinutes) {
+    Date now = new Date();
+    Date expiryDate = new Date(now.getTime() + expirationMinutes * 60 * 1000);
+
+    SecretKey key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
+
+    return Jwts.builder()
+        .setSubject(email)
+        .setIssuedAt(now)
+        .setExpiration(expiryDate)
+        .signWith(key)
+        .compact();
+  }
+
+  public String validatePasswordResetTokenAndGetEmail(String token, String secretKey) {
+    try {
+      SecretKey key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
+      Claims claims =
+          Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();
+      return claims.getSubject();
+    } catch (Exception e) {
+      throw new IllegalArgumentException("비밀번호 재설정 토큰이 유효하지 않거나 만료되었습니다.");
+    }
+  }
 }

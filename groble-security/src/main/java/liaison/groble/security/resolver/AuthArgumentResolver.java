@@ -59,11 +59,14 @@ public class AuthArgumentResolver implements HandlerMethodArgumentResolver {
       userType = userDetails.getLastUserType() != null ? userDetails.getLastUserType() : "BUYER";
     }
 
+    String accountType = userDetails.getAccountType();
+
     return Accessor.builder()
         .id(userDetails.getId())
         .email(userDetails.getEmail())
         .roles(roles)
         .userType(userType)
+        .accountType(accountType)
         .build();
   }
 }

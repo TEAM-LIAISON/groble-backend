@@ -23,8 +23,7 @@ public class UserDetailsImpl implements UserDetails {
   private final String email;
   private final String password;
   private final Collection<? extends GrantedAuthority> authorities;
-
-  // 새로 추가된 필드
+  private final String accountType;
   private final String lastUserType;
 
   public UserDetailsImpl(
@@ -32,11 +31,13 @@ public class UserDetailsImpl implements UserDetails {
       String email,
       String password,
       Collection<? extends GrantedAuthority> authorities,
+      String accountType,
       String lastUserType) {
     this.id = id;
     this.email = email;
     this.password = password;
     this.authorities = authorities;
+    this.accountType = accountType;
     this.lastUserType = lastUserType;
   }
 
@@ -53,7 +54,12 @@ public class UserDetailsImpl implements UserDetails {
             .collect(Collectors.toList());
 
     return new UserDetailsImpl(
-        user.getId(), user.getEmail(), user.getPassword(), authorities, user.getLastUserType());
+        user.getId(),
+        user.getEmail(),
+        user.getPassword(),
+        authorities,
+        user.getAccountType().name(),
+        user.getLastUserType().getDescription());
   }
 
   @Override

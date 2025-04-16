@@ -37,6 +37,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
   // 인증이 필요없는 경로 패턴 목록
   private static final List<String> PUBLIC_PATHS =
       List.of(
+          "api/v1/oauth2/**",
           "/api/v1/home",
           "/api/v1/auth/**",
           "/swagger-ui/**",
@@ -62,11 +63,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     String path = request.getRequestURI();
     boolean isSwagger = isSwaggerRequest(path);
 
+    // 공개 경로 매처를 사용하여 필터링 여부 결정
+    RequestMatcher publicPathsMatcher = buildPublicPathsMatcher();
+    boolean isPublicPath = publicPathsMatcher.matches(request);
+
     if (isSwagger) {
       log.debug("Swagger 관련 요청은 JWT 필터를 건너뜁니다: {}", path);
+    } else if (isPublicPath) {
+      log.debug("공개 경로 요청은 JWT 필터를 건너뜁니다: {}", path);
     }
 
-    return isSwagger;
+    return isSwagger || isPublicPath;
   }
 
   /** 인증 필터 처리 */

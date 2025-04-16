@@ -7,7 +7,6 @@ import java.util.stream.Collectors;
 
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
@@ -64,17 +63,51 @@ public class OAuth2AuthService extends DefaultOAuth2UserService {
   @Transactional
   public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
     try {
-      // 상위 클래스의 loadUser 메서드 호출하여 기본 OAuth2User 객체 가져오기
-      OAuth2User oAuth2User = super.loadUser(userRequest);
+      // 상위 클래스의 loadUser 메서드 호출하기 전에 로깅 추가
+      log.info(
+          "OAuth2 요청 정보: clientId={}, registrationId={}",
+          userRequest.getClientRegistration().getClientId(),
+          userRequest.getClientRegistration().getRegistrationId());
 
-      // OAuth2User 처리 및 커스텀 OAuth2User 객체 반환
+      OAuth2User oAuth2User = super.loadUser(userRequest);
+      log.info("OAuth2 사용자 속성 (after loadUser): {}", oAuth2User.getAttributes());
+
+      // 속성 로깅 추가
+      log.info("OAuth2 사용자 속성: {}", oAuth2User.getAttributes());
+
       return processOAuth2User(userRequest, oAuth2User);
-    } catch (AuthenticationException ex) {
-      throw ex;
     } catch (Exception ex) {
       log.error("OAuth2 인증 처리 중 오류 발생", ex);
       throw new InternalAuthenticationServiceException(ex.getMessage(), ex);
     }
+  }
+
+  /**
+   * 신규 사용자 등록 소셜 로그인 정보로 새로운 사용자 생성
+   *
+   * @param userInfo OAuth2 사용자 정보
+   * @param providerType 소셜 로그인 제공자 유형
+   * @return 등록된 User 객체
+   */
+  @Transactional
+  public User registerNewUser(OAuth2UserInfo userInfo, ProviderType providerType) {
+    // 새 사용자 생성
+    SocialAccount socialAccount =
+        SocialAccount.createAccount(userInfo.getId(), providerType, userInfo.getEmail());
+
+    User savedUser = socialAccount.getUser();
+
+    // 기본 역할 설정 (ROLE_USER)
+    Role userRole =
+        roleRepository
+            .findByName(RoleType.ROLE_USER.toString())
+            .orElseThrow(() -> new RuntimeException("기본 역할(ROLE_USER)을 찾을 수 없습니다."));
+    savedUser.addRole(userRole);
+
+    // 소셜 로그인은 즉시 활성화 상태로 설정
+    savedUser.updateStatus(UserStatus.ACTIVE);
+
+    return userRepository.save(savedUser);
   }
 
   /**
@@ -89,6 +122,20 @@ public class OAuth2AuthService extends DefaultOAuth2UserService {
     // 소셜 로그인 제공자 ID (google, kakao, naver)
     String registrationId = userRequest.getClientRegistration().getRegistrationId();
     ProviderType providerType = getProviderType(registrationId);
+
+    String userNameAttributeName =
+        userRequest
+            .getClientRegistration()
+            .getProviderDetails()
+            .getUserInfoEndpoint()
+            .getUserNameAttributeName(); // ex: "sub", "id", "response.id"
+
+    Map<String, Object> attributes = oAuth2User.getAttributes();
+
+    if (!attributes.containsKey(userNameAttributeName)) {
+      throw new IllegalArgumentException(
+          "Missing attribute '" + userNameAttributeName + "' in attributes");
+    }
 
     // OAuth2UserInfo 객체 생성 (제공자별 데이터 구조 차이 처리)
     OAuth2UserInfo userInfo =
@@ -130,36 +177,16 @@ public class OAuth2AuthService extends DefaultOAuth2UserService {
     user.updateLoginTime();
     userRepository.save(user);
 
+    // ⚠ 필수 키가 없는 경우 추가해주는 안전 장치
+    if (!attributes.containsKey("sub") && "google".equals(registrationId)) {
+      attributes.put("sub", userInfo.getId());
+    }
+    if (!attributes.containsKey("id") && "kakao".equals(registrationId)) {
+      attributes.put("id", userInfo.getId());
+    }
+
     // 커스텀 OAuth2User 객체 생성 및 반환
     return CustomOAuth2User.create(user, oAuth2User.getAttributes());
-  }
-
-  /**
-   * 신규 사용자 등록 소셜 로그인 정보로 새로운 사용자 생성
-   *
-   * @param userInfo OAuth2 사용자 정보
-   * @param providerType 소셜 로그인 제공자 유형
-   * @return 등록된 User 객체
-   */
-  @Transactional
-  public User registerNewUser(OAuth2UserInfo userInfo, ProviderType providerType) {
-    // 새 사용자 생성
-    SocialAccount socialAccount =
-        SocialAccount.createAccount(userInfo.getId(), providerType, userInfo.getEmail());
-
-    User savedUser = socialAccount.getUser();
-
-    // 기본 역할 설정 (ROLE_USER)
-    Role userRole =
-        roleRepository
-            .findByName(RoleType.ROLE_USER.toString())
-            .orElseThrow(() -> new RuntimeException("기본 역할(ROLE_USER)을 찾을 수 없습니다."));
-    savedUser.addRole(userRole);
-
-    // 소셜 로그인은 즉시 활성화 상태로 설정
-    savedUser.updateStatus(UserStatus.ACTIVE);
-
-    return userRepository.save(savedUser);
   }
 
   /**

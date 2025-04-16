@@ -75,8 +75,10 @@ app:
       secret: bZvf0E0wsJXugzxv2m25c5zHvJrNfvsQIjzU6eBScbk=
       expiration-ms: 604800000 # 7 days
     issuer: groble-auth-service
-  frontend-url: https://groble.im
-  backend-url: https://dev.groble.im
+  frontend-url: https://dev.groble.im
+  backend-url: https://api.dev.groble.im
+  cookie:
+    domain: .groble.im
 
 # Springdoc OpenAPI Configuration
 springdoc:

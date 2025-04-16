@@ -62,6 +62,8 @@ app:
     issuer: groble-auth-service
   frontend-url: http://localhost:3000
   backend-url: http://localhost:8080
+  cookie:
+    domain: localhost
 
 # Springdoc OpenAPI Configuration
 springdoc:

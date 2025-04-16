@@ -190,7 +190,7 @@ public class AuthServiceImpl implements AuthService {
       throw new EmailAlreadyExistsException("이미 가입된 이메일입니다.");
     }
 
-    // 인증 코드 생성 (6자리 숫자)
+    // 인증 코드 생성 (4자리 숫자)
     String verificationCode = generateRandomCode();
 
     // 인증 코드 저장 (15분 유효) - 인터페이스 사용
@@ -221,6 +221,6 @@ public class AuthServiceImpl implements AuthService {
   }
 
   private String generateRandomCode() {
-    return CodeGenerator.generateVerificationCode(6);
+    return CodeGenerator.generateVerificationCode(4);
   }
 }

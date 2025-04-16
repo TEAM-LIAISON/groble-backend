@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import liaison.groble.api.model.terms.request.TermsAgreementRequest;
 import liaison.groble.api.model.terms.response.TermsAgreementResponse;
+import liaison.groble.api.model.user.request.AdvertisingAgreementRequest;
 import liaison.groble.api.server.terms.mapper.TermsDtoMapper;
 import liaison.groble.application.terms.dto.TermsAgreementDto;
 import liaison.groble.application.terms.service.TermsService;
@@ -152,5 +153,30 @@ public class TermsController {
         termsDtoMapper.toApiTermsAgreementResponseList(termsDtos);
 
     return ResponseEntity.ok(GrobleResponse.success(responses));
+  }
+
+  @Operation(summary = "광고성 정보 수신 동의 여부 조회", description = "현재 로그인한 사용자의 광고성 정보 수신 동의 여부를 조회합니다.")
+  @GetMapping("/users/me/advertising-agreement")
+  public ResponseEntity<GrobleResponse<Boolean>> getAdvertisingAgreementStatus(
+      @Auth Accessor accessor) {
+    // 1. 서비스 호출
+    boolean agreed = termsService.getAdvertisingAgreementStatus(accessor.getUserId());
+    return ResponseEntity.ok(GrobleResponse.success(agreed, "광고성 정보 수신 동의 여부 조회 성공"));
+  }
+
+  @Operation(summary = "광고성 정보 수신 동의 변경", description = "현재 로그인한 사용자의 광고성 정보 수신 동의 여부를 변경합니다.")
+  @PostMapping("/users/me/advertising-agreement")
+  public ResponseEntity<GrobleResponse<Void>> updateAdvertisingAgreementStatus(
+      @Auth Accessor accessor,
+      @Valid @RequestBody AdvertisingAgreementRequest request,
+      HttpServletRequest httpRequest) {
+
+    // 1. 서비스 호출
+    termsService.updateAdvertisingAgreementStatus(
+        accessor.getUserId(),
+        request.getAgreed(),
+        httpRequest.getRemoteAddr(),
+        httpRequest.getHeader("User-Agent"));
+    return ResponseEntity.ok(GrobleResponse.success(null, "광고성 정보 수신 동의 상태 변경 성공"));
   }
 }

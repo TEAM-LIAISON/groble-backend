@@ -1,5 +1,6 @@
 package liaison.groble.domain.user.entity;
 
+import static liaison.groble.domain.user.enums.UserType.BUYER;
 import static lombok.AccessLevel.PROTECTED;
 
 import java.time.Instant;
@@ -24,9 +25,11 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
 import liaison.groble.domain.common.entity.BaseTimeEntity;
+import liaison.groble.domain.seller.entity.SellerProfile;
 import liaison.groble.domain.user.enums.AccountType;
 import liaison.groble.domain.user.enums.TermsType;
 import liaison.groble.domain.user.enums.UserStatus;
+import liaison.groble.domain.user.enums.UserType;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -59,6 +62,14 @@ public class User extends BaseTimeEntity {
   @Column(name = "nick_name", length = 50)
   private String nickName;
 
+  /** 사용자 프로필 이미지 URL */
+  @Column(name = "profile_image_url", columnDefinition = "TEXT")
+  private String profileImageUrl;
+
+  /** 사용자 전화번호 */
+  @Column(name = "phone_number", length = 20)
+  private String phoneNumber;
+
   /** 통합 계정 정보 (일반 로그인) 양방향 관계로 IntegratedAccount와 연결 */
   @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
   private IntegratedAccount integratedAccount;
@@ -66,6 +77,9 @@ public class User extends BaseTimeEntity {
   /** 소셜 계정 정보 (소셜 로그인) 양방향 관계로 SocialAccount와 연결 */
   @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
   private SocialAccount socialAccount;
+
+  @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+  private SellerProfile sellerProfile;
 
   /** 마지막 로그인 시간 */
   @Column(name = "last_login_at")
@@ -109,7 +123,7 @@ public class User extends BaseTimeEntity {
 
   /** 마지막으로 사용한 사용자 유형 (SELLER 또는 BUYER) */
   @Column(name = "last_user_type", length = 20)
-  private String lastUserType;
+  private UserType lastUserType;
 
   @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
   private Set<UserTermsAgreement> termsAgreements = new HashSet<>();
@@ -126,7 +140,7 @@ public class User extends BaseTimeEntity {
             .accountType(AccountType.INTEGRATED)
             .status(UserStatus.PENDING_VERIFICATION) // 이메일 인증 대기 상태로 설정
             .statusChangedAt(Instant.now())
-            .lastUserType("BUYER") // 기본값으로 BUYER 설정
+            .lastUserType(BUYER) // 기본값으로 BUYER 설정
             .build();
 
     user.setIntegratedAccount(integratedAccount);
@@ -145,7 +159,7 @@ public class User extends BaseTimeEntity {
             .accountType(AccountType.SOCIAL)
             .status(UserStatus.ACTIVE) // 소셜 로그인은 즉시 활성화
             .statusChangedAt(Instant.now())
-            .lastUserType("BUYER") // 기본값으로 BUYER 설정
+            .lastUserType(BUYER) // 기본값으로 BUYER 설정
             .build();
 
     user.setSocialAccount(socialAccount);
@@ -194,7 +208,7 @@ public class User extends BaseTimeEntity {
    *
    * @param userType 사용자 유형 (SELLER 또는 BUYER)
    */
-  public void updateLastUserType(String userType) {
+  public void updateLastUserType(UserType userType) {
     this.lastUserType = userType;
   }
 
@@ -360,5 +374,52 @@ public class User extends BaseTimeEntity {
         .filter(TermsType::isRequired)
         .filter(type -> !hasAgreedTo(type))
         .collect(Collectors.toList());
+  }
+
+  /**
+   * 광고성 정보 수신 동의 여부 확인
+   *
+   * @return true: 동의함, false: 미동의
+   */
+  public boolean hasAgreedToAdvertising() {
+    return termsAgreements.stream()
+        .anyMatch(
+            agreement ->
+                agreement.getTerms().getType() == TermsType.ADVERTISING
+                    && agreement.isAgreed()
+                    && agreement.getTerms().getEffectiveTo() == null);
+  }
+
+  /**
+   * 광고성 정보 수신 동의 여부 업데이트
+   *
+   * @param advertisingTerms 현재 유효한 광고성 정보 약관
+   * @param agreed true: 동의함, false: 미동의
+   * @param ip 동의 또는 철회 시 IP
+   * @param userAgent 동의 또는 철회 시 User-Agent
+   */
+  public void updateAdvertisingAgreement(
+      Terms advertisingTerms, boolean agreed, String ip, String userAgent) {
+    UserTermsAgreement existingAgreement =
+        termsAgreements.stream()
+            .filter(a -> a.getTerms().equals(advertisingTerms))
+            .findFirst()
+            .orElse(null);
+
+    if (existingAgreement != null) {
+      existingAgreement.updateAgreement(agreed, Instant.now(), ip, userAgent);
+    } else {
+      UserTermsAgreement newAgreement =
+          UserTermsAgreement.builder()
+              .user(this)
+              .terms(advertisingTerms)
+              .agreed(agreed)
+              .agreedAt(Instant.now())
+              .agreedIp(ip)
+              .agreedUserAgent(userAgent)
+              .build();
+
+      termsAgreements.add(newAgreement);
+    }
   }
 }

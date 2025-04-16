@@ -18,7 +18,7 @@ public class CookieUtils {
   private static final boolean DEFAULT_HTTP_ONLY = true;
   private static final boolean DEFAULT_SECURE_DEV = false; // 개발 환경
   private static final boolean DEFAULT_SECURE_PROD = true; // 운영 환경
-  private static final String DEFAULT_SAME_SITE = "Lax"; // Lax, Strict, None
+  private static final String DEFAULT_SAME_SITE = "None"; // Lax, Strict, None
 
   /**
    * 요청에서 특정 이름의 쿠키 가져오기
@@ -55,7 +55,8 @@ public class CookieUtils {
         DEFAULT_PATH,
         DEFAULT_HTTP_ONLY,
         isSecureEnvironment(),
-        DEFAULT_SAME_SITE);
+        DEFAULT_SAME_SITE,
+        null);
   }
 
   /**
@@ -79,6 +80,33 @@ public class CookieUtils {
       boolean httpOnly,
       boolean secure,
       String sameSite) {
+    // 도메인 없이 쿠키 추가
+    addCookie(response, name, value, maxAge, path, httpOnly, secure, sameSite, null);
+  }
+
+  /**
+   * 응답에 쿠키 추가 (상세 설정 사용)
+   *
+   * @param response HTTP 응답
+   * @param name 쿠키 이름
+   * @param value 쿠키 값
+   * @param maxAge 쿠키 유효 시간(초)
+   * @param path 쿠키 경로
+   * @param httpOnly HttpOnly 플래그 설정
+   * @param secure Secure 플래그 설정
+   * @param sameSite SameSite 속성 (Lax, Strict, None)
+   * @param domain 쿠키 도메인 (null인 경우 현재 도메인)
+   */
+  public static void addCookie(
+      HttpServletResponse response,
+      String name,
+      String value,
+      int maxAge,
+      String path,
+      boolean httpOnly,
+      boolean secure,
+      String sameSite,
+      String domain) {
 
     // 기본 쿠키 생성
     Cookie cookie = new Cookie(name, value);
@@ -86,6 +114,11 @@ public class CookieUtils {
     cookie.setHttpOnly(httpOnly);
     cookie.setMaxAge(maxAge);
     cookie.setSecure(secure);
+
+    // 도메인 설정 (null이 아닌 경우에만)
+    if (domain != null && !domain.isEmpty()) {
+      cookie.setDomain(domain);
+    }
 
     // jakarta.servlet.http.Cookie에는 SameSite 설정이 없으므로 헤더로 추가
     StringBuilder cookieHeader = new StringBuilder();
@@ -101,6 +134,10 @@ public class CookieUtils {
       cookieHeader.append("; Secure");
     }
 
+    if (domain != null && !domain.isEmpty()) {
+      cookieHeader.append(String.format("; Domain=%s", domain));
+    }
+
     if (sameSite != null && !sameSite.isEmpty()) {
       cookieHeader.append(String.format("; SameSite=%s", sameSite));
     }
@@ -109,7 +146,13 @@ public class CookieUtils {
     response.addCookie(cookie);
     response.addHeader("Set-Cookie", cookieHeader.toString());
 
-    log.debug("쿠키 추가: {}, maxAge={}, secure={}, sameSite={}", name, maxAge, secure, sameSite);
+    log.debug(
+        "쿠키 추가: {}, domain={}, maxAge={}, secure={}, sameSite={}",
+        name,
+        domain,
+        maxAge,
+        secure,
+        sameSite);
   }
 
   /**

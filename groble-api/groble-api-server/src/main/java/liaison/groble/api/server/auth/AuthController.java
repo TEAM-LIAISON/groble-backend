@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -57,6 +58,9 @@ public class AuthController {
   private static final int REFRESH_TOKEN_MAX_AGE = 60 * 60 * 24 * 7; // 7일
   private static final String ACCESS_TOKEN_COOKIE_NAME = "accessToken";
   private static final String REFRESH_TOKEN_COOKIE_NAME = "refreshToken";
+
+  @Value("${app.cookie.domain}")
+  private String cookieDomain; // 쿠키 도메인 설정
 
   /**
    * 회원가입 API
@@ -186,15 +190,7 @@ public class AuthController {
    * @param request 인증 코드를 보낼 이메일 정보
    * @return 이메일 발송 결과
    */
-  @Operation(summary = "회원가입 인증", description = "회원가입할 이메일에게 인증 코드를 발급합니다.")
-  @ApiResponses({
-    @ApiResponse(
-        responseCode = "200",
-        description = "회원가입 인증 성공",
-        content = @Content(schema = @Schema(implementation = GrobleResponse.class))),
-    @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터"),
-    @ApiResponse(responseCode = "401", description = "인증 실패")
-  })
+  @Operation(summary = "회원가입 인증 및 이메일 변경 인증", description = "사용자가 기입한 이메일에 인증 코드를 발급합니다.")
   @PostMapping("/email-verification")
   public ResponseEntity<GrobleResponse<Void>> sendEmailVerification(
       @Parameter(description = "이메일 인증 정보", required = true) @Valid @RequestBody
@@ -289,6 +285,28 @@ public class AuthController {
     return ResponseEntity.ok().body(GrobleResponse.success(null, "이메일 인증이 성공적으로 완료되었습니다.", 200));
   }
 
+  /** 토큰 검증 및 로그인 상태 확인 API OAuth2 로그인 처리 후 프론트엔드에서 호출하여 토큰 상태 확인 */
+  @Operation(summary = "토큰 검증", description = "현재 사용자의 인증 토큰을 검증하고 로그인 상태를 확인합니다.")
+  @ApiResponses({
+    @ApiResponse(responseCode = "200", description = "유효한 토큰, 로그인 성공"),
+    @ApiResponse(responseCode = "401", description = "유효하지 않은 토큰")
+  })
+  @PostMapping("/validate-token")
+  public ResponseEntity<GrobleResponse<SignInResponse>> validateToken(@Auth Accessor accessor) {
+    log.info("토큰 검증 요청: {}", accessor.getEmail());
+
+    // 사용자 역할 및 정보 상태 확인
+    String userType = userService.getUserType(accessor.getEmail());
+
+    // 사용자 라우팅 경로 설정
+    String nextRoutePath = userService.getNextRoutePath(accessor.getEmail());
+
+    // 사용자 정보 응답
+    SignInResponse response = SignInResponse.of(accessor.getEmail(), userType, nextRoutePath);
+
+    return ResponseEntity.ok().body(GrobleResponse.success(response, "유효한 토큰입니다.", 200));
+  }
+
   /** 액세스 토큰과 리프레시 토큰을 쿠키에 저장 */
   private void addTokenCookies(
       HttpServletResponse response, String accessToken, String refreshToken) {
@@ -301,7 +319,8 @@ public class AuthController {
         "/",
         true,
         isSecureEnvironment(),
-        "Lax");
+        "None", // SameSite 설정을 None으로 변경 (크로스 사이트 요청 허용)
+        cookieDomain); // 도메인 설정 추가
 
     // Refresh Token - HttpOnly 설정 (JS에서 접근 불가, 보안 강화)
     CookieUtils.addCookie(
@@ -312,10 +331,12 @@ public class AuthController {
         "/",
         true,
         isSecureEnvironment(),
-        "Lax");
+        "None", // SameSite 설정을 None으로 변경
+        cookieDomain); // 도메인 설정 추가
 
     log.debug(
-        "토큰 쿠키 추가 완료: accessToken({}초), refreshToken({}초)",
+        "토큰 쿠키 추가 완료: domain={}, accessToken({}초), refreshToken({}초)",
+        cookieDomain,
         ACCESS_TOKEN_MAX_AGE,
         REFRESH_TOKEN_MAX_AGE);
   }
