@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class RoleTypeRequest {
+public class UserTypeRequest {
   @NotNull(message = "사용자 유형은 필수 입력값입니다.")
   @Pattern(regexp = "^(SELLER|BUYER)$", message = "사용자 유형은 SELLER 또는 BUYER만 가능합니다.")
   private String userType;

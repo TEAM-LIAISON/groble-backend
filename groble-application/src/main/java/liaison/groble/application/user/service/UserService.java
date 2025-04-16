@@ -84,4 +84,12 @@ public interface UserService {
    * @return UserMyPageDetailDto 사용자 마이페이지 상세 정보
    */
   UserMyPageDetailDto getUserMyPageDetail(Long userId);
+
+  /**
+   * 사용자 초기 역할 설정
+   *
+   * @param userId 사용자 ID
+   * @param userTypeName 설정할 가입 유형 이름
+   */
+  void setInitialUserType(Long userId, String userTypeName);
 }

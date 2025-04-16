@@ -5,6 +5,7 @@ import lombok.Getter;
 @Getter
 public enum TermsType {
   AGE_POLICY("만 14세 이상입니다.", true),
+  SELLER_TERMS("판매자 이용약관 동의", true),
   PRIVACY_POLICY("개인정보 수집 및 이용 동의", true),
   SERVICE_TERMS("서비스 이용약관 동의", true),
   SALES_TERMS("판매 이용약관 동의", true),

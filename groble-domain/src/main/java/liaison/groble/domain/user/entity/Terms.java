@@ -45,7 +45,7 @@ public class Terms extends BaseTimeEntity {
 
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
-  private TermsType type; // ex: SERVICE_TERMS, PRIVACY_POLICY
+  private TermsType type;
 
   @Column(nullable = false)
   private String version; // ex: 20240410.173000

@@ -15,14 +15,12 @@ import liaison.groble.api.model.user.request.NicknameRequest;
 import liaison.groble.api.model.user.request.PasswordChangeRequest;
 import liaison.groble.api.model.user.request.PasswordRequest;
 import liaison.groble.api.model.user.request.PasswordResetRequest;
-import liaison.groble.api.model.user.request.RoleTypeRequest;
+import liaison.groble.api.model.user.request.UserTypeRequest;
 import liaison.groble.api.model.user.response.NicknameDuplicateCheckResponse;
 import liaison.groble.api.model.user.response.NicknameResponse;
 import liaison.groble.api.model.user.response.UserMyPageDetailResponse;
 import liaison.groble.api.model.user.response.UserMyPageSummaryResponse;
-import liaison.groble.api.server.auth.mapper.AuthDtoMapper;
 import liaison.groble.api.server.user.mapper.UserDtoMapper;
-import liaison.groble.application.auth.service.AuthService;
 import liaison.groble.application.user.dto.UserMyPageDetailDto;
 import liaison.groble.application.user.dto.UserMyPageSummaryDto;
 import liaison.groble.application.user.service.UserService;
@@ -49,15 +47,13 @@ import lombok.extern.slf4j.Slf4j;
 public class UserController {
   private final UserService userService;
   private final UserDtoMapper userDtoMapper;
-  private final AuthDtoMapper authDtoMapper;
-  private final AuthService authService;
 
   /** 역할 전환 API 판매자/구매자 모드 전환 */
   @Operation(summary = "가입 유형 전환", description = "판매자 또는 구매자로 가입 유형을 전환합니다.")
   @PostMapping("/users/switch-role")
   @RequireRole({"ROLE_USER"})
-  public ResponseEntity<GrobleResponse<Void>> switchRole(
-      @Auth Accessor accessor, @Valid @RequestBody RoleTypeRequest request) {
+  public ResponseEntity<GrobleResponse<Void>> switchUserType(
+      @Auth Accessor accessor, @Valid @RequestBody UserTypeRequest request) {
 
     boolean success = userService.switchUserType(accessor.getUserId(), request.getUserType());
 
@@ -166,5 +162,22 @@ public class UserController {
         userDtoMapper.toApiMyPageDetailResponse(userMyPageDetailDto);
 
     return ResponseEntity.ok(GrobleResponse.success(response, "마이페이지 상세 조회 성공"));
+  }
+
+  // 처음 회원가입 유형을 선택하는 API
+  @Operation(summary = "회원가입 유형 선택", description = "회원가입 시 판매자 또는 구매자 중 선택합니다.")
+  @ApiResponses({
+    @ApiResponse(
+        responseCode = "200",
+        description = "회원가입 유형 선택 성공",
+        content = @Content(schema = @Schema(implementation = GrobleResponse.class))),
+    @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터")
+  })
+  @PostMapping("/users/initial-user-type")
+  public ResponseEntity<GrobleResponse<Void>> setInitialUserType(
+      @Auth Accessor accessor, @Valid @RequestBody UserTypeRequest request) {
+
+    userService.setInitialUserType(accessor.getUserId(), request.getUserType());
+    return ResponseEntity.ok(GrobleResponse.success(null, "회원가입 유형이 설정되었습니다."));
   }
 }
