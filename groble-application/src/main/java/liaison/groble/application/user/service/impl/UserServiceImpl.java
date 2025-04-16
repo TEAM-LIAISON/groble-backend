@@ -15,7 +15,6 @@ import liaison.groble.domain.user.entity.SocialAccount;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.enums.UserType;
 import liaison.groble.domain.user.repository.IntegratedAccountRepository;
-import liaison.groble.domain.user.repository.TermsRepository;
 import liaison.groble.domain.user.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -27,7 +26,6 @@ import lombok.extern.slf4j.Slf4j;
 public class UserServiceImpl implements UserService {
   private final UserRepository userRepository;
   private final IntegratedAccountRepository integratedAccountRepository;
-  private final TermsRepository termsRepository;
   private final SecurityPort securityPort;
   private final EmailSenderPort emailSenderPort;
 

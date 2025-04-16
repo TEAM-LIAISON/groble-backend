@@ -51,9 +51,6 @@ public class AuthServiceImpl implements AuthService {
       throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
     }
 
-    // 비밀번호 암호화
-    String encodedPassword = securityPort.encodePassword(signUpDto.getPassword());
-
     // IntegratedAccount 생성 (내부적으로 User 객체 생성 및 연결)
     IntegratedAccount integratedAccount = IntegratedAccount.createAccount(signUpDto.getEmail());
 
@@ -77,6 +74,9 @@ public class AuthServiceImpl implements AuthService {
     // 토큰 생성
     String accessToken = securityPort.createAccessToken(savedUser.getId(), savedUser.getEmail());
     String refreshToken = securityPort.createRefreshToken(savedUser.getId(), savedUser.getEmail());
+
+    user.updateRefreshToken(refreshToken);
+    userRepository.save(user);
 
     return TokenDto.builder()
         .accessToken(accessToken)
@@ -208,7 +208,7 @@ public class AuthServiceImpl implements AuthService {
   // 인증 코드 검증 메서드
   @Override
   @Transactional
-  public void verifyEmailCode(VerifyEmailCodeDto verifyEmailCodeDto) {
+  public TokenDto verifyEmailCode(VerifyEmailCodeDto verifyEmailCodeDto) {
     String email = verifyEmailCodeDto.getEmail();
     String code = verifyEmailCodeDto.getVerificationCode();
 
@@ -243,6 +243,16 @@ public class AuthServiceImpl implements AuthService {
 
     // 사용자 저장 (CascadeType.ALL로 IntegratedAccount도 함께 저장됨)
     User savedUser = userRepository.save(user);
+
+    // 토큰 생성
+    String accessToken = securityPort.createAccessToken(savedUser.getId(), savedUser.getEmail());
+    String refreshToken = securityPort.createRefreshToken(savedUser.getId(), savedUser.getEmail());
+
+    return TokenDto.builder()
+        .accessToken(accessToken)
+        .refreshToken(refreshToken)
+        .accessTokenExpiresIn(securityPort.getAccessTokenExpirationTime())
+        .build();
   }
 
   @Override

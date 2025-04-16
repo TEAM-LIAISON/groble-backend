@@ -17,6 +17,7 @@ import liaison.groble.api.model.auth.request.ResetPasswordRequest;
 import liaison.groble.api.model.auth.request.SignInRequest;
 import liaison.groble.api.model.auth.request.VerifyEmailCodeRequest;
 import liaison.groble.api.model.auth.response.SignInResponse;
+import liaison.groble.api.model.auth.response.SignUpResponse;
 import liaison.groble.api.server.auth.mapper.AuthDtoMapper;
 import liaison.groble.application.auth.dto.EmailVerificationDto;
 import liaison.groble.application.auth.dto.SignInDto;
@@ -261,18 +262,22 @@ public class AuthController {
    */
   @Operation(summary = "회원가입 시 이메일 인증 코드 확인", description = "이메일로 발송된 인증 코드의 유효성을 검증합니다.")
   @PostMapping("/verify-code/sign-up")
-  public ResponseEntity<GrobleResponse<Void>> verifyEmailCode(
-      @Valid @RequestBody VerifyEmailCodeRequest request) {
+  public ResponseEntity<GrobleResponse<SignUpResponse>> verifyEmailCode(
+      @Valid @RequestBody VerifyEmailCodeRequest request, HttpServletResponse response) {
     log.info("이메일 인증 코드 검증 요청: {}", request.getEmail());
 
     // API DTO → 서비스 DTO 변환
     VerifyEmailCodeDto verifyEmailCodeDto = authDtoMapper.toServiceVerifyEmailCodeDto(request);
 
-    // 서비스 호출
-    authService.verifyEmailCode(verifyEmailCodeDto);
+    TokenDto tokenDto = authService.verifyEmailCode(verifyEmailCodeDto);
 
-    // API 응답 생성
-    return ResponseEntity.ok().body(GrobleResponse.success(null, "이메일 인증이 성공적으로 완료되었습니다.", 200));
+    // 3. 토큰을 쿠키로 설정
+    addTokenCookies(response, tokenDto.getAccessToken(), tokenDto.getRefreshToken());
+
+    SignUpResponse signUpResponse = SignUpResponse.of(request.getEmail());
+
+    return ResponseEntity.ok()
+        .body(GrobleResponse.success(signUpResponse, "이메일 인증이 성공적으로 완료되었습니다.", 200));
   }
 
   @Operation(
