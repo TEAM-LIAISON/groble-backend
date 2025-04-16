@@ -1,5 +1,6 @@
 package liaison.groble.domain.user.entity;
 
+import static jakarta.persistence.EnumType.STRING;
 import static liaison.groble.domain.user.enums.UserType.BUYER;
 import static lombok.AccessLevel.PROTECTED;
 
@@ -14,7 +15,6 @@ import java.util.stream.Collectors;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -96,7 +96,7 @@ public class User extends BaseTimeEntity {
   /** 계정 유형 INTEGRATED: 일반 로그인 계정 SOCIAL: 소셜 로그인 계정 */
   @Builder.Default
   @Column(name = "account_type", nullable = false)
-  @Enumerated(EnumType.STRING)
+  @Enumerated(STRING)
   private AccountType accountType = AccountType.INTEGRATED;
 
   /**
@@ -105,7 +105,7 @@ public class User extends BaseTimeEntity {
    */
   @Builder.Default
   @Column(name = "status", nullable = false)
-  @Enumerated(EnumType.STRING)
+  @Enumerated(STRING)
   private UserStatus status = UserStatus.PENDING_VERIFICATION;
 
   /** 상태 변경 시간 상태가 변경된 마지막 시간 (휴면 계정 전환, 계정 활성화 등을 추적) */
@@ -113,6 +113,7 @@ public class User extends BaseTimeEntity {
   private Instant statusChangedAt;
 
   /** 마지막으로 사용한 사용자 유형 (SELLER 또는 BUYER) */
+  @Enumerated(STRING)
   @Column(name = "last_user_type", length = 20)
   private UserType lastUserType;
 

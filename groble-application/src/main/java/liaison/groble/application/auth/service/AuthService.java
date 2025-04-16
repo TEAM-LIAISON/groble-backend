@@ -8,10 +8,9 @@ import liaison.groble.application.auth.dto.VerifyEmailCodeDto;
 
 public interface AuthService {
   /**
-   * 회원가입 처리 및 토큰 발급
+   * 회원가입 처리
    *
    * @param signUpDto 회원가입 정보
-   * @return 발급된 토큰 정보
    */
   TokenDto signUp(SignUpDto signUpDto);
 
@@ -28,7 +27,7 @@ public interface AuthService {
    *
    * @param emailVerificationDto 이메일 정보
    */
-  void sendEmailVerification(EmailVerificationDto emailVerificationDto);
+  void sendEmailVerificationForSignUp(EmailVerificationDto emailVerificationDto);
 
   /**
    * 로그아웃 처리
@@ -58,7 +57,7 @@ public interface AuthService {
    *
    * @param verifyEmailCodeDto 이메일 인증 코드 정보
    */
-  TokenDto verifyEmailCode(VerifyEmailCodeDto verifyEmailCodeDto);
+  void verifyEmailCode(VerifyEmailCodeDto verifyEmailCodeDto);
 
   /**
    * 이메일 인증 코드 검증

@@ -21,12 +21,14 @@ import liaison.groble.domain.user.entity.IntegratedAccount;
 import liaison.groble.domain.user.entity.Role;
 import liaison.groble.domain.user.entity.SocialAccount;
 import liaison.groble.domain.user.entity.User;
+import liaison.groble.domain.user.entity.VerifiedEmail;
 import liaison.groble.domain.user.enums.AccountType;
 import liaison.groble.domain.user.enums.UserStatus;
 import liaison.groble.domain.user.repository.IntegratedAccountRepository;
 import liaison.groble.domain.user.repository.RoleRepository;
 import liaison.groble.domain.user.repository.SocialAccountRepository;
 import liaison.groble.domain.user.repository.UserRepository;
+import liaison.groble.domain.user.repository.VerifiedEmailRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,6 +44,7 @@ public class AuthServiceImpl implements AuthService {
   private final RoleRepository roleRepository;
   private final IntegratedAccountRepository integratedAccountRepository;
   private final SocialAccountRepository socialAccountRepository;
+  private final VerifiedEmailRepository verifiedEmailRepository;
 
   @Override
   @Transactional
@@ -51,8 +54,17 @@ public class AuthServiceImpl implements AuthService {
       throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
     }
 
+    VerifiedEmail verifiedEmail =
+        verifiedEmailRepository
+            .findByEmail(signUpDto.getEmail())
+            .orElseThrow(() -> new IllegalArgumentException("인증 완료되지 않은 이메일입니다."));
+
+    // 비밀번호 암호화
+    String encodedPassword = securityPort.encodePassword(signUpDto.getPassword());
+
     // IntegratedAccount 생성 (내부적으로 User 객체 생성 및 연결)
-    IntegratedAccount integratedAccount = IntegratedAccount.createAccount(signUpDto.getEmail());
+    IntegratedAccount integratedAccount =
+        IntegratedAccount.createAccount(verifiedEmail.getEmail(), encodedPassword);
 
     User user = integratedAccount.getUser();
 
@@ -62,27 +74,16 @@ public class AuthServiceImpl implements AuthService {
             .findByName("ROLE_USER")
             .orElseThrow(() -> new RuntimeException("기본 역할(ROLE_USER)을 찾을 수 없습니다."));
     user.addRole(userRole);
-
     // 사용자 상태 활성화 설정
     user.updateStatus(UserStatus.ACTIVE);
-
     // 사용자 저장 (CascadeType.ALL로 IntegratedAccount도 함께 저장됨)
     User savedUser = userRepository.save(user);
 
-    log.info("회원가입 완료: {}", savedUser.getEmail());
-
-    // 토큰 생성
-    String accessToken = securityPort.createAccessToken(savedUser.getId(), savedUser.getEmail());
-    String refreshToken = securityPort.createRefreshToken(savedUser.getId(), savedUser.getEmail());
-
-    savedUser.updateRefreshToken(refreshToken);
+    TokenDto tokenDto = issueTokens(savedUser);
+    savedUser.updateRefreshToken(tokenDto.getRefreshToken());
     userRepository.save(savedUser);
-
-    return TokenDto.builder()
-        .accessToken(accessToken)
-        .refreshToken(refreshToken)
-        .accessTokenExpiresIn(securityPort.getAccessTokenExpirationTime())
-        .build();
+    verifiedEmailRepository.deleteByEmail(verifiedEmail.getEmail());
+    return tokenDto;
   }
 
   @Override
@@ -185,8 +186,9 @@ public class AuthServiceImpl implements AuthService {
 
   @Override
   @Transactional
-  public void sendEmailVerification(EmailVerificationDto emailVerificationDto) {
+  public void sendEmailVerificationForSignUp(EmailVerificationDto emailVerificationDto) {
     String email = emailVerificationDto.getEmail();
+    // 회원 생성용 이메일 인증
 
     // 이미 가입된 이메일인지 확인
     if (integratedAccountRepository.existsByIntegratedAccountEmail(email)) {
@@ -208,7 +210,7 @@ public class AuthServiceImpl implements AuthService {
   // 인증 코드 검증 메서드
   @Override
   @Transactional
-  public TokenDto verifyEmailCode(VerifyEmailCodeDto verifyEmailCodeDto) {
+  public void verifyEmailCode(VerifyEmailCodeDto verifyEmailCodeDto) {
     String email = verifyEmailCodeDto.getEmail();
     String code = verifyEmailCodeDto.getVerificationCode();
 
@@ -219,43 +221,15 @@ public class AuthServiceImpl implements AuthService {
       throw new AuthenticationFailedException("인증 코드가 일치하지 않거나 만료되었습니다.");
     }
 
-    // 인증 코드 삭제
-    verificationCodePort.removeVerificationCode(email);
-
-    if (integratedAccountRepository.existsByIntegratedAccountEmail(email)) {
-      throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
+    if (!verifiedEmailRepository.existsByEmail(email)) {
+      VerifiedEmail verifiedEmail = VerifiedEmail.createVerifiedEmail(email);
+      verifiedEmailRepository.save(verifiedEmail);
+    } else {
+      throw new IllegalArgumentException("이미 인증된 이메일입니다.");
     }
 
-    // 이메일로 통합 계정 생성
-    IntegratedAccount integratedAccount = IntegratedAccount.createAccount(email);
-
-    User user = integratedAccount.getUser();
-
-    // 기본 사용자 역할 추가
-    Role userRole =
-        roleRepository
-            .findByName("ROLE_USER")
-            .orElseThrow(() -> new RuntimeException("기본 역할(ROLE_USER)을 찾을 수 없습니다."));
-    user.addRole(userRole);
-
-    // 사용자 상태 활성화 설정
-    user.updateStatus(UserStatus.ACTIVE);
-
-    // 사용자 저장 (CascadeType.ALL로 IntegratedAccount도 함께 저장됨)
-    User savedUser = userRepository.save(user);
-
-    // 토큰 생성
-    String accessToken = securityPort.createAccessToken(savedUser.getId(), savedUser.getEmail());
-    String refreshToken = securityPort.createRefreshToken(savedUser.getId(), savedUser.getEmail());
-
-    savedUser.updateRefreshToken(refreshToken);
-    userRepository.save(savedUser);
-
-    return TokenDto.builder()
-        .accessToken(accessToken)
-        .refreshToken(refreshToken)
-        .accessTokenExpiresIn(securityPort.getAccessTokenExpirationTime())
-        .build();
+    // 인증 코드 삭제
+    verificationCodePort.removeVerificationCode(email);
   }
 
   @Override
@@ -305,5 +279,16 @@ public class AuthServiceImpl implements AuthService {
 
   private String generateRandomCode() {
     return CodeGenerator.generateVerificationCode(4);
+  }
+
+  private TokenDto issueTokens(User user) {
+    String accessToken = securityPort.createAccessToken(user.getId(), user.getEmail());
+    String refreshToken = securityPort.createRefreshToken(user.getId(), user.getEmail());
+
+    return TokenDto.builder()
+        .accessToken(accessToken)
+        .refreshToken(refreshToken)
+        .accessTokenExpiresIn(securityPort.getAccessTokenExpirationTime())
+        .build();
   }
 }

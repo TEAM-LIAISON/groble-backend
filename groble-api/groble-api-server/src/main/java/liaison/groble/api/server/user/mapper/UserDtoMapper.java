@@ -17,8 +17,8 @@ public class UserDtoMapper {
       UserMyPageSummaryDto userMyPageSummaryDto) {
 
     UserTypeDto userTypeDto =
-        userMyPageSummaryDto.getUserTypeDescription() != null
-            ? UserTypeDto.valueOf(userMyPageSummaryDto.getUserTypeDescription())
+        userMyPageSummaryDto.getUserTypeName() != null
+            ? UserTypeDto.valueOf(userMyPageSummaryDto.getUserTypeName())
             : null;
 
     return UserMyPageSummaryResponse.builder()

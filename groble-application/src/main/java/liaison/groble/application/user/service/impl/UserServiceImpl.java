@@ -213,7 +213,7 @@ public class UserServiceImpl implements UserService {
         .id(user.getId())
         .nickName(user.getNickName())
         .profileImageUrl(user.getProfileImageUrl())
-        .userTypeDescription(user.getLastUserType().getDescription())
+        .userTypeName(user.getLastUserType().name())
         .canSwitchToSeller(existsSellerProfile)
         .build();
   }

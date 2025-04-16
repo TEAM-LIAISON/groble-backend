@@ -15,6 +15,6 @@ public class UserMyPageSummaryDto {
   private Long id;
   private String nickName;
   private String profileImageUrl;
-  private String userTypeDescription;
+  private String userTypeName;
   private boolean canSwitchToSeller;
 }

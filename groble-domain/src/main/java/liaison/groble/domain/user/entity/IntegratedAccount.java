@@ -38,15 +38,20 @@ public class IntegratedAccount {
   private String password;
 
   @Builder
-  private IntegratedAccount(User user, String integratedAccountEmail) {
+  private IntegratedAccount(User user, String integratedAccountEmail, String encodedPassword) {
     this.user = user;
     this.integratedAccountEmail = integratedAccountEmail;
+    this.password = encodedPassword;
   }
 
   // 통합 계정 생성 메서드 - 개선된 버전 (User 생성 전)
-  public static IntegratedAccount createAccount(String email) {
+  public static IntegratedAccount createAccount(String email, String encodedPassword) {
     IntegratedAccount account =
-        IntegratedAccount.builder().user(null).integratedAccountEmail(email).build();
+        IntegratedAccount.builder()
+            .user(null)
+            .integratedAccountEmail(email)
+            .encodedPassword(encodedPassword)
+            .build();
 
     // User 객체 생성 및 양방향 연결
     User user = User.fromIntegratedAccount(account);

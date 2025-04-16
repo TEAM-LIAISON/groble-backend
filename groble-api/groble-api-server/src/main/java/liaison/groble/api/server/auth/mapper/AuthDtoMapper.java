@@ -13,7 +13,7 @@ import liaison.groble.application.auth.dto.VerifyEmailCodeDto;
 
 @Component
 public class AuthDtoMapper {
-  /** API 요청 DTO를 서비스 레이어 DTO로 변환 */
+
   public SignUpDto toServiceSignUpDto(SignUpRequest request) {
     return SignUpDto.builder().email(request.getEmail()).password(request.getPassword()).build();
   }
