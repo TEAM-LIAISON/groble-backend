@@ -41,7 +41,7 @@ import lombok.extern.slf4j.Slf4j;
 /** 유저 관련 API 컨트롤러 */
 @Slf4j
 @RestController
-@RequestMapping("/api/v1/")
+@RequestMapping("/api/v1")
 @RequiredArgsConstructor
 @Tag(name = "사용자 정보 API", description = "닉네임, 비밀번호 설정 및 계정 전환 API")
 public class UserController {

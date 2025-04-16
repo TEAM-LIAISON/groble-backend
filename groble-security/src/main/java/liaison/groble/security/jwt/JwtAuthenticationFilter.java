@@ -188,7 +188,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     // Bearer 헤더에 없으면 쿠키에서 추출 시도
     if (token == null) {
-      token = extractTokenFromCookie(request, "access_token");
+      token = extractTokenFromCookie(request, "accessToken");
     }
 
     return token;
