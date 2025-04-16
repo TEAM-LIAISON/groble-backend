@@ -262,4 +262,13 @@ public class UserServiceImpl implements UserService {
   //        // 판매자 권한은 있지만, 판매자 계정이 없는 경우
   //        return hasSellerRole && !hasSellerProfile;
   //    }
+
+  @Override
+  public boolean getAdvertisingAgreementStatus(Long userId) {
+    User user =
+        userRepository
+            .findById(userId)
+            .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
+    return user.hasAgreedToAdvertising();
+  }
 }

@@ -375,4 +375,18 @@ public class User extends BaseTimeEntity {
         .filter(type -> !hasAgreedTo(type))
         .collect(Collectors.toList());
   }
+
+  /**
+   * 광고성 정보 수신 동의 여부 확인
+   *
+   * @return true: 동의함, false: 미동의
+   */
+  public boolean hasAgreedToAdvertising() {
+    return termsAgreements.stream()
+        .anyMatch(
+            agreement ->
+                agreement.getTerms().getType() == TermsType.ADVERTISING
+                    && agreement.isAgreed()
+                    && agreement.getTerms().getEffectiveTo() == null);
+  }
 }

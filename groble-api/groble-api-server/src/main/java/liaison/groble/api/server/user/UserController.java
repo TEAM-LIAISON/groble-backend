@@ -163,4 +163,13 @@ public class UserController {
 
     return ResponseEntity.ok(GrobleResponse.success(response, "마이페이지 상세 조회 성공"));
   }
+
+  @Operation(summary = "광고성 정보 수신 동의 여부 조회", description = "현재 로그인한 사용자의 광고성 정보 수신 동의 여부를 조회합니다.")
+  @GetMapping("/users/me/advertising-agreement")
+  public ResponseEntity<GrobleResponse<Boolean>> getAdvertisingAgreementStatus(
+      @Auth Accessor accessor) {
+    // 1. 서비스 호출
+    boolean agreed = userService.getAdvertisingAgreementStatus(accessor.getUserId());
+    return ResponseEntity.ok(GrobleResponse.success(agreed, "광고성 정보 수신 동의 여부 조회 성공"));
+  }
 }
