@@ -25,7 +25,7 @@ public class VerifyEmailCodeRequest {
   private String email;
 
   @NotBlank(message = "인증 코드는 필수 입력값입니다.")
-  @Size(min = 6, max = 6, message = "인증 코드는 6자리여야 합니다.")
-  @Schema(description = "이메일로 발송된 인증 코드", example = "123456")
+  @Size(min = 4, max = 4, message = "인증 코드는 4자리여야 합니다.")
+  @Schema(description = "이메일로 발송된 인증 코드", example = "1234")
   private String verificationCode;
 }
