@@ -15,4 +15,5 @@ public class UserMyPageSummaryResponse {
   private String nickName;
   private String profileImageUrl;
   private UserTypeDto userType;
+  private boolean canSwitchToSeller;
 }

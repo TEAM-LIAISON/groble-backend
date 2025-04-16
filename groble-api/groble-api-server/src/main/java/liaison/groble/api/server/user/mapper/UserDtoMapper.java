@@ -25,6 +25,7 @@ public class UserDtoMapper {
         .nickName(userMyPageSummaryDto.getNickName())
         .profileImageUrl(userMyPageSummaryDto.getProfileImageUrl())
         .userType(userTypeDto)
+        .canSwitchToSeller(userMyPageSummaryDto.isCanSwitchToSeller())
         .build();
   }
 

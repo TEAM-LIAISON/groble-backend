@@ -25,6 +25,7 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
 import liaison.groble.domain.common.entity.BaseTimeEntity;
+import liaison.groble.domain.seller.entity.SellerProfile;
 import liaison.groble.domain.user.enums.AccountType;
 import liaison.groble.domain.user.enums.TermsType;
 import liaison.groble.domain.user.enums.UserStatus;
@@ -76,6 +77,9 @@ public class User extends BaseTimeEntity {
   /** 소셜 계정 정보 (소셜 로그인) 양방향 관계로 SocialAccount와 연결 */
   @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
   private SocialAccount socialAccount;
+
+  @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+  private SellerProfile sellerProfile;
 
   /** 마지막 로그인 시간 */
   @Column(name = "last_login_at")

@@ -197,11 +197,14 @@ public class UserServiceImpl implements UserService {
             .findById(userId)
             .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
 
+    boolean existsSellerProfile = user.getSellerProfile() != null;
+
     return UserMyPageSummaryDto.builder()
         .id(user.getId())
         .nickName(user.getNickName())
         .profileImageUrl(user.getProfileImageUrl())
         .userTypeDescription(user.getLastUserType().getDescription())
+        .canSwitchToSeller(existsSellerProfile)
         .build();
   }
 
