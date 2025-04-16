@@ -15,14 +15,11 @@ import org.springframework.web.bind.annotation.RestController;
 import liaison.groble.api.model.auth.request.EmailVerificationRequest;
 import liaison.groble.api.model.auth.request.ResetPasswordRequest;
 import liaison.groble.api.model.auth.request.SignInRequest;
-import liaison.groble.api.model.auth.request.SignUpRequest;
 import liaison.groble.api.model.auth.request.VerifyEmailCodeRequest;
 import liaison.groble.api.model.auth.response.SignInResponse;
-import liaison.groble.api.model.auth.response.SignUpResponse;
 import liaison.groble.api.server.auth.mapper.AuthDtoMapper;
 import liaison.groble.application.auth.dto.EmailVerificationDto;
 import liaison.groble.application.auth.dto.SignInDto;
-import liaison.groble.application.auth.dto.SignUpDto;
 import liaison.groble.application.auth.dto.TokenDto;
 import liaison.groble.application.auth.dto.VerifyEmailCodeDto;
 import liaison.groble.application.auth.service.AuthService;
@@ -62,47 +59,48 @@ public class AuthController {
   @Value("${app.cookie.domain}")
   private String cookieDomain; // 쿠키 도메인 설정
 
-  /**
-   * 회원가입 API
-   *
-   * <p>이메일과 비밀번호로 회원가입 처리
-   *
-   * @param request 회원가입 요청 정보
-   * @return 회원가입 결과 (액세스 토큰, 리프레시 토큰 포함)
-   */
-  @Operation(summary = "회원가입", description = "새로운 사용자를 등록하고 인증 토큰을 발급합니다.")
-  @ApiResponses({
-    @ApiResponse(
-        responseCode = "201",
-        description = "회원가입 성공",
-        content = @Content(schema = @Schema(implementation = GrobleResponse.class))),
-    @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터"),
-    @ApiResponse(responseCode = "409", description = "이미 존재하는 이메일")
-  })
-  @PostMapping("/sign-up")
-  public ResponseEntity<GrobleResponse<SignUpResponse>> signUp(
-      @Parameter(description = "회원가입 정보", required = true) @Valid @RequestBody
-          SignUpRequest request,
-      HttpServletResponse response) {
-
-    log.info("회원가입 요청: {}", request.getEmail());
-
-    // 1. API DTO → 서비스 DTO 변환
-    SignUpDto signUpDto = authDtoMapper.toServiceSignUpDto(request);
-
-    // 2. 서비스 호출
-    TokenDto tokenDto = authService.signUp(signUpDto);
-
-    // 3. 토큰을 쿠키로 설정
-    addTokenCookies(response, tokenDto.getAccessToken(), tokenDto.getRefreshToken());
-
-    // 4. 사용자 정보만 응답 본문에 포함
-    SignUpResponse signUpResponse = SignUpResponse.of(request.getEmail());
-
-    // 5. API 응답 생성
-    return ResponseEntity.status(HttpStatus.CREATED)
-        .body(GrobleResponse.success(signUpResponse, "회원가입이 성공적으로 완료되었습니다.", 201));
-  }
+  // 기존 이메일, 비밀번호 기반 회원가입은 deprecated 되었습니다.
+  //  /**
+  //   * 회원가입 API
+  //   *
+  //   * <p>이메일과 비밀번호로 회원가입 처리
+  //   *
+  //   * @param request 회원가입 요청 정보
+  //   * @return 회원가입 결과 (액세스 토큰, 리프레시 토큰 포함)
+  //   */
+  //  @Operation(summary = "회원가입", description = "새로운 사용자를 등록하고 인증 토큰을 발급합니다.")
+  //  @ApiResponses({
+  //    @ApiResponse(
+  //        responseCode = "201",
+  //        description = "회원가입 성공",
+  //        content = @Content(schema = @Schema(implementation = GrobleResponse.class))),
+  //    @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터"),
+  //    @ApiResponse(responseCode = "409", description = "이미 존재하는 이메일")
+  //  })
+  //  @PostMapping("/sign-up")
+  //  public ResponseEntity<GrobleResponse<SignUpResponse>> signUp(
+  //      @Parameter(description = "회원가입 정보", required = true) @Valid @RequestBody
+  //          SignUpRequest request,
+  //      HttpServletResponse response) {
+  //
+  //    log.info("회원가입 요청: {}", request.getEmail());
+  //
+  //    // 1. API DTO → 서비스 DTO 변환
+  //    SignUpDto signUpDto = authDtoMapper.toServiceSignUpDto(request);
+  //
+  //    // 2. 서비스 호출
+  //    TokenDto tokenDto = authService.signUp(signUpDto);
+  //
+  //    // 3. 토큰을 쿠키로 설정
+  //    addTokenCookies(response, tokenDto.getAccessToken(), tokenDto.getRefreshToken());
+  //
+  //    // 4. 사용자 정보만 응답 본문에 포함
+  //    SignUpResponse signUpResponse = SignUpResponse.of(request.getEmail());
+  //
+  //    // 5. API 응답 생성
+  //    return ResponseEntity.status(HttpStatus.CREATED)
+  //        .body(GrobleResponse.success(signUpResponse, "회원가입이 성공적으로 완료되었습니다.", 201));
+  //  }
 
   /**
    * 로그인 API
