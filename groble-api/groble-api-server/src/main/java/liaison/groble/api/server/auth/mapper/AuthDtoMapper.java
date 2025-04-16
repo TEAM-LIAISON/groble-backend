@@ -26,10 +26,6 @@ public class AuthDtoMapper {
     return EmailVerificationDto.builder().email(request.getEmail()).build();
   }
 
-  public EmailVerificationDto toServiceEmailVerificationDto(EmailChangeRequest request) {
-    return EmailVerificationDto.builder().email(request.getEmail()).build();
-  }
-
   // 추가된 매퍼 메서드
   public VerifyEmailCodeDto toServiceVerifyEmailCodeDto(VerifyEmailCodeRequest request) {
     return VerifyEmailCodeDto.builder()
