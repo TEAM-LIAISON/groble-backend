@@ -75,8 +75,8 @@ public class AuthServiceImpl implements AuthService {
     String accessToken = securityPort.createAccessToken(savedUser.getId(), savedUser.getEmail());
     String refreshToken = securityPort.createRefreshToken(savedUser.getId(), savedUser.getEmail());
 
-    user.updateRefreshToken(refreshToken);
-    userRepository.save(user);
+    savedUser.updateRefreshToken(refreshToken);
+    userRepository.save(savedUser);
 
     return TokenDto.builder()
         .accessToken(accessToken)
@@ -247,6 +247,9 @@ public class AuthServiceImpl implements AuthService {
     // 토큰 생성
     String accessToken = securityPort.createAccessToken(savedUser.getId(), savedUser.getEmail());
     String refreshToken = securityPort.createRefreshToken(savedUser.getId(), savedUser.getEmail());
+
+    savedUser.updateRefreshToken(refreshToken);
+    userRepository.save(savedUser);
 
     return TokenDto.builder()
         .accessToken(accessToken)
