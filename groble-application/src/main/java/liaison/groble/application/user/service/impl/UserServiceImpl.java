@@ -42,35 +42,45 @@ public class UserServiceImpl implements UserService {
    * 사용자 역할 전환 (판매자/구매자 모드 전환)
    *
    * @param userId 사용자 ID
-   * @param userType 전환할 유형 ("SELLER" 또는 "BUYER")
+   * @param userTypeString 전환할 유형 ("SELLER" 또는 "BUYER")
+   * @return 전환 성공 여부
+   */
+  /**
+   * 사용자 역할 전환 (판매자 모드 전환만 검증)
+   *
+   * @param userId 사용자 ID
+   * @param userTypeString 전환할 유형 ("SELLER" 또는 "BUYER")
    * @return 전환 성공 여부
    */
   @Override
   @Transactional
-  public boolean switchUserType(Long userId, UserType userType) {
-
+  public boolean switchUserType(Long userId, String userTypeString) {
     User user =
         userRepository
             .findById(userId)
             .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
 
-    // 요청한 역할을 가지고 있는지 확인
-    boolean hasSeller =
-        user.getUserRoles().stream()
-            .anyMatch(userRole -> userRole.getRole().getName().equals("ROLE_SELLER"));
-    boolean hasBuyer =
-        user.getUserRoles().stream()
-            .anyMatch(userRole -> userRole.getRole().getName().equals("ROLE_USER"));
-
-    if (("SELLER".equals(userType) && !hasSeller) || ("BUYER".equals(userType) && !hasBuyer)) {
-      log.warn("사용자가 전환하려는 역할({})을 가지고 있지 않습니다: {}", userType, user.getEmail());
-      return false;
+    // 문자열 → Enum 변환
+    UserType userType;
+    try {
+      userType = UserType.valueOf(userTypeString.toUpperCase());
+    } catch (IllegalArgumentException | NullPointerException e) {
+      throw new IllegalArgumentException("유효하지 않은 사용자 유형입니다: " + userTypeString);
     }
 
+    // SELLER로 전환할 경우만 검증
+    if (userType == UserType.SELLER) {
+      if (user.getSellerProfile() == null) {
+        log.warn("전환 실패: 사용자 {}는 SELLER 프로필이 없습니다.", user.getId());
+        return false;
+      }
+    }
+
+    // 전환
     user.updateLastUserType(userType);
     userRepository.save(user);
 
-    log.info("사용자 역할 전환 완료: {} -> {}", user.getEmail(), userType);
+    log.info("역할 전환 성공: {} → {}", user.getEmail(), userType);
     return true;
   }
 

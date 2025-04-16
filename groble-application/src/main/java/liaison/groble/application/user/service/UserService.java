@@ -2,7 +2,6 @@ package liaison.groble.application.user.service;
 
 import liaison.groble.application.user.dto.UserMyPageDetailDto;
 import liaison.groble.application.user.dto.UserMyPageSummaryDto;
-import liaison.groble.domain.user.enums.UserType;
 
 public interface UserService {
 
@@ -18,10 +17,10 @@ public interface UserService {
    * 사용자 역할 전환
    *
    * @param userId 사용자 ID
-   * @param userType 전환할 유형 (SELLER 또는 BUYER)
+   * @param userTypeString 전환할 유형 ("SELLER", "BUYER")
    * @return 전환 성공 여부
    */
-  boolean switchUserType(Long userId, UserType userType);
+  boolean switchUserType(Long userId, String userTypeString);
 
   /**
    * 사용자 로그인 이후 라우팅 경로 조회 "/home", "/select/type" 등의 값을 반환
