@@ -261,16 +261,8 @@ public class AuthController {
    * @param request 인증 코드 검증 요청
    * @return 인증 코드 검증 결과
    */
-  @Operation(summary = "이메일 인증 코드 확인", description = "이메일로 발송된 인증 코드의 유효성을 검증합니다.")
-  @ApiResponses({
-    @ApiResponse(
-        responseCode = "200",
-        description = "인증 성공",
-        content = @Content(schema = @Schema(implementation = GrobleResponse.class))),
-    @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터 또는 유효하지 않은 인증 코드"),
-    @ApiResponse(responseCode = "404", description = "존재하지 않는 이메일 또는 만료된 인증 코드")
-  })
-  @PostMapping("/verify-code")
+  @Operation(summary = "회원가입 시 이메일 인증 코드 확인", description = "이메일로 발송된 인증 코드의 유효성을 검증합니다.")
+  @PostMapping("/verify-code/sign-up")
   public ResponseEntity<GrobleResponse<Void>> verifyEmailCode(
       @Valid @RequestBody VerifyEmailCodeRequest request) {
     log.info("이메일 인증 코드 검증 요청: {}", request.getEmail());
@@ -283,6 +275,24 @@ public class AuthController {
 
     // API 응답 생성
     return ResponseEntity.ok().body(GrobleResponse.success(null, "이메일 인증이 성공적으로 완료되었습니다.", 200));
+  }
+
+  @Operation(
+      summary = "이메일 변경 시 이메일 인증 코드 확인",
+      description = "이메일 변경 시 인증 코드의 유효성을 검증하고 이메일을 변경합니다.")
+  @PostMapping("/verify-code/change-email")
+  public ResponseEntity<GrobleResponse<Void>> verifyEmailCodeForChangeEmail(
+      @Auth Accessor accessor, @Valid @RequestBody VerifyEmailCodeRequest request) {
+    log.info("이메일 변경 인증 코드 검증 요청: {}", request.getEmail());
+
+    // API DTO → 서비스 DTO 변환
+    VerifyEmailCodeDto verifyEmailCodeDto = authDtoMapper.toServiceVerifyEmailCodeDto(request);
+
+    // 서비스 호출
+    authService.verifyEmailCodeForChangeEmail(accessor.getUserId(), verifyEmailCodeDto);
+
+    // API 응답 생성
+    return ResponseEntity.ok().body(GrobleResponse.success(null, "이메일 변경 인증이 성공적으로 완료되었습니다.", 200));
   }
 
   /** 토큰 검증 및 로그인 상태 확인 API OAuth2 로그인 처리 후 프론트엔드에서 호출하여 토큰 상태 확인 */

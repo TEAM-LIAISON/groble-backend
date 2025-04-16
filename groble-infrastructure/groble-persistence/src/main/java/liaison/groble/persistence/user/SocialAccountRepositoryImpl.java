@@ -21,8 +21,18 @@ public class SocialAccountRepositoryImpl implements SocialAccountRepository {
   }
 
   @Override
+  public boolean existsBySocialAccountEmail(String socialAccountEmail) {
+    return jpaSocialAccountRepository.existsBySocialAccountEmail(socialAccountEmail);
+  }
+
+  @Override
   public Optional<SocialAccount> findByProviderIdAndProviderType(
       String providerId, ProviderType providerType) {
     return jpaSocialAccountRepository.findByProviderIdAndProviderType(providerId, providerType);
+  }
+
+  @Override
+  public SocialAccount save(SocialAccount socialAccount) {
+    return jpaSocialAccountRepository.save(socialAccount);
   }
 }

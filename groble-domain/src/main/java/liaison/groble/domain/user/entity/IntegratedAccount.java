@@ -34,24 +34,19 @@ public class IntegratedAccount {
   @Column(nullable = false, unique = true)
   private String integratedAccountEmail;
 
-  @Column(nullable = false)
+  @Column(unique = true)
   private String password;
 
   @Builder
-  private IntegratedAccount(User user, String integratedAccountEmail, String password) {
+  private IntegratedAccount(User user, String integratedAccountEmail) {
     this.user = user;
     this.integratedAccountEmail = integratedAccountEmail;
-    this.password = password;
   }
 
   // 통합 계정 생성 메서드 - 개선된 버전 (User 생성 전)
-  public static IntegratedAccount createAccount(String email, String password) {
+  public static IntegratedAccount createAccount(String email) {
     IntegratedAccount account =
-        IntegratedAccount.builder()
-            .user(null)
-            .integratedAccountEmail(email)
-            .password(password)
-            .build();
+        IntegratedAccount.builder().user(null).integratedAccountEmail(email).build();
 
     // User 객체 생성 및 양방향 연결
     User user = User.fromIntegratedAccount(account);

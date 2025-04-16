@@ -19,10 +19,13 @@ import liaison.groble.domain.port.EmailSenderPort;
 import liaison.groble.domain.port.VerificationCodePort;
 import liaison.groble.domain.user.entity.IntegratedAccount;
 import liaison.groble.domain.user.entity.Role;
+import liaison.groble.domain.user.entity.SocialAccount;
 import liaison.groble.domain.user.entity.User;
+import liaison.groble.domain.user.enums.AccountType;
 import liaison.groble.domain.user.enums.UserStatus;
 import liaison.groble.domain.user.repository.IntegratedAccountRepository;
 import liaison.groble.domain.user.repository.RoleRepository;
+import liaison.groble.domain.user.repository.SocialAccountRepository;
 import liaison.groble.domain.user.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -38,6 +41,7 @@ public class AuthServiceImpl implements AuthService {
   private final VerificationCodePort verificationCodePort;
   private final RoleRepository roleRepository;
   private final IntegratedAccountRepository integratedAccountRepository;
+  private final SocialAccountRepository socialAccountRepository;
 
   @Override
   @Transactional
@@ -51,8 +55,7 @@ public class AuthServiceImpl implements AuthService {
     String encodedPassword = securityPort.encodePassword(signUpDto.getPassword());
 
     // IntegratedAccount 생성 (내부적으로 User 객체 생성 및 연결)
-    IntegratedAccount integratedAccount =
-        IntegratedAccount.createAccount(signUpDto.getEmail(), encodedPassword);
+    IntegratedAccount integratedAccount = IntegratedAccount.createAccount(signUpDto.getEmail());
 
     User user = integratedAccount.getUser();
 
@@ -218,6 +221,73 @@ public class AuthServiceImpl implements AuthService {
 
     // 인증 코드 삭제
     verificationCodePort.removeVerificationCode(email);
+
+    if (integratedAccountRepository.existsByIntegratedAccountEmail(email)) {
+      throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
+    }
+
+    // 이메일로 통합 계정 생성
+    IntegratedAccount integratedAccount = IntegratedAccount.createAccount(email);
+
+    User user = integratedAccount.getUser();
+
+    // 기본 사용자 역할 추가
+    Role userRole =
+        roleRepository
+            .findByName("ROLE_USER")
+            .orElseThrow(() -> new RuntimeException("기본 역할(ROLE_USER)을 찾을 수 없습니다."));
+    user.addRole(userRole);
+
+    // 사용자 상태 활성화 설정
+    user.updateStatus(UserStatus.ACTIVE);
+
+    // 사용자 저장 (CascadeType.ALL로 IntegratedAccount도 함께 저장됨)
+    User savedUser = userRepository.save(user);
+  }
+
+  @Override
+  public void verifyEmailCodeForChangeEmail(Long userId, VerifyEmailCodeDto verifyEmailCodeDto) {
+    String email = verifyEmailCodeDto.getEmail();
+    String code = verifyEmailCodeDto.getVerificationCode();
+
+    // 인터페이스를 통한 인증 코드 검증
+    boolean isValid = verificationCodePort.validateVerificationCode(email, code);
+
+    if (!isValid) {
+      throw new AuthenticationFailedException("인증 코드가 일치하지 않거나 만료되었습니다.");
+    }
+
+    // 인증 코드 삭제
+    verificationCodePort.removeVerificationCode(email);
+
+    // 이메일 변경 요청과 새로운 회원 생성에 대한 인증 로직 처리
+    if (userId != null) {
+      User user =
+          userRepository
+              .findById(userId)
+              .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+
+      AccountType accountType = user.getAccountType();
+      if (accountType == AccountType.INTEGRATED) {
+        // 통합 계정인 경우 이메일 변경 요청
+        if (!integratedAccountRepository.existsByIntegratedAccountEmail(email)) {
+          IntegratedAccount account = user.getIntegratedAccount();
+          account.updateEmail(email);
+          integratedAccountRepository.save(account);
+        } else {
+          throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
+        }
+      } else {
+        // 소셜 계정인 경우 이메일 변경 요청
+        if (!socialAccountRepository.existsBySocialAccountEmail(email)) {
+          SocialAccount account = user.getSocialAccount();
+          account.updateEmail(email);
+          socialAccountRepository.save(account);
+        } else {
+          throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
+        }
+      }
+    }
   }
 
   private String generateRandomCode() {

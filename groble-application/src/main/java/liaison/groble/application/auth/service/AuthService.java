@@ -59,4 +59,12 @@ public interface AuthService {
    * @param verifyEmailCodeDto 이메일 인증 코드 정보
    */
   void verifyEmailCode(VerifyEmailCodeDto verifyEmailCodeDto);
+
+  /**
+   * 이메일 인증 코드 검증
+   *
+   * @param userId 사용자 식별 PK
+   * @param verifyEmailCodeDto 이메일 인증 코드 정보
+   */
+  void verifyEmailCodeForChangeEmail(Long userId, VerifyEmailCodeDto verifyEmailCodeDto);
 }
