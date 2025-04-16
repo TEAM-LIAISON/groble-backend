@@ -80,7 +80,7 @@ springdoc:
   paths-to-match:
     - /api/**
   packages-to-scan:
-    - liaison.groble.api.server.auth
+    - liaison.groble.api.server
   show-actuator: false
   model-and-view-allowed: true
 

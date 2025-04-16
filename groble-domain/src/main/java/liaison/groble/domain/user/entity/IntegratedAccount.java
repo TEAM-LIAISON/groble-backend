@@ -60,17 +60,6 @@ public class IntegratedAccount {
     return account;
   }
 
-  // 이전 버전의 생성 메서드 (후방 호환성 유지)
-  public static IntegratedAccount createIntegratedAccount(
-      User user, String email, String password) {
-    return IntegratedAccount.builder()
-        .user(user)
-        .integratedAccountEmail(email)
-        .password(password)
-        .build();
-  }
-
-  // User 설정 메서드
   public void setUser(User user) {
     this.user = user;
   }
