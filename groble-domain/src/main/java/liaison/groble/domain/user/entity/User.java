@@ -112,15 +112,6 @@ public class User extends BaseTimeEntity {
   @Column(name = "status_changed_at")
   private Instant statusChangedAt;
 
-  /** 마케팅 수신 동의 여부 */
-  @Builder.Default
-  @Column(name = "marketing_consent", nullable = false)
-  private boolean marketingConsent = false;
-
-  /** 마케팅 수신 동의 시간 */
-  @Column(name = "marketing_consent_at")
-  private Instant marketingConsentAt;
-
   /** 마지막으로 사용한 사용자 유형 (SELLER 또는 BUYER) */
   @Column(name = "last_user_type", length = 20)
   private UserType lastUserType;
@@ -318,18 +309,6 @@ public class User extends BaseTimeEntity {
    */
   public boolean isLoginable() {
     return this.status.isLoginable();
-  }
-
-  /**
-   * 마케팅 수신 동의 설정
-   *
-   * @param consent 동의 여부
-   */
-  public void setMarketingConsent(boolean consent) {
-    this.marketingConsent = consent;
-    if (consent) {
-      this.marketingConsentAt = Instant.now();
-    }
   }
 
   /**
