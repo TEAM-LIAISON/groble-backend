@@ -20,7 +20,9 @@ import liaison.groble.api.model.user.response.NicknameDuplicateCheckResponse;
 import liaison.groble.api.model.user.response.NicknameResponse;
 import liaison.groble.api.model.user.response.UserMyPageDetailResponse;
 import liaison.groble.api.model.user.response.UserMyPageSummaryResponse;
+import liaison.groble.api.server.auth.mapper.AuthDtoMapper;
 import liaison.groble.api.server.user.mapper.UserDtoMapper;
+import liaison.groble.application.auth.service.AuthService;
 import liaison.groble.application.user.dto.UserMyPageDetailDto;
 import liaison.groble.application.user.dto.UserMyPageSummaryDto;
 import liaison.groble.application.user.service.UserService;
@@ -47,6 +49,8 @@ import lombok.extern.slf4j.Slf4j;
 public class UserController {
   private final UserService userService;
   private final UserDtoMapper userDtoMapper;
+  private final AuthDtoMapper authDtoMapper;
+  private final AuthService authService;
 
   /** 역할 전환 API 판매자/구매자 모드 전환 */
   @Operation(summary = "가입 유형 전환", description = "판매자 또는 구매자로 가입 유형을 전환합니다.")

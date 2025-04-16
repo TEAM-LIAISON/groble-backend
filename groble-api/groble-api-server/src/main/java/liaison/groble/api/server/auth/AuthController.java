@@ -190,15 +190,7 @@ public class AuthController {
    * @param request 인증 코드를 보낼 이메일 정보
    * @return 이메일 발송 결과
    */
-  @Operation(summary = "회원가입 인증", description = "회원가입할 이메일에게 인증 코드를 발급합니다.")
-  @ApiResponses({
-    @ApiResponse(
-        responseCode = "200",
-        description = "회원가입 인증 성공",
-        content = @Content(schema = @Schema(implementation = GrobleResponse.class))),
-    @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터"),
-    @ApiResponse(responseCode = "401", description = "인증 실패")
-  })
+  @Operation(summary = "회원가입 인증 및 이메일 변경 인증", description = "사용자가 기입한 이메일에 인증 코드를 발급합니다.")
   @PostMapping("/email-verification")
   public ResponseEntity<GrobleResponse<Void>> sendEmailVerification(
       @Parameter(description = "이메일 인증 정보", required = true) @Valid @RequestBody
