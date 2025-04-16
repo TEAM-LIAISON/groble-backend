@@ -16,4 +16,6 @@ public interface TermsRepository {
   Optional<Terms> findById(Long id);
 
   Terms save(Terms terms);
+
+  Optional<Terms> findTopByTypeAndEffectiveToIsNullOrderByEffectiveFromDesc(TermsType type);
 }

@@ -1,5 +1,6 @@
 package liaison.groble.api.model.terms.response;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 import liaison.groble.api.model.terms.enums.TermsTypeDto;
@@ -22,7 +23,7 @@ public class TermsAgreementResponse {
   private boolean required;
   private String contentUrl;
   private boolean agreed;
-  private LocalDateTime agreedAt;
+  private Instant agreedAt;
   private LocalDateTime effectiveFrom;
   private LocalDateTime effectiveTo;
 }

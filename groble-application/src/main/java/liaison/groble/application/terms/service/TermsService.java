@@ -6,11 +6,16 @@ import liaison.groble.application.terms.dto.TermsAgreementDto;
 
 public interface TermsService {
 
-  public TermsAgreementDto agreeToTerms(TermsAgreementDto dto);
+  TermsAgreementDto agreeToTerms(TermsAgreementDto dto);
 
-  public TermsAgreementDto withdrawTermsAgreement(TermsAgreementDto dto);
+  TermsAgreementDto withdrawTermsAgreement(TermsAgreementDto dto);
 
-  public List<TermsAgreementDto> getUserTermsAgreements(Long userId);
+  List<TermsAgreementDto> getUserTermsAgreements(Long userId);
 
-  public List<TermsAgreementDto> getActiveTerms();
+  List<TermsAgreementDto> getActiveTerms();
+
+  boolean getAdvertisingAgreementStatus(Long userId);
+
+  void updateAdvertisingAgreementStatus(
+      Long userId, boolean agreed, String ipAddress, String userAgent);
 }

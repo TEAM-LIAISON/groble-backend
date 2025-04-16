@@ -389,4 +389,37 @@ public class User extends BaseTimeEntity {
                     && agreement.isAgreed()
                     && agreement.getTerms().getEffectiveTo() == null);
   }
+
+  /**
+   * 광고성 정보 수신 동의 여부 업데이트
+   *
+   * @param advertisingTerms 현재 유효한 광고성 정보 약관
+   * @param agreed true: 동의함, false: 미동의
+   * @param ip 동의 또는 철회 시 IP
+   * @param userAgent 동의 또는 철회 시 User-Agent
+   */
+  public void updateAdvertisingAgreement(
+      Terms advertisingTerms, boolean agreed, String ip, String userAgent) {
+    UserTermsAgreement existingAgreement =
+        termsAgreements.stream()
+            .filter(a -> a.getTerms().equals(advertisingTerms))
+            .findFirst()
+            .orElse(null);
+
+    if (existingAgreement != null) {
+      existingAgreement.updateAgreement(agreed, Instant.now(), ip, userAgent);
+    } else {
+      UserTermsAgreement newAgreement =
+          UserTermsAgreement.builder()
+              .user(this)
+              .terms(advertisingTerms)
+              .agreed(agreed)
+              .agreedAt(Instant.now())
+              .agreedIp(ip)
+              .agreedUserAgent(userAgent)
+              .build();
+
+      termsAgreements.add(newAgreement);
+    }
+  }
 }

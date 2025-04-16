@@ -2,6 +2,7 @@ package liaison.groble.persistence.terms;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -25,4 +26,9 @@ public interface JpaTermsRepository extends JpaRepository<Terms, Long> {
       @Param("now") LocalDateTime now, @Param("now") LocalDateTime nowAgain);
 
   List<Terms> findByTypeIn(List<TermsType> types);
+
+  @Query(
+      "SELECT t FROM Terms t WHERE t.type = :type AND t.effectiveTo IS NULL ORDER BY t.effectiveFrom DESC")
+  Optional<Terms> findTopByTypeAndEffectiveToIsNullOrderByEffectiveFromDesc(
+      @Param("type") TermsType type);
 }

@@ -84,12 +84,4 @@ public interface UserService {
    * @return UserMyPageDetailDto 사용자 마이페이지 상세 정보
    */
   UserMyPageDetailDto getUserMyPageDetail(Long userId);
-
-  /**
-   * 광고성 정보 수신 동의 여부 조회
-   *
-   * @param userId 사용자 ID
-   * @return 광고성 정보 수신 동의 여부
-   */
-  boolean getAdvertisingAgreementStatus(Long userId);
 }

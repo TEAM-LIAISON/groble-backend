@@ -1,6 +1,8 @@
 package liaison.groble.application.terms.service.impl;
 
-import java.time.LocalDateTime;
+import static liaison.groble.domain.user.enums.TermsType.ADVERTISING;
+
+import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -122,13 +124,13 @@ public class TermsServiceImpl implements TermsService {
               .user(user)
               .terms(terms)
               .agreed(agreed)
-              .agreedAt(LocalDateTime.now())
+              .agreedAt(Instant.now())
               .agreedIp(ipAddress)
               .agreedUserAgent(userAgent)
               .build();
     } else {
       // 기존 동의 업데이트
-      agreement.updateAgreement(agreed, LocalDateTime.now(), ipAddress, userAgent);
+      agreement.updateAgreement(agreed, Instant.now(), ipAddress, userAgent);
     }
 
     return userTermsAgreementRepository.save(agreement);
@@ -168,5 +170,32 @@ public class TermsServiceImpl implements TermsService {
         .effectiveFrom(terms.getEffectiveFrom())
         .effectiveTo(terms.getEffectiveTo())
         .build();
+  }
+
+  @Override
+  public boolean getAdvertisingAgreementStatus(Long userId) {
+    User user =
+        userRepository
+            .findById(userId)
+            .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
+    return user.hasAgreedToAdvertising();
+  }
+
+  @Override
+  public void updateAdvertisingAgreementStatus(
+      Long userId, boolean agreed, String ipAddress, String userAgent) {
+    User user =
+        userRepository
+            .findById(userId)
+            .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
+
+    Terms advertisingTerms =
+        termsRepository
+            .findTopByTypeAndEffectiveToIsNullOrderByEffectiveFromDesc(ADVERTISING)
+            .orElseThrow(() -> new IllegalStateException("현재 유효한 광고성 정보 약관이 없습니다."));
+
+    user.updateAdvertisingAgreement(advertisingTerms, agreed, ipAddress, userAgent);
+
+    userRepository.save(user);
   }
 }
