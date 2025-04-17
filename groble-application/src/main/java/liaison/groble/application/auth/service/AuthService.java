@@ -30,6 +30,13 @@ public interface AuthService {
   void sendEmailVerificationForSignUp(EmailVerificationDto emailVerificationDto);
 
   /**
+   * 이메일 인증 메일 발송
+   *
+   * @param emailVerificationDto 이메일 정보
+   */
+  void sendEmailVerificationForChangeEmail(Long userId, EmailVerificationDto emailVerificationDto);
+
+  /**
    * 로그아웃 처리
    *
    * @param userId 사용자 식별 PK

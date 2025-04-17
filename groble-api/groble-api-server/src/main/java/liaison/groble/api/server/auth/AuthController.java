@@ -228,6 +228,26 @@ public class AuthController {
         .body(GrobleResponse.success(null, "인증 이메일이 발송되었습니다.", 200));
   }
 
+  @Operation(summary = "이메일 변경 이메일 인증", description = "사용자가 기입한 이메일에 인증 코드를 발급합니다.")
+  @PostMapping("/email-verification/change-email")
+  public ResponseEntity<GrobleResponse<Void>> sendEmailVerificationForChangeEmail(
+      @Auth Accessor accessor,
+      @Parameter(description = "이메일 인증 정보", required = true) @Valid @RequestBody
+          EmailVerificationRequest request) {
+    log.info("이메일 변경 인증 요청: {}", request.getEmail());
+
+    // 1. API DTO → 서비스 DTO 변환
+    EmailVerificationDto emailVerificationDto =
+        authDtoMapper.toServiceEmailVerificationDto(request);
+
+    // 2. 서비스 호출
+    authService.sendEmailVerificationForChangeEmail(accessor.getUserId(), emailVerificationDto);
+
+    // 3. API 응답 생성
+    return ResponseEntity.status(HttpStatus.OK)
+        .body(GrobleResponse.success(null, "인증 이메일이 발송되었습니다.", 200));
+  }
+
   @Operation(summary = "회원가입 시 이메일 인증 코드 확인", description = "이메일로 발송된 인증 코드의 유효성을 검증합니다.")
   @PostMapping("/verify-code/sign-up")
   public ResponseEntity<GrobleResponse<Void>> verifyEmailCode(

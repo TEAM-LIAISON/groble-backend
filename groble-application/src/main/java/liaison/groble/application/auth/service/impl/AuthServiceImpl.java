@@ -223,6 +223,39 @@ public class AuthServiceImpl implements AuthService {
     log.info("이메일 인증 코드 발송 완료: {}", email);
   }
 
+  @Override
+  @Transactional
+  public void sendEmailVerificationForChangeEmail(
+      Long userId, EmailVerificationDto emailVerificationDto) {
+    String email = emailVerificationDto.getEmail();
+    // 이메일 변경용 인증 코드 발송
+    User user =
+        userRepository
+            .findById(userId)
+            .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
+
+    AccountType accountType = user.getAccountType();
+
+    if (accountType.equals(AccountType.INTEGRATED)) {
+      if (integratedAccountRepository.existsByIntegratedAccountEmail(email)) {
+        throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
+      }
+    } else {
+      if (socialAccountRepository.existsBySocialAccountEmail(email)) {
+        throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
+      }
+    }
+
+    // 인증 코드 생성 (4자리 숫자)
+    String verificationCode = generateRandomCode();
+
+    // 인증 코드 저장 (15분 유효) - 인터페이스 사용
+    verificationCodePort.saveVerificationCode(email, verificationCode, 15);
+
+    // 이메일 발송
+    emailSenderPort.sendVerificationEmail(email, verificationCode);
+  }
+
   // 인증 코드 검증 메서드
   @Override
   @Transactional
