@@ -12,9 +12,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import liaison.groble.api.model.user.request.NicknameRequest;
-import liaison.groble.api.model.user.request.PasswordChangeRequest;
-import liaison.groble.api.model.user.request.PasswordRequest;
-import liaison.groble.api.model.user.request.PasswordResetRequest;
 import liaison.groble.api.model.user.request.UserTypeRequest;
 import liaison.groble.api.model.user.response.NicknameDuplicateCheckResponse;
 import liaison.groble.api.model.user.response.NicknameResponse;
@@ -66,31 +63,7 @@ public class UserController {
     }
   }
 
-  @Operation(summary = "비밀번호 생성/수정", description = "비밀번호를 생성 또는 수정합니다.")
-  @ApiResponses({
-    @ApiResponse(
-        responseCode = "200",
-        description = "비밀번호 생성/수정 성공",
-        content = @Content(schema = @Schema(implementation = GrobleResponse.class))),
-    @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터")
-  })
-  @PostMapping("/users/password")
-  public ResponseEntity<GrobleResponse<Void>> setPassword(
-      @Auth Accessor accessor, @Valid @RequestBody PasswordRequest request) {
-
-    userService.setOrUpdatePassword(accessor.getUserId(), request.getPassword());
-    return ResponseEntity.ok(GrobleResponse.success(null, "비밀번호가 설정되었습니다."));
-  }
-
   @Operation(summary = "닉네임 중복 확인", description = "닉네임이 이미 사용 중인지 확인합니다. 회원가입 및 닉네임 수정 시 사용됩니다.")
-  @ApiResponses(
-      value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "중복 여부 조회 성공",
-            content = @Content(schema = @Schema(implementation = GrobleResponse.class))),
-        @ApiResponse(responseCode = "400", description = "잘못된 요청 (닉네임 누락 또는 공백)")
-      })
   @GetMapping("/users/nickname/check")
   public ResponseEntity<GrobleResponse<NicknameDuplicateCheckResponse>> checkNicknameDuplicate(
       @RequestParam("value") @NotBlank String nickname) {
@@ -119,26 +92,6 @@ public class UserController {
     NicknameResponse response = NicknameResponse.of(setOrUpdateNickname);
 
     return ResponseEntity.ok(GrobleResponse.success(response, "닉네임이 설정되었습니다."));
-  }
-
-  // Deprecated
-
-  @Operation(summary = "비밀번호 재설정 이메일 요청", description = "등록된 이메일로 비밀번호 재설정 링크를 보냅니다.")
-  @PostMapping("/users/password/reset-request")
-  public ResponseEntity<GrobleResponse<Void>> requestPasswordReset(
-      @Valid @RequestBody PasswordResetRequest request) {
-
-    userService.sendPasswordResetToken(request.getEmail());
-    return ResponseEntity.ok(GrobleResponse.success(null, "비밀번호 재설정 링크를 이메일로 전송했습니다."));
-  }
-
-  @Operation(summary = "비밀번호 재설정", description = "토큰을 통해 새로운 비밀번호를 설정합니다.")
-  @PostMapping("/users/password/reset")
-  public ResponseEntity<GrobleResponse<Void>> resetPassword(
-      @Valid @RequestBody PasswordChangeRequest request) {
-
-    userService.resetPasswordWithToken(request.getToken(), request.getNewPassword());
-    return ResponseEntity.ok(GrobleResponse.success(null, "비밀번호가 성공적으로 변경되었습니다."));
   }
 
   @Operation(summary = "마이페이지 요약 정보 조회", description = "마이페이지 첫 화면에서 요약 정보를 조회합니다.")
