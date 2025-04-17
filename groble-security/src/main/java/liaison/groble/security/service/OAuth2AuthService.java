@@ -5,7 +5,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -17,8 +16,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import liaison.groble.domain.user.entity.Role;
 import liaison.groble.domain.user.entity.SocialAccount;
 import liaison.groble.domain.user.entity.User;
@@ -28,7 +25,6 @@ import liaison.groble.domain.user.enums.UserStatus;
 import liaison.groble.domain.user.repository.RoleRepository;
 import liaison.groble.domain.user.repository.SocialAccountRepository;
 import liaison.groble.domain.user.repository.UserRepository;
-import liaison.groble.security.jwt.JwtTokenProvider;
 import liaison.groble.security.oauth2.exception.OAuth2AuthenticationProcessingException;
 import liaison.groble.security.oauth2.userinfo.OAuth2UserInfo;
 import liaison.groble.security.oauth2.userinfo.OAuth2UserInfoFactory;
@@ -45,12 +41,6 @@ public class OAuth2AuthService extends DefaultOAuth2UserService {
   private final UserRepository userRepository;
   private final RoleRepository roleRepository;
   private final SocialAccountRepository socialAccountRepository;
-  private final JwtTokenProvider jwtTokenProvider;
-  private final RedisTemplate<String, Object> redisTemplate;
-  private final ObjectMapper objectMapper;
-
-  // Redis에 토큰 저장 시 사용할 키 접두사
-  private static final String REFRESH_TOKEN_KEY_PREFIX = "refresh_token:";
 
   /**
    * OAuth2 사용자 정보 로드 및 처리 Spring Security OAuth2의 UserService 인터페이스 구현

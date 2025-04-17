@@ -94,30 +94,7 @@ public class UserServiceImpl implements UserService {
             .orElseThrow(() -> new IllegalArgumentException("등록되지 않은 이메일입니다."));
 
     User user = account.getUser();
-
-    // 기본 정보가 없는 경우
-    if (user.getNickName() == null || user.getNickName().isEmpty()) {
-      return "NONE";
-    }
-
-    // 사용자 역할 확인
-    boolean isSeller =
-        user.getUserRoles().stream()
-            .anyMatch(userRole -> userRole.getRole().getName().equals("ROLE_SELLER"));
-    boolean isBuyer =
-        user.getUserRoles().stream()
-            .anyMatch(userRole -> userRole.getRole().getName().equals("ROLE_USER"));
-
-    // 둘 다 가진 경우 마지막 사용 역할 반환
-    if (isSeller && isBuyer) {
-      String lastUserType = user.getLastUserType().getDescription();
-      // 마지막 사용 역할이 없는 경우 기본값으로 BUYER 반환
-      return lastUserType != null ? lastUserType : "BUYER";
-    } else if (isSeller) {
-      return "SELLER";
-    } else {
-      return "BUYER";
-    }
+    return user.getLastUserType().name();
   }
 
   @Override

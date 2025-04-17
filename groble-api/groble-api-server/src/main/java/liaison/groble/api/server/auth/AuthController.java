@@ -68,7 +68,7 @@ public class AuthController {
    * <p>이메일과 비밀번호로 회원가입 처리
    *
    * @param request 회원가입 요청 정보
-   * @return 회원가입 결과 (액세스 토큰, 리프레시 토큰 포함)
+   * @return 회원가입 결과 (액세스 토큰, 리프레시 토큰 : 쿠키에 세팅 | 해당 이메일에 대한 인증 완료 여부)
    */
   @Operation(summary = "통합 회원가입", description = "새로운 사용자를 등록하고 인증 토큰을 발급합니다.")
   @PostMapping("/sign-up")
@@ -179,11 +179,6 @@ public class AuthController {
    * @return 이메일 발송 결과
    */
   @Operation(summary = "비밀번호 재설정 이메일 발송", description = "비밀번호 재설정 링크가 포함된 이메일을 발송합니다.")
-  @ApiResponses({
-    @ApiResponse(responseCode = "200", description = "이메일 발송 성공"),
-    @ApiResponse(responseCode = "400", description = "잘못된 요청"),
-    @ApiResponse(responseCode = "404", description = "존재하지 않는 이메일")
-  })
   @PostMapping("/password/reset-request")
   public ResponseEntity<GrobleResponse<Void>> requestPasswordReset(
       @Valid @RequestBody EmailVerificationRequest request) {
