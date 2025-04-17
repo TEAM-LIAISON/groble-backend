@@ -90,6 +90,8 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY_DEV }}
           script_stop: true
           script: |
+            sudo docker rm -f dev-mysql || true
+            sudo docker rm -f groble-dev-redis || true
             sudo docker pull ${{ secrets.DOCKER_USERNAME_DEV }}/groble-develop:latest
             sudo docker-compose -f docker-compose-${{env.TARGET_UPSTREAM}}.yml up -d
 
