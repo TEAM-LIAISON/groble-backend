@@ -9,5 +9,5 @@ ARG ENV
 # 지정한 경로의 JAR 파일을 컨테이너 내 app.jar로 복사
 COPY ${JAR_FILE} app.jar
 
-# 컨테이너 시작 명령 설정
-ENTRYPOINT ["java", "-Dspring.profiles.active=${PROFILES}", "-Dserver.env=${ENV}", "-jar", "app.jar"]
+# ENTRYPOINT 수정 (환경변수 읽도록)
+ENTRYPOINT ["sh", "-c", "java -Dspring.profiles.active=$PROFILES -Dserver.env=$ENV -jar app.jar"]
