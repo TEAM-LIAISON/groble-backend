@@ -121,6 +121,8 @@ public class UserController {
     return ResponseEntity.ok(GrobleResponse.success(response, "닉네임이 설정되었습니다."));
   }
 
+  // Deprecated
+
   @Operation(summary = "비밀번호 재설정 이메일 요청", description = "등록된 이메일로 비밀번호 재설정 링크를 보냅니다.")
   @PostMapping("/users/password/reset-request")
   public ResponseEntity<GrobleResponse<Void>> requestPasswordReset(

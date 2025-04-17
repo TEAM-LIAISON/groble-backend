@@ -156,8 +156,6 @@ public class UserServiceImpl implements UserService {
 
     // 메일 발송
     String resetUrl = frontendUrl + "/reset-password?token=" + token;
-
-    emailSenderPort.sendPasswordResetEmail(email, token, resetUrl);
   }
 
   @Override

@@ -144,11 +144,15 @@ public class AuthServiceImpl implements AuthService {
             .findByIntegratedAccountEmail(email)
             .orElseThrow(() -> new IllegalArgumentException("등록되지 않은 이메일입니다."));
 
+    if (!account.getIntegratedAccountEmail().equals(email)) {
+      throw new IllegalArgumentException("해당 회원의 이메일이 아닙니다.");
+    }
+
     // 비밀번호 재설정 토큰 생성
     String token = UUID.randomUUID().toString();
 
     // 이메일 발송
-    String resetLink = "https://groble.im/reset-password?token=" + token;
+    String resetLink = "https://dev.groble.im/reset-password?token=" + token;
     String emailContent =
         String.format(
             "안녕하세요,\n\n"
@@ -160,20 +164,22 @@ public class AuthServiceImpl implements AuthService {
                 + "감사합니다.",
             resetLink);
 
-    // TODO: 이메일 발송 로직 구현
-    log.info("비밀번호 재설정 이메일 발송: {}", email);
+    verificationCodePort.saveVerificationCode(email, token, 1440);
+    emailSenderPort.sendPasswordResetEmail(email, emailContent);
   }
 
   @Override
   @Transactional
-  public void resetPassword(String email, String token, String newPassword) {
+  public void resetPassword(Long userId, String token, String newPassword) {
 
-    // 사용자 계정 찾기
-    IntegratedAccount account =
-        integratedAccountRepository
-            .findByIntegratedAccountEmail(email)
-            .orElseThrow(() -> new IllegalArgumentException("등록되지 않은 이메일입니다."));
+    User user =
+        userRepository
+            .findById(userId)
+            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
 
+    IntegratedAccount account = user.getIntegratedAccount();
+
+    verificationCodePort.validateVerificationCode(account.getIntegratedAccountEmail(), token);
     // 새 비밀번호 암호화
     String encodedPassword = securityPort.encodePassword(newPassword);
 
@@ -181,7 +187,7 @@ public class AuthServiceImpl implements AuthService {
     account.updatePassword(encodedPassword);
     integratedAccountRepository.save(account);
 
-    log.info("비밀번호 재설정 완료: {}", email);
+    verificationCodePort.removeVerificationCode(account.getIntegratedAccountEmail());
   }
 
   @Override

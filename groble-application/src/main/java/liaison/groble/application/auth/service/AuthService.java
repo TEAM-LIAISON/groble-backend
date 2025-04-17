@@ -46,11 +46,10 @@ public interface AuthService {
   /**
    * 비밀번호 재설정
    *
-   * @param email 사용자 이메일
    * @param token 비밀번호 재설정 토큰
    * @param newPassword 새로운 비밀번호
    */
-  void resetPassword(String email, String token, String newPassword);
+  void resetPassword(Long userId, String token, String newPassword);
 
   /**
    * 이메일 인증 코드 검증

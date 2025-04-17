@@ -59,7 +59,7 @@ public class SmtpEmailAdapter implements EmailSenderPort {
   }
 
   @Override
-  public void sendPasswordResetEmail(String to, String resetToken, String resetUrl) {
+  public void sendPasswordResetEmail(String to, String resetUrl) {
     try {
       MimeMessage message = emailSender.createMimeMessage();
       MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
