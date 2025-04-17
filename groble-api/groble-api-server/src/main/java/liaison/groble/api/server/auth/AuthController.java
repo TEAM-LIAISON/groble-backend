@@ -20,6 +20,7 @@ import liaison.groble.api.model.auth.request.SignUpRequest;
 import liaison.groble.api.model.auth.request.VerifyEmailCodeRequest;
 import liaison.groble.api.model.auth.response.SignInResponse;
 import liaison.groble.api.model.auth.response.SignUpResponse;
+import liaison.groble.api.model.user.request.UserTypeRequest;
 import liaison.groble.api.server.auth.mapper.AuthDtoMapper;
 import liaison.groble.application.auth.dto.EmailVerificationDto;
 import liaison.groble.application.auth.dto.SignInDto;
@@ -209,7 +210,7 @@ public class AuthController {
     return ResponseEntity.ok().body(GrobleResponse.success(null, "비밀번호가 성공적으로 재설정되었습니다.", 200));
   }
 
-  @Operation(summary = "통합 회원가입 이메일 인증", description = "사용자가 기입한 이메일에 인증 코드를 발급합니다.")
+  @Operation(summary = "통합 회원가입 이메일 인증 요청", description = "사용자가 기입한 이메일에 인증 코드를 발급합니다.")
   @PostMapping("/email-verification/sign-up")
   public ResponseEntity<GrobleResponse<Void>> sendEmailVerificationForSignUp(
       @Parameter(description = "이메일 인증 정보", required = true) @Valid @RequestBody
@@ -228,7 +229,7 @@ public class AuthController {
         .body(GrobleResponse.success(null, "인증 이메일이 발송되었습니다.", 200));
   }
 
-  @Operation(summary = "이메일 변경 이메일 인증", description = "사용자가 기입한 이메일에 인증 코드를 발급합니다.")
+  @Operation(summary = "이메일 변경 이메일 인증 요청", description = "사용자가 기입한 이메일에 인증 코드를 발급합니다.")
   @PostMapping("/email-verification/change-email")
   public ResponseEntity<GrobleResponse<Void>> sendEmailVerificationForChangeEmail(
       @Auth Accessor accessor,
@@ -306,6 +307,23 @@ public class AuthController {
     addTokenCookies(response, newTokens.getAccessToken(), newTokens.getRefreshToken());
 
     return ResponseEntity.ok(GrobleResponse.success(null, "토큰이 재발급되었습니다.", 200));
+  }
+
+  // 처음 회원가입 유형을 선택하는 API
+  @Operation(summary = "회원가입 유형 선택", description = "회원가입 시 판매자 또는 구매자 중 선택합니다.")
+  @ApiResponses({
+    @ApiResponse(
+        responseCode = "200",
+        description = "회원가입 유형 선택 성공",
+        content = @Content(schema = @Schema(implementation = GrobleResponse.class))),
+    @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터")
+  })
+  @PostMapping("/initial-user-type")
+  public ResponseEntity<GrobleResponse<Void>> setInitialUserType(
+      @Auth Accessor accessor, @Valid @RequestBody UserTypeRequest request) {
+
+    userService.setInitialUserType(accessor.getUserId(), request.getUserType());
+    return ResponseEntity.ok(GrobleResponse.success(null, "회원가입 유형이 설정되었습니다."));
   }
 
   /** 액세스 토큰과 리프레시 토큰을 쿠키에 저장 */

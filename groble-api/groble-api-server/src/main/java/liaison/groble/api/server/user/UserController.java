@@ -165,21 +165,4 @@ public class UserController {
 
     return ResponseEntity.ok(GrobleResponse.success(response, "마이페이지 상세 조회 성공"));
   }
-
-  // 처음 회원가입 유형을 선택하는 API
-  @Operation(summary = "회원가입 유형 선택", description = "회원가입 시 판매자 또는 구매자 중 선택합니다.")
-  @ApiResponses({
-    @ApiResponse(
-        responseCode = "200",
-        description = "회원가입 유형 선택 성공",
-        content = @Content(schema = @Schema(implementation = GrobleResponse.class))),
-    @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터")
-  })
-  @PostMapping("/users/initial-user-type")
-  public ResponseEntity<GrobleResponse<Void>> setInitialUserType(
-      @Auth Accessor accessor, @Valid @RequestBody UserTypeRequest request) {
-
-    userService.setInitialUserType(accessor.getUserId(), request.getUserType());
-    return ResponseEntity.ok(GrobleResponse.success(null, "회원가입 유형이 설정되었습니다."));
-  }
 }
