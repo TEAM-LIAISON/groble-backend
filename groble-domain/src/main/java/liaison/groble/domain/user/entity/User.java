@@ -93,6 +93,9 @@ public class User extends BaseTimeEntity {
   @Column(name = "refresh_token", length = 500)
   private String refreshToken;
 
+  @Column(name = "refresh_token_expires_at")
+  private Instant refreshTokenExpiresAt;
+
   /** 계정 유형 INTEGRATED: 일반 로그인 계정 SOCIAL: 소셜 로그인 계정 */
   @Builder.Default
   @Column(name = "account_type", nullable = false)
@@ -191,8 +194,9 @@ public class User extends BaseTimeEntity {
    *
    * @param refreshToken 새 리프레시 토큰
    */
-  public void updateRefreshToken(String refreshToken) {
+  public void updateRefreshToken(String refreshToken, Instant refreshTokenExpiresAt) {
     this.refreshToken = refreshToken;
+    this.refreshTokenExpiresAt = refreshTokenExpiresAt;
   }
 
   /**

@@ -2,6 +2,7 @@ package liaison.groble.security.oauth2.handler;
 
 import java.io.IOException;
 import java.net.URI;
+import java.time.Instant;
 import java.util.Optional;
 
 import jakarta.servlet.http.Cookie;
@@ -75,9 +76,10 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     // 직접 토큰 생성
     String accessToken = jwtTokenProvider.createAccessToken(user.getId(), user.getEmail());
     String refreshToken = jwtTokenProvider.createRefreshToken(user.getId(), user.getEmail());
+    Instant refreshTokenExpiresAt = jwtTokenProvider.getRefreshTokenExpirationInstant(refreshToken);
 
     // 리프레시 토큰 저장
-    user.updateRefreshToken(refreshToken);
+    user.updateRefreshToken(refreshToken, refreshTokenExpiresAt);
     userRepository.save(user);
 
     log.info("사용자 인증 완료: {}, 토큰 발급 완료", oAuth2User.getEmail());

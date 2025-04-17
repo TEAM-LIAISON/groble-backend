@@ -352,4 +352,28 @@ public class JwtTokenProvider {
       throw new IllegalArgumentException("비밀번호 재설정 토큰이 유효하지 않거나 만료되었습니다.");
     }
   }
+
+  public Instant getRefreshTokenExpirationInstant(String refreshToken) {
+    try {
+      Claims claims = parseToken(refreshToken, refreshTokenKey);
+      Date expiration = claims.getExpiration();
+      return expiration.toInstant();
+    } catch (ExpiredJwtException e) {
+      // 만료된 토큰이어도 만료시간은 읽을 수 있음
+      return e.getClaims().getExpiration().toInstant();
+    } catch (Exception e) {
+      throw new TokenException("RefreshToken에서 만료 시간을 추출할 수 없습니다", e);
+    }
+  }
+
+  public Long getUserIdFromRefreshToken(String token) {
+    try {
+      Claims claims = parseToken(token, getKeyForTokenType(TokenType.REFRESH));
+      return claims.get("userId", Long.class);
+    } catch (ExpiredJwtException e) {
+      return e.getClaims().get("userId", Long.class);
+    } catch (Exception e) {
+      throw new TokenException("리프레쉬 토큰에서 사용자 ID를 추출할 수 없습니다", e);
+    }
+  }
 }

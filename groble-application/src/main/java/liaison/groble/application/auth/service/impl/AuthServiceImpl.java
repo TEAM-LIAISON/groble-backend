@@ -1,5 +1,6 @@
 package liaison.groble.application.auth.service.impl;
 
+import java.time.Instant;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
@@ -13,6 +14,7 @@ import liaison.groble.application.auth.dto.VerifyEmailCodeDto;
 import liaison.groble.application.auth.exception.AuthenticationFailedException;
 import liaison.groble.application.auth.exception.EmailAlreadyExistsException;
 import liaison.groble.application.auth.service.AuthService;
+import liaison.groble.common.exception.EntityNotFoundException;
 import liaison.groble.common.port.security.SecurityPort;
 import liaison.groble.common.utils.CodeGenerator;
 import liaison.groble.domain.port.EmailSenderPort;
@@ -80,7 +82,10 @@ public class AuthServiceImpl implements AuthService {
     User savedUser = userRepository.save(user);
 
     TokenDto tokenDto = issueTokens(savedUser);
-    savedUser.updateRefreshToken(tokenDto.getRefreshToken());
+
+    savedUser.updateRefreshToken(
+        tokenDto.getRefreshToken(),
+        securityPort.getRefreshTokenExpirationTime(tokenDto.getRefreshToken()));
     userRepository.save(savedUser);
     verifiedEmailRepository.deleteByEmail(verifiedEmail.getEmail());
     return tokenDto;
@@ -115,7 +120,12 @@ public class AuthServiceImpl implements AuthService {
     // 토큰 생성
     String accessToken = securityPort.createAccessToken(user.getId(), user.getEmail());
     String refreshToken = securityPort.createRefreshToken(user.getId(), user.getEmail());
+    Instant refreshTokenExpiresAt = securityPort.getRefreshTokenExpirationTime(refreshToken);
 
+    user.updateRefreshToken(refreshToken, refreshTokenExpiresAt);
+    userRepository.save(user);
+
+    log.info("리프레시 토큰 저장 완료: {}", user.getEmail());
     return TokenDto.builder()
         .accessToken(accessToken)
         .refreshToken(refreshToken)
@@ -281,6 +291,50 @@ public class AuthServiceImpl implements AuthService {
         }
       }
     }
+  }
+
+  @Override
+  @Transactional
+  public TokenDto refreshTokens(String requestRefreshToken) {
+    // 1. 요청 온 refreshToken이 JWT로서 유효한지 검증 (서명, 토큰 타입, 포맷)
+    if (!securityPort.validateToken(requestRefreshToken, "refresh")) {
+      throw new IllegalArgumentException("유효하지 않은 리프레시 토큰입니다.");
+    }
+
+    // 2. refreshToken에서 userId 파싱
+    Long userId = securityPort.getUserIdFromRefreshToken(requestRefreshToken);
+
+    // 3. DB에서 사용자 조회
+    User user =
+        userRepository
+            .findById(userId)
+            .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
+
+    // 4. DB에 저장된 refreshToken과 비교
+    if (!requestRefreshToken.equals(user.getRefreshToken())) {
+      throw new IllegalArgumentException("리프레시 토큰이 일치하지 않습니다.");
+    }
+
+    // 5. DB에 저장된 refreshToken 만료시간 체크
+    if (user.getRefreshTokenExpiresAt().isBefore(Instant.now())) {
+      throw new IllegalArgumentException("리프레시 토큰이 만료되었습니다. 다시 로그인해주세요.");
+    }
+
+    // 6. 새 accessToken + 새 refreshToken 발급
+    String newAccessToken = securityPort.createAccessToken(user.getId(), user.getEmail());
+    String newRefreshToken = securityPort.createRefreshToken(user.getId(), user.getEmail());
+    Instant newRefreshTokenExpiresAt = securityPort.getRefreshTokenExpirationTime(newRefreshToken);
+
+    // 7. DB에 새로운 refreshToken과 만료시간 업데이트
+    user.updateRefreshToken(newRefreshToken, newRefreshTokenExpiresAt);
+    userRepository.save(user);
+
+    // 8. 새 토큰들 반환
+    return TokenDto.builder()
+        .accessToken(newAccessToken)
+        .refreshToken(newRefreshToken)
+        .accessTokenExpiresIn(securityPort.getAccessTokenExpirationTime())
+        .build();
   }
 
   private String generateRandomCode() {

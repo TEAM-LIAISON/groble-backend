@@ -1,5 +1,6 @@
 package liaison.groble.api.server.auth;
 
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -261,14 +262,8 @@ public class AuthController {
 
   /** 토큰 검증 및 로그인 상태 확인 API OAuth2 로그인 처리 후 프론트엔드에서 호출하여 토큰 상태 확인 */
   @Operation(summary = "토큰 검증", description = "현재 사용자의 인증 토큰을 검증하고 로그인 상태를 확인합니다.")
-  @ApiResponses({
-    @ApiResponse(responseCode = "200", description = "유효한 토큰, 로그인 성공"),
-    @ApiResponse(responseCode = "401", description = "유효하지 않은 토큰")
-  })
   @PostMapping("/validate-token")
   public ResponseEntity<GrobleResponse<SignInResponse>> validateToken(@Auth Accessor accessor) {
-    log.info("토큰 검증 요청: {}", accessor.getEmail());
-
     // 사용자 역할 및 정보 상태 확인
     String userType = userService.getUserType(accessor.getEmail());
 
@@ -279,6 +274,18 @@ public class AuthController {
     SignInResponse response = SignInResponse.of(accessor.getEmail(), userType, nextRoutePath);
 
     return ResponseEntity.ok().body(GrobleResponse.success(response, "유효한 토큰입니다.", 200));
+  }
+
+  @Operation(summary = "accessToken 재발급", description = "리프레시 토큰을 사용하여 새로운 액세스 토큰을 발급합니다.")
+  @PostMapping("/refresh-token")
+  public ResponseEntity<GrobleResponse<Void>> refreshToken(
+      HttpServletRequest request, HttpServletResponse response) {
+
+    TokenDto newTokens = authService.refreshTokens(extractRefreshTokenFromCookie(request));
+
+    addTokenCookies(response, newTokens.getAccessToken(), newTokens.getRefreshToken());
+
+    return ResponseEntity.ok(GrobleResponse.success(null, "토큰이 재발급되었습니다.", 200));
   }
 
   /** 액세스 토큰과 리프레시 토큰을 쿠키에 저장 */
@@ -319,5 +326,19 @@ public class AuthController {
   private boolean isSecureEnvironment() {
     String env = System.getProperty("spring.profiles.active", "dev");
     return env.equalsIgnoreCase("prod") || env.equalsIgnoreCase("production");
+  }
+
+  private String extractRefreshTokenFromCookie(HttpServletRequest request) {
+    if (request.getCookies() == null) {
+      throw new IllegalArgumentException("쿠키가 없습니다.");
+    }
+
+    for (Cookie cookie : request.getCookies()) {
+      if ("refreshToken".equals(cookie.getName())) {
+        return cookie.getValue();
+      }
+    }
+
+    throw new IllegalArgumentException("refreshToken 쿠키가 없습니다.");
   }
 }

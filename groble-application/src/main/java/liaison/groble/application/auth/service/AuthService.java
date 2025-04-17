@@ -65,4 +65,12 @@ public interface AuthService {
    * @param verifyEmailCodeDto 이메일 인증 코드 정보
    */
   void verifyEmailCodeForChangeEmail(Long userId, VerifyEmailCodeDto verifyEmailCodeDto);
+
+  /**
+   * Refresh tokens
+   *
+   * @param refreshToken refresh token
+   * @return TokenDto
+   */
+  TokenDto refreshTokens(String refreshToken);
 }

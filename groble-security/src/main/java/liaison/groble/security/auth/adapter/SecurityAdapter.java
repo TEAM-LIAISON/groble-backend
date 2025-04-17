@@ -1,10 +1,13 @@
 package liaison.groble.security.auth.adapter;
 
+import java.time.Instant;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import liaison.groble.common.port.security.SecurityPort;
 import liaison.groble.security.jwt.JwtTokenProvider;
+import liaison.groble.security.jwt.TokenType;
 
 import lombok.RequiredArgsConstructor;
 
@@ -35,6 +38,11 @@ public class SecurityAdapter implements SecurityPort {
   }
 
   @Override
+  public Instant getRefreshTokenExpirationTime(String refreshToken) {
+    return jwtTokenProvider.getRefreshTokenExpirationInstant(refreshToken);
+  }
+
+  @Override
   public boolean matches(String rawPassword, String encodedPassword) {
     return passwordEncoder.matches(rawPassword, encodedPassword);
   }
@@ -47,5 +55,19 @@ public class SecurityAdapter implements SecurityPort {
   @Override
   public String validatePasswordResetTokenAndGetEmail(String token, String secretKey) {
     return jwtTokenProvider.validatePasswordResetTokenAndGetEmail(token, secretKey);
+  }
+
+  @Override
+  public boolean validateToken(String token, String tokenType) {
+    if (tokenType.equals("access")) {
+      return jwtTokenProvider.validateToken(token, TokenType.ACCESS);
+    } else {
+      return jwtTokenProvider.validateToken(token, TokenType.REFRESH);
+    }
+  }
+
+  @Override
+  public Long getUserIdFromRefreshToken(String token) {
+    return jwtTokenProvider.getUserIdFromRefreshToken(token);
   }
 }
