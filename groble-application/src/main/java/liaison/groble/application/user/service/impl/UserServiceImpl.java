@@ -70,7 +70,7 @@ public class UserServiceImpl implements UserService {
 
     // SELLER로 전환할 경우만 검증
     if (userType == UserType.SELLER) {
-      if (user.getSellerProfile() == null) {
+      if (user.getSellerInfo() == null) {
         log.warn("전환 실패: 사용자 {}는 SELLER 프로필이 없습니다.", user.getId());
         return false;
       }
@@ -182,7 +182,7 @@ public class UserServiceImpl implements UserService {
             .findById(userId)
             .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
 
-    boolean existsSellerProfile = user.getSellerProfile() != null;
+    boolean existsSellerProfile = user.getSellerInfo() != null;
 
     return UserMyPageSummaryDto.builder()
         .id(user.getId())

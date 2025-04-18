@@ -25,7 +25,7 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
 import liaison.groble.domain.common.entity.BaseTimeEntity;
-import liaison.groble.domain.seller.entity.SellerProfile;
+import liaison.groble.domain.seller.entity.SellerInfo;
 import liaison.groble.domain.user.enums.AccountType;
 import liaison.groble.domain.user.enums.TermsType;
 import liaison.groble.domain.user.enums.UserStatus;
@@ -79,7 +79,7 @@ public class User extends BaseTimeEntity {
   private SocialAccount socialAccount;
 
   @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-  private SellerProfile sellerProfile;
+  private SellerInfo sellerInfo;
 
   /** 마지막 로그인 시간 */
   @Column(name = "last_login_at")
@@ -122,6 +122,9 @@ public class User extends BaseTimeEntity {
 
   @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
   private Set<UserTermsAgreement> termsAgreements = new HashSet<>();
+
+  @Column(name = "is_seller")
+  private boolean isSeller;
 
   /**
    * 통합 계정으로부터 유저 생성 메서드 IntegratedAccount를 먼저 생성하고 그로부터 User를 생성
