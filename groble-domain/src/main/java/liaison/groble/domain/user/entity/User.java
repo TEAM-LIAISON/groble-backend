@@ -132,13 +132,29 @@ public class User extends BaseTimeEntity {
    * @param integratedAccount 통합 계정 정보
    * @return 생성된 User 객체
    */
-  public static User fromIntegratedAccount(IntegratedAccount integratedAccount) {
+  public static User fromDeprecatedIntegratedAccount(IntegratedAccount integratedAccount) {
     User user =
         User.builder()
             .accountType(AccountType.INTEGRATED)
             .status(UserStatus.PENDING_VERIFICATION) // 이메일 인증 대기 상태로 설정
             .statusChangedAt(Instant.now())
             .lastUserType(BUYER) // 기본값으로 BUYER 설정
+            .build();
+
+    user.setIntegratedAccount(integratedAccount);
+    return user;
+  }
+
+  public static User fromIntegratedAccount(
+      IntegratedAccount integratedAccount, String nickName, UserType userType) {
+
+    User user =
+        User.builder()
+            .nickName(nickName)
+            .accountType(AccountType.INTEGRATED)
+            .status(UserStatus.ACTIVE) // 이메일 인증 대기 상태로 설정
+            .statusChangedAt(Instant.now())
+            .lastUserType(userType) // 기본값으로 BUYER 설정
             .build();
 
     user.setIntegratedAccount(integratedAccount);

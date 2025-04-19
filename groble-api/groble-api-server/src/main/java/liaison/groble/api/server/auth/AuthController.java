@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import liaison.groble.api.model.auth.request.DeprecatedSignUpRequest;
 import liaison.groble.api.model.auth.request.EmailVerificationRequest;
 import liaison.groble.api.model.auth.request.ResetPasswordRequest;
 import liaison.groble.api.model.auth.request.SignInRequest;
@@ -22,6 +23,7 @@ import liaison.groble.api.model.auth.response.SignInResponse;
 import liaison.groble.api.model.auth.response.SignUpResponse;
 import liaison.groble.api.model.user.request.UserTypeRequest;
 import liaison.groble.api.server.auth.mapper.AuthDtoMapper;
+import liaison.groble.application.auth.dto.DeprecatedSignUpDto;
 import liaison.groble.application.auth.dto.EmailVerificationDto;
 import liaison.groble.application.auth.dto.SignInDto;
 import liaison.groble.application.auth.dto.SignUpDto;
@@ -67,12 +69,11 @@ public class AuthController {
   /**
    * 회원가입 API
    *
-   * <p>이메일과 비밀번호로 회원가입 처리
-   *
-   * @param request 회원가입 요청 정보
-   * @return 회원가입 결과 (액세스 토큰, 리프레시 토큰 : 쿠키에 세팅 | 해당 이메일에 대한 인증 완료 여부)
+   * <p>유형 선택, 약관, 이메일, 비밀번호, 닉네임
    */
-  @Operation(summary = "통합 회원가입", description = "새로운 사용자를 등록하고 인증 토큰을 발급합니다.")
+  @Operation(
+      summary = "통합 회원가입 (유형, 약관, 이메일(인증된), 비밀번호, 닉네임)",
+      description = "새로운 사용자를 등록하고 인증 토큰을 발급합니다.")
   @PostMapping("/sign-up")
   public ResponseEntity<GrobleResponse<SignUpResponse>> signUp(
       @Parameter(description = "회원가입 정보", required = true) @Valid @RequestBody
@@ -84,6 +85,38 @@ public class AuthController {
 
     // 2. 서비스 호출
     TokenDto tokenDto = authService.signUp(signUpDto);
+
+    // 3. 토큰을 쿠키로 설정
+    addTokenCookies(response, tokenDto.getAccessToken(), tokenDto.getRefreshToken());
+
+    // 4. 사용자 정보만 응답 본문에 포함
+    SignUpResponse signUpResponse = SignUpResponse.of(request.getEmail());
+
+    // 5. API 응답 생성
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(GrobleResponse.success(signUpResponse, "회원가입이 성공적으로 완료되었습니다.", 201));
+  }
+
+  /**
+   * 회원가입 API
+   *
+   * <p>이메일과 비밀번호로 회원가입 처리
+   *
+   * @param request 회원가입 요청 정보
+   * @return 회원가입 결과 (액세스 토큰, 리프레시 토큰 : 쿠키에 세팅 | 해당 이메일에 대한 인증 완료 여부)
+   */
+  @Operation(summary = "통합 회원가입 [deprecated]", description = "새로운 사용자를 등록하고 인증 토큰을 발급합니다.")
+  @PostMapping("/sign-up/deprecated")
+  public ResponseEntity<GrobleResponse<SignUpResponse>> signUp(
+      @Parameter(description = "회원가입 정보", required = true) @Valid @RequestBody
+          DeprecatedSignUpRequest request,
+      HttpServletResponse response) {
+
+    // 1. API DTO → 서비스 DTO 변환
+    DeprecatedSignUpDto deprecatedSignUpDto = authDtoMapper.toServiceDeprecatedSignUpDto(request);
+
+    // 2. 서비스 호출
+    TokenDto tokenDto = authService.signUp(deprecatedSignUpDto);
 
     // 3. 토큰을 쿠키로 설정
     addTokenCookies(response, tokenDto.getAccessToken(), tokenDto.getRefreshToken());

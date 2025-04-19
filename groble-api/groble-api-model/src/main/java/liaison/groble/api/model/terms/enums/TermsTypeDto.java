@@ -7,5 +7,5 @@ public enum TermsTypeDto {
   SERVICE_TERMS,
   SALES_TERMS,
   MARKETING,
-  ADVERTISING;
+  ADVERTISING
 }

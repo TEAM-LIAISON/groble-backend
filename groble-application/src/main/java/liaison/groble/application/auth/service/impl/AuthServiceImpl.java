@@ -6,6 +6,7 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import liaison.groble.application.auth.dto.DeprecatedSignUpDto;
 import liaison.groble.application.auth.dto.EmailVerificationDto;
 import liaison.groble.application.auth.dto.SignInDto;
 import liaison.groble.application.auth.dto.SignUpDto;
@@ -26,6 +27,7 @@ import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.entity.VerifiedEmail;
 import liaison.groble.domain.user.enums.AccountType;
 import liaison.groble.domain.user.enums.UserStatus;
+import liaison.groble.domain.user.enums.UserType;
 import liaison.groble.domain.user.repository.IntegratedAccountRepository;
 import liaison.groble.domain.user.repository.RoleRepository;
 import liaison.groble.domain.user.repository.SocialAccountRepository;
@@ -52,8 +54,19 @@ public class AuthServiceImpl implements AuthService {
   @Transactional
   public TokenDto signUp(SignUpDto signUpDto) {
     // 통합 계정 이메일 중복 검사
+    UserType userType;
+    try {
+      userType = UserType.valueOf(signUpDto.getUserType().toUpperCase());
+    } catch (IllegalArgumentException | NullPointerException e) {
+      throw new IllegalArgumentException("유효하지 않은 사용자 유형입니다: " + signUpDto.getUserType());
+    }
+
     if (integratedAccountRepository.existsByIntegratedAccountEmail(signUpDto.getEmail())) {
       throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
+    }
+
+    if (userRepository.existsByNickName(signUpDto.getNickName())) {
+      throw new IllegalArgumentException("이미 사용 중인 닉네임입니다.");
     }
 
     VerifiedEmail verifiedEmail =
@@ -66,7 +79,53 @@ public class AuthServiceImpl implements AuthService {
 
     // IntegratedAccount 생성 (내부적으로 User 객체 생성 및 연결)
     IntegratedAccount integratedAccount =
-        IntegratedAccount.createAccount(verifiedEmail.getEmail(), encodedPassword);
+        IntegratedAccount.createAccount(
+            verifiedEmail.getEmail(), encodedPassword, signUpDto.getNickName(), userType);
+
+    User user = integratedAccount.getUser();
+
+    // 기본 사용자 역할 추가
+    Role userRole =
+        roleRepository
+            .findByName("ROLE_USER")
+            .orElseThrow(() -> new RuntimeException("기본 역할(ROLE_USER)을 찾을 수 없습니다."));
+    user.addRole(userRole);
+    // 사용자 상태 활성화 설정
+    user.updateStatus(UserStatus.ACTIVE);
+    // 사용자 저장 (CascadeType.ALL로 IntegratedAccount도 함께 저장됨)
+    User savedUser = userRepository.save(user);
+
+    TokenDto tokenDto = issueTokens(savedUser);
+
+    savedUser.updateRefreshToken(
+        tokenDto.getRefreshToken(),
+        securityPort.getRefreshTokenExpirationTime(tokenDto.getRefreshToken()));
+    userRepository.save(savedUser);
+    verifiedEmailRepository.deleteByEmail(verifiedEmail.getEmail());
+    return tokenDto;
+  }
+
+  @Override
+  @Transactional
+  public TokenDto signUp(DeprecatedSignUpDto deprecatedSignUpDto) {
+    // 통합 계정 이메일 중복 검사
+    if (integratedAccountRepository.existsByIntegratedAccountEmail(
+        deprecatedSignUpDto.getEmail())) {
+      throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
+    }
+
+    VerifiedEmail verifiedEmail =
+        verifiedEmailRepository
+            .findByEmail(deprecatedSignUpDto.getEmail())
+            .orElseThrow(() -> new IllegalArgumentException("인증 완료되지 않은 이메일입니다."));
+
+    // 비밀번호 암호화
+    String encodedPassword = securityPort.encodePassword(deprecatedSignUpDto.getPassword());
+
+    // IntegratedAccount 생성 (내부적으로 User 객체 생성 및 연결)
+    IntegratedAccount integratedAccount =
+        IntegratedAccount.createAccount(
+            verifiedEmail.getEmail(), encodedPassword, "nickName", UserType.BUYER);
 
     User user = integratedAccount.getUser();
 
