@@ -2,6 +2,7 @@ package liaison.groble.domain.product.entity;
 
 import static lombok.AccessLevel.PROTECTED;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -25,6 +26,7 @@ public class Category {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
+  @Column(name = "category_name", nullable = false)
   private String name; // 카테고리 이름 (대분류/소분류 둘 다 이 필드 사용)
 
   @ManyToOne(fetch = FetchType.LAZY)

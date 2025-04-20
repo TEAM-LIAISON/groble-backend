@@ -37,13 +37,14 @@ public class DocumentOption {
   private Product product;
 
   // 옵션 이름
+  @Column(name = "option_name")
   private String name;
 
   // 옵션 설명
-  @Column(nullable = false)
+  @Column(name = "option_description")
   private String description;
 
-  @Column(nullable = false)
+  @Column(name = "content_delivery_method")
   @Enumerated(value = STRING)
   private ContentDeliveryMethod contentDeliveryMethod;
 }

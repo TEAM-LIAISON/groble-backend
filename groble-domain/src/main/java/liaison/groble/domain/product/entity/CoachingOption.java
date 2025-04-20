@@ -39,28 +39,28 @@ public class CoachingOption {
   private Product product;
 
   // 옵션 이름
+  @Column(name = "option_name")
   private String name;
 
   // 옵션 설명
+  @Column(name = "option_description")
   private String description;
 
   // 코칭 기간
-  @Column(nullable = false)
+  @Column(name = "coaching_period")
   @Enumerated(value = STRING)
   private CoachingPeriod coachingPeriod;
 
   // 자료 제공 (제공/미제공)
-  @Column(nullable = false)
+  @Column(name = "document_provision")
   @Enumerated(value = STRING)
   private DocumentProvision documentProvision;
 
   // 코칭 방식 (온라인/오프라인)
-  @Column(nullable = false)
+  @Column(name = "coaching_type")
   @Enumerated(value = STRING)
   private CoachingType coachingType;
 
+  @Column(name = "coaching_type_description")
   private String coachingTypeDescription;
-
-  // 옵션 가격
-  private int price;
 }
