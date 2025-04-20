@@ -15,16 +15,16 @@ public class UserDtoMapper {
 
   public UserMyPageSummaryResponse toApiMyPageSummaryResponse(
       UserMyPageSummaryDto userMyPageSummaryDto) {
+    if (userMyPageSummaryDto.getUserTypeName() == null) {
+      throw new IllegalArgumentException("userTypeName is NULL");
+    }
 
-    UserTypeDto userTypeDto =
-        userMyPageSummaryDto.getUserTypeName() != null
-            ? UserTypeDto.valueOf(userMyPageSummaryDto.getUserTypeName())
-            : null;
+    UserTypeDto userTypeDto = UserTypeDto.valueOf(userMyPageSummaryDto.getUserTypeName());
 
     return UserMyPageSummaryResponse.builder()
         .nickName(userMyPageSummaryDto.getNickName())
         .profileImageUrl(userMyPageSummaryDto.getProfileImageUrl())
-        .userType(userTypeDto)
+        .userType(userTypeDto.getDescription())
         .canSwitchToSeller(userMyPageSummaryDto.isCanSwitchToSeller())
         .build();
   }
