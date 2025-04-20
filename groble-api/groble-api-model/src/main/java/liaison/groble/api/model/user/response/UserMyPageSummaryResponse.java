@@ -1,6 +1,6 @@
 package liaison.groble.api.model.user.response;
 
-import liaison.groble.api.model.user.enums.UserTypeDto;
+import liaison.groble.common.response.EnumResponse;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -14,6 +14,6 @@ import lombok.NoArgsConstructor;
 public class UserMyPageSummaryResponse {
   private String nickName;
   private String profileImageUrl;
-  private UserTypeDto userType;
+  private EnumResponse userType;
   private boolean canSwitchToSeller;
 }
