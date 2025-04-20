@@ -68,7 +68,7 @@ public class UserController {
   public ResponseEntity<GrobleResponse<NicknameDuplicateCheckResponse>> checkNicknameDuplicate(
       @RequestParam("value") @NotBlank String nickname) {
 
-    boolean exists = userService.isNickNameTaken(nickname);
+    boolean exists = userService.isNicknameTaken(nickname);
     return ResponseEntity.ok(
         GrobleResponse.success(new NicknameDuplicateCheckResponse(nickname, exists)));
   }

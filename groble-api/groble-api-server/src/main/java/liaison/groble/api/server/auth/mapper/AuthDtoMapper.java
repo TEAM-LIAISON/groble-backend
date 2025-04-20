@@ -29,7 +29,7 @@ public class AuthDtoMapper {
         .termsTypeStrings(request.getTermsTypes().stream().map(Enum::name).toList())
         .email(request.getEmail())
         .password(request.getPassword())
-        .nickName(request.getNickname())
+        .nickname(request.getNickname())
         .build();
   }
 

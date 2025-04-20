@@ -9,5 +9,5 @@ public interface UserRepository {
 
   User save(User user);
 
-  boolean existsByNickName(String nickName);
+  boolean existsByNickname(String nickname);
 }

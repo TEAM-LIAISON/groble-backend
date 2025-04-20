@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class UserMyPageDetailResponse {
   @Schema(description = "사용자 닉네임", example = "권동민")
-  private String nickName;
+  private String nickname;
 
   @Schema(
       description = "사용자 계정 정보 객체 (INTEGRATED - 통합 계정, SOCIAL - 소셜 계정)",

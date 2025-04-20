@@ -22,7 +22,7 @@ public class UserDtoMapper {
             : null;
 
     return UserMyPageSummaryResponse.builder()
-        .nickName(userMyPageSummaryDto.getNickName())
+        .nickname(userMyPageSummaryDto.getNickname())
         .profileImageUrl(userMyPageSummaryDto.getProfileImageUrl())
         .userType(userType)
         .canSwitchToSeller(userMyPageSummaryDto.isCanSwitchToSeller())
@@ -42,7 +42,7 @@ public class UserDtoMapper {
             : null;
 
     return UserMyPageDetailResponse.builder()
-        .nickName(userMyPageDetailDto.getNickName())
+        .nickname(userMyPageDetailDto.getNickname())
         .accountType(accountType)
         .providerType(providerType)
         .email(userMyPageDetailDto.getEmail())

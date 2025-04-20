@@ -65,7 +65,7 @@ public class AuthServiceImpl implements AuthService {
       throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
     }
 
-    if (userRepository.existsByNickName(signUpDto.getNickName())) {
+    if (userRepository.existsByNickname(signUpDto.getNickname())) {
       throw new IllegalArgumentException("이미 사용 중인 닉네임입니다.");
     }
 
@@ -80,7 +80,7 @@ public class AuthServiceImpl implements AuthService {
     // IntegratedAccount 생성 (내부적으로 User 객체 생성 및 연결)
     IntegratedAccount integratedAccount =
         IntegratedAccount.createAccount(
-            verifiedEmail.getEmail(), encodedPassword, signUpDto.getNickName(), userType);
+            verifiedEmail.getEmail(), encodedPassword, signUpDto.getNickname(), userType);
 
     User user = integratedAccount.getUser();
 
@@ -125,7 +125,7 @@ public class AuthServiceImpl implements AuthService {
     // IntegratedAccount 생성 (내부적으로 User 객체 생성 및 연결)
     IntegratedAccount integratedAccount =
         IntegratedAccount.createAccount(
-            verifiedEmail.getEmail(), encodedPassword, "nickName", UserType.BUYER);
+            verifiedEmail.getEmail(), encodedPassword, "nickname", UserType.BUYER);
 
     User user = integratedAccount.getUser();
 

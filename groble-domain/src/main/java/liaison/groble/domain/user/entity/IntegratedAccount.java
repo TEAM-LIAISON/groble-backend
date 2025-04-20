@@ -48,7 +48,7 @@ public class IntegratedAccount {
 
   // 통합 계정 생성 메서드 - 개선된 버전 (User 생성 전)
   public static IntegratedAccount createAccount(
-      String email, String encodedPassword, String nickName, UserType userType) {
+      String email, String encodedPassword, String nickname, UserType userType) {
 
     IntegratedAccount account =
         IntegratedAccount.builder()
@@ -58,7 +58,7 @@ public class IntegratedAccount {
             .build();
 
     // User 객체 생성 및 양방향 연결
-    User user = User.fromIntegratedAccount(account, nickName, userType);
+    User user = User.fromIntegratedAccount(account, nickname, userType);
     account.setUser(user);
 
     return account;

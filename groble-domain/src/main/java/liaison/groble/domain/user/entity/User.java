@@ -59,8 +59,8 @@ public class User extends BaseTimeEntity {
   private String uuid = UUID.randomUUID().toString();
 
   /** 사용자 이름 (닉네임) */
-  @Column(name = "nick_name", length = 50)
-  private String nickName;
+  @Column(name = "nickname", length = 50)
+  private String nickname;
 
   /** 사용자 프로필 이미지 URL */
   @Column(name = "profile_image_url", columnDefinition = "TEXT")
@@ -146,11 +146,11 @@ public class User extends BaseTimeEntity {
   }
 
   public static User fromIntegratedAccount(
-      IntegratedAccount integratedAccount, String nickName, UserType userType) {
+      IntegratedAccount integratedAccount, String nickname, UserType userType) {
 
     User user =
         User.builder()
-            .nickName(nickName)
+            .nickname(nickname)
             .accountType(AccountType.INTEGRATED)
             .status(UserStatus.ACTIVE) // 이메일 인증 대기 상태로 설정
             .statusChangedAt(Instant.now())
@@ -303,7 +303,7 @@ public class User extends BaseTimeEntity {
       // socialAccount.updateEmail(anonymizedEmail);
     }
 
-    this.nickName = "탈퇴한 사용자";
+    this.nickname = "탈퇴한 사용자";
     this.refreshToken = null;
   }
 
@@ -338,10 +338,10 @@ public class User extends BaseTimeEntity {
   /**
    * 사용자 이름 업데이트
    *
-   * @param nickName 새 닉네임
+   * @param nickname 새 닉네임
    */
-  public void updateNickName(String nickName) {
-    this.nickName = nickName;
+  public void updateNickname(String nickname) {
+    this.nickname = nickname;
   }
 
   public void agreeToTerms(Terms terms, String agreedIp, String agreedUserAgent) {

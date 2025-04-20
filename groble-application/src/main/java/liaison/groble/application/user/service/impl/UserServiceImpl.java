@@ -125,21 +125,21 @@ public class UserServiceImpl implements UserService {
   }
 
   @Override
-  public boolean isNickNameTaken(String nickName) {
-    return userRepository.existsByNickName(nickName);
+  public boolean isNicknameTaken(String nickname) {
+    return userRepository.existsByNickname(nickname);
   }
 
   @Override
-  public String setOrUpdateNickname(Long userId, String nickName) {
+  public String setOrUpdateNickname(Long userId, String nickname) {
     User user =
         userRepository
             .findById(userId)
             .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
 
-    user.updateNickName(nickName);
+    user.updateNickname(nickname);
     userRepository.save(user);
 
-    return nickName;
+    return nickname;
   }
 
   @Override
@@ -183,7 +183,7 @@ public class UserServiceImpl implements UserService {
             .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
 
     return UserMyPageSummaryDto.builder()
-        .nickName(user.getNickName())
+        .nickname(user.getNickname())
         .profileImageUrl(user.getProfileImageUrl())
         .userTypeName(user.getLastUserType().name())
         .canSwitchToSeller(user.isSeller())
@@ -215,7 +215,7 @@ public class UserServiceImpl implements UserService {
     boolean sellerAccountNotCreated = true;
 
     return UserMyPageDetailDto.builder()
-        .nickName(user.getNickName())
+        .nickname(user.getNickname())
         .accountTypeName(user.getAccountType().name())
         .providerTypeName(providerTypeName)
         .email(email)

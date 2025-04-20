@@ -41,18 +41,18 @@ public interface UserService {
   /**
    * 닉네임 중복 확인
    *
-   * @param nickName 확인할 닉네임
+   * @param nickname 확인할 닉네임
    * @return 중복 여부
    */
-  boolean isNickNameTaken(String nickName);
+  boolean isNicknameTaken(String nickname);
 
   /**
    * 닉네임 설정 또는 업데이트
    *
-   * @param nickName 설정할 닉네임
+   * @param nickname 설정할 닉네임
    * @return 설정된 닉네임
    */
-  String setOrUpdateNickname(Long userId, String nickName);
+  String setOrUpdateNickname(Long userId, String nickname);
 
   /**
    * 비밀번호 재설정 토큰 발송
