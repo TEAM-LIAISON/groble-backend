@@ -4,13 +4,16 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import liaison.groble.api.model.auth.request.DeprecatedSignUpRequest;
@@ -21,7 +24,10 @@ import liaison.groble.api.model.auth.request.SignUpRequest;
 import liaison.groble.api.model.auth.request.VerifyEmailCodeRequest;
 import liaison.groble.api.model.auth.response.SignInResponse;
 import liaison.groble.api.model.auth.response.SignUpResponse;
+import liaison.groble.api.model.user.request.NicknameRequest;
 import liaison.groble.api.model.user.request.UserTypeRequest;
+import liaison.groble.api.model.user.response.NicknameDuplicateCheckResponse;
+import liaison.groble.api.model.user.response.UpdateNicknameResponse;
 import liaison.groble.api.server.auth.mapper.AuthDtoMapper;
 import liaison.groble.application.auth.dto.DeprecatedSignUpDto;
 import liaison.groble.application.auth.dto.EmailVerificationDto;
@@ -357,6 +363,45 @@ public class AuthController {
 
     userService.setInitialUserType(accessor.getUserId(), request.getUserType());
     return ResponseEntity.ok(GrobleResponse.success(null, "회원가입 유형이 설정되었습니다."));
+  }
+
+  @Operation(summary = "닉네임 중복 확인", description = "닉네임이 이미 사용 중인지 확인합니다. 회원가입 및 닉네임 수정 시 사용됩니다.")
+  @ApiResponses({
+    @ApiResponse(
+        responseCode = "200",
+        description = "닉네임 중복 확인 성공",
+        content = @Content(schema = @Schema(implementation = GrobleResponse.class))),
+    @ApiResponse(responseCode = "401", description = "인증 실패 (AccessToken 만료 또는 없음)"),
+    @ApiResponse(responseCode = "404", description = "사용자 정보를 찾을 수 없음"),
+    @ApiResponse(responseCode = "409", description = "이미 존재하는 닉네임")
+  })
+  @GetMapping("/nickname/check")
+  public ResponseEntity<GrobleResponse<NicknameDuplicateCheckResponse>> checkNicknameDuplicate(
+      @RequestParam("nickname") @NotBlank String nickname) {
+
+    boolean exists = authService.isNicknameTaken(nickname);
+    return ResponseEntity.ok(
+        GrobleResponse.success(new NicknameDuplicateCheckResponse(nickname, exists)));
+  }
+
+  @Operation(summary = "닉네임 수정", description = "닉네임을 수정합니다.")
+  @ApiResponses({
+    @ApiResponse(
+        responseCode = "200",
+        description = "닉네임 수정 성공",
+        content = @Content(schema = @Schema(implementation = GrobleResponse.class))),
+    @ApiResponse(responseCode = "401", description = "인증 실패 (AccessToken 만료 또는 없음)"),
+    @ApiResponse(responseCode = "404", description = "사용자 정보를 찾을 수 없음"),
+    @ApiResponse(responseCode = "409", description = "이미 존재하는 닉네임")
+  })
+  @PostMapping("/users/nickname")
+  public ResponseEntity<GrobleResponse<UpdateNicknameResponse>> updateNickname(
+      @Auth Accessor accessor, @Valid @RequestBody NicknameRequest request) {
+
+    String updatedNickname =
+        authService.updateNickname(accessor.getUserId(), request.getNickname());
+
+    return ResponseEntity.ok(GrobleResponse.success(new UpdateNicknameResponse(updatedNickname)));
   }
 
   /** 액세스 토큰과 리프레시 토큰을 쿠키에 저장 */

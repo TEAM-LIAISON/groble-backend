@@ -3,6 +3,7 @@ package liaison.groble.persistence.user;
 import java.util.Optional;
 
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.repository.UserRepository;
@@ -28,5 +29,11 @@ public class UserRepositoryImpl implements UserRepository {
   @Override
   public boolean existsByNickname(String nickname) {
     return jpaUserRepository.existsByNickname(nickname);
+  }
+
+  @Override
+  @Transactional
+  public User saveAndFlush(User user) {
+    return jpaUserRepository.saveAndFlush(user);
   }
 }

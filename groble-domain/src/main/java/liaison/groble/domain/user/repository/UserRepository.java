@@ -10,4 +10,6 @@ public interface UserRepository {
   User save(User user);
 
   boolean existsByNickname(String nickname);
+
+  User saveAndFlush(User user);
 }

@@ -7,10 +7,8 @@ import org.springframework.transaction.annotation.Transactional;
 import liaison.groble.application.user.dto.UserMyPageDetailDto;
 import liaison.groble.application.user.dto.UserMyPageSummaryDto;
 import liaison.groble.application.user.service.UserService;
-import liaison.groble.common.exception.DuplicateNicknameException;
 import liaison.groble.common.exception.EntityNotFoundException;
 import liaison.groble.common.port.security.SecurityPort;
-import liaison.groble.domain.port.EmailSenderPort;
 import liaison.groble.domain.user.entity.IntegratedAccount;
 import liaison.groble.domain.user.entity.SocialAccount;
 import liaison.groble.domain.user.entity.User;
@@ -28,7 +26,6 @@ public class UserServiceImpl implements UserService {
   private final UserRepository userRepository;
   private final IntegratedAccountRepository integratedAccountRepository;
   private final SecurityPort securityPort;
-  private final EmailSenderPort emailSenderPort;
 
   // 변경: 24시간 (24 * 60 = 1440분)
   private final long PASSWORD_RESET_EXPIRATION_MINUTES = 1440;
@@ -123,30 +120,6 @@ public class UserServiceImpl implements UserService {
 
     user.getIntegratedAccount().updatePassword(encodedPassword);
     userRepository.save(user);
-  }
-
-  @Override
-  public boolean isNicknameTaken(String nickname) {
-    return userRepository.existsByNickname(nickname);
-  }
-
-  @Transactional
-  @Override
-  public String updateNickname(Long userId, String nickname) {
-    User user =
-        userRepository
-            .findById(userId)
-            .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
-
-    // 본인의 현재 닉네임과 같은 경우는 통과
-    if (!user.getNickname().equals(nickname)) {
-      if (userRepository.existsByNickname(nickname)) {
-        throw new DuplicateNicknameException("이미 사용 중인 닉네임입니다."); // 커스텀 예외
-      }
-      user.updateNickname(nickname);
-    }
-
-    return user.getNickname();
   }
 
   @Override
