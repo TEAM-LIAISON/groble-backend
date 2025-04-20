@@ -9,10 +9,10 @@ import lombok.Getter;
 @Schema(description = "Enum 공통 응답 (코드 + 설명)")
 public class EnumResponse {
 
-  @Schema(description = "Enum 코드 값", example = "INTEGRATED")
+  @Schema(description = "코드 값", example = "BUYER")
   private String code;
 
-  @Schema(description = "Enum 설명", example = "통합 계정")
+  @Schema(description = "설명", example = "구매자")
   private String description;
 
   public static EnumResponse from(EnumWithDescription enumValue) {
