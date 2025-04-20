@@ -52,7 +52,7 @@ public interface UserService {
    * @param nickname 설정할 닉네임
    * @return 설정된 닉네임
    */
-  String setOrUpdateNickname(Long userId, String nickname);
+  String updateNickname(Long userId, String nickname);
 
   /**
    * 비밀번호 재설정 토큰 발송

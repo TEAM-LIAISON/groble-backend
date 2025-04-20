@@ -82,11 +82,11 @@ public class UserController {
     @ApiResponse(responseCode = "409", description = "이미 존재하는 닉네임")
   })
   @PostMapping("/users/nickname")
-  public ResponseEntity<GrobleResponse<NicknameResponse>> setNickname(
+  public ResponseEntity<GrobleResponse<NicknameResponse>> updateNickname(
       @Auth Accessor accessor, @Valid @RequestBody NicknameRequest request) {
 
     String setOrUpdateNickname =
-        userService.setOrUpdateNickname(accessor.getUserId(), request.getNickname());
+        userService.updateNickname(accessor.getUserId(), request.getNickname());
 
     NicknameResponse response = NicknameResponse.of(setOrUpdateNickname);
 

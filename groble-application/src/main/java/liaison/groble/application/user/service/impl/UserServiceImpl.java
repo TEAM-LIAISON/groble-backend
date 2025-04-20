@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import liaison.groble.application.user.dto.UserMyPageDetailDto;
 import liaison.groble.application.user.dto.UserMyPageSummaryDto;
 import liaison.groble.application.user.service.UserService;
+import liaison.groble.common.exception.DuplicateNicknameException;
 import liaison.groble.common.exception.EntityNotFoundException;
 import liaison.groble.common.port.security.SecurityPort;
 import liaison.groble.domain.port.EmailSenderPort;
@@ -129,17 +130,23 @@ public class UserServiceImpl implements UserService {
     return userRepository.existsByNickname(nickname);
   }
 
+  @Transactional
   @Override
-  public String setOrUpdateNickname(Long userId, String nickname) {
+  public String updateNickname(Long userId, String nickname) {
     User user =
         userRepository
             .findById(userId)
             .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
 
-    user.updateNickname(nickname);
-    userRepository.save(user);
+    // 본인의 현재 닉네임과 같은 경우는 통과
+    if (!user.getNickname().equals(nickname)) {
+      if (userRepository.existsByNickname(nickname)) {
+        throw new DuplicateNicknameException("이미 사용 중인 닉네임입니다."); // 커스텀 예외
+      }
+      user.updateNickname(nickname);
+    }
 
-    return nickname;
+    return user.getNickname();
   }
 
   @Override

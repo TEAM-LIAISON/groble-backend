@@ -1,5 +1,7 @@
 package liaison.groble.api.model.user.response;
 
+import liaison.groble.common.response.EnumResponse;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -15,10 +17,10 @@ public class UserMyPageDetailResponse {
   private String nickname;
 
   @Schema(description = "사용자 계정 유형 (INTEGRATED: 통합 계정, SOCIAL: 소셜 계정)")
-  private AccountTypeResponse accountType;
+  private EnumResponse accountType;
 
   @Schema(description = "소셜 플랫폼 유형 (KAKAO, NAVER 등)")
-  private ProviderTypeResponse providerType;
+  private EnumResponse providerType;
 
   @Schema(description = "이메일", example = "kwondm7@naver.com")
   private String email;
