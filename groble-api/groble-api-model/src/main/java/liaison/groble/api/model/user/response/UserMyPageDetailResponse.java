@@ -16,10 +16,12 @@ public class UserMyPageDetailResponse {
   @Schema(description = "사용자 닉네임", example = "권동민")
   private String nickname;
 
-  @Schema(description = "사용자 계정 유형 (INTEGRATED: 통합 계정, SOCIAL: 소셜 계정)")
+  @Schema(
+      description = "사용자 계정 유형 (INTEGRATED: 통합 계정, SOCIAL: 소셜 계정)",
+      implementation = EnumResponse.class)
   private EnumResponse accountType;
 
-  @Schema(description = "소셜 플랫폼 유형 (예: KAKAO, NAVER 등)")
+  @Schema(description = "소셜 플랫폼 유형 (예: KAKAO, NAVER 등)", implementation = EnumResponse.class)
   private EnumResponse providerType;
 
   @Schema(description = "이메일", example = "kwondm7@naver.com")
