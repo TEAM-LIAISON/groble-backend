@@ -40,7 +40,7 @@ public class Terms extends BaseTimeEntity {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @Column(nullable = false)
+  @Column(name = "terms_title", nullable = false)
   private String title;
 
   @Enumerated(EnumType.STRING)
@@ -58,7 +58,7 @@ public class Terms extends BaseTimeEntity {
   @Column private LocalDateTime effectiveTo;
 
   @OneToMany(mappedBy = "terms")
-  private List<UserTermsAgreement> agreements = new ArrayList<>();
+  private List<UserTerms> agreements = new ArrayList<>();
 
   @Builder
   public Terms(

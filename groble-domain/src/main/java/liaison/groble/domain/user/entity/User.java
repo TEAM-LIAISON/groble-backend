@@ -112,7 +112,7 @@ public class User extends BaseTimeEntity {
   private UserStatus status = UserStatus.PENDING_VERIFICATION;
 
   /** 상태 변경 시간 상태가 변경된 마지막 시간 (휴면 계정 전환, 계정 활성화 등을 추적) */
-  @Column(name = "status_changed_at")
+  @Column(name = "status_changed_at", nullable = false)
   private Instant statusChangedAt;
 
   /** 마지막으로 사용한 사용자 유형 (SELLER 또는 BUYER) */
@@ -121,7 +121,7 @@ public class User extends BaseTimeEntity {
   private UserType lastUserType;
 
   @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-  private Set<UserTermsAgreement> termsAgreements = new HashSet<>();
+  private Set<UserTerms> termsAgreements = new HashSet<>();
 
   @Column(name = "is_seller")
   private boolean isSeller;
@@ -345,8 +345,8 @@ public class User extends BaseTimeEntity {
   }
 
   public void agreeToTerms(Terms terms, String agreedIp, String agreedUserAgent) {
-    UserTermsAgreement agreement =
-        UserTermsAgreement.builder()
+    UserTerms agreement =
+        UserTerms.builder()
             .user(this)
             .terms(terms)
             .agreed(true)
@@ -403,7 +403,7 @@ public class User extends BaseTimeEntity {
    */
   public void updateAdvertisingAgreement(
       Terms advertisingTerms, boolean agreed, String ip, String userAgent) {
-    UserTermsAgreement existingAgreement =
+    UserTerms existingAgreement =
         termsAgreements.stream()
             .filter(a -> a.getTerms().equals(advertisingTerms))
             .findFirst()
@@ -412,8 +412,8 @@ public class User extends BaseTimeEntity {
     if (existingAgreement != null) {
       existingAgreement.updateAgreement(agreed, Instant.now(), ip, userAgent);
     } else {
-      UserTermsAgreement newAgreement =
-          UserTermsAgreement.builder()
+      UserTerms newAgreement =
+          UserTerms.builder()
               .user(this)
               .terms(advertisingTerms)
               .agreed(agreed)

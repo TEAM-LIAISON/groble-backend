@@ -36,7 +36,7 @@ public class IntegratedAccount {
   @Column(nullable = false, unique = true)
   private String integratedAccountEmail;
 
-  @Column(unique = true)
+  @Column(nullable = false, unique = true)
   private String password;
 
   @Builder

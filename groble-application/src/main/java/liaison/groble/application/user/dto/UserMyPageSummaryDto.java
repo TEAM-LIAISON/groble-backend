@@ -12,9 +12,8 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserMyPageSummaryDto {
-  private Long id;
   private String nickName;
   private String profileImageUrl;
-  private String userTypeName;
-  private boolean canSwitchToSeller;
+  private String userTypeName; // BUYER, SELLER
+  private boolean canSwitchToSeller; // 판매자 전환 가능 여부
 }

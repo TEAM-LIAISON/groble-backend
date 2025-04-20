@@ -5,7 +5,7 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Repository;
 
-import liaison.groble.domain.user.entity.UserTermsAgreement;
+import liaison.groble.domain.user.entity.UserTerms;
 import liaison.groble.domain.user.repository.UserTermsAgreementRepository;
 
 import lombok.AllArgsConstructor;
@@ -17,17 +17,17 @@ public class UserTermsAgreementRepositoryImpl implements UserTermsAgreementRepos
   private final JpaUserTermsAgreementRepository jpaUserTermsAgreementRepository;
 
   @Override
-  public List<UserTermsAgreement> findByUserId(Long userId) {
+  public List<UserTerms> findByUserId(Long userId) {
     return jpaUserTermsAgreementRepository.findByUserId(userId);
   }
 
   @Override
-  public Optional<UserTermsAgreement> findByUserIdAndTermsId(Long userId, Long termsId) {
+  public Optional<UserTerms> findByUserIdAndTermsId(Long userId, Long termsId) {
     return jpaUserTermsAgreementRepository.findByUserIdAndTermsId(userId, termsId);
   }
 
   @Override
-  public UserTermsAgreement save(UserTermsAgreement userTermsAgreement) {
-    return jpaUserTermsAgreementRepository.save(userTermsAgreement);
+  public UserTerms save(UserTerms userTerms) {
+    return jpaUserTermsAgreementRepository.save(userTerms);
   }
 }

@@ -15,7 +15,7 @@ import liaison.groble.common.exception.EntityNotFoundException;
 import liaison.groble.common.exception.ForbiddenException;
 import liaison.groble.domain.user.entity.Terms;
 import liaison.groble.domain.user.entity.User;
-import liaison.groble.domain.user.entity.UserTermsAgreement;
+import liaison.groble.domain.user.entity.UserTerms;
 import liaison.groble.domain.user.enums.TermsType;
 import liaison.groble.domain.user.repository.TermsRepository;
 import liaison.groble.domain.user.repository.UserRepository;
@@ -53,7 +53,7 @@ public class TermsServiceImpl implements TermsService {
     Terms firstTerms = activeTermsList.get(0);
 
     // 약관 동의 처리
-    UserTermsAgreement agreement =
+    UserTerms agreement =
         processTermsAgreement(user, firstTerms, true, dto.getIpAddress(), dto.getUserAgent());
 
     // 응답 DTO 구성
@@ -88,7 +88,7 @@ public class TermsServiceImpl implements TermsService {
     Terms firstTerms = termsList.get(0);
 
     // 약관 철회 처리
-    UserTermsAgreement agreement =
+    UserTerms agreement =
         processTermsAgreement(user, firstTerms, false, dto.getIpAddress(), dto.getUserAgent());
 
     // 응답 DTO 구성
@@ -97,7 +97,7 @@ public class TermsServiceImpl implements TermsService {
 
   @Transactional(readOnly = true)
   public List<TermsAgreementDto> getUserTermsAgreements(Long userId) {
-    List<UserTermsAgreement> agreements = userTermsAgreementRepository.findByUserId(userId);
+    List<UserTerms> agreements = userTermsAgreementRepository.findByUserId(userId);
 
     return agreements.stream().map(this::createTermsAgreementDto).collect(Collectors.toList());
   }
@@ -110,9 +110,9 @@ public class TermsServiceImpl implements TermsService {
   }
 
   // 약관 동의 또는 철회 처리 헬퍼 메서드
-  private UserTermsAgreement processTermsAgreement(
+  private UserTerms processTermsAgreement(
       User user, Terms terms, boolean agreed, String ipAddress, String userAgent) {
-    UserTermsAgreement agreement =
+    UserTerms agreement =
         userTermsAgreementRepository
             .findByUserIdAndTermsId(user.getId(), terms.getId())
             .orElse(null);
@@ -120,7 +120,7 @@ public class TermsServiceImpl implements TermsService {
     if (agreement == null) {
       // 새로운 동의 생성
       agreement =
-          UserTermsAgreement.builder()
+          UserTerms.builder()
               .user(user)
               .terms(terms)
               .agreed(agreed)
@@ -137,7 +137,7 @@ public class TermsServiceImpl implements TermsService {
   }
 
   // 약관 동의 DTO 생성 헬퍼 메서드
-  private TermsAgreementDto createTermsAgreementDto(UserTermsAgreement agreement) {
+  private TermsAgreementDto createTermsAgreementDto(UserTerms agreement) {
     Terms terms = agreement.getTerms();
 
     return TermsAgreementDto.builder()

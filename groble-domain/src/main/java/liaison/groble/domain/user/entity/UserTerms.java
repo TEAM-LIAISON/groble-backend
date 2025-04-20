@@ -21,7 +21,7 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Table(
-    name = "user_terms_agreement",
+    name = "user_terms",
     uniqueConstraints = {
       @UniqueConstraint(
           name = "uk_user_terms",
@@ -29,7 +29,7 @@ import lombok.NoArgsConstructor;
     })
 @Getter
 @NoArgsConstructor(access = PROTECTED)
-public class UserTermsAgreement {
+public class UserTerms {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -62,7 +62,7 @@ public class UserTermsAgreement {
   private String agreedUserAgent;
 
   @Builder
-  public UserTermsAgreement(
+  public UserTerms(
       User user,
       Terms terms,
       boolean agreed,

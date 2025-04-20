@@ -3,12 +3,12 @@ package liaison.groble.domain.user.repository;
 import java.util.List;
 import java.util.Optional;
 
-import liaison.groble.domain.user.entity.UserTermsAgreement;
+import liaison.groble.domain.user.entity.UserTerms;
 
 public interface UserTermsAgreementRepository {
-  List<UserTermsAgreement> findByUserId(Long userId);
+  List<UserTerms> findByUserId(Long userId);
 
-  Optional<UserTermsAgreement> findByUserIdAndTermsId(Long userId, Long termsId);
+  Optional<UserTerms> findByUserIdAndTermsId(Long userId, Long termsId);
 
-  UserTermsAgreement save(UserTermsAgreement userTermsAgreement);
+  UserTerms save(UserTerms userTerms);
 }

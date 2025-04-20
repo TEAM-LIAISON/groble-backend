@@ -7,15 +7,14 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import liaison.groble.domain.user.entity.UserTermsAgreement;
+import liaison.groble.domain.user.entity.UserTerms;
 
-public interface JpaUserTermsAgreementRepository extends JpaRepository<UserTermsAgreement, Long> {
+public interface JpaUserTermsAgreementRepository extends JpaRepository<UserTerms, Long> {
 
-  @Query("SELECT uta FROM UserTermsAgreement uta WHERE uta.user.id = :userId")
-  List<UserTermsAgreement> findByUserId(@Param("userId") Long userId);
+  @Query("SELECT uta FROM UserTerms uta WHERE uta.user.id = :userId")
+  List<UserTerms> findByUserId(@Param("userId") Long userId);
 
-  @Query(
-      "SELECT uta FROM UserTermsAgreement uta WHERE uta.user.id = :userId AND uta.terms.id = :termsId")
-  Optional<UserTermsAgreement> findByUserIdAndTermsId(
+  @Query("SELECT uta FROM UserTerms uta WHERE uta.user.id = :userId AND uta.terms.id = :termsId")
+  Optional<UserTerms> findByUserIdAndTermsId(
       @Param("userId") Long userId, @Param("termsId") Long termsId);
 }
