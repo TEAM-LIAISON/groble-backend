@@ -73,13 +73,12 @@ public class UserController {
         GrobleResponse.success(new NicknameDuplicateCheckResponse(nickname, exists)));
   }
 
-  @Operation(summary = "닉네임 생성/수정", description = "닉네임을 생성 또는 수정합니다.")
+  @Operation(summary = "닉네임 수정", description = "닉네임을 수정합니다.")
   @ApiResponses({
     @ApiResponse(
         responseCode = "200",
-        description = "닉네임 생성/수정 성공",
+        description = "닉네임 수정 성공",
         content = @Content(schema = @Schema(implementation = GrobleResponse.class))),
-    @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터"),
     @ApiResponse(responseCode = "409", description = "이미 존재하는 닉네임")
   })
   @PostMapping("/users/nickname")
