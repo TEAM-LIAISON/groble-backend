@@ -24,7 +24,13 @@ public class AuthDtoMapper {
   }
 
   public SignUpDto toServiceSignUpDto(SignUpRequest request) {
-    return SignUpDto.builder().email(request.getEmail()).password(request.getPassword()).build();
+    return SignUpDto.builder()
+        .userType(request.getUserType())
+        .termsTypeStrings(request.getTermsTypes().stream().map(Enum::name).toList())
+        .email(request.getEmail())
+        .password(request.getPassword())
+        .nickName(request.getNickname())
+        .build();
   }
 
   public SignInDto toServiceSignInDto(SignInRequest request) {

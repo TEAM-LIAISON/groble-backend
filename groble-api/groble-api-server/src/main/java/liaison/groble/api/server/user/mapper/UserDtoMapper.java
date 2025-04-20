@@ -9,6 +9,7 @@ import liaison.groble.api.model.user.response.UserMyPageDetailResponse;
 import liaison.groble.api.model.user.response.UserMyPageSummaryResponse;
 import liaison.groble.application.user.dto.UserMyPageDetailDto;
 import liaison.groble.application.user.dto.UserMyPageSummaryDto;
+import liaison.groble.common.response.EnumResponse;
 
 @Component
 public class UserDtoMapper {
@@ -24,27 +25,27 @@ public class UserDtoMapper {
     return UserMyPageSummaryResponse.builder()
         .nickName(userMyPageSummaryDto.getNickName())
         .profileImageUrl(userMyPageSummaryDto.getProfileImageUrl())
-        .userType(userTypeDto.getDescription())
+        .userType(userTypeDto)
         .canSwitchToSeller(userMyPageSummaryDto.isCanSwitchToSeller())
         .build();
   }
 
   public UserMyPageDetailResponse toApiMyPageDetailResponse(
       UserMyPageDetailDto userMyPageDetailDto) {
-    AccountTypeDto accountTypeDto =
+    EnumResponse accountType =
         userMyPageDetailDto.getAccountTypeName() != null
-            ? AccountTypeDto.valueOf(userMyPageDetailDto.getAccountTypeName())
+            ? EnumResponse.from(AccountTypeDto.valueOf(userMyPageDetailDto.getAccountTypeName()))
             : null;
 
-    ProviderTypeDto providerTypeDto =
+    EnumResponse providerType =
         userMyPageDetailDto.getProviderTypeName() != null
-            ? ProviderTypeDto.valueOf(userMyPageDetailDto.getProviderTypeName())
+            ? EnumResponse.from(ProviderTypeDto.valueOf(userMyPageDetailDto.getProviderTypeName()))
             : null;
 
     return UserMyPageDetailResponse.builder()
         .nickName(userMyPageDetailDto.getNickName())
-        .accountType(accountTypeDto)
-        .providerType(providerTypeDto)
+        .accountType(accountType)
+        .providerType(providerType)
         .email(userMyPageDetailDto.getEmail())
         .profileImageUrl(userMyPageDetailDto.getProfileImageUrl())
         .phoneNumber(userMyPageDetailDto.getPhoneNumber())
