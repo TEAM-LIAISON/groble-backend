@@ -1,4 +1,4 @@
-package liaison.groble.persistence.user;
+package liaison.groble.persistence.role;
 
 import java.util.Optional;
 
