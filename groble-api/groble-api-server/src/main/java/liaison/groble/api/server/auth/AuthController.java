@@ -111,6 +111,7 @@ public class AuthController {
    * @param request 회원가입 요청 정보
    * @return 회원가입 결과 (액세스 토큰, 리프레시 토큰 : 쿠키에 세팅 | 해당 이메일에 대한 인증 완료 여부)
    */
+  @Deprecated
   @Operation(summary = "통합 회원가입 [deprecated]", description = "새로운 사용자를 등록하고 인증 토큰을 발급합니다.")
   @PostMapping("/sign-up/deprecated")
   public ResponseEntity<GrobleResponse<SignUpResponse>> signUp(
@@ -349,6 +350,7 @@ public class AuthController {
   }
 
   // 처음 회원가입 유형을 선택하는 API
+  @Deprecated
   @Operation(summary = "회원가입 유형 선택", description = "회원가입 시 판매자 또는 구매자 중 선택합니다.")
   @ApiResponses({
     @ApiResponse(
