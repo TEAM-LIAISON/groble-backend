@@ -1,4 +1,4 @@
-package liaison.groble.domain.user.enums;
+package liaison.groble.domain.role.enums;
 
 /** 사용자 역할 유형을 나타내는 열거형 */
 public enum RoleType {

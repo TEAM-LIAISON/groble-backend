@@ -1,11 +1,11 @@
-package liaison.groble.domain.user.repository;
+package liaison.groble.domain.terms.repository;
 
 import java.util.List;
 import java.util.Optional;
 
-import liaison.groble.domain.user.entity.UserTerms;
+import liaison.groble.domain.terms.UserTerms;
 
-public interface UserTermsAgreementRepository {
+public interface UserTermsRepository {
   List<UserTerms> findByUserId(Long userId);
 
   Optional<UserTerms> findByUserIdAndTermsId(Long userId, Long termsId);

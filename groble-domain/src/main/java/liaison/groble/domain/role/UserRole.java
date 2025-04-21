@@ -1,4 +1,4 @@
-package liaison.groble.domain.user.entity;
+package liaison.groble.domain.role;
 
 import java.time.LocalDateTime;
 
@@ -10,6 +10,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+
+import liaison.groble.domain.user.entity.User;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;

@@ -10,8 +10,8 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import liaison.groble.domain.user.entity.Role;
-import liaison.groble.domain.user.repository.RoleRepository;
+import liaison.groble.domain.role.Role;
+import liaison.groble.domain.role.repository.RoleRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

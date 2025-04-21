@@ -1,9 +1,9 @@
-package liaison.groble.domain.user.repository;
+package liaison.groble.domain.role.repository;
 
 import java.util.List;
 import java.util.Optional;
 
-import liaison.groble.domain.user.entity.Role;
+import liaison.groble.domain.role.Role;
 
 public interface RoleRepository {
   Optional<Role> findByName(String name);

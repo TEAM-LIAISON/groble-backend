@@ -1,6 +1,6 @@
 package liaison.groble.application.terms.service.impl;
 
-import static liaison.groble.domain.user.enums.TermsType.ADVERTISING;
+import static liaison.groble.domain.terms.enums.TermsType.ADVERTISING_POLICY;
 
 import java.time.Instant;
 import java.util.List;
@@ -13,13 +13,13 @@ import liaison.groble.application.terms.dto.TermsAgreementDto;
 import liaison.groble.application.terms.service.TermsService;
 import liaison.groble.common.exception.EntityNotFoundException;
 import liaison.groble.common.exception.ForbiddenException;
-import liaison.groble.domain.user.entity.Terms;
+import liaison.groble.domain.terms.Terms;
+import liaison.groble.domain.terms.UserTerms;
+import liaison.groble.domain.terms.enums.TermsType;
+import liaison.groble.domain.terms.repository.TermsRepository;
+import liaison.groble.domain.terms.repository.UserTermsRepository;
 import liaison.groble.domain.user.entity.User;
-import liaison.groble.domain.user.entity.UserTerms;
-import liaison.groble.domain.user.enums.TermsType;
-import liaison.groble.domain.user.repository.TermsRepository;
 import liaison.groble.domain.user.repository.UserRepository;
-import liaison.groble.domain.user.repository.UserTermsAgreementRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,7 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 public class TermsServiceImpl implements TermsService {
   private final TermsRepository termsRepository;
   private final UserRepository userRepository;
-  private final UserTermsAgreementRepository userTermsAgreementRepository;
+  private final UserTermsRepository userTermsRepository;
 
   @Transactional
   public TermsAgreementDto agreeToTerms(TermsAgreementDto dto) {
@@ -97,7 +97,7 @@ public class TermsServiceImpl implements TermsService {
 
   @Transactional(readOnly = true)
   public List<TermsAgreementDto> getUserTermsAgreements(Long userId) {
-    List<UserTerms> agreements = userTermsAgreementRepository.findByUserId(userId);
+    List<UserTerms> agreements = userTermsRepository.findByUserId(userId);
 
     return agreements.stream().map(this::createTermsAgreementDto).collect(Collectors.toList());
   }
@@ -113,9 +113,7 @@ public class TermsServiceImpl implements TermsService {
   private UserTerms processTermsAgreement(
       User user, Terms terms, boolean agreed, String ipAddress, String userAgent) {
     UserTerms agreement =
-        userTermsAgreementRepository
-            .findByUserIdAndTermsId(user.getId(), terms.getId())
-            .orElse(null);
+        userTermsRepository.findByUserIdAndTermsId(user.getId(), terms.getId()).orElse(null);
 
     if (agreement == null) {
       // 새로운 동의 생성
@@ -133,7 +131,7 @@ public class TermsServiceImpl implements TermsService {
       agreement.updateAgreement(agreed, Instant.now(), ipAddress, userAgent);
     }
 
-    return userTermsAgreementRepository.save(agreement);
+    return userTermsRepository.save(agreement);
   }
 
   // 약관 동의 DTO 생성 헬퍼 메서드
@@ -191,7 +189,7 @@ public class TermsServiceImpl implements TermsService {
 
     Terms advertisingTerms =
         termsRepository
-            .findTopByTypeAndEffectiveToIsNullOrderByEffectiveFromDesc(ADVERTISING)
+            .findTopByTypeAndEffectiveToIsNullOrderByEffectiveFromDesc(ADVERTISING_POLICY)
             .orElseThrow(() -> new IllegalStateException("현재 유효한 광고성 정보 약관이 없습니다."));
 
     user.updateAdvertisingAgreement(advertisingTerms, agreed, ipAddress, userAgent);

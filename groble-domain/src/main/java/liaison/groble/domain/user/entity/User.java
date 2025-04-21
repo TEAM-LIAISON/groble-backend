@@ -25,9 +25,13 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
 import liaison.groble.domain.common.entity.BaseTimeEntity;
+import liaison.groble.domain.role.Role;
+import liaison.groble.domain.role.UserRole;
 import liaison.groble.domain.seller.entity.SellerInfo;
+import liaison.groble.domain.terms.Terms;
+import liaison.groble.domain.terms.UserTerms;
+import liaison.groble.domain.terms.enums.TermsType;
 import liaison.groble.domain.user.enums.AccountType;
-import liaison.groble.domain.user.enums.TermsType;
 import liaison.groble.domain.user.enums.UserStatus;
 import liaison.groble.domain.user.enums.UserType;
 
@@ -388,7 +392,7 @@ public class User extends BaseTimeEntity {
     return termsAgreements.stream()
         .anyMatch(
             agreement ->
-                agreement.getTerms().getType() == TermsType.ADVERTISING
+                agreement.getTerms().getType() == TermsType.ADVERTISING_POLICY
                     && agreement.isAgreed()
                     && agreement.getTerms().getEffectiveTo() == null);
   }

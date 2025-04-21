@@ -1,4 +1,4 @@
-package liaison.groble.domain.user.entity;
+package liaison.groble.domain.terms;
 
 import static lombok.AccessLevel.PROTECTED;
 
@@ -17,8 +17,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
-import liaison.groble.domain.common.entity.BaseTimeEntity;
-import liaison.groble.domain.user.enums.TermsType;
+import liaison.groble.domain.terms.enums.TermsType;
 
 import lombok.Builder;
 import lombok.Getter;
@@ -34,7 +33,7 @@ import lombok.NoArgsConstructor;
     })
 @Getter
 @NoArgsConstructor(access = PROTECTED)
-public class Terms extends BaseTimeEntity {
+public class Terms {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)

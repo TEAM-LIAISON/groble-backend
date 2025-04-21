@@ -5,14 +5,14 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Repository;
 
-import liaison.groble.domain.user.entity.UserTerms;
-import liaison.groble.domain.user.repository.UserTermsAgreementRepository;
+import liaison.groble.domain.terms.UserTerms;
+import liaison.groble.domain.terms.repository.UserTermsRepository;
 
 import lombok.AllArgsConstructor;
 
 @Repository
 @AllArgsConstructor
-public class UserTermsAgreementRepositoryImpl implements UserTermsAgreementRepository {
+public class UserTermsRepositoryImpl implements UserTermsRepository {
 
   private final JpaUserTermsAgreementRepository jpaUserTermsAgreementRepository;
 

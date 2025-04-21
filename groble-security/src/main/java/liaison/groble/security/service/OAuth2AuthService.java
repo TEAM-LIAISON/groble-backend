@@ -16,13 +16,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import liaison.groble.domain.user.entity.Role;
+import liaison.groble.domain.role.Role;
+import liaison.groble.domain.role.enums.RoleType;
+import liaison.groble.domain.role.repository.RoleRepository;
 import liaison.groble.domain.user.entity.SocialAccount;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.enums.ProviderType;
-import liaison.groble.domain.user.enums.RoleType;
 import liaison.groble.domain.user.enums.UserStatus;
-import liaison.groble.domain.user.repository.RoleRepository;
 import liaison.groble.domain.user.repository.SocialAccountRepository;
 import liaison.groble.domain.user.repository.UserRepository;
 import liaison.groble.security.oauth2.exception.OAuth2AuthenticationProcessingException;

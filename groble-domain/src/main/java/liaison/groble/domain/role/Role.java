@@ -1,4 +1,4 @@
-package liaison.groble.domain.user.entity;
+package liaison.groble.domain.role;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

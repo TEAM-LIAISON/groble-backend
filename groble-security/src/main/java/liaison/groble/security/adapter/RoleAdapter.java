@@ -2,7 +2,7 @@ package liaison.groble.security.adapter;
 
 import org.springframework.security.core.GrantedAuthority;
 
-import liaison.groble.domain.user.entity.Role;
+import liaison.groble.domain.role.Role;
 
 public class RoleAdapter implements GrantedAuthority {
   private final Role role;
