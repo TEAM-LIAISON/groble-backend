@@ -39,22 +39,6 @@ public interface UserService {
   void setOrUpdatePassword(Long userId, String password);
 
   /**
-   * 닉네임 중복 확인
-   *
-   * @param nickName 확인할 닉네임
-   * @return 중복 여부
-   */
-  boolean isNickNameTaken(String nickName);
-
-  /**
-   * 닉네임 설정 또는 업데이트
-   *
-   * @param nickName 설정할 닉네임
-   * @return 설정된 닉네임
-   */
-  String setOrUpdateNickname(Long userId, String nickName);
-
-  /**
    * 비밀번호 재설정 토큰 발송
    *
    * @param email 비밀번호를 재설정할 이메일
@@ -84,4 +68,12 @@ public interface UserService {
    * @return UserMyPageDetailDto 사용자 마이페이지 상세 정보
    */
   UserMyPageDetailDto getUserMyPageDetail(Long userId);
+
+  /**
+   * 사용자 초기 역할 설정
+   *
+   * @param userId 사용자 ID
+   * @param userTypeName 설정할 가입 유형 이름
+   */
+  void setInitialUserType(Long userId, String userTypeName);
 }

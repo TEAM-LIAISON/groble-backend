@@ -46,10 +46,13 @@ spring:
         order_inserts: true
         order_updates: true
     hibernate:
-        ddl-auto: create
+        ddl-auto: none
   mvc:
     path match:
       matching-strategy: ant_path_matcher
+
+storage:
+  provider: local
 
 app:
   jwt:
@@ -80,7 +83,7 @@ springdoc:
   paths-to-match:
     - /api/**
   packages-to-scan:
-    - liaison.groble.api.server.auth
+    - liaison.groble.api.server
   show-actuator: false
   model-and-view-allowed: true
 
@@ -98,3 +101,5 @@ logging:
     liaison: DEBUG
     org.springdoc: DEBUG
     io.swagger.v3: DEBUG
+    software.amazon.awssdk: DEBUG
+    org.apache.http: DEBUG

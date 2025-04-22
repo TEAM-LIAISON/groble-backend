@@ -99,6 +99,7 @@ project(':groble-common') {
     dependencies {
         // Spring Web
         implementation 'org.springframework.boot:spring-boot-starter-web'
+        implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${springdocVersion}"
     }
 }
 
@@ -158,7 +159,10 @@ project(':groble-application') {
         implementation project(':groble-common')
         implementation project(':groble-infrastructure:groble-persistence')
         implementation project(':groble-infrastructure:groble-external')
-        
+
+        // Spring Web
+        implementation 'org.springframework.boot:spring-boot-starter-web'
+
         // 트랜잭션 관리
         implementation 'org.springframework:spring-tx'
         implementation 'org.springframework.boot:spring-boot-starter-aop'
@@ -171,6 +175,9 @@ project(':groble-domain') {
 
         // JPA
         implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+
+        // Spring Web
+        implementation 'org.springframework.boot:spring-boot-starter-web'
 
         // Security
         implementation 'org.springframework.boot:spring-boot-starter-security'
@@ -201,6 +208,9 @@ project(':groble-infrastructure:groble-external') {
         implementation project(':groble-domain')
         implementation project(':groble-common')
 
+        // Spring Web
+        implementation 'org.springframework.boot:spring-boot-starter-web'
+
         // 이메일 발송 의존성 추가
         implementation 'org.springframework.boot:spring-boot-starter-mail'
 
@@ -211,6 +221,9 @@ project(':groble-infrastructure:groble-external') {
         implementation 'io.projectreactor:reactor-core'
         implementation 'com.fasterxml.jackson.core:jackson-databind'
         implementation 'org.springframework.boot:spring-boot-starter-cache'
+
+        // AWS S3
+        implementation 'com.amazonaws:aws-java-sdk-s3:1.12.715'
     }
 }
 

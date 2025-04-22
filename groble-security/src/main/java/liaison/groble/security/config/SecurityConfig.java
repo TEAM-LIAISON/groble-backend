@@ -143,9 +143,11 @@ public class SecurityConfig {
             auth ->
                 auth
                     // 인증 없이 접근 가능한 경로 설정
-                    .requestMatchers("/api/auth/**")
-                    .permitAll()
-                    .requestMatchers("/api/v1/auth/**")
+                    .requestMatchers(
+                        "/api/v1/auth/sign-up",
+                        "/api/v1/auth/sign-in",
+                        "/api/v1/auth/email-verification/sign-up",
+                        "/api/v1/auth/verify-code/sign-up")
                     .permitAll()
                     .requestMatchers("/api/v1/oauth2/**")
                     .permitAll()

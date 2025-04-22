@@ -2,10 +2,12 @@ package liaison.groble.api.server.auth.mapper;
 
 import org.springframework.stereotype.Component;
 
+import liaison.groble.api.model.auth.request.DeprecatedSignUpRequest;
 import liaison.groble.api.model.auth.request.EmailVerificationRequest;
 import liaison.groble.api.model.auth.request.SignInRequest;
 import liaison.groble.api.model.auth.request.SignUpRequest;
 import liaison.groble.api.model.auth.request.VerifyEmailCodeRequest;
+import liaison.groble.application.auth.dto.DeprecatedSignUpDto;
 import liaison.groble.application.auth.dto.EmailVerificationDto;
 import liaison.groble.application.auth.dto.SignInDto;
 import liaison.groble.application.auth.dto.SignUpDto;
@@ -13,9 +15,22 @@ import liaison.groble.application.auth.dto.VerifyEmailCodeDto;
 
 @Component
 public class AuthDtoMapper {
-  /** API 요청 DTO를 서비스 레이어 DTO로 변환 */
+
+  public DeprecatedSignUpDto toServiceDeprecatedSignUpDto(DeprecatedSignUpRequest request) {
+    return DeprecatedSignUpDto.builder()
+        .email(request.getEmail())
+        .password(request.getPassword())
+        .build();
+  }
+
   public SignUpDto toServiceSignUpDto(SignUpRequest request) {
-    return SignUpDto.builder().email(request.getEmail()).password(request.getPassword()).build();
+    return SignUpDto.builder()
+        .userType(request.getUserType())
+        .termsTypeStrings(request.getTermsTypes().stream().map(Enum::name).toList())
+        .email(request.getEmail())
+        .password(request.getPassword())
+        .nickname(request.getNickname())
+        .build();
   }
 
   public SignInDto toServiceSignInDto(SignInRequest request) {

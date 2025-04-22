@@ -6,9 +6,9 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Repository;
 
-import liaison.groble.domain.user.entity.Terms;
-import liaison.groble.domain.user.enums.TermsType;
-import liaison.groble.domain.user.repository.TermsRepository;
+import liaison.groble.domain.terms.Terms;
+import liaison.groble.domain.terms.enums.TermsType;
+import liaison.groble.domain.terms.repository.TermsRepository;
 
 import lombok.AllArgsConstructor;
 
@@ -16,6 +16,11 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class TermsRepositoryImpl implements TermsRepository {
   private final JpaTermsRepository jpaTermsRepository;
+
+  @Override
+  public List<Terms> findAll() {
+    return jpaTermsRepository.findAll();
+  }
 
   @Override
   public List<Terms> findActiveTermsByTypes(List<TermsType> termsTypes) {
@@ -48,5 +53,10 @@ public class TermsRepositoryImpl implements TermsRepository {
   @Override
   public Optional<Terms> findTopByTypeAndEffectiveToIsNullOrderByEffectiveFromDesc(TermsType type) {
     return jpaTermsRepository.findTopByTypeAndEffectiveToIsNullOrderByEffectiveFromDesc(type);
+  }
+
+  @Override
+  public void saveAll(List<Terms> terms) {
+    jpaTermsRepository.saveAll(terms);
   }
 }

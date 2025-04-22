@@ -9,42 +9,42 @@ import liaison.groble.api.model.user.response.UserMyPageDetailResponse;
 import liaison.groble.api.model.user.response.UserMyPageSummaryResponse;
 import liaison.groble.application.user.dto.UserMyPageDetailDto;
 import liaison.groble.application.user.dto.UserMyPageSummaryDto;
+import liaison.groble.common.response.EnumResponse;
 
 @Component
 public class UserDtoMapper {
 
   public UserMyPageSummaryResponse toApiMyPageSummaryResponse(
       UserMyPageSummaryDto userMyPageSummaryDto) {
-
-    UserTypeDto userTypeDto =
-        userMyPageSummaryDto.getUserTypeDescription() != null
-            ? UserTypeDto.valueOf(userMyPageSummaryDto.getUserTypeDescription())
+    EnumResponse userType =
+        userMyPageSummaryDto.getUserTypeName() != null
+            ? EnumResponse.from(UserTypeDto.valueOf(userMyPageSummaryDto.getUserTypeName()))
             : null;
 
     return UserMyPageSummaryResponse.builder()
-        .nickName(userMyPageSummaryDto.getNickName())
+        .nickname(userMyPageSummaryDto.getNickname())
         .profileImageUrl(userMyPageSummaryDto.getProfileImageUrl())
-        .userType(userTypeDto)
+        .userType(userType)
         .canSwitchToSeller(userMyPageSummaryDto.isCanSwitchToSeller())
         .build();
   }
 
   public UserMyPageDetailResponse toApiMyPageDetailResponse(
       UserMyPageDetailDto userMyPageDetailDto) {
-    AccountTypeDto accountTypeDto =
+    EnumResponse accountType =
         userMyPageDetailDto.getAccountTypeName() != null
-            ? AccountTypeDto.valueOf(userMyPageDetailDto.getAccountTypeName())
+            ? EnumResponse.from(AccountTypeDto.valueOf(userMyPageDetailDto.getAccountTypeName()))
             : null;
 
-    ProviderTypeDto providerTypeDto =
+    EnumResponse providerType =
         userMyPageDetailDto.getProviderTypeName() != null
-            ? ProviderTypeDto.valueOf(userMyPageDetailDto.getProviderTypeName())
+            ? EnumResponse.from(ProviderTypeDto.valueOf(userMyPageDetailDto.getProviderTypeName()))
             : null;
 
     return UserMyPageDetailResponse.builder()
-        .nickName(userMyPageDetailDto.getNickName())
-        .accountType(accountTypeDto)
-        .providerType(providerTypeDto)
+        .nickname(userMyPageDetailDto.getNickname())
+        .accountType(accountType)
+        .providerType(providerType)
         .email(userMyPageDetailDto.getEmail())
         .profileImageUrl(userMyPageDetailDto.getProfileImageUrl())
         .phoneNumber(userMyPageDetailDto.getPhoneNumber())

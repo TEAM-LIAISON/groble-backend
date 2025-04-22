@@ -42,16 +42,8 @@ public class TermsController {
   private final TermsService termsService;
   private final TermsDtoMapper termsDtoMapper;
 
-  @Operation(summary = "약관 동의", description = "사용자가 약관에 동의합니다.")
-  @ApiResponses({
-    @ApiResponse(
-        responseCode = "200",
-        description = "약관 동의 처리 성공",
-        content = @Content(schema = @Schema(implementation = GrobleResponse.class))),
-    @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터")
-  })
+  @Operation(summary = "회원가입 약관 동의", description = "사용자가 회원가입 과정에서 약관에 동의합니다.")
   @PostMapping("/agree")
-  @Logging(item = "Terms", action = "AGREE", includeParam = true)
   public ResponseEntity<GrobleResponse<TermsAgreementResponse>> agreeToTerms(
       @Auth Accessor accessor,
       @Valid @RequestBody TermsAgreementRequest request,

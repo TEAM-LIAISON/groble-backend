@@ -12,7 +12,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserMyPageDetailDto {
-  private String nickName;
+  private String nickname;
   private String accountTypeName;
   private String providerTypeName;
   private String email;

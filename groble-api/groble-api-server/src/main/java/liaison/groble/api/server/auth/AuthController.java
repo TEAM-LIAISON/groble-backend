@@ -1,17 +1,22 @@
 package liaison.groble.api.server.auth;
 
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import liaison.groble.api.model.auth.request.DeprecatedSignUpRequest;
 import liaison.groble.api.model.auth.request.EmailVerificationRequest;
 import liaison.groble.api.model.auth.request.ResetPasswordRequest;
 import liaison.groble.api.model.auth.request.SignInRequest;
@@ -19,7 +24,12 @@ import liaison.groble.api.model.auth.request.SignUpRequest;
 import liaison.groble.api.model.auth.request.VerifyEmailCodeRequest;
 import liaison.groble.api.model.auth.response.SignInResponse;
 import liaison.groble.api.model.auth.response.SignUpResponse;
+import liaison.groble.api.model.user.request.NicknameRequest;
+import liaison.groble.api.model.user.request.UserTypeRequest;
+import liaison.groble.api.model.user.response.NicknameDuplicateCheckResponse;
+import liaison.groble.api.model.user.response.UpdateNicknameResponse;
 import liaison.groble.api.server.auth.mapper.AuthDtoMapper;
+import liaison.groble.application.auth.dto.DeprecatedSignUpDto;
 import liaison.groble.application.auth.dto.EmailVerificationDto;
 import liaison.groble.application.auth.dto.SignInDto;
 import liaison.groble.application.auth.dto.SignUpDto;
@@ -65,33 +75,55 @@ public class AuthController {
   /**
    * 회원가입 API
    *
-   * <p>이메일과 비밀번호로 회원가입 처리
-   *
-   * @param request 회원가입 요청 정보
-   * @return 회원가입 결과 (액세스 토큰, 리프레시 토큰 포함)
+   * <p>유형 선택, 약관, 이메일, 비밀번호, 닉네임
    */
-  @Operation(summary = "회원가입", description = "새로운 사용자를 등록하고 인증 토큰을 발급합니다.")
-  @ApiResponses({
-    @ApiResponse(
-        responseCode = "201",
-        description = "회원가입 성공",
-        content = @Content(schema = @Schema(implementation = GrobleResponse.class))),
-    @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터"),
-    @ApiResponse(responseCode = "409", description = "이미 존재하는 이메일")
-  })
+  @Operation(
+      summary = "통합 회원가입 (유형, 약관, 이메일(인증된), 비밀번호, 닉네임)",
+      description = "새로운 사용자를 등록하고 인증 토큰을 발급합니다.")
   @PostMapping("/sign-up")
   public ResponseEntity<GrobleResponse<SignUpResponse>> signUp(
       @Parameter(description = "회원가입 정보", required = true) @Valid @RequestBody
           SignUpRequest request,
       HttpServletResponse response) {
 
-    log.info("회원가입 요청: {}", request.getEmail());
-
     // 1. API DTO → 서비스 DTO 변환
     SignUpDto signUpDto = authDtoMapper.toServiceSignUpDto(request);
 
     // 2. 서비스 호출
     TokenDto tokenDto = authService.signUp(signUpDto);
+
+    // 3. 토큰을 쿠키로 설정
+    addTokenCookies(response, tokenDto.getAccessToken(), tokenDto.getRefreshToken());
+
+    // 4. 사용자 정보만 응답 본문에 포함
+    SignUpResponse signUpResponse = SignUpResponse.of(request.getEmail());
+
+    // 5. API 응답 생성
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(GrobleResponse.success(signUpResponse, "회원가입이 성공적으로 완료되었습니다.", 201));
+  }
+
+  /**
+   * 회원가입 API
+   *
+   * <p>이메일과 비밀번호로 회원가입 처리
+   *
+   * @param request 회원가입 요청 정보
+   * @return 회원가입 결과 (액세스 토큰, 리프레시 토큰 : 쿠키에 세팅 | 해당 이메일에 대한 인증 완료 여부)
+   */
+  @Deprecated
+  @Operation(summary = "통합 회원가입 [deprecated]", description = "새로운 사용자를 등록하고 인증 토큰을 발급합니다.")
+  @PostMapping("/sign-up/deprecated")
+  public ResponseEntity<GrobleResponse<SignUpResponse>> signUp(
+      @Parameter(description = "회원가입 정보", required = true) @Valid @RequestBody
+          DeprecatedSignUpRequest request,
+      HttpServletResponse response) {
+
+    // 1. API DTO → 서비스 DTO 변환
+    DeprecatedSignUpDto deprecatedSignUpDto = authDtoMapper.toServiceDeprecatedSignUpDto(request);
+
+    // 2. 서비스 호출
+    TokenDto tokenDto = authService.signUp(deprecatedSignUpDto);
 
     // 3. 토큰을 쿠키로 설정
     addTokenCookies(response, tokenDto.getAccessToken(), tokenDto.getRefreshToken());
@@ -183,16 +215,44 @@ public class AuthController {
   }
 
   /**
-   * 이메일 인증 API
+   * 비밀번호 재설정 이메일 발송 API
    *
-   * <p>사용자가 기입한 이메일에 인증 코드를 발송
-   *
-   * @param request 인증 코드를 보낼 이메일 정보
+   * @param request 비밀번호 재설정 이메일 요청
    * @return 이메일 발송 결과
    */
-  @Operation(summary = "회원가입 인증 및 이메일 변경 인증", description = "사용자가 기입한 이메일에 인증 코드를 발급합니다.")
-  @PostMapping("/email-verification")
-  public ResponseEntity<GrobleResponse<Void>> sendEmailVerification(
+  @Operation(summary = "비밀번호 재설정 이메일 발송", description = "비밀번호 재설정 링크가 포함된 이메일을 발송합니다.")
+  @PostMapping("/password/reset-request")
+  public ResponseEntity<GrobleResponse<Void>> requestPasswordReset(
+      @Auth Accessor accessor, @Valid @RequestBody EmailVerificationRequest request) {
+    log.info("비밀번호 재설정 이메일 요청: {}", request.getEmail());
+
+    authService.sendPasswordResetEmail(accessor.getUserId(), request.getEmail());
+
+    return ResponseEntity.ok().body(GrobleResponse.success(null, "비밀번호 재설정 이메일이 발송되었습니다.", 200));
+  }
+
+  /**
+   * 비밀번호 재설정 API
+   *
+   * <p>비밀번호 재설정 링크를 통해 새로운 비밀번호로 변경
+   *
+   * @param accessor 인증된 사용자 정보
+   * @param request 비밀번호 재설정 요청
+   * @return 비밀번호 재설정 결과
+   */
+  @Operation(summary = "비밀번호 재설정", description = "새로운 비밀번호로 재설정합니다.")
+  @PostMapping("/password/reset")
+  public ResponseEntity<GrobleResponse<Void>> resetPassword(
+      @Auth Accessor accessor, @Valid @RequestBody ResetPasswordRequest request) {
+
+    authService.resetPassword(accessor.getUserId(), request.getToken(), request.getNewPassword());
+
+    return ResponseEntity.ok().body(GrobleResponse.success(null, "비밀번호가 성공적으로 재설정되었습니다.", 200));
+  }
+
+  @Operation(summary = "통합 회원가입 이메일 인증 요청", description = "사용자가 기입한 이메일에 인증 코드를 발급합니다.")
+  @PostMapping("/email-verification/sign-up")
+  public ResponseEntity<GrobleResponse<Void>> sendEmailVerificationForSignUp(
       @Parameter(description = "이메일 인증 정보", required = true) @Valid @RequestBody
           EmailVerificationRequest request) {
     log.info("이메일 인증 요청: {}", request.getEmail());
@@ -202,75 +262,35 @@ public class AuthController {
         authDtoMapper.toServiceEmailVerificationDto(request);
 
     // 2. 서비스 호출
-    authService.sendEmailVerification(emailVerificationDto);
+    authService.sendEmailVerificationForSignUp(emailVerificationDto);
 
     // 3. API 응답 생성
     return ResponseEntity.status(HttpStatus.OK)
         .body(GrobleResponse.success(null, "인증 이메일이 발송되었습니다.", 200));
   }
 
-  /**
-   * 비밀번호 재설정 이메일 발송 API
-   *
-   * @param request 비밀번호 재설정 이메일 요청
-   * @return 이메일 발송 결과
-   */
-  @Operation(summary = "비밀번호 재설정 이메일 발송", description = "비밀번호 재설정 링크가 포함된 이메일을 발송합니다.")
-  @ApiResponses({
-    @ApiResponse(responseCode = "200", description = "이메일 발송 성공"),
-    @ApiResponse(responseCode = "400", description = "잘못된 요청"),
-    @ApiResponse(responseCode = "404", description = "존재하지 않는 이메일")
-  })
-  @PostMapping("/password/reset-request")
-  public ResponseEntity<GrobleResponse<Void>> requestPasswordReset(
-      @Valid @RequestBody EmailVerificationRequest request) {
-    log.info("비밀번호 재설정 이메일 요청: {}", request.getEmail());
+  @Operation(summary = "이메일 변경 이메일 인증 요청", description = "사용자가 기입한 이메일에 인증 코드를 발급합니다.")
+  @PostMapping("/email-verification/change-email")
+  public ResponseEntity<GrobleResponse<Void>> sendEmailVerificationForChangeEmail(
+      @Auth Accessor accessor,
+      @Parameter(description = "이메일 인증 정보", required = true) @Valid @RequestBody
+          EmailVerificationRequest request) {
+    log.info("이메일 변경 인증 요청: {}", request.getEmail());
 
-    authService.sendPasswordResetEmail(request.getEmail());
+    // 1. API DTO → 서비스 DTO 변환
+    EmailVerificationDto emailVerificationDto =
+        authDtoMapper.toServiceEmailVerificationDto(request);
 
-    return ResponseEntity.ok().body(GrobleResponse.success(null, "비밀번호 재설정 이메일이 발송되었습니다.", 200));
+    // 2. 서비스 호출
+    authService.sendEmailVerificationForChangeEmail(accessor.getUserId(), emailVerificationDto);
+
+    // 3. API 응답 생성
+    return ResponseEntity.status(HttpStatus.OK)
+        .body(GrobleResponse.success(null, "인증 이메일이 발송되었습니다.", 200));
   }
 
-  /**
-   * 비밀번호 재설정 API
-   *
-   * @param request 비밀번호 재설정 요청
-   * @return 비밀번호 재설정 결과
-   */
-  @Operation(summary = "비밀번호 재설정", description = "새로운 비밀번호로 재설정합니다.")
-  @ApiResponses({
-    @ApiResponse(responseCode = "200", description = "비밀번호 재설정 성공"),
-    @ApiResponse(responseCode = "400", description = "잘못된 요청"),
-    @ApiResponse(responseCode = "404", description = "존재하지 않는 이메일")
-  })
-  @PostMapping("/password/reset")
-  public ResponseEntity<GrobleResponse<Void>> resetPassword(
-      @Valid @RequestBody ResetPasswordRequest request) {
-    log.info("비밀번호 재설정 요청: {}", request.getEmail());
-
-    authService.resetPassword(request.getEmail(), request.getToken(), request.getNewPassword());
-
-    return ResponseEntity.ok().body(GrobleResponse.success(null, "비밀번호가 성공적으로 재설정되었습니다.", 200));
-  }
-
-  /**
-   * 이메일 인증 코드 확인 API
-   *
-   * <p>사용자가 이메일로 받은 인증 코드의 유효성을 검증합니다.
-   *
-   * @param request 인증 코드 검증 요청
-   * @return 인증 코드 검증 결과
-   */
-  @Operation(summary = "이메일 인증 코드 확인", description = "이메일로 발송된 인증 코드의 유효성을 검증합니다.")
-  @ApiResponses({
-    @ApiResponse(
-        responseCode = "200",
-        description = "인증 성공",
-        content = @Content(schema = @Schema(implementation = GrobleResponse.class))),
-    @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터 또는 유효하지 않은 인증 코드"),
-    @ApiResponse(responseCode = "404", description = "존재하지 않는 이메일 또는 만료된 인증 코드")
-  })
-  @PostMapping("/verify-code")
+  @Operation(summary = "회원가입 시 이메일 인증 코드 확인", description = "이메일로 발송된 인증 코드의 유효성을 검증합니다.")
+  @PostMapping("/verify-code/sign-up")
   public ResponseEntity<GrobleResponse<Void>> verifyEmailCode(
       @Valid @RequestBody VerifyEmailCodeRequest request) {
     log.info("이메일 인증 코드 검증 요청: {}", request.getEmail());
@@ -278,23 +298,33 @@ public class AuthController {
     // API DTO → 서비스 DTO 변환
     VerifyEmailCodeDto verifyEmailCodeDto = authDtoMapper.toServiceVerifyEmailCodeDto(request);
 
-    // 서비스 호출
     authService.verifyEmailCode(verifyEmailCodeDto);
 
-    // API 응답 생성
     return ResponseEntity.ok().body(GrobleResponse.success(null, "이메일 인증이 성공적으로 완료되었습니다.", 200));
+  }
+
+  @Operation(
+      summary = "이메일 변경 시 이메일 인증 코드 확인",
+      description = "이메일 변경 시 인증 코드의 유효성을 검증하고 이메일을 변경합니다.")
+  @PostMapping("/verify-code/change-email")
+  public ResponseEntity<GrobleResponse<Void>> verifyEmailCodeForChangeEmail(
+      @Auth Accessor accessor, @Valid @RequestBody VerifyEmailCodeRequest request) {
+    log.info("이메일 변경 인증 코드 검증 요청: {}", request.getEmail());
+
+    // API DTO → 서비스 DTO 변환
+    VerifyEmailCodeDto verifyEmailCodeDto = authDtoMapper.toServiceVerifyEmailCodeDto(request);
+
+    // 서비스 호출
+    authService.verifyEmailCodeForChangeEmail(accessor.getUserId(), verifyEmailCodeDto);
+
+    // API 응답 생성
+    return ResponseEntity.ok().body(GrobleResponse.success(null, "이메일 변경 인증이 성공적으로 완료되었습니다.", 200));
   }
 
   /** 토큰 검증 및 로그인 상태 확인 API OAuth2 로그인 처리 후 프론트엔드에서 호출하여 토큰 상태 확인 */
   @Operation(summary = "토큰 검증", description = "현재 사용자의 인증 토큰을 검증하고 로그인 상태를 확인합니다.")
-  @ApiResponses({
-    @ApiResponse(responseCode = "200", description = "유효한 토큰, 로그인 성공"),
-    @ApiResponse(responseCode = "401", description = "유효하지 않은 토큰")
-  })
   @PostMapping("/validate-token")
   public ResponseEntity<GrobleResponse<SignInResponse>> validateToken(@Auth Accessor accessor) {
-    log.info("토큰 검증 요청: {}", accessor.getEmail());
-
     // 사용자 역할 및 정보 상태 확인
     String userType = userService.getUserType(accessor.getEmail());
 
@@ -305,6 +335,75 @@ public class AuthController {
     SignInResponse response = SignInResponse.of(accessor.getEmail(), userType, nextRoutePath);
 
     return ResponseEntity.ok().body(GrobleResponse.success(response, "유효한 토큰입니다.", 200));
+  }
+
+  @Operation(summary = "accessToken 재발급", description = "리프레시 토큰을 사용하여 새로운 액세스 토큰을 발급합니다.")
+  @PostMapping("/refresh-token")
+  public ResponseEntity<GrobleResponse<Void>> refreshToken(
+      HttpServletRequest request, HttpServletResponse response) {
+
+    TokenDto newTokens = authService.refreshTokens(extractRefreshTokenFromCookie(request));
+
+    addTokenCookies(response, newTokens.getAccessToken(), newTokens.getRefreshToken());
+
+    return ResponseEntity.ok(GrobleResponse.success(null, "토큰이 재발급되었습니다.", 200));
+  }
+
+  // 처음 회원가입 유형을 선택하는 API
+  @Deprecated
+  @Operation(summary = "회원가입 유형 선택", description = "회원가입 시 판매자 또는 구매자 중 선택합니다.")
+  @ApiResponses({
+    @ApiResponse(
+        responseCode = "200",
+        description = "회원가입 유형 선택 성공",
+        content = @Content(schema = @Schema(implementation = GrobleResponse.class))),
+    @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터")
+  })
+  @PostMapping("/initial-user-type")
+  public ResponseEntity<GrobleResponse<Void>> setInitialUserType(
+      @Auth Accessor accessor, @Valid @RequestBody UserTypeRequest request) {
+
+    userService.setInitialUserType(accessor.getUserId(), request.getUserType());
+    return ResponseEntity.ok(GrobleResponse.success(null, "회원가입 유형이 설정되었습니다."));
+  }
+
+  @Operation(summary = "닉네임 중복 확인", description = "닉네임이 이미 사용 중인지 확인합니다. 회원가입 및 닉네임 수정 시 사용됩니다.")
+  @ApiResponses({
+    @ApiResponse(
+        responseCode = "200",
+        description = "닉네임 중복 확인 성공",
+        content = @Content(schema = @Schema(implementation = GrobleResponse.class))),
+    @ApiResponse(responseCode = "401", description = "인증 실패 (AccessToken 만료 또는 없음)"),
+    @ApiResponse(responseCode = "404", description = "사용자 정보를 찾을 수 없음"),
+    @ApiResponse(responseCode = "409", description = "이미 존재하는 닉네임")
+  })
+  @GetMapping("/nickname/check")
+  public ResponseEntity<GrobleResponse<NicknameDuplicateCheckResponse>> checkNicknameDuplicate(
+      @RequestParam("nickname") @NotBlank String nickname) {
+
+    boolean exists = authService.isNicknameTaken(nickname);
+    return ResponseEntity.ok(
+        GrobleResponse.success(new NicknameDuplicateCheckResponse(nickname, exists)));
+  }
+
+  @Operation(summary = "닉네임 수정", description = "닉네임을 수정합니다.")
+  @ApiResponses({
+    @ApiResponse(
+        responseCode = "200",
+        description = "닉네임 수정 성공",
+        content = @Content(schema = @Schema(implementation = GrobleResponse.class))),
+    @ApiResponse(responseCode = "401", description = "인증 실패 (AccessToken 만료 또는 없음)"),
+    @ApiResponse(responseCode = "404", description = "사용자 정보를 찾을 수 없음"),
+    @ApiResponse(responseCode = "409", description = "이미 존재하는 닉네임")
+  })
+  @PostMapping("/users/nickname")
+  public ResponseEntity<GrobleResponse<UpdateNicknameResponse>> updateNickname(
+      @Auth Accessor accessor, @Valid @RequestBody NicknameRequest request) {
+
+    String updatedNickname =
+        authService.updateNickname(accessor.getUserId(), request.getNickname());
+
+    return ResponseEntity.ok(GrobleResponse.success(new UpdateNicknameResponse(updatedNickname)));
   }
 
   /** 액세스 토큰과 리프레시 토큰을 쿠키에 저장 */
@@ -345,5 +444,19 @@ public class AuthController {
   private boolean isSecureEnvironment() {
     String env = System.getProperty("spring.profiles.active", "dev");
     return env.equalsIgnoreCase("prod") || env.equalsIgnoreCase("production");
+  }
+
+  private String extractRefreshTokenFromCookie(HttpServletRequest request) {
+    if (request.getCookies() == null) {
+      throw new IllegalArgumentException("쿠키가 없습니다.");
+    }
+
+    for (Cookie cookie : request.getCookies()) {
+      if ("refreshToken".equals(cookie.getName())) {
+        return cookie.getValue();
+      }
+    }
+
+    throw new IllegalArgumentException("refreshToken 쿠키가 없습니다.");
   }
 }

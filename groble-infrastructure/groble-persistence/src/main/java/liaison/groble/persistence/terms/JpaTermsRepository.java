@@ -8,8 +8,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import liaison.groble.domain.user.entity.Terms;
-import liaison.groble.domain.user.enums.TermsType;
+import liaison.groble.domain.terms.Terms;
+import liaison.groble.domain.terms.enums.TermsType;
 
 public interface JpaTermsRepository extends JpaRepository<Terms, Long> {
 

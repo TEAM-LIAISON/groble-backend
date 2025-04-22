@@ -9,13 +9,11 @@ import liaison.groble.application.user.dto.UserMyPageSummaryDto;
 import liaison.groble.application.user.service.UserService;
 import liaison.groble.common.exception.EntityNotFoundException;
 import liaison.groble.common.port.security.SecurityPort;
-import liaison.groble.domain.port.EmailSenderPort;
 import liaison.groble.domain.user.entity.IntegratedAccount;
 import liaison.groble.domain.user.entity.SocialAccount;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.enums.UserType;
 import liaison.groble.domain.user.repository.IntegratedAccountRepository;
-import liaison.groble.domain.user.repository.TermsRepository;
 import liaison.groble.domain.user.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -27,9 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 public class UserServiceImpl implements UserService {
   private final UserRepository userRepository;
   private final IntegratedAccountRepository integratedAccountRepository;
-  private final TermsRepository termsRepository;
   private final SecurityPort securityPort;
-  private final EmailSenderPort emailSenderPort;
 
   // 변경: 24시간 (24 * 60 = 1440분)
   private final long PASSWORD_RESET_EXPIRATION_MINUTES = 1440;
@@ -72,7 +68,7 @@ public class UserServiceImpl implements UserService {
 
     // SELLER로 전환할 경우만 검증
     if (userType == UserType.SELLER) {
-      if (user.getSellerProfile() == null) {
+      if (user.getSellerInfo() == null) {
         log.warn("전환 실패: 사용자 {}는 SELLER 프로필이 없습니다.", user.getId());
         return false;
       }
@@ -96,30 +92,7 @@ public class UserServiceImpl implements UserService {
             .orElseThrow(() -> new IllegalArgumentException("등록되지 않은 이메일입니다."));
 
     User user = account.getUser();
-
-    // 기본 정보가 없는 경우
-    if (user.getNickName() == null || user.getNickName().isEmpty()) {
-      return "NONE";
-    }
-
-    // 사용자 역할 확인
-    boolean isSeller =
-        user.getUserRoles().stream()
-            .anyMatch(userRole -> userRole.getRole().getName().equals("ROLE_SELLER"));
-    boolean isBuyer =
-        user.getUserRoles().stream()
-            .anyMatch(userRole -> userRole.getRole().getName().equals("ROLE_USER"));
-
-    // 둘 다 가진 경우 마지막 사용 역할 반환
-    if (isSeller && isBuyer) {
-      String lastUserType = user.getLastUserType().getDescription();
-      // 마지막 사용 역할이 없는 경우 기본값으로 BUYER 반환
-      return lastUserType != null ? lastUserType : "BUYER";
-    } else if (isSeller) {
-      return "SELLER";
-    } else {
-      return "BUYER";
-    }
+    return user.getLastUserType().name();
   }
 
   @Override
@@ -150,24 +123,6 @@ public class UserServiceImpl implements UserService {
   }
 
   @Override
-  public boolean isNickNameTaken(String nickName) {
-    return userRepository.existsByNickName(nickName);
-  }
-
-  @Override
-  public String setOrUpdateNickname(Long userId, String nickName) {
-    User user =
-        userRepository
-            .findById(userId)
-            .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
-
-    user.updateNickName(nickName);
-    userRepository.save(user);
-
-    return nickName;
-  }
-
-  @Override
   public void sendPasswordResetToken(String email) {
     IntegratedAccount integratedAccount =
         integratedAccountRepository
@@ -181,8 +136,6 @@ public class UserServiceImpl implements UserService {
 
     // 메일 발송
     String resetUrl = frontendUrl + "/reset-password?token=" + token;
-
-    emailSenderPort.sendPasswordResetEmail(email, token, resetUrl);
   }
 
   @Override
@@ -209,14 +162,11 @@ public class UserServiceImpl implements UserService {
             .findById(userId)
             .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
 
-    boolean existsSellerProfile = user.getSellerProfile() != null;
-
     return UserMyPageSummaryDto.builder()
-        .id(user.getId())
-        .nickName(user.getNickName())
+        .nickname(user.getNickname())
         .profileImageUrl(user.getProfileImageUrl())
-        .userTypeDescription(user.getLastUserType().getDescription())
-        .canSwitchToSeller(existsSellerProfile)
+        .userTypeName(user.getLastUserType().name())
+        .canSwitchToSeller(user.isSeller())
         .build();
   }
 
@@ -245,7 +195,7 @@ public class UserServiceImpl implements UserService {
     boolean sellerAccountNotCreated = true;
 
     return UserMyPageDetailDto.builder()
-        .nickName(user.getNickName())
+        .nickname(user.getNickname())
         .accountTypeName(user.getAccountType().name())
         .providerTypeName(providerTypeName)
         .email(email)
@@ -255,14 +205,22 @@ public class UserServiceImpl implements UserService {
         .build();
   }
 
-  //    private boolean isSellerAccountNotCreated(User user) {
-  //        boolean hasSellerRole = user.getUserRoles().stream()
-  //                .anyMatch(role -> role.getRole().getName().equals("ROLE_SELLER"));
-  //
-  //        boolean hasSellerProfile = sellerProfileRepository.existsByUserId(user.getId());
-  //
-  //        // 판매자 권한은 있지만, 판매자 계정이 없는 경우
-  //        return hasSellerRole && !hasSellerProfile;
-  //    }
+  @Override
+  public void setInitialUserType(Long userId, String userTypeName) {
+    User user =
+        userRepository
+            .findById(userId)
+            .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
 
+    // 역할 설정
+    UserType userType;
+    try {
+      userType = UserType.valueOf(userTypeName.toUpperCase());
+    } catch (IllegalArgumentException | NullPointerException e) {
+      throw new IllegalArgumentException("유효하지 않은 사용자 유형입니다: " + userTypeName);
+    }
+
+    user.updateLastUserType(userType);
+    userRepository.save(user);
+  }
 }

@@ -1,5 +1,6 @@
 package liaison.groble.domain.user.entity;
 
+import static jakarta.persistence.EnumType.STRING;
 import static liaison.groble.domain.user.enums.UserType.BUYER;
 import static lombok.AccessLevel.PROTECTED;
 
@@ -14,7 +15,6 @@ import java.util.stream.Collectors;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -25,9 +25,13 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
 import liaison.groble.domain.common.entity.BaseTimeEntity;
-import liaison.groble.domain.seller.entity.SellerProfile;
+import liaison.groble.domain.role.Role;
+import liaison.groble.domain.role.UserRole;
+import liaison.groble.domain.seller.entity.SellerInfo;
+import liaison.groble.domain.terms.Terms;
+import liaison.groble.domain.terms.UserTerms;
+import liaison.groble.domain.terms.enums.TermsType;
 import liaison.groble.domain.user.enums.AccountType;
-import liaison.groble.domain.user.enums.TermsType;
 import liaison.groble.domain.user.enums.UserStatus;
 import liaison.groble.domain.user.enums.UserType;
 
@@ -41,7 +45,7 @@ import lombok.ToString;
 @Entity
 @Table(
     name = "users",
-    indexes = {@Index(name = "idx_user_nick_name", columnList = "nick_name")})
+    indexes = {@Index(name = "idx_user_nickname", columnList = "nickname")})
 @Getter
 @Builder
 @NoArgsConstructor(access = PROTECTED)
@@ -59,8 +63,8 @@ public class User extends BaseTimeEntity {
   private String uuid = UUID.randomUUID().toString();
 
   /** 사용자 이름 (닉네임) */
-  @Column(name = "nick_name", length = 50)
-  private String nickName;
+  @Column(name = "nickname", length = 50)
+  private String nickname;
 
   /** 사용자 프로필 이미지 URL */
   @Column(name = "profile_image_url", columnDefinition = "TEXT")
@@ -79,7 +83,7 @@ public class User extends BaseTimeEntity {
   private SocialAccount socialAccount;
 
   @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-  private SellerProfile sellerProfile;
+  private SellerInfo sellerInfo;
 
   /** 마지막 로그인 시간 */
   @Column(name = "last_login_at")
@@ -93,10 +97,13 @@ public class User extends BaseTimeEntity {
   @Column(name = "refresh_token", length = 500)
   private String refreshToken;
 
+  @Column(name = "refresh_token_expires_at")
+  private Instant refreshTokenExpiresAt;
+
   /** 계정 유형 INTEGRATED: 일반 로그인 계정 SOCIAL: 소셜 로그인 계정 */
   @Builder.Default
   @Column(name = "account_type", nullable = false)
-  @Enumerated(EnumType.STRING)
+  @Enumerated(STRING)
   private AccountType accountType = AccountType.INTEGRATED;
 
   /**
@@ -105,28 +112,23 @@ public class User extends BaseTimeEntity {
    */
   @Builder.Default
   @Column(name = "status", nullable = false)
-  @Enumerated(EnumType.STRING)
+  @Enumerated(STRING)
   private UserStatus status = UserStatus.PENDING_VERIFICATION;
 
   /** 상태 변경 시간 상태가 변경된 마지막 시간 (휴면 계정 전환, 계정 활성화 등을 추적) */
-  @Column(name = "status_changed_at")
+  @Column(name = "status_changed_at", nullable = false)
   private Instant statusChangedAt;
 
-  /** 마케팅 수신 동의 여부 */
-  @Builder.Default
-  @Column(name = "marketing_consent", nullable = false)
-  private boolean marketingConsent = false;
-
-  /** 마케팅 수신 동의 시간 */
-  @Column(name = "marketing_consent_at")
-  private Instant marketingConsentAt;
-
   /** 마지막으로 사용한 사용자 유형 (SELLER 또는 BUYER) */
+  @Enumerated(STRING)
   @Column(name = "last_user_type", length = 20)
   private UserType lastUserType;
 
   @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-  private Set<UserTermsAgreement> termsAgreements = new HashSet<>();
+  private Set<UserTerms> termsAgreements = new HashSet<>();
+
+  @Column(name = "is_seller")
+  private boolean isSeller;
 
   /**
    * 통합 계정으로부터 유저 생성 메서드 IntegratedAccount를 먼저 생성하고 그로부터 User를 생성
@@ -134,13 +136,29 @@ public class User extends BaseTimeEntity {
    * @param integratedAccount 통합 계정 정보
    * @return 생성된 User 객체
    */
-  public static User fromIntegratedAccount(IntegratedAccount integratedAccount) {
+  public static User fromDeprecatedIntegratedAccount(IntegratedAccount integratedAccount) {
     User user =
         User.builder()
             .accountType(AccountType.INTEGRATED)
             .status(UserStatus.PENDING_VERIFICATION) // 이메일 인증 대기 상태로 설정
             .statusChangedAt(Instant.now())
             .lastUserType(BUYER) // 기본값으로 BUYER 설정
+            .build();
+
+    user.setIntegratedAccount(integratedAccount);
+    return user;
+  }
+
+  public static User fromIntegratedAccount(
+      IntegratedAccount integratedAccount, String nickname, UserType userType) {
+
+    User user =
+        User.builder()
+            .nickname(nickname)
+            .accountType(AccountType.INTEGRATED)
+            .status(UserStatus.ACTIVE) // 이메일 인증 대기 상태로 설정
+            .statusChangedAt(Instant.now())
+            .lastUserType(userType) // 기본값으로 BUYER 설정
             .build();
 
     user.setIntegratedAccount(integratedAccount);
@@ -199,8 +217,9 @@ public class User extends BaseTimeEntity {
    *
    * @param refreshToken 새 리프레시 토큰
    */
-  public void updateRefreshToken(String refreshToken) {
+  public void updateRefreshToken(String refreshToken, Instant refreshTokenExpiresAt) {
     this.refreshToken = refreshToken;
+    this.refreshTokenExpiresAt = refreshTokenExpiresAt;
   }
 
   /**
@@ -288,7 +307,7 @@ public class User extends BaseTimeEntity {
       // socialAccount.updateEmail(anonymizedEmail);
     }
 
-    this.nickName = "탈퇴한 사용자";
+    this.nickname = "탈퇴한 사용자";
     this.refreshToken = null;
   }
 
@@ -321,29 +340,21 @@ public class User extends BaseTimeEntity {
   }
 
   /**
-   * 마케팅 수신 동의 설정
-   *
-   * @param consent 동의 여부
-   */
-  public void setMarketingConsent(boolean consent) {
-    this.marketingConsent = consent;
-    if (consent) {
-      this.marketingConsentAt = Instant.now();
-    }
-  }
-
-  /**
    * 사용자 이름 업데이트
    *
-   * @param nickName 새 닉네임
+   * @param nickname 새 닉네임
    */
-  public void updateNickName(String nickName) {
-    this.nickName = nickName;
+  public void updateNickname(String nickname) {
+    this.nickname = nickname;
+  }
+
+  public void updateProfileImageUrl(String profileImageUrl) {
+    this.profileImageUrl = profileImageUrl;
   }
 
   public void agreeToTerms(Terms terms, String agreedIp, String agreedUserAgent) {
-    UserTermsAgreement agreement =
-        UserTermsAgreement.builder()
+    UserTerms agreement =
+        UserTerms.builder()
             .user(this)
             .terms(terms)
             .agreed(true)
@@ -385,7 +396,7 @@ public class User extends BaseTimeEntity {
     return termsAgreements.stream()
         .anyMatch(
             agreement ->
-                agreement.getTerms().getType() == TermsType.ADVERTISING
+                agreement.getTerms().getType() == TermsType.ADVERTISING_POLICY
                     && agreement.isAgreed()
                     && agreement.getTerms().getEffectiveTo() == null);
   }
@@ -400,7 +411,7 @@ public class User extends BaseTimeEntity {
    */
   public void updateAdvertisingAgreement(
       Terms advertisingTerms, boolean agreed, String ip, String userAgent) {
-    UserTermsAgreement existingAgreement =
+    UserTerms existingAgreement =
         termsAgreements.stream()
             .filter(a -> a.getTerms().equals(advertisingTerms))
             .findFirst()
@@ -409,8 +420,8 @@ public class User extends BaseTimeEntity {
     if (existingAgreement != null) {
       existingAgreement.updateAgreement(agreed, Instant.now(), ip, userAgent);
     } else {
-      UserTermsAgreement newAgreement =
-          UserTermsAgreement.builder()
+      UserTerms newAgreement =
+          UserTerms.builder()
               .user(this)
               .terms(advertisingTerms)
               .agreed(agreed)

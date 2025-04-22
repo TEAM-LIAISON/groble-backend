@@ -39,7 +39,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
       List.of(
           "api/v1/oauth2/**",
           "/api/v1/home",
-          "/api/v1/auth/**",
+          "/api/v1/auth/sign-up",
+          "/api/v1/auth/sign-in",
+          "/api/v1/auth/email-verification/sign-up",
+          "/api/v1/auth/verify-code/sign-up",
           "/swagger-ui/**",
           "/swagger-ui.html",
           "/v3/api-docs/**",
@@ -188,7 +191,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     // Bearer 헤더에 없으면 쿠키에서 추출 시도
     if (token == null) {
-      token = extractTokenFromCookie(request, "access_token");
+      token = extractTokenFromCookie(request, "accessToken");
     }
 
     return token;

@@ -59,30 +59,42 @@ public class SmtpEmailAdapter implements EmailSenderPort {
   }
 
   @Override
-  public void sendPasswordResetEmail(String to, String resetToken, String resetUrl) {
+  public void sendPasswordResetEmail(String to, String resetToken) {
     try {
       MimeMessage message = emailSender.createMimeMessage();
       MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
+      String resetUrl = frontendUrl + "/reset-password?token=" + resetToken;
+
       helper.setFrom(fromEmail);
       helper.setTo(to);
-      helper.setSubject("[Groble] 비밀번호 재설정 안내");
+      helper.setSubject("Groble 비밀번호 재설정");
 
       String htmlContent =
-          "<div style='margin:20px;'>"
-              + "<h2>Groble 비밀번호 재설정</h2>"
-              + "<p>안녕하세요, 비밀번호 재설정을 요청하셨습니다.</p>"
-              + "<p>아래 링크를 클릭하여 새 비밀번호를 설정해주세요:</p>"
-              + "<p><a href='"
+          "<div style='max-width:600px; margin:0 auto; font-family:Arial, sans-serif;'>"
+              + "  <div style='text-align:left; padding:20px 0;'>"
+              + "    <img src='"
+              + frontendUrl
+              + "/assets/groble-logo.png' alt='Groble' style='height:40px;'/>"
+              + "  </div>"
+              + "  <h1 style='font-size:24px; font-weight:bold; margin-top:40px; margin-bottom:20px;'>비밀번호 재설정</h1>"
+              + "  <p style='font-size:16px; line-height:1.5; margin-bottom:30px;'>"
+              + "    회원님의 Groble 계정("
+              + to
+              + ")에 대한<br>"
+              + "    비밀번호 재설정 요청을 접수했습니다. 아래 링크는<br>"
+              + "    24시간 이후 만료되며, 한 번만 사용할 수 있습니다."
+              + "  </p>"
+              + "  <div style='text-align:center; margin:40px 0;'>"
+              + "    <a href='"
               + resetUrl
-              + "' style='display:inline-block;background-color:#4CAF50;color:white;padding:10px 20px;text-decoration:none;border-radius:5px;'>비밀번호 재설정</a></p>"
-              + "<p>또는 아래 링크를 브라우저에 복사하여 접속하세요:</p>"
-              + "<p style='word-break:break-all;'>"
-              + resetUrl
-              + "</p>"
-              + "<p>이 링크는 24시간 동안 유효합니다.</p>"
-              + "<p>비밀번호 재설정을 요청하지 않으셨다면 이 이메일을 무시하셔도 됩니다.</p>"
-              + "<p>감사합니다.</p>"
+              + "' style='display:inline-block; background-color:#00FCB4; color:#000000; text-decoration:none; font-weight:bold; padding:15px 0; width:100%; border-radius:8px; font-size:18px;'>비밀번호 재설정</a>"
+              + "  </div>"
+              + "  <p style='font-size:14px; color:#777777; line-height:1.5; margin-top:40px;'>"
+              + "    본 메일은 발신전용이며, 문의에 대한 회신은 처리되지 않습니다.<br>"
+              + "    Groble에 관련하여 궁금하신 점이나 불편한 사항은 언제라도<br>"
+              + "    @@으로 연락해주세요."
+              + "  </p>"
               + "</div>";
 
       helper.setText(htmlContent, true);

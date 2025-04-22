@@ -11,6 +11,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
+import liaison.groble.domain.user.enums.UserType;
+
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -34,43 +36,34 @@ public class IntegratedAccount {
   @Column(nullable = false, unique = true)
   private String integratedAccountEmail;
 
-  @Column(nullable = false)
+  @Column(nullable = false, unique = true)
   private String password;
 
   @Builder
-  private IntegratedAccount(User user, String integratedAccountEmail, String password) {
+  private IntegratedAccount(User user, String integratedAccountEmail, String encodedPassword) {
     this.user = user;
     this.integratedAccountEmail = integratedAccountEmail;
-    this.password = password;
+    this.password = encodedPassword;
   }
 
   // 통합 계정 생성 메서드 - 개선된 버전 (User 생성 전)
-  public static IntegratedAccount createAccount(String email, String password) {
+  public static IntegratedAccount createAccount(
+      String email, String encodedPassword, String nickname, UserType userType) {
+
     IntegratedAccount account =
         IntegratedAccount.builder()
             .user(null)
             .integratedAccountEmail(email)
-            .password(password)
+            .encodedPassword(encodedPassword)
             .build();
 
     // User 객체 생성 및 양방향 연결
-    User user = User.fromIntegratedAccount(account);
+    User user = User.fromIntegratedAccount(account, nickname, userType);
     account.setUser(user);
 
     return account;
   }
 
-  // 이전 버전의 생성 메서드 (후방 호환성 유지)
-  public static IntegratedAccount createIntegratedAccount(
-      User user, String email, String password) {
-    return IntegratedAccount.builder()
-        .user(user)
-        .integratedAccountEmail(email)
-        .password(password)
-        .build();
-  }
-
-  // User 설정 메서드
   public void setUser(User user) {
     this.user = user;
   }
