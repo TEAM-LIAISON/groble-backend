@@ -1,14 +1,16 @@
 package liaison.groble.persistence.file;
 
+import org.springframework.stereotype.Repository;
+
 import liaison.groble.domain.file.entity.FileInfo;
 import liaison.groble.domain.file.repository.FileRepository;
 
+import lombok.AllArgsConstructor;
+
+@Repository
+@AllArgsConstructor
 public class FileRepositoryImpl implements FileRepository {
   private final JpaFileRepository jpaFileRepository;
-
-  public FileRepositoryImpl(JpaFileRepository jpaFileRepository) {
-    this.jpaFileRepository = jpaFileRepository;
-  }
 
   @Override
   public FileInfo save(FileInfo fileInfo) {

@@ -159,7 +159,10 @@ project(':groble-application') {
         implementation project(':groble-common')
         implementation project(':groble-infrastructure:groble-persistence')
         implementation project(':groble-infrastructure:groble-external')
-        
+
+        // Spring Web
+        implementation 'org.springframework.boot:spring-boot-starter-web'
+
         // 트랜잭션 관리
         implementation 'org.springframework:spring-tx'
         implementation 'org.springframework.boot:spring-boot-starter-aop'
