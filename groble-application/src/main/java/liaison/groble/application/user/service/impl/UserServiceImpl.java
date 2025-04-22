@@ -205,15 +205,6 @@ public class UserServiceImpl implements UserService {
         .build();
   }
 
-  //    private boolean isSellerAccountNotCreated(User user) {
-  //        boolean hasSellerRole = user.getUserRoles().stream()
-  //                .anyMatch(role -> role.getRole().getName().equals("ROLE_SELLER"));
-  //
-  //        boolean hasSellerProfile = sellerProfileRepository.existsByUserId(user.getId());
-  //
-  //        // 판매자 권한은 있지만, 판매자 계정이 없는 경우
-  //        return hasSellerRole && !hasSellerProfile;
-  //    }
   @Override
   public void setInitialUserType(Long userId, String userTypeName) {
     User user =

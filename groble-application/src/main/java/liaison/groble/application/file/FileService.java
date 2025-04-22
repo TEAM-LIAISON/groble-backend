@@ -1,12 +1,12 @@
 package liaison.groble.application.file;
 
-import java.io.IOException;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
+import liaison.groble.application.file.dto.FileDto;
+import liaison.groble.application.file.dto.FileUploadDto;
 import liaison.groble.domain.file.entity.FileInfo;
 import liaison.groble.domain.file.entity.PresignedUrlInfo;
 import liaison.groble.domain.file.repository.FileRepository;
@@ -25,33 +25,36 @@ public class FileService {
 
   /** 파일을 S3에 업로드하고 DB에 정보를 저장합니다. */
   @Transactional
-  public FileInfo uploadFile(MultipartFile file, String directory) {
-    try {
-      String originalFileName = file.getOriginalFilename();
-      String contentType = file.getContentType();
-      String fileName = UUID.randomUUID().toString() + "_" + originalFileName;
-      long fileSize = file.getSize();
+  public FileDto uploadFile(FileUploadDto fileUploadDto) {
+    String originalFileName = fileUploadDto.getOriginalFilename();
+    String contentType = fileUploadDto.getContentType();
+    String fileName = fileUploadDto.getFileName();
+    long fileSize = fileUploadDto.getFileSize();
+    String directory = fileUploadDto.getDirectory();
 
-      // S3에 파일 업로드
-      String fileUrl =
-          fileStorageService.uploadFile(file.getInputStream(), fileName, contentType, directory);
+    // S3에 파일 업로드
+    String fileUrl =
+        fileStorageService.uploadFile(
+            fileUploadDto.getInputStream(), fileName, contentType, directory);
 
-      // 파일 정보 DB에 저장
-      FileInfo fileInfo =
-          FileInfo.builder()
-              .fileName(fileName)
-              .originalFilename(originalFileName)
-              .fileUrl(fileUrl)
-              .contentType(contentType)
-              .fileSize(fileSize)
-              .storagePath(directory + "/" + fileName)
-              .build();
+    // 파일 정보 DB에 저장
+    FileInfo fileInfo =
+        FileInfo.builder()
+            .fileName(fileName)
+            .originalFilename(originalFileName)
+            .fileUrl(fileUrl)
+            .contentType(contentType)
+            .fileSize(fileSize)
+            .storagePath(directory + "/" + fileName)
+            .build();
 
-      return fileRepository.save(fileInfo);
-    } catch (IOException e) {
-      log.error("파일 업로드 중 오류 발생", e);
-      throw new RuntimeException("파일 업로드에 실패했습니다", e);
-    }
+    fileRepository.save(fileInfo);
+
+    return FileDto.builder()
+        .originalFilename(originalFileName)
+        .contentType(contentType)
+        .fileUrl(fileUrl)
+        .build();
   }
 
   /** 클라이언트가 직접 S3에 업로드할 수 있는 Presigned URL을 생성합니다. */
@@ -89,7 +92,6 @@ public class FileService {
     FileInfo fileInfo = fileRepository.findByFileName(fileName);
     if (fileInfo != null) {
       fileStorageService.deleteFile(fileInfo.getStoragePath());
-      // DB에서 파일 정보 삭제 로직 추가
     }
   }
 }

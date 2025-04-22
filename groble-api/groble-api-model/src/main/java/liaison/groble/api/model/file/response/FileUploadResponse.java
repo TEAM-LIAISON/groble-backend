@@ -10,7 +10,18 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class FileUploadResponse {
-  private String contentType;
   private String originalFileName;
+  private String fileUrl;
+  private String contentType;
   private String directory;
+
+  public static FileUploadResponse of(
+      String originalFileName, String fileUrl, String contentType, String directory) {
+    return FileUploadResponse.builder()
+        .originalFileName(originalFileName)
+        .fileUrl(fileUrl)
+        .contentType(contentType)
+        .directory(directory)
+        .build();
+  }
 }
