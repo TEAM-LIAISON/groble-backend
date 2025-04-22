@@ -14,7 +14,6 @@ import liaison.groble.domain.file.entity.FileInfo;
 import liaison.groble.domain.file.entity.PresignedUrlInfo;
 import liaison.groble.domain.file.repository.FileRepository;
 import liaison.groble.domain.file.service.FileStorageService;
-import liaison.groble.domain.product.repository.ProductRepository;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.repository.UserRepository;
 
@@ -28,7 +27,6 @@ public class FileService {
 
   private final FileStorageService fileStorageService;
   private final FileRepository fileRepository;
-  private final ProductRepository productRepository;
   private final UserRepository userRepository;
   private final UserReader userReader;
 
