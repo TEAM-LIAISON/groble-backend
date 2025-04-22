@@ -10,7 +10,6 @@ import liaison.groble.application.file.dto.FileUploadDto;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.common.exception.FileSizeLimitExceededException;
 import liaison.groble.common.exception.InvalidFileTypeException;
-import liaison.groble.common.exception.UnauthorizedException;
 import liaison.groble.domain.file.entity.FileInfo;
 import liaison.groble.domain.file.entity.PresignedUrlInfo;
 import liaison.groble.domain.file.repository.FileRepository;
@@ -89,15 +88,15 @@ public class FileService {
     User user = userReader.getUserById(userId);
 
     // 요청 파라미터에 특정 사용자 식별자가 있는 경우 (예: profileUserId)
-    if (fileUploadDto.getMetadata() != null
-        && fileUploadDto.getMetadata().containsKey("profileUserId")) {
-      Long profileUserId = Long.valueOf(fileUploadDto.getMetadata().get("profileUserId"));
-
-      // 본인 프로필이 아니고 관리자도 아닌 경우 권한 없음
-      if (!userId.equals(profileUserId) && !user.hasRole("ROLE_ADMIN")) {
-        throw new UnauthorizedException("다른 사용자의 프로필 사진을 업로드할 권한이 없습니다.");
-      }
-    }
+    //    if (fileUploadDto.getMetadata() != null
+    //        && fileUploadDto.getMetadata().containsKey("profileUserId")) {
+    //      Long profileUserId = Long.valueOf(fileUploadDto.getMetadata().get("profileUserId"));
+    //
+    //      // 본인 프로필이 아니고 관리자도 아닌 경우 권한 없음
+    //      if (!userId.equals(profileUserId) && !user.hasRole("ROLE_ADMIN")) {
+    //        throw new UnauthorizedException("다른 사용자의 프로필 사진을 업로드할 권한이 없습니다.");
+    //      }
+    //    }
 
     // 파일 타입 검증 (이미지 파일만 허용)
     if (!fileUploadDto.getContentType().startsWith("image/")) {
