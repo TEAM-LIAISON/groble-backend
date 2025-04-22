@@ -211,14 +211,10 @@ public class AuthServiceImpl implements AuthService {
 
   @Override
   @Transactional
-  public void sendPasswordResetEmail(String email) {
-    // 이메일로 사용자 계정 찾기
-    IntegratedAccount account =
-        integratedAccountRepository
-            .findByIntegratedAccountEmail(email)
-            .orElseThrow(() -> new IllegalArgumentException("등록되지 않은 이메일입니다."));
+  public void sendPasswordResetEmail(Long userId, String email) {
+    User user = userReader.getUserById(userId);
 
-    if (!account.getIntegratedAccountEmail().equals(email)) {
+    if (!Objects.equals(user.getIntegratedAccount().getIntegratedAccountEmail(), email)) {
       throw new IllegalArgumentException("해당 회원의 이메일이 아닙니다.");
     }
 

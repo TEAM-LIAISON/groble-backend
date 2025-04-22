@@ -66,6 +66,11 @@ spring:
     path match:
       matching-strategy: ant_path_matcher
 
+storage:
+  provider: s3
+  s3:
+    bucket: image.dev.groble.im
+
 app:
   jwt:
     access-token:
