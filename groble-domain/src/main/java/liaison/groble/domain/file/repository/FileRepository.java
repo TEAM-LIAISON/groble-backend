@@ -6,4 +6,8 @@ public interface FileRepository {
   FileInfo save(FileInfo fileInfo);
 
   FileInfo findByFileName(String fileName);
+
+  FileInfo findByFileUrl(String fileUrl);
+
+  void delete(FileInfo fileInfo);
 }

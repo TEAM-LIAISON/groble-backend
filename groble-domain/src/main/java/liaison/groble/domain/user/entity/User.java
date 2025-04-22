@@ -348,6 +348,10 @@ public class User extends BaseTimeEntity {
     this.nickname = nickname;
   }
 
+  public void updateProfileImageUrl(String profileImageUrl) {
+    this.profileImageUrl = profileImageUrl;
+  }
+
   public void agreeToTerms(Terms terms, String agreedIp, String agreedUserAgent) {
     UserTerms agreement =
         UserTerms.builder()

@@ -6,4 +6,6 @@ import liaison.groble.domain.file.entity.FileInfo;
 
 public interface JpaFileRepository extends JpaRepository<FileInfo, Long> {
   FileInfo findByFileName(String fileName);
+
+  FileInfo findByFileUrl(String fileUrl);
 }

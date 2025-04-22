@@ -21,4 +21,14 @@ public class FileRepositoryImpl implements FileRepository {
   public FileInfo findByFileName(String fileName) {
     return jpaFileRepository.findByFileName(fileName);
   }
+
+  @Override
+  public FileInfo findByFileUrl(String fileUrl) {
+    return jpaFileRepository.findByFileUrl(fileUrl);
+  }
+
+  @Override
+  public void delete(FileInfo fileInfo) {
+    jpaFileRepository.delete(fileInfo);
+  }
 }
