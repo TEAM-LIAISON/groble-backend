@@ -31,6 +31,9 @@ public class S3FileStorageService implements FileStorageService {
   @Value("${cloud.aws.s3.bucket}")
   private String bucketName;
 
+  @Value("${cloud.aws.s3.cloud-front-image-domain}")
+  private String cloudDomain;
+
   @PostConstruct
   public void init() {
     log.info("▶ S3FileStorageService initialized for bucket={}", bucketName);
@@ -39,32 +42,23 @@ public class S3FileStorageService implements FileStorageService {
   @Override
   public String uploadFile(
       InputStream inputStream, String fileName, String contentType, String directory) {
-    String key = directory.endsWith("/") ? directory + fileName : directory + "/" + fileName;
-
+    String key = (directory.endsWith("/") ? directory : directory + "/") + fileName;
     ObjectMetadata metadata = new ObjectMetadata();
     metadata.setContentType(contentType);
-    // metadata.setContentLength(...) 필요 시 파일 크기 설정
 
-    try {
-      amazonS3.putObject(new PutObjectRequest(bucketName, key, inputStream, metadata));
-      URL url = amazonS3.getUrl(bucketName, key);
-      String resultUrl = url.toString();
-      log.debug("✅ Uploaded S3 object: {}/{} → {}", bucketName, key, resultUrl);
-      return resultUrl;
-    } catch (Exception e) {
-      log.error("❌ S3 upload failed for key={}", key, e);
-      throw new RuntimeException("파일 업로드에 실패했습니다: " + e.getMessage(), e);
-    }
+    amazonS3.putObject(new PutObjectRequest(bucketName, key, inputStream, metadata));
+
+    // customDomain + "/" + key 형태로 URL 반환
+    String resultUrl = cloudDomain + "/" + key;
+    log.debug("✅ Uploaded to S3 and returning custom URL: {}", resultUrl);
+    return resultUrl;
   }
 
   @Override
   public PresignedUrlInfo generatePresignedUrl(
       String fileName, String contentType, String directory) {
-    String key = directory.endsWith("/") ? directory + fileName : directory + "/" + fileName;
-
-    // presign URL 유효 시간
-    Instant expirationTime = Instant.now().plus(Duration.ofMinutes(15));
-    Date expiration = Date.from(expirationTime);
+    String key = (directory.endsWith("/") ? directory : directory + "/") + fileName;
+    Date expiration = Date.from(Instant.now().plus(Duration.ofMinutes(15)));
 
     GeneratePresignedUrlRequest req =
         new GeneratePresignedUrlRequest(bucketName, key)
@@ -72,25 +66,20 @@ public class S3FileStorageService implements FileStorageService {
             .withExpiration(expiration)
             .withContentType(contentType);
 
-    URL url = amazonS3.generatePresignedUrl(req);
-    log.debug("🔑 Generated presigned URL: {}", url);
+    URL presigned = amazonS3.generatePresignedUrl(req);
+    // presigned URL도 커스텀 도메인 호스트로 치환
+    String presignUrl = presigned.toString().replaceFirst("https://[^/]+", cloudDomain);
 
     return PresignedUrlInfo.builder()
         .key(key)
-        .url(url.toString())
-        .expiration(expirationTime)
+        .url(presignUrl)
+        .expiration(expiration.toInstant())
         .contentType(contentType)
         .build();
   }
 
   @Override
   public void deleteFile(String fileKey) {
-    try {
-      amazonS3.deleteObject(new DeleteObjectRequest(bucketName, fileKey));
-      log.debug("🗑 Deleted S3 object: {}/{}", bucketName, fileKey);
-    } catch (Exception e) {
-      log.error("❌ S3 delete failed for key={}", fileKey, e);
-      throw new RuntimeException("파일 삭제에 실패했습니다: " + e.getMessage(), e);
-    }
+    amazonS3.deleteObject(new DeleteObjectRequest(bucketName, fileKey));
   }
 }
