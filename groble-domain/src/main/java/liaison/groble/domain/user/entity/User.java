@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
@@ -27,7 +28,6 @@ import jakarta.persistence.Table;
 import liaison.groble.domain.common.entity.BaseTimeEntity;
 import liaison.groble.domain.role.Role;
 import liaison.groble.domain.role.UserRole;
-import liaison.groble.domain.seller.entity.SellerInfo;
 import liaison.groble.domain.terms.Terms;
 import liaison.groble.domain.terms.UserTerms;
 import liaison.groble.domain.terms.enums.TermsType;
@@ -82,8 +82,10 @@ public class User extends BaseTimeEntity {
   @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
   private SocialAccount socialAccount;
 
-  @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-  private SellerInfo sellerInfo;
+  @Embedded private SellerInfo sellerInfo;
+
+  // 본인인증 관련 필드 추가
+  @Embedded private IdentityVerification identityVerification;
 
   /** 마지막 로그인 시간 */
   @Column(name = "last_login_at")
@@ -274,6 +276,33 @@ public class User extends BaseTimeEntity {
     if (this.status == UserStatus.PENDING_VERIFICATION) {
       this.updateStatus(UserStatus.ACTIVE);
     }
+  }
+
+  // 판매자 등록 메서드
+  public void registerAsSeller(SellerInfo sellerInfo) {
+    if (!this.isIdentityVerified()) {
+      throw new IllegalStateException("판매자 등록을 위해서는 본인인증이 필요합니다.");
+    }
+
+    this.sellerInfo = sellerInfo;
+  }
+
+  // 본인인증 완료 메서드
+  public void completeIdentityVerification(IdentityVerification verification) {
+    this.identityVerification = verification;
+  }
+
+  // 본인인증 여부 확인
+  public boolean isIdentityVerified() {
+    return identityVerification != null && identityVerification.isVerified();
+  }
+
+  public void addRole(UserRole role) {
+    this.userRoles.add(role);
+  }
+
+  public boolean hasRole(UserRole role) {
+    return this.userRoles.contains(role);
   }
 
   /** 사용자 계정 잠금 관리자에 의한 계정 잠금 처리 */

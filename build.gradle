@@ -181,6 +181,9 @@ project(':groble-domain') {
 
         // Security
         implementation 'org.springframework.boot:spring-boot-starter-security'
+
+        // Apache Commons Codec
+        implementation 'commons-codec:commons-codec:1.15'
     }
 }
 

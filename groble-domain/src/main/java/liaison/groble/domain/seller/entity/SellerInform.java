@@ -20,7 +20,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "seller_profiles")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class SellerInfo {
+public class SellerInform {
   @Id
   @GeneratedValue(strategy = IDENTITY)
   private Long id;
@@ -30,7 +30,7 @@ public class SellerInfo {
   private User user;
 
   @Builder
-  private SellerInfo(User user) {
+  private SellerInform(User user) {
     this.user = user;
   }
 }
