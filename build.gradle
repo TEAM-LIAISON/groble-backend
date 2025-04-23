@@ -28,6 +28,7 @@ allprojects {
     
     repositories {
         mavenCentral()
+        maven { url 'https://jitpack.io' }
     }
 }
 
@@ -227,6 +228,9 @@ project(':groble-infrastructure:groble-external') {
 
         // AWS S3
         implementation 'com.amazonaws:aws-java-sdk-s3:1.12.715'
+
+        // 포트원 API
+        implementation 'com.github.iamport:iamport-rest-client-java:0.2.21'
     }
 }
 

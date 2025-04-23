@@ -1,4 +1,4 @@
-package liaison.groble.domain.user.service;
+package liaison.groble.application.user.service;
 
 import java.util.Map;
 

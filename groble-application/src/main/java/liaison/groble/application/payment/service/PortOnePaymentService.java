@@ -1,4 +1,4 @@
-package liaison.groble.domain.payment.service;
+package liaison.groble.application.payment.service;
 
 import java.math.BigDecimal;
 import java.util.Map;

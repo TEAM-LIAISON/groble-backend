@@ -73,12 +73,13 @@ public class BankAccountVerification extends BaseTimeEntity {
   public BankAccountVerification(
       BankAccount bankAccount,
       String verificationKey,
+      BankAccountVerificationStatus status,
       BankAccountVerificationType type,
       Map<String, Object> requestData) {
     this.bankAccount = bankAccount;
     this.verificationKey = verificationKey;
+    this.status = status;
     this.type = type;
-    this.status = BankAccountVerificationStatus.REQUESTED;
     this.requestData = requestData;
   }
 

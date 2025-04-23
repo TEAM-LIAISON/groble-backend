@@ -62,7 +62,8 @@ public class BankAccount extends BaseTimeEntity {
       String accountNumber,
       String accountHolderName,
       String accountHolderId,
-      String accountHolderType) {
+      String accountHolderType,
+      BankAccountStatus status) {
     this.user = user;
     this.bankCode = bankCode;
     this.bankName = bankName;
@@ -70,7 +71,7 @@ public class BankAccount extends BaseTimeEntity {
     this.accountHolderName = accountHolderName;
     this.accountHolderId = accountHolderId;
     this.accountHolderType = accountHolderType;
-    this.status = BankAccountStatus.REGISTERED;
+    this.status = status;
   }
 
   public void verify() {

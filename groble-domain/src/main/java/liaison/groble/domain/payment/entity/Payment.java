@@ -421,4 +421,28 @@ public class Payment extends BaseEntity {
     COACHING_OPTION,
     DOCUMENT_OPTION
   }
+
+  public void setReceiptUrl(String receiptUrl) {
+    this.receiptUrl = receiptUrl;
+  }
+
+  public void setEscrow(boolean escrow) {
+    this.escrow = escrow;
+  }
+
+  public void setCashReceipt(boolean cashReceipt) {
+    this.cashReceipt = cashReceipt;
+  }
+
+  public void markAsWaitingForDeposit() {
+    if (this.status != PaymentStatus.PAID) {
+      throw new IllegalStateException("결제 완료 상태에서만 입금 대기 상태로 변경 가능합니다.");
+    }
+
+    this.status = PaymentStatus.WAITING_FOR_DEPOSIT;
+  }
+
+  public void updateStatus(PaymentStatus status) {
+    this.status = status;
+  }
 }

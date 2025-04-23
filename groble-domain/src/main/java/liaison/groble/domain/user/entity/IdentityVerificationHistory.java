@@ -94,6 +94,11 @@ public class IdentityVerificationHistory extends BaseEntity {
     this.success = false; // 초기값
   }
 
+  public void markAsUpdate(IdentityVerificationStatus status, Map<String, Object> webhookData) {
+    this.afterStatus = status;
+    this.rawResponse = webhookData;
+  }
+
   public void markAsSuccess(
       IdentityVerificationStatus afterStatus, Map<String, Object> rawResponse) {
     this.success = true;
