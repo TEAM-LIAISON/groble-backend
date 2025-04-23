@@ -118,3 +118,14 @@ logging:
     liaison: DEBUG
     org.springdoc: DEBUG
     io.swagger.v3: DEBUG
+
+portone:
+  api-key: "your-api-key-here"
+  secret-key: "your-secret-key-here"
+  base-url: "https://api.portone.io/v2"
+  webhook-secret: "your-webhook-secret-here"
+  default-pg: "inicis"
+  payment-redirect-url: "https://yourdomain.com/payment/redirect"
+  identity-redirect-url: "https://yourdomain.com/identity/redirect"
+  bank-callback-url: "https://yourdomain.com/bank/callback"
+  merchant-code: "your-merchant-code"
