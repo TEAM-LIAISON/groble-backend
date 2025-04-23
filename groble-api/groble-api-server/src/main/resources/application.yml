@@ -108,11 +108,13 @@ logging:
     org.apache.http: DEBUG
 
 portone:
-  api-key: "your-api-key-here"
-  secret-key: "your-secret-key-here"
+  api-key: "channel-key-704cd3b0-72bf-4829-ad2b-a4a637c0e293"
+  secret-key: "test_sk_d26DibXAaV0xQbpa7y1VqY50Q9RB"
+  client-key: "test_ck_lpP2YxJ4K877JAdv7KX8RGZwXLOb"
   base-url: "https://api.portone.io/v2"
   webhook-secret: "your-webhook-secret-here"
-  default-pg: "inicis"
+  default-pg: "tosspayments"
+  pg-mid: "iamporttest_3"
   payment-redirect-url: "https://yourdomain.com/payment/redirect"
   identity-redirect-url: "https://yourdomain.com/identity/redirect"
   bank-callback-url: "https://yourdomain.com/bank/callback"

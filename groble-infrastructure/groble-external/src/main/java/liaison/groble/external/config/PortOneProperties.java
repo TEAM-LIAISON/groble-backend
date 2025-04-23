@@ -18,6 +18,9 @@ public class PortOneProperties {
   /** 포트원 시크릿 키 */
   private String secretKey;
 
+  /** 포트원 클라이언트 키 */
+  private String clientKey;
+
   /** 포트원 API 기본 URL */
   private String baseUrl = "https://api.portone.io/v2";
 
@@ -25,7 +28,10 @@ public class PortOneProperties {
   private String webhookSecret;
 
   /** 기본 PG사 설정 */
-  private String defaultPg = "inicis";
+  private String defaultPg = "tosspayments";
+
+  /** PG사 상점 ID */
+  private String pgMid;
 
   /** 결제 리다이렉트 URL */
   private String paymentRedirectUrl;

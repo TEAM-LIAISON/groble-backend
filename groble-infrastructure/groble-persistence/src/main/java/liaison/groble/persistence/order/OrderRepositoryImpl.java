@@ -20,6 +20,11 @@ public class OrderRepositoryImpl implements OrderRepository {
   }
 
   @Override
+  public Optional<Order> findById(Long orderId) {
+    return jpaOrderRepository.findById(orderId);
+  }
+
+  @Override
   public Optional<Order> findByMerchantUid(String merchantUid) {
     return jpaOrderRepository.findByMerchantUid(merchantUid);
   }
