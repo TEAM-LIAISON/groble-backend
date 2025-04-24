@@ -29,8 +29,13 @@ public abstract class GigOption extends BaseTimeEntity {
   @JoinColumn(name = "gig_id")
   private Gig gig;
 
+  // 옵션 제목
   private String name;
+
+  // 옵션 설명
   private String description;
+
+  // 옵션 가격
   private BigDecimal price;
 
   public void setProduct(Gig gig) {

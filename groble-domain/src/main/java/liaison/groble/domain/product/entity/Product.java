@@ -10,7 +10,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
 import liaison.groble.domain.common.entity.BaseTimeEntity;
@@ -43,9 +42,6 @@ public class Product extends BaseTimeEntity {
   @Column(name = "product_status", length = 20)
   @Enumerated(value = STRING)
   private ProductStatus status = ProductStatus.PENDING;
-
-  @OneToOne(mappedBy = "product")
-  private ProductCategory productCategory;
 
   @Column(nullable = false)
   private boolean deleted = false;

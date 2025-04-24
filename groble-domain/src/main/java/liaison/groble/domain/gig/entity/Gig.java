@@ -10,9 +10,12 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
@@ -35,24 +38,32 @@ public class Gig {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @OneToMany(mappedBy = "gig", cascade = CascadeType.ALL, orphanRemoval = true)
-  private List<GigOption> options = new ArrayList<>();
-
+  // 컨텐츠 이름
   @Column(nullable = false)
   private String title;
 
-  @Enumerated(EnumType.STRING)
-  @Column(nullable = false)
-  private GigStatus status = GigStatus.DRAFT;
-
+  // 컨텐츠 유형
   @Column(name = "content_type")
   @Enumerated(value = STRING)
   private GigType gigType;
+
+  // 카테고리
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "category_id", nullable = false)
+  private Category category;
+
+  // 컨텐츠 유형에 따른 옵션
+  @OneToMany(mappedBy = "gig", cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<GigOption> options = new ArrayList<>();
 
   private String thumbnailUrl; // 썸네일 이미지 URL
 
   @Column(name = "sale_count")
   private Integer saleCount = 0; // 판매 수
+
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
+  private GigStatus status = GigStatus.DRAFT;
 
   // 비즈니스 로직으로 옵션 유형 검증
   public void addOption(GigOption option) {
