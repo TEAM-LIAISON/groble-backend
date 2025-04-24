@@ -61,16 +61,17 @@ public class PortOnePaymentServiceImpl implements PortOnePaymentService {
     Payment.PaymentMethod paymentMethod =
         Payment.PaymentMethod.valueOf(prepareDto.getPaymentMethod());
 
-    // 결제 요청 데이터 구성
-    Map<String, Object> requestData = createPaymentRequestData(order, prepareDto);
+    // V2 API용 결제 요청 데이터 구성
+    Map<String, Object> requestData = createPaymentPrePareRequestDataV2(prepareDto);
 
     try {
-      // 포트원 API 호출
+      // 포트원 V2 API 호출
       Map<String, Object> response =
-          portOneClient.callApi("/payments/prepare", HttpMethod.POST, requestData, Map.class);
+          portOneClient.callApi(
+              "/payments/1/pre-register", HttpMethod.POST, requestData, Map.class);
 
       // 응답에서 결제 키 추출
-      String paymentKey = (String) response.get("payment_key");
+      String paymentKey = (String) response.get("paymentKey");
 
       // 결제 정보 생성
       Payment payment =
@@ -123,85 +124,84 @@ public class PortOnePaymentServiceImpl implements PortOnePaymentService {
     }
   }
 
-  private Map<String, Object> createPaymentRequestData(Order order, PaymentPrepareDto prepareDto) {
-    // 주문, 결제 정보 등으로 요청 데이터 구성하는 로직
-    Map<String, Object> requestData = prepareDto.getAdditionalData();
+  private Map<String, Object> createPaymentPrePareRequestDataV2(PaymentPrepareDto prepareDto) {
+    Map<String, Object> requestData = new HashMap<>();
 
-    // 주문 정보 설정
-    requestData.put("merchant_uid", order.getMerchantUid());
-    requestData.put("amount", order.getTotalAmount());
-
-    // 상품 정보
-    String orderName = getOrderName(order);
-    requestData.put("name", orderName);
-
-    // 고객 정보가 없다면 주문 정보에서 추출
-    if (!requestData.containsKey("buyer_name") && order.getPurchaser() != null) {
-      requestData.put("buyer_name", order.getPurchaser().getName());
-    }
-
-    if (!requestData.containsKey("buyer_email") && order.getPurchaser() != null) {
-      requestData.put("buyer_email", order.getPurchaser().getEmail());
-    }
-
-    if (!requestData.containsKey("buyer_tel") && order.getPurchaser() != null) {
-      requestData.put("buyer_tel", order.getPurchaser().getPhone());
-    }
-
-    // 결제 수단
-    requestData.put(
-        "pay_method",
-        convertToPortOnePayMethod(Payment.PaymentMethod.valueOf(prepareDto.getPaymentMethod())));
-
-    // PG 설정 (이미 additionalData에 설정되어 있을 것)
-    if (!requestData.containsKey("pg")) {
-      requestData.put("pg", portOneProperties.getDefaultPg());
-    }
-
-    // 성공/실패 URL
-    if (prepareDto.getSuccessUrl() != null) {
-      requestData.put("success_url", prepareDto.getSuccessUrl());
-    } else {
-      requestData.put("success_url", portOneProperties.getPaymentRedirectUrl() + "/success");
-    }
-
-    if (prepareDto.getFailUrl() != null) {
-      requestData.put("fail_url", prepareDto.getFailUrl());
-    } else {
-      requestData.put("fail_url", portOneProperties.getPaymentRedirectUrl() + "/fail");
-    }
+    requestData.put("storeId", "store-e71e2cf1-047a-4618-8989-5582069acb4e");
+    requestData.put("totalAmount", prepareDto.getTotalAmount());
+    requestData.put("taxFreeAmount", prepareDto.getTaxFreeAmount());
+    requestData.put("currency", "KRW");
 
     return requestData;
   }
 
-  /**
-   * 주문에서 결제 상품명을 추출하는 메서드
-   *
-   * @param order 주문 객체
-   * @return 결제에 표시할 상품명
-   */
-  private String getOrderName(Order order) {
-    // 주문 항목이 없는 경우 기본값 반환
-    if (order.getOrderItems() == null || order.getOrderItems().isEmpty()) {
-      return "상품 주문";
+  private Map<String, Object> createPaymentRequestDataV2(
+      Order order, PaymentPrepareDto prepareDto) {
+    // V2 API에 맞게 요청 데이터 구성
+    Map<String, Object> requestData = new HashMap<>();
+
+    // 주문 정보
+    requestData.put("orderName", getOrderName(order));
+    requestData.put("orderId", order.getMerchantUid());
+    requestData.put("amount", order.getTotalAmount());
+
+    // 결제 방법
+    requestData.put(
+        "method",
+        convertToPortOnePayMethodV2(Payment.PaymentMethod.valueOf(prepareDto.getPaymentMethod())));
+
+    // 고객 정보
+    Map<String, Object> customerData = new HashMap<>();
+    customerData.put(
+        "name",
+        prepareDto.getCustomerName() != null
+            ? prepareDto.getCustomerName()
+            : (order.getPurchaser() != null ? order.getPurchaser().getName() : ""));
+    customerData.put(
+        "email",
+        prepareDto.getCustomerEmail() != null
+            ? prepareDto.getCustomerEmail()
+            : (order.getPurchaser() != null ? order.getPurchaser().getEmail() : ""));
+    customerData.put(
+        "phoneNumber",
+        prepareDto.getCustomerPhone() != null
+            ? prepareDto.getCustomerPhone()
+            : (order.getPurchaser() != null ? order.getPurchaser().getPhone() : ""));
+    requestData.put("customer", customerData);
+
+    // 성공/실패 URL
+    requestData.put(
+        "successUrl",
+        prepareDto.getSuccessUrl() != null
+            ? prepareDto.getSuccessUrl()
+            : portOneProperties.getPaymentRedirectUrl() + "/success");
+    requestData.put(
+        "failUrl",
+        prepareDto.getFailUrl() != null
+            ? prepareDto.getFailUrl()
+            : portOneProperties.getPaymentRedirectUrl() + "/fail");
+
+    // 추가 설정
+    if (prepareDto.getAdditionalData() != null && !prepareDto.getAdditionalData().isEmpty()) {
+      // V2 API에 맞게 추가 데이터 변환
+      if (prepareDto.getAdditionalData().containsKey("pg")) {
+        requestData.put("pgProvider", prepareDto.getAdditionalData().get("pg"));
+      } else {
+        requestData.put("pgProvider", portOneProperties.getDefaultPg());
+      }
+
+      // 기타 필요한 추가 데이터 처리
+      if (prepareDto.getAdditionalData().containsKey("card_quota")) {
+        // 카드 할부 관련 설정
+        Map<String, Object> cardOptions = new HashMap<>();
+        cardOptions.put("installment", prepareDto.getAdditionalData().get("card_quota"));
+        requestData.put("cardOptions", cardOptions);
+      }
+    } else {
+      requestData.put("pgProvider", portOneProperties.getDefaultPg());
     }
 
-    // 첫 번째 상품명 가져오기
-    String firstItemName = order.getOrderItems().get(0).getContentName();
-
-    // 상품명이 없는 경우 기본값 설정
-    if (firstItemName == null || firstItemName.trim().isEmpty()) {
-      firstItemName = "상품";
-    }
-
-    // 여러 상품인 경우 "외 N건" 형식으로 표현
-    int totalItems = order.getOrderItems().size();
-    if (totalItems > 1) {
-      return firstItemName + " 외 " + (totalItems - 1) + "건";
-    }
-
-    // 단일 상품인 경우 상품명만 반환
-    return firstItemName;
+    return requestData;
   }
 
   @Override
@@ -235,14 +235,14 @@ public class PortOnePaymentServiceImpl implements PortOnePaymentService {
       throw new IllegalArgumentException("결제 금액이 일치하지 않습니다");
     }
 
-    // 요청 데이터 구성
+    // V2 API 요청 데이터 구성
     Map<String, Object> requestData = new HashMap<>();
-    requestData.put("payment_key", approveDto.getPaymentKey());
-    requestData.put("merchant_uid", approveDto.getOrderId());
+    requestData.put("paymentKey", approveDto.getPaymentKey());
+    requestData.put("orderId", approveDto.getOrderId());
     requestData.put("amount", approveDto.getAmount());
 
     try {
-      // 포트원 API 호출
+      // 포트원 V2 API 호출 - 결제 승인
       Map<String, Object> response =
           portOneClient.callApi(
               "/payments/" + approveDto.getPaymentKey() + "/approve",
@@ -252,8 +252,7 @@ public class PortOnePaymentServiceImpl implements PortOnePaymentService {
 
       // 응답에서 필요한 정보 추출
       String status = (String) response.get("status");
-      String pgTid = (String) response.get("pg_tid");
-      String methodDetail = (String) response.getOrDefault("method_detail", "");
+      String pgTid = (String) response.get("transactionKey");
 
       // 카드 결제 정보 처리
       String cardNumber = "";
@@ -262,27 +261,13 @@ public class PortOnePaymentServiceImpl implements PortOnePaymentService {
       String cardInstallmentPlanMonths = "";
 
       if (payment.getPaymentMethod() == Payment.PaymentMethod.CARD
-          && response.containsKey("card_info")) {
-        Map<String, Object> cardInfo = (Map<String, Object>) response.get("card_info");
+          && response.containsKey("card")) {
+        Map<String, Object> cardInfo = (Map<String, Object>) response.get("card");
         cardNumber = (String) cardInfo.getOrDefault("number", "");
-        String cardExpiryYear = (String) cardInfo.getOrDefault("expiry_year", "");
-        String cardExpiryMonth = (String) cardInfo.getOrDefault("expiry_month", "");
-        String cardIssuerCode = (String) cardInfo.getOrDefault("issuer_code", "");
-        cardIssuerName = (String) cardInfo.getOrDefault("issuer_name", "");
-        String cardAcquirerCode = (String) cardInfo.getOrDefault("acquirer_code", "");
-        cardAcquirerName = (String) cardInfo.getOrDefault("acquirer_name", "");
-        cardInstallmentPlanMonths = (String) cardInfo.getOrDefault("installment_plan_months", "");
-
-        payment.setCardInfo(
-            "카드 정보", // 실제로는 카드 정보 JSON을 저장
-            cardNumber,
-            cardExpiryYear,
-            cardExpiryMonth,
-            cardIssuerCode,
-            cardIssuerName,
-            cardAcquirerCode,
-            cardAcquirerName,
-            cardInstallmentPlanMonths);
+        cardIssuerName = (String) cardInfo.getOrDefault("issuerName", "");
+        cardAcquirerName = (String) cardInfo.getOrDefault("acquirerName", "");
+        cardInstallmentPlanMonths =
+            String.valueOf(cardInfo.getOrDefault("installmentPlanMonths", ""));
       }
 
       // 가상계좌 정보 처리
@@ -291,30 +276,27 @@ public class PortOnePaymentServiceImpl implements PortOnePaymentService {
       LocalDateTime vbankExpiryDate = null;
 
       if (payment.getPaymentMethod() == Payment.PaymentMethod.VIRTUAL_ACCOUNT
-          && response.containsKey("vbank_info")) {
-        Map<String, Object> vbankInfo = (Map<String, Object>) response.get("vbank_info");
-        vbankNumber = (String) vbankInfo.getOrDefault("number", "");
-        String bankCode = (String) vbankInfo.getOrDefault("code", "");
-        vbankBankName = (String) vbankInfo.getOrDefault("name", "");
-        String dueDateStr = (String) vbankInfo.getOrDefault("due_date", "");
+          && response.containsKey("virtualAccount")) {
+        Map<String, Object> vbankInfo = (Map<String, Object>) response.get("virtualAccount");
+        vbankNumber = (String) vbankInfo.getOrDefault("accountNumber", "");
+        vbankBankName = (String) vbankInfo.getOrDefault("bankName", "");
+        String dueDateStr = (String) vbankInfo.getOrDefault("dueDate", "");
 
-        if (!dueDateStr.isEmpty()) {
+        if (dueDateStr != null && !dueDateStr.isEmpty()) {
           vbankExpiryDate = LocalDateTime.parse(dueDateStr, DateTimeFormatter.ISO_DATE_TIME);
         }
-
-        payment.setVirtualAccountInfo(vbankNumber, bankCode, vbankBankName, vbankExpiryDate);
       }
 
       // 결제 상태 업데이트
       Payment.PaymentStatus paymentStatus;
       switch (status) {
-        case "paid":
+        case "DONE":
           paymentStatus = Payment.PaymentStatus.PAID;
           break;
-        case "ready":
+        case "READY":
           paymentStatus = Payment.PaymentStatus.WAITING_FOR_DEPOSIT;
           break;
-        case "failed":
+        case "FAILED":
           paymentStatus = Payment.PaymentStatus.FAILED;
           break;
         default:
@@ -323,23 +305,9 @@ public class PortOnePaymentServiceImpl implements PortOnePaymentService {
 
       // 영수증 URL 저장
       String receiptUrl = null;
-      if (response.containsKey("receipt_url")) {
-        receiptUrl = (String) response.get("receipt_url");
-        payment.setReceiptUrl(receiptUrl);
-      }
-
-      // 에스크로 정보 저장
-      Boolean isEscrow = null;
-      if (response.containsKey("escrow")) {
-        isEscrow = Boolean.TRUE.equals(response.get("escrow"));
-        payment.setEscrow(isEscrow);
-      }
-
-      // 현금영수증 정보 저장
-      Boolean isCashReceipt = null;
-      if (response.containsKey("cash_receipt")) {
-        isCashReceipt = Boolean.TRUE.equals(response.get("cash_receipt"));
-        payment.setCashReceipt(isCashReceipt);
+      if (response.containsKey("receipt")) {
+        Map<String, Object> receiptInfo = (Map<String, Object>) response.get("receipt");
+        receiptUrl = (String) receiptInfo.get("url");
       }
 
       // 결제 정보 업데이트
@@ -352,17 +320,11 @@ public class PortOnePaymentServiceImpl implements PortOnePaymentService {
           "결제 승인됨",
           requestData,
           response,
-          "127.0.0.1", // 실제 구현에서는 클라이언트 IP 사용
-          "User-Agent" // 실제 구현에서는 클라이언트의 User-Agent 사용
-          );
+          "127.0.0.1",
+          "User-Agent");
 
-      log.info(
-          "Payment approved successfully: key={}, status={}",
-          approveDto.getPaymentKey(),
-          paymentStatus);
       Payment savedPayment = paymentRepository.save(payment);
 
-      // PaymentResultDto 구성하여 반환
       return PaymentResultDto.builder()
           .id(savedPayment.getId())
           .paymentKey(savedPayment.getPaymentKey())
@@ -383,35 +345,13 @@ public class PortOnePaymentServiceImpl implements PortOnePaymentService {
           .vbankBankName(vbankBankName)
           .vbankExpiryDate(vbankExpiryDate)
           .receiptUrl(receiptUrl)
-          .isEscrow(isEscrow)
-          .isCashReceipt(isCashReceipt)
           .build();
 
     } catch (Exception e) {
       log.error("Failed to approve payment", e);
-
-      // 결제 실패 상태 업데이트
       payment.markAsFailed(e.getMessage(), Map.of("error", e.getMessage()));
-
-      // 결제 로그 추가
-      payment.addLog(
-          PaymentLogType.ERROR,
-          Payment.PaymentStatus.READY,
-          "결제 승인 실패: " + e.getMessage(),
-          Map.of(
-              "payment_key",
-              approveDto.getPaymentKey(),
-              "merchant_uid",
-              approveDto.getOrderId(),
-              "amount",
-              approveDto.getAmount()),
-          Map.of("error", e.getMessage()),
-          "127.0.0.1",
-          "User-Agent");
-
       Payment savedPayment = paymentRepository.save(payment);
 
-      // 실패한 경우에도 결과 반환
       return PaymentResultDto.builder()
           .id(savedPayment.getId())
           .paymentKey(savedPayment.getPaymentKey())
@@ -445,20 +385,17 @@ public class PortOnePaymentServiceImpl implements PortOnePaymentService {
       throw new IllegalStateException("취소할 수 없는 결제 상태입니다: " + payment.getStatus());
     }
 
-    // 취소 금액 검증
-    if (cancelDto.getAmount().compareTo(BigDecimal.ZERO) <= 0
-        || cancelDto.getAmount().compareTo(payment.getAmount()) > 0) {
-      throw new IllegalArgumentException("올바르지 않은 취소 금액입니다: " + cancelDto.getAmount());
+    // V2 API 요청 데이터 구성
+    Map<String, Object> requestData = new HashMap<>();
+    requestData.put("cancelReason", cancelDto.getReason());
+
+    // V2 API에서는 부분 취소시에만 amount 포함
+    if (cancelDto.getAmount().compareTo(payment.getAmount()) < 0) {
+      requestData.put("cancelAmount", cancelDto.getAmount());
     }
 
-    // 요청 데이터 구성
-    Map<String, Object> requestData = new HashMap<>();
-    requestData.put("payment_key", cancelDto.getPaymentKey());
-    requestData.put("amount", cancelDto.getAmount());
-    requestData.put("reason", cancelDto.getReason());
-
     try {
-      // 포트원 API 호출
+      // 포트원 V2 API 호출 - 결제 취소
       Map<String, Object> response =
           portOneClient.callApi(
               "/payments/" + cancelDto.getPaymentKey() + "/cancel",
@@ -467,7 +404,7 @@ public class PortOnePaymentServiceImpl implements PortOnePaymentService {
               Map.class);
 
       // 응답에서 필요한 정보 추출
-      String cancelKey = (String) response.get("cancel_key");
+      String cancelKey = (String) response.get("cancelKey");
       String status = (String) response.get("status");
 
       // 취소 내역 생성
@@ -490,14 +427,9 @@ public class PortOnePaymentServiceImpl implements PortOnePaymentService {
         orderRepository.save(payment.getOrder());
       }
 
-      log.info(
-          "Payment cancelled successfully: key={}, cancelKey={}",
-          cancelDto.getPaymentKey(),
-          cancelKey);
       Payment savedPayment = paymentRepository.save(payment);
       PaymentCancel savedCancel = paymentCancelRepository.save(paymentCancel);
 
-      // PaymentResultDto 구성하여 반환
       return PaymentResultDto.builder()
           .id(savedPayment.getId())
           .paymentKey(savedPayment.getPaymentKey())
@@ -513,24 +445,12 @@ public class PortOnePaymentServiceImpl implements PortOnePaymentService {
     } catch (Exception e) {
       log.error("Failed to cancel payment", e);
 
-      // 취소 실패 정보 생성
       PaymentCancel paymentCancel = payment.cancel(cancelDto.getReason(), cancelDto.getAmount());
       paymentCancel.fail(e.getMessage());
-
-      // 결제 로그 추가
-      payment.addLog(
-          PaymentLogType.ERROR,
-          payment.getStatus(),
-          "결제 취소 실패: " + e.getMessage(),
-          requestData,
-          Map.of("error", e.getMessage()),
-          "127.0.0.1",
-          "User-Agent");
 
       Payment savedPayment = paymentRepository.save(payment);
       PaymentCancel savedCancel = paymentCancelRepository.save(paymentCancel);
 
-      // 실패한 경우에도 결과 반환
       return PaymentResultDto.builder()
           .id(savedPayment.getId())
           .paymentKey(savedPayment.getPaymentKey())
@@ -553,11 +473,9 @@ public class PortOnePaymentServiceImpl implements PortOnePaymentService {
     // 결제 정보가 없으면 포트원 API를 통해 조회
     if (payment == null) {
       try {
+        // V2 API 호출 - 결제 정보 조회
         Map<String, Object> response =
             portOneClient.callApi("/payments/" + paymentKey, HttpMethod.GET, null, Map.class);
-
-        // TODO: 응답 데이터로 결제 정보 생성 로직 구현 필요
-        log.warn("Payment not found in DB, retrieved from API but not saved: {}", paymentKey);
 
         // 임시 결과 반환
         return PaymentResultDto.builder().paymentKey(paymentKey).status("UNKNOWN").build();
@@ -599,38 +517,110 @@ public class PortOnePaymentServiceImpl implements PortOnePaymentService {
                     new IllegalArgumentException(
                         "주문을 찾을 수 없습니다: " + virtualAccountDto.getOrderId()));
 
-    // 추가 데이터 구성
-    Map<String, Object> additionalData = new HashMap<>();
+    // V2 API용 가상계좌 발급 데이터 구성
+    Map<String, Object> requestData = new HashMap<>();
+    requestData.put("orderName", getOrderName(order));
+    requestData.put("orderId", order.getMerchantUid());
+    requestData.put("amount", order.getTotalAmount());
+    requestData.put("method", "가상계좌");
 
-    // 가상계좌 발급 관련 필드 설정
-    additionalData.put("pay_method", "vbank");
+    // 고객 정보
+    Map<String, Object> customerData = new HashMap<>();
+    customerData.put("name", order.getPurchaser() != null ? order.getPurchaser().getName() : "");
+    customerData.put("email", order.getPurchaser() != null ? order.getPurchaser().getEmail() : "");
+    customerData.put(
+        "phoneNumber", order.getPurchaser() != null ? order.getPurchaser().getPhone() : "");
+    requestData.put("customer", customerData);
 
-    // 은행 정보 설정
-    if (virtualAccountDto.getBankInfo() != null) {
-      additionalData.putAll(virtualAccountDto.getBankInfo());
+    // 가상계좌 옵션
+    Map<String, Object> virtualAccountOptions = new HashMap<>();
+
+    // 은행 정보가 있으면 추가
+    if (virtualAccountDto.getBankInfo() != null && !virtualAccountDto.getBankInfo().isEmpty()) {
+      if (virtualAccountDto.getBankInfo().containsKey("bank_code")) {
+        virtualAccountOptions.put("bankCode", virtualAccountDto.getBankInfo().get("bank_code"));
+      }
     }
 
-    // 결제 준비 - 내부적으로 원래 메서드 호출
-    Payment payment = createPayment(order, Payment.PaymentMethod.VIRTUAL_ACCOUNT, additionalData);
+    // 가상계좌 만료일 설정 (기본 7일)
+    virtualAccountOptions.put("validHours", 168); // 7일 * 24시간
 
-    // 가상계좌 결제는 즉시 완료되지 않고 대기 상태로 변경
-    payment.markAsWaitingForDeposit();
+    requestData.put("virtualAccountOptions", virtualAccountOptions);
+    requestData.put("pgProvider", portOneProperties.getDefaultPg());
 
-    log.info("Virtual account issued successfully: key={}", payment.getPaymentKey());
-    Payment savedPayment = paymentRepository.save(payment);
+    try {
+      // 포트원 V2 API 호출 - 가상계좌 발급
+      Map<String, Object> response =
+          portOneClient.callApi("/payments", HttpMethod.POST, requestData, Map.class);
 
-    // PaymentResultDto 구성하여 반환
-    return PaymentResultDto.builder()
-        .id(savedPayment.getId())
-        .paymentKey(savedPayment.getPaymentKey())
-        .merchantUid(savedPayment.getMerchantUid())
-        .amount(savedPayment.getAmount())
-        .status(savedPayment.getStatus().name())
-        .paymentMethod(savedPayment.getPaymentMethod().name())
-        .customerName(savedPayment.getCustomerName())
-        .customerEmail(savedPayment.getCustomerEmail())
-        .customerPhone(savedPayment.getCustomerMobilePhone())
-        .build();
+      // 응답에서 필요한 정보 추출
+      String paymentKey = (String) response.get("paymentKey");
+
+      // 결제 정보 생성 및 저장
+      Payment payment =
+          Payment.builder()
+              .order(order)
+              .paymentMethod(Payment.PaymentMethod.VIRTUAL_ACCOUNT)
+              .amount(order.getTotalAmount())
+              .selectedOptionType(getSelectedOptionType(order))
+              .selectedOptionId(getSelectedOptionId(order))
+              .customerName(order.getPurchaser() != null ? order.getPurchaser().getName() : "")
+              .customerEmail(order.getPurchaser() != null ? order.getPurchaser().getEmail() : "")
+              .customerMobilePhone(
+                  order.getPurchaser() != null ? order.getPurchaser().getPhone() : "")
+              .build();
+
+      payment.preparePayment(paymentKey, requestData);
+      payment.markAsWaitingForDeposit();
+
+      // 가상계좌 정보 설정 (있는 경우)
+      if (response.containsKey("virtualAccount")) {
+        Map<String, Object> vbankInfo = (Map<String, Object>) response.get("virtualAccount");
+        String vbankNumber = (String) vbankInfo.getOrDefault("accountNumber", "");
+        String bankCode = (String) vbankInfo.getOrDefault("bankCode", "");
+        String bankName = (String) vbankInfo.getOrDefault("bankName", "");
+
+        // 만료일 설정
+        String dueDateStr = (String) vbankInfo.getOrDefault("dueDate", "");
+        LocalDateTime expiryDate = null;
+        if (dueDateStr != null && !dueDateStr.isEmpty()) {
+          expiryDate = LocalDateTime.parse(dueDateStr, DateTimeFormatter.ISO_DATE_TIME);
+        }
+
+        payment.setVirtualAccountInfo(vbankNumber, bankCode, bankName, expiryDate);
+      }
+
+      // 결제 로그 추가
+      payment.addLog(
+          PaymentLogType.VIRTUAL_ACCOUNT_ISSUED,
+          payment.getStatus(),
+          "가상계좌 발급됨",
+          requestData,
+          response,
+          "127.0.0.1",
+          "User-Agent");
+
+      Payment savedPayment = paymentRepository.save(payment);
+
+      return PaymentResultDto.builder()
+          .id(savedPayment.getId())
+          .paymentKey(savedPayment.getPaymentKey())
+          .merchantUid(savedPayment.getMerchantUid())
+          .amount(savedPayment.getAmount())
+          .status(savedPayment.getStatus().name())
+          .paymentMethod(savedPayment.getPaymentMethod().name())
+          .customerName(savedPayment.getCustomerName())
+          .customerEmail(savedPayment.getCustomerEmail())
+          .customerPhone(savedPayment.getCustomerMobilePhone())
+          .vbankNumber(savedPayment.getVirtualAccountNumber())
+          .vbankBankName(savedPayment.getVirtualAccountBankName())
+          .vbankExpiryDate(savedPayment.getVirtualAccountExpiryDate())
+          .build();
+
+    } catch (Exception e) {
+      log.error("Failed to issue virtual account", e);
+      throw new RuntimeException("가상계좌 발급 중 오류가 발생했습니다", e);
+    }
   }
 
   @Override
@@ -638,12 +628,13 @@ public class PortOnePaymentServiceImpl implements PortOnePaymentService {
   public void handleWebhook(Map<String, Object> webhookData) {
     log.info("Handling payment webhook: {}", webhookData);
 
-    String type = (String) webhookData.get("type");
-    String paymentKey = (String) webhookData.get("payment_key");
+    // V2 API 웹훅 처리
+    String eventType = (String) webhookData.get("eventType");
+    String paymentKey = (String) webhookData.get("paymentKey");
     String status = (String) webhookData.get("status");
 
     if (paymentKey == null) {
-      log.warn("Ignoring webhook without payment_key: {}", webhookData);
+      log.warn("Ignoring webhook without paymentKey: {}", webhookData);
       return;
     }
 
@@ -652,8 +643,6 @@ public class PortOnePaymentServiceImpl implements PortOnePaymentService {
 
     if (payment == null) {
       log.warn("Payment not found for key: {}", paymentKey);
-
-      // 필요시 결제 정보 생성 로직 구현 가능
       return;
     }
 
@@ -661,113 +650,114 @@ public class PortOnePaymentServiceImpl implements PortOnePaymentService {
     payment.updateFromWebhook(webhookData);
 
     // 이벤트 유형에 따른 처리
-    switch (type) {
-      case "PAYMENT":
-        handlePaymentWebhook(payment, status, webhookData);
+    switch (eventType) {
+      case "PAYMENT_APPROVED":
+        handlePaymentApprovedWebhook(payment, status, webhookData);
         break;
-
-      case "CANCEL":
-        handleCancelWebhook(payment, webhookData);
+      case "PAYMENT_CANCELED":
+        handlePaymentCanceledWebhook(payment, webhookData);
         break;
-
-      case "VBANK":
-        handleVbankWebhook(payment, status, webhookData);
+      case "PAYMENT_STATUS_CHANGED":
+        handlePaymentStatusChangedWebhook(payment, status, webhookData);
         break;
-
+      case "VIRTUAL_ACCOUNT_ISSUED":
+        handleVirtualAccountIssuedWebhook(payment, webhookData);
+        break;
+      case "VIRTUAL_ACCOUNT_DEPOSIT_MATCHED":
+        handleVirtualAccountDepositMatchedWebhook(payment, webhookData);
+        break;
       default:
-        log.debug("Unhandled webhook type: {}", type);
+        log.debug("Unhandled webhook event type: {}", eventType);
     }
 
     paymentRepository.save(payment);
   }
 
-  // 결제 웹훅 처리 메서드
-  private void handlePaymentWebhook(
+  // 결제 승인 웹훅 처리
+  private void handlePaymentApprovedWebhook(
       Payment payment, String status, Map<String, Object> webhookData) {
-    log.debug("Handling payment webhook: status={}", status);
+    log.debug("Handling payment approved webhook: status={}", status);
 
     Payment.PaymentStatus beforeStatus = payment.getStatus();
 
-    // 상태에 따른 처리
-    switch (status) {
-      case "ready":
-        payment.updateStatus(Payment.PaymentStatus.READY);
-        break;
-
-      case "in_progress":
-        payment.updateStatus(Payment.PaymentStatus.IN_PROGRESS);
-        break;
-
-      case "waiting_for_deposit":
-        payment.updateStatus(Payment.PaymentStatus.WAITING_FOR_DEPOSIT);
-        break;
-
-      case "done":
-      case "paid":
-        if (payment.getStatus() != Payment.PaymentStatus.PAID) {
-          String pgTid = (String) webhookData.getOrDefault("pg_tid", "");
-          payment.markAsPaid(payment.getPaymentKey(), pgTid, webhookData);
-          payment.getOrder().completePayment();
-          orderRepository.save(payment.getOrder());
-        }
-        break;
-
-      case "canceled":
-        if (payment.getStatus() != Payment.PaymentStatus.CANCELLED
-            && payment.getStatus() != Payment.PaymentStatus.PARTIALLY_CANCELLED) {
-
-          BigDecimal cancelAmount =
-              new BigDecimal(webhookData.getOrDefault("cancel_amount", "0").toString());
-          String cancelReason = (String) webhookData.getOrDefault("cancel_reason", "웹훅으로 취소됨");
-
-          if (cancelAmount.compareTo(payment.getAmount()) >= 0) {
-            payment.updateStatus(Payment.PaymentStatus.CANCELLED);
-            payment.getOrder().cancelOrder("결제 취소: " + cancelReason);
-            orderRepository.save(payment.getOrder());
-          } else {
-            payment.updateStatus(Payment.PaymentStatus.PARTIALLY_CANCELLED);
-          }
-        }
-        break;
-
-      case "aborted":
-        payment.updateStatus(Payment.PaymentStatus.ABORTED);
-        payment.getOrder().failOrder("결제 중단");
+    if ("DONE".equals(status)) {
+      if (payment.getStatus() != Payment.PaymentStatus.PAID) {
+        Map<String, Object> data = (Map<String, Object>) webhookData.get("data");
+        String pgTid = (String) data.getOrDefault("transactionKey", "");
+        payment.markAsPaid(payment.getPaymentKey(), pgTid, webhookData);
+        payment.getOrder().completePayment();
         orderRepository.save(payment.getOrder());
-        break;
 
-      case "failed":
-        payment.updateStatus(Payment.PaymentStatus.FAILED);
-        String failReason = (String) webhookData.getOrDefault("fail_reason", "알 수 없는 실패 사유");
-        payment.getOrder().failOrder("결제 실패: " + failReason);
-        orderRepository.save(payment.getOrder());
-        break;
-
-      default:
-        log.warn("Unknown payment status in webhook: {}", status);
-    }
-
-    // 상태 변경 로그 추가
-    if (beforeStatus != payment.getStatus()) {
-      payment.addLog(
-          PaymentLogType.STATUS_CHANGED,
-          beforeStatus,
-          "웹훅으로 상태 변경됨: " + status,
-          null,
-          webhookData,
-          "webhook",
-          "webhook");
+        // 결제 로그 추가
+        payment.addLog(
+            PaymentLogType.PAYMENT_APPROVED,
+            beforeStatus,
+            "웹훅으로 결제 승인됨",
+            null,
+            webhookData,
+            "webhook",
+            "webhook");
+      }
     }
   }
 
-  // 취소 웹훅 처리 메서드
-  private void handleCancelWebhook(Payment payment, Map<String, Object> webhookData) {
-    log.debug("Handling cancel webhook");
+  // 결제 취소 웹훅 처리
+  private void handlePaymentCanceledWebhook(Payment payment, Map<String, Object> webhookData) {
+    log.debug("Handling payment canceled webhook");
 
-    String cancelKey = (String) webhookData.get("cancel_key");
-    BigDecimal cancelAmount =
-        new BigDecimal(webhookData.getOrDefault("cancel_amount", "0").toString());
-    String cancelReason = (String) webhookData.getOrDefault("cancel_reason", "웹훅으로 취소됨");
+    Map<String, Object> data = (Map<String, Object>) webhookData.get("data");
+    String cancelKey = (String) data.get("cancelKey");
+
+    BigDecimal cancelAmount = BigDecimal.ZERO;
+    String cancelReason = "웹훅으로 취소됨";
+
+    // cancels 필드가 리스트로 제공됨
+    if (data.containsKey("cancels")) {
+      Object cancelsObj = data.get("cancels");
+
+      if (cancelsObj instanceof java.util.List) {
+        // List<Map> 형태로 처리
+        java.util.List<?> cancelsList = (java.util.List<?>) cancelsObj;
+        if (!cancelsList.isEmpty()) {
+          Object lastCancelObj = cancelsList.get(cancelsList.size() - 1);
+          if (lastCancelObj instanceof Map) {
+            Map<?, ?> lastCancel = (Map<?, ?>) lastCancelObj;
+            Object amountObj = lastCancel.get("cancelAmount");
+            if (amountObj != null) {
+              cancelAmount = new BigDecimal(amountObj.toString());
+            }
+
+            Object reasonObj = lastCancel.get("cancelReason");
+            if (reasonObj != null) {
+              cancelReason = reasonObj.toString();
+            }
+          }
+        }
+      } else if (cancelsObj instanceof Map) {
+        // 단일 Map으로 제공되는 경우
+        Map<?, ?> cancelMap = (Map<?, ?>) cancelsObj;
+        Object amountObj = cancelMap.get("cancelAmount");
+        if (amountObj != null) {
+          cancelAmount = new BigDecimal(amountObj.toString());
+        }
+
+        Object reasonObj = cancelMap.get("cancelReason");
+        if (reasonObj != null) {
+          cancelReason = reasonObj.toString();
+        }
+      }
+    } else {
+      // 취소 정보가 data 객체에 직접 포함된 경우
+      Object amountObj = data.get("cancelAmount");
+      if (amountObj != null) {
+        cancelAmount = new BigDecimal(amountObj.toString());
+      }
+
+      Object reasonObj = data.get("cancelReason");
+      if (reasonObj != null) {
+        cancelReason = reasonObj.toString();
+      }
+    }
 
     // 이미 처리된 취소 여부 확인
     boolean alreadyProcessed =
@@ -812,113 +802,210 @@ public class PortOnePaymentServiceImpl implements PortOnePaymentService {
     paymentCancelRepository.save(paymentCancel);
   }
 
-  // 가상계좌 웹훅 처리 메서드
-  private void handleVbankWebhook(Payment payment, String status, Map<String, Object> webhookData) {
-    log.debug("Handling vbank webhook: status={}", status);
+  // 결제 상태 변경 웹훅 처리
+  private void handlePaymentStatusChangedWebhook(
+      Payment payment, String status, Map<String, Object> webhookData) {
+    log.debug("Handling payment status changed webhook: status={}", status);
 
+    Payment.PaymentStatus beforeStatus = payment.getStatus();
+    Payment.PaymentStatus newStatus;
+
+    // V2 API 상태값을 내부 상태값으로 변환
     switch (status) {
-      case "issued":
-        // 가상계좌 발급 완료
-        payment.updateStatus(Payment.PaymentStatus.WAITING_FOR_DEPOSIT);
-
-        // 가상계좌 정보 업데이트
-        String accountNumber = (String) webhookData.getOrDefault("vbank_num", "");
-        String bankCode = (String) webhookData.getOrDefault("vbank_code", "");
-        String bankName = (String) webhookData.getOrDefault("vbank_name", "");
-        String dueDateStr = (String) webhookData.getOrDefault("vbank_due", "");
-
-        LocalDateTime expiryDate = null;
-        if (dueDateStr != null && !dueDateStr.isEmpty()) {
-          expiryDate = LocalDateTime.parse(dueDateStr, DateTimeFormatter.ISO_DATE_TIME);
-        }
-
-        payment.setVirtualAccountInfo(accountNumber, bankCode, bankName, expiryDate);
-
-        // 로그 추가
-        payment.addLog(
-            PaymentLogType.VIRTUAL_ACCOUNT_ISSUED,
-            payment.getStatus(),
-            "가상계좌 발급됨",
-            null,
-            webhookData,
-            "webhook",
-            "webhook");
+      case "READY":
+        newStatus = Payment.PaymentStatus.READY;
         break;
-
-      case "deposited":
-        // 입금 완료 처리
-        String pgTid = (String) webhookData.getOrDefault("pg_tid", "");
-        payment.markAsPaid(payment.getPaymentKey(), pgTid, webhookData);
-        payment.getOrder().completePayment();
-        orderRepository.save(payment.getOrder());
-
-        // 로그 추가
-        payment.addLog(
-            PaymentLogType.VIRTUAL_ACCOUNT_DEPOSIT,
-            Payment.PaymentStatus.WAITING_FOR_DEPOSIT,
-            "가상계좌 입금됨",
-            null,
-            webhookData,
-            "webhook",
-            "webhook");
+      case "IN_PROGRESS":
+        newStatus = Payment.PaymentStatus.IN_PROGRESS;
         break;
-
+      case "WAITING_FOR_DEPOSIT":
+        newStatus = Payment.PaymentStatus.WAITING_FOR_DEPOSIT;
+        break;
+      case "DONE":
+        newStatus = Payment.PaymentStatus.PAID;
+        break;
+      case "CANCELED":
+        newStatus = Payment.PaymentStatus.CANCELLED;
+        break;
+      case "PARTIAL_CANCELED":
+        newStatus = Payment.PaymentStatus.PARTIALLY_CANCELLED;
+        break;
+      case "ABORTED":
+        newStatus = Payment.PaymentStatus.ABORTED;
+        break;
+      case "EXPIRED":
+        newStatus = Payment.PaymentStatus.EXPIRED;
+        break;
+      case "FAILED":
+        newStatus = Payment.PaymentStatus.FAILED;
+        break;
       default:
-        log.warn("Unknown vbank status in webhook: {}", status);
+        log.warn("Unknown payment status in webhook: {}", status);
+        return;
+    }
+
+    // 상태 변경
+    if (beforeStatus != newStatus) {
+      payment.updateStatus(newStatus);
+
+      // 실패 처리
+      if (newStatus == Payment.PaymentStatus.FAILED) {
+        Map<String, Object> data = (Map<String, Object>) webhookData.get("data");
+        String failReason = (String) data.getOrDefault("failReason", "알 수 없는 실패 사유");
+        payment.getOrder().failOrder("결제 실패: " + failReason);
+        orderRepository.save(payment.getOrder());
+      }
+
+      // 취소 처리
+      if (newStatus == Payment.PaymentStatus.CANCELLED) {
+        String cancelReason = "결제 취소됨";
+        payment.getOrder().cancelOrder("결제 취소: " + cancelReason);
+        orderRepository.save(payment.getOrder());
+      }
+
+      // 중단 처리
+      if (newStatus == Payment.PaymentStatus.ABORTED) {
+        payment.getOrder().failOrder("결제 중단");
+        orderRepository.save(payment.getOrder());
+      }
+
+      // 만료 처리
+      if (newStatus == Payment.PaymentStatus.EXPIRED) {
+        payment.getOrder().failOrder("결제 만료");
+        orderRepository.save(payment.getOrder());
+      }
+
+      // 상태 변경 로그 추가
+      payment.addLog(
+          PaymentLogType.STATUS_CHANGED,
+          beforeStatus,
+          "웹훅으로 상태 변경됨: " + status,
+          null,
+          webhookData,
+          "webhook",
+          "webhook");
     }
   }
 
-  // 새로 필요한 내부 메서드
-  private Payment createPayment(
-      Order order, Payment.PaymentMethod paymentMethod, Map<String, Object> additionalData) {
-    // 결제 정보 생성
-    Payment payment =
-        Payment.builder()
-            .order(order)
-            .paymentMethod(paymentMethod)
-            .amount(order.getTotalAmount())
-            .selectedOptionType(getSelectedOptionType(order))
-            .selectedOptionId(getSelectedOptionId(order))
-            .build();
+  // 가상계좌 발급 웹훅 처리
+  private void handleVirtualAccountIssuedWebhook(Payment payment, Map<String, Object> webhookData) {
+    log.debug("Handling virtual account issued webhook");
 
-    // 추가 데이터 설정 - 실제 구현시 필요에 따라 조정
-    String paymentKey = "virtual_" + System.currentTimeMillis(); // 가상의 키 생성
-    payment.preparePayment(paymentKey, additionalData);
+    Map<String, Object> data = (Map<String, Object>) webhookData.get("data");
+    Map<String, Object> virtualAccount = (Map<String, Object>) data.get("virtualAccount");
 
-    return payment;
+    if (virtualAccount != null) {
+      String accountNumber = (String) virtualAccount.getOrDefault("accountNumber", "");
+      String bankCode = (String) virtualAccount.getOrDefault("bankCode", "");
+      String bankName = (String) virtualAccount.getOrDefault("bankName", "");
+      String dueDateStr = (String) virtualAccount.getOrDefault("dueDate", "");
+
+      LocalDateTime expiryDate = null;
+      if (dueDateStr != null && !dueDateStr.isEmpty()) {
+        expiryDate = LocalDateTime.parse(dueDateStr, DateTimeFormatter.ISO_DATE_TIME);
+      }
+
+      payment.setVirtualAccountInfo(accountNumber, bankCode, bankName, expiryDate);
+      payment.updateStatus(Payment.PaymentStatus.WAITING_FOR_DEPOSIT);
+
+      // 로그 추가
+      payment.addLog(
+          PaymentLogType.VIRTUAL_ACCOUNT_ISSUED,
+          payment.getStatus(),
+          "가상계좌 발급됨",
+          null,
+          webhookData,
+          "webhook",
+          "webhook");
+    }
   }
 
-  // 포트원 결제 수단 코드로 변환
-  private String convertToPortOnePayMethod(Payment.PaymentMethod method) {
+  // 가상계좌 입금 매칭 웹훅 처리
+  private void handleVirtualAccountDepositMatchedWebhook(
+      Payment payment, Map<String, Object> webhookData) {
+    log.debug("Handling virtual account deposit matched webhook");
+
+    Map<String, Object> data = (Map<String, Object>) webhookData.get("data");
+    String pgTid = (String) data.getOrDefault("transactionKey", "");
+
+    if (payment.getStatus() != Payment.PaymentStatus.PAID) {
+      payment.markAsPaid(payment.getPaymentKey(), pgTid, webhookData);
+      payment.getOrder().completePayment();
+      orderRepository.save(payment.getOrder());
+
+      // 로그 추가
+      payment.addLog(
+          PaymentLogType.VIRTUAL_ACCOUNT_DEPOSIT,
+          Payment.PaymentStatus.WAITING_FOR_DEPOSIT,
+          "가상계좌 입금됨",
+          null,
+          webhookData,
+          "webhook",
+          "webhook");
+    }
+  }
+
+  /**
+   * 주문에서 결제 상품명을 추출하는 메서드
+   *
+   * @param order 주문 객체
+   * @return 결제에 표시할 상품명
+   */
+  private String getOrderName(Order order) {
+    // 주문 항목이 없는 경우 기본값 반환
+    if (order.getOrderItems() == null || order.getOrderItems().isEmpty()) {
+      return "상품 주문";
+    }
+
+    // 첫 번째 상품명 가져오기
+    String firstItemName = order.getOrderItems().get(0).getContentName();
+
+    // 상품명이 없는 경우 기본값 설정
+    if (firstItemName == null || firstItemName.trim().isEmpty()) {
+      firstItemName = "상품";
+    }
+
+    // 여러 상품인 경우 "외 N건" 형식으로 표현
+    int totalItems = order.getOrderItems().size();
+    if (totalItems > 1) {
+      return firstItemName + " 외 " + (totalItems - 1) + "건";
+    }
+
+    // 단일 상품인 경우 상품명만 반환
+    return firstItemName;
+  }
+
+  // 포트원 V2 결제 수단 코드로 변환
+  private String convertToPortOnePayMethodV2(Payment.PaymentMethod method) {
     switch (method) {
       case CARD:
-        return "card";
+        return "카드";
       case VIRTUAL_ACCOUNT:
-        return "vbank";
+        return "가상계좌";
       case BANK_TRANSFER:
-        return "trans";
+        return "계좌이체";
       case MOBILE_PHONE:
-        return "phone";
+        return "휴대폰";
       case KAKAO_PAY:
-        return "kakaopay";
+        return "카카오페이";
       case PAYCO:
-        return "payco";
+        return "페이코";
       case NAVER_PAY:
-        return "naverpay";
+        return "네이버페이";
       case SAMSUNG_PAY:
-        return "samsungpay";
+        return "삼성페이";
       case TOSS_PAY:
-        return "tosspay";
+        return "토스페이";
       case PAYPAL:
-        return "paypal";
+        return "페이팔";
       default:
-        return "card"; // 기본값
+        return "카드"; // 기본값
     }
   }
 
   // 주문에서 선택된 옵션 유형 가져오기
   private Payment.SelectedOptionType getSelectedOptionType(Order order) {
-    if (order.getOrderItems().isEmpty()) {
+    if (order.getOrderItems() == null || order.getOrderItems().isEmpty()) {
       return null;
     }
 
@@ -935,7 +1022,7 @@ public class PortOnePaymentServiceImpl implements PortOnePaymentService {
 
   // 주문에서 선택된 옵션 ID 가져오기
   private Long getSelectedOptionId(Order order) {
-    if (order.getOrderItems().isEmpty()) {
+    if (order.getOrderItems() == null || order.getOrderItems().isEmpty()) {
       return null;
     }
 

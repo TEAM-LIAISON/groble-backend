@@ -1,5 +1,6 @@
 package liaison.groble.api.model.payment.request;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -23,12 +24,56 @@ public class PaymentPrepareRequest {
   @NotBlank(message = "결제 수단은 필수입니다")
   private String paymentMethod;
 
+  // 주문명 (V2 API에서 필요)
+  private String orderName;
+
+  // 결제 금액 (컨트롤러에서 검증 가능)
+  private BigDecimal amount;
+
+  // 고객 정보
   private String customerName;
   private String customerEmail;
   private String customerPhone;
+
+  // 결제 성공/실패 URL
   private String successUrl;
   private String failUrl;
 
-  /** 결제 요청에 필요한 추가 데이터 PG사 별로 필요한 파라미터를 담는 Map 객체 예: 가상계좌 은행 코드, 카드 할부 개월 수, 에스크로 여부 등 */
-  private Map<String, Object> additionalData = new HashMap<>();
+  // PG 사업자
+  private String pgProvider;
+
+  // 카드 결제 옵션
+  private CardOptions cardOptions;
+
+  // 가상계좌 옵션
+  private VirtualAccountOptions virtualAccountOptions;
+
+  // 기타 추가 옵션
+  private Map<String, Object> additionalOptions = new HashMap<>();
+
+  @Getter
+  @Builder
+  @NoArgsConstructor
+  @AllArgsConstructor
+  public static class CardOptions {
+    // 할부 개월 수
+    private Integer installment;
+    // 카드사 직접 결제 여부
+    private Boolean useCardPoint;
+    // 해외카드 결제 여부
+    private Boolean useInternationalCard;
+  }
+
+  @Getter
+  @Builder
+  @NoArgsConstructor
+  @AllArgsConstructor
+  public static class VirtualAccountOptions {
+    // 은행 코드
+    private String bankCode;
+    // 가상계좌 만료 시간(시간)
+    private Integer validHours;
+    // 현금영수증 발행 타입
+    private String cashReceiptType;
+  }
 }

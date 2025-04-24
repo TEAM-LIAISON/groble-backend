@@ -20,4 +20,8 @@ public class PaymentPrepareDto {
   private String successUrl;
   private String failUrl;
   private Map<String, Object> additionalData;
+
+  // 명세 기준
+  private Long totalAmount;
+  private Long taxFreeAmount;
 }

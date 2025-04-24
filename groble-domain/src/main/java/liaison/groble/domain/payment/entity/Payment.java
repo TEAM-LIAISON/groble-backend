@@ -356,7 +356,8 @@ public class Payment extends BaseEntity {
     CANCELLED("취소됨"),
     PARTIALLY_CANCELLED("부분취소됨"),
     ABORTED("결제중단"),
-    FAILED("결제실패");
+    FAILED("결제실패"),
+    EXPIRED("결제만료");
 
     private final String description;
 

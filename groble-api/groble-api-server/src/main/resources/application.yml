@@ -46,7 +46,7 @@ spring:
         order_inserts: true
         order_updates: true
     hibernate:
-        ddl-auto: create
+        ddl-auto: none
   sql:
     init:
       mode: always
@@ -107,15 +107,15 @@ logging:
     software.amazon.awssdk: DEBUG
     org.apache.http: DEBUG
 
+
+# 포트원 결제 관련 설정
 portone:
-  api-key: "channel-key-704cd3b0-72bf-4829-ad2b-a4a637c0e293"
-  secret-key: "test_sk_d26DibXAaV0xQbpa7y1VqY50Q9RB"
-  client-key: "test_ck_lpP2YxJ4K877JAdv7KX8RGZwXLOb"
-  base-url: "https://api.portone.io/v2"
-  webhook-secret: "your-webhook-secret-here"
+  api-url-v2: https://api.portone.io
+  merchant-id: "your_merchant_id"
+  client-key: "your_client_key"
+  api-secret: "8q1r4uoQvToCPixwJH8IZBBtribsZta2F96K1Wwlob1SQ4JuhAMrRS7PzQgsPTxcqYos8hZvQjs8H09g"
   default-pg: "tosspayments"
-  pg-mid: "iamporttest_3"
-  payment-redirect-url: "https://yourdomain.com/payment/redirect"
-  identity-redirect-url: "https://yourdomain.com/identity/redirect"
-  bank-callback-url: "https://yourdomain.com/bank/callback"
-  merchant-code: "your-merchant-code"
+  payment-redirect-url: "https://groble.im/payment"
+  identity-redirect-url: "https://groble.im/identity/verify"
+  bank-callback-url: "https://groble.im/bank/callback"
+  webhook-secret: "your_webhook_secret"

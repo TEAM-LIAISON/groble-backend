@@ -43,33 +43,51 @@ public class PortOneIdentityVerificationServiceImpl implements PortOneIdentityVe
       User user, IdentityVerification.VerificationMethod type, String returnUrl) {
     log.info("Creating identity verification request for user: {}, method: {}", user.getId(), type);
 
-    // 요청 데이터 준비
+    // V2 API용 요청 데이터 준비
     Map<String, Object> requestData = new HashMap<>();
     String requestId =
         "IDENTITY_" + user.getId() + "_" + UUID.randomUUID().toString().substring(0, 8);
 
-    requestData.put("merchant_uid", requestId);
-    requestData.put("company", "포트원");
-    requestData.put("name", user.getNickname());
-    requestData.put("phone", user.getPhoneNumber());
-    requestData.put(
-        "m_redirect_url",
-        returnUrl != null ? returnUrl : portOneProperties.getIdentityRedirectUrl());
+    // 본인인증 요청 데이터 구성
+    Map<String, Object> identityVerificationRequest = new HashMap<>();
+    identityVerificationRequest.put("orderId", requestId);
+    identityVerificationRequest.put("name", user.getNickname());
+    identityVerificationRequest.put("phoneNumber", user.getPhoneNumber());
 
-    // 인증 방법에 따른 PG사 설정
+    // 인증 방법에 따른 PG 및 방법 설정
+    Map<String, Object> identityMethodOptions = new HashMap<>();
     switch (type) {
       case PHONE:
-        requestData.put("pg", "danal");
+        identityVerificationRequest.put("pgProvider", "danal");
+        identityMethodOptions.put("method", "휴대폰인증");
         break;
       case CARD:
-        requestData.put("pg", "inicis_identity");
+        identityVerificationRequest.put("pgProvider", "inicis");
+        identityMethodOptions.put("method", "카드인증");
         break;
       case KAKAO:
-        requestData.put("pg", "kakao");
+        identityVerificationRequest.put("pgProvider", "kakao");
+        identityMethodOptions.put("method", "카카오인증");
         break;
       default:
         throw new IllegalArgumentException("지원하지 않는 인증 방법입니다: " + type);
     }
+
+    identityVerificationRequest.put("identityMethodOptions", identityMethodOptions);
+
+    // 콜백 URL 설정
+    Map<String, String> callbackUrls = new HashMap<>();
+    callbackUrls.put(
+        "successUrl",
+        returnUrl != null ? returnUrl : portOneProperties.getIdentityRedirectUrl() + "/success");
+    callbackUrls.put(
+        "failUrl",
+        returnUrl != null
+            ? returnUrl.replace("/success", "/fail")
+            : portOneProperties.getIdentityRedirectUrl() + "/fail");
+    identityVerificationRequest.put("callbackUrls", callbackUrls);
+
+    requestData.put("identityVerificationRequest", identityVerificationRequest);
 
     // 요청 이력 저장
     IdentityVerificationHistory history =
@@ -86,12 +104,13 @@ public class PortOneIdentityVerificationServiceImpl implements PortOneIdentityVe
     verificationHistoryRepository.save(history);
 
     try {
-      // 포트원 API 호출
+      // 포트원 V2 API 호출
       Map<String, Object> response =
-          portOneClient.callApi("/certifications/request", HttpMethod.POST, requestData, Map.class);
+          portOneClient.callApi("/identity-verifications", HttpMethod.POST, requestData, Map.class);
 
       // 응답에서 리다이렉트 URL 추출
-      String redirectUrl = (String) response.get("redirect_url");
+      Map<String, Object> result = (Map<String, Object>) response.get("identityVerificationResult");
+      String redirectUrl = (String) result.get("redirectUrl");
 
       // 이력 업데이트
       history.markAsUpdate(IdentityVerificationStatus.REQUESTED, response);
@@ -115,16 +134,22 @@ public class PortOneIdentityVerificationServiceImpl implements PortOneIdentityVe
 
   @Override
   @Transactional
-  public IdentityVerification processVerificationResult(String authCode, String state) {
-    log.info("Processing identity verification result: {}, state: {}", authCode, state);
+  public IdentityVerification processVerificationResult(String authToken, String state) {
+    log.info("Processing identity verification result: token={}, state={}", authToken, state);
 
     try {
-      // 포트원 API로 인증 결과 조회
+      // V2 API로 인증 결과 조회
+      Map<String, Object> requestData = new HashMap<>();
+      requestData.put("authToken", authToken);
+
       Map<String, Object> response =
-          portOneClient.callApi("/certifications/" + authCode, HttpMethod.GET, null, Map.class);
+          portOneClient.callApi(
+              "/identity-verifications/result", HttpMethod.POST, requestData, Map.class);
 
       // 응답에서 필요한 정보 추출
-      String merchantUid = (String) response.get("merchant_uid");
+      Map<String, Object> resultData =
+          (Map<String, Object>) response.get("identityVerificationResult");
+      String merchantUid = (String) resultData.get("orderId");
 
       // 이력 조회
       IdentityVerificationHistory history =
@@ -135,15 +160,16 @@ public class PortOneIdentityVerificationServiceImpl implements PortOneIdentityVe
 
       User user = history.getUser();
 
-      // CI/DI 정보 추출
-      String ci = (String) response.get("unique_key");
-      String di = (String) response.get("unique_in_site");
-      String name = (String) response.get("name");
-      String gender = (String) response.get("gender");
-      String birthdate = (String) response.get("birthday");
-      String phone = (String) response.get("phone");
+      // 개인 정보 추출
+      Map<String, Object> personalData = (Map<String, Object>) resultData.get("personalData");
+      String ci = (String) personalData.get("ci");
+      String di = (String) personalData.get("di");
+      String name = (String) personalData.get("name");
+      String gender = (String) personalData.get("gender");
+      String birthdate = (String) personalData.get("birthDate");
+      String phone = (String) personalData.get("phoneNumber");
 
-      // 생년월일 변환
+      // 생년월일 변환 (YYYYMMDD 형식으로 가정)
       LocalDate birthDate = LocalDate.parse(birthdate, DateTimeFormatter.ofPattern("yyyyMMdd"));
 
       // 인증 정보 생성
@@ -158,9 +184,9 @@ public class PortOneIdentityVerificationServiceImpl implements PortOneIdentityVe
               .ci(ci)
               .di(di)
               .certificationProvider("portone")
-              .certificationTxId(authCode)
+              .certificationTxId(authToken)
               .portOneRequestId(merchantUid)
-              .portOneTransactionId(authCode)
+              .portOneTransactionId(authToken)
               .verificationData(response)
               .build();
 
@@ -202,29 +228,35 @@ public class PortOneIdentityVerificationServiceImpl implements PortOneIdentityVe
     log.debug("Getting verification status for request: {}", requestId);
 
     try {
-      // 포트원 API로 인증 상태 조회
+      // V2 API로 인증 상태 조회
+      Map<String, Object> requestData = new HashMap<>();
+      requestData.put("orderId", requestId);
+
       Map<String, Object> response =
           portOneClient.callApi(
-              "/certifications/status/" + requestId, HttpMethod.GET, null, Map.class);
+              "/identity-verifications/status", HttpMethod.POST, requestData, Map.class);
 
-      String status = (String) response.get("status");
+      Map<String, Object> resultData =
+          (Map<String, Object>) response.get("identityVerificationStatusResult");
+      String status = (String) resultData.get("status");
 
       // 상태값 변환
       IdentityVerificationStatus result;
       switch (status) {
-        case "ready":
+        case "READY":
           result = IdentityVerificationStatus.REQUESTED;
           break;
-        case "processing":
+        case "IN_PROGRESS":
           result = IdentityVerificationStatus.IN_PROGRESS;
           break;
-        case "completed":
+        case "COMPLETED":
+        case "DONE":
           result = IdentityVerificationStatus.VERIFIED;
           break;
-        case "failed":
+        case "FAILED":
           result = IdentityVerificationStatus.FAILED;
           break;
-        case "expired":
+        case "EXPIRED":
           result = IdentityVerificationStatus.EXPIRED;
           break;
         default:
@@ -254,14 +286,25 @@ public class PortOneIdentityVerificationServiceImpl implements PortOneIdentityVe
   public void handleWebhook(Map<String, Object> webhookData) {
     log.info("Handling identity verification webhook: {}", webhookData);
 
-    String type = (String) webhookData.get("type");
-    if (!"certification".equals(type)) {
-      log.debug("Ignoring non-certification webhook: {}", type);
+    // V2 API 웹훅 처리
+    String eventType = (String) webhookData.get("eventType");
+
+    // 본인인증 관련 이벤트만 처리
+    if (!eventType.startsWith("IDENTITY_VERIFICATION_")) {
+      log.debug("Ignoring non-identity webhook: {}", eventType);
       return;
     }
 
-    String requestId = (String) webhookData.get("merchant_uid");
-    String impUid = (String) webhookData.get("imp_uid");
+    // 데이터 추출
+    Map<String, Object> data = (Map<String, Object>) webhookData.get("data");
+    Map<String, Object> result = (Map<String, Object>) data.get("identityVerificationResult");
+
+    if (result == null) {
+      log.warn("No identity verification result in webhook data");
+      return;
+    }
+
+    String requestId = (String) result.get("orderId");
     String status = (String) webhookData.get("status");
 
     IdentityVerificationHistory history =
@@ -276,37 +319,47 @@ public class PortOneIdentityVerificationServiceImpl implements PortOneIdentityVe
 
     // 상태에 따른 처리
     switch (status) {
-      case "ready":
+      case "READY":
         log.debug("Updating status to REQUESTED for request: {}", requestId);
         history.markAsUpdate(IdentityVerificationStatus.REQUESTED, webhookData);
         break;
 
-      case "processing":
+      case "IN_PROGRESS":
         log.debug("Updating status to IN_PROGRESS for request: {}", requestId);
         history.markAsUpdate(IdentityVerificationStatus.IN_PROGRESS, webhookData);
         break;
 
-      case "completed":
+      case "COMPLETED":
+      case "DONE":
         log.info("Received completed webhook for request: {}", requestId);
         // 인증 완료 처리
         if (history.isSuccess()) {
           log.debug("Request already processed successfully: {}", requestId);
         } else {
-          log.info("Processing verification result from webhook: {}", impUid);
-          processVerificationResult(impUid, null);
+          log.info("Processing verification result from webhook");
+
+          // 인증 토큰 추출
+          String authToken = (String) result.get("authToken");
+          if (authToken != null) {
+            processVerificationResult(authToken, null);
+          } else {
+            log.warn("No auth token in webhook data, cannot process verification");
+            history.markAsUpdate(IdentityVerificationStatus.VERIFIED, webhookData);
+          }
         }
         break;
 
-      case "failed":
+      case "FAILED":
         log.warn("Verification failed for request: {}", requestId);
-        String failCode = (String) webhookData.getOrDefault("fail_code", "UNKNOWN");
-        String failMessage = (String) webhookData.getOrDefault("fail_message", "Unknown error");
+        Map<String, Object> error = (Map<String, Object>) result.get("error");
+        String failCode = error != null ? (String) error.get("code") : "UNKNOWN";
+        String failMessage = error != null ? (String) error.get("message") : "Unknown error";
 
         history.markAsFailure(
             IdentityVerificationStatus.FAILED, failCode, failMessage, webhookData);
         break;
 
-      case "expired":
+      case "EXPIRED":
         log.warn("Verification expired for request: {}", requestId);
         history.markAsFailure(
             IdentityVerificationStatus.EXPIRED,

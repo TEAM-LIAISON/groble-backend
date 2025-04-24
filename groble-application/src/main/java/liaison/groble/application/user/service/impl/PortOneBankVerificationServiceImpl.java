@@ -81,22 +81,27 @@ public class PortOneBankVerificationServiceImpl implements PortOneBankVerificati
         accountNumber,
         holderName);
 
-    // 요청 데이터 준비
+    // V2 API용 요청 데이터 준비
     Map<String, Object> requestData = new HashMap<>();
-    requestData.put("bank_code", bankCode);
-    requestData.put("bank_num", accountNumber);
-    requestData.put("bank_holder", holderName);
+
+    // 예금주 조회 요청 본문 구성
+    Map<String, Object> bankHolderRequest = new HashMap<>();
+    bankHolderRequest.put("bankCode", bankCode);
+    bankHolderRequest.put("bankAccountNumber", accountNumber);
+
+    requestData.put("bankHolderRequest", bankHolderRequest);
 
     // 고유 검증 키 생성
     String verificationKey = "BANK_OWNER_" + UUID.randomUUID().toString().substring(0, 8);
 
     try {
-      // 포트원 API 호출
+      // 포트원 V2 API 호출
       Map<String, Object> response =
-          portOneClient.callApi("/banking/holders", HttpMethod.POST, requestData, Map.class);
+          portOneClient.callApi("/banking/bank-holder", HttpMethod.POST, requestData, Map.class);
 
       // 응답에서 예금주 정보 확인
-      String responseHolderName = (String) response.get("holder_name");
+      Map<String, Object> bankHolderResult = (Map<String, Object>) response.get("bankHolderResult");
+      String responseHolderName = (String) bankHolderResult.get("bankHolderName");
       boolean matched = holderName.equals(responseHolderName);
 
       log.info(
@@ -149,31 +154,42 @@ public class PortOneBankVerificationServiceImpl implements PortOneBankVerificati
   public BankAccountVerification startOneCentVerification(BankAccount bankAccount) {
     log.info("Starting 1-cent verification for bank account: {}", bankAccount.getId());
 
-    // 요청 데이터 준비
+    // V2 API용 요청 데이터 준비
     Map<String, Object> requestData = new HashMap<>();
-    requestData.put("bank_code", bankAccount.getBankCode());
-    requestData.put("bank_num", bankAccount.getAccountNumber());
-    requestData.put("bank_holder", bankAccount.getAccountHolderName());
-    requestData.put("user_id", bankAccount.getUser().getId().toString());
-    requestData.put("callback_url", portOneProperties.getBankCallbackUrl());
 
     // 고유 검증 키 생성
     String verificationKey =
         "BANK_1CENT_" + bankAccount.getId() + "_" + UUID.randomUUID().toString().substring(0, 8);
-    requestData.put("req_key", verificationKey);
+
+    // 1원 인증 요청 본문 구성
+    Map<String, Object> microTransferRequest = new HashMap<>();
+    microTransferRequest.put("bankCode", bankAccount.getBankCode());
+    microTransferRequest.put("bankAccountNumber", bankAccount.getAccountNumber());
+    microTransferRequest.put("holderName", bankAccount.getAccountHolderName());
+    microTransferRequest.put("verificationKey", verificationKey);
+
+    // 콜백 URL 설정
+    Map<String, String> callbackUrls = new HashMap<>();
+    callbackUrls.put("successUrl", portOneProperties.getBankCallbackUrl() + "/success");
+    callbackUrls.put("failUrl", portOneProperties.getBankCallbackUrl() + "/fail");
+    microTransferRequest.put("callbackUrls", callbackUrls);
+
+    requestData.put("microTransferRequest", microTransferRequest);
 
     try {
-      // 포트원 API 호출
+      // 포트원 V2 API 호출
       Map<String, Object> response =
-          portOneClient.callApi(
-              "/banking/onecent/request", HttpMethod.POST, requestData, Map.class);
+          portOneClient.callApi("/banking/micro-transfer", HttpMethod.POST, requestData, Map.class);
 
       // 응답에서 필요한 정보 추출
-      String depositBank = (String) response.get("bank_name");
-      String depositAccountNumber = (String) response.get("account_number");
-      BigDecimal depositAmount = new BigDecimal(response.get("amount").toString());
+      Map<String, Object> microTransferResult =
+          (Map<String, Object>) response.get("microTransferResult");
+      String depositBank = (String) microTransferResult.get("bankName");
+      String depositAccountNumber = (String) microTransferResult.get("accountNumber");
+      BigDecimal depositAmount = new BigDecimal(microTransferResult.get("amount").toString());
       LocalDateTime expiredAt =
-          LocalDateTime.parse((String) response.get("expired_at"), DateTimeFormatter.ISO_DATE_TIME);
+          LocalDateTime.parse(
+              (String) microTransferResult.get("expiryAt"), DateTimeFormatter.ISO_DATE_TIME);
 
       log.info("1-cent verification initiated: key={}, expires={}", verificationKey, expiredAt);
 
@@ -225,19 +241,25 @@ public class PortOneBankVerificationServiceImpl implements PortOneBankVerificati
             .orElseThrow(
                 () -> new IllegalArgumentException("검증 키에 해당하는 정보를 찾을 수 없습니다: " + verificationKey));
 
-    // 요청 데이터 준비
+    // V2 API용 요청 데이터 준비
     Map<String, Object> requestData = new HashMap<>();
-    requestData.put("req_key", verificationKey);
-    requestData.put("code", code);
+
+    // 1원 인증 확인 요청 본문 구성
+    Map<String, Object> microTransferConfirmRequest = new HashMap<>();
+    microTransferConfirmRequest.put("verificationKey", verificationKey);
+    microTransferConfirmRequest.put("confirmationCode", code);
+
+    requestData.put("microTransferConfirmRequest", microTransferConfirmRequest);
 
     try {
-      // 포트원 API 호출
+      // 포트원 V2 API 호출
       Map<String, Object> response =
           portOneClient.callApi(
-              "/banking/onecent/confirm", HttpMethod.POST, requestData, Map.class);
+              "/banking/micro-transfer/confirm", HttpMethod.POST, requestData, Map.class);
 
       // 응답에서 검증 결과 확인
-      boolean success = Boolean.TRUE.equals(response.get("success"));
+      Map<String, Object> result = (Map<String, Object>) response.get("microTransferConfirmResult");
+      boolean success = Boolean.TRUE.equals(result.get("verified"));
 
       log.info("1-cent verification result: {}", success ? "SUCCESS" : "FAILED");
 
@@ -269,24 +291,31 @@ public class PortOneBankVerificationServiceImpl implements PortOneBankVerificati
       String bankCode, String accountNumber, String holderName, String birthDate) {
     log.info("Verifying account instantly: bank={}, account={}", bankCode, accountNumber);
 
-    // 요청 데이터 준비
+    // V2 API용 요청 데이터 준비
     Map<String, Object> requestData = new HashMap<>();
-    requestData.put("bank_code", bankCode);
-    requestData.put("bank_num", accountNumber);
-    requestData.put("bank_holder", holderName);
-    requestData.put("birth_date", birthDate); // 또는 사업자번호
 
     // 고유 검증 키 생성
     String verificationKey = "BANK_INSTANT_" + UUID.randomUUID().toString().substring(0, 8);
-    requestData.put("req_key", verificationKey);
+
+    // 즉시 인증 요청 본문 구성
+    Map<String, Object> instantVerificationRequest = new HashMap<>();
+    instantVerificationRequest.put("bankCode", bankCode);
+    instantVerificationRequest.put("bankAccountNumber", accountNumber);
+    instantVerificationRequest.put("holderName", holderName);
+    instantVerificationRequest.put("identityNumber", birthDate); // 생년월일 또는 사업자번호
+    instantVerificationRequest.put("verificationKey", verificationKey);
+
+    requestData.put("instantVerificationRequest", instantVerificationRequest);
 
     try {
-      // 포트원 API 호출
+      // 포트원 V2 API 호출
       Map<String, Object> response =
-          portOneClient.callApi("/banking/instant/verify", HttpMethod.POST, requestData, Map.class);
+          portOneClient.callApi(
+              "/banking/instant-verification", HttpMethod.POST, requestData, Map.class);
 
       // 응답에서 검증 결과 확인
-      boolean verified = Boolean.TRUE.equals(response.get("verified"));
+      Map<String, Object> result = (Map<String, Object>) response.get("instantVerificationResult");
+      boolean verified = Boolean.TRUE.equals(result.get("verified"));
 
       log.info("Instant account verification result: {}", verified ? "SUCCESS" : "FAILED");
 
@@ -344,14 +373,38 @@ public class PortOneBankVerificationServiceImpl implements PortOneBankVerificati
   public void handleWebhook(Map<String, Object> webhookData) {
     log.info("Handling bank account verification webhook: {}", webhookData);
 
-    String type = (String) webhookData.get("type");
-    if (!"bank_verification".equals(type)) {
-      log.debug("Ignoring non-bank webhook: {}", type);
+    // V2 API 웹훅 처리
+    String eventType = (String) webhookData.get("eventType");
+
+    // 은행 계좌 검증 관련 이벤트만 처리
+    if (!eventType.startsWith("BANKING_")) {
+      log.debug("Ignoring non-banking webhook: {}", eventType);
       return;
     }
 
-    String verificationKey = (String) webhookData.get("req_key");
-    String status = (String) webhookData.get("status");
+    // 데이터 추출
+    Map<String, Object> data = (Map<String, Object>) webhookData.get("data");
+    String verificationKey = null;
+
+    // 이벤트 유형에 따라 필요한 정보 추출
+    if (eventType.contains("MICRO_TRANSFER")) {
+      Map<String, Object> microTransferResult =
+          (Map<String, Object>) data.get("microTransferResult");
+      if (microTransferResult != null) {
+        verificationKey = (String) microTransferResult.get("verificationKey");
+      }
+    } else if (eventType.contains("INSTANT_VERIFICATION")) {
+      Map<String, Object> instantVerificationResult =
+          (Map<String, Object>) data.get("instantVerificationResult");
+      if (instantVerificationResult != null) {
+        verificationKey = (String) instantVerificationResult.get("verificationKey");
+      }
+    }
+
+    if (verificationKey == null) {
+      log.warn("No verification key found in webhook data: {}", webhookData);
+      return;
+    }
 
     BankAccountVerification verification =
         verificationRepository.findByVerificationKey(verificationKey).orElse(null);
@@ -361,19 +414,23 @@ public class PortOneBankVerificationServiceImpl implements PortOneBankVerificati
       return;
     }
 
+    // 상태 정보 추출
+    String status = (String) webhookData.get("status");
+
     // 상태에 따른 처리
     switch (status) {
-      case "ready":
+      case "READY":
         log.debug("Webhook: Verification ready: {}", verificationKey);
         verification.startProcess();
         break;
 
-      case "processing":
+      case "IN_PROGRESS":
         log.debug("Webhook: Verification processing: {}", verificationKey);
         verification.startProcess();
         break;
 
-      case "completed":
+      case "COMPLETED":
+      case "DONE":
         log.info("Webhook: Verification completed: {}", verificationKey);
         verification.complete(webhookData);
 
@@ -386,12 +443,12 @@ public class PortOneBankVerificationServiceImpl implements PortOneBankVerificati
         }
         break;
 
-      case "failed":
+      case "FAILED":
         log.warn("Webhook: Verification failed: {}", verificationKey);
         verification.fail(webhookData);
         break;
 
-      case "expired":
+      case "EXPIRED":
         log.warn("Webhook: Verification expired: {}", verificationKey);
         verification.expire();
         break;
