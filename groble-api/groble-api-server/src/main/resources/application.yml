@@ -118,4 +118,4 @@ portone:
   payment-redirect-url: "https://groble.im/payment"
   identity-redirect-url: "https://groble.im/identity/verify"
   bank-callback-url: "https://groble.im/bank/callback"
-  webhook-secret: "your_webhook_secret"
+  webhook-secret: "whsec_3ltrVN8oqF50N4fEXaaPryHSvQBl6PxwklNdIdyeQJM="
