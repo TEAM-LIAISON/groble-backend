@@ -27,4 +27,8 @@ public interface PortOnePaymentService {
 
   // 웹훅 처리
   void handleWebhook(Map<String, Object> webhookData);
+
+  String getWebhookSecret();
+
+  Map<String, String> getClientKey();
 }

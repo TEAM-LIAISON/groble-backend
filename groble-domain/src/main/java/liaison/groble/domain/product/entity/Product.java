@@ -3,9 +3,6 @@ package liaison.groble.domain.product.entity;
 import static jakarta.persistence.EnumType.STRING;
 import static lombok.AccessLevel.PROTECTED;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Enumerated;
@@ -13,12 +10,10 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
 import liaison.groble.domain.common.entity.BaseTimeEntity;
-import liaison.groble.domain.product.enums.ContentType;
 import liaison.groble.domain.product.enums.ProductStatus;
 
 import lombok.AllArgsConstructor;
@@ -49,20 +44,8 @@ public class Product extends BaseTimeEntity {
   @Enumerated(value = STRING)
   private ProductStatus status = ProductStatus.PENDING;
 
-  @Column(name = "content_type")
-  @Enumerated(value = STRING)
-  private ContentType contentType;
-
   @OneToOne(mappedBy = "product")
   private ProductCategory productCategory;
-
-  @OneToMany(mappedBy = "product")
-  @Builder.Default
-  private List<CoachingOption> coachingOptions = new ArrayList<>();
-
-  @OneToMany(mappedBy = "product")
-  @Builder.Default
-  private List<DocumentOption> documentOptions = new ArrayList<>();
 
   @Column(nullable = false)
   private boolean deleted = false;
