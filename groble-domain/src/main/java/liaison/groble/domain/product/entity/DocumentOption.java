@@ -4,6 +4,8 @@ import static jakarta.persistence.EnumType.STRING;
 import static jakarta.persistence.FetchType.LAZY;
 import static lombok.AccessLevel.PROTECTED;
 
+import java.math.BigDecimal;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Enumerated;
@@ -47,4 +49,6 @@ public class DocumentOption {
   @Column(name = "content_delivery_method")
   @Enumerated(value = STRING)
   private ContentDeliveryMethod contentDeliveryMethod;
+
+  private BigDecimal price;
 }

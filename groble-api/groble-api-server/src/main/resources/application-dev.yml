@@ -61,7 +61,7 @@ spring:
         order_inserts: true
         order_updates: true
     hibernate:
-      ddl-auto: create
+      ddl-auto: create-drop
   mvc:
     path match:
       matching-strategy: ant_path_matcher
@@ -118,3 +118,15 @@ logging:
     liaison: DEBUG
     org.springdoc: DEBUG
     io.swagger.v3: DEBUG
+
+# 포트원 결제 관련 설정
+portone:
+  api-url-v2: https://api.portone.io
+  merchant-id: "your_merchant_id"
+  client-key: "your_client_key"
+  api-secret: "8q1r4uoQvToCPixwJH8IZBBtribsZta2F96K1Wwlob1SQ4JuhAMrRS7PzQgsPTxcqYos8hZvQjs8H09g"
+  default-pg: "tosspayments"
+  payment-redirect-url: "https://groble.im/payment"
+  identity-redirect-url: "https://groble.im/identity/verify"
+  bank-callback-url: "https://groble.im/bank/callback"
+  webhook-secret: "your_webhook_secret"
