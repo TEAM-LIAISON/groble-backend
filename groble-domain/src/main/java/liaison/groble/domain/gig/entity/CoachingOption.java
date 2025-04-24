@@ -3,9 +3,6 @@ package liaison.groble.domain.gig.entity;
 import static jakarta.persistence.EnumType.STRING;
 import static lombok.AccessLevel.PROTECTED;
 
-import java.math.BigDecimal;
-
-import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Enumerated;
@@ -22,24 +19,18 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = PROTECTED)
 public class CoachingOption extends GigOption {
+  // 코칭 기간
   @Enumerated(value = STRING)
   private CoachingPeriod coachingPeriod;
 
+  // 자료 제공
   @Enumerated(value = STRING)
   private DocumentProvision documentProvision;
 
+  // 코칭 방식
   @Enumerated(value = STRING)
   private CoachingType coachingType;
 
+  // 코칭 방식 설명
   private String coachingTypeDescription;
-
-  // 옵션 이름
-  @Column(name = "option_name")
-  private String name;
-
-  // 옵션 설명
-  @Column(name = "option_description")
-  private String description;
-
-  private BigDecimal price;
 }
