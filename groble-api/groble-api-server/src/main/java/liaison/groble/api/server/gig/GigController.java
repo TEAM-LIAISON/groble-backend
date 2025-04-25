@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import liaison.groble.api.model.gig.request.GigDraftRequest;
+import liaison.groble.api.model.gig.request.GigRegisterRequest;
 import liaison.groble.api.model.gig.response.GigDraftResponse;
 import liaison.groble.api.server.gig.mapper.GigDtoMapper;
 import liaison.groble.application.gig.GigService;
@@ -49,6 +50,14 @@ public class GigController {
     gigService.saveDraft(accessor.getUserId(), gigDraftDto);
 
     return ResponseEntity.ok(GrobleResponse.success(null, "서비스 상품 임시 저장 성공"));
+  }
+
+  // 서비스 상품 심사 요청
+  @Operation(summary = "서비스 상품 심사 요청", description = "서비스 상품을 심사 요청합니다.")
+  @PostMapping("/register")
+  public ResponseEntity<GrobleResponse<Void>> registerGig(
+      @Auth Accessor accessor, @RequestBody GigRegisterRequest request) {
+    return ResponseEntity.ok(GrobleResponse.success(null, "서비스 상품 심사 요청 성공"));
   }
 
   // 상품 등록
