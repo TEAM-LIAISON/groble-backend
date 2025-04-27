@@ -1,4 +1,4 @@
-package liaison.groble.api.model.gig.request;
+package liaison.groble.api.model.gig.request.draft;
 
 import java.math.BigDecimal;
 

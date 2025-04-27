@@ -8,7 +8,7 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public class GigDraftDto {
+public class GigDto {
   private Long gigId;
   private String title;
   private String gigType;

@@ -1,5 +1,6 @@
 package liaison.groble.persistence.gig;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Repository;
@@ -17,5 +18,15 @@ public class CategoryRepositoryImpl implements CategoryRepository {
   @Override
   public Optional<Category> findById(Long categoryId) {
     return jpaCategoryRepository.findById(categoryId);
+  }
+
+  @Override
+  public List<Category> findAll() {
+    return jpaCategoryRepository.findAll();
+  }
+
+  @Override
+  public void saveAll(List<Category> categories) {
+    jpaCategoryRepository.saveAll(categories);
   }
 }

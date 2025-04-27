@@ -9,7 +9,7 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public class GigDraftResponse {
+public class GigResponse {
   @Schema(description = "상품 ID", example = "1")
   private Long id;
 
