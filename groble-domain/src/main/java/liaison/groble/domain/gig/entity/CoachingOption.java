@@ -7,9 +7,9 @@ import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Enumerated;
 
-import liaison.groble.domain.product.enums.CoachingPeriod;
-import liaison.groble.domain.product.enums.CoachingType;
-import liaison.groble.domain.product.enums.DocumentProvision;
+import liaison.groble.domain.gig.enums.CoachingPeriod;
+import liaison.groble.domain.gig.enums.CoachingType;
+import liaison.groble.domain.gig.enums.DocumentProvision;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;

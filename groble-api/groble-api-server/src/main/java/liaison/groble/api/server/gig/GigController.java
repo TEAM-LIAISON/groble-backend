@@ -10,9 +10,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import liaison.groble.api.model.gig.request.GigDraftRequest;
 import liaison.groble.api.model.gig.request.GigRegisterRequest;
+import liaison.groble.api.model.gig.response.GigDetailResponse;
 import liaison.groble.api.model.gig.response.GigDraftResponse;
 import liaison.groble.api.server.gig.mapper.GigDtoMapper;
 import liaison.groble.application.gig.GigService;
+import liaison.groble.application.gig.dto.GigDetailDto;
 import liaison.groble.application.gig.dto.GigDraftDto;
 import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.model.Accessor;
@@ -36,9 +38,14 @@ public class GigController {
   // 서비스 상품 단건 조회
   @Operation(summary = "서비스 상품 단건 조회", description = "서비스 상품을 상세 조회합니다.")
   @GetMapping("/{gigId}")
-  public ResponseEntity<GrobleResponse<Void>> getGigDetail(@PathVariable("gigId") Long gigId) {
+  public ResponseEntity<GrobleResponse<GigDetailResponse>> getGigDetail(
+      @PathVariable("gigId") Long gigId) {
 
-    return ResponseEntity.ok(GrobleResponse.success(null, "서비스 상품 상세 조회 성공"));
+    // 서비스 상품 상세 조회 로직
+    GigDetailDto gigDetailDto = gigService.getGigDetail(gigId);
+    // DTO 매핑
+    GigDetailResponse response = gigDtoMapper.toGigDetailResponse(gigDetailDto);
+    return ResponseEntity.ok(GrobleResponse.success(response, "서비스 상품 상세 조회 성공"));
   }
 
   // 서비스 상품 임시 저장

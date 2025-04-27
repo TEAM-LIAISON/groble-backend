@@ -1,4 +1,4 @@
-package liaison.groble.domain.product.enums;
+package liaison.groble.domain.gig.enums;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

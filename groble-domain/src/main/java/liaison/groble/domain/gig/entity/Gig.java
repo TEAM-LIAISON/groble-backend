@@ -22,7 +22,7 @@ import jakarta.persistence.Table;
 import org.hibernate.annotations.DynamicUpdate;
 
 import liaison.groble.domain.gig.enums.GigStatus;
-import liaison.groble.domain.product.enums.GigType;
+import liaison.groble.domain.gig.enums.GigType;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -43,7 +43,7 @@ public class Gig {
   private String title;
 
   // 컨텐츠 유형
-  @Column(name = "content_type")
+  @Column(name = "gig_type")
   @Enumerated(value = STRING)
   private GigType gigType;
 

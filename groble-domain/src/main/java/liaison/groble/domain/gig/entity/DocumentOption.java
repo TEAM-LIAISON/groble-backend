@@ -7,7 +7,7 @@ import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Enumerated;
 
-import liaison.groble.domain.product.enums.ContentDeliveryMethod;
+import liaison.groble.domain.gig.enums.ContentDeliveryMethod;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;

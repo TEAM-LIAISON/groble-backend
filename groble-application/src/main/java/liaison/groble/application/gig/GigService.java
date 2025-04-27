@@ -3,6 +3,7 @@ package liaison.groble.application.gig;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import liaison.groble.application.gig.dto.GigDetailDto;
 import liaison.groble.application.gig.dto.GigDraftDto;
 
 import lombok.RequiredArgsConstructor;
@@ -15,4 +16,10 @@ public class GigService {
 
   @Transactional
   public void saveDraft(Long userId, GigDraftDto gigDraftDto) {}
+
+  @Transactional(readOnly = true)
+  public GigDetailDto getGigDetail(Long gigId) {
+
+    return GigDetailDto.builder().build();
+  }
 }
