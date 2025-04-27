@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -27,7 +28,7 @@ public class BaseOptionRegisterRequest {
   @Schema(description = "옵션 설명", example = "회당 30분씩 진행됩니다.")
   private String description;
 
-  @NotBlank(message = "가격은 필수 입력 항목입니다")
+  @NotNull(message = "가격은 필수 입력 항목입니다")
   @DecimalMin(value = "0.0", inclusive = true, message = "가격은 0 이상이어야 합니다")
   @Digits(integer = 10, fraction = 0, message = "가격은 최대 10자리 정수이며, 소수점을 허용하지 않습니다.")
   @Schema(description = "가격", example = "50000")

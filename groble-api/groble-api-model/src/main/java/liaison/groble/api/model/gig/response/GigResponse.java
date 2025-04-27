@@ -3,12 +3,15 @@ package liaison.groble.api.model.gig.response;
 import java.math.BigDecimal;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
 
 @Getter
 @Builder
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class GigResponse {
   @Schema(description = "상품 ID", example = "1")
   private Long id;
@@ -36,6 +39,7 @@ public class GigResponse {
 
   @Getter
   @Builder
+  @JsonInclude(JsonInclude.Include.NON_NULL)
   public static class OptionResponse {
     @Schema(description = "옵션 ID", example = "1")
     private Long id;
@@ -46,7 +50,7 @@ public class GigResponse {
     @Schema(description = "옵션 설명", example = "기본적인 컨설팅을 제공합니다.")
     private String description;
 
-    @Schema(description = "가격", example = "50000.00")
+    @Schema(description = "가격", example = "50000")
     private BigDecimal price;
 
     // 코칭 옵션 관련 필드
@@ -63,7 +67,7 @@ public class GigResponse {
     private String coachingTypeDescription;
 
     // 문서 옵션 관련 필드
-    @Schema(description = "컨텐츠 제공 방식", example = "DOWNLOAD")
+    @Schema(description = "컨텐츠 제공 방식", example = "IMMEDIATE_DOWNLOAD")
     private String contentDeliveryMethod;
   }
 }

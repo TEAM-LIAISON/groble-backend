@@ -139,7 +139,7 @@ public class GigDtoMapper {
       if (request.getCoachingOptions() == null || request.getCoachingOptions().isEmpty()) {
         throw new IllegalArgumentException("코칭 상품은 최소 1개 이상의 옵션이 필요합니다.");
       }
-    } else if ("DOCUMENT".equals(request.getGigType())) {
+    } else {
       if (request.getDocumentOptions() == null || request.getDocumentOptions().isEmpty()) {
         throw new IllegalArgumentException("문서 상품은 최소 1개 이상의 옵션이 필요합니다.");
       }
@@ -154,6 +154,10 @@ public class GigDtoMapper {
 
     if (option.getName() == null || option.getName().trim().isEmpty()) {
       throw new IllegalArgumentException("옵션명은 필수 입력 항목입니다.");
+    }
+
+    if (option.getDescription() == null || option.getDescription().trim().isEmpty()) {
+      throw new IllegalArgumentException("옵션 설명은 필수 입력 항목입니다.");
     }
 
     if (option.getPrice() == null) {
@@ -177,6 +181,10 @@ public class GigDtoMapper {
 
     if (option.getName() == null || option.getName().trim().isEmpty()) {
       throw new IllegalArgumentException("옵션명은 필수 입력 항목입니다.");
+    }
+
+    if (option.getDescription() == null || option.getDescription().trim().isEmpty()) {
+      throw new IllegalArgumentException("옵션 설명은 필수 입력 항목입니다.");
     }
 
     if (option.getPrice() == null) {
