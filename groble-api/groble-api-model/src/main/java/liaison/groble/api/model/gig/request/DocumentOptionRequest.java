@@ -17,6 +17,6 @@ import lombok.experimental.SuperBuilder;
 @AllArgsConstructor
 public class DocumentOptionRequest extends BaseOptionDraftRequest {
   @Pattern(regexp = "^(IMMEDIATE_DOWNLOAD|FUTURE_UPLOAD)$", message = "유효한 컨텐츠 제공 방식이 아닙니다")
-  @Schema(description = "컨텐츠 제공 방식", example = "DOWNLOAD")
+  @Schema(description = "컨텐츠 제공 방식", example = "IMMEDIATE_DOWNLOAD")
   private String contentDeliveryMethod;
 }

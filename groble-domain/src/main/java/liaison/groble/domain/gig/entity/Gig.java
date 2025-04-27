@@ -48,7 +48,7 @@ public class Gig {
 
   // 카테고리
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "category_id", nullable = false)
+  @JoinColumn(name = "category_id")
   private Category category;
 
   // 컨텐츠 유형에 따른 옵션
