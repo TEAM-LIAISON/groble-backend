@@ -31,7 +31,7 @@ public class GigDtoMapper {
     }
 
     return GigDraftDto.builder()
-        .id(request.getGigId())
+        .gigId(request.getGigId())
         .title(request.getTitle())
         .gigType(request.getGigType()) // Enum을 문자열로 전달
         .categoryId(request.getCategoryId())
@@ -83,7 +83,7 @@ public class GigDtoMapper {
     }
 
     return GigDraftResponse.builder()
-        .id(dto.getId())
+        .id(dto.getGigId())
         .title(dto.getTitle())
         .gigType(dto.getGigType()) // 문자열로 전달
         .categoryId(dto.getCategoryId())

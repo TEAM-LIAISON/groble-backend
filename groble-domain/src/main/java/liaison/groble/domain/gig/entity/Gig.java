@@ -24,14 +24,13 @@ import org.hibernate.annotations.DynamicUpdate;
 import liaison.groble.domain.gig.enums.GigStatus;
 import liaison.groble.domain.gig.enums.GigType;
 
-import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "gigs")
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@NoArgsConstructor
 @DynamicUpdate
 public class Gig {
   @Id
@@ -75,5 +74,26 @@ public class Gig {
     }
     options.add(option);
     option.setProduct(this);
+  }
+
+  // Setter 메서드 추가
+  public void setTitle(String title) {
+    this.title = title;
+  }
+
+  public void setGigType(GigType gigType) {
+    this.gigType = gigType;
+  }
+
+  public void setCategory(Category category) {
+    this.category = category;
+  }
+
+  public void setThumbnailUrl(String thumbnailUrl) {
+    this.thumbnailUrl = thumbnailUrl;
+  }
+
+  public void setStatus(GigStatus status) {
+    this.status = status;
   }
 }

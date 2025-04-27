@@ -1,7 +1,6 @@
 package liaison.groble.domain.gig.entity;
 
 import static jakarta.persistence.EnumType.STRING;
-import static lombok.AccessLevel.PROTECTED;
 
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
@@ -15,9 +14,14 @@ import lombok.NoArgsConstructor;
 @Entity
 @DiscriminatorValue("DOCUMENT")
 @Getter
-@NoArgsConstructor(access = PROTECTED)
+@NoArgsConstructor
 public class DocumentOption extends GigOption {
   // 컨텐츠 제공 방식
   @Enumerated(value = STRING)
   private ContentDeliveryMethod contentDeliveryMethod;
+
+  // Setter 메서드 추가
+  public void setContentDeliveryMethod(ContentDeliveryMethod contentDeliveryMethod) {
+    this.contentDeliveryMethod = contentDeliveryMethod;
+  }
 }

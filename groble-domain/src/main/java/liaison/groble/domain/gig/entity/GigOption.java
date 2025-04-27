@@ -38,6 +38,40 @@ public abstract class GigOption extends BaseTimeEntity {
   // 옵션 가격
   private BigDecimal price;
 
+  // Getter 메서드들
+  public Long getId() {
+    return id;
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public String getDescription() {
+    return description;
+  }
+
+  public BigDecimal getPrice() {
+    return price;
+  }
+
+  public Gig getGig() {
+    return gig;
+  }
+
+  // Setter 메서드들
+  public void setName(String name) {
+    this.name = name;
+  }
+
+  public void setDescription(String description) {
+    this.description = description;
+  }
+
+  public void setPrice(BigDecimal price) {
+    this.price = price;
+  }
+
   public void setProduct(Gig gig) {
     this.gig = gig;
   }

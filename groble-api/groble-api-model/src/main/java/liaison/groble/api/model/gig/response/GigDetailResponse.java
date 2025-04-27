@@ -11,4 +11,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Schema(description = "서비스 상품 상세 정보 응답")
-public class GigDetailResponse {}
+public class GigDetailResponse {
+  @Schema(description = "상품 ID", example = "1")
+  private Long id;
+
+  @Schema(description = "컨텐츠 이름", example = "사업계획서 컨설팅")
+  private String title;
+}

@@ -1,7 +1,6 @@
 package liaison.groble.domain.gig.entity;
 
 import static jakarta.persistence.EnumType.STRING;
-import static lombok.AccessLevel.PROTECTED;
 
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
@@ -17,7 +16,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @DiscriminatorValue("COACHING")
 @Getter
-@NoArgsConstructor(access = PROTECTED)
+@NoArgsConstructor
 public class CoachingOption extends GigOption {
   // 코칭 기간
   @Enumerated(value = STRING)
@@ -33,4 +32,21 @@ public class CoachingOption extends GigOption {
 
   // 코칭 방식 설명
   private String coachingTypeDescription;
+
+  // Setter 메서드 추가
+  public void setCoachingPeriod(CoachingPeriod coachingPeriod) {
+    this.coachingPeriod = coachingPeriod;
+  }
+
+  public void setDocumentProvision(DocumentProvision documentProvision) {
+    this.documentProvision = documentProvision;
+  }
+
+  public void setCoachingType(CoachingType coachingType) {
+    this.coachingType = coachingType;
+  }
+
+  public void setCoachingTypeDescription(String coachingTypeDescription) {
+    this.coachingTypeDescription = coachingTypeDescription;
+  }
 }
