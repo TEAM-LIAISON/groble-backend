@@ -200,6 +200,7 @@ public class Payment extends BaseEntity {
   @Builder
   public Payment(
       Order order,
+      String paymentKey,
       PaymentMethod paymentMethod,
       BigDecimal amount,
       SelectedOptionType selectedOptionType,
@@ -208,6 +209,7 @@ public class Payment extends BaseEntity {
       String customerEmail,
       String customerMobilePhone) {
     this.order = order;
+    this.paymentKey = paymentKey;
     this.paymentMethod = paymentMethod;
     this.amount = amount;
     this.selectedOptionType = selectedOptionType;

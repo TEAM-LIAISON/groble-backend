@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
@@ -44,6 +45,20 @@ public class PortOnePaymentServiceImpl implements PortOnePaymentService {
 
   @Override
   @Transactional
+  public String getWebhookSecret() {
+    return portOneProperties.getWebhookSecret();
+  }
+
+  @Override
+  @Transactional
+  public Map<String, String> getClientKey() {
+    Map<String, String> requestData = new HashMap<>();
+    requestData.put("clientKey", portOneProperties.getClientKey());
+    return requestData;
+  }
+
+  @Override
+  @Transactional
   public PaymentResultDto preparePayment(PaymentPrepareDto prepareDto) {
     log.info(
         "Preparing payment for order: {}, method: {}",
@@ -66,9 +81,11 @@ public class PortOnePaymentServiceImpl implements PortOnePaymentService {
 
     try {
       // 포트원 V2 API 호출
+      String paymentId = UUID.randomUUID().toString();
+
       Map<String, Object> response =
           portOneClient.callApi(
-              "/payments/1/pre-register", HttpMethod.POST, requestData, Map.class);
+              "/payments/" + paymentId + "/pre-register", HttpMethod.POST, requestData, Map.class);
 
       // 응답에서 결제 키 추출
       String paymentKey = (String) response.get("paymentKey");
@@ -202,164 +219,6 @@ public class PortOnePaymentServiceImpl implements PortOnePaymentService {
     }
 
     return requestData;
-  }
-
-  @Override
-  @Transactional
-  public PaymentResultDto approvePayment(PaymentApproveDto approveDto) {
-    log.info(
-        "Approving payment: key={}, orderId={}, amount={}",
-        approveDto.getPaymentKey(),
-        approveDto.getOrderId(),
-        approveDto.getAmount());
-
-    // 주문 조회
-    Order order =
-        orderRepository
-            .findByMerchantUid(approveDto.getOrderId())
-            .orElseThrow(
-                () -> new IllegalArgumentException("주문을 찾을 수 없습니다: " + approveDto.getOrderId()));
-
-    // 결제 정보 조회
-    Payment payment = order.getPayment();
-    if (payment == null) {
-      throw new IllegalStateException("주문에 대한 결제 정보가 없습니다: " + approveDto.getOrderId());
-    }
-
-    // 금액 검증
-    if (payment.getAmount().compareTo(approveDto.getAmount()) != 0) {
-      log.error(
-          "Payment amount mismatch: expected={}, actual={}",
-          payment.getAmount(),
-          approveDto.getAmount());
-      throw new IllegalArgumentException("결제 금액이 일치하지 않습니다");
-    }
-
-    // V2 API 요청 데이터 구성
-    Map<String, Object> requestData = new HashMap<>();
-    requestData.put("paymentKey", approveDto.getPaymentKey());
-    requestData.put("orderId", approveDto.getOrderId());
-    requestData.put("amount", approveDto.getAmount());
-
-    try {
-      // 포트원 V2 API 호출 - 결제 승인
-      Map<String, Object> response =
-          portOneClient.callApi(
-              "/payments/" + approveDto.getPaymentKey() + "/approve",
-              HttpMethod.POST,
-              requestData,
-              Map.class);
-
-      // 응답에서 필요한 정보 추출
-      String status = (String) response.get("status");
-      String pgTid = (String) response.get("transactionKey");
-
-      // 카드 결제 정보 처리
-      String cardNumber = "";
-      String cardIssuerName = "";
-      String cardAcquirerName = "";
-      String cardInstallmentPlanMonths = "";
-
-      if (payment.getPaymentMethod() == Payment.PaymentMethod.CARD
-          && response.containsKey("card")) {
-        Map<String, Object> cardInfo = (Map<String, Object>) response.get("card");
-        cardNumber = (String) cardInfo.getOrDefault("number", "");
-        cardIssuerName = (String) cardInfo.getOrDefault("issuerName", "");
-        cardAcquirerName = (String) cardInfo.getOrDefault("acquirerName", "");
-        cardInstallmentPlanMonths =
-            String.valueOf(cardInfo.getOrDefault("installmentPlanMonths", ""));
-      }
-
-      // 가상계좌 정보 처리
-      String vbankNumber = "";
-      String vbankBankName = "";
-      LocalDateTime vbankExpiryDate = null;
-
-      if (payment.getPaymentMethod() == Payment.PaymentMethod.VIRTUAL_ACCOUNT
-          && response.containsKey("virtualAccount")) {
-        Map<String, Object> vbankInfo = (Map<String, Object>) response.get("virtualAccount");
-        vbankNumber = (String) vbankInfo.getOrDefault("accountNumber", "");
-        vbankBankName = (String) vbankInfo.getOrDefault("bankName", "");
-        String dueDateStr = (String) vbankInfo.getOrDefault("dueDate", "");
-
-        if (dueDateStr != null && !dueDateStr.isEmpty()) {
-          vbankExpiryDate = LocalDateTime.parse(dueDateStr, DateTimeFormatter.ISO_DATE_TIME);
-        }
-      }
-
-      // 결제 상태 업데이트
-      Payment.PaymentStatus paymentStatus;
-      switch (status) {
-        case "DONE":
-          paymentStatus = Payment.PaymentStatus.PAID;
-          break;
-        case "READY":
-          paymentStatus = Payment.PaymentStatus.WAITING_FOR_DEPOSIT;
-          break;
-        case "FAILED":
-          paymentStatus = Payment.PaymentStatus.FAILED;
-          break;
-        default:
-          paymentStatus = Payment.PaymentStatus.READY;
-      }
-
-      // 영수증 URL 저장
-      String receiptUrl = null;
-      if (response.containsKey("receipt")) {
-        Map<String, Object> receiptInfo = (Map<String, Object>) response.get("receipt");
-        receiptUrl = (String) receiptInfo.get("url");
-      }
-
-      // 결제 정보 업데이트
-      payment.markAsPaid(approveDto.getPaymentKey(), pgTid, response);
-
-      // 결제 로그 추가
-      payment.addLog(
-          PaymentLogType.PAYMENT_APPROVED,
-          Payment.PaymentStatus.READY,
-          "결제 승인됨",
-          requestData,
-          response,
-          "127.0.0.1",
-          "User-Agent");
-
-      Payment savedPayment = paymentRepository.save(payment);
-
-      return PaymentResultDto.builder()
-          .id(savedPayment.getId())
-          .paymentKey(savedPayment.getPaymentKey())
-          .merchantUid(savedPayment.getMerchantUid())
-          .amount(savedPayment.getAmount())
-          .status(savedPayment.getStatus().name())
-          .paymentMethod(savedPayment.getPaymentMethod().name())
-          .customerName(savedPayment.getCustomerName())
-          .customerEmail(savedPayment.getCustomerEmail())
-          .customerPhone(savedPayment.getCustomerMobilePhone())
-          .pgProvider("tosspayments")
-          .clientKey(portOneProperties.getClientKey())
-          .cardNumber(cardNumber)
-          .cardIssuerName(cardIssuerName)
-          .cardAcquirerName(cardAcquirerName)
-          .cardInstallmentPlanMonths(cardInstallmentPlanMonths)
-          .vbankNumber(vbankNumber)
-          .vbankBankName(vbankBankName)
-          .vbankExpiryDate(vbankExpiryDate)
-          .receiptUrl(receiptUrl)
-          .build();
-
-    } catch (Exception e) {
-      log.error("Failed to approve payment", e);
-      payment.markAsFailed(e.getMessage(), Map.of("error", e.getMessage()));
-      Payment savedPayment = paymentRepository.save(payment);
-
-      return PaymentResultDto.builder()
-          .id(savedPayment.getId())
-          .paymentKey(savedPayment.getPaymentKey())
-          .merchantUid(savedPayment.getMerchantUid())
-          .amount(savedPayment.getAmount())
-          .status(savedPayment.getStatus().name())
-          .build();
-    }
   }
 
   @Override
@@ -975,34 +834,6 @@ public class PortOnePaymentServiceImpl implements PortOnePaymentService {
     return firstItemName;
   }
 
-  // 포트원 V2 결제 수단 코드로 변환
-  private String convertToPortOnePayMethodV2(Payment.PaymentMethod method) {
-    switch (method) {
-      case CARD:
-        return "카드";
-      case VIRTUAL_ACCOUNT:
-        return "가상계좌";
-      case BANK_TRANSFER:
-        return "계좌이체";
-      case MOBILE_PHONE:
-        return "휴대폰";
-      case KAKAO_PAY:
-        return "카카오페이";
-      case PAYCO:
-        return "페이코";
-      case NAVER_PAY:
-        return "네이버페이";
-      case SAMSUNG_PAY:
-        return "삼성페이";
-      case TOSS_PAY:
-        return "토스페이";
-      case PAYPAL:
-        return "페이팔";
-      default:
-        return "카드"; // 기본값
-    }
-  }
-
   // 주문에서 선택된 옵션 유형 가져오기
   private Payment.SelectedOptionType getSelectedOptionType(Order order) {
     if (order.getOrderItems() == null || order.getOrderItems().isEmpty()) {
@@ -1028,5 +859,209 @@ public class PortOnePaymentServiceImpl implements PortOnePaymentService {
 
     OrderItem firstItem = order.getOrderItems().get(0);
     return firstItem.getOptionId();
+  }
+
+  //    @Override
+  //    @Transactional
+  //    public PaymentResultDto preparePayment(PaymentPrepareDto prepareDto) {
+  //        // 주문 조회
+  //        Order order = orderRepository.findById(prepareDto.getOrderId())
+  //                .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다: " +
+  // prepareDto.getOrderId()));
+  //
+  //        // V2 API용 결제 요청 데이터 구성
+  //        Map<String, Object> requestData = new HashMap<>();
+  //        requestData.put("storeId", portOneProperties.getStoreId());
+  //        requestData.put("channelKey", portOneProperties.getChannelKey());
+  //        requestData.put("paymentId", "payment-" + UUID.randomUUID().toString());
+  //        requestData.put("orderName", getOrderName(order));
+  //        requestData.put("totalAmount", order.getTotalAmount());
+  //        requestData.put("currency", "CURRENCY_KRW");
+  //        requestData.put("payMethod", convertToPortOnePayMethodV2(
+  //                Payment.PaymentMethod.valueOf(prepareDto.getPaymentMethod())));
+  //
+  //        // 추가 옵션 설정
+  //        if (prepareDto.getAdditionalData() != null) {
+  //            for (Map.Entry<String, Object> entry : prepareDto.getAdditionalData().entrySet()) {
+  //                requestData.put(entry.getKey(), entry.getValue());
+  //            }
+  //        }
+  //
+  //        try {
+  //            // PortOne V2 API 호출
+  //            Map<String, Object> response = portOneClient.requestPaymentPrepare(requestData);
+  //
+  //            // 응답에서 필요한 정보 추출
+  //            String paymentKey = (String) response.get("paymentKey");
+  //
+  //            // 결제 정보 생성
+  //            Payment payment = Payment.builder()
+  //                    .order(order)
+  //                    .paymentMethod(Payment.PaymentMethod.valueOf(prepareDto.getPaymentMethod()))
+  //                    .amount(order.getTotalAmount())
+  //                    .selectedOptionType(getSelectedOptionType(order))
+  //                    .selectedOptionId(getSelectedOptionId(order))
+  //                    .customerName(prepareDto.getCustomerName())
+  //                    .customerEmail(prepareDto.getCustomerEmail())
+  //                    .customerMobilePhone(prepareDto.getCustomerPhone())
+  //                    .build();
+  //
+  //            // 결제 준비 정보 설정
+  //            payment.preparePayment(paymentKey, requestData);
+  //
+  //            // 결제 로그 추가
+  //            payment.addLog(
+  //                    PaymentLogType.PAYMENT_CREATED,
+  //                    Payment.PaymentStatus.READY,
+  //                    "결제 준비됨",
+  //                    requestData,
+  //                    response,
+  //                    "127.0.0.1",
+  //                    "User-Agent"
+  //            );
+  //
+  //            // 저장
+  //            Payment savedPayment = paymentRepository.save(payment);
+  //
+  //            // 서비스 DTO 반환
+  //            return PaymentResultDto.builder()
+  //                    .id(savedPayment.getId())
+  //                    .paymentKey(savedPayment.getPaymentKey())
+  //                    .merchantUid(savedPayment.getMerchantUid())
+  //                    .amount(savedPayment.getAmount())
+  //                    .status(savedPayment.getStatus().name())
+  //                    .paymentMethod(savedPayment.getPaymentMethod().name())
+  //                    .customerName(savedPayment.getCustomerName())
+  //                    .customerEmail(savedPayment.getCustomerEmail())
+  //                    .customerPhone(savedPayment.getCustomerMobilePhone())
+  //                    .pgProvider("tosspayments")
+  //                    .clientKey(portOneProperties.getClientKey())
+  //                    .build();
+  //
+  //        } catch (Exception e) {
+  //            log.error("Failed to prepare payment", e);
+  //            throw new RuntimeException("결제 준비 중 오류가 발생했습니다", e);
+  //        }
+  //    }
+
+  @Override
+  @Transactional
+  public PaymentResultDto approvePayment(PaymentApproveDto approveDto) {
+    // 주문 조회
+    Order order =
+        orderRepository
+            .findByMerchantUid(approveDto.getOrderId())
+            .orElseThrow(
+                () -> new IllegalArgumentException("주문을 찾을 수 없습니다: " + approveDto.getOrderId()));
+
+    // 결제 정보 조회
+    Payment payment = order.getPayment();
+    if (payment == null) {
+      throw new IllegalStateException("주문에 대한 결제 정보가 없습니다: " + approveDto.getOrderId());
+    }
+
+    // 금액 검증
+    if (payment.getAmount().compareTo(approveDto.getAmount()) != 0) {
+      log.error(
+          "Payment amount mismatch: expected={}, actual={}",
+          payment.getAmount(),
+          approveDto.getAmount());
+      throw new IllegalArgumentException("결제 금액이 일치하지 않습니다");
+    }
+
+    // V2 API 요청 데이터 구성
+    Map<String, Object> requestData = new HashMap<>();
+    requestData.put("paymentKey", approveDto.getPaymentKey());
+    requestData.put("orderId", approveDto.getOrderId());
+    requestData.put("amount", approveDto.getAmount());
+
+    try {
+      // PortOne V2 API 호출 - 결제 승인
+      Map<String, Object> response =
+          portOneClient.approvePayment(approveDto.getPaymentKey(), requestData);
+
+      // 응답에서 필요한 정보 추출
+      String status = (String) response.get("status");
+      String pgTid = (String) response.get("transactionKey");
+
+      // 결제 상태 업데이트
+      payment.markAsPaid(approveDto.getPaymentKey(), pgTid, response);
+
+      // 결제 로그 추가
+      payment.addLog(
+          PaymentLogType.PAYMENT_APPROVED,
+          Payment.PaymentStatus.READY,
+          "결제 승인됨",
+          requestData,
+          response,
+          "127.0.0.1",
+          "User-Agent");
+
+      Payment savedPayment = paymentRepository.save(payment);
+
+      // 결과 반환
+      return createPaymentResultDto(savedPayment, response);
+
+    } catch (Exception e) {
+      log.error("Failed to approve payment", e);
+      payment.markAsFailed(e.getMessage(), Map.of("error", e.getMessage()));
+      Payment savedPayment = paymentRepository.save(payment);
+
+      return PaymentResultDto.builder()
+          .id(savedPayment.getId())
+          .paymentKey(savedPayment.getPaymentKey())
+          .merchantUid(savedPayment.getMerchantUid())
+          .amount(savedPayment.getAmount())
+          .status(savedPayment.getStatus().name())
+          .build();
+    }
+  }
+
+  // 다른 메서드 (취소, 조회 등) 구현
+
+  /** PortOne V2 결제 수단 코드로 변환 */
+  private String convertToPortOnePayMethodV2(Payment.PaymentMethod method) {
+    switch (method) {
+      case CARD:
+        return "CARD";
+      case VIRTUAL_ACCOUNT:
+        return "VIRTUAL_ACCOUNT";
+      case BANK_TRANSFER:
+        return "BANK_TRANSFER";
+      case MOBILE_PHONE:
+        return "PHONE";
+      case KAKAO_PAY:
+        return "KAKAO_PAY";
+      case PAYCO:
+        return "PAYCO";
+      case NAVER_PAY:
+        return "NAVER_PAY";
+      case SAMSUNG_PAY:
+        return "SAMSUNG_PAY";
+      case TOSS_PAY:
+        return "TOSS_PAY";
+      case PAYPAL:
+        return "PAYPAL";
+      default:
+        return "CARD"; // 기본값
+    }
+  }
+
+  // 유틸리티 메서드
+  private PaymentResultDto createPaymentResultDto(
+      Payment payment, Map<String, Object> apiResponse) {
+    // 결제 정보를 DTO로 변환
+    return PaymentResultDto.builder()
+        .id(payment.getId())
+        .paymentKey(payment.getPaymentKey())
+        .merchantUid(payment.getMerchantUid())
+        .amount(payment.getAmount())
+        .status(payment.getStatus().name())
+        .paymentMethod(payment.getPaymentMethod().name())
+        .customerName(payment.getCustomerName())
+        .customerEmail(payment.getCustomerEmail())
+        .customerPhone(payment.getCustomerMobilePhone())
+        // 추가 정보 설정
+        .build();
   }
 }

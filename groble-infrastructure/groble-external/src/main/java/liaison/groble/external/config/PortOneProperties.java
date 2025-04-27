@@ -47,4 +47,8 @@ public class PortOneProperties {
 
   /** 웹훅 비밀 키 (웹훅 서명 검증용) */
   private String webhookSecret;
+
+  // V2 API 새 속성 추가
+  private String storeId;
+  private String channelKey;
 }

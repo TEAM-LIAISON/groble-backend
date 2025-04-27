@@ -61,6 +61,8 @@ public class PortOneApiClient {
     log.debug("Calling PortOne API: {} {}", method, apiUrl);
     ResponseEntity<T> response = restTemplate.exchange(apiUrl, method, entity, responseType);
 
+    log.info("response.getBody() = {}", response.getBody());
+
     return response.getBody();
   }
 
@@ -128,5 +130,25 @@ public class PortOneApiClient {
     // 여기에 V2 API 웹훅 서명 검증 로직 구현
     // 실제 구현은 포트원 V2 문서 참조
     return true; // 임시 구현
+  }
+
+  /** 결제 준비 요청 (V2) */
+  public Map<String, Object> requestPaymentPrepare(Map<String, Object> requestData) {
+    return callApi("/payments/prepare", HttpMethod.POST, requestData, Map.class);
+  }
+
+  /** 결제 승인 요청 (V2) */
+  public Map<String, Object> approvePayment(String paymentKey, Map<String, Object> requestData) {
+    return callApi("/payments/" + paymentKey, HttpMethod.GET, requestData, Map.class);
+  }
+
+  /** 결제 취소 요청 (V2) */
+  public Map<String, Object> cancelPayment(String paymentKey, Map<String, Object> requestData) {
+    return callApi("/payments/" + paymentKey + "/cancel", HttpMethod.POST, requestData, Map.class);
+  }
+
+  /** 결제 상태 조회 (V2) */
+  public Map<String, Object> getPaymentStatus(String paymentKey) {
+    return callApi("/payments/" + paymentKey, HttpMethod.GET, null, Map.class);
   }
 }
