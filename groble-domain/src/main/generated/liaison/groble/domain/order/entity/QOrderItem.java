@@ -33,6 +33,8 @@ public class QOrderItem extends EntityPathBase<OrderItem> {
   // inherited
   public final BooleanPath deleted = _super.deleted;
 
+  public final liaison.groble.domain.gig.entity.QGig gig;
+
   public final NumberPath<Long> id = createNumber("id", Long.class);
 
   public final NumberPath<Long> optionId = createNumber("optionId", Long.class);
@@ -46,8 +48,6 @@ public class QOrderItem extends EntityPathBase<OrderItem> {
 
   public final NumberPath<java.math.BigDecimal> price =
       createNumber("price", java.math.BigDecimal.class);
-
-  public final liaison.groble.domain.product.entity.QProduct product;
 
   public final NumberPath<Integer> quantity = createNumber("quantity", Integer.class);
 
@@ -75,11 +75,11 @@ public class QOrderItem extends EntityPathBase<OrderItem> {
 
   public QOrderItem(Class<? extends OrderItem> type, PathMetadata metadata, PathInits inits) {
     super(type, metadata, inits);
+    this.gig =
+        inits.isInitialized("gig")
+            ? new liaison.groble.domain.gig.entity.QGig(forProperty("gig"), inits.get("gig"))
+            : null;
     this.order =
         inits.isInitialized("order") ? new QOrder(forProperty("order"), inits.get("order")) : null;
-    this.product =
-        inits.isInitialized("product")
-            ? new liaison.groble.domain.product.entity.QProduct(forProperty("product"))
-            : null;
   }
 }

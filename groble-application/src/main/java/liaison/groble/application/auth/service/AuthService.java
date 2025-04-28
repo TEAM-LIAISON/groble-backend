@@ -57,7 +57,7 @@ public interface AuthService {
    *
    * @param email 비밀번호를 재설정할 이메일
    */
-  void sendPasswordResetEmail(Long userId, String email);
+  void sendPasswordResetEmail(String email);
 
   /**
    * 비밀번호 재설정

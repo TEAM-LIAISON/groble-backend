@@ -2,6 +2,7 @@ package liaison.groble.application.auth.service.impl;
 
 import java.time.Instant;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.dao.DataIntegrityViolationException;
@@ -211,11 +212,11 @@ public class AuthServiceImpl implements AuthService {
 
   @Override
   @Transactional
-  public void sendPasswordResetEmail(Long userId, String email) {
-    User user = userReader.getUserById(userId);
+  public void sendPasswordResetEmail(String email) {
+    Optional<IntegratedAccount> integratedAccount = userReader.findUserByEmail(email);
 
-    if (!Objects.equals(user.getIntegratedAccount().getIntegratedAccountEmail(), email)) {
-      throw new IllegalArgumentException("해당 회원의 이메일이 아닙니다.");
+    if (integratedAccount.isEmpty()) {
+      throw new EntityNotFoundException("등록되지 않은 이메일입니다.");
     }
 
     // 비밀번호 재설정 토큰 생성

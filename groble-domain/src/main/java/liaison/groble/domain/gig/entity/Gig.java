@@ -117,12 +117,15 @@ public class Gig extends BaseEntity {
     this.status = status;
   }
 
+  public void incrementSaleCount() {
+    this.saleCount = this.saleCount + 1;
+  }
+
   public Gig(User user) {
     if (user == null) {
       throw new IllegalArgumentException("User cannot be null when creating a Gig");
     }
     this.user = user;
-    this.status = GigStatus.DRAFT;
     this.saleCount = 0;
     this.options = new ArrayList<>();
   }

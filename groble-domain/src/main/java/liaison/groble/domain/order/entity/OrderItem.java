@@ -15,7 +15,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 import liaison.groble.domain.common.entity.BaseEntity;
-import liaison.groble.domain.product.entity.Product;
+import liaison.groble.domain.gig.entity.Gig;
 
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -37,8 +37,8 @@ public class OrderItem extends BaseEntity {
   private Order order;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "product_id", nullable = false)
-  private Product product;
+  @JoinColumn(name = "gig_id", nullable = false)
+  private Gig gig;
 
   @Column(nullable = false)
   private BigDecimal price;
@@ -64,17 +64,17 @@ public class OrderItem extends BaseEntity {
   @Builder
   public OrderItem(
       Order order,
-      Product product,
+      Gig gig,
       BigDecimal price,
       int quantity,
       OptionType optionType,
       Long optionId,
       String optionName) {
     this.order = order;
-    this.product = product;
+    this.gig = gig;
     this.price = price;
     this.quantity = quantity;
-    this.contentName = product.getContentName();
+    this.contentName = gig.getTitle();
     this.optionType = optionType;
     this.optionId = optionId;
     this.optionName = optionName;

@@ -8,6 +8,11 @@ import liaison.groble.application.order.dto.OrderCreateDto;
 @Component
 public class OrderDtoMapper {
   public OrderCreateDto toServiceOrderCreateDto(CreateOrderRequest request) {
-    return OrderCreateDto.builder().build();
+    return OrderCreateDto.builder()
+        .gigId(request.getGigId())
+        .price(request.getPrice())
+        .quantity(request.getQuantity())
+        .totalPrice(request.getTotalPrice())
+        .build();
   }
 }
