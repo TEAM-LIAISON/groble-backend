@@ -49,16 +49,13 @@ public class OrderItem extends BaseEntity {
   @Column(name = "content_name", nullable = false)
   private String contentName;
 
+  @Column(name = "option_id")
+  private Long optionId;
+
   // 옵션 관련 필드 추가
   @Column(name = "option_type")
   @Enumerated(EnumType.STRING)
   private OptionType optionType;
-
-  @Column(name = "option_id")
-  private Long optionId;
-
-  @Column(name = "option_name")
-  private String optionName;
 
   // 생성자 수정
   @Builder
@@ -77,7 +74,6 @@ public class OrderItem extends BaseEntity {
     this.contentName = content.getTitle();
     this.optionType = optionType;
     this.optionId = optionId;
-    this.optionName = optionName;
   }
 
   // 비즈니스 메서드

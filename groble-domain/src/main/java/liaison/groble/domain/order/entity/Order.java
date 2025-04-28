@@ -52,6 +52,7 @@ public class Order extends BaseEntity {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
+  // 숫자 8자리 이상
   @Column(name = "merchant_uid", nullable = false, unique = true)
   private String merchantUid;
 
@@ -173,14 +174,12 @@ public class Order extends BaseEntity {
       Long optionId,
       String optionName,
       BigDecimal price,
-      Purchaser purchaser,
-      String orderNote) {
+      Purchaser purchaser) {
     Order order =
         Order.builder()
             .user(user)
             .totalAmount(price) // 옵션 가격으로 초기화
             .purchaser(purchaser)
-            .orderNote(orderNote)
             .build();
 
     // 상품 상태 확인

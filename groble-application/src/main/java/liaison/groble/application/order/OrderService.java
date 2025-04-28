@@ -3,11 +3,19 @@ package liaison.groble.application.order;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import liaison.groble.application.content.ContentReader;
+import liaison.groble.application.order.dto.OrderCreateDto;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.common.exception.EntityNotFoundException;
+import liaison.groble.domain.content.entity.Content;
+import liaison.groble.domain.content.entity.ContentOption;
+import liaison.groble.domain.content.enums.ContentType;
 import liaison.groble.domain.content.repository.ContentRepository;
 import liaison.groble.domain.order.entity.Order;
+import liaison.groble.domain.order.entity.OrderItem;
 import liaison.groble.domain.order.repository.OrderRepository;
+import liaison.groble.domain.purchase.entity.Purchaser;
+import liaison.groble.domain.user.entity.User;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,20 +25,49 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class OrderService {
   private final UserReader userReader;
+  private final ContentReader contentReader;
   private final ContentRepository contentRepository;
   private final OrderRepository orderRepository;
 
   @Transactional
-  public void completePayment(Long orderId) {
+  public void createOrder(Long userId, OrderCreateDto orderCreateDto) {
+    User user = userReader.getUserById(userId);
+
+    Content content = contentReader.getContentById(orderCreateDto.getContentId());
+    OrderItem.OptionType optionType = null;
+    if (content.getContentType().equals(ContentType.COACHING)) {
+      optionType = OrderItem.OptionType.COACHING_OPTION;
+    } else if (content.getContentType().equals(ContentType.DOCUMENT)) {
+      optionType = OrderItem.OptionType.DOCUMENT_OPTION;
+    }
+
+    // Get the selected option
+    ContentOption selectedOption =
+        content.getOptions().stream()
+            .filter(option -> option.getId().equals(orderCreateDto.getContentOptionId()))
+            .findFirst()
+            .orElseThrow(
+                () ->
+                    new EntityNotFoundException(
+                        "해당 옵션을 가진 컨텐츠를 찾을 수 없습니다. ID: " + orderCreateDto.getContentOptionId()));
+
+    Purchaser purchaser =
+        Purchaser.builder()
+            .name(user.getNickname())
+            .email(user.getEmail())
+            .phone(user.getPhoneNumber())
+            .build();
+
     Order order =
-        orderRepository
-            .findById(orderId)
-            .orElseThrow(() -> new EntityNotFoundException("주문을 찾을 수 없습니다."));
+        Order.createOrderWithOption(
+            user,
+            content,
+            optionType,
+            selectedOption.getId(),
+            selectedOption.getName(),
+            selectedOption.getPrice(),
+            purchaser);
 
-    order.completePayment();
     orderRepository.save(order);
-
-    // 간단한 이벤트 발행
-    //        eventPublisher.publishEvent(new OrderPaidEvent(order));
   }
 }

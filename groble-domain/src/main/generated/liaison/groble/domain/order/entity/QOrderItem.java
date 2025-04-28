@@ -39,8 +39,6 @@ public class QOrderItem extends EntityPathBase<OrderItem> {
 
   public final NumberPath<Long> optionId = createNumber("optionId", Long.class);
 
-  public final StringPath optionName = createString("optionName");
-
   public final EnumPath<OrderItem.OptionType> optionType =
       createEnum("optionType", OrderItem.OptionType.class);
 

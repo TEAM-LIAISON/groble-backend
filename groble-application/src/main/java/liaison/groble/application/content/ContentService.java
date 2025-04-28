@@ -126,8 +126,8 @@ public class ContentService {
 
     // 5. Content 필드 업데이트
     updateContentFromDto(content, contentDto);
-    content.setCategory(category);
-    content.setStatus(ContentStatus.PENDING);
+    content.setCategory(category); // 카테고리 설정
+    content.setStatus(ContentStatus.PENDING); // 심사중으로 설정
 
     // 6. 기존 옵션 제거 및 새 옵션 추가
     if (content.getOptions() != null) {

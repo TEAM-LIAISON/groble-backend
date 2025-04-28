@@ -9,6 +9,7 @@ import lombok.Getter;
 @Builder
 public class OrderCreateDto {
   private Long contentId;
+  private Long contentOptionId;
   private BigDecimal price;
   private int quantity;
   private BigDecimal totalPrice;

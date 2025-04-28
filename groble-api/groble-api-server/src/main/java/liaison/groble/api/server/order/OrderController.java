@@ -47,7 +47,7 @@ public class OrderController {
 
     OrderCreateDto orderCreateDto = orderDtoMapper.toServiceOrderCreateDto(request);
 
-    //    orderService.createOrder(accessor.getUserId(), orderCreateDto);
+    orderService.createOrder(accessor.getUserId(), orderCreateDto);
 
     return ResponseEntity.ok(GrobleResponse.success(null, "주문이 성공적으로 생성되었습니다.", 201));
   }
