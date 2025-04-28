@@ -18,5 +18,5 @@ public class CreateOrderRequest {
   //    quantity
   //    selected_options
   //    total_price
-  private Long PID;
+  private Long gigId;
 }

@@ -14,6 +14,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
@@ -21,18 +22,29 @@ import jakarta.persistence.Table;
 
 import org.hibernate.annotations.DynamicUpdate;
 
+import liaison.groble.domain.common.entity.BaseEntity;
 import liaison.groble.domain.gig.enums.GigStatus;
 import liaison.groble.domain.gig.enums.GigType;
+import liaison.groble.domain.user.entity.User;
 
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "gigs")
+@Table(
+    name = "gigs",
+    indexes = {
+      @Index(name = "idx_gig_user_id", columnList = "user_id"),
+      @Index(name = "idx_gig_category_id", columnList = "category_id"),
+      @Index(name = "idx_gig_status", columnList = "status"),
+      @Index(name = "idx_gig_user_status", columnList = "user_id, status"),
+      @Index(name = "idx_gig_user_category", columnList = "user_id, category_id")
+    })
 @Getter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @DynamicUpdate
-public class Gig {
+public class Gig extends BaseEntity {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
@@ -45,6 +57,10 @@ public class Gig {
   @Column(name = "gig_type")
   @Enumerated(value = STRING)
   private GigType gigType;
+
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "user_id", nullable = false)
+  private User user;
 
   // 카테고리
   @ManyToOne(fetch = FetchType.LAZY)
@@ -77,6 +93,10 @@ public class Gig {
   }
 
   // Setter 메서드 추가
+  public void setUser(User user) {
+    this.user = user;
+  }
+
   public void setTitle(String title) {
     this.title = title;
   }
@@ -95,5 +115,20 @@ public class Gig {
 
   public void setStatus(GigStatus status) {
     this.status = status;
+  }
+
+  public Gig(User user) {
+    if (user == null) {
+      throw new IllegalArgumentException("User cannot be null when creating a Gig");
+    }
+    this.user = user;
+    this.status = GigStatus.DRAFT;
+    this.saleCount = 0;
+    this.options = new ArrayList<>();
+  }
+
+  // 팩토리 메서드
+  public static Gig createDraft(User user) {
+    return new Gig(user);
   }
 }

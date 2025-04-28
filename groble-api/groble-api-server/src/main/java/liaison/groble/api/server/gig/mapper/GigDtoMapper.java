@@ -12,7 +12,9 @@ import liaison.groble.api.model.gig.request.register.CoachingOptionRegisterReque
 import liaison.groble.api.model.gig.request.register.DocumentOptionRegisterRequest;
 import liaison.groble.api.model.gig.request.register.GigRegisterRequest;
 import liaison.groble.api.model.gig.response.GigDetailResponse;
+import liaison.groble.api.model.gig.response.GigPreviewCardResponse;
 import liaison.groble.api.model.gig.response.GigResponse;
+import liaison.groble.application.gig.dto.GigCardDto;
 import liaison.groble.application.gig.dto.GigDetailDto;
 import liaison.groble.application.gig.dto.GigDto;
 
@@ -347,5 +349,16 @@ public class GigDtoMapper {
   public GigDetailResponse toGigDetailResponse(GigDetailDto gigDetailDto) {
     // 기존 메서드 구현 유지
     return GigDetailResponse.builder().build();
+  }
+
+  public GigPreviewCardResponse toGigPreviewCardFromCardDto(GigCardDto cardDto) {
+    return GigPreviewCardResponse.builder()
+        .gigId(cardDto.getGigId())
+        .createdAt(cardDto.getCreatedAt())
+        .title(cardDto.getTitle())
+        .thumbnailUrl(cardDto.getThumbnailUrl())
+        .sellerName(cardDto.getSellerName())
+        .status(cardDto.getStatus())
+        .build();
   }
 }

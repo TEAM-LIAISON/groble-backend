@@ -3,13 +3,19 @@ package liaison.groble.application.gig;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import liaison.groble.application.gig.dto.GigCardDto;
 import liaison.groble.application.gig.dto.GigDetailDto;
 import liaison.groble.application.gig.dto.GigDto;
+import liaison.groble.application.user.service.UserReader;
 import liaison.groble.common.exception.EntityNotFoundException;
+import liaison.groble.common.exception.ForbiddenException;
+import liaison.groble.common.response.CursorResponse;
+import liaison.groble.domain.gig.dto.FlatPreviewGigDTO;
 import liaison.groble.domain.gig.entity.Category;
 import liaison.groble.domain.gig.entity.CoachingOption;
 import liaison.groble.domain.gig.entity.DocumentOption;
@@ -22,7 +28,9 @@ import liaison.groble.domain.gig.enums.DocumentProvision;
 import liaison.groble.domain.gig.enums.GigStatus;
 import liaison.groble.domain.gig.enums.GigType;
 import liaison.groble.domain.gig.repository.CategoryRepository;
+import liaison.groble.domain.gig.repository.GigCustomRepository;
 import liaison.groble.domain.gig.repository.GigRepository;
+import liaison.groble.domain.user.entity.User;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,101 +39,237 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 public class GigService {
+  private final UserReader userReader;
   private final GigRepository gigRepository;
+  private final GigCustomRepository gigCustomRepository;
   private final CategoryRepository categoryRepository;
 
+  /**
+   * 서비스 상품을 임시 저장하고 저장된 정보를 반환합니다.
+   *
+   * @param userId 사용자 ID
+   * @param gigDto 저장할 상품 정보 (null 가능)
+   * @return 저장된 상품 정보
+   */
   @Transactional
   public GigDto saveDraftAndReturn(Long userId, GigDto gigDto) {
-    // null 체크 - 입력 DTO가 null인 경우 빈 응답 반환
-    if (gigDto == null) {
-      log.warn("임시 저장 요청에 데이터가 없습니다.");
-      Gig emptyGig = new Gig();
-      emptyGig.setStatus(GigStatus.DRAFT);
-      emptyGig = gigRepository.save(emptyGig);
-      return convertToDto(emptyGig);
-    }
+    // 1. 사용자 조회
+    User user = userReader.getUserById(userId);
 
-    // 카테고리 ID가 null이 아닌 경우에만 카테고리 조회
-    Category category = null;
-    if (gigDto.getCategoryId() != null) {
-      category =
-          categoryRepository
-              .findById(gigDto.getCategoryId())
-              .orElseThrow(
-                  () ->
-                      new EntityNotFoundException(
-                          "카테고리를 찾을 수 없습니다. ID: " + gigDto.getCategoryId()));
-    }
-
-    // 기존 드래프트 있는지 확인
+    // 2. 저장할 Gig 준비
     Gig gig;
+
+    // 2.1 입력 DTO가 null인 경우 기본 Gig 생성
+    if (gigDto == null) {
+      log.info("임시 저장 요청에 데이터가 없습니다. 기본 상품 생성");
+      gig = new Gig(user);
+      gig.setTitle("새 서비스 상품");
+      return saveAndConvertToDto(gig);
+    }
+
+    // 2.2 기존 Gig 업데이트 또는 새 Gig 생성
     if (gigDto.getGigId() != null) {
-      // 기존 드래프트 업데이트
-      gig =
-          gigRepository
-              .findById(gigDto.getGigId())
-              .orElseThrow(
-                  () -> new EntityNotFoundException("상품을 찾을 수 없습니다. ID: " + gigDto.getGigId()));
+      // 기존 Gig 업데이트
+      gig = findAndValidateUserGig(userId, gigDto.getGigId());
+      updateGigFromDto(gig, gigDto);
 
-      // 권한 확인 로직은 필요에 따라 추가
-
-      // 기본 필드 업데이트 - 카테고리가 null일 수 있음을 고려
-      updateGigFields(gig, gigDto, category);
-
-      // 기존 옵션 삭제 - options가 null이 아닌 경우에만 처리
+      // 기존 옵션 제거
       if (gig.getOptions() != null) {
         gig.getOptions().clear();
       }
     } else {
-      // 새 드래프트 생성
-      gig = createNewGig(gigDto, category);
+      // 새 Gig 생성
+      gig = new Gig(user);
+      updateGigFromDto(gig, gigDto);
     }
 
-    // 옵션 추가 - 옵션이 있는 경우에만 처리
+    // 3. 옵션 추가
     if (gigDto.getOptions() != null && !gigDto.getOptions().isEmpty()) {
       addOptionsToGig(gig, gigDto);
     }
 
-    // 저장
+    // 4. 저장 및 변환
+    return saveAndConvertToDto(gig);
+  }
+
+  /**
+   * 서비스 상품을 심사 요청하고 결과를 반환합니다.
+   *
+   * @param userId 사용자 ID
+   * @param gigDto 심사 요청할 상품 정보
+   * @return 심사 요청된 상품 정보
+   */
+  @Transactional
+  public GigDto registerGig(Long userId, GigDto gigDto) {
+    // 1. 유효성 검증
+    if (gigDto == null) {
+      throw new IllegalArgumentException("심사 요청할 상품 정보가 필요합니다.");
+    }
+
+    validateGigForSubmission(gigDto);
+
+    // 2. 사용자 조회
+    User user = userReader.getUserById(userId);
+
+    // 3. Gig 준비 (기존 업데이트 또는 새로 생성)
+    Gig gig;
+    if (gigDto.getGigId() != null) {
+      // 기존 Gig 업데이트
+      gig = findAndValidateUserGig(userId, gigDto.getGigId());
+    } else {
+      // 새 Gig 생성
+      gig = new Gig(user);
+    }
+
+    // 4. 카테고리 조회 및 설정 (심사 요청 시 필수)
+    Category category = findCategoryById(gigDto.getCategoryId());
+
+    // 5. Gig 필드 업데이트
+    updateGigFromDto(gig, gigDto);
+    gig.setCategory(category);
+    gig.setStatus(GigStatus.PENDING);
+
+    // 6. 기존 옵션 제거 및 새 옵션 추가
+    if (gig.getOptions() != null) {
+      gig.getOptions().clear();
+    }
+
+    if (gigDto.getOptions() != null && !gigDto.getOptions().isEmpty()) {
+      addOptionsToGig(gig, gigDto);
+    }
+
+    // 7. 저장 및 변환
+    log.info("서비스 상품 심사 요청 완료. 유저 ID: {}", userId);
+    return saveAndConvertToDto(gig);
+  }
+
+  /**
+   * 서비스 상품 상세 정보를 조회합니다.
+   *
+   * @param gigId 상품 ID
+   * @return 상품 상세 정보
+   */
+  @Transactional(readOnly = true)
+  public GigDetailDto getGigDetail(Long gigId) {
+    return GigDetailDto.builder().build();
+  }
+
+  /**
+   * 사용자의 코칭 상품 목록을 조회합니다.
+   *
+   * @param userId 사용자 ID
+   * @param cursor 커서 (다음 페이지 시작점)
+   * @param size 조회할 상품 수
+   * @param state 상품 상태 필터
+   * @return 커서 기반 페이지네이션된 상품 목록
+   */
+  @Transactional(readOnly = true)
+  public CursorResponse<GigCardDto> getMyCoachingGigs(
+      Long userId, String cursor, int size, String state) {
+    // 1. 코칭 카테고리 ID 조회
+    List<Long> coachingCategoryIds = List.of(1L, 2L, 3L);
+
+    // 2. 커서 디코딩
+    Long lastGigId = parseGigIdFromCursor(cursor);
+
+    // 3. 상태 필터 적용
+    GigStatus gigStatus = parseGigStatus(state);
+
+    // 4. 리포지토리 조회
+    CursorResponse<FlatPreviewGigDTO> flatDtos =
+        gigCustomRepository.findMyCoachingGigsWithCursor(
+            userId, lastGigId, size, coachingCategoryIds, gigStatus);
+
+    // 5. FlatPreviewGigDTO를 GigCardDto로 변환
+    List<GigCardDto> cardDtos =
+        flatDtos.getItems().stream()
+            .map(this::convertFlatDtoToCardDto)
+            .collect(Collectors.toList());
+
+    // 6. 전체 개수 조회
+    int totalCount =
+        gigCustomRepository.countMyCoachingGigs(userId, coachingCategoryIds, gigStatus);
+
+    // 7. 응답 구성
+    return CursorResponse.<GigCardDto>builder()
+        .items(cardDtos)
+        .nextCursor(flatDtos.getNextCursor())
+        .hasNext(flatDtos.isHasNext())
+        .totalCount(totalCount)
+        .meta(flatDtos.getMeta())
+        .build();
+  }
+
+  // --- 유틸리티 메서드 ---
+
+  /** Gig를 저장하고 DTO로 변환합니다. */
+  private GigDto saveAndConvertToDto(Gig gig) {
     gig = gigRepository.save(gig);
-
-    log.info("서비스 상품 임시 저장 완료. ID: {}, 유저 ID: {}", gig.getId(), userId);
-
-    // 저장된 데이터로 바로 응답 DTO 생성
+    log.info("서비스 상품 저장 완료. ID: {}, 유저 ID: {}", gig.getId(), gig.getUser().getId());
     return convertToDto(gig);
   }
 
-  private Gig createNewGig(GigDto dto, Category category) {
-    Gig gig = new Gig();
-    updateGigFields(gig, dto, category);
+  /** 사용자의 Gig를 찾고 접근 권한을 검증합니다. */
+  private Gig findAndValidateUserGig(Long userId, Long gigId) {
+    Gig gig =
+        gigRepository
+            .findById(gigId)
+            .orElseThrow(() -> new EntityNotFoundException("상품을 찾을 수 없습니다. ID: " + gigId));
+
+    // 권한 확인 - 상품의 소유자가 현재 사용자인지 검증
+    if (!gig.getUser().getId().equals(userId)) {
+      throw new ForbiddenException("해당 상품을 수정할 권한이 없습니다.");
+    }
+
     return gig;
   }
 
-  private void updateGigFields(Gig gig, GigDto dto, Category category) {
-    // 문자열에서 Enum으로 변환 - null 체크 추가
-    GigType gigType = null;
+  /** 카테고리 ID로 카테고리를 조회합니다. */
+  private Category findCategoryById(Long categoryId) {
+    if (categoryId == null) {
+      throw new IllegalArgumentException("카테고리 ID는 필수입니다.");
+    }
+
+    return categoryRepository
+        .findById(categoryId)
+        .orElseThrow(() -> new EntityNotFoundException("카테고리를 찾을 수 없습니다. ID: " + categoryId));
+  }
+
+  /** DTO에서 Gig 엔티티로 데이터를 업데이트합니다. */
+  private void updateGigFromDto(Gig gig, GigDto dto) {
+    // 타이틀 업데이트
+    if (dto.getTitle() != null) {
+      gig.setTitle(dto.getTitle());
+    }
+
+    // GigType 업데이트
     if (dto.getGigType() != null) {
       try {
-        gigType = GigType.valueOf(dto.getGigType());
+        gig.setGigType(GigType.valueOf(dto.getGigType()));
       } catch (IllegalArgumentException e) {
         log.warn("유효하지 않은 상품 유형: {}", dto.getGigType());
-        // 기본값 설정 또는 그대로 null로 유지할 수 있음
       }
     }
 
-    // 상태는 항상 DRAFT로 설정
-    GigStatus status = GigStatus.DRAFT;
+    // 썸네일 URL 업데이트
+    if (dto.getThumbnailUrl() != null) {
+      gig.setThumbnailUrl(dto.getThumbnailUrl());
+    }
 
-    // 필드 업데이트 - null 허용
-    gig.setTitle(dto.getTitle());
-    gig.setGigType(gigType);
-    gig.setCategory(category); // null일 수 있음
-    gig.setThumbnailUrl(dto.getThumbnailUrl());
-    gig.setStatus(status);
+    // 카테고리 업데이트 (있는 경우에만)
+    if (dto.getCategoryId() != null) {
+      try {
+        Category category = findCategoryById(dto.getCategoryId());
+        gig.setCategory(category);
+      } catch (EntityNotFoundException e) {
+        log.warn("카테고리를 찾을 수 없습니다: {}", dto.getCategoryId());
+      }
+    }
   }
 
+  /** 옵션을 Gig에 추가합니다. */
   private void addOptionsToGig(Gig gig, GigDto dto) {
-    // dto.getOptions()가 null인 경우 빈 리스트 반환 (NPE 방지)
+    // dto.getOptions()가 null인 경우 빈 리스트 사용 (NPE 방지)
     List<GigDto.GigOptionDto> options =
         dto.getOptions() != null ? dto.getOptions() : Collections.emptyList();
 
@@ -133,34 +277,42 @@ public class GigService {
       // null 옵션 건너뛰기
       if (optionDto == null) continue;
 
-      GigOption option;
-
-      // gigType이 null인 경우 기본값으로 설정하거나 예외 처리
+      // gigType이 null인 경우 기본값 설정
       if (gig.getGigType() == null) {
         log.warn("상품 유형이 지정되지 않았습니다. 기본값으로 DOCUMENT 설정");
         gig.setGigType(GigType.DOCUMENT);
       }
 
-      // 유형에 따라 옵션 생성
-      if (gig.getGigType() == GigType.COACHING) {
-        option = createCoachingOption(optionDto);
-      } else if (gig.getGigType() == GigType.DOCUMENT) {
-        option = createDocumentOption(optionDto);
-      } else {
-        log.warn("지원하지 않는 상품 유형입니다: {}", gig.getGigType());
-        continue; // 지원하지 않는 유형은 건너뛰기
+      // 옵션 생성 및 추가
+      GigOption option = createOptionByGigType(gig.getGigType(), optionDto);
+      if (option != null) {
+        gig.addOption(option);
       }
-
-      // 공통 필드 설정 - null 허용
-      option.setName(optionDto.getName());
-      option.setDescription(optionDto.getDescription());
-      option.setPrice(optionDto.getPrice());
-
-      // Gig에 옵션 추가
-      gig.addOption(option);
     }
   }
 
+  /** Gig 유형에 맞는 옵션을 생성합니다. */
+  private GigOption createOptionByGigType(GigType gigType, GigDto.GigOptionDto optionDto) {
+    GigOption option;
+
+    if (gigType == GigType.COACHING) {
+      option = createCoachingOption(optionDto);
+    } else if (gigType == GigType.DOCUMENT) {
+      option = createDocumentOption(optionDto);
+    } else {
+      log.warn("지원하지 않는 상품 유형입니다: {}", gigType);
+      return null;
+    }
+
+    // 공통 필드 설정
+    option.setName(optionDto.getName());
+    option.setDescription(optionDto.getDescription());
+    option.setPrice(optionDto.getPrice());
+
+    return option;
+  }
+
+  /** 코칭 옵션을 생성합니다. */
   private CoachingOption createCoachingOption(GigDto.GigOptionDto optionDto) {
     CoachingOption option = new CoachingOption();
 
@@ -194,6 +346,7 @@ public class GigService {
     return option;
   }
 
+  /** 문서 옵션을 생성합니다. */
   private DocumentOption createDocumentOption(GigDto.GigOptionDto optionDto) {
     DocumentOption option = new DocumentOption();
 
@@ -210,18 +363,57 @@ public class GigService {
     return option;
   }
 
+  /** FlatPreviewGigDTO를 GigCardDto로 변환합니다. */
+  private GigCardDto convertFlatDtoToCardDto(FlatPreviewGigDTO flat) {
+    return GigCardDto.builder()
+        .gigId(flat.getGigId())
+        .createdAt(flat.getCreatedAt())
+        .title(flat.getTitle())
+        .thumbnailUrl(flat.getThumbnailUrl())
+        .sellerName(flat.getSellerName())
+        .status(flat.getStatus())
+        .build();
+  }
+
+  /** 커서에서 Gig ID를 파싱합니다. */
+  private Long parseGigIdFromCursor(String cursor) {
+    if (cursor == null || cursor.isBlank()) {
+      return null;
+    }
+
+    try {
+      return Long.parseLong(cursor);
+    } catch (NumberFormatException e) {
+      log.warn("유효하지 않은 커서 형식: {}", cursor);
+      return null;
+    }
+  }
+
+  /** 문자열에서 GigStatus를 파싱합니다. */
+  private GigStatus parseGigStatus(String state) {
+    if (state == null || state.isBlank()) {
+      return null;
+    }
+
+    try {
+      return GigStatus.valueOf(state.toUpperCase());
+    } catch (IllegalArgumentException e) {
+      log.warn("유효하지 않은 상품 상태: {}", state);
+      return null;
+    }
+  }
+
+  /** Gig를 DTO로 변환합니다. */
   private GigDto convertToDto(Gig gig) {
     // null 체크
     if (gig == null) {
       return null;
     }
 
+    // 옵션 변환
     List<GigDto.GigOptionDto> optionDtos = new ArrayList<>();
-
-    // 옵션 목록이 null이 아닐 때만 처리
     if (gig.getOptions() != null) {
       for (GigOption option : gig.getOptions()) {
-        // 옵션이 null이면 건너뛰기
         if (option == null) continue;
 
         GigDto.GigOptionDto.GigOptionDtoBuilder builder =
@@ -257,6 +449,7 @@ public class GigService {
       }
     }
 
+    // Gig DTO 구성
     GigDto.GigDtoBuilder dtoBuilder =
         GigDto.builder()
             .gigId(gig.getId())
@@ -272,7 +465,7 @@ public class GigService {
     if (gig.getStatus() != null) {
       dtoBuilder.status(gig.getStatus().name());
     } else {
-      dtoBuilder.status("DRAFT"); // 기본값
+      dtoBuilder.status(GigStatus.DRAFT.name()); // 기본값
     }
 
     // 카테고리가 null이 아닌 경우에만 ID 설정
@@ -283,69 +476,7 @@ public class GigService {
     return dtoBuilder.build();
   }
 
-  @Transactional(readOnly = true)
-  public GigDetailDto getGigDetail(Long gigId) {
-    return GigDetailDto.builder().build();
-  }
-
-  @Transactional
-  public GigDto registerGig(Long userId, GigDto gigDto) {
-    Category category = null;
-    if (gigDto.getCategoryId() != null) {
-      category =
-          categoryRepository
-              .findById(gigDto.getCategoryId())
-              .orElseThrow(
-                  () ->
-                      new EntityNotFoundException(
-                          "카테고리를 찾을 수 없습니다. ID: " + gigDto.getCategoryId()));
-    } else {
-      throw new IllegalArgumentException("심사 요청 시 카테고리는 필수입니다.");
-    }
-    Gig gig;
-    if (gigDto.getGigId() != null) {
-      // 기존 드래프트 업데이트
-      gig =
-          gigRepository
-              .findById(gigDto.getGigId())
-              .orElseThrow(
-                  () -> new EntityNotFoundException("상품을 찾을 수 없습니다. ID: " + gigDto.getGigId()));
-    } else {
-      // 새 드래프트 생성
-      gig = createNewGig(gigDto, category);
-    }
-
-    // 4. 필수 항목 검증
-    validateGigForSubmission(gigDto);
-
-    // 5. Gig 필드 업데이트
-    updateGigFields(gig, gigDto, category);
-
-    // 6. 상태를 PENDING_REVIEW로 변경
-    gig.setStatus(GigStatus.PENDING);
-
-    // 7. 기존 옵션 삭제 및 새 옵션 추가
-    if (gig.getOptions() != null) {
-      gig.getOptions().clear();
-    }
-
-    // 옵션 추가 - 옵션이 있는 경우에만 처리
-    if (gigDto.getOptions() != null && !gigDto.getOptions().isEmpty()) {
-      addOptionsToGig(gig, gigDto);
-    } else {
-      throw new IllegalArgumentException("심사 요청 시 최소 하나의 옵션이 필요합니다.");
-    }
-
-    // 8. 저장
-    gig = gigRepository.save(gig);
-
-    log.info("서비스 상품 심사 요청 완료. ID: {}, 유저 ID: {}", gig.getId(), userId);
-
-    // 9. 저장된 데이터로 응답 DTO 생성
-    return convertToDto(gig);
-  }
-
-  /** 심사 요청 시 필수 항목 검증 */
+  /** 심사 요청 시 필수 항목을 검증합니다. */
   private void validateGigForSubmission(GigDto gigDto) {
     List<String> missingFields = new ArrayList<>();
 
