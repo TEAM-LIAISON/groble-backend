@@ -44,7 +44,7 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequestMapping("/api/v1/gigs")
 @RequiredArgsConstructor
-@Tag(name = "서비스 상품 API")
+@Tag(name = "서비스 상품 API", description = "서비스 상품 조회 및 등록(임시 저장, 심사 요청) API")
 public class GigController {
 
   private final GigService gigService;

@@ -14,6 +14,7 @@ import liaison.groble.domain.gig.dto.FlatPreviewGigDTO;
 import liaison.groble.domain.gig.entity.QCategory;
 import liaison.groble.domain.gig.entity.QGig;
 import liaison.groble.domain.gig.enums.GigStatus;
+import liaison.groble.domain.gig.enums.GigType;
 import liaison.groble.domain.gig.repository.GigCustomRepository;
 import liaison.groble.domain.user.entity.QUser;
 
@@ -77,7 +78,7 @@ public class GigCustomRepositoryImpl implements GigCustomRepository {
     QUser qUser = QUser.user;
 
     // 기본 조건 설정
-    BooleanExpression conditions = qGig.user.id.eq(userId);
+    BooleanExpression conditions = qGig.user.id.eq(userId).and(qGig.gigType.eq(GigType.COACHING));
 
     // 커서 조건 추가
     if (lastGigId != null) {
@@ -139,19 +140,22 @@ public class GigCustomRepositoryImpl implements GigCustomRepository {
     QCategory qCategory = QCategory.category;
 
     // 기본 조건 설정
-    BooleanExpression conditions = qGig.user.id.eq(userId).and(qCategory.id.in(categoryIds));
+    BooleanExpression conditions =
+        qGig.user
+            .id
+            .eq(userId)
+            .and(qCategory.id.in(categoryIds))
+            .and(qGig.gigType.eq(GigType.COACHING));
 
     // 상태 필터 추가
     if (status != null) {
       conditions = conditions.and(qGig.status.eq(status));
     }
 
-    return Math.toIntExact(
-        queryFactory
-            .select(qGig.count())
-            .from(qGig)
-            .join(qGig.category, qCategory)
-            .where(conditions)
-            .fetchOne());
+    // 결과가 null일 경우를 대비한 안전한 처리
+    Long count = queryFactory.select(qGig.count()).from(qGig).where(conditions).fetchOne();
+
+    // null 체크 후 반환 (결과가 null이면 0 반환)
+    return count != null ? count.intValue() : 0;
   }
 }
