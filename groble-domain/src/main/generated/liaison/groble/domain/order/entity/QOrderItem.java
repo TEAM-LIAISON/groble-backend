@@ -22,6 +22,8 @@ public class QOrderItem extends EntityPathBase<OrderItem> {
   public final liaison.groble.domain.common.entity.QBaseEntity _super =
       new liaison.groble.domain.common.entity.QBaseEntity(this);
 
+  public final liaison.groble.domain.content.entity.QContent content;
+
   public final StringPath contentName = createString("contentName");
 
   // inherited
@@ -32,8 +34,6 @@ public class QOrderItem extends EntityPathBase<OrderItem> {
 
   // inherited
   public final BooleanPath deleted = _super.deleted;
-
-  public final liaison.groble.domain.gig.entity.QGig gig;
 
   public final NumberPath<Long> id = createNumber("id", Long.class);
 
@@ -75,9 +75,10 @@ public class QOrderItem extends EntityPathBase<OrderItem> {
 
   public QOrderItem(Class<? extends OrderItem> type, PathMetadata metadata, PathInits inits) {
     super(type, metadata, inits);
-    this.gig =
-        inits.isInitialized("gig")
-            ? new liaison.groble.domain.gig.entity.QGig(forProperty("gig"), inits.get("gig"))
+    this.content =
+        inits.isInitialized("content")
+            ? new liaison.groble.domain.content.entity.QContent(
+                forProperty("content"), inits.get("content"))
             : null;
     this.order =
         inits.isInitialized("order") ? new QOrder(forProperty("order"), inits.get("order")) : null;

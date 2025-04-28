@@ -101,7 +101,8 @@ public class SecurityConfig {
             "https://dev.groble.im",
             "https://api.dev.groble.im")); // 프론트엔드 URL 및 API URL
     configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-    configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Auth-Token"));
+    configuration.setAllowedHeaders(
+        Arrays.asList("Authorization", "Content-ContentType", "X-Auth-Token"));
     configuration.setExposedHeaders(Arrays.asList("X-Auth-Token"));
     configuration.setAllowCredentials(true);
 

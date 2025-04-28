@@ -9,7 +9,7 @@ import liaison.groble.application.order.dto.OrderCreateDto;
 public class OrderDtoMapper {
   public OrderCreateDto toServiceOrderCreateDto(CreateOrderRequest request) {
     return OrderCreateDto.builder()
-        .gigId(request.getGigId())
+        .contentId(request.getContentId())
         .price(request.getPrice())
         .quantity(request.getQuantity())
         .totalPrice(request.getTotalPrice())

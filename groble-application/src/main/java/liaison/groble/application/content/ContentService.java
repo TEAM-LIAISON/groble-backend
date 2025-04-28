@@ -1,0 +1,539 @@
+package liaison.groble.application.content;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import liaison.groble.application.content.dto.ContentCardDto;
+import liaison.groble.application.content.dto.ContentDetailDto;
+import liaison.groble.application.content.dto.ContentDto;
+import liaison.groble.application.user.service.UserReader;
+import liaison.groble.common.exception.EntityNotFoundException;
+import liaison.groble.common.exception.ForbiddenException;
+import liaison.groble.common.response.CursorResponse;
+import liaison.groble.domain.content.dto.FlatPreviewContentDTO;
+import liaison.groble.domain.content.entity.Category;
+import liaison.groble.domain.content.entity.CoachingOption;
+import liaison.groble.domain.content.entity.Content;
+import liaison.groble.domain.content.entity.ContentOption;
+import liaison.groble.domain.content.entity.DocumentOption;
+import liaison.groble.domain.content.enums.CoachingPeriod;
+import liaison.groble.domain.content.enums.CoachingType;
+import liaison.groble.domain.content.enums.ContentDeliveryMethod;
+import liaison.groble.domain.content.enums.ContentStatus;
+import liaison.groble.domain.content.enums.ContentType;
+import liaison.groble.domain.content.enums.DocumentProvision;
+import liaison.groble.domain.content.repository.CategoryRepository;
+import liaison.groble.domain.content.repository.ContentCustomRepository;
+import liaison.groble.domain.content.repository.ContentRepository;
+import liaison.groble.domain.user.entity.User;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class ContentService {
+  private final UserReader userReader;
+  private final ContentRepository contentRepository;
+  private final ContentCustomRepository contentCustomRepository;
+  private final CategoryRepository categoryRepository;
+
+  /**
+   * 서비스 상품을 임시 저장하고 저장된 정보를 반환합니다.
+   *
+   * @param userId 사용자 ID
+   * @param contentDto 저장할 상품 정보 (null 가능)
+   * @return 저장된 상품 정보
+   */
+  @Transactional
+  public ContentDto saveDraftAndReturn(Long userId, ContentDto contentDto) {
+    // 1. 사용자 조회
+    User user = userReader.getUserById(userId);
+
+    // 2. 저장할 Content 준비
+    Content content;
+
+    // 2.1 입력 DTO가 null인 경우 기본 Content 생성
+    if (contentDto == null) {
+      log.info("임시 저장 요청에 데이터가 없습니다. 기본 상품 생성");
+      content = new Content(user);
+      content.setTitle("새 서비스 상품");
+      return saveAndConvertToDto(content);
+    }
+
+    // 2.2 기존 Content 업데이트 또는 새 Content 생성
+    if (contentDto.getContentId() != null) {
+      // 기존 Content 업데이트
+      content = findAndValidateUserContent(userId, contentDto.getContentId());
+      updateContentFromDto(content, contentDto);
+
+      // 기존 옵션 제거
+      if (content.getOptions() != null) {
+        content.getOptions().clear();
+      }
+    } else {
+      // 새 Content 생성
+      content = new Content(user);
+      updateContentFromDto(content, contentDto);
+    }
+
+    // 3. 옵션 추가
+    if (contentDto.getOptions() != null && !contentDto.getOptions().isEmpty()) {
+      addOptionsToContent(content, contentDto);
+    }
+
+    // 4. 저장 및 변환
+    return saveAndConvertToDto(content);
+  }
+
+  /**
+   * 서비스 상품을 심사 요청하고 결과를 반환합니다.
+   *
+   * @param userId 사용자 ID
+   * @param contentDto 심사 요청할 상품 정보
+   * @return 심사 요청된 상품 정보
+   */
+  @Transactional
+  public ContentDto registerContent(Long userId, ContentDto contentDto) {
+    // 1. 유효성 검증
+    if (contentDto == null) {
+      throw new IllegalArgumentException("심사 요청할 상품 정보가 필요합니다.");
+    }
+
+    validateContentForSubmission(contentDto);
+
+    // 2. 사용자 조회
+    User user = userReader.getUserById(userId);
+
+    // 3. Content 준비 (기존 업데이트 또는 새로 생성)
+    Content content;
+    if (contentDto.getContentId() != null) {
+      // 기존 Content 업데이트
+      content = findAndValidateUserContent(userId, contentDto.getContentId());
+    } else {
+      // 새 Content 생성
+      content = new Content(user);
+    }
+
+    // 4. 카테고리 조회 및 설정 (심사 요청 시 필수)
+    Category category = findCategoryById(contentDto.getCategoryId());
+
+    // 5. Content 필드 업데이트
+    updateContentFromDto(content, contentDto);
+    content.setCategory(category);
+    content.setStatus(ContentStatus.PENDING);
+
+    // 6. 기존 옵션 제거 및 새 옵션 추가
+    if (content.getOptions() != null) {
+      content.getOptions().clear();
+    }
+
+    if (contentDto.getOptions() != null && !contentDto.getOptions().isEmpty()) {
+      addOptionsToContent(content, contentDto);
+    }
+
+    // 7. 저장 및 변환
+    log.info("서비스 상품 심사 요청 완료. 유저 ID: {}", userId);
+    return saveAndConvertToDto(content);
+  }
+
+  /**
+   * 서비스 상품 상세 정보를 조회합니다.
+   *
+   * @param contentId 상품 ID
+   * @return 상품 상세 정보
+   */
+  @Transactional(readOnly = true)
+  public ContentDetailDto getContentDetail(Long contentId) {
+    return ContentDetailDto.builder().build();
+  }
+
+  /**
+   * 사용자의 코칭 상품 목록을 조회합니다.
+   *
+   * @param userId 사용자 ID
+   * @param cursor 커서 (다음 페이지 시작점)
+   * @param size 조회할 상품 수
+   * @param state 상품 상태 필터
+   * @return 커서 기반 페이지네이션된 상품 목록
+   */
+  @Transactional(readOnly = true)
+  public CursorResponse<ContentCardDto> getMyCoachingContents(
+      Long userId, String cursor, int size, String state) {
+    // 1. 코칭 카테고리 ID 조회
+    List<Long> coachingCategoryIds = List.of(1L, 2L, 3L);
+
+    // 2. 커서 디코딩
+    Long lastContentId = parseContentIdFromCursor(cursor);
+
+    // 3. 상태 필터 적용
+    ContentStatus contentStatus = parseContentStatus(state);
+
+    // 4. 리포지토리 조회
+    CursorResponse<FlatPreviewContentDTO> flatDtos =
+        contentCustomRepository.findMyCoachingContentsWithCursor(
+            userId, lastContentId, size, coachingCategoryIds, contentStatus);
+
+    // 5. FlatPreviewContentDTO를 ContentCardDto로 변환
+    List<ContentCardDto> cardDtos =
+        flatDtos.getItems().stream()
+            .map(this::convertFlatDtoToCardDto)
+            .collect(Collectors.toList());
+
+    // 6. 전체 개수 조회
+    int totalCount =
+        contentCustomRepository.countMyCoachingContents(userId, coachingCategoryIds, contentStatus);
+
+    // 7. 응답 구성
+    return CursorResponse.<ContentCardDto>builder()
+        .items(cardDtos)
+        .nextCursor(flatDtos.getNextCursor())
+        .hasNext(flatDtos.isHasNext())
+        .totalCount(totalCount)
+        .meta(flatDtos.getMeta())
+        .build();
+  }
+
+  // --- 유틸리티 메서드 ---
+
+  /** Content를 저장하고 DTO로 변환합니다. */
+  private ContentDto saveAndConvertToDto(Content content) {
+    content = contentRepository.save(content);
+    log.info("서비스 상품 저장 완료. ID: {}, 유저 ID: {}", content.getId(), content.getUser().getId());
+    return convertToDto(content);
+  }
+
+  /** 사용자의 Content를 찾고 접근 권한을 검증합니다. */
+  private Content findAndValidateUserContent(Long userId, Long contentId) {
+    Content content =
+        contentRepository
+            .findById(contentId)
+            .orElseThrow(() -> new EntityNotFoundException("상품을 찾을 수 없습니다. ID: " + contentId));
+
+    // 권한 확인 - 상품의 소유자가 현재 사용자인지 검증
+    if (!content.getUser().getId().equals(userId)) {
+      throw new ForbiddenException("해당 상품을 수정할 권한이 없습니다.");
+    }
+
+    return content;
+  }
+
+  /** 카테고리 ID로 카테고리를 조회합니다. */
+  private Category findCategoryById(Long categoryId) {
+    if (categoryId == null) {
+      throw new IllegalArgumentException("카테고리 ID는 필수입니다.");
+    }
+
+    return categoryRepository
+        .findById(categoryId)
+        .orElseThrow(() -> new EntityNotFoundException("카테고리를 찾을 수 없습니다. ID: " + categoryId));
+  }
+
+  /** DTO에서 Content 엔티티로 데이터를 업데이트합니다. */
+  private void updateContentFromDto(Content content, ContentDto dto) {
+    // 타이틀 업데이트
+    if (dto.getTitle() != null) {
+      content.setTitle(dto.getTitle());
+    }
+
+    // ContentType 업데이트
+    if (dto.getContentType() != null) {
+      try {
+        content.setContentType(ContentType.valueOf(dto.getContentType()));
+      } catch (IllegalArgumentException e) {
+        log.warn("유효하지 않은 상품 유형: {}", dto.getContentType());
+      }
+    }
+
+    // 썸네일 URL 업데이트
+    if (dto.getThumbnailUrl() != null) {
+      content.setThumbnailUrl(dto.getThumbnailUrl());
+    }
+
+    // 카테고리 업데이트 (있는 경우에만)
+    if (dto.getCategoryId() != null) {
+      try {
+        Category category = findCategoryById(dto.getCategoryId());
+        content.setCategory(category);
+      } catch (EntityNotFoundException e) {
+        log.warn("카테고리를 찾을 수 없습니다: {}", dto.getCategoryId());
+      }
+    }
+  }
+
+  /** 옵션을 Content에 추가합니다. */
+  private void addOptionsToContent(Content content, ContentDto dto) {
+    // dto.getOptions()가 null인 경우 빈 리스트 사용 (NPE 방지)
+    List<ContentDto.ContentOptionDto> options =
+        dto.getOptions() != null ? dto.getOptions() : Collections.emptyList();
+
+    for (ContentDto.ContentOptionDto optionDto : options) {
+      // null 옵션 건너뛰기
+      if (optionDto == null) continue;
+
+      // contentType이 null인 경우 기본값 설정
+      if (content.getContentType() == null) {
+        log.warn("상품 유형이 지정되지 않았습니다. 기본값으로 DOCUMENT 설정");
+        content.setContentType(ContentType.DOCUMENT);
+      }
+
+      // 옵션 생성 및 추가
+      ContentOption option = createOptionByContentType(content.getContentType(), optionDto);
+      if (option != null) {
+        content.addOption(option);
+      }
+    }
+  }
+
+  /** Content 유형에 맞는 옵션을 생성합니다. */
+  private ContentOption createOptionByContentType(
+      ContentType contentType, ContentDto.ContentOptionDto optionDto) {
+    ContentOption option;
+
+    if (contentType == ContentType.COACHING) {
+      option = createCoachingOption(optionDto);
+    } else if (contentType == ContentType.DOCUMENT) {
+      option = createDocumentOption(optionDto);
+    } else {
+      log.warn("지원하지 않는 상품 유형입니다: {}", contentType);
+      return null;
+    }
+
+    // 공통 필드 설정
+    option.setName(optionDto.getName());
+    option.setDescription(optionDto.getDescription());
+    option.setPrice(optionDto.getPrice());
+
+    return option;
+  }
+
+  /** 코칭 옵션을 생성합니다. */
+  private CoachingOption createCoachingOption(ContentDto.ContentOptionDto optionDto) {
+    CoachingOption option = new CoachingOption();
+
+    // 코칭 옵션 특화 필드 설정 - null 안전하게 처리
+    if (optionDto.getCoachingPeriod() != null) {
+      try {
+        option.setCoachingPeriod(CoachingPeriod.valueOf(optionDto.getCoachingPeriod()));
+      } catch (IllegalArgumentException e) {
+        log.warn("유효하지 않은 코칭 기간: {}", optionDto.getCoachingPeriod());
+      }
+    }
+
+    if (optionDto.getDocumentProvision() != null) {
+      try {
+        option.setDocumentProvision(DocumentProvision.valueOf(optionDto.getDocumentProvision()));
+      } catch (IllegalArgumentException e) {
+        log.warn("유효하지 않은 자료 제공 옵션: {}", optionDto.getDocumentProvision());
+      }
+    }
+
+    if (optionDto.getCoachingType() != null) {
+      try {
+        option.setCoachingType(CoachingType.valueOf(optionDto.getCoachingType()));
+      } catch (IllegalArgumentException e) {
+        log.warn("유효하지 않은 코칭 방식: {}", optionDto.getCoachingType());
+      }
+    }
+
+    option.setCoachingTypeDescription(optionDto.getCoachingTypeDescription());
+
+    return option;
+  }
+
+  /** 문서 옵션을 생성합니다. */
+  private DocumentOption createDocumentOption(ContentDto.ContentOptionDto optionDto) {
+    DocumentOption option = new DocumentOption();
+
+    // 문서 옵션 특화 필드 설정 - null 안전하게 처리
+    if (optionDto.getContentDeliveryMethod() != null) {
+      try {
+        option.setContentDeliveryMethod(
+            ContentDeliveryMethod.valueOf(optionDto.getContentDeliveryMethod()));
+      } catch (IllegalArgumentException e) {
+        log.warn("유효하지 않은 컨텐츠 제공 방식: {}", optionDto.getContentDeliveryMethod());
+      }
+    }
+
+    return option;
+  }
+
+  /** FlatPreviewContentDTO를 ContentCardDto로 변환합니다. */
+  private ContentCardDto convertFlatDtoToCardDto(FlatPreviewContentDTO flat) {
+    return ContentCardDto.builder()
+        .contentId(flat.getContentId())
+        .createdAt(flat.getCreatedAt())
+        .title(flat.getTitle())
+        .thumbnailUrl(flat.getThumbnailUrl())
+        .sellerName(flat.getSellerName())
+        .status(flat.getStatus())
+        .build();
+  }
+
+  /** 커서에서 Content ID를 파싱합니다. */
+  private Long parseContentIdFromCursor(String cursor) {
+    if (cursor == null || cursor.isBlank()) {
+      return null;
+    }
+
+    try {
+      return Long.parseLong(cursor);
+    } catch (NumberFormatException e) {
+      log.warn("유효하지 않은 커서 형식: {}", cursor);
+      return null;
+    }
+  }
+
+  /** 문자열에서 ContentStatus를 파싱합니다. */
+  private ContentStatus parseContentStatus(String state) {
+    if (state == null || state.isBlank()) {
+      return null;
+    }
+
+    try {
+      return ContentStatus.valueOf(state.toUpperCase());
+    } catch (IllegalArgumentException e) {
+      log.warn("유효하지 않은 상품 상태: {}", state);
+      return null;
+    }
+  }
+
+  /** Content를 DTO로 변환합니다. */
+  private ContentDto convertToDto(Content content) {
+    // null 체크
+    if (content == null) {
+      return null;
+    }
+
+    // 옵션 변환
+    List<ContentDto.ContentOptionDto> optionDtos = new ArrayList<>();
+    if (content.getOptions() != null) {
+      for (ContentOption option : content.getOptions()) {
+        if (option == null) continue;
+
+        ContentDto.ContentOptionDto.ContentOptionDtoBuilder builder =
+            ContentDto.ContentOptionDto.builder()
+                .id(option.getId())
+                .name(option.getName())
+                .description(option.getDescription())
+                .price(option.getPrice());
+
+        if (option instanceof CoachingOption coachingOption) {
+          builder
+              .coachingPeriod(
+                  coachingOption.getCoachingPeriod() != null
+                      ? coachingOption.getCoachingPeriod().name()
+                      : null)
+              .documentProvision(
+                  coachingOption.getDocumentProvision() != null
+                      ? coachingOption.getDocumentProvision().name()
+                      : null)
+              .coachingType(
+                  coachingOption.getCoachingType() != null
+                      ? coachingOption.getCoachingType().name()
+                      : null)
+              .coachingTypeDescription(coachingOption.getCoachingTypeDescription());
+        } else if (option instanceof DocumentOption documentOption) {
+          builder.contentDeliveryMethod(
+              documentOption.getContentDeliveryMethod() != null
+                  ? documentOption.getContentDeliveryMethod().name()
+                  : null);
+        }
+
+        optionDtos.add(builder.build());
+      }
+    }
+
+    // Content DTO 구성
+    ContentDto.ContentDtoBuilder dtoBuilder =
+        ContentDto.builder()
+            .contentId(content.getId())
+            .title(content.getTitle())
+            .thumbnailUrl(content.getThumbnailUrl())
+            .options(optionDtos.isEmpty() ? null : optionDtos);
+
+    // Enum을 안전하게 문자열로 변환
+    if (content.getContentType() != null) {
+      dtoBuilder.contentType(content.getContentType().name());
+    }
+
+    if (content.getStatus() != null) {
+      dtoBuilder.status(content.getStatus().name());
+    } else {
+      dtoBuilder.status(ContentStatus.DRAFT.name()); // 기본값
+    }
+
+    // 카테고리가 null이 아닌 경우에만 ID 설정
+    if (content.getCategory() != null) {
+      dtoBuilder.categoryId(content.getCategory().getId());
+    }
+
+    return dtoBuilder.build();
+  }
+
+  /** 심사 요청 시 필수 항목을 검증합니다. */
+  private void validateContentForSubmission(ContentDto contentDto) {
+    List<String> missingFields = new ArrayList<>();
+
+    // 필수 필드 검증
+    if (contentDto.getTitle() == null || contentDto.getTitle().trim().isEmpty()) {
+      missingFields.add("제목");
+    }
+
+    if (contentDto.getContentType() == null) {
+      missingFields.add("상품 유형");
+    }
+
+    if (contentDto.getCategoryId() == null) {
+      missingFields.add("카테고리");
+    }
+
+    if (contentDto.getThumbnailUrl() == null || contentDto.getThumbnailUrl().trim().isEmpty()) {
+      missingFields.add("썸네일 이미지");
+    }
+
+    // 옵션 검증
+    if (contentDto.getOptions() == null || contentDto.getOptions().isEmpty()) {
+      missingFields.add("상품 옵션");
+    } else {
+      // 각 옵션별 필수 필드 검증
+      for (int i = 0; i < contentDto.getOptions().size(); i++) {
+        ContentDto.ContentOptionDto option = contentDto.getOptions().get(i);
+
+        if (option.getName() == null || option.getName().trim().isEmpty()) {
+          missingFields.add("옵션" + (i + 1) + " 이름");
+        }
+
+        if (option.getPrice() == null) {
+          missingFields.add("옵션" + (i + 1) + " 가격");
+        }
+
+        // 상품 유형별 옵션 필수 필드 검증
+        if (ContentType.COACHING.name().equals(contentDto.getContentType())) {
+          if (option.getCoachingPeriod() == null) {
+            missingFields.add("옵션" + (i + 1) + " 코칭 기간");
+          }
+          if (option.getCoachingType() == null) {
+            missingFields.add("옵션" + (i + 1) + " 코칭 방식");
+          }
+        } else if (ContentType.DOCUMENT.name().equals(contentDto.getContentType())) {
+          if (option.getContentDeliveryMethod() == null) {
+            missingFields.add("옵션" + (i + 1) + " 컨텐츠 제공 방식");
+          }
+        }
+      }
+    }
+
+    // 필수 필드가 누락된 경우 예외 발생
+    if (!missingFields.isEmpty()) {
+      throw new IllegalArgumentException(
+          "심사 요청을 위해 다음 필드를 입력해주세요: " + String.join(", ", missingFields));
+    }
+  }
+}

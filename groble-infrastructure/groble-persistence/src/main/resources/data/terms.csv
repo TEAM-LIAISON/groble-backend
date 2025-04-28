@@ -1,4 +1,4 @@
-title,type,version,contentUrl,effectiveFrom,effectiveTo
+title,contentType,version,contentUrl,effectiveFrom,effectiveTo
 만 14세 이상입니다,AGE_POLICY,2025V1,https://dev.groble.im/terms/age-policy/v1,2025-06-01 00:00:00,2026-05-31 23:59:59
 판매자 이용약관 동의,SELLER_TERMS_POLICY,2025V1,https://dev.groble.im/terms/seller-terms-policy/v1,2025-06-01 00:00:00,2026-05-31 23:59:59
 개인정보 수집 및 이용 동의,PRIVACY_POLICY,2025V1,https://dev.groble.im/terms/privacy-policy/v1,2025-06-01 00:00:00,2026-05-31 23:59:59

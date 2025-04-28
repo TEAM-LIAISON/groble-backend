@@ -24,8 +24,8 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 
 import liaison.groble.domain.common.entity.BaseEntity;
-import liaison.groble.domain.gig.entity.Gig;
-import liaison.groble.domain.gig.enums.GigStatus;
+import liaison.groble.domain.content.entity.Content;
+import liaison.groble.domain.content.enums.ContentStatus;
 import liaison.groble.domain.payment.entity.Payment;
 import liaison.groble.domain.purchase.entity.Purchaser;
 import liaison.groble.domain.user.entity.User;
@@ -133,7 +133,7 @@ public class Order extends BaseEntity {
 
   // 연관관계 편의 메서드 수정
   public void addOrderItem(
-      Gig gig,
+      Content content,
       BigDecimal price,
       OrderItem.OptionType optionType,
       Long optionId,
@@ -142,7 +142,7 @@ public class Order extends BaseEntity {
     OrderItem orderItem =
         OrderItem.builder()
             .order(this)
-            .gig(gig)
+            .content(content)
             .price(price) // 옵션에 따른 가격 사용
             .quantity(quantity)
             .optionType(optionType)
@@ -168,7 +168,7 @@ public class Order extends BaseEntity {
   // 팩토리 메서드 수정 (옵션 버전 추가)
   public static Order createOrderWithOption(
       User user,
-      Gig gig,
+      Content content,
       OrderItem.OptionType optionType,
       Long optionId,
       String optionName,
@@ -184,12 +184,12 @@ public class Order extends BaseEntity {
             .build();
 
     // 상품 상태 확인
-    if (gig.getStatus() != GigStatus.ACTIVE) {
-      throw new IllegalArgumentException("판매중인 상품만 구매할 수 있습니다: " + gig.getTitle());
+    if (content.getStatus() != ContentStatus.ACTIVE) {
+      throw new IllegalArgumentException("판매중인 상품만 구매할 수 있습니다: " + content.getTitle());
     }
 
     // 옵션 정보를 포함한 주문 아이템 추가
-    order.addOrderItem(gig, price, optionType, optionId, optionName, 1);
+    order.addOrderItem(content, price, optionType, optionId, optionName, 1);
 
     return order;
   }
