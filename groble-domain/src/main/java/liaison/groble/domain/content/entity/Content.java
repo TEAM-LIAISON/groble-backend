@@ -71,7 +71,8 @@ public class Content extends BaseEntity {
   @OneToMany(mappedBy = "content", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<ContentOption> options = new ArrayList<>();
 
-  private String thumbnailUrl; // 썸네일 이미지 URL
+  // 썸네일 이미지 URL
+  private String thumbnailUrl;
 
   @Column(name = "sale_count")
   private Integer saleCount = 0; // 판매 수
