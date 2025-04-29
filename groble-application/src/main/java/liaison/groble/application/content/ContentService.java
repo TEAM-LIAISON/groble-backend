@@ -43,6 +43,7 @@ public class ContentService {
   private final ContentRepository contentRepository;
   private final ContentCustomRepository contentCustomRepository;
   private final CategoryRepository categoryRepository;
+  private final ContentReader contentReader;
 
   /**
    * 서비스 상품을 임시 저장하고 저장된 정보를 반환합니다.
@@ -207,6 +208,18 @@ public class ContentService {
         contentRepository
             .findById(contentId)
             .orElseThrow(() -> new EntityNotFoundException("상품을 찾을 수 없습니다. ID: " + contentId));
+
+    // 권한 확인 - 상품의 소유자가 현재 사용자인지 검증
+    if (!content.getUser().getId().equals(userId)) {
+      throw new ForbiddenException("해당 상품을 수정할 권한이 없습니다.");
+    }
+
+    return content;
+  }
+
+  /** 사용자의 심사 완료된 Content를 찾고 접근 권한을 검증합니다. */
+  private Content findAndValidateUserApprovedContent(Long userId, Long contentId) {
+    Content content = contentReader.getContentByStatusAndId(contentId, ContentStatus.APPROVED);
 
     // 권한 확인 - 상품의 소유자가 현재 사용자인지 검증
     if (!content.getUser().getId().equals(userId)) {
@@ -527,5 +540,17 @@ public class ContentService {
       throw new IllegalArgumentException(
           "심사 요청을 위해 다음 필드를 입력해주세요: " + String.join(", ", missingFields));
     }
+  }
+
+  @Transactional
+  public ContentDto activateContent(Long userId, Long contentId) {
+    // 1. Content 조회 및 권한 검증
+    Content content = findAndValidateUserApprovedContent(userId, contentId);
+
+    // 2. 상태 업데이트
+    content.setStatus(ContentStatus.ACTIVE);
+
+    // 3. 저장 및 변환
+    return saveAndConvertToDto(content);
   }
 }

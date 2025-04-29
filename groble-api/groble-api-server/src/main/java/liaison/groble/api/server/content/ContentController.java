@@ -19,6 +19,7 @@ import liaison.groble.api.model.content.request.register.ContentRegisterRequest;
 import liaison.groble.api.model.content.response.ContentDetailResponse;
 import liaison.groble.api.model.content.response.ContentPreviewCardResponse;
 import liaison.groble.api.model.content.response.ContentResponse;
+import liaison.groble.api.model.content.response.ContentStatusResponse;
 import liaison.groble.api.server.content.mapper.ContentDtoMapper;
 import liaison.groble.application.content.ContentService;
 import liaison.groble.application.content.dto.ContentCardDto;
@@ -152,7 +153,23 @@ public class ContentController {
   }
 
   // 상품 활성화 (판매중으로 변경)
+  @Operation(summary = "상품 활성화", description = "심사완료된 상품을 활성화합니다.")
+  @PostMapping("/{contentId}/active")
+  public ResponseEntity<GrobleResponse<ContentStatusResponse>> activateContent(
+      @PathVariable("contentId") Long contentId,
+      @Parameter(hidden = true) @Auth Accessor accessor) {
+    // 서비스 호출
+    ContentDto contentDto = contentService.activateContent(accessor.getUserId(), contentId);
 
+    // DTO 변환
+    ContentStatusResponse response =
+        ContentStatusResponse.builder()
+            .id(contentDto.getId())
+            .status(contentDto.getStatus().name())
+            .build();
+
+    return ResponseEntity.ok(GrobleResponse.success(response, "상품 활성화 성공"));
+  }
   // 상품 수정
   // 상품 삭제
   // 상품 검색

@@ -1,0 +1,18 @@
+package liaison.groble.api.model.content.response;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Builder;
+import lombok.Getter;
+
+@Getter
+@Builder
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class ContentStatusResponse {
+  @Schema(description = "상품 ID", example = "1")
+  private Long id;
+
+  @Schema(description = "변경된 상품 상태", example = "ACTIVE")
+  private String status;
+}
