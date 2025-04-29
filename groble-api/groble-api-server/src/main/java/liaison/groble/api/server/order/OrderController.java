@@ -2,6 +2,8 @@ package liaison.groble.api.server.order;
 
 import jakarta.validation.Valid;
 
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -41,14 +43,16 @@ public class OrderController {
       responseCode = "201",
       description = "주문 생성 성공",
       content = @Content(schema = @Schema(implementation = OrderResponse.class)))
-  public ResponseEntity<GrobleResponse<OrderResponse>> createOrder(
+  public ResponseEntity<GrobleResponse<Void>> createOrder(
       @Auth Accessor accessor, @Valid @RequestBody CreateOrderRequest request) {
     log.info("Creating order for user: {}", accessor.getUserId());
 
     OrderCreateDto orderCreateDto = orderDtoMapper.toServiceOrderCreateDto(request);
 
-    orderService.createOrder(accessor.getUserId(), orderCreateDto);
+    String redirectUrl = orderService.createOrder(accessor.getUserId(), orderCreateDto);
 
-    return ResponseEntity.ok(GrobleResponse.success(null, "주문이 성공적으로 생성되었습니다.", 201));
+    return ResponseEntity.status(HttpStatus.FOUND)
+        .header(HttpHeaders.LOCATION, redirectUrl)
+        .build();
   }
 }

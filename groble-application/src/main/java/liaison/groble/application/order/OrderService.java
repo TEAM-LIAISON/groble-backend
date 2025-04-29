@@ -1,5 +1,6 @@
 package liaison.groble.application.order;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,8 +30,12 @@ public class OrderService {
   private final ContentRepository contentRepository;
   private final OrderRepository orderRepository;
 
+  // 환경별 프론트엔드 도메인 설정
+  @Value("${app.frontend-url}")
+  private String frontendDomain; // 환경별로 설정 가능하도록 변경
+
   @Transactional
-  public void createOrder(Long userId, OrderCreateDto orderCreateDto) {
+  public String createOrder(Long userId, OrderCreateDto orderCreateDto) {
     User user = userReader.getUserById(userId);
 
     Content content = contentReader.getContentById(orderCreateDto.getContentId());
@@ -68,6 +73,21 @@ public class OrderService {
             selectedOption.getPrice(),
             purchaser);
 
-    orderRepository.save(order);
+    Order savedOrder = orderRepository.save(order);
+    String savedMerchantUId = savedOrder.getMerchantUid();
+
+    // merchantUId에서 두 번째 언더바 이후의 숫자 추출
+    String parsedMerchantUId = null;
+    if (savedMerchantUId != null && savedMerchantUId.split("_").length >= 3) {
+      parsedMerchantUId = savedMerchantUId.split("_")[2];
+    }
+
+    // 리다이렉트 URL 생성
+    String redirectUrl = null;
+    if (parsedMerchantUId != null) {
+      redirectUrl = frontendDomain + "/contents/" + parsedMerchantUId;
+    }
+
+    return redirectUrl;
   }
 }
