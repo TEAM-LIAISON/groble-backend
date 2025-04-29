@@ -119,13 +119,7 @@ public class ContentController {
                   schema =
                       @Schema(
                           implementation = String.class,
-                          allowableValues = {
-                            "DRAFT",
-                            "PENDING",
-                            "ACTIVE",
-                            "REJECTED",
-                            "SUSPENDED"
-                          }))
+                          allowableValues = {"DRAFT", "PENDING", "APPROVED", "ACTIVE"}))
               @RequestParam(value = "state", required = false)
               String state) {
     // 서비스 호출
@@ -165,6 +159,7 @@ public class ContentController {
     ContentStatusResponse response = contentDtoMapper.toContentStatusResponse(contentDto);
     return ResponseEntity.ok(GrobleResponse.success(response, "상품 활성화 성공"));
   }
+
   // 상품 수정
   // 상품 삭제
   // 상품 검색

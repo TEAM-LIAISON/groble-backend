@@ -2,6 +2,8 @@ package liaison.groble.api.model.content.response;
 
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -19,6 +21,7 @@ public class ContentPreviewCardResponse {
   private Long contentId;
 
   @Schema(description = "생성 일시", example = "2025-04-20T10:15:30")
+  @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
   private LocalDateTime createdAt;
 
   @Schema(description = "상품 제목", example = "Java 프로그래밍 코칭")
