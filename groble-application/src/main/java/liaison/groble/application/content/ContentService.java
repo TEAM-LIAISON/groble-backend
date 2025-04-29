@@ -59,15 +59,7 @@ public class ContentService {
     // 2. 저장할 Content 준비
     Content content;
 
-    // 2.1 입력 DTO가 null인 경우 기본 Content 생성
-    if (contentDto == null) {
-      log.info("임시 저장 요청에 데이터가 없습니다. 기본 상품 생성");
-      content = new Content(user);
-      content.setTitle("새 서비스 상품");
-      return saveAndConvertToDto(content);
-    }
-
-    // 2.2 기존 Content 업데이트 또는 새 Content 생성
+    // 2.1 기존 Content 업데이트 또는 새 Content 생성
     if (contentDto.getContentId() != null) {
       // 기존 Content 업데이트
       content = findAndValidateUserContent(userId, contentDto.getContentId());

@@ -69,14 +69,11 @@ public class ContentController {
   @PostMapping("/draft")
   public ResponseEntity<GrobleResponse<ContentResponse>> saveDraft(
       @Auth Accessor accessor, @Valid @RequestBody ContentDraftRequest request) {
-    // 1. 요청 DTO를 서비스 DTO로 변환
-    ContentDto contentDto = contentDtoMapper.toServiceContentDtoFromDraft(request);
 
-    // 2. 서비스 호출 (저장 및 결과 반환 - 단일 트랜잭션)
+    ContentDto contentDto = contentDtoMapper.toServiceContentDtoFromDraft(request);
     ContentDto savedContentDto =
         contentService.saveDraftAndReturn(accessor.getUserId(), contentDto);
 
-    // 3. 응답 DTO로 변환
     ContentResponse response = contentDtoMapper.toContentDraftResponse(savedContentDto);
 
     return ResponseEntity.ok(GrobleResponse.success(response, "서비스 상품 임시 저장 성공"));
@@ -154,7 +151,8 @@ public class ContentController {
     return ResponseEntity.ok(GrobleResponse.success(response, "나의 코칭 상품 조회 성공"));
   }
 
-  // 상품 등록
+  // 상품 활성화 (판매중으로 변경)
+
   // 상품 수정
   // 상품 삭제
   // 상품 검색
