@@ -51,15 +51,12 @@ public class ContentController {
   private final ContentService contentService;
   private final ContentDtoMapper contentDtoMapper;
 
-  // 서비스 상품 단건 조회 (상세 조회)
-  @Operation(summary = "서비스 상품 단건 조회", description = "서비스 상품을 상세 조회합니다.")
+  // 서비스 상품 단건 조회 (상세 조회 코칭 & 자료 모두 조회 가능)
+  @Operation(summary = "서비스 상품 단건 조회 [코칭&자료 모두 조회 가능]", description = "서비스 상품(코칭&자료)을 상세 조회합니다.")
   @GetMapping("/{contentId}")
   public ResponseEntity<GrobleResponse<ContentDetailResponse>> getContentDetail(
       @PathVariable("contentId") Long contentId) {
-
-    // 서비스 상품 상세 조회 로직
     ContentDetailDto contentDetailDto = contentService.getContentDetail(contentId);
-    // DTO 매핑
     ContentDetailResponse response = contentDtoMapper.toContentDetailResponse(contentDetailDto);
     return ResponseEntity.ok(GrobleResponse.success(response, "서비스 상품 상세 조회 성공"));
   }
@@ -93,19 +90,32 @@ public class ContentController {
     return ResponseEntity.ok(GrobleResponse.success(response, "서비스 상품 심사 요청 성공"));
   }
 
-  // 나의 코칭 상품 (판매자)
+  // 상품 활성화 (판매중으로 변경)
+  @Operation(summary = "상품 활성화", description = "심사완료된 상품을 활성화합니다.")
+  @PostMapping("/{contentId}/active")
+  public ResponseEntity<GrobleResponse<ContentStatusResponse>> activateContent(
+      @PathVariable("contentId") Long contentId,
+      @Parameter(hidden = true) @Auth Accessor accessor) {
+    // 서비스 호출
+    ContentDto contentDto = contentService.activateContent(accessor.getUserId(), contentId);
+
+    // DTO 변환
+    ContentStatusResponse response = contentDtoMapper.toContentStatusResponse(contentDto);
+    return ResponseEntity.ok(GrobleResponse.success(response, "상품 활성화 성공"));
+  }
+
   @ApiResponses({
     @ApiResponse(
         responseCode = "200",
-        description = "나의 코칭 상품 조회 성공",
+        description = "나의 판매 상품 조회 성공",
         content = @Content(schema = @Schema(implementation = GrobleResponse.class))),
     @ApiResponse(responseCode = "401", description = "인증 실패 (AccessToken 만료 또는 없음)"),
     @ApiResponse(responseCode = "404", description = "사용자 정보를 찾을 수 없음")
   })
-  @Operation(summary = "나의 코칭 상품 조회", description = "나의 코칭 상품을 조회합니다.")
-  @GetMapping("/my/coaching")
+  @Operation(summary = "나의 판매 상품 조회", description = "나의 코칭 또는 자료 상품을 조회합니다.")
+  @GetMapping("/my/selling-contents")
   public ResponseEntity<GrobleResponse<CursorResponse<ContentPreviewCardResponse>>>
-      getMyCoachingContents(
+      getMySellingContents(
           @Parameter(hidden = true) @Auth Accessor accessor,
           @Parameter(
                   description = "커서 기반 페이지네이션 요청 정보",
@@ -121,11 +131,20 @@ public class ContentController {
                           implementation = String.class,
                           allowableValues = {"DRAFT", "PENDING", "APPROVED", "ACTIVE"}))
               @RequestParam(value = "state", required = false)
-              String state) {
-    // 서비스 호출
+              String state,
+          @Parameter(
+                  description = "상품 타입 (COACHING 또는 DOCUMENT)",
+                  required = true,
+                  schema =
+                      @Schema(
+                          implementation = String.class,
+                          allowableValues = {"COACHING", "DOCUMENT"}))
+              @RequestParam(value = "type")
+              String type) {
+
     CursorResponse<ContentCardDto> cardDtos =
-        contentService.getMyCoachingContents(
-            accessor.getUserId(), cursorRequest.getCursor(), cursorRequest.getSize(), state);
+        contentService.getMySellingContents(
+            accessor.getUserId(), cursorRequest.getCursor(), cursorRequest.getSize(), state, type);
 
     // DTO 변환
     List<ContentPreviewCardResponse> responseItems =
@@ -143,21 +162,8 @@ public class ContentController {
             .meta(cardDtos.getMeta())
             .build();
 
-    return ResponseEntity.ok(GrobleResponse.success(response, "나의 코칭 상품 조회 성공"));
-  }
-
-  // 상품 활성화 (판매중으로 변경)
-  @Operation(summary = "상품 활성화", description = "심사완료된 상품을 활성화합니다.")
-  @PostMapping("/{contentId}/active")
-  public ResponseEntity<GrobleResponse<ContentStatusResponse>> activateContent(
-      @PathVariable("contentId") Long contentId,
-      @Parameter(hidden = true) @Auth Accessor accessor) {
-    // 서비스 호출
-    ContentDto contentDto = contentService.activateContent(accessor.getUserId(), contentId);
-
-    // DTO 변환
-    ContentStatusResponse response = contentDtoMapper.toContentStatusResponse(contentDto);
-    return ResponseEntity.ok(GrobleResponse.success(response, "상품 활성화 성공"));
+    String successMessage = "COACHING".equals(type) ? "나의 코칭 상품 조회 성공" : "나의 자료 상품 조회 성공";
+    return ResponseEntity.ok(GrobleResponse.success(response, successMessage));
   }
 
   // 상품 수정

@@ -154,34 +154,27 @@ public class ContentService {
    * @param cursor 커서 (다음 페이지 시작점)
    * @param size 조회할 상품 수
    * @param state 상품 상태 필터
+   * @param type 상품 유형
    * @return 커서 기반 페이지네이션된 상품 목록
    */
   @Transactional(readOnly = true)
-  public CursorResponse<ContentCardDto> getMyCoachingContents(
-      Long userId, String cursor, int size, String state) {
-    // 1. 코칭 카테고리 ID 조회
-    List<Long> coachingCategoryIds = List.of(1L, 2L, 3L);
-
-    // 2. 커서 디코딩
+  public CursorResponse<ContentCardDto> getMySellingContents(
+      Long userId, String cursor, int size, String state, String type) {
     Long lastContentId = parseContentIdFromCursor(cursor);
-
-    // 3. 상태 필터 적용
     ContentStatus contentStatus = parseContentStatus(state);
+    ContentType contentType = parseContentType(type);
 
-    // 4. 리포지토리 조회
     CursorResponse<FlatPreviewContentDTO> flatDtos =
-        contentCustomRepository.findMyCoachingContentsWithCursor(
-            userId, lastContentId, size, coachingCategoryIds, contentStatus);
+        contentCustomRepository.findMySellingContentsWithCursor(
+            userId, lastContentId, size, contentStatus, contentType);
 
-    // 5. FlatPreviewContentDTO를 ContentCardDto로 변환
     List<ContentCardDto> cardDtos =
         flatDtos.getItems().stream()
             .map(this::convertFlatDtoToCardDto)
             .collect(Collectors.toList());
 
-    // 6. 전체 개수 조회
     int totalCount =
-        contentCustomRepository.countMyCoachingContents(userId, coachingCategoryIds, contentStatus);
+        contentCustomRepository.countMySellingContents(userId, contentStatus, contentType);
 
     // 7. 응답 구성
     return CursorResponse.<ContentCardDto>builder()
@@ -405,6 +398,19 @@ public class ContentService {
       return ContentStatus.valueOf(state.toUpperCase());
     } catch (IllegalArgumentException e) {
       log.warn("유효하지 않은 상품 상태: {}", state);
+      return null;
+    }
+  }
+
+  private ContentType parseContentType(String type) {
+    if (type == null || type.isBlank()) {
+      return null;
+    }
+
+    try {
+      return ContentType.valueOf(type.toUpperCase());
+    } catch (IllegalArgumentException e) {
+      log.warn("유효하지 않은 컨텐츠 유형: {}", type);
       return null;
     }
   }

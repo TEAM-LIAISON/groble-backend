@@ -11,7 +11,6 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 
 import liaison.groble.common.response.CursorResponse;
 import liaison.groble.domain.content.dto.FlatPreviewContentDTO;
-import liaison.groble.domain.content.entity.QCategory;
 import liaison.groble.domain.content.entity.QContent;
 import liaison.groble.domain.content.enums.ContentStatus;
 import liaison.groble.domain.content.enums.ContentType;
@@ -71,15 +70,15 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
   }
 
   @Override
-  public CursorResponse<FlatPreviewContentDTO> findMyCoachingContentsWithCursor(
-      Long userId, Long lastContentId, int size, List<Long> categoryIds, ContentStatus status) {
+  public CursorResponse<FlatPreviewContentDTO> findMySellingContentsWithCursor(
+      Long userId, Long lastContentId, int size, ContentStatus status, ContentType contentType) {
 
     QContent qContent = QContent.content;
     QUser qUser = QUser.user;
 
     // 기본 조건 설정
     BooleanExpression conditions =
-        qContent.user.id.eq(userId).and(qContent.contentType.eq(ContentType.COACHING));
+        qContent.user.id.eq(userId).and(qContent.contentType.eq(contentType));
 
     // 커서 조건 추가
     if (lastContentId != null) {
@@ -136,18 +135,12 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
   }
 
   @Override
-  public int countMyCoachingContents(Long userId, List<Long> categoryIds, ContentStatus status) {
+  public int countMySellingContents(Long userId, ContentStatus status, ContentType contentType) {
     QContent qContent = QContent.content;
-    QCategory qCategory = QCategory.category;
 
     // 기본 조건 설정
     BooleanExpression conditions =
-        qContent
-            .user
-            .id
-            .eq(userId)
-            .and(qCategory.id.in(categoryIds))
-            .and(qContent.contentType.eq(ContentType.COACHING));
+        qContent.user.id.eq(userId).and(qContent.contentType.eq(contentType));
 
     // 상태 필터 추가
     if (status != null) {

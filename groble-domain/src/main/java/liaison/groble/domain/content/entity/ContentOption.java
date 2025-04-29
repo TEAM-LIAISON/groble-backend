@@ -16,11 +16,15 @@ import jakarta.persistence.Table;
 
 import liaison.groble.domain.common.entity.BaseTimeEntity;
 
+import lombok.Getter;
+
+@Getter
 @Entity
 @Table(name = "content_options")
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "option_type")
 public abstract class ContentOption extends BaseTimeEntity {
+  // Getter 메서드들
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
@@ -37,27 +41,6 @@ public abstract class ContentOption extends BaseTimeEntity {
 
   // 옵션 가격
   private BigDecimal price;
-
-  // Getter 메서드들
-  public Long getId() {
-    return id;
-  }
-
-  public String getName() {
-    return name;
-  }
-
-  public String getDescription() {
-    return description;
-  }
-
-  public BigDecimal getPrice() {
-    return price;
-  }
-
-  public Content getContent() {
-    return content;
-  }
 
   // Setter 메서드들
   public void setName(String name) {

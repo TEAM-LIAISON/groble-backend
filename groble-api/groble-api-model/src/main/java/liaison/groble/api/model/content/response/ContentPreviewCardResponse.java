@@ -36,6 +36,6 @@ public class ContentPreviewCardResponse {
   @Schema(
       description = "상품 상태",
       example = "DRAFT",
-      allowableValues = {"DRAFT", "PENDING", "ACTIVE", "REJECTED", "SUSPENDED"})
+      allowableValues = {"DRAFT", "PENDING", "ACTIVE", "APPROVED", "REJECTED"})
   private String status;
 }
