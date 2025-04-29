@@ -11,7 +11,7 @@ import lombok.Getter;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ContentStatusResponse {
   @Schema(description = "상품 ID", example = "1")
-  private Long id;
+  private Long contentId;
 
   @Schema(description = "변경된 상품 상태", example = "ACTIVE")
   private String status;

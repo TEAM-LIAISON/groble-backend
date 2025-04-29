@@ -14,6 +14,7 @@ import liaison.groble.api.model.content.request.register.DocumentOptionRegisterR
 import liaison.groble.api.model.content.response.ContentDetailResponse;
 import liaison.groble.api.model.content.response.ContentPreviewCardResponse;
 import liaison.groble.api.model.content.response.ContentResponse;
+import liaison.groble.api.model.content.response.ContentStatusResponse;
 import liaison.groble.application.content.dto.ContentCardDto;
 import liaison.groble.application.content.dto.ContentDetailDto;
 import liaison.groble.application.content.dto.ContentDto;
@@ -241,7 +242,7 @@ public class ContentDtoMapper {
     }
 
     return ContentDto.ContentOptionDto.builder()
-        .id(null)
+        .contentOptionId(null)
         .name(name)
         .description(description)
         .price(price)
@@ -292,7 +293,7 @@ public class ContentDtoMapper {
 
     // DTO 생성 및 반환
     return ContentDto.ContentOptionDto.builder()
-        .id(null) // 새로 생성되는 옵션은 ID가 없음
+        .contentOptionId(null) // 새로 생성되는 옵션은 ID가 없음
         .name(name)
         .description(description)
         .price(price)
@@ -315,7 +316,7 @@ public class ContentDtoMapper {
               ContentResponse.OptionResponse.builder();
 
           // 각 필드를 그대로 설정 (null이어도 괜찮음)
-          optionBuilder.id(optionDto.getId());
+          optionBuilder.id(optionDto.getContentOptionId());
           optionBuilder.name(optionDto.getName());
           optionBuilder.description(optionDto.getDescription());
           optionBuilder.price(optionDto.getPrice());
@@ -360,6 +361,17 @@ public class ContentDtoMapper {
         .thumbnailUrl(cardDto.getThumbnailUrl())
         .sellerName(cardDto.getSellerName())
         .status(cardDto.getStatus())
+        .build();
+  }
+
+  public ContentStatusResponse toContentStatusResponse(ContentDto dto) {
+    if (dto == null) {
+      return null;
+    }
+
+    return ContentStatusResponse.builder()
+        .contentId(dto.getContentId())
+        .status(dto.getStatus())
         .build();
   }
 }

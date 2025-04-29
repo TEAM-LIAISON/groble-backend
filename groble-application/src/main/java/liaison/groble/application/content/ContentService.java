@@ -424,7 +424,7 @@ public class ContentService {
 
         ContentDto.ContentOptionDto.ContentOptionDtoBuilder builder =
             ContentDto.ContentOptionDto.builder()
-                .id(option.getId())
+                .contentOptionId(option.getId())
                 .name(option.getName())
                 .description(option.getDescription())
                 .price(option.getPrice());

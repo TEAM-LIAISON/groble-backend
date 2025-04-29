@@ -162,12 +162,7 @@ public class ContentController {
     ContentDto contentDto = contentService.activateContent(accessor.getUserId(), contentId);
 
     // DTO 변환
-    ContentStatusResponse response =
-        ContentStatusResponse.builder()
-            .id(contentDto.getId())
-            .status(contentDto.getStatus().name())
-            .build();
-
+    ContentStatusResponse response = contentDtoMapper.toContentStatusResponse(contentDto);
     return ResponseEntity.ok(GrobleResponse.success(response, "상품 활성화 성공"));
   }
   // 상품 수정

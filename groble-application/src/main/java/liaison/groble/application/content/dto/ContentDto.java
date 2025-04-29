@@ -20,7 +20,7 @@ public class ContentDto {
   @Getter
   @Builder
   public static class ContentOptionDto {
-    private Long id;
+    private Long contentOptionId;
     private String name;
     private String description;
     private BigDecimal price;
