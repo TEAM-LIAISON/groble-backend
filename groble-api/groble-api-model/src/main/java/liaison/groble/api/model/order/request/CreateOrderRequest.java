@@ -13,6 +13,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class CreateOrderRequest {
   private Long contentId;
+  private Long contentOptionId;
   private BigDecimal price;
   private int quantity;
   private BigDecimal totalPrice;
