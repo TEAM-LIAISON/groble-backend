@@ -70,6 +70,70 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
   }
 
   @Override
+  public CursorResponse<FlatPreviewContentDTO> findMyPurchasingContentsWithCursor(
+      Long userId, Long lastContentId, int size, ContentStatus status, ContentType contentType) {
+    QContent qContent = QContent.content;
+    QUser qUser = QUser.user;
+
+    // 기본 조건 설정
+    BooleanExpression conditions =
+        qContent.user.id.eq(userId).and(qContent.contentType.eq(contentType));
+
+    // 커서 조건 추가
+    if (lastContentId != null) {
+      conditions = conditions.and(qContent.id.lt(lastContentId));
+    }
+
+    // 상태 필터 추가
+    if (status != null) {
+      conditions = conditions.and(qContent.status.eq(status));
+    }
+
+    // 조회할 개수 + 1 (다음 페이지 존재 여부 확인용)
+    int fetchSize = size + 1;
+
+    // 쿼리 실행
+    List<FlatPreviewContentDTO> results =
+        queryFactory
+            .select(
+                Projections.fields(
+                    FlatPreviewContentDTO.class,
+                    qContent.id.as("contentId"),
+                    qContent.createdAt.as("createdAt"),
+                    qContent.title.as("title"),
+                    qContent.thumbnailUrl.as("thumbnailUrl"),
+                    qUser.nickname.as("sellerName"),
+                    qContent.status.stringValue().as("status")))
+            .from(qContent)
+            .leftJoin(qContent.user, qUser)
+            .where(conditions)
+            .orderBy(qContent.id.desc())
+            .limit(fetchSize)
+            .fetch();
+
+    // 다음 페이지 여부 확인
+    boolean hasNext = results.size() > size;
+
+    // 실제 반환할 리스트 조정
+    List<FlatPreviewContentDTO> items = hasNext ? results.subList(0, size) : results;
+
+    // 다음 커서 계산
+    String nextCursor = null;
+    if (hasNext && !items.isEmpty()) {
+      nextCursor = String.valueOf(items.get(items.size() - 1).getContentId());
+    }
+
+    // 메타데이터
+    CursorResponse.MetaData meta =
+        CursorResponse.MetaData.builder()
+            .filter(status != null ? status.name() : null)
+            .cursorType("id")
+            .build();
+
+    return CursorResponse.of(items, nextCursor, hasNext, 0, meta);
+  }
+
+  @Override
   public CursorResponse<FlatPreviewContentDTO> findMySellingContentsWithCursor(
       Long userId, Long lastContentId, int size, ContentStatus status, ContentType contentType) {
 
@@ -182,6 +246,26 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
 
   @Override
   public int countMySellingContents(Long userId, ContentStatus status, ContentType contentType) {
+    QContent qContent = QContent.content;
+
+    // 기본 조건 설정
+    BooleanExpression conditions =
+        qContent.user.id.eq(userId).and(qContent.contentType.eq(contentType));
+
+    // 상태 필터 추가
+    if (status != null) {
+      conditions = conditions.and(qContent.status.eq(status));
+    }
+
+    // 결과가 null일 경우를 대비한 안전한 처리
+    Long count = queryFactory.select(qContent.count()).from(qContent).where(conditions).fetchOne();
+
+    // null 체크 후 반환 (결과가 null이면 0 반환)
+    return count != null ? count.intValue() : 0;
+  }
+
+  @Override
+  public int countMyPurchasingContents(Long userId, ContentStatus status, ContentType contentType) {
     QContent qContent = QContent.content;
 
     // 기본 조건 설정
