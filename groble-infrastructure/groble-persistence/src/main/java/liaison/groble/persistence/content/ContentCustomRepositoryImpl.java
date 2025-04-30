@@ -136,7 +136,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
 
   @Override
   public CursorResponse<FlatPreviewContentDTO> findHomeContentsWithCursor(
-      Long lastContentId, int size, ContentStatus status, ContentType contentType) {
+      Long lastContentId, int size, ContentType contentType) {
     QContent qContent = QContent.content;
     QUser qUser = QUser.user;
     // 기본 조건 설정
@@ -145,10 +145,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
     if (lastContentId != null) {
       conditions = conditions.and(qContent.id.lt(lastContentId));
     }
-    // 상태 필터 추가
-    if (status != null) {
-      conditions = conditions.and(qContent.status.eq(status));
-    }
+
     // 조회할 개수 + 1 (다음 페이지 존재 여부 확인용)
     int fetchSize = size + 1;
 
@@ -179,13 +176,8 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
     if (hasNext && !items.isEmpty()) {
       nextCursor = String.valueOf(items.get(items.size() - 1).getContentId());
     }
-    // 메타데이터
-    CursorResponse.MetaData meta =
-        CursorResponse.MetaData.builder()
-            .filter(status != null ? status.name() : null)
-            .cursorType("id")
-            .build();
-    return CursorResponse.of(items, nextCursor, hasNext, 0, meta);
+
+    return CursorResponse.of(items, nextCursor, hasNext, 0);
   }
 
   @Override

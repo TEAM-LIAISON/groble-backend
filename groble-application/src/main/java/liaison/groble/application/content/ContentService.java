@@ -187,15 +187,12 @@ public class ContentService {
   }
 
   @Transactional(readOnly = true)
-  public CursorResponse<ContentCardDto> getHomeContents(
-      String cursor, int size, String state, String type) {
+  public CursorResponse<ContentCardDto> getHomeContents(String cursor, int size, String type) {
     Long lastContentId = parseContentIdFromCursor(cursor);
-    ContentStatus contentStatus = parseContentStatus(state);
     ContentType contentType = parseContentType(type);
 
     CursorResponse<FlatPreviewContentDTO> flatDtos =
-        contentCustomRepository.findHomeContentsWithCursor(
-            lastContentId, size, contentStatus, contentType);
+        contentCustomRepository.findHomeContentsWithCursor(lastContentId, size, contentType);
 
     List<ContentCardDto> cardDtos =
         flatDtos.getItems().stream()
