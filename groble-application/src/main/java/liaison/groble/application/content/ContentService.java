@@ -186,6 +186,30 @@ public class ContentService {
         .build();
   }
 
+  @Transactional(readOnly = true)
+  public CursorResponse<ContentCardDto> getHomeContents(
+      String cursor, int size, String state, String type) {
+    Long lastContentId = parseContentIdFromCursor(cursor);
+    ContentStatus contentStatus = parseContentStatus(state);
+    ContentType contentType = parseContentType(type);
+
+    CursorResponse<FlatPreviewContentDTO> flatDtos =
+        contentCustomRepository.findHomeContentsWithCursor(
+            lastContentId, size, contentStatus, contentType);
+
+    List<ContentCardDto> cardDtos =
+        flatDtos.getItems().stream()
+            .map(this::convertFlatDtoToCardDto)
+            .collect(Collectors.toList());
+
+    // 7. 응답 구성
+    return CursorResponse.<ContentCardDto>builder()
+        .items(cardDtos)
+        .nextCursor(flatDtos.getNextCursor())
+        .hasNext(flatDtos.isHasNext())
+        .build();
+  }
+
   // --- 유틸리티 메서드 ---
 
   /** Content를 저장하고 DTO로 변환합니다. */

@@ -16,5 +16,8 @@ public interface ContentCustomRepository {
   CursorResponse<FlatPreviewContentDTO> findMySellingContentsWithCursor(
       Long userId, Long lastContentId, int size, ContentStatus status, ContentType contentType);
 
+  CursorResponse<FlatPreviewContentDTO> findHomeContentsWithCursor(
+      Long lastContentId, int size, ContentStatus status, ContentType contentType);
+
   int countMySellingContents(Long userId, ContentStatus status, ContentType contentType);
 }

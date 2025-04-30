@@ -166,6 +166,51 @@ public class ContentController {
     return ResponseEntity.ok(GrobleResponse.success(response, successMessage));
   }
 
+  // 홈화면 상품 조회
+  @Operation(summary = "홈화면 상품 조회", description = "홈화면 상품을 조회합니다.")
+  @GetMapping("/home")
+  public ResponseEntity<GrobleResponse<CursorResponse<ContentPreviewCardResponse>>> getHomeContents(
+      @Parameter(
+              description = "커서 기반 페이지네이션 요청 정보",
+              required = true,
+              schema = @Schema(implementation = CursorRequest.class))
+          @Valid
+          @ModelAttribute
+          CursorRequest cursorRequest,
+      @Parameter(
+              description = "상품 타입 (COACHING 또는 DOCUMENT)",
+              required = true,
+              schema =
+                  @Schema(
+                      implementation = String.class,
+                      allowableValues = {"COACHING", "DOCUMENT"}))
+          @RequestParam(value = "type")
+          String type) {
+    CursorResponse<ContentCardDto> cardDtos =
+        contentService.getHomeContents(cursorRequest.getCursor(), cursorRequest.getSize(), type);
+
+    // DTO 변환
+    List<ContentPreviewCardResponse> responseItems =
+        cardDtos.getItems().stream()
+            .map(contentDtoMapper::toContentPreviewCardFromCardDto)
+            .toList();
+
+    // CursorResponse 생성
+    CursorResponse<ContentPreviewCardResponse> response =
+        CursorResponse.<ContentPreviewCardResponse>builder()
+            .items(responseItems)
+            .nextCursor(cardDtos.getNextCursor())
+            .hasNext(cardDtos.isHasNext())
+            .totalCount(cardDtos.getTotalCount())
+            .meta(cardDtos.getMeta())
+            .build();
+
+    String successMessage = "COACHING".equals(type) ? "홈화면 코칭 상품 조회 성공" : "홈화면 자료 상품 조회 성공";
+    return ResponseEntity.ok(GrobleResponse.success(response, successMessage));
+  }
+
+  // 홈화면 상품 조회 [자료]
+
   // 상품 수정
   // 상품 삭제
   // 상품 검색
