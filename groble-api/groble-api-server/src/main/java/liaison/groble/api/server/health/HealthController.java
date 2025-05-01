@@ -27,7 +27,7 @@ public class HealthController {
   }
 
   @GetMapping("/env")
-  public ResponseEntity<ApiResponse<Void>> getEnv() {
-    return ResponseEntity.ok(ApiResponse.success(env));
+  public ResponseEntity<?> getEnv() {
+    return ResponseEntity.ok(env);
   }
 }

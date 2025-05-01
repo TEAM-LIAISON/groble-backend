@@ -5,6 +5,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
+import org.springframework.http.server.ServletServerHttpRequest;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
 
@@ -28,6 +29,20 @@ public class ResponseAdvice implements ResponseBodyAdvice<Object> {
       Class<? extends HttpMessageConverter<?>> selectedConverterType,
       ServerHttpRequest request,
       ServerHttpResponse response) {
+
+    // /env 경로 요청은 래핑하지 않음
+    if (request instanceof ServletServerHttpRequest) {
+      String path = ((ServletServerHttpRequest) request).getServletRequest().getRequestURI();
+      if ("/env".equals(path)) {
+        return body;
+      }
+    }
+
+    // String 타입 특별 처리
+    if (body instanceof String) {
+      // 문자열 타입은 래핑하지 않고 그대로 반환
+      return body;
+    }
 
     // 이미 ApiResponse로 래핑된 경우 그대로 반환
     if (body instanceof ApiResponse) {
