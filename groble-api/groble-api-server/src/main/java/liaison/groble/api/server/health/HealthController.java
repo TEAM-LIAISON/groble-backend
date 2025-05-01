@@ -28,6 +28,7 @@ public class HealthController {
 
   @GetMapping("/env")
   public ResponseEntity<?> getEnv() {
+
     return ResponseEntity.ok(env);
   }
 }
