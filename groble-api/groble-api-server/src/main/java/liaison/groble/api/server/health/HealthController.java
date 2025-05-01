@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import liaison.groble.common.response.ApiResponse;
+
 @RestController
 @RequestMapping
 public class HealthController {
@@ -17,16 +19,16 @@ public class HealthController {
   private String env;
 
   @GetMapping("/hc")
-  public ResponseEntity<?> healthcheck() {
+  public ResponseEntity<ApiResponse<Map<String, String>>> healthcheck() {
     Map<String, String> responseData = new TreeMap<>();
     responseData.put("env", env);
 
-    return ResponseEntity.ok(responseData);
+    return ResponseEntity.ok(ApiResponse.success(responseData));
   }
 
   @GetMapping("/env")
-  public ResponseEntity<?> getEnv() {
-
-    return ResponseEntity.ok(env);
+  public ResponseEntity<ApiResponse<Void>> getEnv() {
+    // ApiResponse를 사용하여 문자열을 반환
+    return ResponseEntity.ok(ApiResponse.success(env));
   }
 }
