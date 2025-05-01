@@ -28,7 +28,6 @@ public class HealthController {
 
   @GetMapping("/env")
   public ResponseEntity<ApiResponse<Void>> getEnv() {
-    // ApiResponse를 사용하여 문자열을 반환
     return ResponseEntity.ok(ApiResponse.success(env));
   }
 }

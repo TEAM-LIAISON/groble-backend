@@ -2,9 +2,6 @@ package liaison.groble.api.server.order;
 
 import jakarta.validation.Valid;
 
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -17,7 +14,6 @@ import liaison.groble.application.order.OrderService;
 import liaison.groble.application.order.dto.OrderCreateDto;
 import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.model.Accessor;
-import liaison.groble.common.response.GrobleResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -43,16 +39,8 @@ public class OrderController {
       responseCode = "201",
       description = "주문 생성 성공",
       content = @Content(schema = @Schema(implementation = OrderResponse.class)))
-  public ResponseEntity<GrobleResponse<Void>> createOrder(
-      @Auth Accessor accessor, @Valid @RequestBody CreateOrderRequest request) {
-    log.info("Creating order for user: {}", accessor.getUserId());
-
+  public void createOrder(@Auth Accessor accessor, @Valid @RequestBody CreateOrderRequest request) {
     OrderCreateDto orderCreateDto = orderDtoMapper.toServiceOrderCreateDto(request);
-
-    String redirectUrl = orderService.createOrder(accessor.getUserId(), orderCreateDto);
-
-    return ResponseEntity.status(HttpStatus.FOUND)
-        .header(HttpHeaders.LOCATION, redirectUrl)
-        .build();
+    orderService.createOrder(accessor.getUserId(), orderCreateDto);
   }
 }
