@@ -1,6 +1,8 @@
 package liaison.groble.api.server.file;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.HttpStatus;
@@ -56,5 +58,32 @@ public class FileController {
 
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(GrobleResponse.success(fileUploadResponse, "파일 업로드가 성공적으로 완료되었습니다.", 201));
+  }
+
+  @Operation(summary = "컨텐츠 파일 업로드", description = "즉시 다운로드에 대한 여러 컨텐츠 파일을 업로드합니다.")
+  @PostMapping(value = "/direct-contents", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  public List<FileUploadResponse> uploadContentsFiles(
+      @RequestParam("files") List<MultipartFile> files,
+      @RequestParam(value = "directory", defaultValue = "contents") String directory,
+      @RequestParam(required = false) Map<String, String> params)
+      throws IOException {
+
+    List<FileUploadResponse> responses = new ArrayList<>();
+
+    for (MultipartFile file : files) {
+      if (file != null && !file.isEmpty()) {
+        FileUploadDto fileUploadDto = fileDtoMapper.toServiceFileUploadDto(file, directory);
+        FileDto fileDto = fileService.uploadFile(0L, fileUploadDto);
+
+        responses.add(
+            FileUploadResponse.of(
+                fileDto.getOriginalFilename(),
+                fileDto.getFileUrl(),
+                fileDto.getContentType(),
+                directory));
+      }
+    }
+
+    return responses;
   }
 }

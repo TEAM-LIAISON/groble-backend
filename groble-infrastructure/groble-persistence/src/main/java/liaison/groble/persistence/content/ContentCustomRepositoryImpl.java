@@ -10,7 +10,7 @@ import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
 import liaison.groble.common.response.CursorResponse;
-import liaison.groble.domain.content.dto.FlatPreviewContentDTO;
+import liaison.groble.domain.content.dto.FlatContentPreviewDTO;
 import liaison.groble.domain.content.entity.QContent;
 import liaison.groble.domain.content.enums.ContentStatus;
 import liaison.groble.domain.content.enums.ContentType;
@@ -26,15 +26,15 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
   private final JPAQueryFactory queryFactory;
 
   @Override
-  public Optional<FlatPreviewContentDTO> findFlatContentById(Long contentId) {
+  public Optional<FlatContentPreviewDTO> findFlatContentById(Long contentId) {
     QContent qContent = QContent.content;
     QUser qUser = QUser.user;
 
-    FlatPreviewContentDTO result =
+    FlatContentPreviewDTO result =
         queryFactory
             .select(
                 Projections.fields(
-                    FlatPreviewContentDTO.class,
+                    FlatContentPreviewDTO.class,
                     qContent.id.as("contentId"),
                     qContent.createdAt.as("createdAt"),
                     qContent.title.as("title"),
@@ -50,14 +50,14 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
   }
 
   @Override
-  public List<FlatPreviewContentDTO> findFlatContentsByUserId(Long userId) {
+  public List<FlatContentPreviewDTO> findFlatContentsByUserId(Long userId) {
     QContent qContent = QContent.content;
     QUser qUser = QUser.user;
 
     return queryFactory
         .select(
             Projections.fields(
-                FlatPreviewContentDTO.class,
+                FlatContentPreviewDTO.class,
                 qContent.id.as("contentId"),
                 qContent.createdAt.as("createdAt"),
                 qContent.title.as("title"),
@@ -70,7 +70,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
   }
 
   @Override
-  public CursorResponse<FlatPreviewContentDTO> findMyPurchasingContentsWithCursor(
+  public CursorResponse<FlatContentPreviewDTO> findMyPurchasingContentsWithCursor(
       Long userId, Long lastContentId, int size, ContentStatus status, ContentType contentType) {
     QContent qContent = QContent.content;
     QUser qUser = QUser.user;
@@ -93,11 +93,11 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
     int fetchSize = size + 1;
 
     // 쿼리 실행
-    List<FlatPreviewContentDTO> results =
+    List<FlatContentPreviewDTO> results =
         queryFactory
             .select(
                 Projections.fields(
-                    FlatPreviewContentDTO.class,
+                    FlatContentPreviewDTO.class,
                     qContent.id.as("contentId"),
                     qContent.createdAt.as("createdAt"),
                     qContent.title.as("title"),
@@ -115,7 +115,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
     boolean hasNext = results.size() > size;
 
     // 실제 반환할 리스트 조정
-    List<FlatPreviewContentDTO> items = hasNext ? results.subList(0, size) : results;
+    List<FlatContentPreviewDTO> items = hasNext ? results.subList(0, size) : results;
 
     // 다음 커서 계산
     String nextCursor = null;
@@ -134,7 +134,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
   }
 
   @Override
-  public CursorResponse<FlatPreviewContentDTO> findMySellingContentsWithCursor(
+  public CursorResponse<FlatContentPreviewDTO> findMySellingContentsWithCursor(
       Long userId, Long lastContentId, int size, ContentStatus status, ContentType contentType) {
 
     QContent qContent = QContent.content;
@@ -158,11 +158,11 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
     int fetchSize = size + 1;
 
     // 쿼리 실행
-    List<FlatPreviewContentDTO> results =
+    List<FlatContentPreviewDTO> results =
         queryFactory
             .select(
                 Projections.fields(
-                    FlatPreviewContentDTO.class,
+                    FlatContentPreviewDTO.class,
                     qContent.id.as("contentId"),
                     qContent.createdAt.as("createdAt"),
                     qContent.title.as("title"),
@@ -180,7 +180,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
     boolean hasNext = results.size() > size;
 
     // 실제 반환할 리스트 조정
-    List<FlatPreviewContentDTO> items = hasNext ? results.subList(0, size) : results;
+    List<FlatContentPreviewDTO> items = hasNext ? results.subList(0, size) : results;
 
     // 다음 커서 계산
     String nextCursor = null;
@@ -199,7 +199,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
   }
 
   @Override
-  public CursorResponse<FlatPreviewContentDTO> findHomeContentsWithCursor(
+  public CursorResponse<FlatContentPreviewDTO> findHomeContentsWithCursor(
       Long lastContentId, int size, ContentType contentType) {
     QContent qContent = QContent.content;
     QUser qUser = QUser.user;
@@ -214,11 +214,11 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
     int fetchSize = size + 1;
 
     // 쿼리 실행
-    List<FlatPreviewContentDTO> results =
+    List<FlatContentPreviewDTO> results =
         queryFactory
             .select(
                 Projections.fields(
-                    FlatPreviewContentDTO.class,
+                    FlatContentPreviewDTO.class,
                     qContent.id.as("contentId"),
                     qContent.createdAt.as("createdAt"),
                     qContent.title.as("title"),
@@ -234,7 +234,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
     // 다음 페이지 여부 확인
     boolean hasNext = results.size() > size;
     // 실제 반환할 리스트 조정
-    List<FlatPreviewContentDTO> items = hasNext ? results.subList(0, size) : results;
+    List<FlatContentPreviewDTO> items = hasNext ? results.subList(0, size) : results;
     // 다음 커서 계산
     String nextCursor = null;
     if (hasNext && !items.isEmpty()) {

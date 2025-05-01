@@ -5,7 +5,7 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Repository;
 
-import liaison.groble.domain.content.dto.FlatPreviewContentDTO;
+import liaison.groble.domain.content.dto.FlatContentPreviewDTO;
 import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.content.enums.ContentStatus;
 import liaison.groble.domain.content.repository.ContentCustomRepository;
@@ -34,11 +34,11 @@ public class ContentRepositoryImpl implements ContentRepository {
     return jpaContentRepository.save(content);
   }
 
-  public Optional<FlatPreviewContentDTO> findFlatContentById(Long contentId) {
+  public Optional<FlatContentPreviewDTO> findFlatContentById(Long contentId) {
     return contentCustomRepository.findFlatContentById(contentId);
   }
 
-  public List<FlatPreviewContentDTO> findFlatContentsByUserId(Long userId) {
+  public List<FlatContentPreviewDTO> findFlatContentsByUserId(Long userId) {
     return contentCustomRepository.findFlatContentsByUserId(userId);
   }
 }

@@ -18,6 +18,7 @@ import liaison.groble.api.model.content.response.ContentStatusResponse;
 import liaison.groble.application.content.dto.ContentCardDto;
 import liaison.groble.application.content.dto.ContentDetailDto;
 import liaison.groble.application.content.dto.ContentDto;
+import liaison.groble.application.content.dto.ContentOptionDto;
 
 @Component
 public class ContentDtoMapper {
@@ -28,7 +29,7 @@ public class ContentDtoMapper {
       return null;
     }
 
-    List<ContentDto.ContentOptionDto> options = new ArrayList<>();
+    List<ContentOptionDto> options = new ArrayList<>();
 
     // ContentType에 따라 적절한 옵션 목록 생성
     String contentType = request.getContentType();
@@ -36,7 +37,7 @@ public class ContentDtoMapper {
       if ("COACHING".equals(contentType) && request.getCoachingOptions() != null) {
         for (CoachingOptionDraftRequest optionRequest : request.getCoachingOptions()) {
           if (optionRequest != null) {
-            ContentDto.ContentOptionDto option = mapToCoachingOptionDto(optionRequest);
+            ContentOptionDto option = mapToCoachingOptionDto(optionRequest);
             if (option != null) {
               options.add(option);
             }
@@ -45,7 +46,7 @@ public class ContentDtoMapper {
       } else if ("DOCUMENT".equals(contentType) && request.getDocumentOptions() != null) {
         for (DocumentOptionDraftRequest optionRequest : request.getDocumentOptions()) {
           if (optionRequest != null) {
-            ContentDto.ContentOptionDto option = mapToDocumentOptionDto(optionRequest);
+            ContentOptionDto option = mapToDocumentOptionDto(optionRequest);
             if (option != null) {
               options.add(option);
             }
@@ -82,7 +83,7 @@ public class ContentDtoMapper {
     // 필수 필드 검증
     validateRegisterRequest(request);
 
-    List<ContentDto.ContentOptionDto> options = new ArrayList<>();
+    List<ContentOptionDto> options = new ArrayList<>();
 
     // ContentType에 따라 적절한 옵션 목록 생성
     String contentType = request.getContentType();
@@ -201,7 +202,7 @@ public class ContentDtoMapper {
   }
 
   // T 타입은 특정 조건을 만족해야 함
-  private <T> ContentDto.ContentOptionDto mapToCoachingOptionDto(T optionRequest) {
+  private <T> ContentOptionDto mapToCoachingOptionDto(T optionRequest) {
     if (optionRequest == null) {
       return null;
     }
@@ -241,7 +242,7 @@ public class ContentDtoMapper {
       coachingTypeDescription = request.getCoachingTypeDescription();
     }
 
-    return ContentDto.ContentOptionDto.builder()
+    return ContentOptionDto.builder()
         .contentOptionId(null)
         .name(name)
         .description(description)
@@ -253,7 +254,7 @@ public class ContentDtoMapper {
         .build();
   }
 
-  private <T> ContentDto.ContentOptionDto mapToDocumentOptionDto(T optionRequest) {
+  private <T> ContentOptionDto mapToDocumentOptionDto(T optionRequest) {
     if (optionRequest == null) {
       return null;
     }
@@ -292,7 +293,7 @@ public class ContentDtoMapper {
     }
 
     // DTO 생성 및 반환
-    return ContentDto.ContentOptionDto.builder()
+    return ContentOptionDto.builder()
         .contentOptionId(null) // 새로 생성되는 옵션은 ID가 없음
         .name(name)
         .description(description)
@@ -309,7 +310,7 @@ public class ContentDtoMapper {
     List<ContentResponse.OptionResponse> optionResponses = new ArrayList<>();
 
     if (dto.getOptions() != null) {
-      for (ContentDto.ContentOptionDto optionDto : dto.getOptions()) {
+      for (ContentOptionDto optionDto : dto.getOptions()) {
         if (optionDto != null) {
           // 모든 필드가 null일 수 있음을 고려
           ContentResponse.OptionResponse.OptionResponseBuilder optionBuilder =

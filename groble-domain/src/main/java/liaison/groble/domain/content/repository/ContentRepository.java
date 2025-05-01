@@ -3,7 +3,7 @@ package liaison.groble.domain.content.repository;
 import java.util.List;
 import java.util.Optional;
 
-import liaison.groble.domain.content.dto.FlatPreviewContentDTO;
+import liaison.groble.domain.content.dto.FlatContentPreviewDTO;
 import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.content.enums.ContentStatus;
 
@@ -14,7 +14,7 @@ public interface ContentRepository {
 
   Content save(Content content);
 
-  Optional<FlatPreviewContentDTO> findFlatContentById(Long contentId);
+  Optional<FlatContentPreviewDTO> findFlatContentById(Long contentId);
 
-  List<FlatPreviewContentDTO> findFlatContentsByUserId(Long userId);
+  List<FlatContentPreviewDTO> findFlatContentsByUserId(Long userId);
 }

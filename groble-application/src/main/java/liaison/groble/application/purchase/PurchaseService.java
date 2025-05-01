@@ -7,7 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import liaison.groble.application.content.dto.ContentCardDto;
 import liaison.groble.common.response.CursorResponse;
-import liaison.groble.domain.content.dto.FlatPreviewContentDTO;
+import liaison.groble.domain.content.dto.FlatContentPreviewDTO;
 import liaison.groble.domain.content.enums.ContentStatus;
 import liaison.groble.domain.content.enums.ContentType;
 import liaison.groble.domain.content.repository.ContentCustomRepository;
@@ -29,7 +29,7 @@ public class PurchaseService {
     ContentStatus contentStatus = parseContentStatus(state);
     ContentType contentType = parseContentType(type);
 
-    CursorResponse<FlatPreviewContentDTO> flatDtos =
+    CursorResponse<FlatContentPreviewDTO> flatDtos =
         contentCustomRepository.findMyPurchasingContentsWithCursor(
             userId, lastContentId, size, contentStatus, contentType);
 
@@ -50,7 +50,7 @@ public class PurchaseService {
   }
 
   /** FlatPreviewContentDTO를 ContentCardDto로 변환합니다. */
-  private ContentCardDto convertFlatDtoToCardDto(FlatPreviewContentDTO flat) {
+  private ContentCardDto convertFlatDtoToCardDto(FlatContentPreviewDTO flat) {
     return ContentCardDto.builder()
         .contentId(flat.getContentId())
         .createdAt(flat.getCreatedAt())

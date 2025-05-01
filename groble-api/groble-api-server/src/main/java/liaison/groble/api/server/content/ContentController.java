@@ -38,70 +38,71 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 @RestController
 @RequestMapping("/api/v1/contents")
-@RequiredArgsConstructor
-@Tag(name = "서비스 상품 API", description = "서비스 상품 조회 및 등록(임시 저장, 심사 요청) API")
+@Tag(name = "컨텐츠 API", description = "컨텐츠 조회 및 등록(임시 저장, 심사 요청) API")
 public class ContentController {
 
   private final ContentService contentService;
   private final ContentDtoMapper contentDtoMapper;
 
-  // 서비스 상품 단건 조회 (상세 조회 코칭 & 자료 모두 조회 가능)
-  @Operation(summary = "서비스 상품 단건 조회 [코칭&자료 모두 조회 가능]", description = "서비스 상품(코칭&자료)을 상세 조회합니다.")
-  @GetMapping("/{contentId}")
-  public ResponseEntity<GrobleResponse<ContentDetailResponse>> getContentDetail(
-      @PathVariable("contentId") Long contentId) {
-    ContentDetailDto contentDetailDto = contentService.getContentDetail(contentId);
-    ContentDetailResponse response = contentDtoMapper.toContentDetailResponse(contentDetailDto);
-    return ResponseEntity.ok(GrobleResponse.success(response, "서비스 상품 상세 조회 성공"));
+  public ContentController(ContentService contentService, ContentDtoMapper contentDtoMapper) {
+    this.contentService = contentService;
+    this.contentDtoMapper = contentDtoMapper;
   }
 
-  // 서비스 상품 임시 저장
-  @Operation(summary = "서비스 상품 임시 저장", description = "서비스 상품을 임시 저장합니다.")
-  @ApiResponse(description = "서비스 상품을 임시 저장합니다.")
+  @Operation(summary = "컨텐츠 단건 조회 [코칭&자료 모두 조회 가능]", description = "컨텐츠(코칭&자료)를 상세 조회합니다.")
+  @ApiResponses({
+    @ApiResponse(
+        responseCode = "200",
+        description = "컨텐츠 단건 조회 성공",
+        content = @Content(schema = @Schema(implementation = ContentDetailResponse.class))),
+    @ApiResponse(responseCode = "404", description = "해당 컨텐츠 정보를 찾을 수 없음")
+  })
+  @GetMapping("/{contentId}")
+  public ContentDetailResponse getContentDetail(@PathVariable("contentId") Long contentId) {
+    ContentDetailDto contentDetailDto = contentService.getContentDetail(contentId);
+    return contentDtoMapper.toContentDetailResponse(contentDetailDto);
+  }
+
+  @Operation(summary = "컨텐츠 임시 저장", description = "컨텐츠를 임시 저장합니다.")
+  @ApiResponses({
+    @ApiResponse(
+        responseCode = "200",
+        description = "컨텐츠 임시 저장 성공",
+        content = @Content(schema = @Schema(implementation = ContentResponse.class)))
+  })
   @PostMapping("/draft")
-  public ResponseEntity<GrobleResponse<ContentResponse>> saveDraft(
-      @Auth Accessor accessor, @Valid @RequestBody ContentDraftRequest request) {
+  public ContentResponse saveDraft(
+      @Parameter(hidden = true) @Auth Accessor accessor,
+      @Valid @RequestBody ContentDraftRequest request) {
 
     ContentDto contentDto = contentDtoMapper.toServiceContentDtoFromDraft(request);
     ContentDto savedContentDto =
         contentService.saveDraftAndReturn(accessor.getUserId(), contentDto);
 
-    ContentResponse response = contentDtoMapper.toContentDraftResponse(savedContentDto);
-
-    return ResponseEntity.ok(GrobleResponse.success(response, "서비스 상품 임시 저장 성공"));
+    return contentDtoMapper.toContentDraftResponse(savedContentDto);
   }
 
   // 서비스 상품 심사 요청
-  @Operation(summary = "서비스 상품 심사 요청", description = "서비스 상품을 심사 요청합니다.")
+  @Operation(summary = "컨텐츠 심사 요청", description = "작성 완료한 컨텐츠에 대해 심사를 요청합니다.")
   @PostMapping("/register")
-  public ResponseEntity<GrobleResponse<ContentResponse>> registerContent(
-      @Auth Accessor accessor, @Valid @RequestBody ContentRegisterRequest request) {
-    // 1. 요청 DTO를 서비스 DTO로 변환
+  public ContentResponse registerContent(
+      @Parameter(hidden = true) @Auth Accessor accessor,
+      @Valid @RequestBody ContentRegisterRequest request) {
     ContentDto contentDto = contentDtoMapper.toServiceContentDtoFromRegister(request);
     ContentDto savedContentDto = contentService.registerContent(accessor.getUserId(), contentDto);
-
-    ContentResponse response = contentDtoMapper.toContentDraftResponse(savedContentDto);
-    return ResponseEntity.ok(GrobleResponse.success(response, "서비스 상품 심사 요청 성공"));
+    return contentDtoMapper.toContentDraftResponse(savedContentDto);
   }
 
-  // 상품 활성화 (판매중으로 변경)
-  @Operation(summary = "상품 활성화", description = "심사완료된 상품을 활성화합니다.")
+  @Operation(summary = "컨텐츠 활성화", description = "심사완료된 컨텐츠를 활성화합니다.")
   @PostMapping("/{contentId}/active")
-  public ResponseEntity<GrobleResponse<ContentStatusResponse>> activateContent(
-      @PathVariable("contentId") Long contentId,
-      @Parameter(hidden = true) @Auth Accessor accessor) {
-    // 서비스 호출
+  public ContentStatusResponse activateContent(
+      @Parameter(hidden = true) @Auth Accessor accessor,
+      @PathVariable("contentId") Long contentId) {
     ContentDto contentDto = contentService.activateContent(accessor.getUserId(), contentId);
-
-    // DTO 변환
-    ContentStatusResponse response = contentDtoMapper.toContentStatusResponse(contentDto);
-    return ResponseEntity.ok(GrobleResponse.success(response, "상품 활성화 성공"));
+    return contentDtoMapper.toContentStatusResponse(contentDto);
   }
 
   @ApiResponses({

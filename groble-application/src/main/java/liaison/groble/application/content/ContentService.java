@@ -11,11 +11,12 @@ import org.springframework.transaction.annotation.Transactional;
 import liaison.groble.application.content.dto.ContentCardDto;
 import liaison.groble.application.content.dto.ContentDetailDto;
 import liaison.groble.application.content.dto.ContentDto;
+import liaison.groble.application.content.dto.ContentOptionDto;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.common.exception.EntityNotFoundException;
 import liaison.groble.common.exception.ForbiddenException;
 import liaison.groble.common.response.CursorResponse;
-import liaison.groble.domain.content.dto.FlatPreviewContentDTO;
+import liaison.groble.domain.content.dto.FlatContentPreviewDTO;
 import liaison.groble.domain.content.entity.Category;
 import liaison.groble.domain.content.entity.CoachingOption;
 import liaison.groble.domain.content.entity.Content;
@@ -94,11 +95,6 @@ public class ContentService {
    */
   @Transactional
   public ContentDto registerContent(Long userId, ContentDto contentDto) {
-    // 1. 유효성 검증
-    if (contentDto == null) {
-      throw new IllegalArgumentException("심사 요청할 상품 정보가 필요합니다.");
-    }
-
     validateContentForSubmission(contentDto);
 
     // 2. 사용자 조회
@@ -144,6 +140,7 @@ public class ContentService {
    */
   @Transactional(readOnly = true)
   public ContentDetailDto getContentDetail(Long contentId) {
+    Content content = contentReader.getContentById(contentId);
     return ContentDetailDto.builder().build();
   }
 
@@ -164,7 +161,7 @@ public class ContentService {
     ContentStatus contentStatus = parseContentStatus(state);
     ContentType contentType = parseContentType(type);
 
-    CursorResponse<FlatPreviewContentDTO> flatDtos =
+    CursorResponse<FlatContentPreviewDTO> flatDtos =
         contentCustomRepository.findMySellingContentsWithCursor(
             userId, lastContentId, size, contentStatus, contentType);
 
@@ -191,7 +188,7 @@ public class ContentService {
     Long lastContentId = parseContentIdFromCursor(cursor);
     ContentType contentType = parseContentType(type);
 
-    CursorResponse<FlatPreviewContentDTO> flatDtos =
+    CursorResponse<FlatContentPreviewDTO> flatDtos =
         contentCustomRepository.findHomeContentsWithCursor(lastContentId, size, contentType);
 
     List<ContentCardDto> cardDtos =
@@ -289,10 +286,10 @@ public class ContentService {
   /** 옵션을 Content에 추가합니다. */
   private void addOptionsToContent(Content content, ContentDto dto) {
     // dto.getOptions()가 null인 경우 빈 리스트 사용 (NPE 방지)
-    List<ContentDto.ContentOptionDto> options =
+    List<ContentOptionDto> options =
         dto.getOptions() != null ? dto.getOptions() : Collections.emptyList();
 
-    for (ContentDto.ContentOptionDto optionDto : options) {
+    for (ContentOptionDto optionDto : options) {
       // null 옵션 건너뛰기
       if (optionDto == null) continue;
 
@@ -312,7 +309,7 @@ public class ContentService {
 
   /** Content 유형에 맞는 옵션을 생성합니다. */
   private ContentOption createOptionByContentType(
-      ContentType contentType, ContentDto.ContentOptionDto optionDto) {
+      ContentType contentType, ContentOptionDto optionDto) {
     ContentOption option;
 
     if (contentType == ContentType.COACHING) {
@@ -333,7 +330,7 @@ public class ContentService {
   }
 
   /** 코칭 옵션을 생성합니다. */
-  private CoachingOption createCoachingOption(ContentDto.ContentOptionDto optionDto) {
+  private CoachingOption createCoachingOption(ContentOptionDto optionDto) {
     CoachingOption option = new CoachingOption();
 
     // 코칭 옵션 특화 필드 설정 - null 안전하게 처리
@@ -367,7 +364,7 @@ public class ContentService {
   }
 
   /** 문서 옵션을 생성합니다. */
-  private DocumentOption createDocumentOption(ContentDto.ContentOptionDto optionDto) {
+  private DocumentOption createDocumentOption(ContentOptionDto optionDto) {
     DocumentOption option = new DocumentOption();
 
     // 문서 옵션 특화 필드 설정 - null 안전하게 처리
@@ -384,7 +381,7 @@ public class ContentService {
   }
 
   /** FlatPreviewContentDTO를 ContentCardDto로 변환합니다. */
-  private ContentCardDto convertFlatDtoToCardDto(FlatPreviewContentDTO flat) {
+  private ContentCardDto convertFlatDtoToCardDto(FlatContentPreviewDTO flat) {
     return ContentCardDto.builder()
         .contentId(flat.getContentId())
         .createdAt(flat.getCreatedAt())
@@ -444,13 +441,13 @@ public class ContentService {
     }
 
     // 옵션 변환
-    List<ContentDto.ContentOptionDto> optionDtos = new ArrayList<>();
+    List<ContentOptionDto> optionDtos = new ArrayList<>();
     if (content.getOptions() != null) {
       for (ContentOption option : content.getOptions()) {
         if (option == null) continue;
 
-        ContentDto.ContentOptionDto.ContentOptionDtoBuilder builder =
-            ContentDto.ContentOptionDto.builder()
+        ContentOptionDto.ContentOptionDtoBuilder builder =
+            ContentOptionDto.builder()
                 .contentOptionId(option.getId())
                 .name(option.getName())
                 .description(option.getDescription())
@@ -536,7 +533,7 @@ public class ContentService {
     } else {
       // 각 옵션별 필수 필드 검증
       for (int i = 0; i < contentDto.getOptions().size(); i++) {
-        ContentDto.ContentOptionDto option = contentDto.getOptions().get(i);
+        ContentOptionDto option = contentDto.getOptions().get(i);
 
         if (option.getName() == null || option.getName().trim().isEmpty()) {
           missingFields.add("옵션" + (i + 1) + " 이름");

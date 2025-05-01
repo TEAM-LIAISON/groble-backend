@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class FlatPreviewContentDTO {
+public class FlatContentPreviewDTO {
   private Long contentId;
   private LocalDateTime createdAt;
   private String title;
