@@ -16,11 +16,6 @@ public class QSellerInfo extends BeanPath<SellerInfo> {
 
   public static final QSellerInfo sellerInfo = new QSellerInfo("sellerInfo");
 
-  public final BooleanPath approved = createBoolean("approved");
-
-  public final DateTimePath<java.time.LocalDateTime> approvedAt =
-      createDateTime("approvedAt", java.time.LocalDateTime.class);
-
   public final StringPath bankAccountNumber = createString("bankAccountNumber");
 
   public final StringPath bankAccountOwner = createString("bankAccountOwner");
@@ -35,9 +30,21 @@ public class QSellerInfo extends BeanPath<SellerInfo> {
 
   public final StringPath businessNumber = createString("businessNumber");
 
-  public final StringPath businessType = createString("businessType");
+  public final EnumPath<liaison.groble.domain.user.enums.BusinessType> businessType =
+      createEnum("businessType", liaison.groble.domain.user.enums.BusinessType.class);
+
+  public final DateTimePath<java.time.LocalDateTime> lastVerificationAttempt =
+      createDateTime("lastVerificationAttempt", java.time.LocalDateTime.class);
 
   public final StringPath representativeName = createString("representativeName");
+
+  public final StringPath verificationMessage = createString("verificationMessage");
+
+  public final EnumPath<liaison.groble.domain.user.enums.SellerVerificationStatus>
+      verificationStatus =
+          createEnum(
+              "verificationStatus",
+              liaison.groble.domain.user.enums.SellerVerificationStatus.class);
 
   public QSellerInfo(String variable) {
     super(SellerInfo.class, forVariable(variable));
