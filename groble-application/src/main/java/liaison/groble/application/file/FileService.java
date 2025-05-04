@@ -12,6 +12,7 @@ import liaison.groble.common.exception.FileSizeLimitExceededException;
 import liaison.groble.common.exception.InvalidFileTypeException;
 import liaison.groble.domain.file.entity.FileInfo;
 import liaison.groble.domain.file.entity.PresignedUrlInfo;
+import liaison.groble.domain.file.enums.FileTypeGroup;
 import liaison.groble.domain.file.repository.FileRepository;
 import liaison.groble.domain.file.service.FileStorageService;
 import liaison.groble.domain.user.entity.User;
@@ -195,5 +196,16 @@ public class FileService {
     if (fileInfo != null) {
       fileStorageService.deleteFile(fileInfo.getStoragePath());
     }
+  }
+
+  public String resolveDirectoryPath(String fileType, String directory) {
+    FileTypeGroup base = FileTypeGroup.from(fileType);
+
+    if (directory == null || directory.isBlank()) {
+      return base.getDir(); // 예: images
+    }
+
+    // 일반적인 케이스: profile/images
+    return directory.toLowerCase() + "/" + base.getDir();
   }
 }

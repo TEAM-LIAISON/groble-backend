@@ -34,7 +34,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/v1/files")
+@RequestMapping("/api/v1")
 @RequiredArgsConstructor
 @Tag(name = "이미지 및 첨부 파일 API", description = "파일 업로드 및 관리 API")
 public class FileController {
@@ -43,11 +43,12 @@ public class FileController {
 
   private static final String DEFAULT_DIRECTORY = "default";
   private static final String IMAGE_DIRECTORY = "images";
-  private static final String DOCUMENT_DIRECTORY = "documents";
+  private static final String CONTENT_DIRECTORY = "contents";
+  private static final String BUSINESS_LICENSE_DIRECTORY = "business-license";
 
   /** 기본 파일 업로드 - 모든 파일 타입 처리 */
   @Operation(
-      summary = "파일 업로드",
+      summary = "단건 파일 업로드",
       description =
           "폼 데이터를 통해 다양한 유형의 파일을 업로드합니다. fileType 파라미터를 통해 파일 저장 위치를 자동으로 결정하거나 directory 파라미터로 직접 지정할 수 있습니다.")
   @ApiResponses({
@@ -60,7 +61,7 @@ public class FileController {
     @ApiResponse(responseCode = "413", description = "파일 크기 제한 초과"),
     @ApiResponse(responseCode = "500", description = "서버 오류 - 파일 저장 실패")
   })
-  @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @PostMapping(value = "/file", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public FileUploadResponse uploadFile(
       @Auth Accessor accessor,
       @RequestParam("file") MultipartFile file,
@@ -68,8 +69,7 @@ public class FileController {
       @RequestParam(value = "directory", required = false) String directory) {
 
     try {
-      // 파일 타입과 디렉토리를 조합하여 최종 저장 경로 결정
-      String targetDirectory = determineTargetDirectory(fileType, directory);
+      String targetDirectory = fileService.resolveDirectoryPath(fileType, directory);
 
       FileUploadDto fileUploadDto = fileDtoMapper.toServiceFileUploadDto(file, targetDirectory);
       FileDto fileDto = fileService.uploadFile(accessor.getUserId(), fileUploadDto);
@@ -175,7 +175,7 @@ public class FileController {
 
     return switch (fileType.toUpperCase()) {
       case "IMAGE" -> IMAGE_DIRECTORY;
-      case "DOCUMENT", "PDF", "WORD", "EXCEL", "PPT" -> DOCUMENT_DIRECTORY;
+      case "DOCUMENT", "PDF", "WORD", "EXCEL", "PPT" -> CONTENT_DIRECTORY;
       default -> DEFAULT_DIRECTORY;
     };
   }
