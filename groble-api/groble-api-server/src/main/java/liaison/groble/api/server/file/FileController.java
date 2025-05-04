@@ -41,7 +41,6 @@ public class FileController {
   private final FileService fileService;
   private final FileDtoMapper fileDtoMapper;
 
-  // 파일 타입별 디렉토리 매핑 (확장성 고려)
   private static final String DEFAULT_DIRECTORY = "uploads";
   private static final String IMAGE_DIRECTORY = "images";
   private static final String DOCUMENT_DIRECTORY = "documents";

@@ -71,17 +71,10 @@ public class Content extends BaseEntity {
   @OneToMany(mappedBy = "content", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<ContentOption> options = new ArrayList<>();
 
-  // 썸네일 이미지 URL
-  private String thumbnailUrl;
-
-  // 서비스 소개
-  private String serviceIntro;
-  // 서비스 타겟
-  private String serviceTarget;
-  // 제공 절차
-  private String serviceProcess;
-  // 메이커 소개
-  private String makerIntro;
+  private String thumbnailUrl; // 썸네일 URL
+  private String serviceTarget; // 서비스 타겟
+  private String serviceProcess; // 제공 절차
+  private String makerIntro; // 메이커 소개
 
   @Column(name = "sale_count")
   private Integer saleCount = 0; // 판매 수

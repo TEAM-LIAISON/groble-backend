@@ -46,8 +46,6 @@ public class QContent extends EntityPathBase<Content> {
 
   public final NumberPath<Integer> saleCount = createNumber("saleCount", Integer.class);
 
-  public final StringPath serviceIntro = createString("serviceIntro");
-
   public final StringPath serviceProcess = createString("serviceProcess");
 
   public final StringPath serviceTarget = createString("serviceTarget");
