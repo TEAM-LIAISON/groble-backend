@@ -41,7 +41,6 @@ public class ResponseAdvice implements ResponseBodyAdvice<Object> {
 
     // Check if this is a Spring error response
     if (isSpringErrorResponse(body)) {
-      // Extract error details
       Map<String, Object> errorMap = (Map<String, Object>) body;
       String errorMessage = (String) errorMap.get("message");
       Integer status = (Integer) errorMap.get("status");
