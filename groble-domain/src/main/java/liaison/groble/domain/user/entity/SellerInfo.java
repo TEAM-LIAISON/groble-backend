@@ -4,6 +4,11 @@ import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+
+import liaison.groble.domain.user.enums.BusinessType;
+import liaison.groble.domain.user.enums.SellerVerificationStatus;
 
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -22,7 +27,8 @@ public class SellerInfo {
   private String businessNumber; // 사업자등록번호
 
   @Column(name = "business_type")
-  private String businessType;
+  @Enumerated(EnumType.STRING)
+  private BusinessType businessType;
 
   @Column(name = "business_category")
   private String businessCategory;
@@ -42,17 +48,21 @@ public class SellerInfo {
   @Column(name = "bank_account_owner")
   private String bankAccountOwner;
 
-  @Column(name = "approved")
-  private boolean approved = false;
+  @Column(name = "verification_status")
+  @Enumerated(EnumType.STRING)
+  private SellerVerificationStatus verificationStatus = SellerVerificationStatus.PENDING;
 
-  @Column(name = "approved_at")
-  private LocalDateTime approvedAt;
+  @Column(name = "verification_message")
+  private String verificationMessage;
+
+  @Column(name = "last_verification_attempt")
+  private LocalDateTime lastVerificationAttempt;
 
   @Builder
   public SellerInfo(
       String businessName,
       String businessNumber,
-      String businessType,
+      BusinessType businessType, // Enum으로 변경
       String businessCategory,
       String businessAddress,
       String representativeName,
@@ -68,10 +78,13 @@ public class SellerInfo {
     this.bankName = bankName;
     this.bankAccountNumber = bankAccountNumber;
     this.bankAccountOwner = bankAccountOwner;
+    this.verificationStatus = SellerVerificationStatus.PENDING;
   }
 
-  public void approve() {
-    this.approved = true;
-    this.approvedAt = LocalDateTime.now();
+  // 상태 변경 메서드
+  public void updateVerificationStatus(SellerVerificationStatus status, String message) {
+    this.verificationStatus = status;
+    this.verificationMessage = message;
+    this.lastVerificationAttempt = LocalDateTime.now();
   }
 }
