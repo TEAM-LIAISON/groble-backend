@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import liaison.groble.api.model.user.request.UserTypeRequest;
+import liaison.groble.api.model.user.response.BuyerMyPageSummaryResponse;
+import liaison.groble.api.model.user.response.SellerMyPageSummaryResponse;
 import liaison.groble.api.model.user.response.UserMyPageDetailResponse;
 import liaison.groble.api.model.user.response.UserMyPageSummaryResponse;
 import liaison.groble.api.server.user.mapper.UserDtoMapper;
@@ -63,12 +65,21 @@ public class UserController {
     @ApiResponse(
         responseCode = "200",
         description = "마이페이지 요약 정보 조회 성공",
-        content = @Content(schema = @Schema(implementation = UserMyPageSummaryResponse.class))),
+        content =
+            @Content(
+                schema =
+                    @Schema(
+                        oneOf = {
+                          BuyerMyPageSummaryResponse.class,
+                          SellerMyPageSummaryResponse.class
+                        },
+                        discriminatorProperty = "userType.code"))),
     @ApiResponse(responseCode = "401", description = "인증 실패 (AccessToken 만료 또는 없음)"),
     @ApiResponse(responseCode = "404", description = "사용자 정보를 찾을 수 없음")
   })
   @GetMapping("/me/summary")
   public UserMyPageSummaryResponse getUserMyPageSummary(@Auth Accessor accessor) {
+    // 기존 코드와 동일하게 유지 - 클라이언트에서의 변경 최소화
     UserMyPageSummaryDto summaryDto = userService.getUserMyPageSummary(accessor.getUserId());
     return userDtoMapper.toApiMyPageSummaryResponse(summaryDto);
   }
