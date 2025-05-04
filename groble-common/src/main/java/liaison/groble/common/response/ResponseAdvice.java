@@ -30,14 +30,15 @@ public class ResponseAdvice implements ResponseBodyAdvice<Object> {
       ServerHttpRequest request,
       ServerHttpResponse response) {
 
-    // /env 경로 요청은 래핑하지 않음
+    // /env 경로 및 Swagger 관련 경로 요청은 래핑하지 않음
     if (request instanceof ServletServerHttpRequest) {
       String path = ((ServletServerHttpRequest) request).getServletRequest().getRequestURI();
-      if ("/env".equals(path)) {
+      if ("/env".equals(path) || isSwaggerRequest(path)) {
         return body;
       }
     }
 
+    // 기존 코드는 그대로 유지
     // String 타입 특별 처리
     if (body instanceof String) {
       // 문자열 타입은 래핑하지 않고 그대로 반환
@@ -56,5 +57,12 @@ public class ResponseAdvice implements ResponseBodyAdvice<Object> {
 
     // 일반 객체인 경우 성공 응답으로 래핑하여 반환
     return ApiResponse.success(body);
+  }
+
+  // Swagger 관련 요청인지 확인하는 메소드 추가
+  private boolean isSwaggerRequest(String path) {
+    return path.contains("/swagger-ui")
+        || path.contains("/v3/api-docs")
+        || path.contains("/swagger-resources");
   }
 }
