@@ -41,11 +41,9 @@ public class FileController {
   private final FileService fileService;
   private final FileDtoMapper fileDtoMapper;
 
-  private static final String DEFAULT_DIRECTORY = "uploads";
+  private static final String DEFAULT_DIRECTORY = "default";
   private static final String IMAGE_DIRECTORY = "images";
   private static final String DOCUMENT_DIRECTORY = "documents";
-  private static final String CONTENT_DIRECTORY = "contents";
-  private static final String PROFILE_DIRECTORY = "profiles";
 
   /** 기본 파일 업로드 - 모든 파일 타입 처리 */
   @Operation(
@@ -70,8 +68,8 @@ public class FileController {
       @RequestParam(value = "directory", required = false) String directory) {
 
     try {
-      // 파일 타입에 따른 기본 디렉토리 결정
-      String targetDirectory = directory != null ? directory : getDirectoryByFileType(fileType);
+      // 파일 타입과 디렉토리를 조합하여 최종 저장 경로 결정
+      String targetDirectory = determineTargetDirectory(fileType, directory);
 
       FileUploadDto fileUploadDto = fileDtoMapper.toServiceFileUploadDto(file, targetDirectory);
       FileDto fileDto = fileService.uploadFile(accessor.getUserId(), fileUploadDto);
@@ -180,6 +178,24 @@ public class FileController {
       case "DOCUMENT", "PDF", "WORD", "EXCEL", "PPT" -> DOCUMENT_DIRECTORY;
       default -> DEFAULT_DIRECTORY;
     };
+  }
+
+  /** 파일 타입과 디렉토리를 조합하여 최종 저장 경로 결정 */
+  private String determineTargetDirectory(String fileType, String directory) {
+    String typeDirectory = getDirectoryByFileType(fileType);
+
+    // 디렉토리가 지정되지 않은 경우 타입 디렉토리만 사용
+    if (directory == null) {
+      return typeDirectory;
+    }
+
+    // fileType이 IMAGE인 경우 images/지정된디렉토리 형식으로 조합
+    if (fileType != null && fileType.equalsIgnoreCase("IMAGE")) {
+      return typeDirectory + "/" + directory.toLowerCase();
+    }
+
+    // 그 외의 경우 지정된 디렉토리만 사용
+    return directory;
   }
 
   /** 이미지 파일 여부 확인 */
