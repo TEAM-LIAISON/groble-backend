@@ -45,6 +45,7 @@ public class FileController {
   private static final String IMAGE_DIRECTORY = "images";
   private static final String DOCUMENT_DIRECTORY = "documents";
   private static final String CONTENT_DIRECTORY = "contents";
+  private static final String PROFILE_DIRECTORY = "profiles";
 
   /** 기본 파일 업로드 - 모든 파일 타입 처리 */
   @Operation(
@@ -62,7 +63,7 @@ public class FileController {
     @ApiResponse(responseCode = "500", description = "서버 오류 - 파일 저장 실패")
   })
   @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  public ResponseEntity<GrobleResponse<FileUploadResponse>> uploadFile(
+  public FileUploadResponse uploadFile(
       @Auth Accessor accessor,
       @RequestParam("file") MultipartFile file,
       @RequestParam(value = "fileType", required = false) String fileType,
@@ -75,15 +76,11 @@ public class FileController {
       FileUploadDto fileUploadDto = fileDtoMapper.toServiceFileUploadDto(file, targetDirectory);
       FileDto fileDto = fileService.uploadFile(accessor.getUserId(), fileUploadDto);
 
-      FileUploadResponse response =
-          FileUploadResponse.of(
-              fileDto.getOriginalFilename(),
-              fileDto.getFileUrl(),
-              fileDto.getContentType(),
-              targetDirectory);
-
-      return ResponseEntity.status(HttpStatus.CREATED)
-          .body(GrobleResponse.success(response, "파일 업로드가 성공적으로 완료되었습니다.", 201));
+      return FileUploadResponse.of(
+          fileDto.getOriginalFilename(),
+          fileDto.getFileUrl(),
+          fileDto.getContentType(),
+          targetDirectory);
     } catch (IOException e) {
       log.error("파일 업로드 중 오류 발생: {}", e.getMessage(), e);
       throw new FileProcessingException("파일 업로드 중 오류가 발생했습니다: " + e.getMessage());
@@ -105,7 +102,7 @@ public class FileController {
     @ApiResponse(responseCode = "500", description = "서버 오류 - 파일 저장 실패")
   })
   @PostMapping(value = "/content/thumbnail", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  public ResponseEntity<GrobleResponse<FileUploadResponse>> uploadContentThumbnail(
+  public FileUploadResponse uploadContentThumbnail(
       @Auth Accessor accessor,
       @RequestParam("file") MultipartFile file,
       @RequestParam(value = "directory", defaultValue = "contents") String directory) {
@@ -119,15 +116,8 @@ public class FileController {
       FileUploadDto fileUploadDto = fileDtoMapper.toServiceFileUploadDto(file, directory);
       FileDto fileDto = fileService.uploadFile(accessor.getUserId(), fileUploadDto);
 
-      FileUploadResponse response =
-          FileUploadResponse.of(
-              fileDto.getOriginalFilename(),
-              fileDto.getFileUrl(),
-              fileDto.getContentType(),
-              directory);
-
-      return ResponseEntity.status(HttpStatus.CREATED)
-          .body(GrobleResponse.success(response, "파일 업로드가 성공적으로 완료되었습니다.", 201));
+      return FileUploadResponse.of(
+          fileDto.getOriginalFilename(), fileDto.getFileUrl(), fileDto.getContentType(), directory);
     } catch (IOException e) {
       log.error("파일 업로드 중 오류 발생: {}", e.getMessage(), e);
       throw new FileProcessingException("파일 업로드 중 오류가 발생했습니다: " + e.getMessage());
@@ -188,7 +178,6 @@ public class FileController {
     return switch (fileType.toUpperCase()) {
       case "IMAGE" -> IMAGE_DIRECTORY;
       case "DOCUMENT", "PDF", "WORD", "EXCEL", "PPT" -> DOCUMENT_DIRECTORY;
-      case "CONTENT" -> CONTENT_DIRECTORY;
       default -> DEFAULT_DIRECTORY;
     };
   }

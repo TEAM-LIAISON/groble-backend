@@ -26,9 +26,13 @@ public class QSellerInfo extends BeanPath<SellerInfo> {
 
   public final StringPath businessCategory = createString("businessCategory");
 
+  public final StringPath businessLicenseFileUrl = createString("businessLicenseFileUrl");
+
   public final StringPath businessName = createString("businessName");
 
   public final StringPath businessNumber = createString("businessNumber");
+
+  public final StringPath businessSector = createString("businessSector");
 
   public final EnumPath<liaison.groble.domain.user.enums.BusinessType> businessType =
       createEnum("businessType", liaison.groble.domain.user.enums.BusinessType.class);
@@ -37,6 +41,8 @@ public class QSellerInfo extends BeanPath<SellerInfo> {
       createDateTime("lastVerificationAttempt", java.time.LocalDateTime.class);
 
   public final StringPath representativeName = createString("representativeName");
+
+  public final StringPath taxInvoiceEmail = createString("taxInvoiceEmail");
 
   public final StringPath verificationMessage = createString("verificationMessage");
 
