@@ -1,5 +1,6 @@
 package liaison.groble.domain.content.dto;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import lombok.AllArgsConstructor;
@@ -17,5 +18,6 @@ public class FlatContentPreviewDTO {
   private String title;
   private String thumbnailUrl;
   private String sellerName;
+  private BigDecimal lowestPrice;
   private String status;
 }

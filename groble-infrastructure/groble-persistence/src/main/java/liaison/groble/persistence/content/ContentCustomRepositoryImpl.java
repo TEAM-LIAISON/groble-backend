@@ -40,6 +40,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     qContent.title.as("title"),
                     qContent.thumbnailUrl.as("thumbnailUrl"),
                     qUser.nickname.as("sellerName"),
+                    qContent.lowestPrice.as("lowestPrice"),
                     qContent.status.stringValue().as("status")))
             .from(qContent)
             .leftJoin(qContent.user, qUser)

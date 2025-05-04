@@ -2,6 +2,7 @@ package liaison.groble.domain.content.entity;
 
 import static jakarta.persistence.EnumType.STRING;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -82,6 +83,9 @@ public class Content extends BaseEntity {
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
   private ContentStatus status = ContentStatus.DRAFT;
+
+  @Column(name = "lowest_price")
+  private BigDecimal lowestPrice; // 최저가
 
   // 비즈니스 로직으로 옵션 유형 검증
   public void addOption(ContentOption option) {

@@ -388,6 +388,7 @@ public class ContentService {
         .title(flat.getTitle())
         .thumbnailUrl(flat.getThumbnailUrl())
         .sellerName(flat.getSellerName())
+        .lowestPrice(flat.getLowestPrice())
         .status(flat.getStatus())
         .build();
   }

@@ -1,5 +1,6 @@
 package liaison.groble.application.content.dto;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import lombok.Builder;
@@ -13,5 +14,6 @@ public class ContentCardDto {
   private String title;
   private String thumbnailUrl;
   private String sellerName;
+  private BigDecimal lowestPrice;
   private String status;
 }

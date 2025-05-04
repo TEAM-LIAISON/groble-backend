@@ -1,5 +1,6 @@
 package liaison.groble.api.model.content.response;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -32,6 +33,9 @@ public class ContentPreviewCardResponse {
 
   @Schema(description = "판매자 이름", example = "개발자킴")
   private String sellerName;
+
+  @Schema(description = "상품 최저가 가격", example = "100000")
+  private BigDecimal lowestPrice;
 
   @Schema(
       description = "상품 상태",
