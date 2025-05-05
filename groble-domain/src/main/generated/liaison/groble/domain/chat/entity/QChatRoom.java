@@ -22,9 +22,12 @@ public class QChatRoom extends EntityPathBase<ChatRoom> {
   public final liaison.groble.domain.common.entity.QBaseTimeEntity _super =
       new liaison.groble.domain.common.entity.QBaseTimeEntity(this);
 
-  public final BooleanPath active = createBoolean("active");
-
   public final liaison.groble.domain.user.entity.QUser buyer;
+
+  public final NumberPath<Integer> buyerUnreadCount =
+      createNumber("buyerUnreadCount", Integer.class);
+
+  public final liaison.groble.domain.content.entity.QContent content;
 
   // inherited
   public final DateTimePath<java.time.Instant> createdAt = _super.createdAt;
@@ -33,13 +36,25 @@ public class QChatRoom extends EntityPathBase<ChatRoom> {
 
   public final StringPath lastMessage = createString("lastMessage");
 
-  public final DateTimePath<java.time.LocalDateTime> lastMessageTime =
-      createDateTime("lastMessageTime", java.time.LocalDateTime.class);
+  public final DateTimePath<java.time.Instant> lastMessageTime =
+      createDateTime("lastMessageTime", java.time.Instant.class);
+
+  public final ListPath<ChatMessage, QChatMessage> messages =
+      this.<ChatMessage, QChatMessage>createList(
+          "messages", ChatMessage.class, QChatMessage.class, PathInits.DIRECT2);
 
   // inherited
   public final DateTimePath<java.time.Instant> modifiedAt = _super.modifiedAt;
 
   public final liaison.groble.domain.user.entity.QUser seller;
+
+  public final NumberPath<Integer> sellerUnreadCount =
+      createNumber("sellerUnreadCount", Integer.class);
+
+  public final EnumPath<liaison.groble.domain.chat.enums.ChatRoomStatus> status =
+      createEnum("status", liaison.groble.domain.chat.enums.ChatRoomStatus.class);
+
+  public final StringPath title = createString("title");
 
   public QChatRoom(String variable) {
     this(ChatRoom.class, forVariable(variable), INITS);
@@ -62,6 +77,11 @@ public class QChatRoom extends EntityPathBase<ChatRoom> {
     this.buyer =
         inits.isInitialized("buyer")
             ? new liaison.groble.domain.user.entity.QUser(forProperty("buyer"), inits.get("buyer"))
+            : null;
+    this.content =
+        inits.isInitialized("content")
+            ? new liaison.groble.domain.content.entity.QContent(
+                forProperty("content"), inits.get("content"))
             : null;
     this.seller =
         inits.isInitialized("seller")

@@ -1,16 +1,24 @@
 package liaison.groble.domain.chat.entity;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 
+import liaison.groble.domain.chat.enums.ChatRoomStatus;
 import liaison.groble.domain.common.entity.BaseTimeEntity;
+import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.user.entity.User;
 
 import lombok.AccessLevel;
@@ -26,6 +34,8 @@ public class ChatRoom extends BaseTimeEntity {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
+  private String title; // 채팅방 제목 추가
+
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "seller_id")
   private User seller;
@@ -34,29 +44,77 @@ public class ChatRoom extends BaseTimeEntity {
   @JoinColumn(name = "buyer_id")
   private User buyer;
 
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "content_id")
+  private Content content; // 관련 상품 추가
+
+  // 채팅방 상태 (ACTIVE, INACTIVE, DELETED 등)
+  @Enumerated(EnumType.STRING)
+  private ChatRoomStatus status = ChatRoomStatus.ACTIVE;
+
   // 마지막 메시지 내용 (채팅방 목록에서 미리보기 용도)
   private String lastMessage;
 
   // 마지막 메시지 전송 시간
-  private LocalDateTime lastMessageTime;
+  private Instant lastMessageTime;
 
-  // 채팅방 활성화 상태
-  private boolean active = true;
+  // 판매자 읽지 않은 메시지 수
+  private int sellerUnreadCount = 0;
+
+  // 구매자 읽지 않은 메시지 수
+  private int buyerUnreadCount = 0;
+
+  // 채팅 메시지 관계 추가
+  @OneToMany(mappedBy = "chatRoom", cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<ChatMessage> messages = new ArrayList<>();
 
   @Builder
-  public ChatRoom(User seller, User buyer, String title) {
+  public ChatRoom(User seller, User buyer, Content content, String title) {
     this.seller = seller;
     this.buyer = buyer;
+    this.content = content;
+    this.title = title;
   }
 
   // 마지막 메시지 업데이트
-  public void updateLastMessage(String message, LocalDateTime time) {
+  public void updateLastMessage(String message, Instant time) {
     this.lastMessage = message;
     this.lastMessageTime = time;
   }
 
-  // 채팅방 비활성화
-  public void deactivate() {
-    this.active = false;
+  // 사용자가 채팅방 참여자인지 확인
+  public boolean isParticipant(User user) {
+    return user.getId().equals(seller.getId()) || user.getId().equals(buyer.getId());
+  }
+
+  // 판매자 메시지 읽음 처리
+  public void markAsReadBySeller() {
+    this.sellerUnreadCount = 0;
+  }
+
+  // 구매자 메시지 읽음 처리
+  public void markAsReadByBuyer() {
+    this.buyerUnreadCount = 0;
+  }
+
+  // 새 메시지 추가 (보낸 사람에 따라 읽지 않은 메시지 카운트 증가)
+  public void addMessage(ChatMessage message, User sender) {
+    messages.add(message);
+
+    // 메시지 보낸 사람이 구매자인 경우, 판매자의 읽지 않은 메시지 수 증가
+    if (sender.getId().equals(buyer.getId())) {
+      sellerUnreadCount++;
+    }
+    // 메시지 보낸 사람이 판매자인 경우, 구매자의 읽지 않은 메시지 수 증가
+    else if (sender.getId().equals(seller.getId())) {
+      buyerUnreadCount++;
+    }
+
+    updateLastMessage(message.getContent(), message.getCreatedAt());
+  }
+
+  // 채팅방 상태 변경 (비활성화, 삭제 등)
+  public void updateStatus(ChatRoomStatus status) {
+    this.status = status;
   }
 }
