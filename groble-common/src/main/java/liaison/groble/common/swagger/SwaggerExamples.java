@@ -43,4 +43,26 @@ public class SwaggerExamples {
               "timestamp": "2025-05-06 04:26:26"
             }
             """;
+
+  public static final String USER_MYPAGE_DETAIL =
+      """
+                    {
+                      "status": "SUCCESS",
+                      "code": 200,
+                      "message": "요청이 성공적으로 처리되었습니다.",
+                      "data": {
+                        "nickname": "권동민",
+                        "accountType": {
+                          "code": "INTEGRATED",
+                          "description": "통합 계정"
+                        },
+                        "providerType": null,
+                        "email": "kwondm7@naver.com",
+                        "profileImageUrl": "https://example.com/profile.jpg",
+                        "phoneNumber": "010-1234-5678",
+                        "sellerAccountNotCreated": true
+                      },
+                      "timestamp": "2025-05-06 04:26:26"
+                    }
+            """;
 }
