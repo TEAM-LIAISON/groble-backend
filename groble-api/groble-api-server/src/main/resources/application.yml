@@ -89,6 +89,9 @@ springdoc:
     - liaison.groble.api.server
   show-actuator: false
   model-and-view-allowed: true
+  generic-models:
+    enabled: true
+    packages-and-classes: liaison.groble.common.response.GrobleResponse
 
 # Actuator Configuration
 # management:
