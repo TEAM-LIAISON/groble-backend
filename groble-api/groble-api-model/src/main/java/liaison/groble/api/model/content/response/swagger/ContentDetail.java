@@ -5,6 +5,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import liaison.groble.common.response.GrobleResponse;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -22,34 +24,47 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
       content = {
         @Content(
             mediaType = "application/json",
-            schema = @Schema(implementation = ContentDetail.class),
+            schema = @Schema(implementation = GrobleResponse.class),
             examples = {
               @ExampleObject(
                   name = "콘텐츠 상세 정보 응답",
                   summary = "콘텐츠 상세 정보",
                   value =
                       """
-                                                      {
-                                                        "status": "SUCCESS",
-                                                        "code": 200,
-                                                        "message": "요청이 성공적으로 처리되었습니다.",
-                                                        "data": {
-                                                          "nickname": "권동민",
-                                                          "accountType": {
-                                                            "code": "INTEGRATED",
-                                                            "description": "통합 계정"
+                                                        {
+                                                          "status": "SUCCESS",
+                                                          "code": 200,
+                                                          "message": "콘텐츠 상세 조회 성공",
+                                                          "data": {
+                                                            "id": 1,
+                                                            "contentType": "COACHING",
+                                                            "categoryId": 1,
+                                                            "title": "사업계획서 컨설팅",
+                                                            "sellerProfileImageUrl": "https://example.com/profile.jpg",
+                                                            "sellerName": "전문가",
+                                                            "options": [
+                                                              {
+                                                                "id": 1,
+                                                                "optionType": "COACHING_OPTION",
+                                                                "name": "1시간 코칭",
+                                                                "description": "1:1 전문가 코칭 1시간",
+                                                                "price": 50000
+                                                              },
+                                                              {
+                                                                "id": 2,
+                                                                "optionType": "COACHING_OPTION",
+                                                                "name": "2시간 코칭",
+                                                                "description": "1:1 전문가 코칭 2시간",
+                                                                "price": 90000
+                                                              }
+                                                            ]
                                                           },
-                                                          "providerType": null,
-                                                          "email": "kwondm7@naver.com",
-                                                          "profileImageUrl": "https://example.com/profile.jpg",
-                                                          "phoneNumber": "010-1234-5678",
-                                                          "sellerAccountNotCreated": true
-                                                        },
-                                                        "timestamp": "2025-05-06 04:26:26"
-                                                      }
-                                                      """)
+                                                          "timestamp": "2025-05-06 04:26:26"
+                                                        }
+                                                        """)
             })
       }),
+  @ApiResponse(responseCode = "401", description = "인증 실패 (AccessToken 만료 또는 없음)"),
   @ApiResponse(responseCode = "404", description = "콘텐츠 정보를 찾을 수 없음")
 })
 public @interface ContentDetail {}
