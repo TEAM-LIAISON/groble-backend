@@ -1,5 +1,6 @@
 package liaison.groble.common.response;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -10,6 +11,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Schema(description = "에러 상세 정보")
 public class ErrorDetail {
   private String code; // 오류 코드
   private String message; // 오류 메시지
