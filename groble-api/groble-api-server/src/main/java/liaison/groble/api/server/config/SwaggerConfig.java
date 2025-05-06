@@ -100,7 +100,6 @@ public class SwaggerConfig {
   @Bean
   public OpenApiCustomizer grobleResponseCustomizer() {
     return openApi -> {
-      // Generic GrobleResponse parametrization for common data types
       openApi
           .getComponents()
           .addSchemas(
