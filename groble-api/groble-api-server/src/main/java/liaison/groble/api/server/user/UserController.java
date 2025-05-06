@@ -3,6 +3,7 @@ package liaison.groble.api.server.user;
 import jakarta.validation.Valid;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -22,6 +23,7 @@ import liaison.groble.application.user.service.UserService;
 import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.annotation.RequireRole;
 import liaison.groble.common.model.Accessor;
+import liaison.groble.common.response.GrobleResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -60,16 +62,20 @@ public class UserController {
   /** 마이페이지 요약 정보 조회 */
   @MyPageSummaryResponse
   @GetMapping("/me/summary")
-  public MyPageSummaryResponseBase getUserMyPageSummary(@Auth Accessor accessor) {
+  public ResponseEntity<GrobleResponse<MyPageSummaryResponseBase>> getUserMyPageSummary(
+      @Auth Accessor accessor) {
     UserMyPageSummaryDto summaryDto = userService.getUserMyPageSummary(accessor.getUserId());
-    return userDtoMapper.toApiMyPageSummaryResponse(summaryDto);
+    return ResponseEntity.ok(
+        GrobleResponse.success(userDtoMapper.toApiMyPageSummaryResponse(summaryDto)));
   }
 
   /** 마이페이지 상세 정보 조회 */
   @MyPageDetailResponse
   @GetMapping("/me/detail")
-  public UserMyPageDetailResponse getUserMyPageDetail(@Auth Accessor accessor) {
+  public ResponseEntity<GrobleResponse<UserMyPageDetailResponse>> getUserMyPageDetail(
+      @Auth Accessor accessor) {
     UserMyPageDetailDto detailDto = userService.getUserMyPageDetail(accessor.getUserId());
-    return userDtoMapper.toApiMyPageDetailResponse(detailDto);
+    return ResponseEntity.ok(
+        GrobleResponse.success(userDtoMapper.toApiMyPageDetailResponse(detailDto)));
   }
 }

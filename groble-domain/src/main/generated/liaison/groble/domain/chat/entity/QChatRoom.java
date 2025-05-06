@@ -39,10 +39,6 @@ public class QChatRoom extends EntityPathBase<ChatRoom> {
   public final DateTimePath<java.time.Instant> lastMessageTime =
       createDateTime("lastMessageTime", java.time.Instant.class);
 
-  public final ListPath<ChatMessage, QChatMessage> messages =
-      this.<ChatMessage, QChatMessage>createList(
-          "messages", ChatMessage.class, QChatMessage.class, PathInits.DIRECT2);
-
   // inherited
   public final DateTimePath<java.time.Instant> modifiedAt = _super.modifiedAt;
 
