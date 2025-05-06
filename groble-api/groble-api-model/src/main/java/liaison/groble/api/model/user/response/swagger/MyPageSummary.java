@@ -7,6 +7,7 @@ import java.lang.annotation.Target;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -23,7 +24,48 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
       content =
           @Content(
               mediaType = "application/json",
-              schema = @Schema(implementation = UserMyPageSummaryApiResponse.class))),
+              schema = @Schema(implementation = UserMyPageSummaryApiResponse.class),
+              examples = {
+                @ExampleObject(
+                    name = "구매자 응답",
+                    summary = "구매자 마이페이지 요약 정보",
+                    value =
+                        """
+                                                {
+                                                  "status": "SUCCESS",
+                                                  "code": 200,
+                                                  "message": "요청이 성공적으로 처리되었습니다.",
+                                                  "data": {
+                                                    "nickname": "권동민",
+                                                    "profileImageUrl": null,
+                                                    "userType": "BUYER",
+                                                    "canSwitchToSeller": false
+                                                  },
+                                                  "timestamp": "2025-05-06 04:26:26"
+                                                }
+                                                """),
+                @ExampleObject(
+                    name = "판매자 응답",
+                    summary = "판매자 마이페이지 요약 정보",
+                    value =
+                        """
+                                                {
+                                                  "status": "SUCCESS",
+                                                  "code": 200,
+                                                  "message": "요청이 성공적으로 처리되었습니다.",
+                                                  "data": {
+                                                    "nickname": "김판매",
+                                                    "profileImageUrl": "https://example.com/profile.jpg",
+                                                    "userType": "SELLER",
+                                                    "verificationStatus": {
+                                                      "code": "APPROVED",
+                                                      "description": "승인됨"
+                                                    }
+                                                  },
+                                                  "timestamp": "2025-05-06 04:26:26"
+                                                }
+                                                """)
+              })),
   @ApiResponse(responseCode = "401", description = "인증 실패 (AccessToken 만료 또는 없음)"),
   @ApiResponse(responseCode = "404", description = "사용자 정보를 찾을 수 없음")
 })
