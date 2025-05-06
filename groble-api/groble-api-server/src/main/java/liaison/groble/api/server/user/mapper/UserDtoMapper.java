@@ -9,7 +9,6 @@ import liaison.groble.api.model.user.response.BuyerMyPageSummaryResponse;
 import liaison.groble.api.model.user.response.MyPageSummaryResponseBase;
 import liaison.groble.api.model.user.response.SellerMyPageSummaryResponse;
 import liaison.groble.api.model.user.response.UserMyPageDetailResponse;
-import liaison.groble.api.model.user.response.UserMyPageSummaryResponse;
 import liaison.groble.application.user.dto.UserMyPageDetailDto;
 import liaison.groble.application.user.dto.UserMyPageSummaryDto;
 import liaison.groble.common.response.EnumResponse;
@@ -17,24 +16,20 @@ import liaison.groble.common.response.EnumResponse;
 @Component
 public class UserDtoMapper {
 
-  // 기존 메서드는 유지하되 내부 로직 변경
-  public UserMyPageSummaryResponse toApiMyPageSummaryResponse(
+  // 중첩 구조 문제를 해결하기 위해 매퍼 메서드 수정
+  public MyPageSummaryResponseBase toApiMyPageSummaryResponse(
       UserMyPageSummaryDto userMyPageSummaryDto) {
 
     String userTypeName = userMyPageSummaryDto.getUserTypeName();
     EnumResponse userType =
         userTypeName != null ? EnumResponse.from(UserTypeDto.valueOf(userTypeName)) : null;
 
-    // 사용자 유형에 따라 다른 응답 객체 생성
-    MyPageSummaryResponseBase responseData;
-
+    // 사용자 유형에 따라 다른 응답 객체 직접 반환 (래퍼 사용하지 않음)
     if (userTypeName != null && userTypeName.equals("SELLER")) {
-      responseData = toSellerSummaryResponse(userMyPageSummaryDto, userType);
+      return toSellerSummaryResponse(userMyPageSummaryDto, userType);
     } else {
-      responseData = toBuyerSummaryResponse(userMyPageSummaryDto, userType);
+      return toBuyerSummaryResponse(userMyPageSummaryDto, userType);
     }
-
-    return new UserMyPageSummaryResponse(responseData);
   }
 
   // 구매자 전용 응답 생성 메서드
