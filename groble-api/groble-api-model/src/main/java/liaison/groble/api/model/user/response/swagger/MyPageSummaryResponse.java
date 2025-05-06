@@ -44,10 +44,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
                     "data": {
                       "nickname": "권동민",
                       "profileImageUrl": null,
-                      "userType": {
-                        "code": "BUYER",
-                        "description": "구매자"
-                      },
+                      "userType": "BUYER",
                       "canSwitchToSeller": false
                     },
                     "timestamp": "2025-05-06 04:26:26"
@@ -65,10 +62,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
                     "data": {
                       "nickname": "김판매",
                       "profileImageUrl": "https://example.com/profile.jpg",
-                      "userType": {
-                        "code": "SELLER",
-                        "description": "판매자"
-                      },
+                      "userType": : "SELLER",
                       "verificationStatus": {
                         "code": "APPROVED",
                         "description": "승인됨"

@@ -1,7 +1,5 @@
 package liaison.groble.api.model.user.response;
 
-import liaison.groble.common.response.EnumResponse;
-
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 
@@ -16,8 +14,8 @@ public class UserMyPageSummaryResponse {
   @Schema(description = "프로필 이미지 URL")
   private final String profileImageUrl;
 
-  @Schema(description = "사용자 유형", implementation = EnumResponse.class)
-  private final EnumResponse userType;
+  @Schema(description = "사용자 유형 (BUYER/SELLER)", example = "구매자")
+  private final String userType;
 
   // BuyerMyPageSummaryResponse에만 있는 필드
   @Schema(description = "판매자 전환 가능 여부", example = "false")
@@ -25,7 +23,7 @@ public class UserMyPageSummaryResponse {
 
   // SellerMyPageSummaryResponse에만 있는 필드
   @Schema(description = "판매자 인증 상태")
-  private final EnumResponse verificationStatus;
+  private final String verificationStatus;
 
   // 생성자 - 구매자용
   public UserMyPageSummaryResponse(BuyerMyPageSummaryResponse response) {

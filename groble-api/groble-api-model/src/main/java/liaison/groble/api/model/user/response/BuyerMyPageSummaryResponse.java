@@ -1,7 +1,5 @@
 package liaison.groble.api.model.user.response;
 
-import liaison.groble.common.response.EnumResponse;
-
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -21,9 +19,9 @@ public class BuyerMyPageSummaryResponse implements MyPageSummaryResponseBase {
   @Schema(description = "사용자 프로필 이미지 URL", example = "https://example.com/profile.jpg")
   private String profileImageUrl;
 
-  @Schema(description = "사용자 유형 정보", example = "구매자")
-  private EnumResponse userType;
+  @Schema(description = "사용자 유형 정보 (BUYER/SELLER)", example = "구매자")
+  private String userType;
 
-  @Schema(description = "판매자 계정 전환 가능 여부", example = "true")
+  @Schema(description = "판매자 계정 전환 가능 여부 (userType : BUYER 경우에만)", example = "true")
   private boolean canSwitchToSeller;
 }
