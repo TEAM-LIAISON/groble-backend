@@ -37,10 +37,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
                       "message": "요청이 성공적으로 처리되었습니다.",
                       "data": {
                         "nickname": "권동민",
-                        "accountType": {
-                          "code": "INTEGRATED",
-                          "description": "통합 계정"
-                        },
+                        "accountType": "INTEGRATED",
                         "providerType": null,
                         "email": "kwondm7@naver.com",
                         "profileImageUrl": "https://example.com/profile.jpg",
