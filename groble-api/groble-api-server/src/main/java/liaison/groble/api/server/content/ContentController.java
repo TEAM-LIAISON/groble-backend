@@ -20,6 +20,9 @@ import liaison.groble.api.model.content.response.ContentDetailResponse;
 import liaison.groble.api.model.content.response.ContentPreviewCardResponse;
 import liaison.groble.api.model.content.response.ContentResponse;
 import liaison.groble.api.model.content.response.ContentStatusResponse;
+import liaison.groble.api.model.content.response.swagger.ContentDetail;
+import liaison.groble.api.model.content.response.swagger.ContentDraft;
+import liaison.groble.api.model.content.response.swagger.ContentRegister;
 import liaison.groble.api.server.content.mapper.ContentDtoMapper;
 import liaison.groble.application.content.ContentService;
 import liaison.groble.application.content.dto.ContentCardDto;
@@ -52,29 +55,18 @@ public class ContentController {
     this.contentDtoMapper = contentDtoMapper;
   }
 
-  @Operation(summary = "컨텐츠 단건 조회 [코칭&자료 모두 조회 가능]", description = "컨텐츠(코칭&자료)를 상세 조회합니다.")
-  @ApiResponses({
-    @ApiResponse(
-        responseCode = "200",
-        description = "컨텐츠 단건 조회 성공",
-        content = @Content(schema = @Schema(implementation = ContentDetailResponse.class))),
-    @ApiResponse(responseCode = "404", description = "해당 컨텐츠 정보를 찾을 수 없음")
-  })
+  @ContentDetail
   @GetMapping("/{contentId}")
-  public ContentDetailResponse getContentDetail(@PathVariable("contentId") Long contentId) {
+  public ResponseEntity<GrobleResponse<ContentDetailResponse>> getContentDetail(
+      @PathVariable("contentId") Long contentId) {
     ContentDetailDto contentDetailDto = contentService.getContentDetail(contentId);
-    return contentDtoMapper.toContentDetailResponse(contentDetailDto);
+    ContentDetailResponse response = contentDtoMapper.toContentDetailResponse(contentDetailDto);
+    return ResponseEntity.ok(GrobleResponse.success(response, "컨텐츠 상세 조회 성공"));
   }
 
-  @Operation(summary = "컨텐츠 임시 저장", description = "컨텐츠를 임시 저장합니다.")
-  @ApiResponses({
-    @ApiResponse(
-        responseCode = "200",
-        description = "컨텐츠 임시 저장 성공",
-        content = @Content(schema = @Schema(implementation = ContentResponse.class)))
-  })
+  @ContentDraft
   @PostMapping("/draft")
-  public ContentResponse saveDraft(
+  public ResponseEntity<GrobleResponse<ContentResponse>> saveDraft(
       @Parameter(hidden = true) @Auth Accessor accessor,
       @Valid @RequestBody ContentDraftRequest request) {
 
@@ -82,18 +74,20 @@ public class ContentController {
     ContentDto savedContentDto =
         contentService.saveDraftAndReturn(accessor.getUserId(), contentDto);
 
-    return contentDtoMapper.toContentDraftResponse(savedContentDto);
+    ContentResponse response = contentDtoMapper.toContentDraftResponse(savedContentDto);
+    return ResponseEntity.ok(GrobleResponse.success(response, "컨텐츠 임시 저장 성공"));
   }
 
   // 서비스 상품 심사 요청
-  @Operation(summary = "컨텐츠 심사 요청", description = "작성 완료한 컨텐츠에 대해 심사를 요청합니다.")
+  @ContentRegister
   @PostMapping("/register")
-  public ContentResponse registerContent(
+  public ResponseEntity<GrobleResponse<ContentResponse>> registerContent(
       @Parameter(hidden = true) @Auth Accessor accessor,
       @Valid @RequestBody ContentRegisterRequest request) {
     ContentDto contentDto = contentDtoMapper.toServiceContentDtoFromRegister(request);
     ContentDto savedContentDto = contentService.registerContent(accessor.getUserId(), contentDto);
-    return contentDtoMapper.toContentDraftResponse(savedContentDto);
+    ContentResponse response = contentDtoMapper.toContentDraftResponse(savedContentDto);
+    return ResponseEntity.ok(GrobleResponse.success(response, "컨텐츠 심사 요청 성공"));
   }
 
   @Operation(summary = "컨텐츠 활성화", description = "심사완료된 컨텐츠를 활성화합니다.")

@@ -76,4 +76,4 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
   @ApiResponse(responseCode = "401", description = "인증 실패"),
   @ApiResponse(responseCode = "404", description = "사용자 정보 없음")
 })
-public @interface MyPageSummaryResponse {}
+public @interface MyPageSummary {}

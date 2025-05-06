@@ -55,4 +55,4 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
   @ApiResponse(responseCode = "401", description = "인증 실패 (AccessToken 만료 또는 없음)"),
   @ApiResponse(responseCode = "404", description = "사용자 정보를 찾을 수 없음")
 })
-public @interface MyPageDetailResponse {}
+public @interface MyPageDetail {}

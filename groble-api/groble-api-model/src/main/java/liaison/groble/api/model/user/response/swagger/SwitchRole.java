@@ -67,4 +67,4 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
   @ApiResponse(responseCode = "401", description = "인증 실패 (AccessToken 만료 또는 없음)"),
   @ApiResponse(responseCode = "403", description = "권한 없음")
 })
-public @interface SwitchRoleResponse {}
+public @interface SwitchRole {}

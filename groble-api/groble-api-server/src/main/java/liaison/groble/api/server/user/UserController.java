@@ -13,9 +13,9 @@ import org.springframework.web.bind.annotation.RestController;
 import liaison.groble.api.model.user.request.UserTypeRequest;
 import liaison.groble.api.model.user.response.MyPageSummaryResponseBase;
 import liaison.groble.api.model.user.response.UserMyPageDetailResponse;
-import liaison.groble.api.model.user.response.swagger.MyPageDetailResponse;
-import liaison.groble.api.model.user.response.swagger.MyPageSummaryResponse;
-import liaison.groble.api.model.user.response.swagger.SwitchRoleResponse;
+import liaison.groble.api.model.user.response.swagger.MyPageDetail;
+import liaison.groble.api.model.user.response.swagger.MyPageSummary;
+import liaison.groble.api.model.user.response.swagger.SwitchRole;
 import liaison.groble.api.server.user.mapper.UserDtoMapper;
 import liaison.groble.application.user.dto.UserMyPageDetailDto;
 import liaison.groble.application.user.dto.UserMyPageSummaryDto;
@@ -41,7 +41,7 @@ public class UserController {
     this.userDtoMapper = userDtoMapper;
   }
 
-  @SwitchRoleResponse
+  @SwitchRole
   @PostMapping("/switch-role")
   @RequireRole({"ROLE_USER"})
   public ResponseEntity<GrobleResponse<Void>> switchUserType(
@@ -58,7 +58,7 @@ public class UserController {
   }
 
   /** 마이페이지 요약 정보 조회 */
-  @MyPageSummaryResponse
+  @MyPageSummary
   @GetMapping("/me/summary")
   public ResponseEntity<GrobleResponse<MyPageSummaryResponseBase>> getUserMyPageSummary(
       @Auth Accessor accessor) {
@@ -68,7 +68,7 @@ public class UserController {
   }
 
   /** 마이페이지 상세 정보 조회 */
-  @MyPageDetailResponse
+  @MyPageDetail
   @GetMapping("/me/detail")
   public ResponseEntity<GrobleResponse<UserMyPageDetailResponse>> getUserMyPageDetail(
       @Auth Accessor accessor) {
