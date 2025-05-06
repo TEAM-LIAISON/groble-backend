@@ -6,7 +6,6 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 import liaison.groble.api.model.user.response.UserMyPageDetailResponse;
-import liaison.groble.common.swagger.SwaggerExamples;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -17,9 +16,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
-@Operation(
-    summary = "마이페이지 요약 정보 조회",
-    description = "마이페이지 첫 화면에서 요약 정보를 조회합니다. 사용자 유형(구매자/판매자)에 따라 응답 구조가 달라집니다.")
+@Operation(summary = "마이페이지 상세 정보 조회", description = "마이페이지에서 사용자 상세 정보를 조회합니다.")
 @ApiResponses({
   @ApiResponse(
       responseCode = "200",
@@ -32,7 +29,27 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
               @ExampleObject(
                   name = "상세 정보 응답",
                   summary = "마이페이지 상세 정보",
-                  value = SwaggerExamples.USER_MYPAGE_DETAIL)
+                  value =
+                      """
+                    {
+                      "status": "SUCCESS",
+                      "code": 200,
+                      "message": "요청이 성공적으로 처리되었습니다.",
+                      "data": {
+                        "nickname": "권동민",
+                        "accountType": {
+                          "code": "INTEGRATED",
+                          "description": "통합 계정"
+                        },
+                        "providerType": null,
+                        "email": "kwondm7@naver.com",
+                        "profileImageUrl": "https://example.com/profile.jpg",
+                        "phoneNumber": "010-1234-5678",
+                        "sellerAccountNotCreated": true
+                      },
+                      "timestamp": "2025-05-06 04:26:26"
+                    }
+                    """)
             })
       }),
   @ApiResponse(responseCode = "401", description = "인증 실패 (AccessToken 만료 또는 없음)"),
