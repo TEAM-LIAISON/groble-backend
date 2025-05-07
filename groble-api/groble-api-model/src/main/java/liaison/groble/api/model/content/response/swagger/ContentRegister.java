@@ -32,7 +32,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
                                                 {
                                                   "status": "SUCCESS",
                                                   "code": 200,
-                                                  "message": "컨텐츠 심사 요청 성공",
+                                                  "message": "콘텐츠 심사 요청 성공",
                                                   "data": {
                                                     "id": 1,
                                                     "title": "사업계획서 컨설팅",
@@ -65,7 +65,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
                                                 {
                                                   "status": "SUCCESS",
                                                   "code": 200,
-                                                  "message": "컨텐츠 심사 요청 성공",
+                                                  "message": "콘텐츠 심사 요청 성공",
                                                   "data": {
                                                     "id": 2,
                                                     "title": "표준 사업계획서 템플릿",

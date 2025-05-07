@@ -16,7 +16,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor
 public class DocumentOption extends ContentOption {
-  // 컨텐츠 제공 방식
+  // 콘텐츠 제공 방식
   @Enumerated(value = STRING)
   private ContentDeliveryMethod contentDeliveryMethod;
 

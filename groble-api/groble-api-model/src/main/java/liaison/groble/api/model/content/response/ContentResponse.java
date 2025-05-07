@@ -13,13 +13,13 @@ import lombok.Getter;
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ContentResponse {
-  @Schema(description = "상품 ID", example = "1")
+  @Schema(description = "콘텐츠 ID", example = "1")
   private Long id;
 
-  @Schema(description = "컨텐츠 이름", example = "사업계획서 컨설팅")
+  @Schema(description = "콘텐츠 이름", example = "사업계획서 컨설팅")
   private String title;
 
-  @Schema(description = "컨텐츠 유형", example = "COACHING")
+  @Schema(description = "콘텐츠 유형 [COACHING - 코칭], [DOCUMENT - 자료]", example = "COACHING")
   private String contentType;
 
   @Schema(description = "카테고리 ID", example = "1")
@@ -67,7 +67,7 @@ public class ContentResponse {
     private String coachingTypeDescription;
 
     // 문서 옵션 관련 필드
-    @Schema(description = "컨텐츠 제공 방식", example = "IMMEDIATE_DOWNLOAD")
+    @Schema(description = "콘텐츠 제공 방식", example = "IMMEDIATE_DOWNLOAD")
     private String contentDeliveryMethod;
   }
 }

@@ -50,11 +50,11 @@ public class Content extends BaseEntity {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  // 컨텐츠 이름
+  // 콘텐츠 이름
   @Column(nullable = false)
   private String title;
 
-  // 컨텐츠 유형
+  // 콘텐츠 유형
   @Column(name = "content_type")
   @Enumerated(value = STRING)
   private ContentType contentType;
@@ -68,7 +68,7 @@ public class Content extends BaseEntity {
   @JoinColumn(name = "category_id")
   private Category category;
 
-  // 컨텐츠 유형에 따른 옵션
+  // 콘텐츠 유형에 따른 옵션
   @OneToMany(mappedBy = "content", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<ContentOption> options = new ArrayList<>();
 

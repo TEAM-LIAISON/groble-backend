@@ -393,7 +393,7 @@ public class ContentService {
         option.setContentDeliveryMethod(
             ContentDeliveryMethod.valueOf(optionDto.getContentDeliveryMethod()));
       } catch (IllegalArgumentException e) {
-        log.warn("유효하지 않은 컨텐츠 제공 방식: {}", optionDto.getContentDeliveryMethod());
+        log.warn("유효하지 않은 콘텐츠 제공 방식: {}", optionDto.getContentDeliveryMethod());
       }
     }
 
@@ -454,7 +454,7 @@ public class ContentService {
     try {
       return ContentType.valueOf(type.toUpperCase());
     } catch (IllegalArgumentException e) {
-      log.warn("유효하지 않은 컨텐츠 유형: {}", type);
+      log.warn("유효하지 않은 콘텐츠 유형: {}", type);
       return null;
     }
   }
@@ -579,7 +579,7 @@ public class ContentService {
           }
         } else if (ContentType.DOCUMENT.name().equals(contentDto.getContentType())) {
           if (option.getContentDeliveryMethod() == null) {
-            missingFields.add("옵션" + (i + 1) + " 컨텐츠 제공 방식");
+            missingFields.add("옵션" + (i + 1) + " 콘텐츠 제공 방식");
           }
         }
       }

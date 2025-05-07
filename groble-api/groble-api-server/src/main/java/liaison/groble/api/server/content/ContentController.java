@@ -42,7 +42,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
 @RequestMapping("/api/v1/contents")
-@Tag(name = "컨텐츠 API", description = "컨텐츠 조회 및 등록(임시 저장, 심사 요청) API")
+@Tag(name = "콘텐츠 API", description = "콘텐츠 조회 및 등록(임시 저장, 심사 요청) API")
 public class ContentController {
 
   private final ContentService contentService;
@@ -60,7 +60,7 @@ public class ContentController {
       @PathVariable("contentId") Long contentId) {
     ContentDetailDto contentDetailDto = contentService.getContentDetail(contentId);
     ContentDetailResponse response = contentDtoMapper.toContentDetailResponse(contentDetailDto);
-    return ResponseEntity.ok(GrobleResponse.success(response, "컨텐츠 상세 조회 성공"));
+    return ResponseEntity.ok(GrobleResponse.success(response, "콘텐츠 상세 조회 성공"));
   }
 
   // 콘텐츠 임시 저장
@@ -75,7 +75,7 @@ public class ContentController {
         contentService.saveDraftAndReturn(accessor.getUserId(), contentDto);
 
     ContentResponse response = contentDtoMapper.toContentDraftResponse(savedContentDto);
-    return ResponseEntity.ok(GrobleResponse.success(response, "컨텐츠 임시 저장 성공"));
+    return ResponseEntity.ok(GrobleResponse.success(response, "콘텐츠 임시 저장 성공"));
   }
 
   // 콘텐츠 심사 요청
@@ -87,10 +87,11 @@ public class ContentController {
     ContentDto contentDto = contentDtoMapper.toServiceContentDtoFromRegister(request);
     ContentDto savedContentDto = contentService.registerContent(accessor.getUserId(), contentDto);
     ContentResponse response = contentDtoMapper.toContentDraftResponse(savedContentDto);
-    return ResponseEntity.ok(GrobleResponse.success(response, "컨텐츠 심사 요청 성공"));
+    return ResponseEntity.ok(GrobleResponse.success(response, "콘텐츠 심사 요청 성공"));
   }
 
-  @Operation(summary = "컨텐츠 활성화", description = "심사완료된 컨텐츠를 활성화합니다.")
+  // 콘텐츠 심사 완료(승인) 이후 콘텐츠 판매중으로 활성화
+  @Operation(summary = "콘텐츠 활성화", description = "심사완료된 콘텐츠를 활성화합니다.")
   @PostMapping("/{contentId}/active")
   public ContentStatusResponse activateContent(
       @Parameter(hidden = true) @Auth Accessor accessor,

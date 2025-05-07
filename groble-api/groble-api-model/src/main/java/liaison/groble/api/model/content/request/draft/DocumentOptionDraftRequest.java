@@ -17,8 +17,8 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @AllArgsConstructor
 public class DocumentOptionDraftRequest extends BaseOptionDraftRequest {
-  @NotBlank(message = "컨텐츠 제공 방식은 필수 입력 항목입니다")
-  @Pattern(regexp = "^(IMMEDIATE_DOWNLOAD|FUTURE_UPLOAD)$", message = "유효한 컨텐츠 제공 방식이 아닙니다")
-  @Schema(description = "컨텐츠 제공 방식", example = "IMMEDIATE_DOWNLOAD")
+  @NotBlank(message = "콘텐츠 제공 방식은 필수 입력 항목입니다")
+  @Pattern(regexp = "^(IMMEDIATE_DOWNLOAD|FUTURE_UPLOAD)$", message = "유효한 콘텐츠 제공 방식이 아닙니다")
+  @Schema(description = "콘텐츠 제공 방식", example = "IMMEDIATE_DOWNLOAD")
   private String contentDeliveryMethod;
 }

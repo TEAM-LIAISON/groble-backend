@@ -197,7 +197,7 @@ public class ContentDtoMapper {
     }
 
     if (option.getContentDeliveryMethod() == null) {
-      throw new IllegalArgumentException("컨텐츠 제공 방식은 필수 입력 항목입니다.");
+      throw new IllegalArgumentException("콘텐츠 제공 방식은 필수 입력 항목입니다.");
     }
   }
 
@@ -288,7 +288,7 @@ public class ContentDtoMapper {
 
       // Register 타입에 대한 추가 유효성 검사
       if (name == null || price == null || contentDeliveryMethod == null) {
-        throw new IllegalArgumentException("등록 시 옵션명, 가격, 컨텐츠 제공 방식은 필수 입력 항목입니다.");
+        throw new IllegalArgumentException("등록 시 옵션명, 가격, 콘텐츠 제공 방식은 필수 입력 항목입니다.");
       }
     }
 

@@ -97,7 +97,7 @@ public class PurchaseService {
     try {
       return ContentType.valueOf(type.toUpperCase());
     } catch (IllegalArgumentException e) {
-      log.warn("유효하지 않은 컨텐츠 유형: {}", type);
+      log.warn("유효하지 않은 콘텐츠 유형: {}", type);
       return null;
     }
   }

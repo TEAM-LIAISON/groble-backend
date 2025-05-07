@@ -15,8 +15,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 @Operation(
-    summary = "여러 컨텐츠 파일 업로드",
-    description = "즉시 다운로드에 대한 여러 컨텐츠 파일을 한 번에 업로드합니다. 비어있지 않은 파일만 처리합니다.")
+    summary = "여러 콘텐츠 파일 업로드",
+    description = "즉시 다운로드에 대한 여러 콘텐츠 파일을 한 번에 업로드합니다. 비어있지 않은 파일만 처리합니다.")
 @ApiResponses({
   @ApiResponse(
       responseCode = "201",

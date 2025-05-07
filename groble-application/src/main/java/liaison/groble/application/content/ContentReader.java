@@ -22,13 +22,13 @@ public class ContentReader {
   public Content getContentById(Long contentId) {
     return contentRepository
         .findById(contentId)
-        .orElseThrow(() -> new EntityNotFoundException("컨텐츠를 찾을 수 없습니다. ID: " + contentId));
+        .orElseThrow(() -> new EntityNotFoundException("콘텐츠를 찾을 수 없습니다. ID: " + contentId));
   }
 
   // ===== status & ID로 Content 조회 =====
   public Content getContentByStatusAndId(Long contentId, ContentStatus status) {
     return contentRepository
         .findByIdAndStatus(contentId, status)
-        .orElseThrow(() -> new EntityNotFoundException("컨텐츠를 찾을 수 없습니다. ID: " + contentId));
+        .orElseThrow(() -> new EntityNotFoundException("콘텐츠를 찾을 수 없습니다. ID: " + contentId));
   }
 }

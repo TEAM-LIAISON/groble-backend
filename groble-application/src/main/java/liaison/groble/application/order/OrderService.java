@@ -54,7 +54,7 @@ public class OrderService {
             .orElseThrow(
                 () ->
                     new EntityNotFoundException(
-                        "해당 옵션을 가진 컨텐츠를 찾을 수 없습니다. ID: " + orderCreateDto.getContentOptionId()));
+                        "해당 옵션을 가진 콘텐츠를 찾을 수 없습니다. ID: " + orderCreateDto.getContentOptionId()));
 
     Purchaser purchaser =
         Purchaser.builder()

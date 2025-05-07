@@ -27,12 +27,12 @@ public class ContentRegisterRequest {
 
   @NotBlank(message = "제목은 필수 입력 항목입니다")
   @Size(max = 30, message = "제목은 30자 이내로 입력해주세요")
-  @Schema(description = "컨텐츠 이름", example = "사업계획서 컨설팅")
+  @Schema(description = "콘텐츠 이름", example = "사업계획서 컨설팅")
   private String title;
 
-  @NotBlank(message = "컨텐츠 유형은 필수 입력 항목입니다")
-  @Pattern(regexp = "^(COACHING|DOCUMENT)$", message = "컨텐츠 유형은 COACHING과 DOCUMENT만 가능합니다.")
-  @Schema(description = "컨텐츠 유형", example = "COACHING")
+  @NotBlank(message = "콘텐츠 유형은 필수 입력 항목입니다")
+  @Pattern(regexp = "^(COACHING|DOCUMENT)$", message = "콘텐츠 유형은 COACHING과 DOCUMENT만 가능합니다.")
+  @Schema(description = "콘텐츠 유형", example = "COACHING")
   private String contentType;
 
   @NotNull(message = "카테고리 ID는 필수 입력 항목입니다")

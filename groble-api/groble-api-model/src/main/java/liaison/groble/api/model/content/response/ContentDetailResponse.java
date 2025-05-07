@@ -1,5 +1,6 @@
 package liaison.groble.api.model.content.response;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -14,8 +15,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Schema(description = "콘텐츠 상세 정보 응답")
 public class ContentDetailResponse {
-  @Schema(description = "상품 ID", example = "1")
-  private Long id;
+  @Schema(description = "콘텐츠 ID", example = "1")
+  private Long contentId;
+
+  // TODO: 콘텐츠에 등록된 모든 이미지들의 URL
 
   @Schema(description = "콘텐츠 유형 [COACHING - 코칭], [DOCUMENT - 자료]", example = "COACHING")
   private String contentType;
@@ -23,13 +26,7 @@ public class ContentDetailResponse {
   @Schema(description = "카테고리 ID", example = "1")
   private Long categoryId;
 
-  @Schema(description = "카테고리 대분류 이름", example = "AI")
-  private String categoryLargeName;
-
-  @Schema(description = "카테고리 소분류 이름", example = "프로세스")
-  private String categorySmallName;
-
-  @Schema(description = "컨텐츠 이름", example = "사업계획서 컨설팅")
+  @Schema(description = "콘텐츠 이름", example = "사업계획서 컨설팅")
   private String title;
 
   @Schema(description = "판매자 프로필 이미지 URL")
@@ -38,6 +35,9 @@ public class ContentDetailResponse {
   @Schema(description = "판매자 이름")
   private String sellerName;
 
-  @Schema(description = "상품 옵션 목록")
-  private List<ContentOptionResponse> options;
+  @Schema(description = "콘텐츠 최저가", example = "10000")
+  private BigDecimal lowestPrice;
+
+  @Schema(description = "콘텐츠 옵션 목록")
+  private List<BaseOptionResponse> options;
 }
