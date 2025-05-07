@@ -35,6 +35,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
                                                   "message": "콘텐츠 상세 조회 성공",
                                                   "data": {
                                                     "contentId": 1,
+                                                    "contentsImageUrls": [
+                                                      "https://example.com/image1.jpg",
+                                                      "https://example.com/image2.jpg"
+                                                    ],
                                                     "contentType": "COACHING",
                                                     "categoryId": 1,
                                                     "title": "사업계획서 컨설팅",
@@ -64,7 +68,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
                                                         "coachingType": "ONLINE",
                                                         "coachingTypeDescription": "줌을 통한 온라인 미팅으로 진행됩니다."
                                                       }
-                                                    ]
+                                                    ],
+                                                    "serviceTarget": "초창패, 창중, 예창패, 청창사 등을 준비하는 분",
+                                                    "serviceProcess": "STANDARD/DELUXE/PREMIUM",
+                                                    "makerIntro": "- 동국대학교 철학과 졸업\\n- 前 스타트업 창업 5년 경력\\n- 전문 사업계획서 컨설턴트"
                                                   },
                                                   "timestamp": "2025-05-06 04:26:26"
                                                 }
@@ -80,6 +87,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
                                                   "message": "콘텐츠 상세 조회 성공",
                                                   "data": {
                                                     "contentId": 2,
+                                                    "contentsImageUrls": [
+                                                      "https://example.com/doc_preview1.jpg",
+                                                      "https://example.com/doc_preview2.jpg"
+                                                    ],
                                                     "contentType": "DOCUMENT",
                                                     "categoryId": 2,
                                                     "title": "사업계획서 템플릿 모음",
@@ -103,7 +114,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
                                                         "price": 25000,
                                                         "contentDeliveryMethod": "IMMEDIATE_DOWNLOAD"
                                                       }
-                                                    ]
+                                                    ],
+                                                    "serviceTarget": "스타트업 설립 단계에 있는 예비 창업자",
+                                                    "serviceProcess": "즉시 다운로드 가능한 PDF 형식 제공",
+                                                    "makerIntro": "- 스타트업 액셀러레이터 5년 근무\\n- 200개 이상의 사업계획서 검토 경험"
                                                   },
                                                   "timestamp": "2025-05-06 04:26:26"
                                                 }
