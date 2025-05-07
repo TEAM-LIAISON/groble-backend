@@ -39,11 +39,6 @@ public class FileController {
   private final FileService fileService;
   private final FileDtoMapper fileDtoMapper;
 
-  private static final String DEFAULT_DIRECTORY = "default";
-  private static final String IMAGE_DIRECTORY = "images";
-  private static final String CONTENT_DIRECTORY = "contents";
-  private static final String BUSINESS_LICENSE_DIRECTORY = "business-license";
-
   @UploadFile
   @PostMapping(value = "/file", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<GrobleResponse<FileUploadResponse>> uploadFile(
@@ -73,12 +68,17 @@ public class FileController {
     }
   }
 
+  // 썸네일 이미지를 업로드해서 URL 경로를 반환 받음
   @UploadContentThumbnail
   @PostMapping(value = "/content/thumbnail", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<GrobleResponse<FileUploadResponse>> uploadContentThumbnail(
       @Auth Accessor accessor,
       @RequestParam("file") MultipartFile file,
-      @RequestParam(value = "directory", defaultValue = "contents") String directory) {
+      @RequestParam(
+              value = "directory",
+              defaultValue = "images/contents/thumbnail",
+              required = false)
+          String directory) {
 
     try {
       // 이미지 파일 타입 체크
@@ -134,37 +134,6 @@ public class FileController {
       log.error("파일 업로드 중 오류 발생: {}", e.getMessage(), e);
       throw new FileProcessingException("파일 업로드 중 오류가 발생했습니다: " + e.getMessage());
     }
-  }
-
-  /** 파일 타입에 따른 디렉토리 결정 */
-  private String getDirectoryByFileType(String fileType) {
-    if (fileType == null) {
-      return DEFAULT_DIRECTORY;
-    }
-
-    return switch (fileType.toUpperCase()) {
-      case "IMAGE" -> IMAGE_DIRECTORY;
-      case "DOCUMENT", "PDF", "WORD", "EXCEL", "PPT" -> CONTENT_DIRECTORY;
-      default -> DEFAULT_DIRECTORY;
-    };
-  }
-
-  /** 파일 타입과 디렉토리를 조합하여 최종 저장 경로 결정 */
-  private String determineTargetDirectory(String fileType, String directory) {
-    String typeDirectory = getDirectoryByFileType(fileType);
-
-    // 디렉토리가 지정되지 않은 경우 타입 디렉토리만 사용
-    if (directory == null) {
-      return typeDirectory;
-    }
-
-    // fileType이 IMAGE인 경우 images/지정된디렉토리 형식으로 조합
-    if (fileType != null && fileType.equalsIgnoreCase("IMAGE")) {
-      return typeDirectory + "/" + directory.toLowerCase();
-    }
-
-    // 그 외의 경우 지정된 디렉토리만 사용
-    return directory;
   }
 
   /** 이미지 파일 여부 확인 */

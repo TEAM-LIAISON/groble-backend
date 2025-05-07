@@ -15,8 +15,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 @Operation(
-    summary = "콘텐츠 대표 이미지 업로드",
-    description = "콘텐츠 대표 이미지를 업로드합니다. 이미지 파일만 업로드 가능하며, 다른 파일 형식은 오류가 발생합니다.")
+    summary = "콘텐츠 대표(썸네일) 이미지 업로드",
+    description =
+        "콘텐츠 대표(썸네일) 이미지를 업로드합니다. 이미지 파일만 업로드 가능하며, 다른 파일 형식은 오류가 발생합니다."
+            + "반환된 fileUrl을 콘텐츠 임시 저장 및 심사 요청 request에 포함하여 사용합니다.")
 @ApiResponses({
   @ApiResponse(
       responseCode = "201",
@@ -28,7 +30,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
               examples = {
                 @ExampleObject(
                     name = "이미지 업로드 성공 응답",
-                    summary = "콘텐츠 대표 이미지 업로드 성공",
+                    summary = "콘텐츠 대표(썸네일) 이미지 업로드 성공",
                     value =
                         """
                                     {
@@ -39,7 +41,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
                                         "originalFileName": "thumbnail.jpg",
                                         "fileUrl": "https://storage.example.com/contents/thumbnail.jpg",
                                         "contentType": "image/jpeg",
-                                        "directory": "contents"
+                                        "directory": "content/thumbnail"
                                       },
                                       "timestamp": "2025-05-06 04:26:26"
                                     }
