@@ -29,85 +29,82 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
                     summary = "나의 코칭 상품 목록 조회",
                     value =
                         """
-                                    {
-                                      "status": "SUCCESS",
-                                      "code": 200,
-                                      "message": "나의 코칭 상품 조회 성공",
-                                      "data": {
-                                        "items": [
-                                          {
-                                            "id": 1,
-                                            "title": "사업계획서 컨설팅",
-                                            "contentType": "COACHING",
-                                            "thumbnailUrl": "https://example.com/image1.jpg",
-                                            "status": "ACTIVE",
-                                            "price": 50000,
-                                            "categoryName": "비즈니스 컨설팅"
-                                          },
-                                          {
-                                            "id": 2,
-                                            "title": "스타트업 진단 코칭",
-                                            "contentType": "COACHING",
-                                            "thumbnailUrl": "https://example.com/image2.jpg",
-                                            "status": "PENDING_REVIEW",
-                                            "price": 70000,
-                                            "categoryName": "비즈니스 컨설팅"
-                                          }
-                                        ],
-                                        "nextCursor": "cursor_token_123",
-                                        "hasNext": true,
-                                        "totalCount": 10,
-                                        "meta": {
-                                          "draftCount": 2,
-                                          "pendingCount": 1,
-                                          "activeCount": 7
-                                        }
-                                      },
-                                      "timestamp": "2025-05-06 04:26:26"
-                                    }
-                                    """),
+                                                {
+                                                  "status": "SUCCESS",
+                                                  "code": 200,
+                                                  "message": "나의 코칭 상품 조회 성공",
+                                                  "data": {
+                                                    "items": [
+                                                      {
+                                                        "contentId": 1,
+                                                        "createdAt": "2025-05-07 16:52:12",
+                                                        "title": "사업계획서 컨설팅",
+                                                        "thumbnailUrl": "https://example.com/image1.jpg",
+                                                        "sellerName": "권동민",
+                                                        "lowestPrice": 50000,
+                                                        "status": "ACTIVE"
+                                                      },
+                                                      {
+                                                        "contentId": 2,
+                                                        "createdAt": "2025-05-07 15:30:45",
+                                                        "title": "스타트업 진단 코칭",
+                                                        "thumbnailUrl": "https://example.com/image2.jpg",
+                                                        "sellerName": "권동민",
+                                                        "lowestPrice": 70000,
+                                                        "status": "PENDING"
+                                                      }
+                                                    ],
+                                                    "nextCursor": "2",
+                                                    "hasNext": true,
+                                                    "totalCount": 10,
+                                                    "meta": {
+                                                      "filter": "ACTIVE",
+                                                      "cursorType": "id"
+                                                    }
+                                                  },
+                                                  "timestamp": "2025-05-07 18:56:50"
+                                                }
+                                                """),
                 @ExampleObject(
                     name = "자료 상품 조회 성공",
                     summary = "나의 자료 상품 목록 조회",
                     value =
                         """
-                                    {
-                                      "status": "SUCCESS",
-                                      "code": 200,
-                                      "message": "나의 자료 상품 조회 성공",
-                                      "data": {
-                                        "items": [
-                                          {
-                                            "id": 3,
-                                            "title": "사업계획서 템플릿",
-                                            "contentType": "DOCUMENT",
-                                            "thumbnailUrl": "https://example.com/doc1.jpg",
-                                            "status": "ACTIVE",
-                                            "price": 20000,
-                                            "categoryName": "사업계획서"
-                                          },
-                                          {
-                                            "id": 4,
-                                            "title": "투자 유치 제안서",
-                                            "contentType": "DOCUMENT",
-                                            "thumbnailUrl": "https://example.com/doc2.jpg",
-                                            "status": "DRAFT",
-                                            "price": 15000,
-                                            "categoryName": "제안서"
-                                          }
-                                        ],
-                                        "nextCursor": null,
-                                        "hasNext": false,
-                                        "totalCount": 4,
-                                        "meta": {
-                                          "draftCount": 1,
-                                          "pendingCount": 0,
-                                          "activeCount": 3
-                                        }
-                                      },
-                                      "timestamp": "2025-05-06 04:26:26"
-                                    }
-                                    """)
+                                                {
+                                                  "status": "SUCCESS",
+                                                  "code": 200,
+                                                  "message": "나의 자료 상품 조회 성공",
+                                                  "data": {
+                                                    "items": [
+                                                      {
+                                                        "contentId": 3,
+                                                        "createdAt": "2025-05-06 14:22:33",
+                                                        "title": "사업계획서 템플릿",
+                                                        "thumbnailUrl": "https://example.com/doc1.jpg",
+                                                        "sellerName": "권동민",
+                                                        "lowestPrice": 20000,
+                                                        "status": "ACTIVE"
+                                                      },
+                                                      {
+                                                        "contentId": 4,
+                                                        "createdAt": "2025-05-05 09:15:21",
+                                                        "title": "투자 유치 제안서",
+                                                        "thumbnailUrl": "https://example.com/doc2.jpg",
+                                                        "sellerName": "권동민",
+                                                        "lowestPrice": 15000,
+                                                        "status": "DRAFT"
+                                                      }
+                                                    ],
+                                                    "hasNext": false,
+                                                    "totalCount": 4,
+                                                    "meta": {
+                                                      "filter": "DOCUMENT",
+                                                      "cursorType": "id"
+                                                    }
+                                                  },
+                                                  "timestamp": "2025-05-07 18:56:50"
+                                                }
+                                                """)
               })),
   @ApiResponse(responseCode = "401", description = "인증 실패 (AccessToken 만료 또는 없음)"),
   @ApiResponse(responseCode = "404", description = "사용자 정보를 찾을 수 없음")

@@ -40,7 +40,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
                                                     "categoryId": 1,
                                                     "categoryName": "비즈니스 컨설팅",
                                                     "thumbnailUrl": "https://example.com/thumbnail.jpg",
-                                                    "status": "PENDING_REVIEW",
+                                                    "status": "PENDING",
                                                     "options": [
                                                       {
                                                         "id": 1,
@@ -73,7 +73,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
                                                     "categoryId": 2,
                                                     "categoryName": "사업계획서",
                                                     "thumbnailUrl": "https://example.com/document-thumbnail.jpg",
-                                                    "status": "PENDING_REVIEW",
+                                                    "status": "PENDING",
                                                     "options": [
                                                       {
                                                         "id": 2,

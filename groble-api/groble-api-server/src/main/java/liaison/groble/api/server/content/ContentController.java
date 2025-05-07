@@ -112,7 +112,7 @@ public class ContentController {
               CursorRequest cursorRequest,
           @Parameter(
                   description =
-                      "콘텐츠 상태 필터 [ACTIVE - 판매중], [DRAFT - 작성중], [PENDING - 심사중], [APPROVED - 심사완료])",
+                      "콘텐츠 상태 필터 [ACTIVE - 판매중], [DRAFT - 작성중], [PENDING - 심사중], [APPROVED - 심사완료]",
                   schema =
                       @Schema(
                           implementation = String.class,
@@ -120,7 +120,7 @@ public class ContentController {
               @RequestParam(value = "state")
               String state,
           @Parameter(
-                  description = "콘텐츠 유형 [COACHING - 코창], [DOCUMENT - 자료])",
+                  description = "콘텐츠 유형 [COACHING - 코창], [DOCUMENT - 자료]",
                   required = true,
                   schema =
                       @Schema(
@@ -195,17 +195,4 @@ public class ContentController {
     String successMessage = "COACHING".equals(type) ? "홈화면 코칭 상품 조회 성공" : "홈화면 자료 상품 조회 성공";
     return ResponseEntity.ok(GrobleResponse.success(response, successMessage));
   }
-
-  // 홈화면 상품 조회 [자료]
-
-  // 상품 수정
-  // 상품 삭제
-  // 상품 검색
-  // 상품 필터링
-  // 상품 정렬
-  // 상품 상세 조회
-  // 상품 리뷰 조회
-  // 상품 리뷰 작성
-  // 상품 리뷰 수정
-  // 상품 리뷰 삭제
 }
