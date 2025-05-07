@@ -48,7 +48,7 @@ public class ContentService {
   private final ContentReader contentReader;
 
   /**
-   * 서비스 상품을 임시 저장하고 저장된 정보를 반환합니다.
+   * 콘텐츠를 임시 저장하고 저장된 정보를 반환합니다.
    *
    * @param userId 사용자 ID
    * @param contentDto 저장할 상품 정보 (null 가능)
@@ -88,7 +88,7 @@ public class ContentService {
   }
 
   /**
-   * 서비스 상품을 심사 요청하고 결과를 반환합니다.
+   * 콘텐츠를 심사 요청하고 결과를 반환합니다.
    *
    * @param userId 사용자 ID
    * @param contentDto 심사 요청할 상품 정보
@@ -129,12 +129,12 @@ public class ContentService {
     }
 
     // 7. 저장 및 변환
-    log.info("서비스 상품 심사 요청 완료. 유저 ID: {}", userId);
+    log.info("콘텐츠 심사 요청 완료. 유저 ID: {}", userId);
     return saveAndConvertToDto(content);
   }
 
   /**
-   * 서비스 상품 상세 정보를 조회합니다.
+   * 콘텐츠 상세 정보를 조회합니다.
    *
    * @param contentId 상품 ID
    * @return 상품 상세 정보
@@ -210,7 +210,7 @@ public class ContentService {
   /** Content를 저장하고 DTO로 변환합니다. */
   private ContentDto saveAndConvertToDto(Content content) {
     content = contentRepository.save(content);
-    log.info("서비스 상품 저장 완료. ID: {}, 유저 ID: {}", content.getId(), content.getUser().getId());
+    log.info("콘텐츠 저장 완료. ID: {}, 유저 ID: {}", content.getId(), content.getUser().getId());
     return convertToDto(content);
   }
 

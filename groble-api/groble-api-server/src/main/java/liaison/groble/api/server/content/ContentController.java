@@ -53,6 +53,7 @@ public class ContentController {
     this.contentDtoMapper = contentDtoMapper;
   }
 
+  // TODO: service 로직 구체화
   @ContentDetail
   @GetMapping("/{contentId}")
   public ResponseEntity<GrobleResponse<ContentDetailResponse>> getContentDetail(

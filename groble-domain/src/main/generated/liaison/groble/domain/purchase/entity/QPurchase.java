@@ -19,9 +19,9 @@ public class QPurchase extends EntityPathBase<Purchase> {
 
   public static final QPurchase purchase = new QPurchase("purchase");
 
-  public final NumberPath<Long> id = createNumber("id", Long.class);
+  public final liaison.groble.domain.content.entity.QContent content;
 
-  public final liaison.groble.domain.product.entity.QProduct product;
+  public final NumberPath<Long> id = createNumber("id", Long.class);
 
   public final liaison.groble.domain.user.entity.QUser user;
 
@@ -43,9 +43,10 @@ public class QPurchase extends EntityPathBase<Purchase> {
 
   public QPurchase(Class<? extends Purchase> type, PathMetadata metadata, PathInits inits) {
     super(type, metadata, inits);
-    this.product =
-        inits.isInitialized("product")
-            ? new liaison.groble.domain.product.entity.QProduct(forProperty("product"))
+    this.content =
+        inits.isInitialized("content")
+            ? new liaison.groble.domain.content.entity.QContent(
+                forProperty("content"), inits.get("content"))
             : null;
     this.user =
         inits.isInitialized("user")

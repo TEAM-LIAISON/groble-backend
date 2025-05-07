@@ -20,7 +20,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class ContentDraftRequest {
 
-  @Schema(description = "상품 ID", example = "1")
+  @Schema(description = "콘텐츠 ID", example = "1")
   private Long contentId;
 
   @Size(max = 30, message = "제목은 30자 이내로 입력해주세요")

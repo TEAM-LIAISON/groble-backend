@@ -34,7 +34,7 @@ public class OrderController {
   private final OrderDtoMapper orderDtoMapper;
 
   @PostMapping
-  @Operation(summary = "주문 생성", description = "상품 정보를 받아 주문을 생성하고 주문 ID를 반환합니다.")
+  @Operation(summary = "주문 생성", description = "콘텐츠 정보를 받아 주문을 생성하고 주문 ID를 반환합니다.")
   @ApiResponse(
       responseCode = "201",
       description = "주문 생성 성공",

@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "서비스 상품 옵션 정보 응답")
+@Schema(description = "콘텐츠 옵션 정보 응답")
 public class ContentOptionResponse {
   @Schema(description = "옵션 ID", example = "1")
   private Long id;

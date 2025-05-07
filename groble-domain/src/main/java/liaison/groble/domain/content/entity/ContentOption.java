@@ -24,7 +24,6 @@ import lombok.Getter;
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "option_type")
 public abstract class ContentOption extends BaseTimeEntity {
-  // Getter 메서드들
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
@@ -55,7 +54,7 @@ public abstract class ContentOption extends BaseTimeEntity {
     this.price = price;
   }
 
-  public void setProduct(Content content) {
+  public void setContent(Content content) {
     this.content = content;
   }
 }

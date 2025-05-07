@@ -96,7 +96,7 @@ public class Content extends BaseEntity {
       throw new IllegalArgumentException("문서 상품에는 문서 옵션만 추가할 수 있습니다.");
     }
     options.add(option);
-    option.setProduct(this);
+    option.setContent(this);
   }
 
   // Setter 메서드 추가

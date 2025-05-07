@@ -350,7 +350,6 @@ public class ContentDtoMapper {
   }
 
   public ContentDetailResponse toContentDetailResponse(ContentDetailDto contentDetailDto) {
-    // 기존 메서드 구현 유지
     return ContentDetailResponse.builder().build();
   }
 
