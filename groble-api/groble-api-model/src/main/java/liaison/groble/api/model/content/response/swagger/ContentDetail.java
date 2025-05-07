@@ -25,8 +25,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
               schema = @Schema(implementation = ContentDetailApiResponse.class),
               examples = {
                 @ExampleObject(
-                    name = "콘텐츠 상세 정보 응답",
-                    summary = "콘텐츠 상세 정보",
+                    name = "코칭 콘텐츠 상세 정보",
+                    summary = "코칭 유형 콘텐츠 상세 정보",
                     value =
                         """
                                                 {
@@ -34,26 +34,74 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
                                                   "code": 200,
                                                   "message": "콘텐츠 상세 조회 성공",
                                                   "data": {
-                                                    "id": 1,
+                                                    "contentId": 1,
                                                     "contentType": "COACHING",
                                                     "categoryId": 1,
                                                     "title": "사업계획서 컨설팅",
                                                     "sellerProfileImageUrl": "https://example.com/profile.jpg",
                                                     "sellerName": "전문가",
+                                                    "lowestPrice": 50000,
                                                     "options": [
                                                       {
-                                                        "id": 1,
+                                                        "optionId": 1,
                                                         "optionType": "COACHING_OPTION",
                                                         "name": "1시간 코칭",
                                                         "description": "1:1 전문가 코칭 1시간",
-                                                        "price": 50000
+                                                        "price": 50000,
+                                                        "coachingPeriod": "ONE_DAY",
+                                                        "documentProvision": "PROVIDED",
+                                                        "coachingType": "ONLINE",
+                                                        "coachingTypeDescription": "줌을 통한 온라인 미팅으로 진행됩니다."
                                                       },
                                                       {
-                                                        "id": 2,
+                                                        "optionId": 2,
                                                         "optionType": "COACHING_OPTION",
                                                         "name": "2시간 코칭",
                                                         "description": "1:1 전문가 코칭 2시간",
-                                                        "price": 90000
+                                                        "price": 90000,
+                                                        "coachingPeriod": "ONE_DAY",
+                                                        "documentProvision": "PROVIDED",
+                                                        "coachingType": "ONLINE",
+                                                        "coachingTypeDescription": "줌을 통한 온라인 미팅으로 진행됩니다."
+                                                      }
+                                                    ]
+                                                  },
+                                                  "timestamp": "2025-05-06 04:26:26"
+                                                }
+                                                """),
+                @ExampleObject(
+                    name = "문서 콘텐츠 상세 정보",
+                    summary = "문서 유형 콘텐츠 상세 정보",
+                    value =
+                        """
+                                                {
+                                                  "status": "SUCCESS",
+                                                  "code": 200,
+                                                  "message": "콘텐츠 상세 조회 성공",
+                                                  "data": {
+                                                    "contentId": 2,
+                                                    "contentType": "DOCUMENT",
+                                                    "categoryId": 2,
+                                                    "title": "사업계획서 템플릿 모음",
+                                                    "sellerProfileImageUrl": "https://example.com/profile2.jpg",
+                                                    "sellerName": "자료제공자",
+                                                    "lowestPrice": 15000,
+                                                    "options": [
+                                                      {
+                                                        "optionId": 3,
+                                                        "optionType": "DOCUMENT_OPTION",
+                                                        "name": "기본 템플릿",
+                                                        "description": "기본적인 사업계획서 템플릿입니다.",
+                                                        "price": 15000,
+                                                        "contentDeliveryMethod": "IMMEDIATE_DOWNLOAD"
+                                                      },
+                                                      {
+                                                        "optionId": 4,
+                                                        "optionType": "DOCUMENT_OPTION",
+                                                        "name": "프리미엄 템플릿",
+                                                        "description": "상세한 작성 가이드가 포함된 프리미엄 템플릿입니다.",
+                                                        "price": 25000,
+                                                        "contentDeliveryMethod": "IMMEDIATE_DOWNLOAD"
                                                       }
                                                     ]
                                                   },
