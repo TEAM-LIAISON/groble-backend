@@ -17,8 +17,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 @Operation(
     summary = "콘텐츠 대표(썸네일) 이미지 업로드",
     description =
-        "콘텐츠 대표(썸네일) 이미지를 업로드합니다. 이미지 파일만 업로드 가능하며, 다른 파일 형식은 오류가 발생합니다."
-            + "반환된 fileUrl을 콘텐츠 임시 저장 및 심사 요청 request에 포함하여 사용합니다.")
+        "콘텐츠 대표(썸네일) 이미지를 업로드합니다. 이미지 파일만 업로드 가능하며, 다른 파일 형식은 오류가 발생합니다. "
+            + " 반환된 fileUrl을 콘텐츠 임시 저장 및 심사 요청 request 에 포함하여 사용합니다.")
 @ApiResponses({
   @ApiResponse(
       responseCode = "201",
