@@ -15,7 +15,7 @@ public class FileDtoMapper {
       throws IOException {
     return FileUploadDto.builder()
         .inputStream(file.getInputStream())
-        .fileName(UUID.randomUUID().toString() + "_" + file.getOriginalFilename())
+        .fileName(UUID.randomUUID() + "_" + file.getOriginalFilename())
         .originalFilename(file.getOriginalFilename())
         .contentType(file.getContentType())
         .fileSize(file.getSize())

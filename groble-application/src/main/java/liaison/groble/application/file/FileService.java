@@ -12,6 +12,7 @@ import liaison.groble.common.exception.FileSizeLimitExceededException;
 import liaison.groble.common.exception.InvalidFileTypeException;
 import liaison.groble.domain.file.entity.FileInfo;
 import liaison.groble.domain.file.entity.PresignedUrlInfo;
+import liaison.groble.domain.file.enums.FileTypeGroup;
 import liaison.groble.domain.file.repository.FileRepository;
 import liaison.groble.domain.file.service.FileStorageService;
 import liaison.groble.domain.user.entity.User;
@@ -111,47 +112,24 @@ public class FileService {
   /** 디렉토리 타입에 따른 후처리 로직을 실행합니다. */
   private void processFileByDirectory(Long userId, FileInfo fileInfo) {
     String directory = fileInfo.getStoragePath().split("/")[0];
-
-    if (directory.equals("profile")) { // 프로필 이미지 업로드 후처리 (기존 프로필 이미지 삭제, 유저 정보 업데이트 등)
+    if (directory.equals("profiles")) { // 프로필 이미지 업로드 후처리 (기존 프로필 이미지 삭제, 유저 정보 업데이트 등)
       updateUserProfileImage(userId, fileInfo);
-      //            case "products":
-      //                // 상품 이미지 업로드 후처리
-      //                if (fileInfo.getMetadata() != null &&
-      // fileInfo.getMetadata().containsKey("productId")) {
-      //
-      // updateProductImage(Long.valueOf(fileInfo.getMetadata().get("productId")), fileInfo);
-      //                }
-      //                break;
-      // 다른 디렉토리 타입에 대한 후처리...
     }
   }
 
   /** 사용자 프로필 이미지를 업데이트합니다. */
   private void updateUserProfileImage(Long userId, FileInfo fileInfo) {
     User user = userReader.getUserById(userId);
-    // 기존 프로필 이미지가 있으면 삭제
     if (user.getProfileImageUrl() != null) {
-      // 기존 이미지 파일 정보 찾기
       FileInfo oldImageInfo = fileRepository.findByFileUrl(user.getProfileImageUrl());
       if (oldImageInfo != null) {
-        // S3에서 파일 삭제
         fileStorageService.deleteFile(oldImageInfo.getStoragePath());
-        // DB에서 파일 정보 삭제
         fileRepository.delete(oldImageInfo);
       }
     }
 
-    // 사용자 프로필 이미지 URL 업데이트
     user.updateProfileImageUrl(fileInfo.getFileUrl());
     userRepository.save(user);
-
-    // 파일과 사용자 연결 정보 저장 (필요한 경우) [다대다 관계로 풀어석 구현하는 경우]
-    //        UserFile userFile = UserFile.builder()
-    //                .userId(userId)
-    //                .fileId(fileInfo.getId())
-    //                .fileType("PROFILE")
-    //                .build();
-    //        userFileRepository.save(userFile);
   }
 
   /** 상품 이미지를 업데이트합니다. */
@@ -218,5 +196,16 @@ public class FileService {
     if (fileInfo != null) {
       fileStorageService.deleteFile(fileInfo.getStoragePath());
     }
+  }
+
+  public String resolveDirectoryPath(String fileType, String directory) {
+    FileTypeGroup base = FileTypeGroup.from(fileType);
+
+    if (directory == null || directory.isBlank()) {
+      return base.getDir(); // 예: images
+    }
+
+    // 일반적인 케이스: profile/images
+    return directory.toLowerCase() + "/" + base.getDir();
   }
 }

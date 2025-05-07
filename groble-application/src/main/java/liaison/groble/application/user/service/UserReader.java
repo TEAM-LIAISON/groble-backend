@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import liaison.groble.common.exception.EntityNotFoundException;
+import liaison.groble.domain.user.entity.IntegratedAccount;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.repository.IntegratedAccountRepository;
 import liaison.groble.domain.user.repository.SocialAccountRepository;
@@ -59,6 +60,11 @@ public class UserReader {
    */
   public boolean isNicknameTaken(String nickname) {
     return userRepository.existsByNickname(nickname);
+  }
+
+  // ===== 이메일로 User 조회 =====
+  public Optional<IntegratedAccount> findUserByEmail(String email) {
+    return integratedAccountRepository.findByIntegratedAccountEmail(email);
   }
 
   // ===== 사용자 존재 여부 확인 =====

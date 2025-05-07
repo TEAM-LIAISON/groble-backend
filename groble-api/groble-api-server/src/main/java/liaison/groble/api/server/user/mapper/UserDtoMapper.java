@@ -2,44 +2,58 @@ package liaison.groble.api.server.user.mapper;
 
 import org.springframework.stereotype.Component;
 
-import liaison.groble.api.model.user.enums.AccountTypeDto;
-import liaison.groble.api.model.user.enums.ProviderTypeDto;
-import liaison.groble.api.model.user.enums.UserTypeDto;
+import liaison.groble.api.model.user.response.BuyerMyPageSummaryResponse;
+import liaison.groble.api.model.user.response.MyPageSummaryResponseBase;
+import liaison.groble.api.model.user.response.SellerMyPageSummaryResponse;
 import liaison.groble.api.model.user.response.UserMyPageDetailResponse;
-import liaison.groble.api.model.user.response.UserMyPageSummaryResponse;
 import liaison.groble.application.user.dto.UserMyPageDetailDto;
 import liaison.groble.application.user.dto.UserMyPageSummaryDto;
-import liaison.groble.common.response.EnumResponse;
 
 @Component
 public class UserDtoMapper {
 
-  public UserMyPageSummaryResponse toApiMyPageSummaryResponse(
+  // 중첩 구조 문제를 해결하기 위해 매퍼 메서드 수정
+  public MyPageSummaryResponseBase toApiMyPageSummaryResponse(
       UserMyPageSummaryDto userMyPageSummaryDto) {
-    EnumResponse userType =
-        userMyPageSummaryDto.getUserTypeName() != null
-            ? EnumResponse.from(UserTypeDto.valueOf(userMyPageSummaryDto.getUserTypeName()))
-            : null;
 
-    return UserMyPageSummaryResponse.builder()
-        .nickname(userMyPageSummaryDto.getNickname())
-        .profileImageUrl(userMyPageSummaryDto.getProfileImageUrl())
+    String userTypeName = userMyPageSummaryDto.getUserTypeName();
+
+    // 사용자 유형에 따라 다른 응답 객체 직접 반환 (래퍼 사용하지 않음)
+    if (userTypeName != null && userTypeName.equals("SELLER")) {
+      return toSellerSummaryResponse(userMyPageSummaryDto, userTypeName);
+    } else {
+      return toBuyerSummaryResponse(userMyPageSummaryDto, userTypeName);
+    }
+  }
+
+  // 구매자 전용 응답 생성 메서드
+  private BuyerMyPageSummaryResponse toBuyerSummaryResponse(
+      UserMyPageSummaryDto dto, String userType) {
+
+    return BuyerMyPageSummaryResponse.builder()
+        .nickname(dto.getNickname())
+        .profileImageUrl(dto.getProfileImageUrl())
         .userType(userType)
-        .canSwitchToSeller(userMyPageSummaryDto.isCanSwitchToSeller())
+        .canSwitchToSeller(dto.isCanSwitchToSeller())
+        .build();
+  }
+
+  // 판매자 전용 응답 생성 메서드
+  private SellerMyPageSummaryResponse toSellerSummaryResponse(
+      UserMyPageSummaryDto dto, String userType) {
+
+    return SellerMyPageSummaryResponse.builder()
+        .nickname(dto.getNickname())
+        .profileImageUrl(dto.getProfileImageUrl())
+        .userType(userType)
         .build();
   }
 
   public UserMyPageDetailResponse toApiMyPageDetailResponse(
       UserMyPageDetailDto userMyPageDetailDto) {
-    EnumResponse accountType =
-        userMyPageDetailDto.getAccountTypeName() != null
-            ? EnumResponse.from(AccountTypeDto.valueOf(userMyPageDetailDto.getAccountTypeName()))
-            : null;
+    String accountType = userMyPageDetailDto.getAccountTypeName();
 
-    EnumResponse providerType =
-        userMyPageDetailDto.getProviderTypeName() != null
-            ? EnumResponse.from(ProviderTypeDto.valueOf(userMyPageDetailDto.getProviderTypeName()))
-            : null;
+    String providerType = userMyPageDetailDto.getProviderTypeName();
 
     return UserMyPageDetailResponse.builder()
         .nickname(userMyPageDetailDto.getNickname())

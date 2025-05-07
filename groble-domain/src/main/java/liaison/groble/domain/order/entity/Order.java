@@ -24,9 +24,9 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 
 import liaison.groble.domain.common.entity.BaseEntity;
+import liaison.groble.domain.content.entity.Content;
+import liaison.groble.domain.content.enums.ContentStatus;
 import liaison.groble.domain.payment.entity.Payment;
-import liaison.groble.domain.product.entity.Product;
-import liaison.groble.domain.product.enums.ProductStatus;
 import liaison.groble.domain.purchase.entity.Purchaser;
 import liaison.groble.domain.user.entity.User;
 
@@ -52,6 +52,7 @@ public class Order extends BaseEntity {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
+  // 숫자 8자리 이상
   @Column(name = "merchant_uid", nullable = false, unique = true)
   private String merchantUid;
 
@@ -133,7 +134,7 @@ public class Order extends BaseEntity {
 
   // 연관관계 편의 메서드 수정
   public void addOrderItem(
-      Product product,
+      Content content,
       BigDecimal price,
       OrderItem.OptionType optionType,
       Long optionId,
@@ -142,7 +143,7 @@ public class Order extends BaseEntity {
     OrderItem orderItem =
         OrderItem.builder()
             .order(this)
-            .product(product)
+            .content(content)
             .price(price) // 옵션에 따른 가격 사용
             .quantity(quantity)
             .optionType(optionType)
@@ -168,28 +169,26 @@ public class Order extends BaseEntity {
   // 팩토리 메서드 수정 (옵션 버전 추가)
   public static Order createOrderWithOption(
       User user,
-      Product product,
+      Content content,
       OrderItem.OptionType optionType,
       Long optionId,
       String optionName,
       BigDecimal price,
-      Purchaser purchaser,
-      String orderNote) {
+      Purchaser purchaser) {
     Order order =
         Order.builder()
             .user(user)
             .totalAmount(price) // 옵션 가격으로 초기화
             .purchaser(purchaser)
-            .orderNote(orderNote)
             .build();
 
     // 상품 상태 확인
-    if (product.getStatus() != ProductStatus.ACTIVE) {
-      throw new IllegalArgumentException("판매중인 상품만 구매할 수 있습니다: " + product.getContentName());
+    if (content.getStatus() != ContentStatus.ACTIVE) {
+      throw new IllegalArgumentException("판매중인 상품만 구매할 수 있습니다: " + content.getTitle());
     }
 
     // 옵션 정보를 포함한 주문 아이템 추가
-    order.addOrderItem(product, price, optionType, optionId, optionName, 1);
+    order.addOrderItem(content, price, optionType, optionId, optionName, 1);
 
     return order;
   }
@@ -198,7 +197,8 @@ public class Order extends BaseEntity {
   public enum OrderStatus {
     PENDING("결제대기"),
     PAID("결제완료"),
-    CANCELLED("취소됨"),
+    CANCELLED("결제취소"),
+    EXPIRED("기간만료"),
     FAILED("결제실패");
 
     private final String description;

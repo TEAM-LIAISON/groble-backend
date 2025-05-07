@@ -101,7 +101,8 @@ public class SecurityConfig {
             "https://dev.groble.im",
             "https://api.dev.groble.im")); // 프론트엔드 URL 및 API URL
     configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-    configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Auth-Token"));
+    configuration.setAllowedHeaders(
+        Arrays.asList("Authorization", "Content-ContentType", "X-Auth-Token"));
     configuration.setExposedHeaders(Arrays.asList("X-Auth-Token"));
     configuration.setAllowCredentials(true);
 
@@ -147,7 +148,9 @@ public class SecurityConfig {
                         "/api/v1/auth/sign-up",
                         "/api/v1/auth/sign-in",
                         "/api/v1/auth/email-verification/sign-up",
-                        "/api/v1/auth/verify-code/sign-up")
+                        "/api/v1/auth/verify-code/sign-up",
+                        "/api/v1/auth/password/reset-request",
+                        "/api/v1/auth/password/reset")
                     .permitAll()
                     .requestMatchers("/api/v1/oauth2/**")
                     .permitAll()

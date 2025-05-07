@@ -223,10 +223,10 @@ public class AuthController {
   @Operation(summary = "비밀번호 재설정 이메일 발송", description = "비밀번호 재설정 링크가 포함된 이메일을 발송합니다.")
   @PostMapping("/password/reset-request")
   public ResponseEntity<GrobleResponse<Void>> requestPasswordReset(
-      @Auth Accessor accessor, @Valid @RequestBody EmailVerificationRequest request) {
+      @Valid @RequestBody EmailVerificationRequest request) {
     log.info("비밀번호 재설정 이메일 요청: {}", request.getEmail());
 
-    authService.sendPasswordResetEmail(accessor.getUserId(), request.getEmail());
+    authService.sendPasswordResetEmail(request.getEmail());
 
     return ResponseEntity.ok().body(GrobleResponse.success(null, "비밀번호 재설정 이메일이 발송되었습니다.", 200));
   }

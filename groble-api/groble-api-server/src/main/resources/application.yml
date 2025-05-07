@@ -46,7 +46,7 @@ spring:
         order_inserts: true
         order_updates: true
     hibernate:
-        ddl-auto: none
+        ddl-auto: update
   sql:
     init:
       mode: always
@@ -89,6 +89,9 @@ springdoc:
     - liaison.groble.api.server
   show-actuator: false
   model-and-view-allowed: true
+  generic-models:
+    enabled: true
+    packages-and-classes: liaison.groble.common.response.GrobleResponse
 
 # Actuator Configuration
 # management:

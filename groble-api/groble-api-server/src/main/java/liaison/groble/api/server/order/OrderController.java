@@ -2,7 +2,6 @@ package liaison.groble.api.server.order;
 
 import jakarta.validation.Valid;
 
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -15,7 +14,6 @@ import liaison.groble.application.order.OrderService;
 import liaison.groble.application.order.dto.OrderCreateDto;
 import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.model.Accessor;
-import liaison.groble.common.response.GrobleResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -36,19 +34,13 @@ public class OrderController {
   private final OrderDtoMapper orderDtoMapper;
 
   @PostMapping
-  @Operation(summary = "주문 생성", description = "상품 정보를 받아 주문을 생성하고 주문 ID를 반환합니다.")
+  @Operation(summary = "주문 생성", description = "콘텐츠 정보를 받아 주문을 생성하고 주문 ID를 반환합니다.")
   @ApiResponse(
       responseCode = "201",
       description = "주문 생성 성공",
       content = @Content(schema = @Schema(implementation = OrderResponse.class)))
-  public ResponseEntity<GrobleResponse<OrderResponse>> createOrder(
-      @Auth Accessor accessor, @Valid @RequestBody CreateOrderRequest request) {
-    log.info("Creating order for user: {}", accessor.getUserId());
-
+  public void createOrder(@Auth Accessor accessor, @Valid @RequestBody CreateOrderRequest request) {
     OrderCreateDto orderCreateDto = orderDtoMapper.toServiceOrderCreateDto(request);
-
     orderService.createOrder(accessor.getUserId(), orderCreateDto);
-
-    return ResponseEntity.ok(GrobleResponse.success(null, "주문이 성공적으로 생성되었습니다.", 201));
   }
 }

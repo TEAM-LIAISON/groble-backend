@@ -15,7 +15,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 import liaison.groble.domain.common.entity.BaseEntity;
-import liaison.groble.domain.product.entity.Product;
+import liaison.groble.domain.content.entity.Content;
 
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -37,8 +37,8 @@ public class OrderItem extends BaseEntity {
   private Order order;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "product_id", nullable = false)
-  private Product product;
+  @JoinColumn(name = "content_id", nullable = false)
+  private Content content;
 
   @Column(nullable = false)
   private BigDecimal price;
@@ -49,35 +49,31 @@ public class OrderItem extends BaseEntity {
   @Column(name = "content_name", nullable = false)
   private String contentName;
 
+  @Column(name = "option_id")
+  private Long optionId;
+
   // 옵션 관련 필드 추가
   @Column(name = "option_type")
   @Enumerated(EnumType.STRING)
   private OptionType optionType;
 
-  @Column(name = "option_id")
-  private Long optionId;
-
-  @Column(name = "option_name")
-  private String optionName;
-
   // 생성자 수정
   @Builder
   public OrderItem(
       Order order,
-      Product product,
+      Content content,
       BigDecimal price,
       int quantity,
       OptionType optionType,
       Long optionId,
       String optionName) {
     this.order = order;
-    this.product = product;
+    this.content = content;
     this.price = price;
     this.quantity = quantity;
-    this.contentName = product.getContentName();
+    this.contentName = content.getTitle();
     this.optionType = optionType;
     this.optionId = optionId;
-    this.optionName = optionName;
   }
 
   // 비즈니스 메서드

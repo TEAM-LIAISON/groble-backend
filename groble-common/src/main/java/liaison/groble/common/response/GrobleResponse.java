@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -20,19 +21,32 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL) // null 값은 JSON에 포함하지 않음
+@Schema(description = "공통 응답 형식", name = "GrobleResponse")
 public class GrobleResponse<T> {
-  private ResponseStatus status; // 응답 상태 (SUCCESS, ERROR)
-  private int code; // HTTP 상태 코드 또는 커스텀 코드
-  private String message; // 응답 메시지
+  @Schema(description = "응답 상태 (SUCCESS, ERROR, FAIL)", example = "SUCCESS")
+  private ResponseStatus status;
+
+  @Schema(description = "HTTP 상태 코드 또는 커스텀 코드", example = "200")
+  private int code;
+
+  @Schema(description = "응답 메시지", example = "요청이 성공적으로 처리되었습니다.")
+  private String message;
 
   @JsonInclude(JsonInclude.Include.NON_NULL)
-  private T data; // 응답 데이터 (제네릭 타입)
+  @Schema(description = "응답 데이터 (요청 성공 시)")
+  private T data;
 
   @JsonInclude(JsonInclude.Include.NON_NULL)
-  private ErrorDetail error; // 에러 상세 정보 (에러 발생 시에만 포함)
+  @Schema(description = "에러 상세 정보 (요청 실패 시)")
+  private ErrorDetail error;
 
   @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
-  private LocalDateTime timestamp; // 응답 생성 시간
+  @Schema(
+      description = "응답 생성 시간",
+      example = "2025-05-06 04:26:26",
+      type = "string",
+      format = "date-time")
+  private LocalDateTime timestamp;
 
   /**
    * 성공 응답 생성 (데이터 없음)

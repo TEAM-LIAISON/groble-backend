@@ -15,4 +15,11 @@ public class GlobalExceptionHandler {
     return ResponseEntity.status(HttpStatus.CONFLICT) // 409 Conflict
         .body(GrobleResponse.error(ex.getMessage(), 409, ex));
   }
+
+  @ExceptionHandler(InvalidRequestException.class)
+  public ResponseEntity<GrobleResponse<Void>> handleInvalidRequestException(
+      InvalidRequestException e) {
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        .body(GrobleResponse.error(e.getMessage(), 400, e));
+  }
 }
