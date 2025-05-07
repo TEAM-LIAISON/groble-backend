@@ -17,12 +17,17 @@ public interface ContentCustomRepository {
       Long userId, Long lastContentId, int size, ContentStatus status, ContentType contentType);
 
   CursorResponse<FlatContentPreviewDTO> findMySellingContentsWithCursor(
-      Long userId, Long lastContentId, int size, ContentStatus status, ContentType contentType);
+      Long userId,
+      Long lastContentId,
+      int size,
+      List<ContentStatus> statusList,
+      ContentType contentType);
 
   CursorResponse<FlatContentPreviewDTO> findHomeContentsWithCursor(
       Long lastContentId, int size, ContentType contentType);
 
-  int countMySellingContents(Long userId, ContentStatus status, ContentType contentType);
+  int countMySellingContents(
+      Long userId, List<ContentStatus> contentStatusList, ContentType contentType);
 
   int countMyPurchasingContents(Long userId, ContentStatus status, ContentType contentType);
 }

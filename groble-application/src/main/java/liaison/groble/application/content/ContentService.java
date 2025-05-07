@@ -1,5 +1,6 @@
 package liaison.groble.application.content;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -145,25 +146,25 @@ public class ContentService {
   }
 
   /**
-   * 사용자의 코칭 상품 목록을 조회합니다.
+   * 사용자의 콘텐츠 상품 목록을 조회합니다.
    *
    * @param userId 사용자 ID
    * @param cursor 커서 (다음 페이지 시작점)
    * @param size 조회할 상품 수
-   * @param state 상품 상태 필터
-   * @param type 상품 유형
+   * @param state 콘텐츠 상태 필터
+   * @param type 콘텐츠 유형
    * @return 커서 기반 페이지네이션된 상품 목록
    */
   @Transactional(readOnly = true)
   public CursorResponse<ContentCardDto> getMySellingContents(
       Long userId, String cursor, int size, String state, String type) {
     Long lastContentId = parseContentIdFromCursor(cursor);
-    ContentStatus contentStatus = parseContentStatus(state);
+    List<ContentStatus> contentStatusList = parseContentStatusList(state);
     ContentType contentType = parseContentType(type);
 
     CursorResponse<FlatContentPreviewDTO> flatDtos =
         contentCustomRepository.findMySellingContentsWithCursor(
-            userId, lastContentId, size, contentStatus, contentType);
+            userId, lastContentId, size, contentStatusList, contentType);
 
     List<ContentCardDto> cardDtos =
         flatDtos.getItems().stream()
@@ -171,9 +172,9 @@ public class ContentService {
             .collect(Collectors.toList());
 
     int totalCount =
-        contentCustomRepository.countMySellingContents(userId, contentStatus, contentType);
+        contentCustomRepository.countMySellingContents(userId, contentStatusList, contentType);
 
-    // 7. 응답 구성
+    // 응답 구성
     return CursorResponse.<ContentCardDto>builder()
         .items(cardDtos)
         .nextCursor(flatDtos.getNextCursor())
@@ -229,8 +230,8 @@ public class ContentService {
   }
 
   /** 사용자의 심사 완료된 Content를 찾고 접근 권한을 검증합니다. */
-  private Content findAndValidateUserApprovedContent(Long userId, Long contentId) {
-    Content content = contentReader.getContentByStatusAndId(contentId, ContentStatus.APPROVED);
+  private Content findAndValidateUserValidatedContent(Long userId, Long contentId) {
+    Content content = contentReader.getContentByStatusAndId(contentId, ContentStatus.VALIDATED);
 
     // 권한 확인 - 상품의 소유자가 현재 사용자인지 검증
     if (!content.getUser().getId().equals(userId)) {
@@ -283,11 +284,14 @@ public class ContentService {
     }
   }
 
-  /** 옵션을 Content에 추가합니다. */
+  /** 옵션을 Content에 추가하고 최저가를 설정합니다. */
   private void addOptionsToContent(Content content, ContentDto dto) {
     // dto.getOptions()가 null인 경우 빈 리스트 사용 (NPE 방지)
     List<ContentOptionDto> options =
         dto.getOptions() != null ? dto.getOptions() : Collections.emptyList();
+
+    // 옵션 추가 전에 최저가 계산을 위한 리스트 생성
+    List<BigDecimal> validPrices = new ArrayList<>();
 
     for (ContentOptionDto optionDto : options) {
       // null 옵션 건너뛰기
@@ -303,7 +307,23 @@ public class ContentService {
       ContentOption option = createOptionByContentType(content.getContentType(), optionDto);
       if (option != null) {
         content.addOption(option);
+
+        // 유효한 가격인 경우 최저가 계산용 리스트에 추가
+        if (option.getPrice() != null) {
+          validPrices.add(option.getPrice());
+        }
       }
+    }
+
+    // 최저가 계산 및 설정
+    if (!validPrices.isEmpty()) {
+      BigDecimal lowestPrice = Collections.min(validPrices);
+      content.setLowestPrice(lowestPrice);
+      log.debug("상품 최저가 설정: {}", lowestPrice);
+    } else {
+      // 유효한 가격이 없는 경우 최저가를 null로 설정
+      content.setLowestPrice(null);
+      log.debug("유효한 가격이 없어 최저가를 null로 설정");
     }
   }
 
@@ -408,15 +428,20 @@ public class ContentService {
   }
 
   /** 문자열에서 ContentStatus를 파싱합니다. */
-  private ContentStatus parseContentStatus(String state) {
+  private List<ContentStatus> parseContentStatusList(String state) {
     if (state == null || state.isBlank()) {
       return null;
     }
 
+    // "APPROVED"는 특별한 경우로, VALIDATED와 REJECTED 두 상태를 모두 포함
+    if ("APPROVED".equalsIgnoreCase(state)) {
+      return List.of(ContentStatus.VALIDATED, ContentStatus.REJECTED);
+    }
+
     try {
-      return ContentStatus.valueOf(state.toUpperCase());
+      return List.of(ContentStatus.valueOf(state.toUpperCase()));
     } catch (IllegalArgumentException e) {
-      log.warn("유효하지 않은 상품 상태: {}", state);
+      log.warn("유효하지 않은 콘텐츠 상태: {}", state);
       return null;
     }
   }
@@ -570,7 +595,7 @@ public class ContentService {
   @Transactional
   public ContentDto activateContent(Long userId, Long contentId) {
     // 1. Content 조회 및 권한 검증
-    Content content = findAndValidateUserApprovedContent(userId, contentId);
+    Content content = findAndValidateUserValidatedContent(userId, contentId);
 
     // 2. 상태 업데이트
     content.setStatus(ContentStatus.ACTIVE);

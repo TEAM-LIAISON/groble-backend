@@ -69,7 +69,7 @@ public class SellerInfo {
   @Column(name = "bank_account_owner")
   private String bankAccountOwner;
 
-  /** 판매자 인증 상태 (PENDING, IN_PROGRESS, FAILED, APPROVED) */
+  /** 판매자 인증 상태 (PENDING, IN_PROGRESS, FAILED, VERIFIED) */
   @Column(name = "verification_status")
   @Enumerated(EnumType.STRING)
   private SellerVerificationStatus verificationStatus = SellerVerificationStatus.PENDING;

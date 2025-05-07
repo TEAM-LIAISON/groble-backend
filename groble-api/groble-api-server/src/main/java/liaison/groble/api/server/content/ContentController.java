@@ -62,6 +62,7 @@ public class ContentController {
     return ResponseEntity.ok(GrobleResponse.success(response, "컨텐츠 상세 조회 성공"));
   }
 
+  // 콘텐츠 임시 저장
   @ContentDraft
   @PostMapping("/draft")
   public ResponseEntity<GrobleResponse<ContentResponse>> saveDraft(
@@ -76,7 +77,7 @@ public class ContentController {
     return ResponseEntity.ok(GrobleResponse.success(response, "컨텐츠 임시 저장 성공"));
   }
 
-  // 서비스 상품 심사 요청
+  // 콘텐츠 심사 요청
   @ContentRegister
   @PostMapping("/register")
   public ResponseEntity<GrobleResponse<ContentResponse>> registerContent(
@@ -110,15 +111,16 @@ public class ContentController {
               @ModelAttribute
               CursorRequest cursorRequest,
           @Parameter(
-                  description = "상품 상태 필터 (DRAFT, PENDING, ACTIVE 등)",
+                  description =
+                      "콘텐츠 상태 필터 [ACTIVE - 판매중], [DRAFT - 작성중], [PENDING - 심사중], [APPROVED - 심사완료])",
                   schema =
                       @Schema(
                           implementation = String.class,
-                          allowableValues = {"DRAFT", "PENDING", "APPROVED", "ACTIVE"}))
-              @RequestParam(value = "state", required = false)
+                          allowableValues = {"ACTIVE", "DRAFT", "PENDING", "APPROVED"}))
+              @RequestParam(value = "state")
               String state,
           @Parameter(
-                  description = "상품 타입 (COACHING 또는 DOCUMENT)",
+                  description = "콘텐츠 유형 [COACHING - 코창], [DOCUMENT - 자료])",
                   required = true,
                   schema =
                       @Schema(

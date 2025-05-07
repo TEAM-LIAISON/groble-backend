@@ -21,6 +21,6 @@ public class SellerMyPageSummaryResponse implements MyPageSummaryResponseBase {
   @Schema(description = "사용자 유형 정보 (BUYER/SELLER)", example = "판매자")
   private String userType;
 
-  @Schema(description = "판매자 인증 상태 (userType : SELLER 경우에만)", example = "APPROVED")
+  @Schema(description = "판매자 인증 상태 (userType : SELLER 경우에만)", example = "VERIFIED")
   private String verificationStatus;
 }

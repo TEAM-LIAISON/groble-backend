@@ -124,6 +124,10 @@ public class Content extends BaseEntity {
     this.status = status;
   }
 
+  public void setLowestPrice(BigDecimal lowestPrice) {
+    this.lowestPrice = lowestPrice;
+  }
+
   public void incrementSaleCount() {
     this.saleCount = this.saleCount + 1;
   }

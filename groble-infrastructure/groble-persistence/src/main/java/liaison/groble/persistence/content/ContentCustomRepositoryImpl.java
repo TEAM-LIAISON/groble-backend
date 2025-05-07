@@ -2,6 +2,7 @@ package liaison.groble.persistence.content;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Repository;
 
@@ -136,7 +137,11 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
 
   @Override
   public CursorResponse<FlatContentPreviewDTO> findMySellingContentsWithCursor(
-      Long userId, Long lastContentId, int size, ContentStatus status, ContentType contentType) {
+      Long userId,
+      Long lastContentId,
+      int size,
+      List<ContentStatus> statusList,
+      ContentType contentType) {
 
     QContent qContent = QContent.content;
     QUser qUser = QUser.user;
@@ -150,9 +155,9 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
       conditions = conditions.and(qContent.id.lt(lastContentId));
     }
 
-    // 상태 필터 추가
-    if (status != null) {
-      conditions = conditions.and(qContent.status.eq(status));
+    // 상태 필터 추가 (여러 상태 지원)
+    if (statusList != null && !statusList.isEmpty()) {
+      conditions = conditions.and(qContent.status.in(statusList));
     }
 
     // 조회할 개수 + 1 (다음 페이지 존재 여부 확인용)
@@ -189,12 +194,20 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
       nextCursor = String.valueOf(items.get(items.size() - 1).getContentId());
     }
 
-    // 메타데이터
+    // 메타데이터 (여러 상태를 표시)
+    String filterValue = null;
+    if (statusList != null && !statusList.isEmpty()) {
+      if (statusList.size() == 2
+          && statusList.contains(ContentStatus.VALIDATED)
+          && statusList.contains(ContentStatus.REJECTED)) {
+        filterValue = "APPROVED"; // VALIDATED와 REJECTED를 함께 조회할 경우 "APPROVED"로 표시
+      } else {
+        filterValue = statusList.stream().map(ContentStatus::name).collect(Collectors.joining(","));
+      }
+    }
+
     CursorResponse.MetaData meta =
-        CursorResponse.MetaData.builder()
-            .filter(status != null ? status.name() : null)
-            .cursorType("id")
-            .build();
+        CursorResponse.MetaData.builder().filter(filterValue).cursorType("id").build();
 
     return CursorResponse.of(items, nextCursor, hasNext, 0, meta);
   }
@@ -246,16 +259,17 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
   }
 
   @Override
-  public int countMySellingContents(Long userId, ContentStatus status, ContentType contentType) {
+  public int countMySellingContents(
+      Long userId, List<ContentStatus> statusList, ContentType contentType) {
     QContent qContent = QContent.content;
 
     // 기본 조건 설정
     BooleanExpression conditions =
         qContent.user.id.eq(userId).and(qContent.contentType.eq(contentType));
 
-    // 상태 필터 추가
-    if (status != null) {
-      conditions = conditions.and(qContent.status.eq(status));
+    // 상태 필터 추가 (여러 상태 지원)
+    if (statusList != null && !statusList.isEmpty()) {
+      conditions = conditions.and(qContent.status.in(statusList));
     }
 
     // 결과가 null일 경우를 대비한 안전한 처리
