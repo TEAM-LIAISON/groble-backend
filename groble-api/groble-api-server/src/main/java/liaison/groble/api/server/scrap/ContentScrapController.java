@@ -45,6 +45,6 @@ public class ContentScrapController {
     UpdateContentScrapStateResponse updateContentScrapStateResponse =
         contentScrapDtoMapper.toUpdateContentScrapStateResponse(contentScrapDto);
     return ResponseEntity.ok(
-        GrobleResponse.success(updateContentScrapStateResponse, "콘텐츠 스크랩이 완료되었습니다.", 200));
+        GrobleResponse.success(updateContentScrapStateResponse, "콘텐츠 스크랩 상태 변경이 완료되었습니다.", 200));
   }
 }
