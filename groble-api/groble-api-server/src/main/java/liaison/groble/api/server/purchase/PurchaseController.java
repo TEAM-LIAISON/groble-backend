@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import liaison.groble.api.model.content.response.ContentPreviewCardResponse;
+import liaison.groble.api.model.purchase.swagger.MyPurchaseContents;
 import liaison.groble.api.server.content.mapper.ContentDtoMapper;
 import liaison.groble.application.content.dto.ContentCardDto;
 import liaison.groble.application.purchase.PurchaseService;
@@ -21,7 +22,6 @@ import liaison.groble.common.request.CursorRequest;
 import liaison.groble.common.response.CursorResponse;
 import liaison.groble.common.response.GrobleResponse;
 
-import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -29,7 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/v1/purchases")
+@RequestMapping("/api/v1/purchase")
 @Tag(name = "구매 관련 API", description = "내가 구매한 콘텐츠 조회, 내가 구매한 콘텐츠(자료) 다운로드 등")
 public class PurchaseController {
   private final PurchaseService purchaseService;
@@ -40,9 +40,8 @@ public class PurchaseController {
     this.contentDtoMapper = contentDtoMapper;
   }
 
-  // 내가 구매한 자료 및 코칭 콘텐츠
-  @Operation(summary = "내가 구매한 자료 및 코칭 콘텐츠", description = "내가 구매한 자료 및 코칭 콘텐츠를 조회합니다.")
-  @GetMapping("/my")
+  @MyPurchaseContents
+  @GetMapping("/contents/my")
   public ResponseEntity<GrobleResponse<CursorResponse<ContentPreviewCardResponse>>>
       getMyPurchasingContents(
           @Parameter(hidden = true) @Auth Accessor accessor,

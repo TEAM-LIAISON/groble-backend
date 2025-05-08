@@ -35,8 +35,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
-@RequestMapping("/api/v1/contents")
-@Tag(name = "콘텐츠 API", description = "콘텐츠 조회 및 등록(임시 저장, 심사 요청), 활성화 및 거절 등")
+@RequestMapping("/api/v1")
+@Tag(name = "콘텐츠 관련 API", description = "콘텐츠 상세 조회, 홈화면 콘텐츠 조회")
 public class ContentController {
 
   private final ContentService contentService;
@@ -49,7 +49,7 @@ public class ContentController {
 
   // 콘텐츠 상세 조회
   @ContentDetail
-  @GetMapping("/{contentId}")
+  @GetMapping("/content/{contentId}")
   public ResponseEntity<GrobleResponse<ContentDetailResponse>> getContentDetail(
       @PathVariable("contentId") Long contentId) {
     ContentDetailDto contentDetailDto = contentService.getContentDetail(contentId);
@@ -58,7 +58,7 @@ public class ContentController {
   }
 
   @Operation(summary = "홈화면 콘텐츠 조회", description = "홈화면 콘텐츠를 조회합니다.")
-  @GetMapping("/home")
+  @GetMapping("/home/contents")
   public ResponseEntity<GrobleResponse<CursorResponse<ContentPreviewCardResponse>>> getHomeContents(
       @Parameter(
               description = "커서 기반 페이지네이션 요청 정보",
