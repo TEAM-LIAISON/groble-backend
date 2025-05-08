@@ -63,7 +63,7 @@ public class User extends BaseTimeEntity {
   private String uuid = UUID.randomUUID().toString();
 
   /** 사용자 이름 (닉네임) */
-  @Column(name = "nickname", length = 50)
+  @Column(name = "nickname", length = 50, unique = true)
   private String nickname;
 
   /** 사용자 프로필 이미지 URL */
