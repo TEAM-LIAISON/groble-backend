@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import liaison.groble.api.model.content.request.draft.ContentDraftRequest;
-import liaison.groble.api.model.content.request.examine.ContentReviewRequest;
+import liaison.groble.api.model.content.request.examine.ContentExamineRequest;
 import liaison.groble.api.model.content.request.register.ContentRegisterRequest;
 import liaison.groble.api.model.content.response.ContentDetailResponse;
 import liaison.groble.api.model.content.response.ContentPreviewCardResponse;
@@ -24,6 +24,7 @@ import liaison.groble.api.model.content.response.ContentStatusResponse;
 import liaison.groble.api.model.content.response.swagger.ContentDetail;
 import liaison.groble.api.model.content.response.swagger.ContentDraft;
 import liaison.groble.api.model.content.response.swagger.ContentExamine;
+import liaison.groble.api.model.content.response.swagger.ContentExamineReject;
 import liaison.groble.api.model.content.response.swagger.ContentRegister;
 import liaison.groble.api.model.content.response.swagger.MySellingContents;
 import liaison.groble.api.server.content.mapper.ContentDtoMapper;
@@ -100,6 +101,17 @@ public class ContentController {
       @PathVariable("contentId") Long contentId) {
     ContentDto contentDto = contentService.activateContent(accessor.getUserId(), contentId);
     return contentDtoMapper.toContentStatusResponse(contentDto);
+  }
+
+  // 심사 거절된 콘텐츠의 거절 사유를 조회
+
+  @ContentExamineReject
+  @GetMapping("/{contentId}/examine/reject")
+  public ResponseEntity<GrobleResponse<String>> getExamineRejectReason(
+      @Parameter(hidden = true) @Auth Accessor accessor,
+      @PathVariable("contentId") Long contentId) {
+    String rejectReason = contentService.getExamineRejectReason(accessor.getUserId(), contentId);
+    return ResponseEntity.ok(GrobleResponse.success(rejectReason, "콘텐츠 심사 거절 사유 조회 성공"));
   }
 
   @MySellingContents
@@ -200,23 +212,24 @@ public class ContentController {
   }
 
   // 콘텐츠 심사 [반려]
+  @Deprecated
   @ContentExamine
   @PostMapping("/{contentId}/examine")
-  public ResponseEntity<GrobleResponse<Void>> reviewContent(
+  public ResponseEntity<GrobleResponse<Void>> examineContent(
       @Parameter(hidden = true) @Auth Accessor accessor,
       @PathVariable("contentId") Long contentId,
-      @RequestBody ContentReviewRequest reviewRequest) {
+      @RequestBody ContentExamineRequest examineRequest) {
     final String APPROVE = "APPROVE";
     final String REJECT = "REJECT";
 
-    String action = reviewRequest.getAction();
+    String action = examineRequest.getAction();
 
     if (APPROVE.equals(action)) {
       contentService.approveContent(accessor.getUserId(), contentId);
       return ResponseEntity.ok(GrobleResponse.success(null, "콘텐츠 심사 승인 성공"));
     } else if (REJECT.equals(action)) {
       // 반려 사유가 있다면 함께 전달
-      String rejectReason = reviewRequest.getRejectReason();
+      String rejectReason = examineRequest.getRejectReason();
       contentService.rejectContent(accessor.getUserId(), contentId, rejectReason);
       return ResponseEntity.ok(GrobleResponse.success(null, "콘텐츠 심사 반려 성공"));
     } else {

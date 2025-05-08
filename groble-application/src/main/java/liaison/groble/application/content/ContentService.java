@@ -251,6 +251,12 @@ public class ContentService {
         .build();
   }
 
+  @Transactional(readOnly = true)
+  public String getExamineRejectReason(Long userId, Long contentId) {
+    Content content = contentReader.getContentById(contentId);
+    return content.getRejectReason();
+  }
+
   @Transactional
   public void approveContent(Long userId, Long contentId) {
     Content content = contentReader.getContentById(contentId);

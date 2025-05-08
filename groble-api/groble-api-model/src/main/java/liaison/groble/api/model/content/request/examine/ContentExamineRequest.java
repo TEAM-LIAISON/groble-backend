@@ -12,7 +12,7 @@ import lombok.Setter;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ContentReviewRequest {
+public class ContentExamineRequest {
   @Schema(description = "심사 액션 (APPROVE: 승인, REJECT: 반려)", example = "APPROVE")
   private String action;
 
