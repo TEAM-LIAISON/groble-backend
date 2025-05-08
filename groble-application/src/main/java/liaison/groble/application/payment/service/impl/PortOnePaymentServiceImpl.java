@@ -804,33 +804,23 @@ public class PortOnePaymentServiceImpl implements PortOnePaymentService {
     }
   }
 
-  /**
-   * 주문에서 결제 상품명을 추출하는 메서드
-   *
-   * @param order 주문 객체
-   * @return 결제에 표시할 상품명
-   */
   private String getOrderName(Order order) {
     // 주문 항목이 없는 경우 기본값 반환
     if (order.getOrderItems() == null || order.getOrderItems().isEmpty()) {
-      return "상품 주문";
+      return "콘텐츠 주문";
     }
 
-    // 첫 번째 상품명 가져오기
     String firstItemName = order.getOrderItems().get(0).getContentName();
 
-    // 상품명이 없는 경우 기본값 설정
     if (firstItemName == null || firstItemName.trim().isEmpty()) {
-      firstItemName = "상품";
+      firstItemName = "콘텐츠";
     }
 
-    // 여러 상품인 경우 "외 N건" 형식으로 표현
     int totalItems = order.getOrderItems().size();
     if (totalItems > 1) {
       return firstItemName + " 외 " + (totalItems - 1) + "건";
     }
 
-    // 단일 상품인 경우 상품명만 반환
     return firstItemName;
   }
 

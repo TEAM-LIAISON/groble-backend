@@ -53,7 +53,7 @@ public class ContentController {
     this.contentDtoMapper = contentDtoMapper;
   }
 
-  // TODO: service 로직 구체화
+  // 콘텐츠 상세 조회
   @ContentDetail
   @GetMapping("/{contentId}")
   public ResponseEntity<GrobleResponse<ContentDetailResponse>> getContentDetail(
@@ -151,12 +151,11 @@ public class ContentController {
             .meta(cardDtos.getMeta())
             .build();
 
-    String successMessage = "COACHING".equals(type) ? "나의 코칭 상품 조회 성공" : "나의 자료 상품 조회 성공";
+    String successMessage = "COACHING".equals(type) ? "나의 코칭 콘텐츠 조회 성공" : "나의 자료 콘텐츠 조회 성공";
     return ResponseEntity.ok(GrobleResponse.success(response, successMessage));
   }
 
-  // 홈화면 상품 조회
-  @Operation(summary = "홈화면 상품 조회", description = "홈화면 상품을 조회합니다.")
+  @Operation(summary = "홈화면 콘텐츠 조회", description = "홈화면 콘텐츠를 조회합니다.")
   @GetMapping("/home")
   public ResponseEntity<GrobleResponse<CursorResponse<ContentPreviewCardResponse>>> getHomeContents(
       @Parameter(
@@ -167,7 +166,7 @@ public class ContentController {
           @ModelAttribute
           CursorRequest cursorRequest,
       @Parameter(
-              description = "상품 타입 (COACHING 또는 DOCUMENT)",
+              description = "콘텐츠 타입 (COACHING 또는 DOCUMENT)",
               required = true,
               schema =
                   @Schema(
@@ -194,7 +193,7 @@ public class ContentController {
             .meta(cardDtos.getMeta())
             .build();
 
-    String successMessage = "COACHING".equals(type) ? "홈화면 코칭 상품 조회 성공" : "홈화면 자료 상품 조회 성공";
+    String successMessage = "COACHING".equals(type) ? "홈화면 코칭 콘텐츠 조회 성공" : "홈화면 자료 콘텐츠 조회 성공";
     return ResponseEntity.ok(GrobleResponse.success(response, successMessage));
   }
 }

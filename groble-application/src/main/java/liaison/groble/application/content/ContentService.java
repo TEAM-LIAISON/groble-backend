@@ -51,8 +51,8 @@ public class ContentService {
    * 콘텐츠를 임시 저장하고 저장된 정보를 반환합니다.
    *
    * @param userId 사용자 ID
-   * @param contentDto 저장할 상품 정보 (null 가능)
-   * @return 저장된 상품 정보
+   * @param contentDto 저장할 콘텐츠 정보 (null 가능)
+   * @return 저장된 콘텐츠 정보
    */
   @Transactional
   public ContentDto saveDraftAndReturn(Long userId, ContentDto contentDto) {
@@ -91,8 +91,8 @@ public class ContentService {
    * 콘텐츠를 심사 요청하고 결과를 반환합니다.
    *
    * @param userId 사용자 ID
-   * @param contentDto 심사 요청할 상품 정보
-   * @return 심사 요청된 상품 정보
+   * @param contentDto 심사 요청할 콘텐츠 정보
+   * @return 심사 요청된 콘텐츠 정보
    */
   @Transactional
   public ContentDto registerContent(Long userId, ContentDto contentDto) {
@@ -133,28 +133,71 @@ public class ContentService {
     return saveAndConvertToDto(content);
   }
 
-  /**
-   * 콘텐츠 상세 정보를 조회합니다.
-   *
-   * @param contentId 상품 ID
-   * @return 상품 상세 정보
-   */
-  @Transactional(readOnly = true)
-  public ContentDetailDto getContentDetail(Long contentId) {
-    Content content = contentReader.getContentById(contentId);
-    return ContentDetailDto.builder().build();
-  }
+    /**
+     * 콘텐츠 상세 정보를 조회합니다.
+     *
+     * @param contentId 상품 ID
+     * @return 상품 상세 정보
+     */
+    @Transactional(readOnly = true)
+    public ContentDetailDto getContentDetail(Long contentId) {
+        Content content = contentReader.getContentById(contentId);
 
-  /**
-   * 사용자의 콘텐츠 상품 목록을 조회합니다.
-   *
-   * @param userId 사용자 ID
-   * @param cursor 커서 (다음 페이지 시작점)
-   * @param size 조회할 상품 수
-   * @param state 콘텐츠 상태 필터
-   * @param type 콘텐츠 유형
-   * @return 커서 기반 페이지네이션된 상품 목록
-   */
+        // 콘텐츠 이미지 URL 목록 (현재는 썸네일만 있음)
+        List<String> contentImageUrls = new ArrayList<>();
+        if (content.getThumbnailUrl() != null) {
+            contentImageUrls.add(content.getThumbnailUrl());
+        }
+        // 추가 이미지가 있다면 여기서 처리
+
+        // 옵션 목록 변환 - ContentOptionDto 사용
+        List<ContentOptionDto> optionDtos = content.getOptions().stream()
+                .map(option -> {
+                    ContentOptionDto.ContentOptionDtoBuilder builder = ContentOptionDto.builder()
+                            .contentOptionId(option.getId())
+                            .name(option.getName())
+                            .description(option.getDescription())
+                            .price(option.getPrice());
+
+                    // 옵션 타입별 필드 설정
+                    if (option instanceof CoachingOption) {
+                        CoachingOption coachingOption = (CoachingOption) option;
+                        builder
+                                .coachingPeriod(coachingOption.getCoachingPeriod().name())
+                                .documentProvision(coachingOption.getDocumentProvision().name())
+                                .coachingType(coachingOption.getCoachingType().name())
+                                .coachingTypeDescription(coachingOption.getCoachingTypeDescription());
+                    } else if (option instanceof DocumentOption) {
+                        DocumentOption documentOption = (DocumentOption) option;
+                        builder.contentDeliveryMethod(documentOption.getContentDeliveryMethod().name());
+                    }
+
+                    return builder.build();
+                })
+                .collect(Collectors.toList());
+
+        // User 관련 정보 추출
+        User seller = content.getUser();
+        String sellerProfileImageUrl = (seller != null) ? seller.getProfileImageUrl() : null;
+        String sellerName = (seller != null) ? seller.getNickname() : null;
+
+        return ContentDetailDto.builder()
+                .contentId(content.getId())
+                .status(content.getStatus().name())
+                .contentsImageUrls(contentImageUrls)
+                .contentType(content.getContentType().name())
+                .categoryId(content.getCategory() != null ? content.getCategory().getId() : null)
+                .title(content.getTitle())
+                .sellerProfileImageUrl(sellerProfileImageUrl)
+                .sellerName(sellerName)
+                .lowestPrice(content.getLowestPrice())
+                .options(optionDtos)
+                .serviceTarget(content.getServiceTarget())
+                .serviceProcess(content.getServiceProcess())
+                .makerIntro(content.getMakerIntro())
+                .build();
+    }
+
   @Transactional(readOnly = true)
   public CursorResponse<ContentCardDto> getMySellingContents(
       Long userId, String cursor, int size, String state, String type) {
@@ -219,11 +262,10 @@ public class ContentService {
     Content content =
         contentRepository
             .findById(contentId)
-            .orElseThrow(() -> new EntityNotFoundException("상품을 찾을 수 없습니다. ID: " + contentId));
+            .orElseThrow(() -> new EntityNotFoundException("콘텐츠를 찾을 수 없습니다. ID: " + contentId));
 
-    // 권한 확인 - 상품의 소유자가 현재 사용자인지 검증
     if (!content.getUser().getId().equals(userId)) {
-      throw new ForbiddenException("해당 상품을 수정할 권한이 없습니다.");
+      throw new ForbiddenException("해당 콘텐츠를 수정할 권한이 없습니다.");
     }
 
     return content;
@@ -233,9 +275,8 @@ public class ContentService {
   private Content findAndValidateUserValidatedContent(Long userId, Long contentId) {
     Content content = contentReader.getContentByStatusAndId(contentId, ContentStatus.VALIDATED);
 
-    // 권한 확인 - 상품의 소유자가 현재 사용자인지 검증
     if (!content.getUser().getId().equals(userId)) {
-      throw new ForbiddenException("해당 상품을 수정할 권한이 없습니다.");
+      throw new ForbiddenException("해당 콘텐츠를 수정할 권한이 없습니다.");
     }
 
     return content;
@@ -264,7 +305,7 @@ public class ContentService {
       try {
         content.setContentType(ContentType.valueOf(dto.getContentType()));
       } catch (IllegalArgumentException e) {
-        log.warn("유효하지 않은 상품 유형: {}", dto.getContentType());
+        log.warn("유효하지 않은 콘텐츠 유형: {}", dto.getContentType());
       }
     }
 
@@ -299,7 +340,7 @@ public class ContentService {
 
       // contentType이 null인 경우 기본값 설정
       if (content.getContentType() == null) {
-        log.warn("상품 유형이 지정되지 않았습니다. 기본값으로 DOCUMENT 설정");
+        log.warn("콘텐츠 유형이 지정되지 않았습니다. 기본값으로 DOCUMENT 설정");
         content.setContentType(ContentType.DOCUMENT);
       }
 
@@ -319,7 +360,7 @@ public class ContentService {
     if (!validPrices.isEmpty()) {
       BigDecimal lowestPrice = Collections.min(validPrices);
       content.setLowestPrice(lowestPrice);
-      log.debug("상품 최저가 설정: {}", lowestPrice);
+      log.debug("콘텐츠 최저가 설정: {}", lowestPrice);
     } else {
       // 유효한 가격이 없는 경우 최저가를 null로 설정
       content.setLowestPrice(null);
@@ -337,7 +378,7 @@ public class ContentService {
     } else if (contentType == ContentType.DOCUMENT) {
       option = createDocumentOption(optionDto);
     } else {
-      log.warn("지원하지 않는 상품 유형입니다: {}", contentType);
+      log.warn("지원하지 않는 콘텐츠 유형입니다: {}", contentType);
       return null;
     }
 
@@ -542,7 +583,7 @@ public class ContentService {
     }
 
     if (contentDto.getContentType() == null) {
-      missingFields.add("상품 유형");
+      missingFields.add("콘텐츠 유형");
     }
 
     if (contentDto.getCategoryId() == null) {
@@ -555,7 +596,7 @@ public class ContentService {
 
     // 옵션 검증
     if (contentDto.getOptions() == null || contentDto.getOptions().isEmpty()) {
-      missingFields.add("상품 옵션");
+      missingFields.add("콘텐츠 옵션");
     } else {
       // 각 옵션별 필수 필드 검증
       for (int i = 0; i < contentDto.getOptions().size(); i++) {
@@ -569,7 +610,7 @@ public class ContentService {
           missingFields.add("옵션" + (i + 1) + " 가격");
         }
 
-        // 상품 유형별 옵션 필수 필드 검증
+        // 콘텐츠 유형별 옵션 필수 필드 검증
         if (ContentType.COACHING.name().equals(contentDto.getContentType())) {
           if (option.getCoachingPeriod() == null) {
             missingFields.add("옵션" + (i + 1) + " 코칭 기간");

@@ -14,25 +14,25 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
-@Operation(summary = "나의 판매 상품 조회", description = "나의 코칭 또는 자료 상품을 조회합니다.")
+@Operation(summary = "나의 판매 콘텐츠 조회", description = "나의 코칭 또는 자료 콘텐츠를 조회합니다.")
 @ApiResponses({
   @ApiResponse(
       responseCode = "200",
-      description = "나의 판매 상품 조회 성공",
+      description = "나의 판매 콘텐츠 조회 성공",
       content =
           @Content(
               mediaType = "application/json",
               schema = @Schema(implementation = MySellingContentsApiResponse.class),
               examples = {
                 @ExampleObject(
-                    name = "코칭 상품 조회 성공",
-                    summary = "나의 코칭 상품 목록 조회",
+                    name = "코칭 콘텐츠 조회 성공",
+                    summary = "나의 코칭 콘텐츠 목록 조회",
                     value =
                         """
                                                 {
                                                   "status": "SUCCESS",
                                                   "code": 200,
-                                                  "message": "나의 코칭 상품 조회 성공",
+                                                  "message": "나의 코칭 콘텐츠 조회 성공",
                                                   "data": {
                                                     "items": [
                                                       {
@@ -66,14 +66,14 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
                                                 }
                                                 """),
                 @ExampleObject(
-                    name = "자료 상품 조회 성공",
-                    summary = "나의 자료 상품 목록 조회",
+                    name = "자료 콘텐츠 조회 성공",
+                    summary = "나의 자료 콘텐츠 목록 조회",
                     value =
                         """
                                                 {
                                                   "status": "SUCCESS",
                                                   "code": 200,
-                                                  "message": "나의 자료 상품 조회 성공",
+                                                  "message": "나의 자료 콘텐츠 조회 성공",
                                                   "data": {
                                                     "items": [
                                                       {

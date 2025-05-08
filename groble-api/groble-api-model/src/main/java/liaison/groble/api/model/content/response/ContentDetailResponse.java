@@ -18,6 +18,9 @@ public class ContentDetailResponse {
   @Schema(description = "콘텐츠 ID", example = "1")
   private Long contentId;
 
+    @Schema(description = "콘텐츠 상태", example = "DRAFT")
+    private String status;
+
   // TODO: 콘텐츠에 등록된 모든 이미지들의 URL
   @Schema(
       description = "콘텐츠 이미지 URL 목록",

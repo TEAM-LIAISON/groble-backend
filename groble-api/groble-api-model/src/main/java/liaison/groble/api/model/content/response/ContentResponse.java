@@ -31,7 +31,7 @@ public class ContentResponse {
   @Schema(description = "썸네일 이미지 URL", example = "https://example.com/thumbnail.jpg")
   private String thumbnailUrl;
 
-  @Schema(description = "상품 상태", example = "DRAFT")
+  @Schema(description = "콘텐츠 상태", example = "DRAFT")
   private String status;
 
   @Schema(description = "옵션 목록")

@@ -22,7 +22,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class ContentRegisterRequest {
 
-  @Schema(description = "상품 ID", example = "1")
+  @Schema(description = "콘텐츠 ID", example = "1")
   private Long contentId;
 
   @NotBlank(message = "제목은 필수 입력 항목입니다")

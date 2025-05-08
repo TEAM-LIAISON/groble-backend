@@ -28,7 +28,10 @@ public class SignUpRequest {
   private String userType;
 
   @NotEmpty(message = "약관 유형은 필수입니다.")
-  @Schema(description = "약관 동의 유형", example = "[\"MARKETING\", \"TERMS\"]")
+  @Schema(
+      description = "약관 동의 유형",
+      example = "[\"MARKETING\", \"TERMS\"]",
+      allowableValues = {"ACTIVE", "DRAFT", "PENDING", "VALIDATED", "REJECTED"})
   private List<TermsTypeDto> termsTypes;
 
   @NotBlank(message = "이메일은 필수 입력값입니다.")

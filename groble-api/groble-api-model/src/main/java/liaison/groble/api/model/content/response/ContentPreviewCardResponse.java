@@ -11,21 +11,20 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-/** 상품 미리보기 카드 응답 DTO 목록 조회 시 카드 형태로 표시되는 상품 정보 */
-@Schema(description = "상품 미리보기 카드 응답 DTO")
+@Schema(description = "콘텐츠 미리보기 카드 응답 DTO")
 @Getter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class ContentPreviewCardResponse {
-  @Schema(description = "상품 ID", example = "123")
+  @Schema(description = "콘텐츠 ID", example = "123")
   private Long contentId;
 
   @Schema(description = "생성 일시", example = "2025-04-20T10:15:30")
   @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
   private LocalDateTime createdAt;
 
-  @Schema(description = "상품 제목", example = "Java 프로그래밍 코칭")
+  @Schema(description = "콘텐츠 제목", example = "Java 프로그래밍 코칭")
   private String title;
 
   @Schema(description = "썸네일 이미지 URL", example = "https://example.com/thumbnail1.jpg")

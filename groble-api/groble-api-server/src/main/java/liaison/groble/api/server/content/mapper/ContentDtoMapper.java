@@ -3,6 +3,10 @@ package liaison.groble.api.server.content.mapper;
 import java.util.ArrayList;
 import java.util.List;
 
+import java.util.stream.Collectors;
+import liaison.groble.api.model.content.response.BaseOptionResponse;
+import liaison.groble.api.model.content.response.CoachingOptionResponse;
+import liaison.groble.api.model.content.response.DocumentOptionResponse;
 import org.springframework.stereotype.Component;
 
 import liaison.groble.api.model.content.request.draft.CoachingOptionDraftRequest;
@@ -77,7 +81,7 @@ public class ContentDtoMapper {
   /** ContentRegisterRequest를 ContentDto로 변환 (등록용) - 필수 필드에 대한 검증 수행 */
   public ContentDto toServiceContentDtoFromRegister(ContentRegisterRequest request) {
     if (request == null) {
-      throw new IllegalArgumentException("상품 등록 요청이 null입니다.");
+      throw new IllegalArgumentException("콘텐츠 심사 요청이 null입니다.");
     }
 
     // 필수 필드 검증
@@ -119,16 +123,16 @@ public class ContentDtoMapper {
   /** 등록 요청의 필수 필드 검증 */
   private void validateRegisterRequest(ContentRegisterRequest request) {
     if (request.getTitle() == null || request.getTitle().trim().isEmpty()) {
-      throw new IllegalArgumentException("상품명은 필수 입력 항목입니다.");
+      throw new IllegalArgumentException("콘텐츠 이름은 필수 입력 항목입니다.");
     }
 
     if (request.getContentType() == null) {
-      throw new IllegalArgumentException("상품 유형은 필수 입력 항목입니다.");
+      throw new IllegalArgumentException("콘텐츠 유형은 필수 입력 항목입니다.");
     }
 
     if (!("COACHING".equals(request.getContentType())
         || "DOCUMENT".equals(request.getContentType()))) {
-      throw new IllegalArgumentException("유효하지 않은 상품 유형입니다: " + request.getContentType());
+      throw new IllegalArgumentException("유효하지 않은 콘텐츠 유형입니다: " + request.getContentType());
     }
 
     if (request.getCategoryId() == null) {
@@ -142,11 +146,11 @@ public class ContentDtoMapper {
     // 옵션 검증
     if ("COACHING".equals(request.getContentType())) {
       if (request.getCoachingOptions() == null || request.getCoachingOptions().isEmpty()) {
-        throw new IllegalArgumentException("코칭 상품은 최소 1개 이상의 옵션이 필요합니다.");
+        throw new IllegalArgumentException("코칭 콘텐츠는 최소 1개 이상의 옵션이 필요합니다.");
       }
     } else {
       if (request.getDocumentOptions() == null || request.getDocumentOptions().isEmpty()) {
-        throw new IllegalArgumentException("문서 상품은 최소 1개 이상의 옵션이 필요합니다.");
+        throw new IllegalArgumentException("문서 콘텐츠는 최소 1개 이상의 옵션이 필요합니다.");
       }
     }
   }
@@ -349,9 +353,61 @@ public class ContentDtoMapper {
     return responseBuilder.build();
   }
 
-  public ContentDetailResponse toContentDetailResponse(ContentDetailDto contentDetailDto) {
-    return ContentDetailResponse.builder().build();
-  }
+    public ContentDetailResponse toContentDetailResponse(ContentDetailDto contentDetailDto) {
+        List<BaseOptionResponse> optionResponses = contentDetailDto.getOptions().stream()
+                .map(optionDto -> {
+                    // 코칭 옵션인 경우
+                    if (optionDto.getCoachingPeriod() != null) {
+                        return CoachingOptionResponse.builder()
+                                .optionId(optionDto.getContentOptionId())
+                                .name(optionDto.getName())
+                                .description(optionDto.getDescription())
+                                .price(optionDto.getPrice())
+                                .coachingPeriod(optionDto.getCoachingPeriod())
+                                .documentProvision(optionDto.getDocumentProvision())
+                                .coachingType(optionDto.getCoachingType())
+                                .coachingTypeDescription(optionDto.getCoachingTypeDescription())
+                                .build();
+                    }
+                    // 문서 옵션인 경우
+                    else if (optionDto.getContentDeliveryMethod() != null) {
+                        return DocumentOptionResponse.builder()
+                                .optionId(optionDto.getContentOptionId())
+                                .name(optionDto.getName())
+                                .description(optionDto.getDescription())
+                                .price(optionDto.getPrice())
+                                .contentDeliveryMethod(optionDto.getContentDeliveryMethod())
+                                .build();
+                    }
+                    // 기본 옵션의 경우
+                    else {
+                        return BaseOptionResponse.builder()
+                                .optionId(optionDto.getContentOptionId())
+                                .name(optionDto.getName())
+                                .description(optionDto.getDescription())
+                                .price(optionDto.getPrice())
+                                .build();
+                    }
+                })
+                .collect(Collectors.toList());
+
+        // 나머지 코드는 동일
+        return ContentDetailResponse.builder()
+                .contentId(contentDetailDto.getContentId())
+                .status(contentDetailDto.getStatus())
+                .contentsImageUrls(contentDetailDto.getContentsImageUrls())
+                .contentType(contentDetailDto.getContentType())
+                .categoryId(contentDetailDto.getCategoryId())
+                .title(contentDetailDto.getTitle())
+                .sellerProfileImageUrl(contentDetailDto.getSellerProfileImageUrl())
+                .sellerName(contentDetailDto.getSellerName())
+                .lowestPrice(contentDetailDto.getLowestPrice())
+                .options(optionResponses)
+                .serviceTarget(contentDetailDto.getServiceTarget())
+                .serviceProcess(contentDetailDto.getServiceProcess())
+                .makerIntro(contentDetailDto.getMakerIntro())
+                .build();
+    }
 
   public ContentPreviewCardResponse toContentPreviewCardFromCardDto(ContentCardDto cardDto) {
     return ContentPreviewCardResponse.builder()
