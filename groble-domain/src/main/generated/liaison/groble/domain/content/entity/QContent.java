@@ -47,6 +47,8 @@ public class QContent extends EntityPathBase<Content> {
       this.<ContentOption, QContentOption>createList(
           "options", ContentOption.class, QContentOption.class, PathInits.DIRECT2);
 
+  public final StringPath rejectReason = createString("rejectReason");
+
   public final NumberPath<Integer> saleCount = createNumber("saleCount", Integer.class);
 
   public final StringPath serviceProcess = createString("serviceProcess");

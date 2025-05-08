@@ -87,6 +87,9 @@ public class Content extends BaseEntity {
   @Column(name = "lowest_price")
   private BigDecimal lowestPrice; // 최저가
 
+  @Column(name = "reject_reason")
+  private String rejectReason;
+
   // 비즈니스 로직으로 옵션 유형 검증
   public void addOption(ContentOption option) {
     if (contentType == ContentType.COACHING && !(option instanceof CoachingOption)) {
@@ -126,6 +129,10 @@ public class Content extends BaseEntity {
 
   public void setLowestPrice(BigDecimal lowestPrice) {
     this.lowestPrice = lowestPrice;
+  }
+
+  public void setRejectReason(String rejectReason) {
+    this.rejectReason = rejectReason;
   }
 
   public void incrementSaleCount() {

@@ -252,18 +252,21 @@ public class ContentService {
   }
 
   @Transactional
-  public void rejectContent(Long userId, Long contentId) {
-    // 1. 사용자 조회
-    User user = userReader.getUserById(userId);
+  public void approveContent(Long userId, Long contentId) {
+    Content content = contentReader.getContentById(contentId);
+    content.setStatus(ContentStatus.VALIDATED);
+    saveAndConvertToDto(content);
+  }
 
-    // 2. 콘텐츠 조회 및 권한 검증
+  @Transactional
+  public void rejectContent(Long userId, Long contentId, String rejectReason) {
+
     Content content = contentReader.getContentById(contentId);
 
-    // 3. 콘텐츠 상태 업데이트
     content.setStatus(ContentStatus.REJECTED);
+    content.setRejectReason(rejectReason);
     log.info("콘텐츠 심사 거절 완료. 유저 ID: {}, 콘텐츠 ID: {}", userId, contentId);
 
-    // 4. 저장 및 변환
     saveAndConvertToDto(content);
   }
 
