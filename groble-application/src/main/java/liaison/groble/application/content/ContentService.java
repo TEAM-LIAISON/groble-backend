@@ -609,6 +609,18 @@ public class ContentService {
       dtoBuilder.categoryId(content.getCategory().getId());
     }
 
+    if (content.getServiceTarget() != null) {
+      dtoBuilder.serviceTarget(content.getServiceTarget());
+    }
+
+    if (content.getServiceProcess() != null) {
+      dtoBuilder.serviceProcess(content.getServiceProcess());
+    }
+
+    if (content.getMakerIntro() != null) {
+      dtoBuilder.makerIntro(content.getMakerIntro());
+    }
+
     return dtoBuilder.build();
   }
 

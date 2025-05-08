@@ -71,7 +71,6 @@ public class ContentDtoMapper {
     builder.serviceTarget(request.getServiceTarget());
     builder.serviceProcess(request.getServiceProcess());
     builder.makerIntro(request.getMakerIntro());
-    // 임시저장 상태 설정
     builder.status("DRAFT");
 
     // 옵션 설정
@@ -347,6 +346,9 @@ public class ContentDtoMapper {
     responseBuilder.contentType(dto.getContentType());
     responseBuilder.categoryId(dto.getCategoryId());
     responseBuilder.thumbnailUrl(dto.getThumbnailUrl());
+    responseBuilder.serviceTarget(dto.getServiceTarget());
+    responseBuilder.serviceProcess(dto.getServiceProcess());
+    responseBuilder.makerIntro(dto.getMakerIntro());
     responseBuilder.status(dto.getStatus());
 
     // 옵션이 없는 경우 null로 설정 (빈 리스트가 아닌)
