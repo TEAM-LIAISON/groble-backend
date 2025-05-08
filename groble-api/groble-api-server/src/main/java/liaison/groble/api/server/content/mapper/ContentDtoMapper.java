@@ -111,8 +111,9 @@ public class ContentDtoMapper {
     builder.contentType(contentType);
     builder.categoryId(request.getCategoryId());
     builder.thumbnailUrl(request.getThumbnailUrl());
-
-    // 등록 요청 상태 설정
+    builder.serviceTarget(request.getServiceTarget());
+    builder.serviceProcess(request.getServiceProcess());
+    builder.makerIntro(request.getMakerIntro());
     builder.status("PENDING_REVIEW");
 
     // 옵션 설정 - 등록 시에는 최소 1개 이상의 옵션이 필요
@@ -153,6 +154,18 @@ public class ContentDtoMapper {
       if (request.getDocumentOptions() == null || request.getDocumentOptions().isEmpty()) {
         throw new IllegalArgumentException("문서 콘텐츠는 최소 1개 이상의 옵션이 필요합니다.");
       }
+    }
+
+    if (request.getServiceTarget() == null || request.getServiceTarget().trim().isEmpty()) {
+      throw new IllegalArgumentException("서비스 타겟은 필수 입력 항목입니다.");
+    }
+
+    if (request.getServiceProcess() == null || request.getServiceProcess().trim().isEmpty()) {
+      throw new IllegalArgumentException("제공 절차는 필수 입력 항목입니다.");
+    }
+
+    if (request.getMakerIntro() == null || request.getMakerIntro().trim().isEmpty()) {
+      throw new IllegalArgumentException("메이커 소개는 필수 입력 항목입니다.");
     }
   }
 

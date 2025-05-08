@@ -4,6 +4,7 @@ import java.util.List;
 
 import jakarta.validation.Valid;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -74,7 +75,8 @@ public class SellController {
     ContentDto contentDto = contentDtoMapper.toServiceContentDtoFromRegister(request);
     ContentDto savedContentDto = contentService.registerContent(accessor.getUserId(), contentDto);
     ContentResponse response = contentDtoMapper.toContentDraftResponse(savedContentDto);
-    return ResponseEntity.ok(GrobleResponse.success(response, "콘텐츠 심사 요청 성공"));
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(GrobleResponse.success(response, "콘텐츠 심사 요청 성공"));
   }
 
   // 콘텐츠 심사 완료(승인) 이후 콘텐츠 판매중으로 활성화

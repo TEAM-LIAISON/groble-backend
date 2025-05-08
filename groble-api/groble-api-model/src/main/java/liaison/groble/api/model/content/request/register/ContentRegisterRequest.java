@@ -51,16 +51,15 @@ public class ContentRegisterRequest {
   @Schema(description = "문서 옵션 목록 (contentType이 DOCUMENT인 경우)")
   private List<DocumentOptionRegisterRequest> documentOptions;
 
-  /** 요청의 유효성을 검증합니다. contentType에 따라 적절한 옵션 목록이 제공되었는지 확인합니다. */
-  public void validate() {
-    if ("COACHING".equals(contentType)) {
-      if (coachingOptions == null || coachingOptions.isEmpty()) {
-        throw new IllegalArgumentException("COACHING 유형은 최소 하나 이상의 코칭 옵션이 필요합니다.");
-      }
-    } else if ("DOCUMENT".equals(contentType)) {
-      if (documentOptions == null || documentOptions.isEmpty()) {
-        throw new IllegalArgumentException("DOCUMENT 유형은 최소 하나 이상의 문서 옵션이 필요합니다.");
-      }
-    }
-  }
+  @NotBlank(message = "서비스 타겟은 필수 입력 항목입니다")
+  @Schema(description = "서비스 타겟", example = "초창패, 창중, 예창패, 청창사 등을 준비하는 분")
+  private String serviceTarget;
+
+  @NotBlank(message = "제공 절차는 필수 입력 항목입니다")
+  @Schema(description = "제공 절차", example = "STANDARD/DELUXE/PREMIUM")
+  private String serviceProcess;
+
+  @NotBlank(message = "메이커 소개는 필수 입력 항목입니다")
+  @Schema(description = "메이커 소개", example = "- 동국대학교 철학과 졸업")
+  private String makerIntro;
 }
