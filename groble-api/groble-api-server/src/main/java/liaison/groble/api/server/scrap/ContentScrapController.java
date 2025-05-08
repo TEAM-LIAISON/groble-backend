@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import liaison.groble.api.model.content.response.ContentScrapCardResponse;
 import liaison.groble.api.model.scrap.request.UpdateContentScrapStateRequest;
 import liaison.groble.api.model.scrap.response.UpdateContentScrapStateResponse;
+import liaison.groble.api.model.scrap.response.swagger.ContentScrapCard;
 import liaison.groble.api.model.scrap.response.swagger.UpdateContentScrapState;
 import liaison.groble.api.server.scrap.mapper.ContentScrapDtoMapper;
 import liaison.groble.application.scrap.dto.ContentScrapCardDto;
@@ -60,7 +61,7 @@ public class ContentScrapController {
         GrobleResponse.success(updateContentScrapStateResponse, "콘텐츠 스크랩 상태 변경이 완료되었습니다.", 200));
   }
 
-  // 자료 코칭 구분 필터 필요
+  @ContentScrapCard
   @GetMapping("/contents")
   public ResponseEntity<GrobleResponse<CursorResponse<ContentScrapCardResponse>>>
       getMyScrapContents(
