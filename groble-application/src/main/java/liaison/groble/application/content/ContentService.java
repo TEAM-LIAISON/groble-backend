@@ -351,6 +351,17 @@ public class ContentService {
         log.warn("카테고리를 찾을 수 없습니다: {}", dto.getCategoryId());
       }
     }
+
+    // 서비스 타겟, 프로세스, 제작자 소개 업데이트
+    if (dto.getServiceTarget() != null) {
+      content.setServiceTarget(dto.getServiceTarget());
+    }
+    if (dto.getServiceProcess() != null) {
+      content.setServiceProcess(dto.getServiceProcess());
+    }
+    if (dto.getMakerIntro() != null) {
+      content.setMakerIntro(dto.getMakerIntro());
+    }
   }
 
   /** 옵션을 Content에 추가하고 최저가를 설정합니다. */

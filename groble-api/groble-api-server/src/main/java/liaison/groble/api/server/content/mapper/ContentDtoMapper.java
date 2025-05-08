@@ -68,7 +68,9 @@ public class ContentDtoMapper {
     builder.contentType(contentType);
     builder.categoryId(request.getCategoryId());
     builder.thumbnailUrl(request.getThumbnailUrl());
-
+    builder.serviceTarget(request.getServiceTarget());
+    builder.serviceProcess(request.getServiceProcess());
+    builder.makerIntro(request.getMakerIntro());
     // 임시저장 상태 설정
     builder.status("DRAFT");
 

@@ -123,6 +123,18 @@ public class Content extends BaseEntity {
     this.thumbnailUrl = thumbnailUrl;
   }
 
+  public void setServiceTarget(String serviceTarget) {
+    this.serviceTarget = serviceTarget;
+  }
+
+  public void setServiceProcess(String serviceProcess) {
+    this.serviceProcess = serviceProcess;
+  }
+
+  public void setMakerIntro(String makerIntro) {
+    this.makerIntro = makerIntro;
+  }
+
   public void setStatus(ContentStatus status) {
     this.status = status;
   }

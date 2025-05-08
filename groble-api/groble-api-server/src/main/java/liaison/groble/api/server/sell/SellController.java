@@ -50,6 +50,7 @@ public class SellController {
     this.contentDtoMapper = contentDtoMapper;
   }
 
+  // 콘텐츠 임시 저장
   @ContentDraft
   @PostMapping("/content/draft")
   public ResponseEntity<GrobleResponse<ContentResponse>> saveDraft(
