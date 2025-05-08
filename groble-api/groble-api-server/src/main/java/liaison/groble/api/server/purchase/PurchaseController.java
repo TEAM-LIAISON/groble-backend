@@ -24,16 +24,21 @@ import liaison.groble.common.response.GrobleResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.RequiredArgsConstructor;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestController
 @RequestMapping("/api/v1/purchases")
-@RequiredArgsConstructor
+@Tag(name = "구매 관련 API", description = "내가 구매한 콘텐츠 조회, 내가 구매한 콘텐츠(자료) 다운로드 등")
 public class PurchaseController {
   private final PurchaseService purchaseService;
   private final ContentDtoMapper contentDtoMapper;
+
+  public PurchaseController(PurchaseService purchaseService, ContentDtoMapper contentDtoMapper) {
+    this.purchaseService = purchaseService;
+    this.contentDtoMapper = contentDtoMapper;
+  }
 
   // 내가 구매한 자료 및 코칭 콘텐츠
   @Operation(summary = "내가 구매한 자료 및 코칭 콘텐츠", description = "내가 구매한 자료 및 코칭 콘텐츠를 조회합니다.")
