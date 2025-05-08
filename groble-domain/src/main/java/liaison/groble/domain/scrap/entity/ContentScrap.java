@@ -24,7 +24,7 @@ import lombok.NoArgsConstructor;
 /** 사용자 엔티티 통합계정, 소셜계정 등 모든 유형의 계정에 공통으로 사용되는 사용자 정보를 관리 */
 @Entity
 @Table(
-    name = "scraps",
+    name = "content_scraps",
     indexes = {@Index(name = "idx_scrap_user_content", columnList = "user_id, content_id")})
 @Getter
 @Builder
