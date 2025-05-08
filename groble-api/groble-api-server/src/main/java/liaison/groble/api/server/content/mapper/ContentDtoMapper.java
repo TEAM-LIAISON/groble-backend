@@ -2,11 +2,8 @@ package liaison.groble.api.server.content.mapper;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import java.util.stream.Collectors;
-import liaison.groble.api.model.content.response.BaseOptionResponse;
-import liaison.groble.api.model.content.response.CoachingOptionResponse;
-import liaison.groble.api.model.content.response.DocumentOptionResponse;
+
 import org.springframework.stereotype.Component;
 
 import liaison.groble.api.model.content.request.draft.CoachingOptionDraftRequest;
@@ -15,10 +12,13 @@ import liaison.groble.api.model.content.request.draft.DocumentOptionDraftRequest
 import liaison.groble.api.model.content.request.register.CoachingOptionRegisterRequest;
 import liaison.groble.api.model.content.request.register.ContentRegisterRequest;
 import liaison.groble.api.model.content.request.register.DocumentOptionRegisterRequest;
+import liaison.groble.api.model.content.response.BaseOptionResponse;
+import liaison.groble.api.model.content.response.CoachingOptionResponse;
 import liaison.groble.api.model.content.response.ContentDetailResponse;
 import liaison.groble.api.model.content.response.ContentPreviewCardResponse;
 import liaison.groble.api.model.content.response.ContentResponse;
 import liaison.groble.api.model.content.response.ContentStatusResponse;
+import liaison.groble.api.model.content.response.DocumentOptionResponse;
 import liaison.groble.application.content.dto.ContentCardDto;
 import liaison.groble.application.content.dto.ContentDetailDto;
 import liaison.groble.application.content.dto.ContentDto;
@@ -353,61 +353,63 @@ public class ContentDtoMapper {
     return responseBuilder.build();
   }
 
-    public ContentDetailResponse toContentDetailResponse(ContentDetailDto contentDetailDto) {
-        List<BaseOptionResponse> optionResponses = contentDetailDto.getOptions().stream()
-                .map(optionDto -> {
-                    // 코칭 옵션인 경우
-                    if (optionDto.getCoachingPeriod() != null) {
-                        return CoachingOptionResponse.builder()
-                                .optionId(optionDto.getContentOptionId())
-                                .name(optionDto.getName())
-                                .description(optionDto.getDescription())
-                                .price(optionDto.getPrice())
-                                .coachingPeriod(optionDto.getCoachingPeriod())
-                                .documentProvision(optionDto.getDocumentProvision())
-                                .coachingType(optionDto.getCoachingType())
-                                .coachingTypeDescription(optionDto.getCoachingTypeDescription())
-                                .build();
-                    }
-                    // 문서 옵션인 경우
-                    else if (optionDto.getContentDeliveryMethod() != null) {
-                        return DocumentOptionResponse.builder()
-                                .optionId(optionDto.getContentOptionId())
-                                .name(optionDto.getName())
-                                .description(optionDto.getDescription())
-                                .price(optionDto.getPrice())
-                                .contentDeliveryMethod(optionDto.getContentDeliveryMethod())
-                                .build();
-                    }
-                    // 기본 옵션의 경우
-                    else {
-                        return BaseOptionResponse.builder()
-                                .optionId(optionDto.getContentOptionId())
-                                .name(optionDto.getName())
-                                .description(optionDto.getDescription())
-                                .price(optionDto.getPrice())
-                                .build();
-                    }
+  public ContentDetailResponse toContentDetailResponse(ContentDetailDto contentDetailDto) {
+    List<BaseOptionResponse> optionResponses =
+        contentDetailDto.getOptions().stream()
+            .map(
+                optionDto -> {
+                  // 코칭 옵션인 경우
+                  if (optionDto.getCoachingPeriod() != null) {
+                    return CoachingOptionResponse.builder()
+                        .optionId(optionDto.getContentOptionId())
+                        .name(optionDto.getName())
+                        .description(optionDto.getDescription())
+                        .price(optionDto.getPrice())
+                        .coachingPeriod(optionDto.getCoachingPeriod())
+                        .documentProvision(optionDto.getDocumentProvision())
+                        .coachingType(optionDto.getCoachingType())
+                        .coachingTypeDescription(optionDto.getCoachingTypeDescription())
+                        .build();
+                  }
+                  // 문서 옵션인 경우
+                  else if (optionDto.getContentDeliveryMethod() != null) {
+                    return DocumentOptionResponse.builder()
+                        .optionId(optionDto.getContentOptionId())
+                        .name(optionDto.getName())
+                        .description(optionDto.getDescription())
+                        .price(optionDto.getPrice())
+                        .contentDeliveryMethod(optionDto.getContentDeliveryMethod())
+                        .build();
+                  }
+                  // 기본 옵션의 경우
+                  else {
+                    return BaseOptionResponse.builder()
+                        .optionId(optionDto.getContentOptionId())
+                        .name(optionDto.getName())
+                        .description(optionDto.getDescription())
+                        .price(optionDto.getPrice())
+                        .build();
+                  }
                 })
-                .collect(Collectors.toList());
+            .collect(Collectors.toList());
 
-        // 나머지 코드는 동일
-        return ContentDetailResponse.builder()
-                .contentId(contentDetailDto.getContentId())
-                .status(contentDetailDto.getStatus())
-                .contentsImageUrls(contentDetailDto.getContentsImageUrls())
-                .contentType(contentDetailDto.getContentType())
-                .categoryId(contentDetailDto.getCategoryId())
-                .title(contentDetailDto.getTitle())
-                .sellerProfileImageUrl(contentDetailDto.getSellerProfileImageUrl())
-                .sellerName(contentDetailDto.getSellerName())
-                .lowestPrice(contentDetailDto.getLowestPrice())
-                .options(optionResponses)
-                .serviceTarget(contentDetailDto.getServiceTarget())
-                .serviceProcess(contentDetailDto.getServiceProcess())
-                .makerIntro(contentDetailDto.getMakerIntro())
-                .build();
-    }
+    // 나머지 코드는 동일
+    return ContentDetailResponse.builder()
+        .contentId(contentDetailDto.getContentId())
+        .status(contentDetailDto.getStatus())
+        .contentsImageUrls(contentDetailDto.getContentsImageUrls())
+        .contentType(contentDetailDto.getContentType())
+        .categoryId(contentDetailDto.getCategoryId())
+        .title(contentDetailDto.getTitle())
+        .sellerProfileImageUrl(contentDetailDto.getSellerProfileImageUrl())
+        .sellerName(contentDetailDto.getSellerName())
+        .lowestPrice(contentDetailDto.getLowestPrice())
+        .options(optionResponses)
+        .serviceTarget(contentDetailDto.getServiceTarget())
+        .serviceProcess(contentDetailDto.getServiceProcess())
+        .makerIntro(contentDetailDto.getMakerIntro())
+        .build();
+  }
 
   public ContentPreviewCardResponse toContentPreviewCardFromCardDto(ContentCardDto cardDto) {
     return ContentPreviewCardResponse.builder()

@@ -35,6 +35,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
                                                   "message": "콘텐츠 상세 조회 성공",
                                                   "data": {
                                                     "contentId": 1,
+                                                    "status": "ACTIVE",
                                                     "contentsImageUrls": [
                                                       "https://example.com/image1.jpg",
                                                       "https://example.com/image2.jpg"
@@ -87,6 +88,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
                                                   "message": "콘텐츠 상세 조회 성공",
                                                   "data": {
                                                     "contentId": 2,
+                                                    "status": "DRAFT",
                                                     "contentsImageUrls": [
                                                       "https://example.com/doc_preview1.jpg",
                                                       "https://example.com/doc_preview2.jpg"

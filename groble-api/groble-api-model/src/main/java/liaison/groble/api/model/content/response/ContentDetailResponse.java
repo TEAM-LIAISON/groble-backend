@@ -18,8 +18,12 @@ public class ContentDetailResponse {
   @Schema(description = "콘텐츠 ID", example = "1")
   private Long contentId;
 
-    @Schema(description = "콘텐츠 상태", example = "DRAFT")
-    private String status;
+  @Schema(
+      description =
+          "콘텐츠 상태 [ACTIVE - 판매중], [DRAFT - 작성중], [PENDING - 심사중], [VALIDATED - 심사완료(승인)], [REJECTED - 심사완료(거절)]",
+      example = "DRAFT",
+      allowableValues = {"ACTIVE", "DRAFT", "PENDING", "VALIDATED", "REJECTED"})
+  private String status;
 
   // TODO: 콘텐츠에 등록된 모든 이미지들의 URL
   @Schema(

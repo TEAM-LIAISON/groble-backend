@@ -1,5 +1,8 @@
 package liaison.groble.application.file;
 
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import liaison.groble.application.file.dto.FileDto;
 import liaison.groble.application.file.dto.FileUploadDto;
 import liaison.groble.application.user.service.UserReader;
@@ -11,10 +14,9 @@ import liaison.groble.domain.file.repository.FileRepository;
 import liaison.groble.domain.file.service.FileStorageService;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.repository.UserRepository;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service

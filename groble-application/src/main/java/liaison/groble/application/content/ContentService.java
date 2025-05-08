@@ -133,70 +133,73 @@ public class ContentService {
     return saveAndConvertToDto(content);
   }
 
-    /**
-     * 콘텐츠 상세 정보를 조회합니다.
-     *
-     * @param contentId 상품 ID
-     * @return 상품 상세 정보
-     */
-    @Transactional(readOnly = true)
-    public ContentDetailDto getContentDetail(Long contentId) {
-        Content content = contentReader.getContentById(contentId);
+  /**
+   * 콘텐츠 상세 정보를 조회합니다.
+   *
+   * @param contentId 상품 ID
+   * @return 상품 상세 정보
+   */
+  @Transactional(readOnly = true)
+  public ContentDetailDto getContentDetail(Long contentId) {
+    Content content = contentReader.getContentById(contentId);
 
-        // 콘텐츠 이미지 URL 목록 (현재는 썸네일만 있음)
-        List<String> contentImageUrls = new ArrayList<>();
-        if (content.getThumbnailUrl() != null) {
-            contentImageUrls.add(content.getThumbnailUrl());
-        }
-        // 추가 이미지가 있다면 여기서 처리
-
-        // 옵션 목록 변환 - ContentOptionDto 사용
-        List<ContentOptionDto> optionDtos = content.getOptions().stream()
-                .map(option -> {
-                    ContentOptionDto.ContentOptionDtoBuilder builder = ContentOptionDto.builder()
-                            .contentOptionId(option.getId())
-                            .name(option.getName())
-                            .description(option.getDescription())
-                            .price(option.getPrice());
-
-                    // 옵션 타입별 필드 설정
-                    if (option instanceof CoachingOption) {
-                        CoachingOption coachingOption = (CoachingOption) option;
-                        builder
-                                .coachingPeriod(coachingOption.getCoachingPeriod().name())
-                                .documentProvision(coachingOption.getDocumentProvision().name())
-                                .coachingType(coachingOption.getCoachingType().name())
-                                .coachingTypeDescription(coachingOption.getCoachingTypeDescription());
-                    } else if (option instanceof DocumentOption) {
-                        DocumentOption documentOption = (DocumentOption) option;
-                        builder.contentDeliveryMethod(documentOption.getContentDeliveryMethod().name());
-                    }
-
-                    return builder.build();
-                })
-                .collect(Collectors.toList());
-
-        // User 관련 정보 추출
-        User seller = content.getUser();
-        String sellerProfileImageUrl = (seller != null) ? seller.getProfileImageUrl() : null;
-        String sellerName = (seller != null) ? seller.getNickname() : null;
-
-        return ContentDetailDto.builder()
-                .contentId(content.getId())
-                .status(content.getStatus().name())
-                .contentsImageUrls(contentImageUrls)
-                .contentType(content.getContentType().name())
-                .categoryId(content.getCategory() != null ? content.getCategory().getId() : null)
-                .title(content.getTitle())
-                .sellerProfileImageUrl(sellerProfileImageUrl)
-                .sellerName(sellerName)
-                .lowestPrice(content.getLowestPrice())
-                .options(optionDtos)
-                .serviceTarget(content.getServiceTarget())
-                .serviceProcess(content.getServiceProcess())
-                .makerIntro(content.getMakerIntro())
-                .build();
+    // 콘텐츠 이미지 URL 목록 (현재는 썸네일만 있음)
+    List<String> contentImageUrls = new ArrayList<>();
+    if (content.getThumbnailUrl() != null) {
+      contentImageUrls.add(content.getThumbnailUrl());
     }
+    // 추가 이미지가 있다면 여기서 처리
+
+    // 옵션 목록 변환 - ContentOptionDto 사용
+    List<ContentOptionDto> optionDtos =
+        content.getOptions().stream()
+            .map(
+                option -> {
+                  ContentOptionDto.ContentOptionDtoBuilder builder =
+                      ContentOptionDto.builder()
+                          .contentOptionId(option.getId())
+                          .name(option.getName())
+                          .description(option.getDescription())
+                          .price(option.getPrice());
+
+                  // 옵션 타입별 필드 설정
+                  if (option instanceof CoachingOption) {
+                    CoachingOption coachingOption = (CoachingOption) option;
+                    builder
+                        .coachingPeriod(coachingOption.getCoachingPeriod().name())
+                        .documentProvision(coachingOption.getDocumentProvision().name())
+                        .coachingType(coachingOption.getCoachingType().name())
+                        .coachingTypeDescription(coachingOption.getCoachingTypeDescription());
+                  } else if (option instanceof DocumentOption) {
+                    DocumentOption documentOption = (DocumentOption) option;
+                    builder.contentDeliveryMethod(documentOption.getContentDeliveryMethod().name());
+                  }
+
+                  return builder.build();
+                })
+            .collect(Collectors.toList());
+
+    // User 관련 정보 추출
+    User seller = content.getUser();
+    String sellerProfileImageUrl = (seller != null) ? seller.getProfileImageUrl() : null;
+    String sellerName = (seller != null) ? seller.getNickname() : null;
+
+    return ContentDetailDto.builder()
+        .contentId(content.getId())
+        .status(content.getStatus().name())
+        .contentsImageUrls(contentImageUrls)
+        .contentType(content.getContentType().name())
+        .categoryId(content.getCategory() != null ? content.getCategory().getId() : null)
+        .title(content.getTitle())
+        .sellerProfileImageUrl(sellerProfileImageUrl)
+        .sellerName(sellerName)
+        .lowestPrice(content.getLowestPrice())
+        .options(optionDtos)
+        .serviceTarget(content.getServiceTarget())
+        .serviceProcess(content.getServiceProcess())
+        .makerIntro(content.getMakerIntro())
+        .build();
+  }
 
   @Transactional(readOnly = true)
   public CursorResponse<ContentCardDto> getMySellingContents(
@@ -246,6 +249,22 @@ public class ContentService {
         .nextCursor(flatDtos.getNextCursor())
         .hasNext(flatDtos.isHasNext())
         .build();
+  }
+
+  @Transactional
+  public void rejectContent(Long userId, Long contentId) {
+    // 1. 사용자 조회
+    User user = userReader.getUserById(userId);
+
+    // 2. 콘텐츠 조회 및 권한 검증
+    Content content = contentReader.getContentById(contentId);
+
+    // 3. 콘텐츠 상태 업데이트
+    content.setStatus(ContentStatus.REJECTED);
+    log.info("콘텐츠 심사 거절 완료. 유저 ID: {}, 콘텐츠 ID: {}", userId, contentId);
+
+    // 4. 저장 및 변환
+    saveAndConvertToDto(content);
   }
 
   // --- 유틸리티 메서드 ---

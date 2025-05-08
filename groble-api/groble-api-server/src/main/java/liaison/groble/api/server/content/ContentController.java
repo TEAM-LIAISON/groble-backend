@@ -196,4 +196,14 @@ public class ContentController {
     String successMessage = "COACHING".equals(type) ? "홈화면 코칭 콘텐츠 조회 성공" : "홈화면 자료 콘텐츠 조회 성공";
     return ResponseEntity.ok(GrobleResponse.success(response, successMessage));
   }
+
+  // 콘텐츠 심사 [반려]
+  @Operation(summary = "콘텐츠 심사 반려 [관리자 기능]", description = "콘텐츠 심사를 반려합니다. [관리자 기능]")
+  @PostMapping("/{contentId}/reject")
+  public ResponseEntity<GrobleResponse<Void>> rejectContent(
+      @Parameter(hidden = true) @Auth Accessor accessor,
+      @PathVariable("contentId") Long contentId) {
+    contentService.rejectContent(accessor.getUserId(), contentId);
+    return ResponseEntity.ok(GrobleResponse.success(null, "콘텐츠 심사 반려 성공"));
+  }
 }
