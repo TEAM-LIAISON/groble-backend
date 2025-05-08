@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import liaison.groble.api.model.scrap.request.UpdateContentScrapStateRequest;
 import liaison.groble.api.model.scrap.response.UpdateContentScrapStateResponse;
+import liaison.groble.api.model.scrap.response.swagger.UpdateContentScrapState;
 import liaison.groble.api.server.scrap.mapper.ContentScrapDtoMapper;
 import liaison.groble.application.scrap.dto.ContentScrapDto;
 import liaison.groble.application.scrap.service.ContentScrapService;
@@ -16,7 +17,6 @@ import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.model.Accessor;
 import liaison.groble.common.response.GrobleResponse;
 
-import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
@@ -33,7 +33,7 @@ public class ContentScrapController {
     this.contentScrapDtoMapper = contentScrapDtoMapper;
   }
 
-  @Operation(summary = "콘텐츠 스크랩", description = "콘텐츠 스크랩을 진행합니다. 스크랩된 콘텐츠는 나의 스크랩 목록에서 확인할 수 있습니다.")
+  @UpdateContentScrapState
   @PostMapping("/content/{contentId}")
   public ResponseEntity<GrobleResponse<UpdateContentScrapStateResponse>> scrapContent(
       @Parameter(hidden = true) @Auth Accessor accessor,
