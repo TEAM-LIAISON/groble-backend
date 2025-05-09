@@ -67,6 +67,7 @@ public class Notification extends BaseTimeEntity {
   private String details;
 
   @Transient private SystemDetails systemDetails;
+  @Transient private InquiryDetails inquiryDetails;
 
   // JSON 변환 로직을 처리하는 메서드들
   @PrePersist
@@ -76,6 +77,9 @@ public class Notification extends BaseTimeEntity {
     ObjectMapper mapper = new ObjectMapper();
     try {
       switch (notificationType) {
+        case INQUIRY:
+          details = inquiryDetails != null ? mapper.writeValueAsString(inquiryDetails) : null;
+          break;
         case SYSTEM:
           details = systemDetails != null ? mapper.writeValueAsString(systemDetails) : null;
           break;
@@ -93,6 +97,9 @@ public class Notification extends BaseTimeEntity {
     ObjectMapper mapper = new ObjectMapper();
     try {
       switch (notificationType) {
+        case INQUIRY:
+          inquiryDetails = mapper.readValue(details, InquiryDetails.class);
+          break;
         case SYSTEM:
           systemDetails = mapper.readValue(details, SystemDetails.class);
           break;
@@ -105,6 +112,8 @@ public class Notification extends BaseTimeEntity {
   // 현재 알림 타입에 맞는 세부 정보 객체를 반환하는 편의 메서드
   public Object getDetails() {
     switch (notificationType) {
+      case INQUIRY:
+        return inquiryDetails;
       case SYSTEM:
         return systemDetails;
       default:
