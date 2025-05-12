@@ -426,6 +426,8 @@ public class ContentDtoMapper {
         .sellerName(contentDetailDto.getSellerName())
         .lowestPrice(contentDetailDto.getLowestPrice())
         .options(optionResponses)
+        .contentIntroduction(contentDetailDto.getContentIntroduction())
+        .contentDetailImageUrls(contentDetailDto.getContentDetailImageUrls())
         .serviceTarget(contentDetailDto.getServiceTarget())
         .serviceProcess(contentDetailDto.getServiceProcess())
         .makerIntro(contentDetailDto.getMakerIntro())
