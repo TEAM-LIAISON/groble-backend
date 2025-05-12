@@ -57,6 +57,7 @@ public class ContentController {
     return ResponseEntity.ok(GrobleResponse.success(response, "콘텐츠 상세 조회 성공"));
   }
 
+  // 홈화면 콘텐츠 조회
   @Operation(summary = "홈화면 콘텐츠 조회", description = "홈화면 콘텐츠를 조회합니다.")
   @GetMapping("/home/contents")
   public ResponseEntity<GrobleResponse<CursorResponse<ContentPreviewCardResponse>>> getHomeContents(
