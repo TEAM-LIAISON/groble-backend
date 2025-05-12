@@ -357,6 +357,11 @@ public class ContentService {
     if (dto.getContentIntroduction() != null) {
       content.setContentIntroduction(dto.getContentIntroduction());
     }
+    // 콘텐츠 상세 이미지 URL 목록 업데이트
+    if (dto.getContentDetailImageUrls() != null) {
+      content.getContentDetailImageUrls().clear();
+      content.getContentDetailImageUrls().addAll(dto.getContentDetailImageUrls());
+    }
     // 서비스 타겟, 프로세스, 제작자 소개 업데이트
     if (dto.getServiceTarget() != null) {
       content.setServiceTarget(dto.getServiceTarget());
@@ -614,6 +619,17 @@ public class ContentService {
       dtoBuilder.categoryId(content.getCategory().getId());
     }
 
+    // 콘텐츠 소개와 상세 이미지 URL 추가
+    if (content.getContentIntroduction() != null) {
+      dtoBuilder.contentIntroduction(content.getContentIntroduction());
+    }
+
+    // 상세 이미지 URL 목록이 비어있지 않은 경우에만 추가
+    if (content.getContentDetailImageUrls() != null
+        && !content.getContentDetailImageUrls().isEmpty()) {
+      dtoBuilder.contentDetailImageUrls(new ArrayList<>(content.getContentDetailImageUrls()));
+    }
+
     if (content.getServiceTarget() != null) {
       dtoBuilder.serviceTarget(content.getServiceTarget());
     }
@@ -648,6 +664,16 @@ public class ContentService {
 
     if (contentDto.getThumbnailUrl() == null || contentDto.getThumbnailUrl().trim().isEmpty()) {
       missingFields.add("썸네일 이미지");
+    }
+
+    if (contentDto.getContentDetailImageUrls() == null
+        || contentDto.getContentDetailImageUrls().isEmpty()) {
+      missingFields.add("콘텐츠 상세 이미지");
+    }
+
+    if (contentDto.getContentIntroduction() == null
+        || contentDto.getContentIntroduction().trim().isEmpty()) {
+      missingFields.add("콘텐츠 소개");
     }
 
     // 옵션 검증

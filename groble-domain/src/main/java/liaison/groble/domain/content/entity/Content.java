@@ -7,7 +7,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -76,8 +78,15 @@ public class Content extends BaseEntity {
   private String thumbnailUrl; // 썸네일 URL
 
   @Lob
-  @Column(nullable = false, columnDefinition = "TEXT")
+  @Column(columnDefinition = "TEXT")
   private String contentIntroduction; // 콘텐츠 소개
+
+  @ElementCollection
+  @CollectionTable(
+      name = "content_detail_image_urls",
+      joinColumns = @JoinColumn(name = "content_id"))
+  @Column(name = "image_url")
+  private List<String> contentDetailImageUrls = new ArrayList<>();
 
   private String serviceTarget; // 서비스 타겟
   private String serviceProcess; // 제공 절차
@@ -155,6 +164,24 @@ public class Content extends BaseEntity {
 
   public void setContentIntroduction(String contentIntroduction) {
     this.contentIntroduction = contentIntroduction;
+  }
+
+  // Content 클래스에 추가
+  public void setContentDetailImageUrls(List<String> urls) {
+    this.contentDetailImageUrls.clear();
+    if (urls != null) {
+      this.contentDetailImageUrls.addAll(urls);
+    }
+  }
+
+  public void addContentDetailImageUrl(String url) {
+    if (url != null && !url.isBlank()) {
+      this.contentDetailImageUrls.add(url);
+    }
+  }
+
+  public void removeContentDetailImageUrl(String url) {
+    this.contentDetailImageUrls.remove(url);
   }
 
   public void incrementSaleCount() {

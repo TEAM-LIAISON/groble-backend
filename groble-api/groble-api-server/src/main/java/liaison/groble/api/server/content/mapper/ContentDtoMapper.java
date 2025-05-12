@@ -361,6 +361,8 @@ public class ContentDtoMapper {
     responseBuilder.contentType(dto.getContentType());
     responseBuilder.categoryId(dto.getCategoryId());
     responseBuilder.thumbnailUrl(dto.getThumbnailUrl());
+    responseBuilder.contentIntroduction(dto.getContentIntroduction());
+    responseBuilder.contentDetailImageUrls(dto.getContentDetailImageUrls());
     responseBuilder.serviceTarget(dto.getServiceTarget());
     responseBuilder.serviceProcess(dto.getServiceProcess());
     responseBuilder.makerIntro(dto.getMakerIntro());
