@@ -196,6 +196,7 @@ public class ContentService {
         .lowestPrice(content.getLowestPrice())
         .options(optionDtos)
         .contentIntroduction(content.getContentIntroduction())
+        .contentDetailImageUrls(content.getContentDetailImageUrls())
         .serviceTarget(content.getServiceTarget())
         .serviceProcess(content.getServiceProcess())
         .makerIntro(content.getMakerIntro())
