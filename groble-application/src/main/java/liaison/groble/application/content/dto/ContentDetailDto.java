@@ -19,6 +19,8 @@ public class ContentDetailDto {
   private String sellerName;
   private BigDecimal lowestPrice;
   private List<ContentOptionDto> options;
+  private String contentIntroduction;
+  private List<String> contentDetailImageUrls;
   private String serviceTarget;
   private String serviceProcess;
   private String makerIntro;

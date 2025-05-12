@@ -24,6 +24,8 @@ public class QContent extends EntityPathBase<Content> {
 
   public final QCategory category;
 
+  public final StringPath contentIntroduction = createString("contentIntroduction");
+
   public final EnumPath<liaison.groble.domain.content.enums.ContentType> contentType =
       createEnum("contentType", liaison.groble.domain.content.enums.ContentType.class);
 

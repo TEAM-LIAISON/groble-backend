@@ -52,6 +52,12 @@ public class ContentDetailResponse {
   @Schema(description = "콘텐츠 옵션 목록")
   private List<BaseOptionResponse> options;
 
+  @Schema(description = "콘텐츠 소개")
+  private String contentIntroduction;
+
+  @Schema(description = "콘텐츠 상세 이미지 URL 목록")
+  private List<String> contentDetailImageUrls;
+
   @Schema(description = "서비스 타겟", example = "초창패, 창중, 예창패, 청창사 등을 준비하는 분")
   private String serviceTarget;
 

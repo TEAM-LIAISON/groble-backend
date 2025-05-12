@@ -68,6 +68,8 @@ public class ContentDtoMapper {
     builder.contentType(contentType);
     builder.categoryId(request.getCategoryId());
     builder.thumbnailUrl(request.getThumbnailUrl());
+    builder.contentIntroduction(request.getContentIntroduction());
+    builder.contentDetailImageUrls(request.getContentDetailImageUrls());
     builder.serviceTarget(request.getServiceTarget());
     builder.serviceProcess(request.getServiceProcess());
     builder.makerIntro(request.getMakerIntro());

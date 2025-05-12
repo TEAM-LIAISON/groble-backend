@@ -17,6 +17,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
@@ -73,6 +74,11 @@ public class Content extends BaseEntity {
   private List<ContentOption> options = new ArrayList<>();
 
   private String thumbnailUrl; // 썸네일 URL
+
+  @Lob
+  @Column(nullable = false, columnDefinition = "TEXT")
+  private String contentIntroduction; // 콘텐츠 소개
+
   private String serviceTarget; // 서비스 타겟
   private String serviceProcess; // 제공 절차
   private String makerIntro; // 메이커 소개
@@ -145,6 +151,10 @@ public class Content extends BaseEntity {
 
   public void setRejectReason(String rejectReason) {
     this.rejectReason = rejectReason;
+  }
+
+  public void setContentIntroduction(String contentIntroduction) {
+    this.contentIntroduction = contentIntroduction;
   }
 
   public void incrementSaleCount() {

@@ -15,6 +15,8 @@ public class ContentDto {
   private String thumbnailUrl;
   private String status;
   private List<ContentOptionDto> options;
+  private String contentIntroduction;
+  private List<String> contentDetailImageUrls;
   private String serviceTarget;
   private String serviceProcess;
   private String makerIntro;

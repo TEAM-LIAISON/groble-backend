@@ -195,6 +195,7 @@ public class ContentService {
         .sellerName(sellerName)
         .lowestPrice(content.getLowestPrice())
         .options(optionDtos)
+        .contentIntroduction(content.getContentIntroduction())
         .serviceTarget(content.getServiceTarget())
         .serviceProcess(content.getServiceProcess())
         .makerIntro(content.getMakerIntro())
@@ -352,6 +353,10 @@ public class ContentService {
       }
     }
 
+    // 콘텐츠 소개
+    if (dto.getContentIntroduction() != null) {
+      content.setContentIntroduction(dto.getContentIntroduction());
+    }
     // 서비스 타겟, 프로세스, 제작자 소개 업데이트
     if (dto.getServiceTarget() != null) {
       content.setServiceTarget(dto.getServiceTarget());
