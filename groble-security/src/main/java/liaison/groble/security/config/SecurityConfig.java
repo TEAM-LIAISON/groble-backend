@@ -99,7 +99,9 @@ public class SecurityConfig {
         List.of(
             "http://localhost:3000",
             "https://dev.groble.im",
-            "https://api.dev.groble.im")); // 프론트엔드 URL 및 API URL
+            "https://api.dev.groble.im",
+            "https://api.groble.im",
+            "https://groble.im")); // 프론트엔드 URL 및 API URL
     configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
     configuration.setAllowedHeaders(
         Arrays.asList("Authorization", "Content-ContentType", "X-Auth-Token"));
