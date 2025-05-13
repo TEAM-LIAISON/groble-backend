@@ -525,7 +525,5 @@ public class AuthServiceImpl implements AuthService {
     // 6. 사용자 정보 익명화 (GDPR 등 규정 준수)
     user.anonymize();
     userRepository.save(user);
-
-    log.info("회원 탈퇴 처리 완료: userId={}, reason={}", userId, reason);
   }
 }
