@@ -156,6 +156,8 @@ public class SecurityConfig {
                     .permitAll()
                     .requestMatchers("/oauth2/**")
                     .permitAll()
+                    .requestMatchers("/api/v1/me")
+                    .permitAll() // 이 부분 추가
                     .requestMatchers("/api/v1/payments/**")
                     .permitAll()
                     .requestMatchers("/login/**")

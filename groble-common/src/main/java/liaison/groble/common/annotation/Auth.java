@@ -7,4 +7,6 @@ import java.lang.annotation.Target;
 
 @Target(ElementType.PARAMETER)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface Auth {}
+public @interface Auth {
+  boolean required() default true; // required 속성 추가, 기본값은 true
+}

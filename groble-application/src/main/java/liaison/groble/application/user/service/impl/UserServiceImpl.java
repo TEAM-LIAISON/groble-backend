@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import liaison.groble.application.user.dto.UserHeaderDto;
 import liaison.groble.application.user.dto.UserMyPageDetailDto;
 import liaison.groble.application.user.dto.UserMyPageSummaryDto;
 import liaison.groble.application.user.service.UserService;
@@ -222,5 +223,21 @@ public class UserServiceImpl implements UserService {
 
     user.updateLastUserType(userType);
     userRepository.save(user);
+  }
+
+  @Override
+  public UserHeaderDto getUserHeaderInform(Long userId) {
+    User user =
+        userRepository
+            .findById(userId)
+            .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
+
+    return UserHeaderDto.builder()
+        .isLogin(true)
+        .nickname(user.getNickname())
+        .profileImageUrl(user.getProfileImageUrl())
+        .canSwitchToSeller(user.isSeller())
+        .unreadNotificationCount(0) // TODO: 알림 개수 조회 로직 추가
+        .build();
   }
 }

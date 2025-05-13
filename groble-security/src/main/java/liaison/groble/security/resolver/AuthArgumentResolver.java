@@ -35,17 +35,33 @@ public class AuthArgumentResolver implements HandlerMethodArgumentResolver {
       ModelAndViewContainer mavContainer,
       NativeWebRequest webRequest,
       WebDataBinderFactory binderFactory) {
-    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-    if (authentication == null || !authentication.isAuthenticated()) {
-      throw new UnauthorizedException("인증 정보가 없습니다.");
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    Auth authAnnotation = parameter.getParameterAnnotation(Auth.class);
+    boolean isRequired = authAnnotation.required();
+
+    // 인증되지 않은 경우
+    if (authentication == null
+        || !authentication.isAuthenticated()
+        || "anonymousUser".equals(authentication.getPrincipal())) {
+
+      if (isRequired) {
+        throw new UnauthorizedException("인증 정보가 없습니다.");
+      }
+
+      // required=false일 경우 null 반환
+      return null;
     }
 
     Object principal = authentication.getPrincipal();
     if (!(principal instanceof liaison.groble.security.jwt.UserDetailsImpl)) {
-      throw new UnauthorizedException("인증 정보가 유효하지 않습니다.");
+      if (isRequired) {
+        throw new UnauthorizedException("인증 정보가 유효하지 않습니다.");
+      }
+      return null;
     }
 
+    // 기존 로직과 동일
     liaison.groble.security.jwt.UserDetailsImpl userDetails =
         (liaison.groble.security.jwt.UserDetailsImpl) principal;
 
