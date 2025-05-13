@@ -17,16 +17,28 @@ public class NotificationItem {
   @Schema(description = "알림 ID")
   private Long notificationId;
 
-  @Schema(description = "알림 타입")
+  @Schema(
+      description = "알림 타입",
+      allowableValues = {"SELLER", "CONTENT", "SYSTEM"})
   private String notificationType;
 
-  @Schema(description = "알림 서브 타입")
+  @Schema(
+      description = "알림 서브 타입",
+      allowableValues = {
+        "SELLER_VERIFIED",
+        "SELLER_REJECTED",
+        "CONTENT_APPROVED",
+        "CONTENT_REJECTED",
+        "WELCOME_GROBLE"
+      })
   private String subNotificationType;
 
-  @Schema(description = "알림 읽음 상태")
+  @Schema(
+      description = "알림 읽음 상태",
+      allowableValues = {"READ", "UNREAD"})
   private String notificationReadStatus;
 
-  @Schema(description = "알림 발생 시간")
+  @Schema(description = "알림 발생 시간 (상대적 시간 표시, 예: '3일 전')")
   private LocalDateTime notificationOccurTime;
 
   @Schema(description = "알림 상세 정보")

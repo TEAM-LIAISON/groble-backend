@@ -3,6 +3,7 @@ package liaison.groble.application.notification.service;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import liaison.groble.application.notification.dto.NotificationDetailsDto;
 import liaison.groble.application.notification.dto.NotificationItemDto;
@@ -31,6 +32,20 @@ public class NotificationService {
 
     // Build and return NotificationItemsDto
     return NotificationItemsDto.builder().notificationItems(notificationItemDtos).build();
+  }
+
+  /** 사용자의 모든 알림을 삭제합니다. */
+  @Transactional
+  public void deleteAllNotifications(final Long userId) {
+    notificationCustomRepository.deleteAllNotificationsByReceiverUser(userId);
+    log.info("모든 알림이 삭제되었습니다. userId: {}", userId);
+  }
+
+  /** 특정 알림을 삭제합니다. */
+  @Transactional
+  public void deleteNotification(final Long userId, final Long notificationId) {
+    notificationCustomRepository.deleteNotificationByReceiverUser(userId, notificationId);
+    log.info("알림이 삭제되었습니다. userId: {}, notificationId: {}", userId, notificationId);
   }
 
   /** Converts a Notification entity to a NotificationItemDto */
