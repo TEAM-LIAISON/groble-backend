@@ -76,11 +76,9 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
     QContent qContent = QContent.content;
     QUser qUser = QUser.user;
 
-    // 기본 조건 설정 - 승인된 콘텐츠만 표시
     BooleanExpression conditions =
         qContent.contentType.eq(contentType).and(qContent.status.eq(ContentStatus.ACTIVE));
 
-    // 쿼리 실행
     return queryFactory
         .select(
             Projections.fields(
@@ -95,7 +93,8 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
         .from(qContent)
         .leftJoin(qContent.user, qUser)
         .where(conditions)
-        .orderBy(qContent.createdAt.desc()) // 최신 콘텐츠 우선
+        .orderBy(qContent.createdAt.desc()) // 최신순 정렬
+        .limit(12) // 최대 12개로 제한
         .fetch();
   }
 
