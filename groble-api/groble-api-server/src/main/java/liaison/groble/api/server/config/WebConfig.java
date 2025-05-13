@@ -41,7 +41,8 @@ public class WebConfig implements WebMvcConfigurer {
             "http://localhost:3000",
             "https://dev.groble.im",
             "https://api.dev.groble.im",
-            "https://groble.im")
+            "https://groble.im",
+            "https://api.groble.im")
         .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS") // 허용할 HTTP 메서드
         .allowedHeaders("*") // 모든 헤더 허용
         .allowCredentials(true) // 쿠키 포함 요청 허용
