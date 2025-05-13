@@ -439,10 +439,18 @@ public class AuthController {
         REFRESH_TOKEN_MAX_AGE);
   }
 
-  /** 보안 환경(운영)인지 확인 */
+  /** 보안 환경(운영)인지 확인 - 프로필 설정에 맞게 수정 */
   private boolean isSecureEnvironment() {
-    String env = System.getProperty("spring.profiles.active", "dev");
-    return env.equalsIgnoreCase("prod") || env.equalsIgnoreCase("production");
+    // 현재 활성화된 프로필 목록 확인
+    String activeProfiles = getActiveProfiles();
+
+    // secret-prod 프로필이 포함되어 있는지 확인
+    return activeProfiles.contains("secret-prod");
+  }
+
+  /** 현재 활성화된 프로필 목록 가져오기 */
+  private String getActiveProfiles() {
+    return System.getProperty("spring.profiles.active", "");
   }
 
   private String extractRefreshTokenFromCookie(HttpServletRequest request) {
