@@ -11,27 +11,42 @@ import lombok.NoArgsConstructor;
 @Schema(description = "알림 상세 응답")
 public class NotificationDetails {
 
-  // 회원 닉네임
+  // Common fields
+  @Schema(description = "닉네임")
   private String nickname;
 
-  // 시스템 알림
-  private String systemTitle;
+  // Seller fields
+  @Schema(description = "판매자 인증 여부")
+  private Boolean isVerified;
 
-  // 1:1 문의 요청자 이름
-  private String inquiryRequesterName;
-  // 1:1 문의가 들어간 콘텐츠의 썸네일 URL
-  private String contentThumbnailUrl;
+  // Content fields
+  @Schema(description = "콘텐츠 ID")
+  private Long contentId;
+
+  @Schema(description = "썸네일 URL")
+  private String thumbnailUrl;
+
+  @Schema(description = "콘텐츠 승인 여부")
+  private Boolean isContentApproved;
+
+  // System fields
+  @Schema(description = "시스템 알림 제목")
+  private String systemTitle;
 
   @Builder
   private NotificationDetails(
       final String nickname,
-      final String systemTitle,
-      final String inquiryRequesterName,
-      final String contentThumbnailUrl) {
+      final Boolean isVerified,
+      final Long contentId,
+      final String thumbnailUrl,
+      final Boolean isContentApproved,
+      final String systemTitle) {
     this.nickname = nickname;
+    this.isVerified = isVerified;
+    this.contentId = contentId;
+    this.thumbnailUrl = thumbnailUrl;
+    this.isContentApproved = isContentApproved;
     this.systemTitle = systemTitle;
-    this.inquiryRequesterName = inquiryRequesterName;
-    this.contentThumbnailUrl = contentThumbnailUrl;
   }
 
   // 그로블 환영 알림

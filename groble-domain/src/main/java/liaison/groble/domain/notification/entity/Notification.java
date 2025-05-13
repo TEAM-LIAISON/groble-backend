@@ -2,6 +2,8 @@ package liaison.groble.domain.notification.entity;
 
 import static lombok.AccessLevel.PROTECTED;
 
+import java.time.LocalDateTime;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -22,7 +24,6 @@ import jakarta.persistence.Transient;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import liaison.groble.domain.common.entity.BaseTimeEntity;
 import liaison.groble.domain.notification.enums.NotificationReadStatus;
 import liaison.groble.domain.notification.enums.NotificationType;
 import liaison.groble.domain.notification.enums.SubNotificationType;
@@ -41,7 +42,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor(access = PROTECTED)
 @AllArgsConstructor
-public class Notification extends BaseTimeEntity {
+public class Notification {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
@@ -70,6 +71,8 @@ public class Notification extends BaseTimeEntity {
   @Transient private ContentDetails contentDetails;
   @Transient private SellerDetails sellerDetails;
   @Transient private InquiryDetails inquiryDetails;
+
+  private LocalDateTime createdAt;
 
   // JSON 변환 로직을 처리하는 메서드들
   @PrePersist

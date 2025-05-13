@@ -11,5 +11,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ContentDetails {
   private Long contentId;
+  private String thumbnailUrl;
   private Boolean isContentApproved;
 }
