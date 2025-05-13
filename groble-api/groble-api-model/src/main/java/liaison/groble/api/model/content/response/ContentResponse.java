@@ -25,17 +25,31 @@ public class ContentResponse {
   @Schema(description = "카테고리 ID", example = "1")
   private Long categoryId;
 
-  @Schema(description = "카테고리 이름", example = "비즈니스 컨설팅")
-  private String categoryName;
-
   @Schema(description = "썸네일 이미지 URL", example = "https://example.com/thumbnail.jpg")
   private String thumbnailUrl;
 
-  @Schema(description = "상품 상태", example = "DRAFT")
+  @Schema(description = "콘텐츠 상태", example = "DRAFT")
   private String status;
 
   @Schema(description = "옵션 목록")
   private List<OptionResponse> options;
+
+  @Schema(description = "콘텐츠 소개", example = "사업계획서 컨설팅")
+  private String contentIntroduction;
+
+  @Schema(
+      description = "콘텐츠 상세 이미지 URL 목록",
+      example = "[\"https://example.com/image1.jpg\", \"https://example.com/image2.jpg\"]")
+  private List<String> contentDetailImageUrls;
+
+  @Schema(description = "서비스 타겟", example = "초창패, 창중, 예창패, 청창사 등을 준비하는 분")
+  private String serviceTarget;
+
+  @Schema(description = "제공 절차", example = "STANDARD/DELUXE/PREMIUM")
+  private String serviceProcess;
+
+  @Schema(description = "메이커 소개", example = "- 동국대학교 철학과 졸업")
+  private String makerIntro;
 
   @Getter
   @Builder

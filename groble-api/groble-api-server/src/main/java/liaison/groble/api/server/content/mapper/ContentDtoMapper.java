@@ -2,6 +2,7 @@ package liaison.groble.api.server.content.mapper;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
 
@@ -11,10 +12,13 @@ import liaison.groble.api.model.content.request.draft.DocumentOptionDraftRequest
 import liaison.groble.api.model.content.request.register.CoachingOptionRegisterRequest;
 import liaison.groble.api.model.content.request.register.ContentRegisterRequest;
 import liaison.groble.api.model.content.request.register.DocumentOptionRegisterRequest;
+import liaison.groble.api.model.content.response.BaseOptionResponse;
+import liaison.groble.api.model.content.response.CoachingOptionResponse;
 import liaison.groble.api.model.content.response.ContentDetailResponse;
 import liaison.groble.api.model.content.response.ContentPreviewCardResponse;
 import liaison.groble.api.model.content.response.ContentResponse;
 import liaison.groble.api.model.content.response.ContentStatusResponse;
+import liaison.groble.api.model.content.response.DocumentOptionResponse;
 import liaison.groble.application.content.dto.ContentCardDto;
 import liaison.groble.application.content.dto.ContentDetailDto;
 import liaison.groble.application.content.dto.ContentDto;
@@ -64,8 +68,11 @@ public class ContentDtoMapper {
     builder.contentType(contentType);
     builder.categoryId(request.getCategoryId());
     builder.thumbnailUrl(request.getThumbnailUrl());
-
-    // 임시저장 상태 설정
+    builder.contentIntroduction(request.getContentIntroduction());
+    builder.contentDetailImageUrls(request.getContentDetailImageUrls());
+    builder.serviceTarget(request.getServiceTarget());
+    builder.serviceProcess(request.getServiceProcess());
+    builder.makerIntro(request.getMakerIntro());
     builder.status("DRAFT");
 
     // 옵션 설정
@@ -77,7 +84,7 @@ public class ContentDtoMapper {
   /** ContentRegisterRequest를 ContentDto로 변환 (등록용) - 필수 필드에 대한 검증 수행 */
   public ContentDto toServiceContentDtoFromRegister(ContentRegisterRequest request) {
     if (request == null) {
-      throw new IllegalArgumentException("상품 등록 요청이 null입니다.");
+      throw new IllegalArgumentException("콘텐츠 심사 요청이 null입니다.");
     }
 
     // 필수 필드 검증
@@ -106,8 +113,9 @@ public class ContentDtoMapper {
     builder.contentType(contentType);
     builder.categoryId(request.getCategoryId());
     builder.thumbnailUrl(request.getThumbnailUrl());
-
-    // 등록 요청 상태 설정
+    builder.serviceTarget(request.getServiceTarget());
+    builder.serviceProcess(request.getServiceProcess());
+    builder.makerIntro(request.getMakerIntro());
     builder.status("PENDING_REVIEW");
 
     // 옵션 설정 - 등록 시에는 최소 1개 이상의 옵션이 필요
@@ -119,16 +127,16 @@ public class ContentDtoMapper {
   /** 등록 요청의 필수 필드 검증 */
   private void validateRegisterRequest(ContentRegisterRequest request) {
     if (request.getTitle() == null || request.getTitle().trim().isEmpty()) {
-      throw new IllegalArgumentException("상품명은 필수 입력 항목입니다.");
+      throw new IllegalArgumentException("콘텐츠 이름은 필수 입력 항목입니다.");
     }
 
     if (request.getContentType() == null) {
-      throw new IllegalArgumentException("상품 유형은 필수 입력 항목입니다.");
+      throw new IllegalArgumentException("콘텐츠 유형은 필수 입력 항목입니다.");
     }
 
     if (!("COACHING".equals(request.getContentType())
         || "DOCUMENT".equals(request.getContentType()))) {
-      throw new IllegalArgumentException("유효하지 않은 상품 유형입니다: " + request.getContentType());
+      throw new IllegalArgumentException("유효하지 않은 콘텐츠 유형입니다: " + request.getContentType());
     }
 
     if (request.getCategoryId() == null) {
@@ -142,12 +150,24 @@ public class ContentDtoMapper {
     // 옵션 검증
     if ("COACHING".equals(request.getContentType())) {
       if (request.getCoachingOptions() == null || request.getCoachingOptions().isEmpty()) {
-        throw new IllegalArgumentException("코칭 상품은 최소 1개 이상의 옵션이 필요합니다.");
+        throw new IllegalArgumentException("코칭 콘텐츠는 최소 1개 이상의 옵션이 필요합니다.");
       }
     } else {
       if (request.getDocumentOptions() == null || request.getDocumentOptions().isEmpty()) {
-        throw new IllegalArgumentException("문서 상품은 최소 1개 이상의 옵션이 필요합니다.");
+        throw new IllegalArgumentException("문서 콘텐츠는 최소 1개 이상의 옵션이 필요합니다.");
       }
+    }
+
+    if (request.getServiceTarget() == null || request.getServiceTarget().trim().isEmpty()) {
+      throw new IllegalArgumentException("서비스 타겟은 필수 입력 항목입니다.");
+    }
+
+    if (request.getServiceProcess() == null || request.getServiceProcess().trim().isEmpty()) {
+      throw new IllegalArgumentException("제공 절차는 필수 입력 항목입니다.");
+    }
+
+    if (request.getMakerIntro() == null || request.getMakerIntro().trim().isEmpty()) {
+      throw new IllegalArgumentException("메이커 소개는 필수 입력 항목입니다.");
     }
   }
 
@@ -341,6 +361,11 @@ public class ContentDtoMapper {
     responseBuilder.contentType(dto.getContentType());
     responseBuilder.categoryId(dto.getCategoryId());
     responseBuilder.thumbnailUrl(dto.getThumbnailUrl());
+    responseBuilder.contentIntroduction(dto.getContentIntroduction());
+    responseBuilder.contentDetailImageUrls(dto.getContentDetailImageUrls());
+    responseBuilder.serviceTarget(dto.getServiceTarget());
+    responseBuilder.serviceProcess(dto.getServiceProcess());
+    responseBuilder.makerIntro(dto.getMakerIntro());
     responseBuilder.status(dto.getStatus());
 
     // 옵션이 없는 경우 null로 설정 (빈 리스트가 아닌)
@@ -350,7 +375,63 @@ public class ContentDtoMapper {
   }
 
   public ContentDetailResponse toContentDetailResponse(ContentDetailDto contentDetailDto) {
-    return ContentDetailResponse.builder().build();
+    List<BaseOptionResponse> optionResponses =
+        contentDetailDto.getOptions().stream()
+            .map(
+                optionDto -> {
+                  // 코칭 옵션인 경우
+                  if (optionDto.getCoachingPeriod() != null) {
+                    return CoachingOptionResponse.builder()
+                        .optionId(optionDto.getContentOptionId())
+                        .name(optionDto.getName())
+                        .description(optionDto.getDescription())
+                        .price(optionDto.getPrice())
+                        .coachingPeriod(optionDto.getCoachingPeriod())
+                        .documentProvision(optionDto.getDocumentProvision())
+                        .coachingType(optionDto.getCoachingType())
+                        .coachingTypeDescription(optionDto.getCoachingTypeDescription())
+                        .build();
+                  }
+                  // 문서 옵션인 경우
+                  else if (optionDto.getContentDeliveryMethod() != null) {
+                    return DocumentOptionResponse.builder()
+                        .optionId(optionDto.getContentOptionId())
+                        .name(optionDto.getName())
+                        .description(optionDto.getDescription())
+                        .price(optionDto.getPrice())
+                        .contentDeliveryMethod(optionDto.getContentDeliveryMethod())
+                        .build();
+                  }
+                  // 기본 옵션의 경우
+                  else {
+                    return BaseOptionResponse.builder()
+                        .optionId(optionDto.getContentOptionId())
+                        .name(optionDto.getName())
+                        .description(optionDto.getDescription())
+                        .price(optionDto.getPrice())
+                        .build();
+                  }
+                })
+            .collect(Collectors.toList());
+
+    // 나머지 코드는 동일
+    return ContentDetailResponse.builder()
+        .contentId(contentDetailDto.getContentId())
+        .status(contentDetailDto.getStatus())
+        .contentsImageUrls(contentDetailDto.getContentsImageUrls())
+        .contentType(contentDetailDto.getContentType())
+        .categoryId(contentDetailDto.getCategoryId())
+        .title(contentDetailDto.getTitle())
+        .sellerProfileImageUrl(contentDetailDto.getSellerProfileImageUrl())
+        .sellerName(contentDetailDto.getSellerName())
+        .lowestPrice(contentDetailDto.getLowestPrice())
+        .options(optionResponses)
+        .contentIntroduction(contentDetailDto.getContentIntroduction())
+        .contentDetailImageUrls(contentDetailDto.getContentDetailImageUrls())
+        .serviceTarget(contentDetailDto.getServiceTarget())
+        .serviceProcess(contentDetailDto.getServiceProcess())
+        .makerIntro(contentDetailDto.getMakerIntro())
+        .build();
   }
 
   public ContentPreviewCardResponse toContentPreviewCardFromCardDto(ContentCardDto cardDto) {

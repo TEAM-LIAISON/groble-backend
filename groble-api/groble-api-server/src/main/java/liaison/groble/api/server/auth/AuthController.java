@@ -24,6 +24,7 @@ import liaison.groble.api.model.auth.request.SignUpRequest;
 import liaison.groble.api.model.auth.request.VerifyEmailCodeRequest;
 import liaison.groble.api.model.auth.response.SignInResponse;
 import liaison.groble.api.model.auth.response.SignUpResponse;
+import liaison.groble.api.model.auth.response.swagger.SignUp;
 import liaison.groble.api.model.user.request.NicknameRequest;
 import liaison.groble.api.model.user.request.UserTypeRequest;
 import liaison.groble.api.model.user.response.NicknameDuplicateCheckResponse;
@@ -49,19 +50,24 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /** 인증 관련 API 컨트롤러 회원가입, 로그인, 이메일 인증, 토큰 갱신 등의 엔드포인트 제공 */
 @Slf4j
 @RestController
-@RequiredArgsConstructor
 @RequestMapping("/api/v1/auth")
 @Tag(name = "인증 API", description = "통합 회원가입, 통합 로그인, 이메일 인증, 토큰 갱신 등의 인증 관련 API")
 public class AuthController {
   private final AuthService authService;
   private final UserService userService;
   private final AuthDtoMapper authDtoMapper;
+
+  public AuthController(
+      AuthService authService, UserService userService, AuthDtoMapper authDtoMapper) {
+    this.authService = authService;
+    this.userService = userService;
+    this.authDtoMapper = authDtoMapper;
+  }
 
   // 쿠키 설정값
   private static final int ACCESS_TOKEN_MAX_AGE = 60 * 30; // 30분
@@ -72,14 +78,7 @@ public class AuthController {
   @Value("${app.cookie.domain}")
   private String cookieDomain; // 쿠키 도메인 설정
 
-  /**
-   * 회원가입 API
-   *
-   * <p>유형 선택, 약관, 이메일, 비밀번호, 닉네임
-   */
-  @Operation(
-      summary = "통합 회원가입 (유형, 약관, 이메일(인증된), 비밀번호, 닉네임)",
-      description = "새로운 사용자를 등록하고 인증 토큰을 발급합니다.")
+  @SignUp
   @PostMapping("/sign-up")
   public ResponseEntity<GrobleResponse<SignUpResponse>> signUp(
       @Parameter(description = "회원가입 정보", required = true) @Valid @RequestBody

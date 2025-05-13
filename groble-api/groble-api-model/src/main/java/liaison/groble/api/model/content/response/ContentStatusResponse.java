@@ -10,9 +10,9 @@ import lombok.Getter;
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ContentStatusResponse {
-  @Schema(description = "상품 ID", example = "1")
+  @Schema(description = "콘텐츠 ID", example = "1")
   private Long contentId;
 
-  @Schema(description = "변경된 상품 상태", example = "ACTIVE")
+  @Schema(description = "변경된 콘텐츠 상태", example = "ACTIVE")
   private String status;
 }

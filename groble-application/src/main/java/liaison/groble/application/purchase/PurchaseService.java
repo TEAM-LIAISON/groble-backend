@@ -84,7 +84,7 @@ public class PurchaseService {
     try {
       return ContentStatus.valueOf(state.toUpperCase());
     } catch (IllegalArgumentException e) {
-      log.warn("유효하지 않은 상품 상태: {}", state);
+      log.warn("유효하지 않은 콘텐츠 상태: {}", state);
       return null;
     }
   }

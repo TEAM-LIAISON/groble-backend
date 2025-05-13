@@ -105,7 +105,7 @@ public class FileController {
   }
 
   @UploadMultipleFiles
-  @PostMapping(value = "/direct-contents", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @PostMapping(value = "/content/direct-contents", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<GrobleResponse<List<FileUploadResponse>>> uploadContentsFiles(
       @Auth Accessor accessor,
       @RequestParam("files") List<MultipartFile> files,

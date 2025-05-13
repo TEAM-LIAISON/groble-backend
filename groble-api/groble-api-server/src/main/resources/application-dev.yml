@@ -61,7 +61,7 @@ spring:
         order_inserts: true
         order_updates: true
     hibernate:
-      ddl-auto: update
+      ddl-auto: create
   mvc:
     path match:
       matching-strategy: ant_path_matcher
@@ -83,7 +83,7 @@ app:
   frontend-url: https://dev.groble.im
   backend-url: https://api.dev.groble.im
   cookie:
-    domain: groble.im
+    domain: dev.groble.im
 
 # Springdoc OpenAPI Configuration
 springdoc:

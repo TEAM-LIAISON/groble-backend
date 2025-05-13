@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import liaison.groble.api.model.content.response.ContentPreviewCardResponse;
+import liaison.groble.api.model.purchase.swagger.MyPurchaseContents;
 import liaison.groble.api.server.content.mapper.ContentDtoMapper;
 import liaison.groble.application.content.dto.ContentCardDto;
 import liaison.groble.application.purchase.PurchaseService;
@@ -21,23 +22,26 @@ import liaison.groble.common.request.CursorRequest;
 import liaison.groble.common.response.CursorResponse;
 import liaison.groble.common.response.GrobleResponse;
 
-import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.RequiredArgsConstructor;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/v1/purchases")
-@RequiredArgsConstructor
+@RequestMapping("/api/v1/purchase")
+@Tag(name = "구매 관련 API", description = "내가 구매한 콘텐츠 조회, 내가 구매한 콘텐츠(자료) 다운로드 등")
 public class PurchaseController {
   private final PurchaseService purchaseService;
   private final ContentDtoMapper contentDtoMapper;
 
-  // 내가 구매한 자료 및 코칭 상품
-  @Operation(summary = "내가 구매한 자료 및 코칭 상품", description = "내가 구매한 자료 및 코칭 상품을 조회합니다.")
-  @GetMapping("/my")
+  public PurchaseController(PurchaseService purchaseService, ContentDtoMapper contentDtoMapper) {
+    this.purchaseService = purchaseService;
+    this.contentDtoMapper = contentDtoMapper;
+  }
+
+  @MyPurchaseContents
+  @GetMapping("/contents/my")
   public ResponseEntity<GrobleResponse<CursorResponse<ContentPreviewCardResponse>>>
       getMyPurchasingContents(
           @Parameter(hidden = true) @Auth Accessor accessor,
@@ -49,7 +53,7 @@ public class PurchaseController {
               @ModelAttribute
               CursorRequest cursorRequest,
           @Parameter(
-                  description = "구매한 상품 상태 필터 (PENDING, PAID, EXPIRED, CANCELLED)",
+                  description = "구매한 콘텐츠 상태 필터 (PENDING, PAID, EXPIRED, CANCELLED)",
                   schema =
                       @Schema(
                           implementation = String.class,
@@ -57,7 +61,7 @@ public class PurchaseController {
               @RequestParam(value = "state", required = false)
               String state,
           @Parameter(
-                  description = "상품 타입 (COACHING 또는 DOCUMENT)",
+                  description = "콘텐츠 타입 (COACHING 또는 DOCUMENT)",
                   required = true,
                   schema =
                       @Schema(
@@ -85,7 +89,7 @@ public class PurchaseController {
             .meta(cardDtos.getMeta())
             .build();
 
-    String successMessage = "COACHING".equals(type) ? "내가 구매한 코칭 상품 조회 성공" : "내가 구매한 자료 상품 조회 성공";
+    String successMessage = "COACHING".equals(type) ? "내가 구매한 코칭 콘텐츠 조회 성공" : "내가 구매한 자료 콘텐츠 조회 성공";
     return ResponseEntity.ok(GrobleResponse.success(response, successMessage));
   }
 }

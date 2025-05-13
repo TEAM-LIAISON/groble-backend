@@ -24,6 +24,12 @@ public class QContent extends EntityPathBase<Content> {
 
   public final QCategory category;
 
+  public final ListPath<String, StringPath> contentDetailImageUrls =
+      this.<String, StringPath>createList(
+          "contentDetailImageUrls", String.class, StringPath.class, PathInits.DIRECT2);
+
+  public final StringPath contentIntroduction = createString("contentIntroduction");
+
   public final EnumPath<liaison.groble.domain.content.enums.ContentType> contentType =
       createEnum("contentType", liaison.groble.domain.content.enums.ContentType.class);
 
@@ -46,6 +52,8 @@ public class QContent extends EntityPathBase<Content> {
   public final ListPath<ContentOption, QContentOption> options =
       this.<ContentOption, QContentOption>createList(
           "options", ContentOption.class, QContentOption.class, PathInits.DIRECT2);
+
+  public final StringPath rejectReason = createString("rejectReason");
 
   public final NumberPath<Integer> saleCount = createNumber("saleCount", Integer.class);
 

@@ -30,7 +30,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 /** 사용자 정보 관련 API 컨트롤러 */
 @RestController
 @RequestMapping("/api/v1/users")
-@Tag(name = "사용자 정보 API", description = "마이페이지 조회 및 가입 유형 전환 API")
+@Tag(name = "사용자 정보 관련 API", description = "마이페이지 조회 및 가입 유형 전환 API")
 public class UserController {
 
   private final UserService userService;

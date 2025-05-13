@@ -182,9 +182,8 @@ public class Order extends BaseEntity {
             .purchaser(purchaser)
             .build();
 
-    // 상품 상태 확인
     if (content.getStatus() != ContentStatus.ACTIVE) {
-      throw new IllegalArgumentException("판매중인 상품만 구매할 수 있습니다: " + content.getTitle());
+      throw new IllegalArgumentException("판매중인 콘텐츠만 구매할 수 있습니다: " + content.getTitle());
     }
 
     // 옵션 정보를 포함한 주문 아이템 추가

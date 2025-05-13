@@ -16,15 +16,17 @@ import lombok.experimental.SuperBuilder;
 @AllArgsConstructor
 public class CoachingOptionDraftRequest extends BaseOptionDraftRequest {
   @Pattern(regexp = "^(ONE_DAY|TWO_TO_SIX_DAYS|MORE_THAN_ONE_WEEK)$", message = "유효한 코칭 기간이 아닙니다")
-  @Schema(description = "코칭 기간", example = "ONE_DAY")
+  @Schema(
+      description = "코칭 기간 [ONE_DAY - 1일], [TWO_TO_SIX_DAYS - 2-6일], [MORE_THAN_ONE_WEEK - 일주일 이상]",
+      example = "ONE_DAY")
   private String coachingPeriod;
 
   @Pattern(regexp = "^(PROVIDED|NOT_PROVIDED)$", message = "유효한 자료 제공 옵션이 아닙니다")
-  @Schema(description = "자료 제공 여부", example = "PROVIDED")
+  @Schema(description = "자료 제공 여부 [PROVIDED - 제공], [NOT_PROVIDED - 미제공]", example = "PROVIDED")
   private String documentProvision;
 
   @Pattern(regexp = "^(ONLINE|OFFLINE)$", message = "유효한 코칭 방식이 아닙니다")
-  @Schema(description = "코칭 방식", example = "ONLINE")
+  @Schema(description = "코칭 방식 [ONLINE - 온라인], [OFFLINE - 오프라인]", example = "ONLINE")
   private String coachingType;
 
   @Schema(description = "코칭 방식 설명", example = "줌을 통한 온라인 미팅으로 진행됩니다.")

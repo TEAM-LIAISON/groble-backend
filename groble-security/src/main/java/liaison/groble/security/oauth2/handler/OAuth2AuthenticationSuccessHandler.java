@@ -3,13 +3,16 @@ package liaison.groble.security.oauth2.handler;
 import java.io.IOException;
 import java.net.URI;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Optional;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
@@ -27,6 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
+  private final Environment environment;
   private final JwtTokenProvider jwtTokenProvider;
   private final UserRepository userRepository;
 
@@ -42,10 +46,12 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
   private static final String ACCESS_TOKEN_COOKIE_NAME = "accessToken";
   private static final String REFRESH_TOKEN_COOKIE_NAME = "refreshToken";
 
+  @Autowired
   public OAuth2AuthenticationSuccessHandler(
-      JwtTokenProvider jwtTokenProvider, UserRepository userRepository) {
+      JwtTokenProvider jwtTokenProvider, UserRepository userRepository, Environment environment) {
     this.jwtTokenProvider = jwtTokenProvider;
     this.userRepository = userRepository;
+    this.environment = environment;
   }
 
   @Override
@@ -170,34 +176,17 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         REFRESH_TOKEN_MAX_AGE);
   }
 
-  /**
-   * 로컬 환경인지 확인
-   *
-   * @return 로컬 환경이면 true
-   */
-  private boolean isLocalEnvironment() {
-    String activeProfile = getActiveProfile();
-    return activeProfile.equals("local") || activeProfile.isEmpty();
-  }
-
-  /**
-   * 운영 환경인지 확인
-   *
-   * @return 운영 환경이면 true
-   */
-  private boolean isProduction() {
-    String activeProfile = getActiveProfile();
-    return activeProfile.equals("prod") || activeProfile.equals("production");
-  }
-
-  /**
-   * 개발 환경인지 확인
-   *
-   * @return 개발 환경이면 true
-   */
   private boolean isDevelopment() {
-    String activeProfile = getActiveProfile();
-    return activeProfile.equals("dev") || activeProfile.equals("development");
+    return Arrays.asList(environment.getActiveProfiles()).contains("dev");
+  }
+
+  private boolean isProduction() {
+    return Arrays.asList(environment.getActiveProfiles()).contains("prod")
+        || Arrays.asList(environment.getActiveProfiles()).contains("production");
+  }
+
+  private boolean isLocalEnvironment() {
+    return Arrays.asList(environment.getActiveProfiles()).contains("local");
   }
 
   /**

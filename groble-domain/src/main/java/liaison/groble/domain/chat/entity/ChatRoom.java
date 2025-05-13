@@ -42,7 +42,7 @@ public class ChatRoom extends BaseTimeEntity {
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "content_id")
-  private Content content; // 관련 상품 추가
+  private Content content; // 관련 콘텐츠 추가
 
   // 채팅방 상태 (ACTIVE, INACTIVE, DELETED 등)
   @Enumerated(EnumType.STRING)

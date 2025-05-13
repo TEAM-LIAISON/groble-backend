@@ -7,7 +7,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -17,6 +19,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
@@ -73,6 +76,18 @@ public class Content extends BaseEntity {
   private List<ContentOption> options = new ArrayList<>();
 
   private String thumbnailUrl; // 썸네일 URL
+
+  @Lob
+  @Column(columnDefinition = "TEXT")
+  private String contentIntroduction; // 콘텐츠 소개
+
+  @ElementCollection
+  @CollectionTable(
+      name = "content_detail_image_urls",
+      joinColumns = @JoinColumn(name = "content_id"))
+  @Column(name = "image_url")
+  private List<String> contentDetailImageUrls = new ArrayList<>();
+
   private String serviceTarget; // 서비스 타겟
   private String serviceProcess; // 제공 절차
   private String makerIntro; // 메이커 소개
@@ -87,13 +102,16 @@ public class Content extends BaseEntity {
   @Column(name = "lowest_price")
   private BigDecimal lowestPrice; // 최저가
 
+  @Column(name = "reject_reason")
+  private String rejectReason;
+
   // 비즈니스 로직으로 옵션 유형 검증
   public void addOption(ContentOption option) {
     if (contentType == ContentType.COACHING && !(option instanceof CoachingOption)) {
-      throw new IllegalArgumentException("코칭 상품에는 코칭 옵션만 추가할 수 있습니다.");
+      throw new IllegalArgumentException("코칭 콘텐츠에는 코칭 옵션만 추가할 수 있습니다.");
     }
     if (contentType == ContentType.DOCUMENT && !(option instanceof DocumentOption)) {
-      throw new IllegalArgumentException("문서 상품에는 문서 옵션만 추가할 수 있습니다.");
+      throw new IllegalArgumentException("문서 콘텐츠에는 문서 옵션만 추가할 수 있습니다.");
     }
     options.add(option);
     option.setContent(this);
@@ -120,12 +138,50 @@ public class Content extends BaseEntity {
     this.thumbnailUrl = thumbnailUrl;
   }
 
+  public void setServiceTarget(String serviceTarget) {
+    this.serviceTarget = serviceTarget;
+  }
+
+  public void setServiceProcess(String serviceProcess) {
+    this.serviceProcess = serviceProcess;
+  }
+
+  public void setMakerIntro(String makerIntro) {
+    this.makerIntro = makerIntro;
+  }
+
   public void setStatus(ContentStatus status) {
     this.status = status;
   }
 
   public void setLowestPrice(BigDecimal lowestPrice) {
     this.lowestPrice = lowestPrice;
+  }
+
+  public void setRejectReason(String rejectReason) {
+    this.rejectReason = rejectReason;
+  }
+
+  public void setContentIntroduction(String contentIntroduction) {
+    this.contentIntroduction = contentIntroduction;
+  }
+
+  // Content 클래스에 추가
+  public void setContentDetailImageUrls(List<String> urls) {
+    this.contentDetailImageUrls.clear();
+    if (urls != null) {
+      this.contentDetailImageUrls.addAll(urls);
+    }
+  }
+
+  public void addContentDetailImageUrl(String url) {
+    if (url != null && !url.isBlank()) {
+      this.contentDetailImageUrls.add(url);
+    }
+  }
+
+  public void removeContentDetailImageUrl(String url) {
+    this.contentDetailImageUrls.remove(url);
   }
 
   public void incrementSaleCount() {
