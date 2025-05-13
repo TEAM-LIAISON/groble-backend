@@ -1,0 +1,20 @@
+package liaison.groble.api.model.order.request;
+
+import java.math.BigDecimal;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+@Getter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class CreateOrderRequest {
+  private Long contentId;
+  private Long contentOptionId;
+  private BigDecimal price;
+  private int quantity;
+  private BigDecimal totalPrice;
+}

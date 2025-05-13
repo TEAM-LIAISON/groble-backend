@@ -1,7 +1,19 @@
 rootProject.name = 'groble'
 
-include 'groble-core'
-include 'groble-common'
-include 'groble-auth'
+// 빌드 캐시 설정
+buildCache {
+    local {
+        enabled = true
+    }
+}
+
 include 'groble-api'
-include 'groble-payment'
+include 'groble-api:groble-api-model'
+include 'groble-api:groble-api-server'
+include 'groble-application'
+include 'groble-common'
+include 'groble-domain'
+include 'groble-infrastructure'
+include 'groble-infrastructure:groble-persistence'
+include 'groble-infrastructure:groble-external'
+include 'groble-security'
