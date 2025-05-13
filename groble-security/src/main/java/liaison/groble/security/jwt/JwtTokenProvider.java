@@ -67,21 +67,6 @@ public class JwtTokenProvider {
     return generateToken(userPrincipal, TokenType.ACCESS, accessTokenKey, accessTokenExpirationMs);
   }
 
-  /**
-   * 사용하지 않는 메소드 제거 또는 Deprecated 처리
-   *
-   * @deprecated 이메일 중복 시 보안 문제 발생 가능
-   */
-  @Deprecated
-  public String generateAccessToken(String email) {
-    throw new UnsupportedOperationException("이메일만으로 토큰을 생성하는 것은 안전하지 않습니다. User 객체를 사용하세요.");
-  }
-
-  @Deprecated
-  public String generateRefreshToken(String email) {
-    throw new UnsupportedOperationException("이메일만으로 토큰을 생성하는 것은 안전하지 않습니다. User 객체를 사용하세요.");
-  }
-
   /** 리프레시 토큰 생성 */
   public String generateRefreshToken(UserPrincipal userPrincipal) {
     return generateToken(
@@ -282,7 +267,6 @@ public class JwtTokenProvider {
    * @return 생성된 액세스 토큰
    */
   public String createAccessToken(Long userId, String email) {
-    // userId를 반드시 포함하고 고유 식별자로 사용
     return generateToken(userId, email, TokenType.ACCESS, accessTokenKey, accessTokenExpirationMs);
   }
 

@@ -107,5 +107,11 @@ public interface AuthService {
    */
   String updateNickname(Long userId, String nickname);
 
+  /**
+   * 사용자 탈퇴 처리
+   *
+   * @param userId 사용자 식별 PK
+   * @param userWithdrawalDto 탈퇴 사유 및 기타 정보
+   */
   void withdrawUser(Long userId, UserWithdrawalDto userWithdrawalDto);
 }
