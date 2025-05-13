@@ -76,4 +76,6 @@ public class UserController {
     return ResponseEntity.ok(
         GrobleResponse.success(userDtoMapper.toApiMyPageDetailResponse(detailDto)));
   }
+
+  // TODO : 웹에서 사용자 정보 호출하는 /me API 추가
 }
