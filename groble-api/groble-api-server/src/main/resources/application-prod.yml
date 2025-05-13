@@ -83,7 +83,7 @@ app:
   frontend-url: https://groble.im
   backend-url: https://api.groble.im
   cookie:
-    domain: .groble.im
+    domain: groble.im
 
 # Springdoc OpenAPI Configuration
 springdoc:
