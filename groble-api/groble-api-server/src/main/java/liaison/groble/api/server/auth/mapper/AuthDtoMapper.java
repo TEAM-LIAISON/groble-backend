@@ -6,11 +6,13 @@ import liaison.groble.api.model.auth.request.DeprecatedSignUpRequest;
 import liaison.groble.api.model.auth.request.EmailVerificationRequest;
 import liaison.groble.api.model.auth.request.SignInRequest;
 import liaison.groble.api.model.auth.request.SignUpRequest;
+import liaison.groble.api.model.auth.request.UserWithdrawalRequest;
 import liaison.groble.api.model.auth.request.VerifyEmailCodeRequest;
 import liaison.groble.application.auth.dto.DeprecatedSignUpDto;
 import liaison.groble.application.auth.dto.EmailVerificationDto;
 import liaison.groble.application.auth.dto.SignInDto;
 import liaison.groble.application.auth.dto.SignUpDto;
+import liaison.groble.application.auth.dto.UserWithdrawalDto;
 import liaison.groble.application.auth.dto.VerifyEmailCodeDto;
 
 @Component
@@ -46,6 +48,13 @@ public class AuthDtoMapper {
     return VerifyEmailCodeDto.builder()
         .email(request.getEmail())
         .verificationCode(request.getVerificationCode())
+        .build();
+  }
+
+  public UserWithdrawalDto toServiceUserWithdrawalDto(UserWithdrawalRequest userWithdrawalRequest) {
+    return UserWithdrawalDto.builder()
+        .reason(userWithdrawalRequest.getReason().name())
+        .additionalComment(userWithdrawalRequest.getAdditionalComment())
         .build();
   }
 }

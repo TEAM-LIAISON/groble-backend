@@ -320,24 +320,51 @@ public class User extends BaseTimeEntity {
     this.updateStatus(UserStatus.PENDING_WITHDRAWAL);
   }
 
-  /** 사용자 탈퇴 확정 개인정보는 비식별화 처리 */
-  public void confirmWithdrawal() {
+  /** 회원 탈퇴 처리 즉시 탈퇴 처리하고 사용자 상태를 WITHDRAWN으로 변경 */
+  public void withdraw() {
     this.updateStatus(UserStatus.WITHDRAWN);
 
-    // 개인정보 비식별화 처리
-    String anonymizedEmail = "withdrawn_" + this.id + "@example.com";
+    // 리프레시 토큰 제거
+    this.refreshToken = null;
+    this.refreshTokenExpiresAt = null;
 
-    // 계정 타입에 따라 적절한 이메일 필드 업데이트
+    // 도메일 별도 설정 필요 없음 (anonymize에서 처리)
+  }
+
+  /** 사용자 정보 익명화 처리 GDPR 등 개인정보보호 규정 준수를 위한 비식별화 */
+  public void anonymize() {
+    // 닉네임 익명화
+    this.nickname = "탈퇴한 사용자";
+
+    // 프로필 이미지 초기화
+    this.profileImageUrl = null;
+
+    // 전화번호 초기화
+    this.phoneNumber = null;
+
+    // 계정 타입에 따른 이메일 익명화
+    String anonymizedEmail =
+        "withdrawn_"
+            + this.id
+            + "_"
+            + UUID.randomUUID().toString().substring(0, 8)
+            + "@anonymous.com";
+
     if (accountType == AccountType.INTEGRATED && integratedAccount != null) {
-      // 별도 메서드를 통해 이메일 업데이트 (IntegratedAccount 클래스에 추가 필요)
-      // integratedAccount.updateEmail(anonymizedEmail);
+      integratedAccount.anonymizeEmail(anonymizedEmail);
     } else if (accountType == AccountType.SOCIAL && socialAccount != null) {
-      // 별도 메서드를 통해 이메일 업데이트 (SocialAccount 클래스에 추가 필요)
-      // socialAccount.updateEmail(anonymizedEmail);
+      socialAccount.anonymizeEmail(anonymizedEmail);
     }
 
-    this.nickname = "탈퇴한 사용자";
-    this.refreshToken = null;
+    // 판매자 정보 초기화 (선택적, 법적 요구사항에 따라 보존 여부 결정)
+    if (this.sellerInfo != null) {
+      this.sellerInfo.anonymize();
+    }
+
+    // 본인인증 정보 초기화
+    if (this.identityVerification != null) {
+      this.identityVerification.anonymize();
+    }
   }
 
   /** 계정 활성화 */

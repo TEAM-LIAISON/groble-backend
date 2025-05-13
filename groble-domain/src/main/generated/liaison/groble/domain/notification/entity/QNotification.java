@@ -19,18 +19,12 @@ public class QNotification extends EntityPathBase<Notification> {
 
   public static final QNotification notification = new QNotification("notification");
 
-  public final liaison.groble.domain.common.entity.QBaseTimeEntity _super =
-      new liaison.groble.domain.common.entity.QBaseTimeEntity(this);
-
-  // inherited
-  public final DateTimePath<java.time.Instant> createdAt = _super.createdAt;
+  public final DateTimePath<java.time.LocalDateTime> createdAt =
+      createDateTime("createdAt", java.time.LocalDateTime.class);
 
   public final StringPath details = createString("details");
 
   public final NumberPath<Long> id = createNumber("id", Long.class);
-
-  // inherited
-  public final DateTimePath<java.time.Instant> modifiedAt = _super.modifiedAt;
 
   public final EnumPath<liaison.groble.domain.notification.enums.NotificationReadStatus>
       notificationReadStatus =

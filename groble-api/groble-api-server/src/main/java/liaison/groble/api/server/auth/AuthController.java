@@ -21,6 +21,7 @@ import liaison.groble.api.model.auth.request.EmailVerificationRequest;
 import liaison.groble.api.model.auth.request.ResetPasswordRequest;
 import liaison.groble.api.model.auth.request.SignInRequest;
 import liaison.groble.api.model.auth.request.SignUpRequest;
+import liaison.groble.api.model.auth.request.UserWithdrawalRequest;
 import liaison.groble.api.model.auth.request.VerifyEmailCodeRequest;
 import liaison.groble.api.model.auth.response.SignInResponse;
 import liaison.groble.api.model.auth.response.SignUpResponse;
@@ -35,6 +36,7 @@ import liaison.groble.application.auth.dto.EmailVerificationDto;
 import liaison.groble.application.auth.dto.SignInDto;
 import liaison.groble.application.auth.dto.SignUpDto;
 import liaison.groble.application.auth.dto.TokenDto;
+import liaison.groble.application.auth.dto.UserWithdrawalDto;
 import liaison.groble.application.auth.dto.VerifyEmailCodeDto;
 import liaison.groble.application.auth.service.AuthService;
 import liaison.groble.application.user.service.UserService;
@@ -405,6 +407,36 @@ public class AuthController {
     return ResponseEntity.ok(GrobleResponse.success(new UpdateNicknameResponse(updatedNickname)));
   }
 
+  @Operation(summary = "회원 탈퇴", description = "사용자 계정을 탈퇴 처리합니다.")
+  @ApiResponses({
+    @ApiResponse(
+        responseCode = "200",
+        description = "회원 탈퇴 성공",
+        content = @Content(schema = @Schema(implementation = GrobleResponse.class))),
+    @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터"),
+    @ApiResponse(responseCode = "401", description = "인증 실패 또는 비밀번호 불일치"),
+    @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음")
+  })
+  @PostMapping("/withdrawal")
+  public ResponseEntity<GrobleResponse<Void>> withdrawUser(
+      @Auth Accessor accessor,
+      @Valid @RequestBody UserWithdrawalRequest request,
+      HttpServletRequest servletRequest,
+      HttpServletResponse servletResponse) {
+
+    // 1. 회원 탈퇴 처리
+    UserWithdrawalDto userWithdrawalDto = authDtoMapper.toServiceUserWithdrawalDto(request);
+
+    authService.withdrawUser(accessor.getUserId(), userWithdrawalDto);
+
+    // 2. 쿠키 삭제
+    CookieUtils.deleteCookie(servletRequest, servletResponse, ACCESS_TOKEN_COOKIE_NAME);
+    CookieUtils.deleteCookie(servletRequest, servletResponse, REFRESH_TOKEN_COOKIE_NAME);
+
+    // 3. 응답 반환
+    return ResponseEntity.ok().body(GrobleResponse.success(null, "회원 탈퇴가 성공적으로 처리되었습니다.", 200));
+  }
+
   /** 액세스 토큰과 리프레시 토큰을 쿠키에 저장 */
   private void addTokenCookies(
       HttpServletResponse response, String accessToken, String refreshToken) {
@@ -416,7 +448,7 @@ public class AuthController {
         ACCESS_TOKEN_MAX_AGE,
         "/",
         true,
-        isSecureEnvironment(),
+        true,
         "None", // SameSite 설정을 None으로 변경 (크로스 사이트 요청 허용)
         cookieDomain); // 도메인 설정 추가
 
@@ -428,7 +460,7 @@ public class AuthController {
         REFRESH_TOKEN_MAX_AGE,
         "/",
         true,
-        isSecureEnvironment(),
+        true,
         "None", // SameSite 설정을 None으로 변경
         cookieDomain); // 도메인 설정 추가
 
@@ -439,10 +471,18 @@ public class AuthController {
         REFRESH_TOKEN_MAX_AGE);
   }
 
-  /** 보안 환경(운영)인지 확인 */
+  /** 보안 환경(운영)인지 확인 - 프로필 설정에 맞게 수정 */
   private boolean isSecureEnvironment() {
-    String env = System.getProperty("spring.profiles.active", "dev");
-    return env.equalsIgnoreCase("prod") || env.equalsIgnoreCase("production");
+    // 현재 활성화된 프로필 목록 확인
+    String activeProfiles = getActiveProfiles();
+
+    // secret-prod 프로필이 포함되어 있는지 확인
+    return activeProfiles.contains("secret-prod");
+  }
+
+  /** 현재 활성화된 프로필 목록 가져오기 */
+  private String getActiveProfiles() {
+    return System.getProperty("spring.profiles.active", "");
   }
 
   private String extractRefreshTokenFromCookie(HttpServletRequest request) {

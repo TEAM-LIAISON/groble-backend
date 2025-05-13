@@ -232,6 +232,24 @@ public class ContentService {
         .build();
   }
 
+  /**
+   * 홈화면 콘텐츠 목록을 List 형태로 조회합니다.
+   *
+   * @param type 콘텐츠 타입 (COACHING 또는 DOCUMENT)
+   * @return 콘텐츠 카드 DTO 목록
+   */
+  @Transactional(readOnly = true)
+  public List<ContentCardDto> getHomeContentsList(String type) {
+    // 콘텐츠 타입 파싱
+    ContentType contentType = parseContentType(type);
+
+    // contentCustomRepository를 통해 데이터 조회 (커서 없이)
+    List<FlatContentPreviewDTO> flatDtos = contentCustomRepository.findHomeContents(contentType);
+
+    // DTO 변환
+    return flatDtos.stream().map(this::convertFlatDtoToCardDto).collect(Collectors.toList());
+  }
+
   @Transactional(readOnly = true)
   public CursorResponse<ContentCardDto> getHomeContents(String cursor, int size, String type) {
     Long lastContentId = parseContentIdFromCursor(cursor);
@@ -245,7 +263,6 @@ public class ContentService {
             .map(this::convertFlatDtoToCardDto)
             .collect(Collectors.toList());
 
-    // 7. 응답 구성
     return CursorResponse.<ContentCardDto>builder()
         .items(cardDtos)
         .nextCursor(flatDtos.getNextCursor())

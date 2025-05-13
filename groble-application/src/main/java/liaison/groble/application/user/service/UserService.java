@@ -1,5 +1,6 @@
 package liaison.groble.application.user.service;
 
+import liaison.groble.application.user.dto.UserHeaderDto;
 import liaison.groble.application.user.dto.UserMyPageDetailDto;
 import liaison.groble.application.user.dto.UserMyPageSummaryDto;
 
@@ -76,4 +77,11 @@ public interface UserService {
    * @param userTypeName 설정할 가입 유형 이름
    */
   void setInitialUserType(Long userId, String userTypeName);
+
+  /**
+   * 사용자 헤더 정보 조회
+   *
+   * @return UserHeaderDto 사용자 헤더 정보
+   */
+  UserHeaderDto getUserHeaderInform(Long userId);
 }

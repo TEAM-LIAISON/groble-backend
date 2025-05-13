@@ -33,6 +33,7 @@ public class OrderController {
   private final OrderService orderService;
   private final OrderDtoMapper orderDtoMapper;
 
+  @Deprecated
   @PostMapping
   @Operation(summary = "주문 생성", description = "콘텐츠 정보를 받아 주문을 생성하고 주문 ID를 반환합니다.")
   @ApiResponse(

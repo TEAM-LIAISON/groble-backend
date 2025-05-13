@@ -40,6 +40,7 @@ public class PurchaseController {
     this.contentDtoMapper = contentDtoMapper;
   }
 
+  @Deprecated
   @MyPurchaseContents
   @GetMapping("/contents/my")
   public ResponseEntity<GrobleResponse<CursorResponse<ContentPreviewCardResponse>>>

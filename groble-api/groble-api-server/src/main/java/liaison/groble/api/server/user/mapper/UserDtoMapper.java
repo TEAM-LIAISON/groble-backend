@@ -5,7 +5,9 @@ import org.springframework.stereotype.Component;
 import liaison.groble.api.model.user.response.BuyerMyPageSummaryResponse;
 import liaison.groble.api.model.user.response.MyPageSummaryResponseBase;
 import liaison.groble.api.model.user.response.SellerMyPageSummaryResponse;
+import liaison.groble.api.model.user.response.UserHeaderResponse;
 import liaison.groble.api.model.user.response.UserMyPageDetailResponse;
+import liaison.groble.application.user.dto.UserHeaderDto;
 import liaison.groble.application.user.dto.UserMyPageDetailDto;
 import liaison.groble.application.user.dto.UserMyPageSummaryDto;
 
@@ -63,6 +65,16 @@ public class UserDtoMapper {
         .profileImageUrl(userMyPageDetailDto.getProfileImageUrl())
         .phoneNumber(userMyPageDetailDto.getPhoneNumber())
         .sellerAccountNotCreated(userMyPageDetailDto.isSellerAccountNotCreated())
+        .build();
+  }
+
+  public UserHeaderResponse toApiUserHeaderResponse(UserHeaderDto userHeaderDto) {
+    return UserHeaderResponse.builder()
+        .isLogin(userHeaderDto.getIsLogin())
+        .nickname(userHeaderDto.getNickname())
+        .profileImageUrl(userHeaderDto.getProfileImageUrl())
+        .canSwitchToSeller(userHeaderDto.isCanSwitchToSeller())
+        .unreadNotificationCount(userHeaderDto.getUnreadNotificationCount())
         .build();
   }
 }

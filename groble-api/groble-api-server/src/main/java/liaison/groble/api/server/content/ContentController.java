@@ -2,11 +2,8 @@ package liaison.groble.api.server.content;
 
 import java.util.List;
 
-import jakarta.validation.Valid;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -19,17 +16,15 @@ import liaison.groble.api.model.content.response.ContentDetailResponse;
 import liaison.groble.api.model.content.response.ContentPreviewCardResponse;
 import liaison.groble.api.model.content.response.swagger.ContentDetail;
 import liaison.groble.api.model.content.response.swagger.ContentExamine;
+import liaison.groble.api.model.content.response.swagger.HomeContents;
 import liaison.groble.api.server.content.mapper.ContentDtoMapper;
 import liaison.groble.application.content.ContentService;
 import liaison.groble.application.content.dto.ContentCardDto;
 import liaison.groble.application.content.dto.ContentDetailDto;
 import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.model.Accessor;
-import liaison.groble.common.request.CursorRequest;
-import liaison.groble.common.response.CursorResponse;
 import liaison.groble.common.response.GrobleResponse;
 
-import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -58,16 +53,9 @@ public class ContentController {
   }
 
   // 홈화면 콘텐츠 조회
-  @Operation(summary = "홈화면 콘텐츠 조회", description = "홈화면 콘텐츠를 조회합니다.")
+  @HomeContents
   @GetMapping("/home/contents")
-  public ResponseEntity<GrobleResponse<CursorResponse<ContentPreviewCardResponse>>> getHomeContents(
-      @Parameter(
-              description = "커서 기반 페이지네이션 요청 정보",
-              required = true,
-              schema = @Schema(implementation = CursorRequest.class))
-          @Valid
-          @ModelAttribute
-          CursorRequest cursorRequest,
+  public ResponseEntity<GrobleResponse<List<ContentPreviewCardResponse>>> getHomeContents(
       @Parameter(
               description = "콘텐츠 타입 (COACHING 또는 DOCUMENT)",
               required = true,
@@ -77,27 +65,16 @@ public class ContentController {
                       allowableValues = {"COACHING", "DOCUMENT"}))
           @RequestParam(value = "type")
           String type) {
-    CursorResponse<ContentCardDto> cardDtos =
-        contentService.getHomeContents(cursorRequest.getCursor(), cursorRequest.getSize(), type);
+
+    // 서비스에서 콘텐츠 목록 조회 (List 형태)
+    List<ContentCardDto> contentCardDtos = contentService.getHomeContentsList(type);
 
     // DTO 변환
     List<ContentPreviewCardResponse> responseItems =
-        cardDtos.getItems().stream()
-            .map(contentDtoMapper::toContentPreviewCardFromCardDto)
-            .toList();
-
-    // CursorResponse 생성
-    CursorResponse<ContentPreviewCardResponse> response =
-        CursorResponse.<ContentPreviewCardResponse>builder()
-            .items(responseItems)
-            .nextCursor(cardDtos.getNextCursor())
-            .hasNext(cardDtos.isHasNext())
-            .totalCount(cardDtos.getTotalCount())
-            .meta(cardDtos.getMeta())
-            .build();
+        contentCardDtos.stream().map(contentDtoMapper::toContentPreviewCardFromCardDto).toList();
 
     String successMessage = "COACHING".equals(type) ? "홈화면 코칭 콘텐츠 조회 성공" : "홈화면 자료 콘텐츠 조회 성공";
-    return ResponseEntity.ok(GrobleResponse.success(response, successMessage));
+    return ResponseEntity.ok(GrobleResponse.success(responseItems, successMessage));
   }
 
   // 콘텐츠 심사 [반려]

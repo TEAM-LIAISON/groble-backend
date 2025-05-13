@@ -188,4 +188,8 @@ public class SellerInfo {
       this.bankAccountOwner = updatedInfo.getBankAccountOwner();
     }
   }
+
+  public void anonymize() {
+    this.businessName = "탈퇴한 판매자";
+  }
 }

@@ -91,7 +91,6 @@ public class SecurityConfig {
     return authConfig.getAuthenticationManager();
   }
 
-  /** CORS 설정 */
   @Bean
   public CorsConfigurationSource corsConfigurationSource() {
     CorsConfiguration configuration = new CorsConfiguration();
@@ -99,12 +98,31 @@ public class SecurityConfig {
         List.of(
             "http://localhost:3000",
             "https://dev.groble.im",
-            "https://api.dev.groble.im")); // 프론트엔드 URL 및 API URL
+            "https://api.dev.groble.im",
+            "https://api.groble.im",
+            "https://groble.im")); // 프론트엔드 URL 및 API URL
     configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+
+    // 이 부분 수정: 더 많은 헤더 허용
     configuration.setAllowedHeaders(
-        Arrays.asList("Authorization", "Content-ContentType", "X-Auth-Token"));
-    configuration.setExposedHeaders(Arrays.asList("X-Auth-Token"));
+        Arrays.asList(
+            "Authorization",
+            "Content-Type", // Content-ContentType 대신 Content-Type으로 수정
+            "X-Auth-Token",
+            "Access-Control-Allow-Origin",
+            "Access-Control-Allow-Credentials",
+            "Access-Control-Allow-Headers",
+            "Accept",
+            "Origin",
+            "Cache-Control",
+            "X-Requested-With"));
+
+    // 필요시 더 많은 헤더 노출
+    configuration.setExposedHeaders(Arrays.asList("X-Auth-Token", "Authorization"));
     configuration.setAllowCredentials(true);
+
+    // 필요시 preflight 요청 캐시 시간 설정 (선택사항)
+    configuration.setMaxAge(3600L);
 
     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
     source.registerCorsConfiguration("/**", configuration);
@@ -156,6 +174,10 @@ public class SecurityConfig {
                     .permitAll()
                     .requestMatchers("/oauth2/**")
                     .permitAll()
+                    .requestMatchers("/api/v1/me")
+                    .permitAll() // 이 부분 추가
+                    .requestMatchers("/api/v1/home/contents")
+                    .permitAll() // 이 부분 추가
                     .requestMatchers("/api/v1/payments/**")
                     .permitAll()
                     .requestMatchers("/login/**")

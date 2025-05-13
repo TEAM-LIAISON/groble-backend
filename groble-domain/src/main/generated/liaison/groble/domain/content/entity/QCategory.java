@@ -19,6 +19,9 @@ public class QCategory extends EntityPathBase<Category> {
 
   public static final QCategory category = new QCategory("category");
 
+  public final EnumPath<liaison.groble.domain.content.enums.ContentType> categoryType =
+      createEnum("categoryType", liaison.groble.domain.content.enums.ContentType.class);
+
   public final ListPath<Category, QCategory> children =
       this.<Category, QCategory>createList(
           "children", Category.class, QCategory.class, PathInits.DIRECT2);
