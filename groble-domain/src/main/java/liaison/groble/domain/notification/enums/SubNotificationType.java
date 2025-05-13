@@ -4,6 +4,10 @@ public enum SubNotificationType {
   // SELLER [판매자 관련]
   SELLER_VERIFIED,
 
+  // CONTENT [콘텐츠 관련]
+  CONTENT_APPROVED,
+  CONTENT_REJECTED,
+
   // INQUIRY [문의하기 관련]
   INQUIRY_START, // 문의 시작
 
