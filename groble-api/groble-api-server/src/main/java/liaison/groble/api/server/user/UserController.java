@@ -84,7 +84,7 @@ public class UserController {
   @UserHeader
   @GetMapping("/me")
   public ResponseEntity<GrobleResponse<UserHeaderResponse>> getUserHeaderInform(
-      @Auth(required = false) Accessor accessor) {
+      @Auth Accessor accessor) {
 
     // 로그인하지 않은 경우
     if (accessor == null) {
