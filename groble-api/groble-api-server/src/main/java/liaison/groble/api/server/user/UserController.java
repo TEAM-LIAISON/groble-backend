@@ -17,6 +17,7 @@ import liaison.groble.api.model.user.response.UserMyPageDetailResponse;
 import liaison.groble.api.model.user.response.swagger.MyPageDetail;
 import liaison.groble.api.model.user.response.swagger.MyPageSummary;
 import liaison.groble.api.model.user.response.swagger.SwitchRole;
+import liaison.groble.api.model.user.response.swagger.UserHeader;
 import liaison.groble.api.server.user.mapper.UserDtoMapper;
 import liaison.groble.application.user.dto.UserHeaderDto;
 import liaison.groble.application.user.dto.UserMyPageDetailDto;
@@ -80,6 +81,7 @@ public class UserController {
   }
 
   // 홈화면 헤더 정보 조회
+  @UserHeader
   @GetMapping("/me")
   public ResponseEntity<GrobleResponse<UserHeaderResponse>> getUserHeaderInform(
       @Auth(required = false) Accessor accessor) {
@@ -102,12 +104,6 @@ public class UserController {
     UserHeaderDto userHeaderDto = userService.getUserHeaderInform(accessor.getUserId());
     UserHeaderResponse response = userDtoMapper.toApiUserHeaderResponse(userHeaderDto);
 
-    // 응답에 isLogin 값을 true로 설정 (만약 DTO 매핑에서 처리하지 않는 경우)
-    if (response != null && response.getIsLogin() == null) {
-      // reflection이나 새 객체 생성을 통해 isLogin을 true로 설정
-      // 이 예제에서는 현재 코드가 완전하지 않아 정확한 방법을 제시하기 어려움
-    }
-
-    return ResponseEntity.ok(GrobleResponse.success(response, "사용자 정보 조회 성공"));
+    return ResponseEntity.ok(GrobleResponse.success(response, "사용자 헤더 정보 조회 성공"));
   }
 }
