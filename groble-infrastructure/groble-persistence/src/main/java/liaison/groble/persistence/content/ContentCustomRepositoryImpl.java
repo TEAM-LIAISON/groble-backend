@@ -72,6 +72,34 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
   }
 
   @Override
+  public List<FlatContentPreviewDTO> findHomeContents(ContentType contentType) {
+    QContent qContent = QContent.content;
+    QUser qUser = QUser.user;
+
+    // 기본 조건 설정 - 승인된 콘텐츠만 표시
+    BooleanExpression conditions =
+        qContent.contentType.eq(contentType).and(qContent.status.eq(ContentStatus.ACTIVE));
+
+    // 쿼리 실행
+    return queryFactory
+        .select(
+            Projections.fields(
+                FlatContentPreviewDTO.class,
+                qContent.id.as("contentId"),
+                qContent.createdAt.as("createdAt"),
+                qContent.title.as("title"),
+                qContent.thumbnailUrl.as("thumbnailUrl"),
+                qUser.nickname.as("sellerName"),
+                qContent.lowestPrice.as("lowestPrice"),
+                qContent.status.stringValue().as("status")))
+        .from(qContent)
+        .leftJoin(qContent.user, qUser)
+        .where(conditions)
+        .orderBy(qContent.createdAt.desc()) // 최신 콘텐츠 우선
+        .fetch();
+  }
+
+  @Override
   public CursorResponse<FlatContentPreviewDTO> findMyPurchasingContentsWithCursor(
       Long userId, Long lastContentId, int size, ContentStatus status, ContentType contentType) {
     QContent qContent = QContent.content;

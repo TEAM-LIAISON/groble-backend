@@ -158,6 +158,8 @@ public class SecurityConfig {
                     .permitAll()
                     .requestMatchers("/api/v1/me")
                     .permitAll() // 이 부분 추가
+                    .requestMatchers("/api/v1/home/contents")
+                    .permitAll() // 이 부분 추가
                     .requestMatchers("/api/v1/payments/**")
                     .permitAll()
                     .requestMatchers("/login/**")
