@@ -21,6 +21,7 @@ import liaison.groble.api.model.auth.request.EmailVerificationRequest;
 import liaison.groble.api.model.auth.request.ResetPasswordRequest;
 import liaison.groble.api.model.auth.request.SignInRequest;
 import liaison.groble.api.model.auth.request.SignUpRequest;
+import liaison.groble.api.model.auth.request.UserWithdrawalRequest;
 import liaison.groble.api.model.auth.request.VerifyEmailCodeRequest;
 import liaison.groble.api.model.auth.response.SignInResponse;
 import liaison.groble.api.model.auth.response.SignUpResponse;
@@ -35,6 +36,7 @@ import liaison.groble.application.auth.dto.EmailVerificationDto;
 import liaison.groble.application.auth.dto.SignInDto;
 import liaison.groble.application.auth.dto.SignUpDto;
 import liaison.groble.application.auth.dto.TokenDto;
+import liaison.groble.application.auth.dto.UserWithdrawalDto;
 import liaison.groble.application.auth.dto.VerifyEmailCodeDto;
 import liaison.groble.application.auth.service.AuthService;
 import liaison.groble.application.user.service.UserService;
@@ -403,6 +405,36 @@ public class AuthController {
         authService.updateNickname(accessor.getUserId(), request.getNickname());
 
     return ResponseEntity.ok(GrobleResponse.success(new UpdateNicknameResponse(updatedNickname)));
+  }
+
+  @Operation(summary = "회원 탈퇴", description = "사용자 계정을 탈퇴 처리합니다.")
+  @ApiResponses({
+    @ApiResponse(
+        responseCode = "200",
+        description = "회원 탈퇴 성공",
+        content = @Content(schema = @Schema(implementation = GrobleResponse.class))),
+    @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터"),
+    @ApiResponse(responseCode = "401", description = "인증 실패 또는 비밀번호 불일치"),
+    @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음")
+  })
+  @PostMapping("/withdrawal")
+  public ResponseEntity<GrobleResponse<Void>> withdrawUser(
+      @Auth Accessor accessor,
+      @Valid @RequestBody UserWithdrawalRequest request,
+      HttpServletRequest servletRequest,
+      HttpServletResponse servletResponse) {
+
+    // 1. 회원 탈퇴 처리
+    UserWithdrawalDto userWithdrawalDto = authDtoMapper.toServiceUserWithdrawalDto(request);
+
+    authService.withdrawUser(accessor.getUserId(), userWithdrawalDto);
+
+    // 2. 쿠키 삭제
+    CookieUtils.deleteCookie(servletRequest, servletResponse, ACCESS_TOKEN_COOKIE_NAME);
+    CookieUtils.deleteCookie(servletRequest, servletResponse, REFRESH_TOKEN_COOKIE_NAME);
+
+    // 3. 응답 반환
+    return ResponseEntity.ok().body(GrobleResponse.success(null, "회원 탈퇴가 성공적으로 처리되었습니다.", 200));
   }
 
   /** 액세스 토큰과 리프레시 토큰을 쿠키에 저장 */

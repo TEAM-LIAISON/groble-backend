@@ -77,4 +77,9 @@ public class IntegratedAccount {
   public void updateEmail(String newEmail) {
     this.integratedAccountEmail = newEmail;
   }
+
+  public void anonymizeEmail(String anonymizedEmail) {
+    this.integratedAccountEmail = anonymizedEmail;
+    this.password = null; // 비밀번호도 제거
+  }
 }

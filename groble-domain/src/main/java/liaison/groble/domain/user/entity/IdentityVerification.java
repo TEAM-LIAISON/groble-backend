@@ -144,4 +144,10 @@ public class IdentityVerification {
       return description;
     }
   }
+
+  public void anonymize() {
+    this.ci = null;
+    this.di = null;
+    // 필요에 따라 다른 필드 익명화
+  }
 }

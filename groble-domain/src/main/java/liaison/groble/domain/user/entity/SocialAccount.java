@@ -91,4 +91,8 @@ public class SocialAccount {
   public void updateEmail(String newEmail) {
     this.socialAccountEmail = newEmail;
   }
+
+  public void anonymizeEmail(String anonymizedEmail) {
+    this.socialAccountEmail = anonymizedEmail;
+  }
 }

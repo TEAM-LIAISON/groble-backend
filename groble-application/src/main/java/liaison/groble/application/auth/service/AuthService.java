@@ -5,6 +5,7 @@ import liaison.groble.application.auth.dto.EmailVerificationDto;
 import liaison.groble.application.auth.dto.SignInDto;
 import liaison.groble.application.auth.dto.SignUpDto;
 import liaison.groble.application.auth.dto.TokenDto;
+import liaison.groble.application.auth.dto.UserWithdrawalDto;
 import liaison.groble.application.auth.dto.VerifyEmailCodeDto;
 
 public interface AuthService {
@@ -105,4 +106,6 @@ public interface AuthService {
    * @return 설정된 닉네임
    */
   String updateNickname(Long userId, String nickname);
+
+  void withdrawUser(Long userId, UserWithdrawalDto userWithdrawalDto);
 }

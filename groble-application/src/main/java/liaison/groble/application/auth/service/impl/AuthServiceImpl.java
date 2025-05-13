@@ -1,6 +1,7 @@
 package liaison.groble.application.auth.service.impl;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -14,6 +15,7 @@ import liaison.groble.application.auth.dto.EmailVerificationDto;
 import liaison.groble.application.auth.dto.SignInDto;
 import liaison.groble.application.auth.dto.SignUpDto;
 import liaison.groble.application.auth.dto.TokenDto;
+import liaison.groble.application.auth.dto.UserWithdrawalDto;
 import liaison.groble.application.auth.dto.VerifyEmailCodeDto;
 import liaison.groble.application.auth.exception.AuthenticationFailedException;
 import liaison.groble.application.auth.exception.EmailAlreadyExistsException;
@@ -30,13 +32,16 @@ import liaison.groble.domain.role.repository.RoleRepository;
 import liaison.groble.domain.user.entity.IntegratedAccount;
 import liaison.groble.domain.user.entity.SocialAccount;
 import liaison.groble.domain.user.entity.User;
+import liaison.groble.domain.user.entity.UserWithdrawalHistory;
 import liaison.groble.domain.user.entity.VerifiedEmail;
 import liaison.groble.domain.user.enums.AccountType;
 import liaison.groble.domain.user.enums.UserStatus;
 import liaison.groble.domain.user.enums.UserType;
+import liaison.groble.domain.user.enums.WithdrawalReason;
 import liaison.groble.domain.user.repository.IntegratedAccountRepository;
 import liaison.groble.domain.user.repository.SocialAccountRepository;
 import liaison.groble.domain.user.repository.UserRepository;
+import liaison.groble.domain.user.repository.UserWithdrawalHistoryRepository;
 import liaison.groble.domain.user.repository.VerifiedEmailRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -54,6 +59,7 @@ public class AuthServiceImpl implements AuthService {
   private final IntegratedAccountRepository integratedAccountRepository;
   private final SocialAccountRepository socialAccountRepository;
   private final VerifiedEmailRepository verifiedEmailRepository;
+  private final UserWithdrawalHistoryRepository userWithdrawalHistoryRepository;
   private final UserReader userReader;
 
   @Override
@@ -484,5 +490,42 @@ public class AuthServiceImpl implements AuthService {
   @Transactional(readOnly = true)
   public boolean isNicknameTaken(String nickname) {
     return userRepository.existsByNickname(nickname);
+  }
+
+  @Override
+  @Transactional
+  public void withdrawUser(Long userId, UserWithdrawalDto userWithdrawalDto) {
+    // 1. 사용자 조회
+    User user = userReader.getUserById(userId);
+
+    WithdrawalReason withdrawalReason;
+    try {
+      withdrawalReason = WithdrawalReason.valueOf(userWithdrawalDto.getReason().toUpperCase());
+    } catch (IllegalArgumentException | NullPointerException e) {
+      throw new IllegalArgumentException("유효하지 않은 탈퇴 사유입니다: " + userWithdrawalDto.getReason());
+    }
+
+    // 3. 탈퇴 사유 기록
+    userWithdrawalHistoryRepository.save(
+        UserWithdrawalHistory.builder()
+            .userId(userId)
+            .email(user.getEmail())
+            .reason(withdrawalReason)
+            .additionalComment(userWithdrawalDto.getAdditionalComment())
+            .withdrawalDate(LocalDateTime.now())
+            .build());
+
+    // 3. 리프레시 토큰 무효화
+    //      refreshTokenRepository.deleteAllByUserId(userId);
+
+    // 5. 사용자 상태 변경 (논리적 삭제)
+    user.withdraw();
+    userRepository.save(user);
+
+    // 6. 사용자 정보 익명화 (GDPR 등 규정 준수)
+    user.anonymize();
+    userRepository.save(user);
+
+    log.info("회원 탈퇴 처리 완료: userId={}, reason={}", userId, reason);
   }
 }
