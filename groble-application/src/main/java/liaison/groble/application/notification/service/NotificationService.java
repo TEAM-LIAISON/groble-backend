@@ -12,7 +12,4 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class NotificationService {
   private final NotificationCustomRepository notificationCustomRepository;
-
-  // 알림 전체 조회
-
 }

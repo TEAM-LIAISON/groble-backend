@@ -1,43 +1,132 @@
 spring:
+  profiles:
+    group:
+      blue: blue, common, secret-prod
+      green: green, common, secret-prod
+
+server:
+  env: blue
+
+---
+
+spring:
   config:
     activate:
-      on-profile: prod
-  jpa:
-    hibernate:
-      ddl-auto: validate
-  datasource:
-    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:groble}?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
-    username: ${DB_USERNAME:root}
-    password: ${DB_PASSWORD:root}
-  data:
-    redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
+      on-profile: blue
 
-  # Production environment-specific OAuth2 settings
-  security:
-    oauth2:
-      client:
-        registration:
-          kakao:
-            redirect-uri: https://groble.im/login/oauth2/callback/kakao
-          naver:
-            redirect-uri: https://groble.im/login/oauth2/callback/naver
-          google:
-            redirect-uri: https://groble.im/login/oauth2/callback/google
-  mail:
-    host: smtp.gmail.com
-    port: 587
-    username: linkit@linkit.im
-    password: fatu mxkw wcuy pkdf
+server:
+  port: 8080
+  servlet:
+    context-path: /
+  error:
+    include-message: always
+    include-binding-errors: always
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: green
+
+server:
+  port: 8081
+  servlet:
+    context-path: /
+  error:
+    include-message: always
+    include-binding-errors: always
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: common
+
+  application:
+    name: groble
+  jpa:
+    database-platform: org.hibernate.dialect.MySQL8Dialect
     properties:
-      mail.smtp.auth: true
-      mail.smtp.starttls.enable: true
-      mail.smtp.connectiontimeout: 5000
-      mail.smtp.timeout: 5000
-      mail.smtp.writetimeout: 5000
+      hibernate:
+        format_sql: false
+        show_sql: false
+        use_sql_comments: false
+        default_batch_fetch_size: 100
+        generate_statistics: false   # 성능 모니터링 설정
+        jdbc:
+          batch_size: 50
+          time_zone: Asia/Seoul
+        order_inserts: true
+        order_updates: true
+    hibernate:
+      ddl-auto: create
+  mvc:
+    path match:
+      matching-strategy: ant_path_matcher
+
+storage:
+  provider: s3
+  s3:
+    bucket: image.groble.im
+
+app:
+  jwt:
+    access-token:
+      secret: 6M1boNRsyYPgKuR197f4w2uuh8DXfYyjxgPJKmINtHo=
+      expiration-ms: 3600000 # 1 hour
+    refresh-token:
+      secret: bZvf0E0wsJXugzxv2m25c5zHvJrNfvsQIjzU6eBScbk=
+      expiration-ms: 604800000 # 7 days
+    issuer: groble-auth-service
+  frontend-url: https://groble.im
+  backend-url: https://api.groble.im
+  cookie:
+    domain: groble.im
+
+# Springdoc OpenAPI Configuration
+springdoc:
+  swagger-ui:
+    path: /swagger-ui
+    tags-sorter: alpha
+    operations-sorter: alpha
+    doc-expansion: none
+    disable-swagger-default-url: true
+  api-docs:
+    path: /v3/api-docs
+  default-consumes-media-type: application/json
+  default-produces-media-type: application/json
+  paths-to-match:
+    - /api/**
+  packages-to-scan:
+    - liaison.groble.api.server
+  show-actuator: false
+  model-and-view-allowed: true
+
+# Actuator Configuration
+# management:
+#  endpoints:
+#    web:
+#      exposure:
+#        include: health,info,metrics,prometheus
+
+# Logging
 logging:
   level:
-    root: WARN
-    liaison: INFO
-    org.springframework: WARN
+    root: INFO
+    liaison: DEBUG
+    org.springdoc: DEBUG
+    io.swagger.v3: DEBUG
+
+# 포트원 결제 관련 설정
+portone:
+  api-url-v2: https://api.portone.io
+  merchant-id: "your_merchant_id"
+  client-key: "your_client_key"
+  api-secret: "8q1r4uoQvToCPixwJH8IZBBtribsZta2F96K1Wwlob1SQ4JuhAMrRS7PzQgsPTxcqYos8hZvQjs8H09g"
+  default-pg: "tosspayments"
+  payment-redirect-url: "https://groble.im/payment"
+  identity-redirect-url: "https://groble.im/identity/verify"
+  bank-callback-url: "https://groble.im/bank/callback"
+  webhook-secret: "your_webhook_secret"
