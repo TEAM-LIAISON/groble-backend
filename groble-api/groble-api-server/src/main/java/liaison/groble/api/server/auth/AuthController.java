@@ -416,7 +416,7 @@ public class AuthController {
         ACCESS_TOKEN_MAX_AGE,
         "/",
         true,
-        isSecureEnvironment(),
+        true,
         "None", // SameSite 설정을 None으로 변경 (크로스 사이트 요청 허용)
         cookieDomain); // 도메인 설정 추가
 
@@ -428,7 +428,7 @@ public class AuthController {
         REFRESH_TOKEN_MAX_AGE,
         "/",
         true,
-        isSecureEnvironment(),
+        true,
         "None", // SameSite 설정을 None으로 변경
         cookieDomain); // 도메인 설정 추가
 
