@@ -6,7 +6,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -62,15 +61,6 @@ public class AuthServiceImpl implements AuthService {
   private final VerifiedEmailRepository verifiedEmailRepository;
   private final UserWithdrawalHistoryRepository userWithdrawalHistoryRepository;
   private final UserReader userReader;
-
-  @Value("${app.reset.base-url")
-  private String baseUrl;
-
-  @Value("${app.reset.path")
-  private String path;
-
-  @Value("${app.reset.expiration-minutes}")
-  private long expireMin;
 
   @Override
   @Transactional

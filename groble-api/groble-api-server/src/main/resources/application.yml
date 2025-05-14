@@ -73,7 +73,7 @@ app:
   reset:
     base-url: http://localhost:3000
     path: /reset-password
-    expiration-ms: 200000 # 2 minutes
+    expiration-minutes: 200000
 
 # Springdoc OpenAPI Configuration
 springdoc:
