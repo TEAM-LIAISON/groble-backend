@@ -29,6 +29,9 @@ public class OAuth2Controller {
   @Value("${app.frontend-url}")
   private String frontendDomain; // 환경별로 설정 가능하도록 변경
 
+  @Value("${app.cookie.domain}")
+  private String cookieDomain;
+
   /** OAuth2 인증 페이지로 리다이렉트하기 전에 리다이렉트 URI를 쿠키에 저장 */
   @Operation(summary = "OAuth2 로그인 시작", description = "소셜 로그인 시작 전 리다이렉트 URI를 설정합니다.")
   @GetMapping("/authorize")
@@ -46,12 +49,44 @@ public class OAuth2Controller {
 
     log.info("OAuth2 로그인 시작: provider={}, redirect_uri={}", provider, redirectUri);
 
-    // 쿠키 세팅 - frontend redirect URI를 저장 (여기서 값이 제대로 저장되는지 확인)
+    // 환경에 따른 설정 결정
+    String activeProfile = System.getProperty("spring.profiles.active", "local");
+    boolean isLocal = activeProfile.contains("local") || activeProfile.isEmpty();
+
+    // 개발/운영 환경에서는 HTTPS 사용하므로 Secure=true
+    boolean isSecure = !isLocal;
+
+    // OAuth2 리다이렉트 흐름을 위해 SameSite=None 설정
+    // SameSite=None일 때는 항상 Secure=true 설정 (브라우저 요구사항)
+    String sameSite = "None";
+    if (sameSite.equals("None")) {
+      isSecure = true;
+    }
+
+    // 도메인 설정: 로컬 환경에서는 설정하지 않음
+    String domain = null;
+    if (!isLocal) {
+      domain = cookieDomain; // app.cookie.domain 속성값 사용 (groble.im)
+    }
+
+    // 쿠키 세팅 - redirect URI를 HttpOnly=false로 설정 (JS에서 읽을 수 있도록)
     CookieUtils.addCookie(
         response,
         HttpCookieOAuth2AuthorizationRequestRepository.REDIRECT_URI_PARAM_COOKIE_NAME,
         redirectUri,
-        180);
+        180, // 3분 유효
+        "/", // path
+        false, // httpOnly = false (JS에서 읽을 수 있도록)
+        isSecure, // secure
+        sameSite, // sameSite
+        domain); // domain
+
+    log.debug(
+        "리다이렉트 URI 쿠키 설정: {}, domain={}, secure={}, sameSite={}",
+        redirectUri,
+        domain != null ? domain : "기본값",
+        isSecure,
+        sameSite);
 
     // Redirect to OAuth2 provider
     response.sendRedirect("/oauth2/authorize/" + provider);

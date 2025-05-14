@@ -437,54 +437,6 @@ public class AuthController {
     return ResponseEntity.ok().body(GrobleResponse.success(null, "회원 탈퇴가 성공적으로 처리되었습니다.", 200));
   }
 
-  /** 액세스 토큰과 리프레시 토큰을 쿠키에 저장 */
-  private void addTokenCookies(
-      HttpServletResponse response, String accessToken, String refreshToken) {
-    // Access Token - HttpOnly 설정 (JS에서 접근 불가)
-    CookieUtils.addCookie(
-        response,
-        ACCESS_TOKEN_COOKIE_NAME,
-        accessToken,
-        ACCESS_TOKEN_MAX_AGE,
-        "/",
-        true,
-        true,
-        "None", // SameSite 설정을 None으로 변경 (크로스 사이트 요청 허용)
-        cookieDomain); // 도메인 설정 추가
-
-    // Refresh Token - HttpOnly 설정 (JS에서 접근 불가, 보안 강화)
-    CookieUtils.addCookie(
-        response,
-        REFRESH_TOKEN_COOKIE_NAME,
-        refreshToken,
-        REFRESH_TOKEN_MAX_AGE,
-        "/",
-        true,
-        true,
-        "None", // SameSite 설정을 None으로 변경
-        cookieDomain); // 도메인 설정 추가
-
-    log.debug(
-        "토큰 쿠키 추가 완료: domain={}, accessToken({}초), refreshToken({}초)",
-        cookieDomain,
-        ACCESS_TOKEN_MAX_AGE,
-        REFRESH_TOKEN_MAX_AGE);
-  }
-
-  /** 보안 환경(운영)인지 확인 - 프로필 설정에 맞게 수정 */
-  private boolean isSecureEnvironment() {
-    // 현재 활성화된 프로필 목록 확인
-    String activeProfiles = getActiveProfiles();
-
-    // secret-prod 프로필이 포함되어 있는지 확인
-    return activeProfiles.contains("secret-prod");
-  }
-
-  /** 현재 활성화된 프로필 목록 가져오기 */
-  private String getActiveProfiles() {
-    return System.getProperty("spring.profiles.active", "");
-  }
-
   private String extractRefreshTokenFromCookie(HttpServletRequest request) {
     if (request.getCookies() == null) {
       throw new IllegalArgumentException("쿠키가 없습니다.");
@@ -497,5 +449,65 @@ public class AuthController {
     }
 
     throw new IllegalArgumentException("refreshToken 쿠키가 없습니다.");
+  }
+
+  private void addTokenCookies(
+      HttpServletResponse response, String accessToken, String refreshToken) {
+
+    // 1. 환경에 따른 설정 결정
+    String activeProfile = System.getProperty("spring.profiles.active", "local");
+    boolean isLocal = activeProfile.contains("local") || activeProfile.isEmpty();
+
+    // 2. 로컬 환경이 아닌 경우에만 Secure 설정
+    // 개발(dev) 및 운영(prod) 환경에서는 HTTPS 사용
+    boolean isSecure = !isLocal;
+
+    // 3. SameSite 설정: 크로스 사이트 요청을 허용하기 위해 'None' 사용
+    // SameSite=None이면 항상 Secure=true여야 함 (브라우저 요구사항)
+    String sameSite = "None";
+    if (sameSite.equals("None")) {
+      isSecure = true; // SameSite=None인 경우 항상 Secure 설정
+    }
+
+    // 4. 도메인 설정 (app.cookie.domain 프로퍼티 사용)
+    String domain = null;
+    if (!isLocal) {
+      domain = cookieDomain; // 개발/운영 환경: groble.im
+    }
+    // 로컬 환경에서는 domain 명시적으로 설정하지 않음 (기본값 사용)
+
+    // 5. 토큰 쿠키 설정
+    // Access Token
+    CookieUtils.addCookie(
+        response,
+        ACCESS_TOKEN_COOKIE_NAME,
+        accessToken,
+        ACCESS_TOKEN_MAX_AGE,
+        "/", // path
+        true, // httpOnly
+        isSecure, // secure
+        sameSite, // sameSite
+        domain); // domain
+
+    // Refresh Token
+    CookieUtils.addCookie(
+        response,
+        REFRESH_TOKEN_COOKIE_NAME,
+        refreshToken,
+        REFRESH_TOKEN_MAX_AGE,
+        "/", // path
+        true, // httpOnly
+        isSecure, // secure
+        sameSite, // sameSite
+        domain); // domain
+
+    log.debug(
+        "토큰 쿠키 추가 완료: env={}, domain={}, accessToken({}초), refreshToken({}초), secure={}, sameSite={}",
+        activeProfile,
+        domain != null ? domain : "기본값(localhost)",
+        ACCESS_TOKEN_MAX_AGE,
+        REFRESH_TOKEN_MAX_AGE,
+        isSecure,
+        sameSite);
   }
 }

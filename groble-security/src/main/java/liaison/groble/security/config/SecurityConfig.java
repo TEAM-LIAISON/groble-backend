@@ -28,8 +28,6 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import liaison.groble.security.jwt.JwtAuthenticationFilter;
 import liaison.groble.security.jwt.UserDetailsServiceImpl;
 import liaison.groble.security.oauth2.handler.OAuth2AuthenticationSuccessHandler;
@@ -49,8 +47,9 @@ public class SecurityConfig {
   private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
   private final JwtTokenAuthenticationEntryPoint jwtTokenAuthenticationEntryPoint;
   private final JwtTokenAccessDeniedHandler jwtTokenAccessDeniedHandler;
-  private final ObjectMapper objectMapper;
   private final OAuth2UserService<OAuth2UserRequest, OAuth2User> oAuth2UserService;
+  private final HttpCookieOAuth2AuthorizationRequestRepository
+      httpCookieOAuth2AuthorizationRequestRepository;
 
   public SecurityConfig(
       UserDetailsServiceImpl userDetailsService,
@@ -58,15 +57,17 @@ public class SecurityConfig {
       OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler,
       JwtTokenAuthenticationEntryPoint jwtTokenAuthenticationEntryPoint,
       JwtTokenAccessDeniedHandler jwtTokenAccessDeniedHandler,
-      ObjectMapper objectMapper,
-      OAuth2UserService<OAuth2UserRequest, OAuth2User> oAuth2UserService) {
+      OAuth2UserService<OAuth2UserRequest, OAuth2User> oAuth2UserService,
+      HttpCookieOAuth2AuthorizationRequestRepository
+          httpCookieOAuth2AuthorizationRequestRepository) {
     this.userDetailsService = userDetailsService;
     this.jwtAuthenticationFilter = jwtAuthenticationFilter;
     this.oAuth2AuthenticationSuccessHandler = oAuth2AuthenticationSuccessHandler;
     this.jwtTokenAuthenticationEntryPoint = jwtTokenAuthenticationEntryPoint;
     this.jwtTokenAccessDeniedHandler = jwtTokenAccessDeniedHandler;
-    this.objectMapper = objectMapper;
     this.oAuth2UserService = oAuth2UserService;
+    this.httpCookieOAuth2AuthorizationRequestRepository =
+        httpCookieOAuth2AuthorizationRequestRepository;
   }
 
   /** 비밀번호 인코더 빈 설정 */
@@ -107,7 +108,7 @@ public class SecurityConfig {
     configuration.setAllowedHeaders(
         Arrays.asList(
             "Authorization",
-            "Content-Type", // Content-ContentType 대신 Content-Type으로 수정
+            "Content-Type",
             "X-Auth-Token",
             "Access-Control-Allow-Origin",
             "Access-Control-Allow-Credentials",
@@ -133,7 +134,7 @@ public class SecurityConfig {
   @Bean
   public AuthorizationRequestRepository<OAuth2AuthorizationRequest>
       authorizationRequestRepository() {
-    return new HttpCookieOAuth2AuthorizationRequestRepository(objectMapper);
+    return httpCookieOAuth2AuthorizationRequestRepository;
   }
 
   @Bean

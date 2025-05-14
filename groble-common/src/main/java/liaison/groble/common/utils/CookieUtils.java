@@ -18,7 +18,7 @@ public class CookieUtils {
   private static final boolean DEFAULT_HTTP_ONLY = true;
   private static final boolean DEFAULT_SECURE_DEV = false; // 개발 환경
   private static final boolean DEFAULT_SECURE_PROD = true; // 운영 환경
-  private static final String DEFAULT_SAME_SITE = "None"; // Lax, Strict, None
+  private static final String DEFAULT_SAME_SITE = "Lax"; // 기본값을 Lax로 변경 (보안과 편의성 균형)
 
   /**
    * 요청에서 특정 이름의 쿠키 가져오기
@@ -108,6 +108,17 @@ public class CookieUtils {
       String sameSite,
       String domain) {
 
+    // SameSite=None인 경우 Secure 플래그 강제 설정 (브라우저 요구사항)
+    if ("None".equalsIgnoreCase(sameSite)) {
+      secure = true;
+    }
+
+    // Local 환경에서는 domain을 설정하지 않음 (localhost에서 동작하도록)
+    boolean isLocalEnv = isLocalEnvironment();
+    if (isLocalEnv) {
+      domain = null;
+    }
+
     // 기본 쿠키 생성
     Cookie cookie = new Cookie(name, value);
     cookie.setPath(path);
@@ -116,8 +127,9 @@ public class CookieUtils {
     cookie.setSecure(secure);
 
     // 도메인 설정 (null이 아닌 경우에만)
-    if (domain != null && !domain.isEmpty()) {
+    if (domain != null && !domain.isEmpty() && !isLocalEnv) {
       cookie.setDomain(domain);
+      log.debug("쿠키 도메인 설정: {}", domain);
     }
 
     // jakarta.servlet.http.Cookie에는 SameSite 설정이 없으므로 헤더로 추가
@@ -134,7 +146,7 @@ public class CookieUtils {
       cookieHeader.append("; Secure");
     }
 
-    if (domain != null && !domain.isEmpty()) {
+    if (domain != null && !domain.isEmpty() && !isLocalEnv) {
       cookieHeader.append(String.format("; Domain=%s", domain));
     }
 
@@ -232,13 +244,27 @@ public class CookieUtils {
   }
 
   /**
-   * 현재 환경이 보안 환경(운영)인지 확인
+   * 현재 환경이 보안 환경(운영 또는 개발)인지 확인
    *
    * @return 보안 환경 여부
    */
   private static boolean isSecureEnvironment() {
-    String env = System.getProperty("spring.profiles.active", "dev");
-    return env.equalsIgnoreCase("prod") || env.equalsIgnoreCase("production");
+    String env = System.getProperty("spring.profiles.active", "local");
+    // 운영 또는 개발 환경인 경우 true 반환 (HTTPS 사용)
+    return env.contains("prod")
+        || env.contains("dev")
+        || env.contains("blue")
+        || env.contains("green");
+  }
+
+  /**
+   * 현재 환경이 로컬 환경인지 확인
+   *
+   * @return 로컬 환경 여부
+   */
+  private static boolean isLocalEnvironment() {
+    String env = System.getProperty("spring.profiles.active", "local");
+    return env.contains("local") || env.isEmpty();
   }
 
   /** 쿠키 직렬화 관련 예외 클래스 */
