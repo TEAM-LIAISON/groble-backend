@@ -70,6 +70,10 @@ app:
   backend-url: http://localhost:8080
   cookie:
     domain: localhost
+  reset:
+    base-url: http://localhost:3000
+    path: /reset-password
+    expiration-ms: 200000 # 2 minutes
 
 # Springdoc OpenAPI Configuration
 springdoc:

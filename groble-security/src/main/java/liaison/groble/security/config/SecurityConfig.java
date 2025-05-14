@@ -7,6 +7,7 @@ import java.util.List;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -24,6 +25,7 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequ
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.util.matcher.RegexRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -178,6 +180,9 @@ public class SecurityConfig {
                     .requestMatchers("/api/v1/me")
                     .permitAll()
                     .requestMatchers("/api/v1/home/contents")
+                    .permitAll()
+                    .requestMatchers(
+                        new RegexRequestMatcher("^/api/v1/content/\\d+$", HttpMethod.GET.name()))
                     .permitAll()
                     .requestMatchers("/api/v1/contents/document/category")
                     .permitAll()

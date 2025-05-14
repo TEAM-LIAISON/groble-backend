@@ -84,6 +84,10 @@ app:
   backend-url: https://api.dev.groble.im
   cookie:
     domain: groble.im
+  reset:
+    base-url: https://dev.groble.im
+    path: /reset-password
+    expiration-ms: 900000 # 15 minutes
 
 # Springdoc OpenAPI Configuration
 springdoc:

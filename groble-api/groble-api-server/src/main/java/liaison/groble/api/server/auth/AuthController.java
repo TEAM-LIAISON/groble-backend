@@ -465,9 +465,7 @@ public class AuthController {
     // 3. SameSite 설정: 크로스 사이트 요청을 허용하기 위해 'None' 사용
     // SameSite=None이면 항상 Secure=true여야 함 (브라우저 요구사항)
     String sameSite = "None";
-    if (sameSite.equals("None")) {
-      isSecure = true; // SameSite=None인 경우 항상 Secure 설정
-    }
+    isSecure = true; // SameSite=None인 경우 항상 Secure 설정
 
     // 4. 도메인 설정 (app.cookie.domain 프로퍼티 사용)
     String domain = null;
