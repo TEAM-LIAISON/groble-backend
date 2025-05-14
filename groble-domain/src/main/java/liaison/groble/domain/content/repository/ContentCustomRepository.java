@@ -31,6 +31,10 @@ public interface ContentCustomRepository {
   CursorResponse<FlatContentPreviewDTO> findHomeContentsWithCursor(
       Long lastContentId, int size, ContentType contentType);
 
+  /** 콘텐츠 타입만으로 페이징 조회 (카테고리가 없는 경우). */
+  Page<FlatContentPreviewDTO> findContentsByType(ContentType contentType, Pageable pageable);
+
+  /** 카테고리 + 콘텐츠 타입으로 페이징 조회. */
   Page<FlatContentPreviewDTO> findContentsByCategoryAndType(
       Long categoryId, ContentType contentType, Pageable pageable);
 

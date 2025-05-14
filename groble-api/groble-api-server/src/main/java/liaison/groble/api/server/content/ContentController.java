@@ -88,18 +88,15 @@ public class ContentController {
   @GetMapping("/contents/coaching/category")
   public ResponseEntity<GrobleResponse<PageResponse<ContentPreviewCardResponse>>>
       getCoachingContentsByCategory(
-          @RequestParam("categoryId") Long categoryId,
+          @RequestParam(value = "categoryId", required = false) Long categoryId,
           @RequestParam(value = "page", defaultValue = "0") int page,
           @RequestParam(value = "size", defaultValue = "12") int size,
           @RequestParam(value = "sort", defaultValue = "createdAt,desc") String sort) {
 
     Pageable pageable = createPageable(page, size, sort);
-
-    // → 코칭 전용 메서드 호출
     PageResponse<ContentCardDto> dtoPage =
         contentService.getCoachingContentsByCategory(categoryId, pageable);
 
-    // 변환 & 래핑(기존과 동일)
     PageResponse<ContentPreviewCardResponse> responsePage = toPreviewResponsePage(dtoPage);
     return ResponseEntity.ok(GrobleResponse.success(responsePage));
   }
@@ -108,18 +105,15 @@ public class ContentController {
   @GetMapping("/contents/document/category")
   public ResponseEntity<GrobleResponse<PageResponse<ContentPreviewCardResponse>>>
       getDocumentContentsByCategory(
-          @RequestParam("categoryId") Long categoryId,
+          @RequestParam(value = "categoryId", required = false) Long categoryId,
           @RequestParam(value = "page", defaultValue = "0") int page,
           @RequestParam(value = "size", defaultValue = "12") int size,
           @RequestParam(value = "sort", defaultValue = "createdAt,desc") String sort) {
 
     Pageable pageable = createPageable(page, size, sort);
-
-    // → 자료 전용 메서드 호출
     PageResponse<ContentCardDto> dtoPage =
         contentService.getDocumentContentsByCategory(categoryId, pageable);
 
-    // 변환 & 래핑(기존과 동일)
     PageResponse<ContentPreviewCardResponse> responsePage = toPreviewResponsePage(dtoPage);
     return ResponseEntity.ok(GrobleResponse.success(responsePage));
   }

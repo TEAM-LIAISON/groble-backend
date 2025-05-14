@@ -331,6 +331,39 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
   }
 
   @Override
+  public Page<FlatContentPreviewDTO> findContentsByType(
+      ContentType contentType, Pageable pageable) {
+
+    QContent q = QContent.content;
+    QUser u = QUser.user;
+    BooleanExpression cond = q.contentType.eq(contentType).and(q.status.eq(ContentStatus.ACTIVE));
+
+    List<FlatContentPreviewDTO> items =
+        queryFactory
+            .select(
+                Projections.fields(
+                    FlatContentPreviewDTO.class,
+                    q.id.as("contentId"),
+                    q.createdAt.as("createdAt"),
+                    q.title.as("title"),
+                    q.thumbnailUrl.as("thumbnailUrl"),
+                    u.nickname.as("sellerName"),
+                    q.lowestPrice.as("lowestPrice"),
+                    q.status.stringValue().as("status")))
+            .from(q)
+            .leftJoin(q.user, u)
+            .where(cond)
+            .orderBy(q.createdAt.desc())
+            .offset(pageable.getOffset())
+            .limit(pageable.getPageSize())
+            .fetch();
+
+    Long total = queryFactory.select(q.count()).from(q).where(cond).fetchOne();
+
+    return new PageImpl<>(items, pageable, total != null ? total : 0L);
+  }
+
+  @Override
   public Page<FlatContentPreviewDTO> findContentsByCategoryAndType(
       Long categoryId, ContentType contentType, Pageable pageable) {
 

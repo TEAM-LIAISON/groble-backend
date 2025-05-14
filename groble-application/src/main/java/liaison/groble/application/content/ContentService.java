@@ -748,39 +748,57 @@ public class ContentService {
     return saveAndConvertToDto(content);
   }
 
-  /** 특정 카테고리의 코칭 콘텐츠를 페이지 단위로 조회합니다. */
+  /** 카테고리 ID가 null 이면 타입만, 아니면 카테고리＋타입으로 조회 */
   @Transactional(readOnly = true)
   public PageResponse<ContentCardDto> getCoachingContentsByCategory(
       Long categoryId, Pageable pageable) {
-    return getContentsByCategoryAndType(categoryId, ContentType.COACHING, pageable);
+    if (categoryId == null) {
+      return getContentsByType(ContentType.COACHING, pageable);
+    } else {
+      return getContentsByCategoryAndType(categoryId, ContentType.COACHING, pageable);
+    }
   }
 
-  /** 특정 카테고리의 자료 콘텐츠를 페이지 단위로 조회합니다. */
   @Transactional(readOnly = true)
   public PageResponse<ContentCardDto> getDocumentContentsByCategory(
       Long categoryId, Pageable pageable) {
-    return getContentsByCategoryAndType(categoryId, ContentType.DOCUMENT, pageable);
+    if (categoryId == null) {
+      return getContentsByType(ContentType.DOCUMENT, pageable);
+    } else {
+      return getContentsByCategoryAndType(categoryId, ContentType.DOCUMENT, pageable);
+    }
   }
 
-  /** 내부 공통 로직: 카테고리 + 타입으로 Flat DTO 페이징 조회 → ContentCardDto 변환 → PageResponse 리턴 */
-  private PageResponse<ContentCardDto> getContentsByCategoryAndType(
-      Long categoryId, ContentType contentType, Pageable pageable) {
+  // 타입만 조회
+  private PageResponse<ContentCardDto> getContentsByType(ContentType type, Pageable pageable) {
+    Page<FlatContentPreviewDTO> page = contentCustomRepository.findContentsByType(type, pageable);
+    List<ContentCardDto> items =
+        page.getContent().stream().map(this::convertFlatDtoToCardDto).toList();
 
-    // 1) 카테고리 존재 확인
+    PageResponse.MetaData meta =
+        PageResponse.MetaData.builder()
+            .sortBy(pageable.getSort().iterator().next().getProperty())
+            .sortDirection(pageable.getSort().iterator().next().getDirection().name())
+            .build();
+
+    return PageResponse.from(page, items, meta);
+  }
+
+  // 기존 카테고리＋타입 조회
+  private PageResponse<ContentCardDto> getContentsByCategoryAndType(
+      Long categoryId, ContentType type, Pageable pageable) {
+    // 1) 카테고리 확인 (필터가 널이 아니므로 예외 처리)
     Category category =
         categoryRepository
             .findById(categoryId)
             .orElseThrow(() -> new EntityNotFoundException("카테고리를 찾을 수 없습니다. ID: " + categoryId));
 
-    // 2) FlatContentPreviewDTO 페이징 조회 (카테고리 + 타입 필터)
     Page<FlatContentPreviewDTO> page =
-        contentCustomRepository.findContentsByCategoryAndType(categoryId, contentType, pageable);
+        contentCustomRepository.findContentsByCategoryAndType(categoryId, type, pageable);
 
-    // 3) Flat DTO → ContentCardDto
     List<ContentCardDto> items =
-        page.getContent().stream().map(this::convertFlatDtoToCardDto).collect(Collectors.toList());
+        page.getContent().stream().map(this::convertFlatDtoToCardDto).toList();
 
-    // 4) 메타데이터 구성
     PageResponse.MetaData meta =
         PageResponse.MetaData.builder()
             .categoryId(categoryId)
@@ -789,7 +807,6 @@ public class ContentService {
             .sortDirection(pageable.getSort().iterator().next().getDirection().name())
             .build();
 
-    // 5) PageResponse 반환
     return PageResponse.from(page, items, meta);
   }
 }
