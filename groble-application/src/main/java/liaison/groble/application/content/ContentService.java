@@ -6,6 +6,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +19,7 @@ import liaison.groble.application.user.service.UserReader;
 import liaison.groble.common.exception.EntityNotFoundException;
 import liaison.groble.common.exception.ForbiddenException;
 import liaison.groble.common.response.CursorResponse;
+import liaison.groble.common.response.PageResponse;
 import liaison.groble.domain.content.dto.FlatContentPreviewDTO;
 import liaison.groble.domain.content.entity.Category;
 import liaison.groble.domain.content.entity.CoachingOption;
@@ -743,5 +746,50 @@ public class ContentService {
 
     // 3. 저장 및 변환
     return saveAndConvertToDto(content);
+  }
+
+  /** 특정 카테고리의 코칭 콘텐츠를 페이지 단위로 조회합니다. */
+  @Transactional(readOnly = true)
+  public PageResponse<ContentCardDto> getCoachingContentsByCategory(
+      Long categoryId, Pageable pageable) {
+    return getContentsByCategoryAndType(categoryId, ContentType.COACHING, pageable);
+  }
+
+  /** 특정 카테고리의 자료 콘텐츠를 페이지 단위로 조회합니다. */
+  @Transactional(readOnly = true)
+  public PageResponse<ContentCardDto> getDocumentContentsByCategory(
+      Long categoryId, Pageable pageable) {
+    return getContentsByCategoryAndType(categoryId, ContentType.DOCUMENT, pageable);
+  }
+
+  /** 내부 공통 로직: 카테고리 + 타입으로 Flat DTO 페이징 조회 → ContentCardDto 변환 → PageResponse 리턴 */
+  private PageResponse<ContentCardDto> getContentsByCategoryAndType(
+      Long categoryId, ContentType contentType, Pageable pageable) {
+
+    // 1) 카테고리 존재 확인
+    Category category =
+        categoryRepository
+            .findById(categoryId)
+            .orElseThrow(() -> new EntityNotFoundException("카테고리를 찾을 수 없습니다. ID: " + categoryId));
+
+    // 2) FlatContentPreviewDTO 페이징 조회 (카테고리 + 타입 필터)
+    Page<FlatContentPreviewDTO> page =
+        contentCustomRepository.findContentsByCategoryAndType(categoryId, contentType, pageable);
+
+    // 3) Flat DTO → ContentCardDto
+    List<ContentCardDto> items =
+        page.getContent().stream().map(this::convertFlatDtoToCardDto).collect(Collectors.toList());
+
+    // 4) 메타데이터 구성
+    PageResponse.MetaData meta =
+        PageResponse.MetaData.builder()
+            .categoryId(categoryId)
+            .categoryName(category.getName())
+            .sortBy(pageable.getSort().iterator().next().getProperty())
+            .sortDirection(pageable.getSort().iterator().next().getDirection().name())
+            .build();
+
+    // 5) PageResponse 반환
+    return PageResponse.from(page, items, meta);
   }
 }

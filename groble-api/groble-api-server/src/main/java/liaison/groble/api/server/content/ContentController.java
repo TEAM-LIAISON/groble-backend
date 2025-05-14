@@ -1,13 +1,18 @@
 package liaison.groble.api.server.content;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import liaison.groble.api.model.content.request.examine.ContentExamineRequest;
@@ -16,6 +21,8 @@ import liaison.groble.api.model.content.response.ContentPreviewCardResponse;
 import liaison.groble.api.model.content.response.HomeContentsResponse;
 import liaison.groble.api.model.content.response.swagger.ContentDetail;
 import liaison.groble.api.model.content.response.swagger.ContentExamine;
+import liaison.groble.api.model.content.response.swagger.ContentsCoachingCategory;
+import liaison.groble.api.model.content.response.swagger.ContentsDocumentCategory;
 import liaison.groble.api.model.content.response.swagger.HomeContents;
 import liaison.groble.api.server.content.mapper.ContentDtoMapper;
 import liaison.groble.application.content.ContentService;
@@ -24,6 +31,7 @@ import liaison.groble.application.content.dto.ContentDetailDto;
 import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.model.Accessor;
 import liaison.groble.common.response.GrobleResponse;
+import liaison.groble.common.response.PageResponse;
 
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -76,51 +84,80 @@ public class ContentController {
     return ResponseEntity.ok(GrobleResponse.success(payload, successMessage));
   }
 
-  // 카테고리 포함 콘텐츠 조회
-  //  @GetMapping("/contents/category")
-  //  public ResponseEntity<GrobleResponse<PageResponse<ContentListItem>>> getContentsByCategory(
-  //          @RequestParam("categoryId") Long categoryId,
-  //          @RequestParam(value = "page", defaultValue = "0") int page,
-  //          @RequestParam(value = "size", defaultValue = "12") int size,
-  //          @RequestParam(value = "sort", defaultValue = "createdAt,desc") String sort) {
-  //
-  //      // 정렬 정보 파싱 및 페이지 요청 객체 생성
-  //      String[] sortParams = sort.split(",");
-  //      Sort sortObj = Sort.by(Sort.Direction.fromString(sortParams[1]), sortParams[0]);
-  //      Pageable pageable = PageRequest.of(page, size, sortObj);
-  //
-  //      // 카테고리 정보 조회 (선택적)
-  //      Category category = categoryService.findById(categoryId);
-  //
-  //      // 서비스 호출하여 페이지 데이터 조회
-  //      Page<Content> contentPage = contentService.findByCategoryId(categoryId, pageable);
-  //
-  //      // DTO 변환
-  //      List<ContentListItem> contentItems = contentPage.getContent().stream()
-  //              .map(content -> ContentListItem.builder()
-  //                      .id(content.getId())
-  //                      .title(content.getTitle())
-  //                      .price(content.getPrice())
-  //                      .seller(content.getSeller().getName())
-  //                      .rating(content.getAverageRating())
-  //                      .imageUrl(content.getThumbnailUrl())
-  //                      .build())
-  //              .collect(Collectors.toList());
-  //
-  //      // 메타데이터 생성 (선택적)
-  //      PageResponse.MetaData metaData = PageResponse.MetaData.builder()
-  //              .categoryId(categoryId)
-  //              .categoryName(category.getName())
-  //              .sortBy(sortParams[0])
-  //              .sortDirection(sortParams[1])
-  //              .build();
-  //
-  //      // 응답 객체 생성
-  //      PageResponse<ContentListItem> response = PageResponse.from(contentPage, contentItems,
-  // metaData);
-  //
-  //      return ResponseEntity.ok(GrobleResponse.success(response));
-  //  }
+  @ContentsCoachingCategory
+  @GetMapping("/contents/coaching/category")
+  public ResponseEntity<GrobleResponse<PageResponse<ContentPreviewCardResponse>>>
+      getCoachingContentsByCategory(
+          @RequestParam("categoryId") Long categoryId,
+          @RequestParam(value = "page", defaultValue = "0") int page,
+          @RequestParam(value = "size", defaultValue = "12") int size,
+          @RequestParam(value = "sort", defaultValue = "createdAt,desc") String sort) {
+
+    Pageable pageable = createPageable(page, size, sort);
+
+    // → 코칭 전용 메서드 호출
+    PageResponse<ContentCardDto> dtoPage =
+        contentService.getCoachingContentsByCategory(categoryId, pageable);
+
+    // 변환 & 래핑(기존과 동일)
+    PageResponse<ContentPreviewCardResponse> responsePage = toPreviewResponsePage(dtoPage);
+    return ResponseEntity.ok(GrobleResponse.success(responsePage));
+  }
+
+  @ContentsDocumentCategory
+  @GetMapping("/contents/document/category")
+  public ResponseEntity<GrobleResponse<PageResponse<ContentPreviewCardResponse>>>
+      getDocumentContentsByCategory(
+          @RequestParam("categoryId") Long categoryId,
+          @RequestParam(value = "page", defaultValue = "0") int page,
+          @RequestParam(value = "size", defaultValue = "12") int size,
+          @RequestParam(value = "sort", defaultValue = "createdAt,desc") String sort) {
+
+    Pageable pageable = createPageable(page, size, sort);
+
+    // → 자료 전용 메서드 호출
+    PageResponse<ContentCardDto> dtoPage =
+        contentService.getDocumentContentsByCategory(categoryId, pageable);
+
+    // 변환 & 래핑(기존과 동일)
+    PageResponse<ContentPreviewCardResponse> responsePage = toPreviewResponsePage(dtoPage);
+    return ResponseEntity.ok(GrobleResponse.success(responsePage));
+  }
+
+  // ------------------------
+  // PageRequest 생성 헬퍼
+  private Pageable createPageable(int page, int size, String sort) {
+    String[] parts = sort.split(",");
+    String property = parts[0]; // 최소한 필드명은 있다고 가정
+    Sort.Direction direction;
+    if (parts.length > 1) {
+      try {
+        direction = Sort.Direction.fromString(parts[1]);
+      } catch (IllegalArgumentException e) {
+        // 잘못된 방향이 넘어온 경우에도 기본값 사용
+        direction = Sort.Direction.DESC;
+      }
+    } else {
+      // 방향이 명시되지 않은 경우 기본 DESC
+      direction = Sort.Direction.DESC;
+    }
+    return PageRequest.of(page, size, Sort.by(direction, property));
+  }
+
+  // ContentCardDto → ContentPreviewCardResponse + PageResponse 재구성 헬퍼
+  private PageResponse<ContentPreviewCardResponse> toPreviewResponsePage(
+      PageResponse<ContentCardDto> dtoPage) {
+    List<ContentPreviewCardResponse> items =
+        dtoPage.getItems().stream()
+            .map(contentDtoMapper::toContentPreviewCardFromCardDto)
+            .collect(Collectors.toList());
+
+    return PageResponse.<ContentPreviewCardResponse>builder()
+        .items(items)
+        .pageInfo(dtoPage.getPageInfo())
+        .meta(dtoPage.getMeta())
+        .build();
+  }
 
   // 콘텐츠 심사 [반려]
   @Deprecated

@@ -4,6 +4,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import com.querydsl.core.types.Projections;
@@ -325,5 +328,50 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
 
     // null 체크 후 반환 (결과가 null이면 0 반환)
     return count != null ? count.intValue() : 0;
+  }
+
+  @Override
+  public Page<FlatContentPreviewDTO> findContentsByCategoryAndType(
+      Long categoryId, ContentType contentType, Pageable pageable) {
+
+    QContent qContent = QContent.content;
+    QUser qUser = QUser.user;
+
+    // 1) 조건: 카테고리, 타입, ACTIVE
+    BooleanExpression conditions =
+        qContent
+            .category
+            .id
+            .eq(categoryId)
+            .and(qContent.contentType.eq(contentType))
+            .and(qContent.status.eq(ContentStatus.ACTIVE));
+
+    // 2) 데이터 조회 (offset/limit 적용, 최신순)
+    List<FlatContentPreviewDTO> items =
+        queryFactory
+            .select(
+                Projections.fields(
+                    FlatContentPreviewDTO.class,
+                    qContent.id.as("contentId"),
+                    qContent.createdAt.as("createdAt"),
+                    qContent.title.as("title"),
+                    qContent.thumbnailUrl.as("thumbnailUrl"),
+                    qUser.nickname.as("sellerName"),
+                    qContent.lowestPrice.as("lowestPrice"),
+                    qContent.status.stringValue().as("status")))
+            .from(qContent)
+            .leftJoin(qContent.user, qUser)
+            .where(conditions)
+            .orderBy(qContent.createdAt.desc())
+            .offset(pageable.getOffset())
+            .limit(pageable.getPageSize())
+            .fetch();
+
+    // 3) 전체 개수 조회
+    Long total = queryFactory.select(qContent.count()).from(qContent).where(conditions).fetchOne();
+    long totalCount = (total != null ? total : 0L);
+
+    // 4) PageImpl 반환
+    return new PageImpl<>(items, pageable, totalCount);
   }
 }
