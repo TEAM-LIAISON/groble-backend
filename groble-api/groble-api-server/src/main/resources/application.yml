@@ -61,10 +61,10 @@ app:
   jwt:
     access-token:
       secret: 6M1boNRsyYPgKuR197f4w2uuh8DXfYyjxgPJKmINtHo=
-      expiration-ms: 3600000 # 1 hour
+      expiration-ms: 60000 # 1 minute
     refresh-token:
       secret: bZvf0E0wsJXugzxv2m25c5zHvJrNfvsQIjzU6eBScbk=
-      expiration-ms: 604800000 # 7 days
+      expiration-ms: 90000 # 1.5 minutes
     issuer: groble-auth-service
   frontend-url: http://localhost:3000
   backend-url: http://localhost:8080
