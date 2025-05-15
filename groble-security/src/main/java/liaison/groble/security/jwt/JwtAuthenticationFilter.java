@@ -103,7 +103,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 // 만료된 경우 accessToken, refreshToken 모두 삭제
                 CookieUtils.deleteCookie(request, response, "accessToken");
                 CookieUtils.deleteCookie(request, response, "refreshToken");
-                log.info("만료된 refreshToken 발견, 쿠키 삭제 처리");
               }
             });
     // ————————————————————————

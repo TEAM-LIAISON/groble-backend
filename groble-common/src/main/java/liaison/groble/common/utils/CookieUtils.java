@@ -176,28 +176,48 @@ public class CookieUtils {
    */
   public static void deleteCookie(
       HttpServletRequest request, HttpServletResponse response, String name) {
-    Cookie[] cookies = request.getCookies();
-    if (cookies != null && cookies.length > 0) {
-      Arrays.stream(cookies)
-          .filter(cookie -> cookie.getName().equals(name))
-          .forEach(
-              cookie -> {
-                // 쿠키 삭제를 위해 빈 값과 0 만료시간 설정
-                cookie.setValue("");
-                cookie.setPath(DEFAULT_PATH);
-                cookie.setMaxAge(0);
-                response.addCookie(cookie);
-
-                // SameSite 속성 유지를 위해 헤더 추가
-                String cookieHeader =
-                    String.format(
-                        "%s=; Path=%s; Max-Age=0; HttpOnly; SameSite=%s",
-                        name, DEFAULT_PATH, DEFAULT_SAME_SITE);
-                response.addHeader("Set-Cookie", cookieHeader);
-
-                log.debug("쿠키 삭제: {}", name);
-              });
+    // 요청에 붙어있는 원본 쿠키 가져오기
+    Optional<Cookie> maybe = getCookie(request, name);
+    if (maybe.isEmpty()) {
+      return;
     }
+
+    Cookie original = maybe.get();
+
+    // 삭제용 쿠키 객체 생성 (속성은 원본과 똑같이)
+    Cookie cookie = new Cookie(name, "");
+    cookie.setPath(original.getPath() != null ? original.getPath() : DEFAULT_PATH);
+    cookie.setHttpOnly(original.isHttpOnly());
+    cookie.setSecure(original.getSecure());
+    cookie.setMaxAge(0);
+
+    // Domain 이 설정되어 있었다면 동일하게 지정
+    if (original.getDomain() != null) {
+      cookie.setDomain(original.getDomain());
+    }
+
+    response.addCookie(cookie);
+
+    // 중복 방지를 위해 헤더 방식도 추가
+    StringBuilder header =
+        new StringBuilder()
+            .append(name)
+            .append("=; Path=")
+            .append(cookie.getPath())
+            .append("; Max-Age=0");
+    if (cookie.isHttpOnly()) {
+      header.append("; HttpOnly");
+    }
+    if (cookie.getSecure()) {
+      header.append("; Secure");
+    }
+    if (original.getDomain() != null) {
+      header.append("; Domain=").append(original.getDomain());
+    }
+    // 원본 SameSite 값도 유지
+    header.append("; SameSite=").append(DEFAULT_SAME_SITE);
+
+    response.addHeader("Set-Cookie", header.toString());
   }
 
   /**
