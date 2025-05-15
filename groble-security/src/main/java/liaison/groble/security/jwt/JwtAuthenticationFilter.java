@@ -91,53 +91,88 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
       HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
       throws ServletException, IOException {
 
-    // ———————— 여기에 추가 ————————
+    // 0) refreshToken 만료시 기존 토큰 삭제 (기존 구현)
     CookieUtils.getCookie(request, "refreshToken")
         .ifPresent(
             cookie -> {
-              String refresh = cookie.getValue();
               try {
-                // REFRESH 토큰 검증 (만료 시 ExpiredJwtException 던짐)
-                jwtTokenProvider.validateToken(refresh, TokenType.REFRESH);
+                jwtTokenProvider.validateToken(cookie.getValue(), TokenType.REFRESH);
               } catch (ExpiredJwtException ex) {
-                // 만료된 경우 accessToken, refreshToken 모두 삭제
                 CookieUtils.deleteCookie(request, response, "accessToken");
                 CookieUtils.deleteCookie(request, response, "refreshToken");
+                log.debug("refreshToken 만료, 쿠키 삭제");
               }
             });
-    // ————————————————————————
 
     final String requestURI = request.getRequestURI();
     StopWatch stopWatch = new StopWatch();
     stopWatch.start();
 
     try {
-      String jwt = extractTokenFromRequest(request);
-      boolean tokenProcessed = false;
+      String accessJwt = extractTokenFromRequest(request);
 
-      if (StringUtils.hasText(jwt)) {
+      if (StringUtils.hasText(accessJwt)) {
         try {
-          tokenProcessed = processToken(request, jwt);
-          if (tokenProcessed) {
-            log.debug("JWT 인증 성공 - URI: {}", requestURI);
-          } else {
-            log.debug("유효하지 않은 JWT 토큰 - URI: {}", requestURI);
-          }
-        } catch (Exception e) {
-          log.error("JWT 토큰 처리 중 오류 발생: {}", e.getMessage());
-          // 예외는 기록하되 필터 체인은 계속 진행
+          // 1) accessToken 검증 & 인증
+          processToken(request, accessJwt);
+
+        } catch (ExpiredJwtException expiredEx) {
+          log.debug("accessToken 만료 확인: {}", requestURI);
+
+          // 2) accessToken 만료 → refreshToken 으로 재발급 시도
+          CookieUtils.getCookie(request, "refreshToken")
+              .ifPresent(
+                  refreshCookie -> {
+                    String refreshJwt = refreshCookie.getValue();
+                    try {
+                      if (jwtTokenProvider.validateToken(refreshJwt, TokenType.REFRESH)) {
+                        // 3) refreshToken이 유효하면 새 accessToken 발급
+                        Long userId =
+                            jwtTokenProvider.getUserIdFromToken(refreshJwt, TokenType.REFRESH);
+                        String email =
+                            jwtTokenProvider.getUserEmailFromToken(refreshJwt, TokenType.REFRESH);
+
+                        String newAccess = jwtTokenProvider.createAccessToken(userId, email);
+                        int maxAge = (int) (jwtTokenProvider.getAccessTokenExpirationMs() / 1000);
+
+                        // 4) 쿠키에 덮어쓰기
+                        CookieUtils.addCookie(response, "accessToken", newAccess, maxAge);
+                        // 5) (선택) 응답 헤더에도 세팅
+                        response.setHeader("Authorization", "Bearer " + newAccess);
+
+                        // 6) SecurityContext에 인증 정보 직접 설정
+                        UserDetails principal = userDetailsService.loadUserByUsername(email);
+                        UsernamePasswordAuthenticationToken auth =
+                            new UsernamePasswordAuthenticationToken(
+                                principal, null, principal.getAuthorities());
+                        auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                        SecurityContextHolder.getContext().setAuthentication(auth);
+
+                        log.debug("새 accessToken 발급 및 SecurityContext 적용");
+
+                      } else {
+                        // refreshToken도 만료된 경우
+                        CookieUtils.deleteCookie(request, response, "accessToken");
+                        CookieUtils.deleteCookie(request, response, "refreshToken");
+                        log.debug("refreshToken도 만료, 전체 로그아웃 처리");
+                      }
+
+                    } catch (Exception e) {
+                      // refreshToken 검증 중 오류
+                      CookieUtils.deleteCookie(request, response, "accessToken");
+                      CookieUtils.deleteCookie(request, response, "refreshToken");
+                      log.error("refreshToken 검증 중 오류 발생, 쿠키 삭제", e);
+                    }
+                  });
         }
-      } else {
-        log.debug("Authorization 헤더 없음 - URI: {}", requestURI);
       }
 
     } finally {
+      // 7) 체인 계속 진행
       filterChain.doFilter(request, response);
       stopWatch.stop();
-
-      // 5초 이상 걸린 요청 로깅 (성능 모니터링)
       if (stopWatch.getTotalTimeMillis() > 5000) {
-        log.warn("긴 요청 처리 시간: {} ms - URI: {}", stopWatch.getTotalTimeMillis(), requestURI);
+        log.warn("긴 요청 처리 시간: {}ms - {}", stopWatch.getTotalTimeMillis(), requestURI);
       }
     }
   }
