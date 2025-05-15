@@ -2,6 +2,7 @@ package liaison.groble.external.s3;
 
 import java.io.InputStream;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
@@ -10,6 +11,7 @@ import jakarta.annotation.PostConstruct;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.util.UriUtils;
 
 import com.amazonaws.HttpMethod;
 import com.amazonaws.services.s3.AmazonS3;
@@ -42,15 +44,20 @@ public class S3FileStorageService implements FileStorageService {
   @Override
   public String uploadFile(
       InputStream inputStream, String fileName, String contentType, String directory) {
-    String key = (directory.endsWith("/") ? directory : directory + "/") + fileName;
+    // 1) 원본 키(슬래시 포함) 생성
+    String rawKey = (directory.endsWith("/") ? directory : directory + "/") + fileName;
+
+    // 2) S3에 업로드
     ObjectMetadata metadata = new ObjectMetadata();
     metadata.setContentType(contentType);
+    amazonS3.putObject(new PutObjectRequest(bucketName, rawKey, inputStream, metadata));
 
-    amazonS3.putObject(new PutObjectRequest(bucketName, key, inputStream, metadata));
+    // 3) 키를 URL-안전하게 인코딩 (슬래시만 제외)
+    String encodedKey = UriUtils.encodePath(rawKey, StandardCharsets.UTF_8);
 
-    // customDomain + "/" + key 형태로 URL 반환
-    String resultUrl = cloudDomain + "/" + key;
-    log.debug("✅ Uploaded to S3 and returning custom URL: {}", resultUrl);
+    // 4) 퍼블릭 도메인 + 인코딩된 키를 합쳐서 반환
+    String resultUrl = cloudDomain + "/" + encodedKey;
+    log.debug("Uploaded to S3, returning URL: {}", resultUrl);
     return resultUrl;
   }
 
