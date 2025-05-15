@@ -5,6 +5,7 @@ import java.io.IOException;
 import jakarta.validation.Valid;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -37,6 +38,8 @@ import liaison.groble.common.annotation.RequireRole;
 import liaison.groble.common.model.Accessor;
 import liaison.groble.common.response.GrobleResponse;
 
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 /** 사용자 정보 관련 API 컨트롤러 */
@@ -131,9 +134,15 @@ public class UserController {
 
   /** 사용자 프로필 이미지 업로드 */
   @UploadUserProfileImage
-  @PostMapping("/users/me/profile-image")
+  @PostMapping(value = "/users/me/profile-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<GrobleResponse<?>> uploadProfileImage(
-      @Auth Accessor accessor, @RequestPart MultipartFile profileImage) {
+      @Auth Accessor accessor,
+      @RequestPart("profileImage")
+          @Parameter(
+              description = "프로필 이미지 파일",
+              required = true,
+              schema = @Schema(type = "string", format = "binary"))
+          MultipartFile profileImage) {
 
     // 1) 파일 미선택
     if (profileImage == null || profileImage.isEmpty()) {
