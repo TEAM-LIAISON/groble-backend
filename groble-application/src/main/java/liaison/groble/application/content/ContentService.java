@@ -146,6 +146,10 @@ public class ContentService {
   public ContentDetailDto getContentDetail(Long contentId) {
     Content content = contentReader.getContentById(contentId);
 
+    // 1) 조회수 증가
+    content.incrementViewCount();
+    // 변경 감지를 위해 save 불필요 (영속 상태이므로 flush 시 반영됨)
+
     // 콘텐츠 이미지 URL 목록 (현재는 썸네일만 있음)
     List<String> contentImageUrls = new ArrayList<>();
     if (content.getThumbnailUrl() != null) {

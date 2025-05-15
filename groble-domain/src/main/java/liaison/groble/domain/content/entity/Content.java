@@ -105,6 +105,10 @@ public class Content extends BaseEntity {
   @Column(name = "reject_reason")
   private String rejectReason;
 
+  /** 조회수 */
+  @Column(name = "view_count", nullable = false)
+  private Long viewCount = 0L;
+
   // 비즈니스 로직으로 옵션 유형 검증
   public void addOption(ContentOption option) {
     if (contentType == ContentType.COACHING && !(option instanceof CoachingOption)) {
@@ -186,6 +190,11 @@ public class Content extends BaseEntity {
 
   public void incrementSaleCount() {
     this.saleCount = this.saleCount + 1;
+  }
+
+  /** 조회수 1 증가 */
+  public void incrementViewCount() {
+    this.viewCount = this.viewCount + 1;
   }
 
   public Content(User user) {

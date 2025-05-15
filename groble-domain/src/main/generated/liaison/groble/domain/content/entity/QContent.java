@@ -76,6 +76,8 @@ public class QContent extends EntityPathBase<Content> {
 
   public final liaison.groble.domain.user.entity.QUser user;
 
+  public final NumberPath<Long> viewCount = createNumber("viewCount", Long.class);
+
   public QContent(String variable) {
     this(Content.class, forVariable(variable), INITS);
   }
