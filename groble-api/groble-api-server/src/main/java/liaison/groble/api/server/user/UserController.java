@@ -149,7 +149,7 @@ public class UserController {
     try {
       // 3) DTO 변환
       FileUploadDto dto =
-          fileDtoMapper.toServiceFileUploadDto(profileImage, "/profiles/" + accessor.getUserId());
+          fileDtoMapper.toServiceFileUploadDto(profileImage, "profiles/" + accessor.getUserId());
       // 4) 업로드
       var fileDto = fileService.uploadFile(accessor.getUserId(), dto);
       // 5) 사용자 프로필에 URL 업데이트
