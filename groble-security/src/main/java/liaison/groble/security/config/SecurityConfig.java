@@ -241,7 +241,6 @@ public class SecurityConfig {
 
         // HTTP 기본 인증 비활성화
         .httpBasic(AbstractHttpConfigurer::disable)
-
         // JWT 필터 추가
         .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
 

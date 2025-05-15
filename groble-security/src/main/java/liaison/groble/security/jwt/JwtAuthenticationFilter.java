@@ -21,6 +21,9 @@ import org.springframework.util.StopWatch;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import liaison.groble.common.utils.CookieUtils;
+
+import io.jsonwebtoken.ExpiredJwtException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -87,6 +90,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
   protected void doFilterInternal(
       HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
       throws ServletException, IOException {
+
+    // ———————— 여기에 추가 ————————
+    CookieUtils.getCookie(request, "refreshToken")
+        .ifPresent(
+            cookie -> {
+              String refresh = cookie.getValue();
+              try {
+                // REFRESH 토큰 검증 (만료 시 ExpiredJwtException 던짐)
+                jwtTokenProvider.validateToken(refresh, TokenType.REFRESH);
+              } catch (ExpiredJwtException ex) {
+                // 만료된 경우 accessToken, refreshToken 모두 삭제
+                CookieUtils.deleteCookie(request, response, "accessToken");
+                CookieUtils.deleteCookie(request, response, "refreshToken");
+                log.info("만료된 refreshToken 발견, 쿠키 삭제 처리");
+              }
+            });
+    // ————————————————————————
 
     final String requestURI = request.getRequestURI();
     StopWatch stopWatch = new StopWatch();
