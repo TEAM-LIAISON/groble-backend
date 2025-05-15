@@ -59,6 +59,7 @@ public class UserDtoMapper {
 
     return UserMyPageDetailResponse.builder()
         .nickname(userMyPageDetailDto.getNickname())
+        .userType(userMyPageDetailDto.getUserTypeName())
         .accountType(accountType)
         .providerType(providerType)
         .email(userMyPageDetailDto.getEmail())

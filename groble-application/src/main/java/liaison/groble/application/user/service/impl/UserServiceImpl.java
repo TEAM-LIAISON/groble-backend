@@ -200,6 +200,7 @@ public class UserServiceImpl implements UserService {
 
     return UserMyPageDetailDto.builder()
         .nickname(user.getNickname())
+        .userTypeName(user.getLastUserType().name())
         .accountTypeName(user.getAccountType().name())
         .providerTypeName(providerTypeName)
         .email(email)

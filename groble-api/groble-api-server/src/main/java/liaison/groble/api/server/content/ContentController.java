@@ -122,7 +122,7 @@ public class ContentController {
               List<String> categoryIds,
           @RequestParam(value = "page", defaultValue = "0") int page,
           @RequestParam(value = "size", defaultValue = "12") int size,
-          @RequestParam(value = "sort", defaultValue = "createdAt,desc") String sort) {
+          @RequestParam(value = "sort", defaultValue = "createdAt,popular") String sort) {
 
     Pageable pageable = createPageable(page, size, sort);
     PageResponse<ContentCardDto> dtoPage =
@@ -145,7 +145,7 @@ public class ContentController {
               List<String> categoryIds,
           @RequestParam(value = "page", defaultValue = "0") int page,
           @RequestParam(value = "size", defaultValue = "12") int size,
-          @RequestParam(value = "sort", defaultValue = "createdAt,desc") String sort) {
+          @RequestParam(value = "sort", defaultValue = "createdAt,popular") String sort) {
 
     Pageable pageable = createPageable(page, size, sort);
     PageResponse<ContentCardDto> dtoPage =

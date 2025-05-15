@@ -14,6 +14,9 @@ public class UserMyPageDetailResponse {
   @Schema(description = "사용자 닉네임", example = "권동민")
   private String nickname;
 
+  @Schema(description = "사용자 마지막 선택 유형", example = "BUYER / SELLER")
+  private String userType;
+
   @Schema(description = "사용자 계정 유형 (INTEGRATED: 통합 계정, SOCIAL: 소셜 계정)")
   private String accountType;
 
