@@ -21,6 +21,11 @@ public class CategoryRepositoryImpl implements CategoryRepository {
   }
 
   @Override
+  public Optional<Category> findByCode(String categoryCode) {
+    return jpaCategoryRepository.findByCode(categoryCode);
+  }
+
+  @Override
   public List<Category> findAll() {
     return jpaCategoryRepository.findAll();
   }

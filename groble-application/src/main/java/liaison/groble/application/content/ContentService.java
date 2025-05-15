@@ -749,21 +749,24 @@ public class ContentService {
   /** 카테고리 ID가 null 이면 타입만, 아니면 카테고리＋타입으로 조회 */
   @Transactional(readOnly = true)
   public PageResponse<ContentCardDto> getCoachingContentsByCategory(
-      Long categoryId, Pageable pageable) {
-    if (categoryId == null) {
+      List<String> categoryIds, Pageable pageable) {
+
+    if (categoryIds == null || categoryIds.isEmpty()) {
+      // no filter: just by type
       return getContentsByType(ContentType.COACHING, pageable);
     } else {
-      return getContentsByCategoryAndType(categoryId, ContentType.COACHING, pageable);
+      // filter by any of the passed categories
+      return getContentsByCategoriesAndType(categoryIds, ContentType.COACHING, pageable);
     }
   }
 
   @Transactional(readOnly = true)
   public PageResponse<ContentCardDto> getDocumentContentsByCategory(
-      Long categoryId, Pageable pageable) {
-    if (categoryId == null) {
+      List<String> categoryIds, Pageable pageable) {
+    if (categoryIds == null || categoryIds.isEmpty()) {
       return getContentsByType(ContentType.DOCUMENT, pageable);
     } else {
-      return getContentsByCategoryAndType(categoryId, ContentType.DOCUMENT, pageable);
+      return getContentsByCategoriesAndType(categoryIds, ContentType.DOCUMENT, pageable);
     }
   }
 
@@ -783,24 +786,17 @@ public class ContentService {
   }
 
   // 기존 카테고리＋타입 조회
-  private PageResponse<ContentCardDto> getContentsByCategoryAndType(
-      Long categoryId, ContentType type, Pageable pageable) {
-    // 1) 카테고리 확인 (필터가 널이 아니므로 예외 처리)
-    Category category =
-        categoryRepository
-            .findById(categoryId)
-            .orElseThrow(() -> new EntityNotFoundException("카테고리를 찾을 수 없습니다. ID: " + categoryId));
-
+  private PageResponse<ContentCardDto> getContentsByCategoriesAndType(
+      List<String> categoryIds, ContentType type, Pageable pageable) {
     Page<FlatContentPreviewDTO> page =
-        contentCustomRepository.findContentsByCategoryAndType(categoryId, type, pageable);
+        contentCustomRepository.findContentsByCategoriesAndType(categoryIds, type, pageable);
 
     List<ContentCardDto> items =
         page.getContent().stream().map(this::convertFlatDtoToCardDto).toList();
 
     PageResponse.MetaData meta =
         PageResponse.MetaData.builder()
-            .categoryId(categoryId)
-            .categoryName(category.getName())
+            .categoryIds(categoryIds)
             .sortBy(pageable.getSort().iterator().next().getProperty())
             .sortDirection(pageable.getSort().iterator().next().getDirection().name())
             .build();

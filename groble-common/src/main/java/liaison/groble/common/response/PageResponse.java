@@ -148,7 +148,6 @@ public class PageResponse<T> {
     private String filter; // 적용된 필터 (있는 경우)
     private String sortBy; // 정렬 기준 (있는 경우)
     private String sortDirection; // 정렬 방향 (있는 경우)
-    private String categoryName; // 카테고리 이름 (있는 경우)
-    private Long categoryId; // 카테고리 ID (있는 경우)
+    private List<String> categoryIds; // 카테고리 IDs (있는 경우)
   }
 }

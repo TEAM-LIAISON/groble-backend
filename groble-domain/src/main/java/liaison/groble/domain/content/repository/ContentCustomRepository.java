@@ -35,8 +35,8 @@ public interface ContentCustomRepository {
   Page<FlatContentPreviewDTO> findContentsByType(ContentType contentType, Pageable pageable);
 
   /** 카테고리 + 콘텐츠 타입으로 페이징 조회. */
-  Page<FlatContentPreviewDTO> findContentsByCategoryAndType(
-      Long categoryId, ContentType contentType, Pageable pageable);
+  Page<FlatContentPreviewDTO> findContentsByCategoriesAndType(
+      List<String> categoryId, ContentType contentType, Pageable pageable);
 
   int countMySellingContents(
       Long userId, List<ContentStatus> contentStatusList, ContentType contentType);

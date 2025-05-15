@@ -48,6 +48,9 @@ import liaison.groble.common.response.GrobleResponse;
 import liaison.groble.common.response.PageResponse;
 
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
@@ -110,14 +113,20 @@ public class ContentController {
   @GetMapping("/contents/coaching/category")
   public ResponseEntity<GrobleResponse<PageResponse<ContentPreviewCardResponse>>>
       getCoachingContentsByCategory(
-          @RequestParam(value = "categoryId", required = false) Long categoryId,
+          @Parameter(
+                  in = ParameterIn.QUERY,
+                  name = "categoryId",
+                  description = "카테고리 코드 (여러 개 전달 가능)",
+                  array = @ArraySchema(schema = @Schema(type = "string")))
+              @RequestParam(value = "categoryId", required = false)
+              List<String> categoryIds,
           @RequestParam(value = "page", defaultValue = "0") int page,
           @RequestParam(value = "size", defaultValue = "12") int size,
           @RequestParam(value = "sort", defaultValue = "createdAt,desc") String sort) {
 
     Pageable pageable = createPageable(page, size, sort);
     PageResponse<ContentCardDto> dtoPage =
-        contentService.getCoachingContentsByCategory(categoryId, pageable);
+        contentService.getCoachingContentsByCategory(categoryIds, pageable);
 
     PageResponse<ContentPreviewCardResponse> responsePage = toPreviewResponsePage(dtoPage);
     return ResponseEntity.ok(GrobleResponse.success(responsePage));
@@ -127,14 +136,20 @@ public class ContentController {
   @GetMapping("/contents/document/category")
   public ResponseEntity<GrobleResponse<PageResponse<ContentPreviewCardResponse>>>
       getDocumentContentsByCategory(
-          @RequestParam(value = "categoryId", required = false) Long categoryId,
+          @Parameter(
+                  in = ParameterIn.QUERY,
+                  name = "categoryId",
+                  description = "카테고리 코드 (여러 개 전달 가능)",
+                  array = @ArraySchema(schema = @Schema(type = "string")))
+              @RequestParam(value = "categoryId", required = false)
+              List<String> categoryIds,
           @RequestParam(value = "page", defaultValue = "0") int page,
           @RequestParam(value = "size", defaultValue = "12") int size,
           @RequestParam(value = "sort", defaultValue = "createdAt,desc") String sort) {
 
     Pageable pageable = createPageable(page, size, sort);
     PageResponse<ContentCardDto> dtoPage =
-        contentService.getDocumentContentsByCategory(categoryId, pageable);
+        contentService.getDocumentContentsByCategory(categoryIds, pageable);
 
     PageResponse<ContentPreviewCardResponse> responsePage = toPreviewResponsePage(dtoPage);
     return ResponseEntity.ok(GrobleResponse.success(responsePage));

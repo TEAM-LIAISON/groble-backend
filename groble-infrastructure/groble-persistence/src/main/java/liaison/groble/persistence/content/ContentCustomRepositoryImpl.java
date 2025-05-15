@@ -364,22 +364,19 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
   }
 
   @Override
-  public Page<FlatContentPreviewDTO> findContentsByCategoryAndType(
-      Long categoryId, ContentType contentType, Pageable pageable) {
+  public Page<FlatContentPreviewDTO> findContentsByCategoriesAndType(
+      List<String> categoryCodes, ContentType type, Pageable pageable) {
 
     QContent qContent = QContent.content;
     QUser qUser = QUser.user;
 
-    // 1) 조건: 카테고리, 타입, ACTIVE
-    BooleanExpression conditions =
+    BooleanExpression cond =
         qContent
-            .category
-            .id
-            .eq(categoryId)
-            .and(qContent.contentType.eq(contentType))
-            .and(qContent.status.eq(ContentStatus.ACTIVE));
+            .contentType
+            .eq(type)
+            .and(qContent.status.eq(ContentStatus.ACTIVE))
+            .and(qContent.category.code.in(categoryCodes));
 
-    // 2) 데이터 조회 (offset/limit 적용, 최신순)
     List<FlatContentPreviewDTO> items =
         queryFactory
             .select(
@@ -394,17 +391,16 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     qContent.status.stringValue().as("status")))
             .from(qContent)
             .leftJoin(qContent.user, qUser)
-            .where(conditions)
-            .orderBy(qContent.createdAt.desc())
+            .where(cond)
             .offset(pageable.getOffset())
             .limit(pageable.getPageSize())
             .fetch();
 
-    // 3) 전체 개수 조회
-    Long total = queryFactory.select(qContent.count()).from(qContent).where(conditions).fetchOne();
-    long totalCount = (total != null ? total : 0L);
+    long total =
+        Optional.ofNullable(
+                queryFactory.select(qContent.count()).from(qContent).where(cond).fetchOne())
+            .orElse(0L);
 
-    // 4) PageImpl 반환
-    return new PageImpl<>(items, pageable, totalCount);
+    return new PageImpl<>(items, pageable, total);
   }
 }
