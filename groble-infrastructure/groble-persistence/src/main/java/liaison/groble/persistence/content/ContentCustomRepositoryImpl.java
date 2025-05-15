@@ -15,6 +15,7 @@ import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.ComparableExpressionBase;
+import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.core.types.dsl.PathBuilder;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -343,9 +344,12 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
 
     QContent q = QContent.content;
     QUser u = QUser.user;
+
+    // 1) 기본 조건
     BooleanExpression cond = q.contentType.eq(contentType).and(q.status.eq(ContentStatus.ACTIVE));
 
-    List<FlatContentPreviewDTO> items =
+    // 2) QueryDSL 쿼리 빌드
+    JPAQuery<FlatContentPreviewDTO> query =
         queryFactory
             .select(
                 Projections.fields(
@@ -359,12 +363,36 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     q.status.stringValue().as("status")))
             .from(q)
             .leftJoin(q.user, u)
-            .where(cond)
-            .orderBy(q.createdAt.desc())
-            .offset(pageable.getOffset())
-            .limit(pageable.getPageSize())
-            .fetch();
+            .where(cond);
 
+    // 3) Sort 적용
+    if (pageable.getSort().isUnsorted()) {
+      // 기본: 생성일 내림차순
+      query.orderBy(q.createdAt.desc());
+    } else {
+      // 동적 정렬: createdAt, popular(viewCount) 등
+      PathBuilder<Content> path = new PathBuilder<>(Content.class, q.getMetadata());
+      for (Sort.Order order : pageable.getSort()) {
+        Order direction = order.isAscending() ? Order.ASC : Order.DESC;
+        String prop = order.getProperty();
+
+        if ("popular".equalsIgnoreCase(prop)) {
+          // viewCount 기준 정렬
+          NumberExpression<Long> viewExpr = path.getNumber("viewCount", Long.class);
+          query.orderBy(new OrderSpecifier<>(direction, viewExpr));
+        } else {
+          // 그 외 필드(prop) 기준 정렬
+          ComparableExpressionBase<?> expr = path.getComparable(prop, Comparable.class);
+          query.orderBy(new OrderSpecifier<>(direction, expr));
+        }
+      }
+    }
+
+    // 4) 페이징
+    List<FlatContentPreviewDTO> items =
+        query.offset(pageable.getOffset()).limit(pageable.getPageSize()).fetch();
+
+    // 5) total count
     Long total = queryFactory.select(q.count()).from(q).where(cond).fetchOne();
 
     return new PageImpl<>(items, pageable, total != null ? total : 0L);
