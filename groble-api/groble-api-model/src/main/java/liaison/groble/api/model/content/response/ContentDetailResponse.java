@@ -25,11 +25,8 @@ public class ContentDetailResponse {
       allowableValues = {"ACTIVE", "DRAFT", "PENDING", "VALIDATED", "REJECTED"})
   private String status;
 
-  // TODO: 콘텐츠에 등록된 모든 이미지들의 URL
-  @Schema(
-      description = "콘텐츠 이미지 URL 목록",
-      example = "[\"https://example.com/image1.jpg\", \"https://example.com/image2.jpg\"]")
-  private List<String> contentsImageUrls;
+  @Schema(description = "썸네일 이미지 URL", example = "https://example.com/thumbnail1.jpg")
+  private String thumbnailUrl;
 
   @Schema(description = "콘텐츠 유형 [COACHING - 코칭], [DOCUMENT - 자료]", example = "COACHING")
   private String contentType;
@@ -54,9 +51,6 @@ public class ContentDetailResponse {
 
   @Schema(description = "콘텐츠 소개")
   private String contentIntroduction;
-
-  @Schema(description = "콘텐츠 상세 이미지 URL 목록")
-  private List<String> contentDetailImageUrls;
 
   @Schema(description = "서비스 타겟", example = "초창패, 창중, 예창패, 청창사 등을 준비하는 분")
   private String serviceTarget;

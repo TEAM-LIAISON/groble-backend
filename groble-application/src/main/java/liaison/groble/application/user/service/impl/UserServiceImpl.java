@@ -13,6 +13,7 @@ import liaison.groble.common.port.security.SecurityPort;
 import liaison.groble.domain.user.entity.IntegratedAccount;
 import liaison.groble.domain.user.entity.SocialAccount;
 import liaison.groble.domain.user.entity.User;
+import liaison.groble.domain.user.enums.AccountType;
 import liaison.groble.domain.user.enums.UserType;
 import liaison.groble.domain.user.repository.IntegratedAccountRepository;
 import liaison.groble.domain.user.repository.UserRepository;
@@ -178,15 +179,17 @@ public class UserServiceImpl implements UserService {
             .findById(userId)
             .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
 
+    AccountType accountType = user.getAccountType();
+
     String email = null;
     String phoneNumber = null;
     String providerTypeName = null;
 
-    if (user.getIntegratedAccount() != null) {
+    if (accountType == AccountType.INTEGRATED && user.getIntegratedAccount() != null) {
       IntegratedAccount account = user.getIntegratedAccount();
       email = account.getIntegratedAccountEmail();
       phoneNumber = user.getPhoneNumber();
-    } else if (user.getSocialAccount() != null) {
+    } else if (accountType == AccountType.SOCIAL && user.getSocialAccount() != null) {
       SocialAccount account = user.getSocialAccount();
       email = account.getSocialAccountEmail();
       phoneNumber = user.getPhoneNumber();
