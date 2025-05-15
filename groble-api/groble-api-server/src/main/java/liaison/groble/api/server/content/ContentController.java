@@ -157,22 +157,28 @@ public class ContentController {
 
   // ------------------------
   // PageRequest 생성 헬퍼
+  /** PageRequest 생성 헬퍼 */
   private Pageable createPageable(int page, int size, String sort) {
     String[] parts = sort.split(",");
-    String property = parts[0]; // 최소한 필드명은 있다고 가정
+    String key = parts[0].trim();
     Sort.Direction direction;
     if (parts.length > 1) {
       try {
-        direction = Sort.Direction.fromString(parts[1]);
+        direction = Sort.Direction.fromString(parts[1].trim());
       } catch (IllegalArgumentException e) {
-        // 잘못된 방향이 넘어온 경우에도 기본값 사용
         direction = Sort.Direction.DESC;
       }
     } else {
-      // 방향이 명시되지 않은 경우 기본 DESC
       direction = Sort.Direction.DESC;
     }
-    return PageRequest.of(page, size, Sort.by(direction, property));
+
+    // "popular" 로 넘어오면 viewCount 컬럼 기준 정렬
+    if ("popular".equalsIgnoreCase(key)) {
+      return PageRequest.of(page, size, Sort.by(direction, "viewCount"));
+    }
+
+    // 그 외엔 key 그대로
+    return PageRequest.of(page, size, Sort.by(direction, key));
   }
 
   // ContentCardDto → ContentPreviewCardResponse + PageResponse 재구성 헬퍼
