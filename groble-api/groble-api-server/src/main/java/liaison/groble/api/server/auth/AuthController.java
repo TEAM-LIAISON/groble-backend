@@ -72,8 +72,8 @@ public class AuthController {
   }
 
   // 쿠키 설정값
-  private static final int ACCESS_TOKEN_MAX_AGE = 60 * 30; // 30분
-  private static final int REFRESH_TOKEN_MAX_AGE = 60 * 60 * 24 * 7; // 7일
+  private static final int ACCESS_TOKEN_MAX_AGE = 60; // 1분
+  private static final int REFRESH_TOKEN_MAX_AGE = 90; // 1.5분
   private static final String ACCESS_TOKEN_COOKIE_NAME = "accessToken";
   private static final String REFRESH_TOKEN_COOKIE_NAME = "refreshToken";
 
