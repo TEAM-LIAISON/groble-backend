@@ -1,5 +1,8 @@
 package liaison.groble.security.auth.adapter;
 
+import static liaison.groble.security.jwt.TokenType.ACCESS;
+import static liaison.groble.security.jwt.TokenType.REFRESH;
+
 import java.time.Instant;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -7,8 +10,9 @@ import org.springframework.stereotype.Component;
 
 import liaison.groble.common.port.security.SecurityPort;
 import liaison.groble.security.jwt.JwtTokenProvider;
-import liaison.groble.security.jwt.TokenType;
 
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
 
 @Component
@@ -58,16 +62,20 @@ public class SecurityAdapter implements SecurityPort {
   }
 
   @Override
-  public boolean validateToken(String token, String tokenType) {
-    if (tokenType.equals("access")) {
-      return jwtTokenProvider.validateToken(token, TokenType.ACCESS);
-    } else {
-      return jwtTokenProvider.validateToken(token, TokenType.REFRESH);
-    }
+  public Long getUserIdFromRefreshToken(String token) {
+    return jwtTokenProvider.getUserIdFromRefreshToken(token);
   }
 
   @Override
-  public Long getUserIdFromRefreshToken(String token) {
-    return jwtTokenProvider.getUserIdFromRefreshToken(token);
+  public boolean validateToken(String token, String tokenType) {
+    try {
+      if ("access".equalsIgnoreCase(tokenType)) jwtTokenProvider.parseClaimsJws(token, ACCESS);
+      else jwtTokenProvider.parseClaimsJws(token, REFRESH);
+      return true;
+    } catch (ExpiredJwtException e) {
+      throw e;
+    } catch (JwtException | IllegalArgumentException e) {
+      return false;
+    }
   }
 }

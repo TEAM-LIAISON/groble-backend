@@ -69,7 +69,7 @@ public class ContentDtoMapper {
     builder.categoryId(request.getCategoryId());
     builder.thumbnailUrl(request.getThumbnailUrl());
     builder.contentIntroduction(request.getContentIntroduction());
-    builder.contentDetailImageUrls(request.getContentDetailImageUrls());
+    //    builder.contentDetailImageUrls(request.getContentDetailImageUrls());
     builder.serviceTarget(request.getServiceTarget());
     builder.serviceProcess(request.getServiceProcess());
     builder.makerIntro(request.getMakerIntro());
@@ -113,6 +113,7 @@ public class ContentDtoMapper {
     builder.contentType(contentType);
     builder.categoryId(request.getCategoryId());
     builder.thumbnailUrl(request.getThumbnailUrl());
+    builder.contentIntroduction(request.getContentIntroduction());
     builder.serviceTarget(request.getServiceTarget());
     builder.serviceProcess(request.getServiceProcess());
     builder.makerIntro(request.getMakerIntro());
@@ -362,7 +363,6 @@ public class ContentDtoMapper {
     responseBuilder.categoryId(dto.getCategoryId());
     responseBuilder.thumbnailUrl(dto.getThumbnailUrl());
     responseBuilder.contentIntroduction(dto.getContentIntroduction());
-    responseBuilder.contentDetailImageUrls(dto.getContentDetailImageUrls());
     responseBuilder.serviceTarget(dto.getServiceTarget());
     responseBuilder.serviceProcess(dto.getServiceProcess());
     responseBuilder.makerIntro(dto.getMakerIntro());

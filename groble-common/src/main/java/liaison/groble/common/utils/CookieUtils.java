@@ -220,6 +220,36 @@ public class CookieUtils {
     response.addHeader("Set-Cookie", header.toString());
   }
 
+  public static void deleteCookie(
+      HttpServletRequest request,
+      HttpServletResponse response,
+      String name,
+      String path,
+      String domain,
+      String sameSite,
+      boolean httpOnly,
+      boolean secure) {
+    // Path, Domain, SameSite, HttpOnly, Secure 값을 일치시켜 만료 쿠키 설정
+    Cookie cookie = new Cookie(name, "");
+    cookie.setPath(path);
+    cookie.setHttpOnly(httpOnly);
+    cookie.setSecure(secure);
+    cookie.setMaxAge(0);
+    if (domain != null && !domain.isEmpty()) {
+      cookie.setDomain(domain);
+    }
+    response.addCookie(cookie);
+
+    // 헤더 방식으로도 제거
+    StringBuilder header = new StringBuilder();
+    header.append(name).append("=; Path=").append(path).append("; Max-Age=0");
+    if (httpOnly) header.append("; HttpOnly");
+    if (secure) header.append("; Secure");
+    if (domain != null && !domain.isEmpty()) header.append("; Domain=").append(domain);
+    if (sameSite != null && !sameSite.isEmpty()) header.append("; SameSite=").append(sameSite);
+    response.addHeader("Set-Cookie", header.toString());
+  }
+
   /**
    * 직렬화된 객체를 쿠키에 저장
    *

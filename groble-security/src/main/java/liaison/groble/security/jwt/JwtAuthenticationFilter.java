@@ -1,6 +1,7 @@
 package liaison.groble.security.jwt;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.util.List;
 
 import jakarta.servlet.FilterChain;
@@ -8,6 +9,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -17,13 +19,13 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StopWatch;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import liaison.groble.common.utils.CookieUtils;
 
 import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -32,6 +34,9 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+
+  @Value("${app.cookie.domain}")
+  private String cookieDomain;
 
   private final JwtTokenProvider jwtTokenProvider;
   private final UserDetailsService userDetailsService;
@@ -86,145 +91,160 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
   }
 
   /** 인증 필터 처리 */
+  /** 인증 필터 처리 */
   @Override
   protected void doFilterInternal(
-      HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+      HttpServletRequest request, HttpServletResponse response, FilterChain chain)
       throws ServletException, IOException {
-
-    // 0) refreshToken 만료시 기존 토큰 삭제 (기존 구현)
-    CookieUtils.getCookie(request, "refreshToken")
-        .ifPresent(
-            cookie -> {
-              try {
-                jwtTokenProvider.validateToken(cookie.getValue(), TokenType.REFRESH);
-              } catch (ExpiredJwtException ex) {
-                CookieUtils.deleteCookie(request, response, "accessToken");
-                CookieUtils.deleteCookie(request, response, "refreshToken");
-                log.debug("refreshToken 만료, 쿠키 삭제");
-              }
-            });
-
-    final String requestURI = request.getRequestURI();
-    StopWatch stopWatch = new StopWatch();
-    stopWatch.start();
-
     try {
-      String accessJwt = extractTokenFromRequest(request);
+      // 디버깅 정보: 요청 정보 로깅
+      log.debug("JWT 필터 처리 시작 - 경로: {}, 메소드: {}", request.getRequestURI(), request.getMethod());
 
-      if (StringUtils.hasText(accessJwt)) {
+      // 1) 액세스 토큰 확인
+      String accessJwt = extractToken(request);
+      boolean accessTokenPresent = StringUtils.hasText(accessJwt);
+
+      // 2) 리프레시 토큰 확인
+      var refreshTokenOpt = CookieUtils.getCookie(request, "refreshToken");
+      boolean validRefreshToken = false;
+      String refreshToken = null;
+
+      if (refreshTokenOpt.isPresent()) {
+        refreshToken = refreshTokenOpt.get().getValue();
+        log.debug("리프레시 토큰 발견: {}", maskToken(refreshToken));
+
         try {
-          // 1) accessToken 검증 & 인증
-          processToken(request, accessJwt);
+          jwtTokenProvider.parseClaimsJws(refreshToken, TokenType.REFRESH);
+          log.debug("리프레시 토큰 유효함");
+          validRefreshToken = true;
+        } catch (ExpiredJwtException e) {
+          log.info("리프레시 토큰 만료됨, 모든 인증 쿠키 삭제");
+          deleteAuthCookies(request, response);
+        } catch (JwtException e) {
+          log.warn("유효하지 않은 리프레시 토큰: {}", e.getMessage());
+        }
+      } else {
+        log.debug("리프레시 토큰 쿠키 없음");
+      }
 
-        } catch (ExpiredJwtException expiredEx) {
-          log.debug("accessToken 만료 확인: {}", requestURI);
+      // 3) 액세스 토큰 처리
+      if (accessTokenPresent) {
+        log.debug("액세스 토큰 발견: {}", maskToken(accessJwt));
+        try {
+          jwtTokenProvider.parseClaimsJws(accessJwt, TokenType.ACCESS);
+          log.debug("액세스 토큰 유효함, 인증 진행...");
+          authenticate(accessJwt, request);
+        } catch (ExpiredJwtException exp) {
+          log.debug("액세스 토큰 만료됨, 재발급 시도");
+          handleTokenRefresh(refreshToken, validRefreshToken, response, request);
+        } catch (JwtException | IllegalArgumentException bad) {
+          log.debug("유효하지 않은 액세스 토큰: {}", bad.getMessage());
+          response.addHeader("X-Token-Refresh-Status", "invalid-access");
 
-          // 2) accessToken 만료 → refreshToken 으로 재발급 시도
-          CookieUtils.getCookie(request, "refreshToken")
-              .ifPresent(
-                  refreshCookie -> {
-                    String refreshJwt = refreshCookie.getValue();
-                    try {
-                      if (jwtTokenProvider.validateToken(refreshJwt, TokenType.REFRESH)) {
-                        // 3) refreshToken이 유효하면 새 accessToken 발급
-                        Long userId =
-                            jwtTokenProvider.getUserIdFromToken(refreshJwt, TokenType.REFRESH);
-                        String email =
-                            jwtTokenProvider.getUserEmailFromToken(refreshJwt, TokenType.REFRESH);
+          // 액세스 토큰이 유효하지 않지만 리프레시 토큰이 유효한 경우 새 액세스 토큰 발급
+          if (validRefreshToken) {
+            log.debug("유효하지 않은 액세스 토큰이지만 유효한 리프레시 토큰이 있어 재발급 시도");
+            handleTokenRefresh(refreshToken, true, response, request);
+          }
+        }
+      } else {
+        log.debug("액세스 토큰 없음");
 
-                        String newAccess = jwtTokenProvider.createAccessToken(userId, email);
-                        int maxAge = (int) (jwtTokenProvider.getAccessTokenExpirationMs() / 1000);
-
-                        // 4) 쿠키에 덮어쓰기
-                        CookieUtils.addCookie(response, "accessToken", newAccess, maxAge);
-                        // 5) (선택) 응답 헤더에도 세팅
-                        response.setHeader("Authorization", "Bearer " + newAccess);
-
-                        // 6) SecurityContext에 인증 정보 직접 설정
-                        UserDetails principal = userDetailsService.loadUserByUsername(email);
-                        UsernamePasswordAuthenticationToken auth =
-                            new UsernamePasswordAuthenticationToken(
-                                principal, null, principal.getAuthorities());
-                        auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                        SecurityContextHolder.getContext().setAuthentication(auth);
-
-                        log.debug("새 accessToken 발급 및 SecurityContext 적용");
-
-                      } else {
-                        // refreshToken도 만료된 경우
-                        CookieUtils.deleteCookie(request, response, "accessToken");
-                        CookieUtils.deleteCookie(request, response, "refreshToken");
-                        log.debug("refreshToken도 만료, 전체 로그아웃 처리");
-                      }
-
-                    } catch (Exception e) {
-                      // refreshToken 검증 중 오류
-                      CookieUtils.deleteCookie(request, response, "accessToken");
-                      CookieUtils.deleteCookie(request, response, "refreshToken");
-                      log.error("refreshToken 검증 중 오류 발생, 쿠키 삭제", e);
-                    }
-                  });
+        // 액세스 토큰이 없지만 유효한 리프레시 토큰이 있는 경우 새 액세스 토큰 발급
+        if (validRefreshToken) {
+          log.debug("액세스 토큰 없음, 유효한 리프레시 토큰으로 액세스 토큰 발급 시도");
+          handleTokenRefresh(refreshToken, true, response, request);
         }
       }
 
-    } finally {
-      // 7) 체인 계속 진행
-      filterChain.doFilter(request, response);
-      stopWatch.stop();
-      if (stopWatch.getTotalTimeMillis() > 5000) {
-        log.warn("긴 요청 처리 시간: {}ms - {}", stopWatch.getTotalTimeMillis(), requestURI);
+      // 4) 처리 완료 후 상태 로깅
+      var auth = SecurityContextHolder.getContext().getAuthentication();
+      if (auth != null && auth.isAuthenticated()) {
+        log.debug("인증 성공: {}", auth.getName());
       }
+
+    } catch (Exception e) {
+      log.error("JWT 필터 처리 중 예외 발생", e);
+    } finally {
+      chain.doFilter(request, response);
     }
   }
 
-  /**
-   * JWT 토큰 처리 및 인증 설정
-   *
-   * @return 인증 처리 성공 여부
-   */
-  private boolean processToken(HttpServletRequest request, String jwt) {
-    // 1. 토큰 유효성 검증
-    if (!jwtTokenProvider.validateToken(jwt, TokenType.ACCESS)) {
-      return false;
+  /** 리프레시 토큰으로 액세스 토큰 재발급 처리 */
+  private void handleTokenRefresh(
+      String refreshToken,
+      boolean validRefreshToken,
+      HttpServletResponse response,
+      HttpServletRequest request) {
+    if (!validRefreshToken || refreshToken == null) {
+      log.debug("리프레시 토큰이 없거나 유효하지 않아 액세스 토큰을 재발급할 수 없습니다");
+      return;
     }
 
     try {
-      // 2. 토큰에서 사용자 정보 추출
-      final String userEmail = jwtTokenProvider.getUserEmailFromToken(jwt, TokenType.ACCESS);
-      final Long userId = jwtTokenProvider.getUserIdFromToken(jwt, TokenType.ACCESS);
+      Long userId = jwtTokenProvider.getUserId(refreshToken, TokenType.REFRESH);
+      String email = jwtTokenProvider.getEmail(refreshToken, TokenType.REFRESH);
 
-      // 3. 이미 인증이 되어있지 않은 경우에만 처리
-      if (SecurityContextHolder.getContext().getAuthentication() == null) {
-        // 4. 사용자 조회 (캐시 우선 조회)
-        UserDetails userDetails;
+      // 리프레시 토큰의 만료 시간을 고려하여 새 액세스 토큰 생성
+      String newAccess =
+          jwtTokenProvider.createAccessTokenWithRefreshConstraint(userId, email, refreshToken);
 
-        // 캐시에서 사용자 조회 시도
-        userDetails = userId != null ? userCacheService.getUserFromCache(userId) : null;
+      // 리프레시 토큰의 만료 시간 정보
+      Instant refreshExpiration = jwtTokenProvider.getRefreshTokenExpirationInstant(refreshToken);
+      Instant now = Instant.now();
+      int maxAge =
+          (int)
+              Math.min(
+                  (refreshExpiration.toEpochMilli() - now.toEpochMilli()) / 1000,
+                  jwtTokenProvider.getAccessTokenExpirationMs() / 1000);
 
-        // 캐시에 없으면 DB에서 조회
-        if (userDetails == null) {
-          userDetails = userDetailsService.loadUserByUsername(userEmail);
-          // 다음 요청을 위해 캐시에 저장
-          if (userId != null) {
-            userCacheService.cacheUser(userId, userDetails);
-          }
-        }
+      log.info(
+          "새 액세스 토큰 발급 성공 - userId: {}, email: {}, 쿠키 만료: {}초", userId, maskEmail(email), maxAge);
 
-        // 5. 인증 객체 생성
-        UsernamePasswordAuthenticationToken authentication =
-            createAuthenticationToken(userDetails, request);
+      // 디버깅 헤더 추가
+      response.addHeader("X-Token-Refresh-Status", "success");
 
-        // 6. 인증 정보 설정
-        SecurityContextHolder.getContext().setAuthentication(authentication);
+      // 쿠키에 새 액세스 토큰 추가 (수정된 최대 수명으로)
+      CookieUtils.addCookie(
+          response, "accessToken", newAccess, maxAge, "/", true, true, "None", cookieDomain);
 
-        return true;
-      }
+      // 인증 설정
+      setAuthentication(newAccess, request);
     } catch (Exception e) {
-      log.error("토큰 처리 중 예외 발생", e);
-      return false;
+      log.error("토큰 재발급 처리 중 오류 발생: {}", e.getMessage());
+      response.addHeader("X-Token-Refresh-Status", "refresh-error");
     }
+  }
 
-    return false;
+  /** 인증용 쿠키 삭제 헬퍼 메소드 */
+  private void deleteAuthCookies(HttpServletRequest request, HttpServletResponse response) {
+    CookieUtils.deleteCookie(
+        request, response, "accessToken", "/", cookieDomain, "None", true, true);
+    CookieUtils.deleteCookie(
+        request, response, "refreshToken", "/", cookieDomain, "None", true, true);
+  }
+
+  /** 토큰 마스킹 헬퍼 메소드 (로깅 시 보안을 위해) */
+  private String maskToken(String token) {
+    if (token == null || token.length() < 10) {
+      return "[보안상 숨김]";
+    }
+    return token.substring(0, 5) + "..." + token.substring(token.length() - 5);
+  }
+
+  /** 이메일 마스킹 헬퍼 메소드 */
+  private String maskEmail(String email) {
+    if (email == null || email.indexOf('@') < 1) {
+      return "[이메일 형식 오류]";
+    }
+    String[] parts = email.split("@");
+    String name = parts[0];
+    String domain = parts[1];
+
+    String maskedName =
+        name.substring(0, Math.min(2, name.length())) + "*".repeat(Math.max(1, name.length() - 2));
+
+    return maskedName + "@" + domain;
   }
 
   /** 인증 객체 생성 */
@@ -286,5 +306,59 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             .toList();
 
     return new OrRequestMatcher(matchers.toArray(new RequestMatcher[0]));
+  }
+
+  /** 주어진 accessToken 으로 인증 정보를 생성하여 SecurityContext 에 설정 */
+  private void authenticate(String jwt, HttpServletRequest request) {
+    // 이미 context에 인증 정보가 있을 때만 설정
+    if (SecurityContextHolder.getContext().getAuthentication() != null) {
+      log.debug("이미 인증 정보가 있습니다.");
+      return;
+    }
+
+    try {
+      // 토큰에서 사용자 정보 추출
+      String email = jwtTokenProvider.getEmail(jwt, TokenType.ACCESS);
+      log.debug("인증 정보 설정 시도: {}", maskEmail(email));
+
+      UserDetails ud = userDetailsService.loadUserByUsername(email);
+      UsernamePasswordAuthenticationToken auth =
+          new UsernamePasswordAuthenticationToken(ud, null, ud.getAuthorities());
+      auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+      SecurityContextHolder.getContext().setAuthentication(auth);
+      log.debug("인증 정보 설정 완료: {}", maskEmail(email));
+    } catch (Exception e) {
+      log.error("인증 처리 중 오류 발생: {}", e.getMessage());
+    }
+  }
+
+  /** 재발급된 accessToken 으로 SecurityContext 를 업데이트 */
+  private void setAuthentication(String newAccessToken, HttpServletRequest request) {
+    try {
+      // 토큰에서 사용자 정보 추출
+      String email = jwtTokenProvider.getEmail(newAccessToken, TokenType.ACCESS);
+      log.debug("새 토큰으로 인증 정보 설정: {}", maskEmail(email));
+
+      UserDetails ud = userDetailsService.loadUserByUsername(email);
+      UsernamePasswordAuthenticationToken auth =
+          new UsernamePasswordAuthenticationToken(ud, null, ud.getAuthorities());
+      auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+      SecurityContextHolder.getContext().setAuthentication(auth);
+      log.debug("새 토큰으로 인증 설정 완료");
+    } catch (Exception e) {
+      log.error("새 토큰으로 인증 설정 중 오류: {}", e.getMessage());
+    }
+  }
+
+  /** 요청 헤더나 쿠키에서 accessToken을 추출합니다. */
+  private String extractToken(HttpServletRequest request) {
+    // Authorization 헤더에서 Bearer 토큰 확인
+    String bearer = request.getHeader("Authorization");
+    String token = jwtTokenProvider.resolveToken(bearer);
+    // 헤더에 없으면 쿠키에서 조회
+    if (token == null) {
+      token = CookieUtils.getCookie(request, "accessToken").map(c -> c.getValue()).orElse(null);
+    }
+    return token;
   }
 }
