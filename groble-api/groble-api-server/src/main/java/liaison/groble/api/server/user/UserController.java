@@ -1,5 +1,7 @@
 package liaison.groble.api.server.user;
 
+import java.io.IOException;
+
 import jakarta.validation.Valid;
 
 import org.springframework.http.HttpStatus;
@@ -8,8 +10,11 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
+import liaison.groble.api.model.file.response.FileUploadResponse;
 import liaison.groble.api.model.user.request.UserTypeRequest;
 import liaison.groble.api.model.user.response.MyPageSummaryResponseBase;
 import liaison.groble.api.model.user.response.UserHeaderResponse;
@@ -17,8 +22,12 @@ import liaison.groble.api.model.user.response.UserMyPageDetailResponse;
 import liaison.groble.api.model.user.response.swagger.MyPageDetail;
 import liaison.groble.api.model.user.response.swagger.MyPageSummary;
 import liaison.groble.api.model.user.response.swagger.SwitchRole;
+import liaison.groble.api.model.user.response.swagger.UploadUserProfileImage;
 import liaison.groble.api.model.user.response.swagger.UserHeader;
+import liaison.groble.api.server.file.mapper.FileDtoMapper;
 import liaison.groble.api.server.user.mapper.UserDtoMapper;
+import liaison.groble.application.file.FileService;
+import liaison.groble.application.file.dto.FileUploadDto;
 import liaison.groble.application.user.dto.UserHeaderDto;
 import liaison.groble.application.user.dto.UserMyPageDetailDto;
 import liaison.groble.application.user.dto.UserMyPageSummaryDto;
@@ -38,10 +47,23 @@ public class UserController {
 
   private final UserService userService;
   private final UserDtoMapper userDtoMapper;
+  private final FileService fileService;
+  private final FileDtoMapper fileDtoMapper;
 
-  public UserController(UserService userService, UserDtoMapper userDtoMapper) {
+  public UserController(
+      UserService userService,
+      UserDtoMapper userDtoMapper,
+      FileService fileService,
+      FileDtoMapper fileDtoMapper) {
     this.userService = userService;
     this.userDtoMapper = userDtoMapper;
+    this.fileService = fileService;
+    this.fileDtoMapper = fileDtoMapper;
+  }
+
+  private boolean isImageFile(MultipartFile file) {
+    String ct = file.getContentType();
+    return ct != null && ct.startsWith("image/");
   }
 
   @SwitchRole
@@ -105,5 +127,51 @@ public class UserController {
     UserHeaderResponse response = userDtoMapper.toApiUserHeaderResponse(userHeaderDto);
 
     return ResponseEntity.ok(GrobleResponse.success(response, "사용자 헤더 정보 조회 성공"));
+  }
+
+  /** 사용자 프로필 이미지 업로드 */
+  @UploadUserProfileImage
+  @PostMapping("/users/me/profile-image")
+  public ResponseEntity<GrobleResponse<?>> uploadProfileImage(
+      @Auth Accessor accessor, @RequestPart MultipartFile profileImage) {
+
+    // 1) 파일 미선택
+    if (profileImage == null || profileImage.isEmpty()) {
+      return ResponseEntity.badRequest()
+          .body(GrobleResponse.error("이미지 파일을 선택해주세요.", HttpStatus.BAD_REQUEST.value()));
+    }
+    // 2) 이미지 타입 검증
+    if (!isImageFile(profileImage)) {
+      return ResponseEntity.badRequest()
+          .body(GrobleResponse.error("이미지 파일만 업로드 가능합니다.", HttpStatus.BAD_REQUEST.value()));
+    }
+
+    try {
+      // 3) DTO 변환
+      FileUploadDto dto =
+          fileDtoMapper.toServiceFileUploadDto(profileImage, "/profiles/" + accessor.getUserId());
+      // 4) 업로드
+      var fileDto = fileService.uploadFile(accessor.getUserId(), dto);
+      // 5) 사용자 프로필에 URL 업데이트
+      userService.updateProfileImageUrl(accessor.getUserId(), fileDto.getFileUrl());
+
+      // 6) 응답 생성
+      FileUploadResponse response =
+          FileUploadResponse.of(
+              fileDto.getOriginalFilename(),
+              fileDto.getFileUrl(),
+              fileDto.getContentType(),
+              dto.getDirectory());
+      return ResponseEntity.status(HttpStatus.CREATED)
+          .body(
+              GrobleResponse.success(
+                  response, "프로필 이미지가 성공적으로 업로드되었습니다.", HttpStatus.CREATED.value()));
+
+    } catch (IOException e) {
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .body(
+              GrobleResponse.error(
+                  "프로필 이미지 저장 중 오류가 발생했습니다. 다시 시도해주세요.", HttpStatus.INTERNAL_SERVER_ERROR.value()));
+    }
   }
 }

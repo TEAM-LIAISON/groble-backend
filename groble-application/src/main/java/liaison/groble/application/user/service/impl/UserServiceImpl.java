@@ -243,4 +243,15 @@ public class UserServiceImpl implements UserService {
         .unreadNotificationCount(0) // TODO: 알림 개수 조회 로직 추가
         .build();
   }
+
+  @Override
+  public void updateProfileImageUrl(Long userId, String profileImageUrl) {
+    User user =
+        userRepository
+            .findById(userId)
+            .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
+
+    user.updateProfileImageUrl(profileImageUrl);
+    userRepository.save(user);
+  }
 }
