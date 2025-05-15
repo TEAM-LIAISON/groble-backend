@@ -379,7 +379,6 @@ public class ContentDtoMapper {
         contentDetailDto.getOptions().stream()
             .map(
                 optionDto -> {
-                  // 코칭 옵션인 경우
                   if (optionDto.getCoachingPeriod() != null) {
                     return CoachingOptionResponse.builder()
                         .optionId(optionDto.getContentOptionId())
@@ -391,9 +390,7 @@ public class ContentDtoMapper {
                         .coachingType(optionDto.getCoachingType())
                         .coachingTypeDescription(optionDto.getCoachingTypeDescription())
                         .build();
-                  }
-                  // 문서 옵션인 경우
-                  else if (optionDto.getContentDeliveryMethod() != null) {
+                  } else if (optionDto.getContentDeliveryMethod() != null) {
                     return DocumentOptionResponse.builder()
                         .optionId(optionDto.getContentOptionId())
                         .name(optionDto.getName())
@@ -401,15 +398,9 @@ public class ContentDtoMapper {
                         .price(optionDto.getPrice())
                         .contentDeliveryMethod(optionDto.getContentDeliveryMethod())
                         .build();
-                  }
-                  // 기본 옵션의 경우
-                  else {
-                    return BaseOptionResponse.builder()
-                        .optionId(optionDto.getContentOptionId())
-                        .name(optionDto.getName())
-                        .description(optionDto.getDescription())
-                        .price(optionDto.getPrice())
-                        .build();
+                  } else {
+                    // 예외 처리 또는 명시적으로 무시
+                    throw new IllegalStateException("Unknown option type: " + optionDto);
                   }
                 })
             .collect(Collectors.toList());

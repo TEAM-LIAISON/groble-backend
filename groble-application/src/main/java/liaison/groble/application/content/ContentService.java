@@ -151,7 +151,6 @@ public class ContentService {
     if (content.getThumbnailUrl() != null) {
       contentImageUrls.add(content.getThumbnailUrl());
     }
-    // 추가 이미지가 있다면 여기서 처리
 
     // 옵션 목록 변환 - ContentOptionDto 사용
     List<ContentOptionDto> optionDtos =

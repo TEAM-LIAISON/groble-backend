@@ -3,6 +3,7 @@ package liaison.groble.api.model.content.response;
 import java.math.BigDecimal;
 import java.util.List;
 
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -46,8 +47,41 @@ public class ContentDetailResponse {
   @Schema(description = "콘텐츠 최저가", example = "10000")
   private BigDecimal lowestPrice;
 
-  @Schema(description = "콘텐츠 옵션 목록")
-  private List<BaseOptionResponse> options;
+  @ArraySchema(
+      schema =
+          @Schema(
+              implementation = OptionResponseDoc.class, // ← 문서용 DTO
+              description = "콘텐츠 옵션 목록",
+              example =
+                  """
+      [
+        {
+          "optionId": 1,
+          "optionType": "COACHING_OPTION",
+          "name": "1시간 코칭",
+          "description": "1:1 전문가 코칭 1시간",
+          "price": 50000,
+          "coachingPeriod": "ONE_DAY",
+          "documentProvision": "PROVIDED",
+          "coachingType": "ONLINE",
+          "coachingTypeDescription": "줌을 통한 온라인 미팅",
+          "contentDeliveryMethod": null
+        },
+        {
+          "optionId": 3,
+          "optionType": "DOCUMENT_OPTION",
+          "name": "기본 템플릿",
+          "description": "기본적인 사업계획서 템플릿",
+          "price": 15000,
+          "coachingPeriod": null,
+          "documentProvision": null,
+          "coachingType": null,
+          "coachingTypeDescription": null,
+          "contentDeliveryMethod": "IMMEDIATE_DOWNLOAD"
+        }
+      ]
+      """))
+  private List<?> options; // 실제론 BaseOptionResponse 계열이지만, 문서에선 와일드카드로 처리
 
   @Schema(description = "콘텐츠 소개")
   private String contentIntroduction;

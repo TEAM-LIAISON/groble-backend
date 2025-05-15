@@ -6,22 +6,27 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "optionType")
-@JsonSubTypes({
-  @JsonSubTypes.Type(value = CoachingOptionResponse.class, name = "COACHING_OPTION"),
-  @JsonSubTypes.Type(value = DocumentOptionResponse.class, name = "DOCUMENT_OPTION")
-})
 @Getter
 @SuperBuilder
 @NoArgsConstructor
-@AllArgsConstructor
-@Schema(description = "콘텐츠 옵션 공통 정보 응답")
-public class BaseOptionResponse {
+@JsonTypeInfo(
+    use = JsonTypeInfo.Id.NAME,
+    include = JsonTypeInfo.As.PROPERTY,
+    property = "optionType",
+    visible = true)
+@JsonSubTypes({
+  @JsonSubTypes.Type(name = "COACHING_OPTION", value = CoachingOptionResponse.class),
+  @JsonSubTypes.Type(name = "DOCUMENT_OPTION", value = DocumentOptionResponse.class)
+})
+@Schema(
+    name = "BaseOptionResponse",
+    description = "콘텐츠 옵션 공통 정보 응답",
+    discriminatorProperty = "optionType")
+public abstract class BaseOptionResponse {
   @Schema(description = "옵션 ID", example = "1")
   private Long optionId;
 
@@ -33,4 +38,7 @@ public class BaseOptionResponse {
 
   @Schema(description = "옵션 가격", example = "50000")
   private BigDecimal price;
+
+  @Schema(description = "옵션 유형", example = "COACHING_OPTION", required = true)
+  public abstract String getOptionType();
 }
