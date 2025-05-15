@@ -1,11 +1,15 @@
 package liaison.groble.api.server.content;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import jakarta.validation.Valid;
 
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -13,7 +17,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import liaison.groble.api.model.content.request.examine.ContentExamineRequest;
 import liaison.groble.api.model.content.response.ContentDetailResponse;
@@ -24,10 +30,16 @@ import liaison.groble.api.model.content.response.swagger.ContentExamine;
 import liaison.groble.api.model.content.response.swagger.ContentsCoachingCategory;
 import liaison.groble.api.model.content.response.swagger.ContentsDocumentCategory;
 import liaison.groble.api.model.content.response.swagger.HomeContents;
+import liaison.groble.api.model.content.response.swagger.UploadContentThumbnail;
+import liaison.groble.api.model.file.response.FileUploadResponse;
 import liaison.groble.api.server.content.mapper.ContentDtoMapper;
+import liaison.groble.api.server.file.mapper.FileDtoMapper;
 import liaison.groble.application.content.ContentService;
 import liaison.groble.application.content.dto.ContentCardDto;
 import liaison.groble.application.content.dto.ContentDetailDto;
+import liaison.groble.application.file.FileService;
+import liaison.groble.application.file.dto.FileDto;
+import liaison.groble.application.file.dto.FileUploadDto;
 import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.model.Accessor;
 import liaison.groble.common.response.GrobleResponse;
@@ -43,10 +55,18 @@ public class ContentController {
 
   private final ContentService contentService;
   private final ContentDtoMapper contentDtoMapper;
+  private final FileService fileService;
+  private final FileDtoMapper fileDtoMapper;
 
-  public ContentController(ContentService contentService, ContentDtoMapper contentDtoMapper) {
+  public ContentController(
+      ContentService contentService,
+      ContentDtoMapper contentDtoMapper,
+      FileService fileService,
+      FileDtoMapper fileDtoMapper) {
     this.contentService = contentService;
     this.contentDtoMapper = contentDtoMapper;
+    this.fileService = fileService;
+    this.fileDtoMapper = fileDtoMapper;
   }
 
   // 콘텐츠 상세 조회
@@ -177,5 +197,50 @@ public class ContentController {
     } else {
       throw new IllegalArgumentException("지원하지 않는 심사 액션입니다: " + action);
     }
+  }
+
+  // 콘텐츠의 썸네일 이미지 저장 요청
+  @UploadContentThumbnail
+  @PostMapping("/content/thumbnail/image")
+  public ResponseEntity<GrobleResponse<?>> addContentThumbnailImage(
+      @Auth final Accessor accessor,
+      @RequestPart @Valid final MultipartFile contentThumbnailImage) {
+
+    if (contentThumbnailImage == null || contentThumbnailImage.isEmpty()) {
+      return ResponseEntity.badRequest()
+          .body(GrobleResponse.error("이미지 파일을 선택해주세요.", HttpStatus.BAD_REQUEST.value()));
+    }
+
+    if (!isImageFile(contentThumbnailImage)) {
+      return ResponseEntity.badRequest()
+          .body(GrobleResponse.error("이미지 파일만 업로드 가능합니다.", HttpStatus.BAD_REQUEST.value()));
+    }
+    try {
+      FileUploadDto fileUploadDto =
+          fileDtoMapper.toServiceFileUploadDto(contentThumbnailImage, "/contents/thumbnail");
+      FileDto fileDto = fileService.uploadFile(accessor.getUserId(), fileUploadDto);
+      FileUploadResponse response =
+          FileUploadResponse.of(
+              fileDto.getOriginalFilename(),
+              fileDto.getFileUrl(),
+              fileDto.getContentType(),
+              "/contents/thumbnail");
+      return ResponseEntity.status(HttpStatus.CREATED)
+          .body(
+              GrobleResponse.success(
+                  response, "썸네일 이미지 업로드가 성공적으로 완료되었습니다.", HttpStatus.CREATED.value()));
+    } catch (IOException ioe) {
+      // I/O 문제(파일 읽기 실패 등)
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .body(
+              GrobleResponse.error(
+                  "썸네일 저장 중 오류가 발생했습니다. 다시 시도해주세요.", HttpStatus.INTERNAL_SERVER_ERROR.value()));
+    }
+  }
+
+  /** 이미지 파일 여부 확인 */
+  private boolean isImageFile(MultipartFile file) {
+    String contentType = file.getContentType();
+    return contentType != null && contentType.startsWith("image/");
   }
 }
