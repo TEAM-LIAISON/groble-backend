@@ -1,6 +1,7 @@
 package liaison.groble.api.server.content;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -30,6 +31,7 @@ import liaison.groble.api.model.content.response.swagger.ContentExamine;
 import liaison.groble.api.model.content.response.swagger.ContentsCoachingCategory;
 import liaison.groble.api.model.content.response.swagger.ContentsDocumentCategory;
 import liaison.groble.api.model.content.response.swagger.HomeContents;
+import liaison.groble.api.model.content.response.swagger.UploadContentDetailImages;
 import liaison.groble.api.model.content.response.swagger.UploadContentThumbnail;
 import liaison.groble.api.model.file.response.FileUploadResponse;
 import liaison.groble.api.server.content.mapper.ContentDtoMapper;
@@ -236,6 +238,45 @@ public class ContentController {
               GrobleResponse.error(
                   "썸네일 저장 중 오류가 발생했습니다. 다시 시도해주세요.", HttpStatus.INTERNAL_SERVER_ERROR.value()));
     }
+  }
+
+  @UploadContentDetailImages
+  @PostMapping("/content/detail/images")
+  public ResponseEntity<GrobleResponse<?>> addContentDetailImages(
+      @Auth Accessor accessor, @RequestPart List<MultipartFile> contentDetailImages) {
+
+    if (contentDetailImages == null || contentDetailImages.isEmpty()) {
+      return ResponseEntity.badRequest()
+          .body(GrobleResponse.error("적어도 하나 이상의 이미지를 선택해주세요.", HttpStatus.BAD_REQUEST.value()));
+    }
+
+    List<FileUploadResponse> responses = new ArrayList<>();
+    for (MultipartFile file : contentDetailImages) {
+      if (file.isEmpty() || !isImageFile(file)) {
+        return ResponseEntity.badRequest()
+            .body(GrobleResponse.error("모든 파일이 유효한 이미지여야 합니다.", HttpStatus.BAD_REQUEST.value()));
+      }
+      try {
+        FileUploadDto dto = fileDtoMapper.toServiceFileUploadDto(file, "/contents/detail");
+        FileDto uploaded = fileService.uploadFile(accessor.getUserId(), dto);
+        responses.add(
+            FileUploadResponse.of(
+                uploaded.getOriginalFilename(),
+                uploaded.getFileUrl(),
+                uploaded.getContentType(),
+                "/contents/detail"));
+      } catch (IOException e) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            .body(
+                GrobleResponse.error(
+                    "상세 이미지 저장 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR.value()));
+      }
+    }
+
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(
+            GrobleResponse.success(
+                responses, "상세 이미지 업로드가 성공적으로 완료되었습니다.", HttpStatus.CREATED.value()));
   }
 
   /** 이미지 파일 여부 확인 */
