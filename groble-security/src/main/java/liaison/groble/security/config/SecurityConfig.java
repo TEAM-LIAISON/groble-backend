@@ -97,13 +97,7 @@ public class SecurityConfig {
   @Bean
   public CorsConfigurationSource corsConfigurationSource() {
     CorsConfiguration configuration = new CorsConfiguration();
-    configuration.setAllowedOrigins(
-        List.of(
-            "http://localhost:3000",
-            "https://dev.groble.im",
-            "https://api.dev.groble.im",
-            "https://api.groble.im",
-            "https://groble.im")); // 프론트엔드 URL 및 API URL
+    configuration.setAllowedOriginPatterns(List.of("https://*.groble.im", "http://localhost:3000"));
     configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
 
     // 이 부분 수정: 더 많은 헤더 허용
