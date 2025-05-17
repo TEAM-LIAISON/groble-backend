@@ -73,39 +73,34 @@ public class NotificationService {
 
     // Switch based on notification type and subtype to create appropriate details
     return switch (type) {
-      case SELLER -> createSellerDetails(notification, subType);
-      case CONTENT -> createContentDetails(notification, subType);
+      case CERTIFY -> createCertifyDetails(notification, subType);
+      case REVIEW -> createReviewDetails(notification, subType);
       case SYSTEM -> createSystemDetails(notification, subType);
       default -> null;
     };
   }
 
-  private NotificationDetailsDto createSellerDetails(
+  private NotificationDetailsDto createCertifyDetails(
       Notification notification, SubNotificationType subNotificationType) {
-    if (subNotificationType == SubNotificationType.SELLER_VERIFIED) {
-      return NotificationDetailsDto.sellerVerified(
-          notification.getSellerDetails().getNickname(),
-          notification.getSellerDetails().getIsVerified());
-    } else if (subNotificationType == SubNotificationType.SELLER_REJECTED) {
-      return NotificationDetailsDto.sellerRejected(
-          notification.getSellerDetails().getNickname(),
-          notification.getSellerDetails().getIsVerified());
+    if (subNotificationType == SubNotificationType.MAKER_CERTIFIED) {
+      return NotificationDetailsDto.makerCertified(notification.getCertifyDetails().getNickname());
+    } else if (subNotificationType == SubNotificationType.MAKER_CERTIFY_REJECTED) {
+      return NotificationDetailsDto.makerCertifyRejected(
+          notification.getCertifyDetails().getNickname());
     }
     return null;
   }
 
-  private NotificationDetailsDto createContentDetails(
+  private NotificationDetailsDto createReviewDetails(
       Notification notification, SubNotificationType subNotificationType) {
-    if (subNotificationType == SubNotificationType.CONTENT_APPROVED) {
-      return NotificationDetailsDto.contentApproved(
-          notification.getContentDetails().getContentId(),
-          notification.getContentDetails().getThumbnailUrl(),
-          notification.getContentDetails().getIsContentApproved());
-    } else if (subNotificationType == SubNotificationType.CONTENT_REJECTED) {
-      return NotificationDetailsDto.contentRejected(
-          notification.getContentDetails().getContentId(),
-          notification.getContentDetails().getThumbnailUrl(),
-          notification.getContentDetails().getIsContentApproved());
+    if (subNotificationType == SubNotificationType.CONTENT_REVIEW_APPROVED) {
+      return NotificationDetailsDto.contentReviewApproved(
+          notification.getReviewDetails().getContentId(),
+          notification.getReviewDetails().getThumbnailUrl());
+    } else if (subNotificationType == SubNotificationType.CONTENT_REVIEW_REJECTED) {
+      return NotificationDetailsDto.contentReviewRejected(
+          notification.getReviewDetails().getContentId(),
+          notification.getReviewDetails().getThumbnailUrl());
     }
     return null;
   }

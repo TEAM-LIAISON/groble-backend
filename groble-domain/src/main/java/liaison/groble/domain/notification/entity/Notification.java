@@ -68,9 +68,8 @@ public class Notification {
   private String details;
 
   @Transient private SystemDetails systemDetails;
-  @Transient private ContentDetails contentDetails;
-  @Transient private SellerDetails sellerDetails;
-  @Transient private InquiryDetails inquiryDetails;
+  @Transient private ReviewDetails reviewDetails;
+  @Transient private CertifyDetails certifyDetails;
 
   private LocalDateTime createdAt;
 
@@ -82,14 +81,11 @@ public class Notification {
     ObjectMapper mapper = new ObjectMapper();
     try {
       switch (notificationType) {
-        case SELLER:
-          details = sellerDetails != null ? mapper.writeValueAsString(sellerDetails) : null;
+        case CERTIFY:
+          details = certifyDetails != null ? mapper.writeValueAsString(certifyDetails) : null;
           break;
-        case CONTENT:
-          details = contentDetails != null ? mapper.writeValueAsString(contentDetails) : null;
-          break;
-        case INQUIRY:
-          details = inquiryDetails != null ? mapper.writeValueAsString(inquiryDetails) : null;
+        case REVIEW:
+          details = reviewDetails != null ? mapper.writeValueAsString(reviewDetails) : null;
           break;
         case SYSTEM:
           details = systemDetails != null ? mapper.writeValueAsString(systemDetails) : null;
@@ -108,14 +104,11 @@ public class Notification {
     ObjectMapper mapper = new ObjectMapper();
     try {
       switch (notificationType) {
-        case SELLER:
-          sellerDetails = mapper.readValue(details, SellerDetails.class);
+        case CERTIFY:
+          certifyDetails = mapper.readValue(details, CertifyDetails.class);
           break;
-        case CONTENT:
-          contentDetails = mapper.readValue(details, ContentDetails.class);
-          break;
-        case INQUIRY:
-          inquiryDetails = mapper.readValue(details, InquiryDetails.class);
+        case REVIEW:
+          reviewDetails = mapper.readValue(details, ReviewDetails.class);
           break;
         case SYSTEM:
           systemDetails = mapper.readValue(details, SystemDetails.class);
@@ -129,12 +122,10 @@ public class Notification {
   // 현재 알림 타입에 맞는 세부 정보 객체를 반환하는 편의 메서드
   public Object getDetails() {
     switch (notificationType) {
-      case SELLER:
-        return sellerDetails;
-      case CONTENT:
-        return contentDetails;
-      case INQUIRY:
-        return inquiryDetails;
+      case CERTIFY:
+        return certifyDetails;
+      case REVIEW:
+        return reviewDetails;
       case SYSTEM:
         return systemDetails;
       default:
