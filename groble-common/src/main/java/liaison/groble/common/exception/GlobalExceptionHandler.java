@@ -29,4 +29,10 @@ public class GlobalExceptionHandler {
     return ResponseEntity.status(HttpStatus.NOT_FOUND) // 404 Not Found
         .body(GrobleResponse.error(ex.getMessage(), 404, ex));
   }
+
+  @ExceptionHandler(GrobleException.class)
+  public ResponseEntity<GrobleResponse<Void>> handleGrobleException(GrobleException ex) {
+    return ResponseEntity.status(ex.getStatusCode())
+        .body(GrobleResponse.error(ex.getMessage(), ex.getStatusCode()));
+  }
 }

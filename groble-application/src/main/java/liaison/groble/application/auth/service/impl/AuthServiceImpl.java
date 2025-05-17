@@ -270,12 +270,11 @@ public class AuthServiceImpl implements AuthService {
   @Override
   @Transactional
   public void sendEmailVerificationForSignUp(EmailVerificationDto emailVerificationDto) {
-    String email = emailVerificationDto.getEmail();
-    // 회원 생성용 이메일 인증
+    final String email = emailVerificationDto.getEmail();
 
-    // 이미 가입된 이메일인지 확인
+    // 통합 계정 테이블에서 이미 가입된 이메일인지 확인
     if (integratedAccountRepository.existsByIntegratedAccountEmail(email)) {
-      throw new EmailAlreadyExistsException("이미 가입된 이메일입니다.");
+      throw new EmailAlreadyExistsException();
     }
 
     // 인증 코드 생성 (4자리 숫자)
