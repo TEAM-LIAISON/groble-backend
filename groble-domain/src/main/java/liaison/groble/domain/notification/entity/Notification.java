@@ -67,6 +67,7 @@ public class Notification {
   @Column(name = "details", columnDefinition = "JSON")
   private String details;
 
+  // 세부 정보 객체들
   @Transient private SystemDetails systemDetails;
   @Transient private ReviewDetails reviewDetails;
   @Transient private CertifyDetails certifyDetails;
