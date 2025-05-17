@@ -33,22 +33,22 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
                     name = "판매자 인증 성공",
                     summary = "판매자 인증 성공 알림 예제",
                     description = "판매자가 인증에 성공했을 때 받는 알림",
-                    value = NotificationExamples.SellerVerifiedExample.EXAMPLE),
+                    value = NotificationExamples.MakerCertifiedExample.EXAMPLE),
                 @ExampleObject(
                     name = "판매자 인증 거부",
                     summary = "판매자 인증 거부 알림 예제",
                     description = "판매자 인증이 거부되었을 때 받는 알림",
-                    value = NotificationExamples.SellerRejectedExample.EXAMPLE),
+                    value = NotificationExamples.MakerCertifyRejectedExample.EXAMPLE),
                 @ExampleObject(
                     name = "콘텐츠 승인",
                     summary = "콘텐츠 승인 알림 예제",
                     description = "업로드한 콘텐츠가 승인되었을 때 받는 알림",
-                    value = NotificationExamples.ContentApprovedExample.EXAMPLE),
+                    value = NotificationExamples.ContentReviewApprovedExample.EXAMPLE),
                 @ExampleObject(
                     name = "콘텐츠 거부",
                     summary = "콘텐츠 거부 알림 예제",
                     description = "업로드한 콘텐츠가 거부되었을 때 받는 알림",
-                    value = NotificationExamples.ContentRejectedExample.EXAMPLE),
+                    value = NotificationExamples.ContentReviewRejectedExample.EXAMPLE),
                 @ExampleObject(
                     name = "시스템 환영",
                     summary = "시스템 환영 알림 예제",
