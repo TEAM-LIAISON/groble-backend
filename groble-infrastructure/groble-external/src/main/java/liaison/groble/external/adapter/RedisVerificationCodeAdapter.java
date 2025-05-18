@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 public class RedisVerificationCodeAdapter implements VerificationCodePort {
   private final RedisTemplate<String, String> redisTemplate;
   private static final String EMAIL_VERIFICATION_PREFIX = "email:verification:";
+  private static final String EMAIL_VERIFIED_PREFIX = "email:verified:";
   private static final String EMAIL_PASSWORD_RESET_PREFIX = "email:password_reset:";
 
   public RedisVerificationCodeAdapter(RedisTemplate<String, String> redisTemplate) {
@@ -112,7 +113,7 @@ public class RedisVerificationCodeAdapter implements VerificationCodePort {
 
   @Override
   public void saveVerifiedFlag(String email, long expirationTimeInMinutes) {
-    String key = verificationKey(email);
+    String key = verifiedKey(email);
     try {
       redisTemplate.opsForValue().set(key, "verified", expirationTimeInMinutes, TimeUnit.MINUTES);
     } catch (DataAccessException e) {
@@ -121,7 +122,23 @@ public class RedisVerificationCodeAdapter implements VerificationCodePort {
     }
   }
 
+  @Override
+  public boolean validateVerifiedFlag(String email) {
+    String key = verifiedKey(email);
+    try {
+      String storedValue = redisTemplate.opsForValue().get(key);
+      return storedValue != null && storedValue.equals("verified");
+    } catch (DataAccessException e) {
+      log.error("Redis에서 인증 플래그 검증 실패: key={}, error={}", key, e.getMessage());
+      return false;
+    }
+  }
+
   private String verificationKey(String email) {
+    return EMAIL_VERIFICATION_PREFIX + email;
+  }
+
+  private String verifiedKey(String email) {
     return EMAIL_VERIFICATION_PREFIX + email;
   }
 

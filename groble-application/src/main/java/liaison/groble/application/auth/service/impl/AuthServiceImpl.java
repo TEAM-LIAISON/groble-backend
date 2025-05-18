@@ -79,10 +79,9 @@ public class AuthServiceImpl implements AuthService {
       throw new IllegalArgumentException("이미 사용 중인 닉네임입니다.");
     }
 
-    VerifiedEmail verifiedEmail =
-        verifiedEmailRepository
-            .findByEmail(signUpDto.getEmail())
-            .orElseThrow(() -> new IllegalArgumentException("인증 완료되지 않은 이메일입니다."));
+    if (!verificationCodePort.validateVerifiedFlag(signUpDto.getEmail())) {
+      throw new IllegalArgumentException("이메일 인증이 완료되지 않았습니다.");
+    }
 
     // 비밀번호 암호화
     String encodedPassword = securityPort.encodePassword(signUpDto.getPassword());
@@ -90,7 +89,7 @@ public class AuthServiceImpl implements AuthService {
     // IntegratedAccount 생성 (내부적으로 User 객체 생성 및 연결)
     IntegratedAccount integratedAccount =
         IntegratedAccount.createAccount(
-            verifiedEmail.getEmail(), encodedPassword, signUpDto.getNickname(), userType);
+            signUpDto.getEmail(), encodedPassword, signUpDto.getNickname(), userType);
 
     User user = integratedAccount.getUser();
 
@@ -111,7 +110,6 @@ public class AuthServiceImpl implements AuthService {
         tokenDto.getRefreshToken(),
         securityPort.getRefreshTokenExpirationTime(tokenDto.getRefreshToken()));
     userRepository.save(savedUser);
-    verifiedEmailRepository.deleteByEmail(verifiedEmail.getEmail());
     return tokenDto;
   }
 

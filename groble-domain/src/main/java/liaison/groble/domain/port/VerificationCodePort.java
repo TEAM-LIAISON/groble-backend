@@ -21,4 +21,6 @@ public interface VerificationCodePort {
   void removePasswordResetCode(String token);
 
   void saveVerifiedFlag(String email, long expirationTimeInMinutes);
+
+  boolean validateVerifiedFlag(String email);
 }
