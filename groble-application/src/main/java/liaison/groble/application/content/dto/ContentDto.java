@@ -11,7 +11,7 @@ public class ContentDto {
   private Long contentId;
   private String title;
   private String contentType;
-  private Long categoryId;
+  private String categoryId;
   private String thumbnailUrl;
   private String status;
   private List<ContentOptionDto> options;

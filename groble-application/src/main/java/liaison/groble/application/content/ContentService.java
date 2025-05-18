@@ -115,7 +115,7 @@ public class ContentService {
     }
 
     // 4. 카테고리 조회 및 설정 (심사 요청 시 필수)
-    Category category = findCategoryById(contentDto.getCategoryId());
+    Category category = findCategoryByCode(contentDto.getCategoryId());
 
     // 5. Content 필드 업데이트
     updateContentFromDto(content, contentDto);
@@ -195,7 +195,7 @@ public class ContentService {
         .status(content.getStatus().name())
         .thumbnailUrl(content.getThumbnailUrl())
         .contentType(content.getContentType().name())
-        .categoryId(content.getCategory() != null ? content.getCategory().getId() : null)
+        .categoryId(content.getCategory() != null ? content.getCategory().getCode() : null)
         .title(content.getTitle())
         .sellerProfileImageUrl(sellerProfileImageUrl)
         .sellerName(sellerName)
@@ -335,13 +335,13 @@ public class ContentService {
   }
 
   /** 카테고리 ID로 카테고리를 조회합니다. */
-  private Category findCategoryById(Long categoryId) {
+  private Category findCategoryByCode(String categoryId) {
     if (categoryId == null) {
       throw new IllegalArgumentException("카테고리 ID는 필수입니다.");
     }
 
     return categoryRepository
-        .findById(categoryId)
+        .findByCode(categoryId)
         .orElseThrow(() -> new EntityNotFoundException("카테고리를 찾을 수 없습니다. ID: " + categoryId));
   }
 
@@ -369,7 +369,7 @@ public class ContentService {
     // 카테고리 업데이트 (있는 경우에만)
     if (dto.getCategoryId() != null) {
       try {
-        Category category = findCategoryById(dto.getCategoryId());
+        Category category = findCategoryByCode(dto.getCategoryId());
         content.setCategory(category);
       } catch (EntityNotFoundException e) {
         log.warn("카테고리를 찾을 수 없습니다: {}", dto.getCategoryId());
@@ -639,7 +639,7 @@ public class ContentService {
 
     // 카테고리가 null이 아닌 경우에만 ID 설정
     if (content.getCategory() != null) {
-      dtoBuilder.categoryId(content.getCategory().getId());
+      dtoBuilder.categoryId(content.getCategory().getCode());
     }
 
     // 콘텐츠 소개와 상세 이미지 URL 추가

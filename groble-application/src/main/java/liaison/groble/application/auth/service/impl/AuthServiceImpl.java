@@ -255,6 +255,7 @@ public class AuthServiceImpl implements AuthService {
   public void sendEmailVerificationForSignUp(EmailVerificationDto dto) {
     final String email = dto.getEmail();
 
+    // 기존에 가입된 통합 계정 여부를 판단함
     validateEmailNotRegistered(email);
 
     final String code = generateRandomCode();

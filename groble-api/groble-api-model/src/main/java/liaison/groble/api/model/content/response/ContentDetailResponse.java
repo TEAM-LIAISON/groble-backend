@@ -33,7 +33,7 @@ public class ContentDetailResponse {
   private String contentType;
 
   @Schema(description = "카테고리 ID", example = "1")
-  private Long categoryId;
+  private String categoryId;
 
   @Schema(description = "콘텐츠 이름", example = "사업계획서 컨설팅")
   private String title;

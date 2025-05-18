@@ -23,7 +23,7 @@ public class ContentResponse {
   private String contentType;
 
   @Schema(description = "카테고리 ID", example = "1")
-  private Long categoryId;
+  private String categoryId;
 
   @Schema(description = "썸네일 이미지 URL", example = "https://example.com/thumbnail.jpg")
   private String thumbnailUrl;

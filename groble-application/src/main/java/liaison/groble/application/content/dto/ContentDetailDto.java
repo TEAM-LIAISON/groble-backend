@@ -13,7 +13,7 @@ public class ContentDetailDto {
   private String status;
   private String thumbnailUrl;
   private String contentType;
-  private Long categoryId;
+  private String categoryId;
   private String title;
   private String sellerProfileImageUrl;
   private String sellerName;

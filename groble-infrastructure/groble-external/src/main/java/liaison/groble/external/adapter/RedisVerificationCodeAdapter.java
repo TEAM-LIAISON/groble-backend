@@ -25,6 +25,7 @@ public class RedisVerificationCodeAdapter implements VerificationCodePort {
   public void saveVerificationCode(String email, String code, long expirationTimeInMinutes) {
     String key = verificationKey(email);
     try {
+      // 덮어쓰기
       redisTemplate.opsForValue().set(key, code, expirationTimeInMinutes, TimeUnit.MINUTES);
     } catch (DataAccessException e) {
       log.error("Redis에 인증 코드 저장 실패: key={}, error={}", key, e.getMessage());

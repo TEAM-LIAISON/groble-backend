@@ -37,7 +37,7 @@ public class ContentRegisterRequest {
 
   @NotNull(message = "카테고리 ID는 필수 입력 항목입니다")
   @Schema(description = "카테고리 ID", example = "1")
-  private Long categoryId;
+  private String categoryId;
 
   @NotBlank(message = "썸네일 이미지 URL은 필수 입력 항목입니다")
   @Schema(description = "썸네일 이미지 URL", example = "https://example.com/thumbnail.jpg")
