@@ -215,17 +215,10 @@ public class AuthController {
     }
   }
 
-  /**
-   * 비밀번호 재설정 이메일 발송 API
-   *
-   * @param request 비밀번호 재설정 이메일 요청
-   * @return 이메일 발송 결과
-   */
   @Operation(summary = "비밀번호 재설정 이메일 발송", description = "비밀번호 재설정 링크가 포함된 이메일을 발송합니다.")
   @PostMapping("/password/reset-request")
   public ResponseEntity<GrobleResponse<Void>> requestPasswordReset(
       @Valid @RequestBody EmailVerificationRequest request) {
-    log.info("비밀번호 재설정 이메일 요청: {}", request.getEmail());
 
     authService.sendPasswordResetEmail(request.getEmail());
 
@@ -237,16 +230,15 @@ public class AuthController {
    *
    * <p>비밀번호 재설정 링크를 통해 새로운 비밀번호로 변경
    *
-   * @param accessor 인증된 사용자 정보
    * @param request 비밀번호 재설정 요청
    * @return 비밀번호 재설정 결과
    */
   @Operation(summary = "비밀번호 재설정", description = "새로운 비밀번호로 재설정합니다.")
   @PostMapping("/password/reset")
   public ResponseEntity<GrobleResponse<Void>> resetPassword(
-      @Auth Accessor accessor, @Valid @RequestBody ResetPasswordRequest request) {
+      @Valid @RequestBody ResetPasswordRequest request) {
 
-    authService.resetPassword(accessor.getUserId(), request.getToken(), request.getNewPassword());
+    authService.resetPassword(request.getToken(), request.getNewPassword());
 
     return ResponseEntity.ok().body(GrobleResponse.success(null, "비밀번호가 성공적으로 재설정되었습니다.", 200));
   }

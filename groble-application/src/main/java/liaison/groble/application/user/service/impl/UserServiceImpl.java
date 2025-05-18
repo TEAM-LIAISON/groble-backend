@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import liaison.groble.application.user.dto.UserHeaderDto;
 import liaison.groble.application.user.dto.UserMyPageDetailDto;
 import liaison.groble.application.user.dto.UserMyPageSummaryDto;
+import liaison.groble.application.user.service.UserReader;
 import liaison.groble.application.user.service.UserService;
 import liaison.groble.common.exception.EntityNotFoundException;
 import liaison.groble.common.port.security.SecurityPort;
@@ -31,6 +32,7 @@ public class UserServiceImpl implements UserService {
 
   // 변경: 24시간 (24 * 60 = 1440분)
   private final long PASSWORD_RESET_EXPIRATION_MINUTES = 1440;
+  private final UserReader userReader;
 
   @Value("${app.frontend-url}")
   private String frontendUrl;
@@ -45,20 +47,10 @@ public class UserServiceImpl implements UserService {
    * @param userTypeString 전환할 유형 ("SELLER" 또는 "BUYER")
    * @return 전환 성공 여부
    */
-  /**
-   * 사용자 역할 전환 (판매자 모드 전환만 검증)
-   *
-   * @param userId 사용자 ID
-   * @param userTypeString 전환할 유형 ("SELLER" 또는 "BUYER")
-   * @return 전환 성공 여부
-   */
   @Override
   @Transactional
   public boolean switchUserType(Long userId, String userTypeString) {
-    User user =
-        userRepository
-            .findById(userId)
-            .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
+    User user = userReader.getUserById(userId);
 
     // 문자열 → Enum 변환
     UserType userType;

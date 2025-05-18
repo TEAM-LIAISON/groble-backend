@@ -17,6 +17,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 
+import liaison.groble.common.exception.EntityNotFoundException;
 import liaison.groble.common.utils.CookieUtils;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.repository.UserRepository;
@@ -77,7 +78,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     User user =
         userRepository
             .findById(userId)
-            .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + userId));
+            .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다: " + userId));
 
     // 직접 토큰 생성
     String accessToken = jwtTokenProvider.createAccessToken(user.getId(), user.getEmail());

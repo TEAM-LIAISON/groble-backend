@@ -377,29 +377,14 @@ public class User extends BaseTimeEntity {
     this.updateStatus(UserStatus.INACTIVE);
   }
 
-  /**
-   * 계정 접근 가능 여부 확인
-   *
-   * @return 접근 가능 여부
-   */
   public boolean isAccessible() {
     return this.status.isAccessible();
   }
 
-  /**
-   * 로그인 가능 여부 확인
-   *
-   * @return 로그인 가능 여부
-   */
   public boolean isLoginable() {
     return this.status.isLoginable();
   }
 
-  /**
-   * 사용자 이름 업데이트
-   *
-   * @param nickname 새 닉네임
-   */
   public void updateNickname(String nickname) {
     this.nickname = nickname;
   }

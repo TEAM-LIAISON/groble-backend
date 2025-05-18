@@ -3,7 +3,6 @@ package liaison.groble.application.auth.service.impl;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.dao.DataIntegrityViolationException;
@@ -219,72 +218,60 @@ public class AuthServiceImpl implements AuthService {
   @Override
   @Transactional
   public void sendPasswordResetEmail(String email) {
-    Optional<IntegratedAccount> integratedAccount = userReader.findUserByEmail(email);
-
-    if (integratedAccount.isEmpty()) {
-      throw new EntityNotFoundException("등록되지 않은 이메일입니다.");
+    // 1. 가입 여부 확인
+    if (!userReader.existsByIntegratedAccountEmail(email)) {
+      throw new EntityNotFoundException("해당 이메일로 가입한 사용자를 찾을 수 없습니다.");
     }
 
-    // 비밀번호 재설정 토큰 생성
+    // 2. UUID 생성
     String token = UUID.randomUUID().toString();
 
-    // 이메일 발송
-    String resetLink = "https://dev.groble.im/reset-password?token=" + token;
+    // 3. 메일 본문 구성
+    String resetLink = "https://groble.im/reset-password?token=" + token;
     String emailContent =
         String.format(
             "안녕하세요,\n\n"
                 + "비밀번호 재설정을 요청하셨습니다.\n"
-                + "아래 링크를 클릭하여 새로운 비밀번호를 설정해주세요:\n\n"
-                + "%s\n\n"
+                + "아래 링크를 클릭하여 새로운 비밀번호를 설정해주세요:\n\n%s\n\n"
                 + "이 링크는 24시간 동안 유효합니다.\n"
-                + "비밀번호 재설정을 요청하지 않으셨다면 이 이메일을 무시하셔도 됩니다.\n\n"
-                + "감사합니다.",
+                + "비밀번호 재설정을 요청하지 않으셨다면 이 이메일을 무시하셔도 됩니다.\n\n감사합니다.",
             resetLink);
 
-    verificationCodePort.saveVerificationCode(email, token, 1440);
+    // 4. Redis에 저장: token → email (TTL: 24시간)
+    verificationCodePort.savePasswordResetCode(email, token, 1440);
+
+    // 5. 이메일 발송
     emailSenderPort.sendPasswordResetEmail(email, emailContent);
   }
 
   @Override
   @Transactional
-  public void resetPassword(Long userId, String token, String newPassword) {
+  public void resetPassword(String token, String newPassword) {
+    // 1. Redis에서 token → email 조회
+    String email = verificationCodePort.getPasswordResetEmail(token);
 
-    User user =
-        userRepository
-            .findById(userId)
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+    // 2. 사용자 조회
+    IntegratedAccount account = userReader.getUserByIntegratedAccountEmail(email);
 
-    IntegratedAccount account = user.getIntegratedAccount();
-
-    verificationCodePort.validateVerificationCode(account.getIntegratedAccountEmail(), token);
-    // 새 비밀번호 암호화
+    // 3. 새 비밀번호 암호화 및 저장
     String encodedPassword = securityPort.encodePassword(newPassword);
-
-    // 비밀번호 업데이트
     account.updatePassword(encodedPassword);
     integratedAccountRepository.save(account);
 
-    verificationCodePort.removeVerificationCode(account.getIntegratedAccountEmail());
+    // 4. Redis에서 token 제거
+    verificationCodePort.removePasswordResetCode(token);
   }
 
   @Override
   @Transactional
-  public void sendEmailVerificationForSignUp(EmailVerificationDto emailVerificationDto) {
-    final String email = emailVerificationDto.getEmail();
+  public void sendEmailVerificationForSignUp(EmailVerificationDto dto) {
+    final String email = dto.getEmail();
 
-    // 통합 계정 테이블에서 이미 가입된 이메일인지 확인
-    if (integratedAccountRepository.existsByIntegratedAccountEmail(email)) {
-      throw new EmailAlreadyExistsException();
-    }
+    validateEmailNotRegistered(email);
 
-    // 인증 코드 생성 (4자리 숫자)
-    String verificationCode = generateRandomCode();
-
-    // 인증 코드 저장 (15분 유효) - 인터페이스 사용
-    verificationCodePort.saveVerificationCode(email, verificationCode, 15);
-
-    // 이메일 발송
-    emailSenderPort.sendVerificationEmail(email, verificationCode);
+    final String code = generateRandomCode();
+    verificationCodePort.saveVerificationCode(email, code, 15);
+    emailSenderPort.sendVerificationEmail(email, code);
 
     log.info("이메일 인증 코드 발송 완료: {}", email);
   }
@@ -524,5 +511,11 @@ public class AuthServiceImpl implements AuthService {
     // 6. 사용자 정보 익명화 (GDPR 등 규정 준수)
     user.anonymize();
     userRepository.save(user);
+  }
+
+  private void validateEmailNotRegistered(String email) {
+    if (integratedAccountRepository.existsByIntegratedAccountEmail(email)) {
+      throw new EmailAlreadyExistsException(); // 메시지는 Exception 클래스 내에서 관리
+    }
   }
 }

@@ -60,13 +60,7 @@ public interface AuthService {
    */
   void sendPasswordResetEmail(String email);
 
-  /**
-   * 비밀번호 재설정
-   *
-   * @param token 비밀번호 재설정 토큰
-   * @param newPassword 새로운 비밀번호
-   */
-  void resetPassword(Long userId, String token, String newPassword);
+  void resetPassword(String token, String newPassword);
 
   /**
    * 이메일 인증 코드 검증

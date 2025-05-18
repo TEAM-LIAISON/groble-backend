@@ -34,7 +34,6 @@ import liaison.groble.application.user.dto.UserMyPageDetailDto;
 import liaison.groble.application.user.dto.UserMyPageSummaryDto;
 import liaison.groble.application.user.service.UserService;
 import liaison.groble.common.annotation.Auth;
-import liaison.groble.common.annotation.RequireRole;
 import liaison.groble.common.model.Accessor;
 import liaison.groble.common.response.GrobleResponse;
 
@@ -71,7 +70,6 @@ public class UserController {
 
   @SwitchRole
   @PostMapping("/users/switch-role")
-  @RequireRole({"ROLE_USER"})
   public ResponseEntity<GrobleResponse<Void>> switchUserType(
       @Auth Accessor accessor, @Valid @RequestBody UserTypeRequest request) {
     boolean success = userService.switchUserType(accessor.getUserId(), request.getUserType());

@@ -2,15 +2,20 @@ package liaison.groble.external.adapter;
 
 import java.util.concurrent.TimeUnit;
 
+import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
 import liaison.groble.domain.port.VerificationCodePort;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Component
 public class RedisVerificationCodeAdapter implements VerificationCodePort {
   private final RedisTemplate<String, String> redisTemplate;
   private static final String EMAIL_VERIFICATION_PREFIX = "email:verification:";
+  private static final String EMAIL_PASSWORD_RESET_PREFIX = "email:password_reset:";
 
   public RedisVerificationCodeAdapter(RedisTemplate<String, String> redisTemplate) {
     this.redisTemplate = redisTemplate;
@@ -18,25 +23,97 @@ public class RedisVerificationCodeAdapter implements VerificationCodePort {
 
   @Override
   public void saveVerificationCode(String email, String code, long expirationTimeInMinutes) {
-    String key = EMAIL_VERIFICATION_PREFIX + email;
-    redisTemplate.opsForValue().set(key, code, expirationTimeInMinutes, TimeUnit.MINUTES);
+    String key = verificationKey(email);
+    try {
+      redisTemplate.opsForValue().set(key, code, expirationTimeInMinutes, TimeUnit.MINUTES);
+    } catch (DataAccessException e) {
+      log.error("Redis에 인증 코드 저장 실패: key={}, error={}", key, e.getMessage());
+      throw new RuntimeException("인증 코드를 저장하는 중 오류가 발생했습니다.", e);
+    }
   }
 
   @Override
   public String getVerificationCode(String email) {
-    String key = EMAIL_VERIFICATION_PREFIX + email;
-    return redisTemplate.opsForValue().get(key);
+    String key = verificationKey(email);
+    try {
+      return redisTemplate.opsForValue().get(key);
+    } catch (DataAccessException e) {
+      log.error("Redis에서 인증 코드 조회 실패: key={}, error={}", key, e.getMessage());
+      throw new RuntimeException("인증 코드를 조회하는 중 오류가 발생했습니다.", e);
+    }
   }
 
   @Override
   public boolean validateVerificationCode(String email, String code) {
-    String storedCode = getVerificationCode(email);
-    return storedCode != null && storedCode.equals(code);
+    String key = verificationKey(email);
+    try {
+      String storedCode = redisTemplate.opsForValue().getAndDelete(key);
+      return storedCode != null && storedCode.equals(code);
+    } catch (DataAccessException e) {
+      log.error("Redis에서 인증 코드 검증 실패: key={}, error={}", key, e.getMessage());
+      return false;
+    }
   }
 
   @Override
   public void removeVerificationCode(String email) {
-    String key = EMAIL_VERIFICATION_PREFIX + email;
-    redisTemplate.delete(key);
+    String key = verificationKey(email);
+    try {
+      redisTemplate.delete(key);
+    } catch (DataAccessException e) {
+      log.warn("Redis에서 인증 코드 삭제 실패: key={}, error={}", key, e.getMessage());
+    }
+  }
+
+  @Override
+  public void savePasswordResetCode(String email, String token, long expirationTimeInMinutes) {
+    String key = passwordResetKey(token);
+    try {
+      redisTemplate.opsForValue().set(key, email, expirationTimeInMinutes, TimeUnit.MINUTES);
+    } catch (DataAccessException e) {
+      log.error("Redis에 비밀번호 리셋 코드 저장 실패: key={}, error={}", key, e.getMessage());
+      throw new RuntimeException("비밀번호 재설정 코드를 저장하는 중 오류가 발생했습니다.", e);
+    }
+  }
+
+  @Override
+  public boolean validatePasswordResetCode(String token) {
+    String key = passwordResetKey(token);
+    try {
+      String storedEmail = redisTemplate.opsForValue().getAndDelete(key);
+      return storedEmail != null;
+    } catch (DataAccessException e) {
+      log.error("Redis에서 비밀번호 리셋 코드 검증 실패: key={}, error={}", key, e.getMessage());
+      return false;
+    }
+  }
+
+  @Override
+  public String getPasswordResetEmail(String token) {
+    String key = passwordResetKey(token);
+    try {
+      return redisTemplate.opsForValue().get(key);
+    } catch (DataAccessException e) {
+      log.error("Redis에서 비밀번호 리셋 이메일 조회 실패: key={}, error={}", key, e.getMessage());
+      throw new RuntimeException("비밀번호 재설정 이메일을 조회하는 중 오류가 발생했습니다.", e);
+    }
+  }
+
+  @Override
+  public void removePasswordResetCode(String token) {
+    String key = passwordResetKey(token);
+    try {
+      redisTemplate.delete(key);
+    } catch (DataAccessException e) {
+      log.warn("Redis에서 비밀번호 리셋 코드 삭제 실패: key={}, error={}", key, e.getMessage());
+    }
+  }
+
+  private String verificationKey(String email) {
+    return EMAIL_VERIFICATION_PREFIX + email;
+  }
+
+  private String passwordResetKey(String token) {
+    return EMAIL_PASSWORD_RESET_PREFIX + token;
   }
 }

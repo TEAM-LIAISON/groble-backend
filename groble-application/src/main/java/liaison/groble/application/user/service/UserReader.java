@@ -63,8 +63,16 @@ public class UserReader {
   }
 
   // ===== 이메일로 User 조회 =====
-  public Optional<IntegratedAccount> findUserByEmail(String email) {
+
+  public Optional<IntegratedAccount> findUserByIntegratedAccountEmail(String email) {
     return integratedAccountRepository.findByIntegratedAccountEmail(email);
+  }
+
+  public IntegratedAccount getUserByIntegratedAccountEmail(String email) {
+    return integratedAccountRepository
+        .findByIntegratedAccountEmail(email)
+        .orElseThrow(
+            () -> new EntityNotFoundException("해당 통합 계정용 이메일로 가입한 사용자를 찾을 수 없습니다. 이메일: " + email));
   }
 
   // ===== 사용자 존재 여부 확인 =====
@@ -75,7 +83,7 @@ public class UserReader {
    * @param email 이메일
    * @return 존재 여부
    */
-  public boolean existsByEmail(String email) {
+  public boolean existsByIntegratedAccountEmail(String email) {
     return integratedAccountRepository.existsByIntegratedAccountEmail(email);
   }
 }
