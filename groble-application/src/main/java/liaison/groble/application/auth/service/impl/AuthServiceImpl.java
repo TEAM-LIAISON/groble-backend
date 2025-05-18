@@ -29,7 +29,6 @@ import liaison.groble.domain.port.VerificationCodePort;
 import liaison.groble.domain.role.Role;
 import liaison.groble.domain.role.repository.RoleRepository;
 import liaison.groble.domain.user.entity.IntegratedAccount;
-import liaison.groble.domain.user.entity.SocialAccount;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.entity.UserWithdrawalHistory;
 import liaison.groble.domain.user.entity.VerifiedEmail;
@@ -226,22 +225,11 @@ public class AuthServiceImpl implements AuthService {
     // 2. UUID 생성
     String token = UUID.randomUUID().toString();
 
-    // 3. 메일 본문 구성
-    String resetLink = "https://groble.im/reset-password?token=" + token;
-    String emailContent =
-        String.format(
-            "안녕하세요,\n\n"
-                + "비밀번호 재설정을 요청하셨습니다.\n"
-                + "아래 링크를 클릭하여 새로운 비밀번호를 설정해주세요:\n\n%s\n\n"
-                + "이 링크는 24시간 동안 유효합니다.\n"
-                + "비밀번호 재설정을 요청하지 않으셨다면 이 이메일을 무시하셔도 됩니다.\n\n감사합니다.",
-            resetLink);
-
     // 4. Redis에 저장: token → email (TTL: 24시간)
     verificationCodePort.savePasswordResetCode(email, token, 1440);
 
     // 5. 이메일 발송
-    emailSenderPort.sendPasswordResetEmail(email, emailContent);
+    emailSenderPort.sendPasswordResetEmail(email, token);
   }
 
   @Override
@@ -270,112 +258,93 @@ public class AuthServiceImpl implements AuthService {
     validateEmailNotRegistered(email);
 
     final String code = generateRandomCode();
-    verificationCodePort.saveVerificationCode(email, code, 15);
-    emailSenderPort.sendVerificationEmail(email, code);
+    saveAndSendVerificationCode(email, code);
 
     log.info("이메일 인증 코드 발송 완료: {}", email);
   }
 
+  private void saveAndSendVerificationCode(String email, String code) {
+    verificationCodePort.saveVerificationCode(email, code, 15);
+    emailSenderPort.sendVerificationEmail(email, code);
+  }
+
   @Override
   @Transactional
-  public void sendEmailVerificationForChangeEmail(
-      Long userId, EmailVerificationDto emailVerificationDto) {
-    String email = emailVerificationDto.getEmail();
-    // 이메일 변경용 인증 코드 발송
+  public void sendEmailVerificationForChangeEmail(Long userId, EmailVerificationDto dto) {
+    final String email = dto.getEmail();
+
     User user =
         userRepository
             .findById(userId)
             .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
 
-    AccountType accountType = user.getAccountType();
+    validateEmailNotDuplicatedForAccountType(user.getAccountType(), email);
 
-    if (accountType.equals(AccountType.INTEGRATED)) {
-      if (integratedAccountRepository.existsByIntegratedAccountEmail(email)) {
-        throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
-      }
-    } else {
-      if (socialAccountRepository.existsBySocialAccountEmail(email)) {
-        throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
-      }
+    final String code = generateRandomCode();
+    saveAndSendVerificationCode(email, code);
+
+    log.info("이메일 변경 인증 코드 발송 완료: {} (userId={})", email, userId);
+  }
+
+  private void validateEmailNotDuplicatedForAccountType(AccountType accountType, String email) {
+    boolean isDuplicated =
+        (accountType == AccountType.INTEGRATED)
+            ? integratedAccountRepository.existsByIntegratedAccountEmail(email)
+            : socialAccountRepository.existsBySocialAccountEmail(email);
+
+    if (isDuplicated) {
+      throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
     }
-
-    // 인증 코드 생성 (4자리 숫자)
-    String verificationCode = generateRandomCode();
-
-    // 인증 코드 저장 (15분 유효) - 인터페이스 사용
-    verificationCodePort.saveVerificationCode(email, verificationCode, 15);
-
-    // 이메일 발송
-    emailSenderPort.sendVerificationEmail(email, verificationCode);
   }
 
   // 인증 코드 검증 메서드
   @Override
   @Transactional
-  public void verifyEmailCode(VerifyEmailCodeDto verifyEmailCodeDto) {
-    String email = verifyEmailCodeDto.getEmail();
-    String code = verifyEmailCodeDto.getVerificationCode();
+  public void verifyEmailCode(VerifyEmailCodeDto dto) {
+    final String email = dto.getEmail();
+    final String code = dto.getVerificationCode();
 
-    // 인터페이스를 통한 인증 코드 검증
-    boolean isValid = verificationCodePort.validateVerificationCode(email, code);
-
-    if (!isValid) {
+    if (!verificationCodePort.validateVerificationCode(email, code)) {
       throw new AuthenticationFailedException("인증 코드가 일치하지 않거나 만료되었습니다.");
     }
 
-    if (!verifiedEmailRepository.existsByEmail(email)) {
-      VerifiedEmail verifiedEmail = VerifiedEmail.createVerifiedEmail(email);
-      verifiedEmailRepository.save(verifiedEmail);
-    } else {
+    if (verifiedEmailRepository.existsByEmail(email)) {
       throw new IllegalArgumentException("이미 인증된 이메일입니다.");
     }
 
-    // 인증 코드 삭제
+    verifiedEmailRepository.save(VerifiedEmail.createVerifiedEmail(email));
     verificationCodePort.removeVerificationCode(email);
   }
 
   @Override
-  public void verifyEmailCodeForChangeEmail(Long userId, VerifyEmailCodeDto verifyEmailCodeDto) {
-    String email = verifyEmailCodeDto.getEmail();
-    String code = verifyEmailCodeDto.getVerificationCode();
+  @Transactional
+  public void verifyEmailCodeForChangeEmail(Long userId, VerifyEmailCodeDto dto) {
+    final String email = dto.getEmail();
+    final String code = dto.getVerificationCode();
 
-    // 인터페이스를 통한 인증 코드 검증
-    boolean isValid = verificationCodePort.validateVerificationCode(email, code);
-
-    if (!isValid) {
+    if (!verificationCodePort.validateVerificationCode(email, code)) {
       throw new AuthenticationFailedException("인증 코드가 일치하지 않거나 만료되었습니다.");
     }
 
-    // 인증 코드 삭제
     verificationCodePort.removeVerificationCode(email);
 
-    // 이메일 변경 요청과 새로운 회원 생성에 대한 인증 로직 처리
-    if (userId != null) {
-      User user =
-          userRepository
-              .findById(userId)
-              .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+    User user =
+        userRepository
+            .findById(userId)
+            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
 
-      AccountType accountType = user.getAccountType();
-      if (accountType == AccountType.INTEGRATED) {
-        // 통합 계정인 경우 이메일 변경 요청
-        if (!integratedAccountRepository.existsByIntegratedAccountEmail(email)) {
-          IntegratedAccount account = user.getIntegratedAccount();
-          account.updateEmail(email);
-          integratedAccountRepository.save(account);
-        } else {
-          throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
-        }
-      } else {
-        // 소셜 계정인 경우 이메일 변경 요청
-        if (!socialAccountRepository.existsBySocialAccountEmail(email)) {
-          SocialAccount account = user.getSocialAccount();
-          account.updateEmail(email);
-          socialAccountRepository.save(account);
-        } else {
-          throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
-        }
+    if (user.getAccountType() == AccountType.INTEGRATED) {
+      if (integratedAccountRepository.existsByIntegratedAccountEmail(email)) {
+        throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
       }
+      user.getIntegratedAccount().updateEmail(email);
+      integratedAccountRepository.save(user.getIntegratedAccount());
+    } else {
+      if (socialAccountRepository.existsBySocialAccountEmail(email)) {
+        throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
+      }
+      user.getSocialAccount().updateEmail(email);
+      socialAccountRepository.save(user.getSocialAccount());
     }
   }
 
@@ -515,7 +484,7 @@ public class AuthServiceImpl implements AuthService {
 
   private void validateEmailNotRegistered(String email) {
     if (integratedAccountRepository.existsByIntegratedAccountEmail(email)) {
-      throw new EmailAlreadyExistsException(); // 메시지는 Exception 클래스 내에서 관리
+      throw new EmailAlreadyExistsException();
     }
   }
 }

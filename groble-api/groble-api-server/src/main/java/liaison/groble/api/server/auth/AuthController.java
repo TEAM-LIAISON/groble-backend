@@ -315,6 +315,7 @@ public class AuthController {
   }
 
   /** 토큰 검증 및 로그인 상태 확인 API OAuth2 로그인 처리 후 프론트엔드에서 호출하여 토큰 상태 확인 */
+  @Deprecated
   @Operation(summary = "토큰 검증", description = "현재 사용자의 인증 토큰을 검증하고 로그인 상태를 확인합니다.")
   @PostMapping("/validate-token")
   public ResponseEntity<GrobleResponse<SignInResponse>> validateToken(@Auth Accessor accessor) {
@@ -330,6 +331,7 @@ public class AuthController {
     return ResponseEntity.ok().body(GrobleResponse.success(response, "유효한 토큰입니다.", 200));
   }
 
+  @Deprecated
   @Operation(summary = "accessToken 재발급", description = "리프레시 토큰을 사용하여 새로운 액세스 토큰을 발급합니다.")
   @PostMapping("/refresh-token")
   public ResponseEntity<GrobleResponse<Void>> refreshToken(
