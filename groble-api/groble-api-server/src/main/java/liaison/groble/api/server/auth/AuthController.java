@@ -225,14 +225,6 @@ public class AuthController {
     return ResponseEntity.ok().body(GrobleResponse.success(null, "비밀번호 재설정 이메일이 발송되었습니다.", 200));
   }
 
-  /**
-   * 비밀번호 재설정 API
-   *
-   * <p>비밀번호 재설정 링크를 통해 새로운 비밀번호로 변경
-   *
-   * @param request 비밀번호 재설정 요청
-   * @return 비밀번호 재설정 결과
-   */
   @Operation(summary = "비밀번호 재설정", description = "새로운 비밀번호로 재설정합니다.")
   @PostMapping("/password/reset")
   public ResponseEntity<GrobleResponse<Void>> resetPassword(

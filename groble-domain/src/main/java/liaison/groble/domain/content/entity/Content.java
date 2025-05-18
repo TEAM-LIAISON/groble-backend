@@ -54,7 +54,6 @@ public class Content extends BaseEntity {
   private Long id;
 
   // 콘텐츠 이름
-  @Column(nullable = false)
   private String title;
 
   // 콘텐츠 유형

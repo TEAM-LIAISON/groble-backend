@@ -19,4 +19,6 @@ public interface VerificationCodePort {
 
   // 비밀번호 재설정 토큰을 삭제하는 메서드
   void removePasswordResetCode(String token);
+
+  void saveVerifiedFlag(String email, long expirationTimeInMinutes);
 }

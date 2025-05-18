@@ -47,7 +47,7 @@ public class RedisVerificationCodeAdapter implements VerificationCodePort {
   public boolean validateVerificationCode(String email, String code) {
     String key = verificationKey(email);
     try {
-      String storedCode = redisTemplate.opsForValue().getAndDelete(key);
+      String storedCode = redisTemplate.opsForValue().get(key);
       return storedCode != null && storedCode.equals(code);
     } catch (DataAccessException e) {
       log.error("Redis에서 인증 코드 검증 실패: key={}, error={}", key, e.getMessage());
@@ -106,6 +106,17 @@ public class RedisVerificationCodeAdapter implements VerificationCodePort {
       redisTemplate.delete(key);
     } catch (DataAccessException e) {
       log.warn("Redis에서 비밀번호 리셋 코드 삭제 실패: key={}, error={}", key, e.getMessage());
+    }
+  }
+
+  @Override
+  public void saveVerifiedFlag(String email, long expirationTimeInMinutes) {
+    String key = verificationKey(email);
+    try {
+      redisTemplate.opsForValue().set(key, "verified", expirationTimeInMinutes, TimeUnit.MINUTES);
+    } catch (DataAccessException e) {
+      log.error("Redis에 인증 플래그 저장 실패: key={}, error={}", key, e.getMessage());
+      throw new RuntimeException("인증 플래그를 저장하는 중 오류가 발생했습니다.", e);
     }
   }
 

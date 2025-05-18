@@ -273,11 +273,9 @@ public class AuthServiceImpl implements AuthService {
   public void sendEmailVerificationForChangeEmail(Long userId, EmailVerificationDto dto) {
     final String email = dto.getEmail();
 
-    User user =
-        userRepository
-            .findById(userId)
-            .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
+    User user = userReader.getUserById(userId);
 
+    // INTEGRATED/SOCIAL 타입 판단 진행
     validateEmailNotDuplicatedForAccountType(user.getAccountType(), email);
 
     final String code = generateRandomCode();
@@ -304,15 +302,19 @@ public class AuthServiceImpl implements AuthService {
     final String email = dto.getEmail();
     final String code = dto.getVerificationCode();
 
-    if (!verificationCodePort.validateVerificationCode(email, code)) {
-      throw new AuthenticationFailedException("인증 코드가 일치하지 않거나 만료되었습니다.");
+    String storedCode = verificationCodePort.getVerificationCode(email);
+
+    if (storedCode == null) {
+      throw new IllegalStateException("이메일 인증 유효 시간이 만료되었습니다. 다시 인증을 요청해주세요.");
     }
 
-    if (verifiedEmailRepository.existsByEmail(email)) {
-      throw new IllegalArgumentException("이미 인증된 이메일입니다.");
+    // 코드 불일치
+    if (!storedCode.equals(code)) {
+      throw new AuthenticationFailedException("인증 코드가 일치하지 않습니다.");
     }
 
-    verifiedEmailRepository.save(VerifiedEmail.createVerifiedEmail(email));
+    // 인증 성공 → 인증 플래그 저장 및 코드 제거
+    verificationCodePort.saveVerifiedFlag(email, 15);
     verificationCodePort.removeVerificationCode(email);
   }
 
