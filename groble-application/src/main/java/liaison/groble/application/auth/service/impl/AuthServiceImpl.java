@@ -110,6 +110,7 @@ public class AuthServiceImpl implements AuthService {
         tokenDto.getRefreshToken(),
         securityPort.getRefreshTokenExpirationTime(tokenDto.getRefreshToken()));
     userRepository.save(savedUser);
+    verificationCodePort.removeVerifiedFlag(signUpDto.getEmail());
     return tokenDto;
   }
 

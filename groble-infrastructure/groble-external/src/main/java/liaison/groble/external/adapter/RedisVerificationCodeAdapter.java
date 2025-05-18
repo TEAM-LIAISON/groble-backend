@@ -134,12 +134,22 @@ public class RedisVerificationCodeAdapter implements VerificationCodePort {
     }
   }
 
+  @Override
+  public void removeVerifiedFlag(String email) {
+    String key = verifiedKey(email);
+    try {
+      redisTemplate.delete(key);
+    } catch (DataAccessException e) {
+      log.warn("Redis에서 인증 플래그 삭제 실패: key={}, error={}", key, e.getMessage());
+    }
+  }
+
   private String verificationKey(String email) {
     return EMAIL_VERIFICATION_PREFIX + email;
   }
 
   private String verifiedKey(String email) {
-    return EMAIL_VERIFICATION_PREFIX + email;
+    return EMAIL_VERIFIED_PREFIX + email;
   }
 
   private String passwordResetKey(String token) {
