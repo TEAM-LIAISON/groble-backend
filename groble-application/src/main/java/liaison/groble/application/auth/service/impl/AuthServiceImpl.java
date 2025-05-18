@@ -264,7 +264,7 @@ public class AuthServiceImpl implements AuthService {
   }
 
   private void saveAndSendVerificationCode(String email, String code) {
-    verificationCodePort.saveVerificationCode(email, code, 15);
+    verificationCodePort.saveVerificationCode(email, code, 5);
     emailSenderPort.sendVerificationEmail(email, code);
   }
 

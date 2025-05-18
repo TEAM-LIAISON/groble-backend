@@ -172,13 +172,14 @@ public class ContentService {
                   if (option instanceof CoachingOption) {
                     CoachingOption coachingOption = (CoachingOption) option;
                     builder
-                        .coachingPeriod(coachingOption.getCoachingPeriod().name())
-                        .documentProvision(coachingOption.getDocumentProvision().name())
-                        .coachingType(coachingOption.getCoachingType().name())
+                        .coachingPeriod(safeEnumName(coachingOption.getCoachingPeriod()))
+                        .documentProvision(safeEnumName(coachingOption.getDocumentProvision()))
+                        .coachingType(safeEnumName(coachingOption.getCoachingType()))
                         .coachingTypeDescription(coachingOption.getCoachingTypeDescription());
                   } else if (option instanceof DocumentOption) {
                     DocumentOption documentOption = (DocumentOption) option;
-                    builder.contentDeliveryMethod(documentOption.getContentDeliveryMethod().name());
+                    builder.contentDeliveryMethod(
+                        safeEnumName(documentOption.getContentDeliveryMethod()));
                   }
 
                   return builder.build();
@@ -192,9 +193,9 @@ public class ContentService {
 
     return ContentDetailDto.builder()
         .contentId(content.getId())
-        .status(content.getStatus().name())
+        .status(safeEnumName(content.getStatus()))
         .thumbnailUrl(content.getThumbnailUrl())
-        .contentType(content.getContentType().name())
+        .contentType(safeEnumName(content.getContentType()))
         .categoryId(content.getCategory() != null ? content.getCategory().getCode() : null)
         .title(content.getTitle())
         .sellerProfileImageUrl(sellerProfileImageUrl)
@@ -806,5 +807,9 @@ public class ContentService {
             .build();
 
     return PageResponse.from(page, items, meta);
+  }
+
+  private String safeEnumName(Enum<?> e) {
+    return e != null ? e.name() : null;
   }
 }

@@ -2,6 +2,7 @@ package liaison.groble.api.server.content.mapper;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
@@ -24,6 +25,9 @@ import liaison.groble.application.content.dto.ContentDetailDto;
 import liaison.groble.application.content.dto.ContentDto;
 import liaison.groble.application.content.dto.ContentOptionDto;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Component
 public class ContentDtoMapper {
 
@@ -379,7 +383,16 @@ public class ContentDtoMapper {
         contentDetailDto.getOptions().stream()
             .map(
                 optionDto -> {
-                  if (optionDto.getCoachingPeriod() != null) {
+                  // CoachingOptionResponse 조건
+                  boolean isCoachingOption =
+                      optionDto.getCoachingPeriod() != null
+                          || optionDto.getDocumentProvision() != null
+                          || optionDto.getCoachingType() != null;
+
+                  // DocumentOptionResponse 조건
+                  boolean isDocumentOption = optionDto.getContentDeliveryMethod() != null;
+
+                  if (isCoachingOption) {
                     return CoachingOptionResponse.builder()
                         .optionId(optionDto.getContentOptionId())
                         .name(optionDto.getName())
@@ -390,7 +403,7 @@ public class ContentDtoMapper {
                         .coachingType(optionDto.getCoachingType())
                         .coachingTypeDescription(optionDto.getCoachingTypeDescription())
                         .build();
-                  } else if (optionDto.getContentDeliveryMethod() != null) {
+                  } else if (isDocumentOption) {
                     return DocumentOptionResponse.builder()
                         .optionId(optionDto.getContentOptionId())
                         .name(optionDto.getName())
@@ -399,13 +412,13 @@ public class ContentDtoMapper {
                         .contentDeliveryMethod(optionDto.getContentDeliveryMethod())
                         .build();
                   } else {
-                    // 예외 처리 또는 명시적으로 무시
-                    throw new IllegalStateException("Unknown option type: " + optionDto);
+                    log.warn("Unknown option type encountered in ContentOptionDto: {}", optionDto);
+                    return null; // 또는 Optional.empty()나 필터링
                   }
                 })
+            .filter(Objects::nonNull) // null 반환된 옵션 제거
             .collect(Collectors.toList());
 
-    // 나머지 코드는 동일
     return ContentDetailResponse.builder()
         .contentId(contentDetailDto.getContentId())
         .status(contentDetailDto.getStatus())
