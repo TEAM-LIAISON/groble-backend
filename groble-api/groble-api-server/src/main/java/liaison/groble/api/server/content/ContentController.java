@@ -11,6 +11,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -50,6 +51,7 @@ import liaison.groble.common.response.PageResponse;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
@@ -227,7 +229,13 @@ public class ContentController {
   @PostMapping("/content/thumbnail/image")
   public ResponseEntity<GrobleResponse<?>> addContentThumbnailImage(
       @Auth final Accessor accessor,
-      @RequestPart @Valid final MultipartFile contentThumbnailImage) {
+      @RequestPart("contentThumbnailImage")
+          @Parameter(
+              description = "콘텐츠 썸네일 이미지 파일",
+              required = true,
+              schema = @Schema(type = "string", format = "binary"))
+          @Valid
+          final MultipartFile contentThumbnailImage) {
 
     if (contentThumbnailImage == null || contentThumbnailImage.isEmpty()) {
       return ResponseEntity.badRequest()
@@ -264,7 +272,16 @@ public class ContentController {
   @UploadContentDetailImages
   @PostMapping("/content/detail/images")
   public ResponseEntity<GrobleResponse<?>> addContentDetailImages(
-      @Auth Accessor accessor, @RequestPart List<MultipartFile> contentDetailImages) {
+      @Auth Accessor accessor,
+      @RequestPart("contentDetailImages")
+          @Parameter(
+              description = "콘텐츠 상세 이미지 파일들 (여러 개 가능)",
+              required = true,
+              content =
+                  @Content(
+                      mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
+                      array = @ArraySchema(schema = @Schema(type = "string", format = "binary"))))
+          List<MultipartFile> contentDetailImages) {
 
     if (contentDetailImages == null || contentDetailImages.isEmpty()) {
       return ResponseEntity.badRequest()
@@ -278,7 +295,7 @@ public class ContentController {
             .body(GrobleResponse.error("모든 파일이 유효한 이미지여야 합니다.", HttpStatus.BAD_REQUEST.value()));
       }
       try {
-        FileUploadDto dto = fileDtoMapper.toServiceFileUploadDto(file, "/contents/detail");
+        FileUploadDto dto = fileDtoMapper.toServiceFileUploadDto(file, "contents/detail");
         FileDto uploaded = fileService.uploadFile(accessor.getUserId(), dto);
         responses.add(
             FileUploadResponse.of(
