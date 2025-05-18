@@ -240,7 +240,7 @@ public class ContentController {
     }
     try {
       FileUploadDto fileUploadDto =
-          fileDtoMapper.toServiceFileUploadDto(contentThumbnailImage, "/contents/thumbnail");
+          fileDtoMapper.toServiceFileUploadDto(contentThumbnailImage, "contents/thumbnail");
       FileDto fileDto = fileService.uploadFile(accessor.getUserId(), fileUploadDto);
       FileUploadResponse response =
           FileUploadResponse.of(
