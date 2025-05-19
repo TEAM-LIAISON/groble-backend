@@ -296,6 +296,7 @@ public class ContentDtoMapper {
     String description = null;
     java.math.BigDecimal price = null;
     String contentDeliveryMethod = null;
+    String documentFileUrl = null;
 
     // 타입에 따라 데이터 추출
     if (optionRequest instanceof DocumentOptionDraftRequest) {
@@ -304,12 +305,14 @@ public class ContentDtoMapper {
       description = request.getDescription();
       price = request.getPrice();
       contentDeliveryMethod = request.getContentDeliveryMethod();
+      documentFileUrl = request.getDocumentFileUrl();
     } else {
       DocumentOptionRegisterRequest request = (DocumentOptionRegisterRequest) optionRequest;
       name = request.getName();
       description = request.getDescription();
       price = request.getPrice();
       contentDeliveryMethod = request.getContentDeliveryMethod();
+      documentFileUrl = request.getDocumentFileUrl();
 
       // Register 타입에 대한 추가 유효성 검사
       if (name == null || price == null || contentDeliveryMethod == null) {
@@ -324,6 +327,7 @@ public class ContentDtoMapper {
         .description(description)
         .price(price)
         .contentDeliveryMethod(contentDeliveryMethod)
+        .documentFileUrl(documentFileUrl)
         .build();
   }
 
@@ -351,6 +355,7 @@ public class ContentDtoMapper {
           optionBuilder.coachingType(optionDto.getCoachingType());
           optionBuilder.coachingTypeDescription(optionDto.getCoachingTypeDescription());
           optionBuilder.contentDeliveryMethod(optionDto.getContentDeliveryMethod());
+          optionBuilder.documentFileUrl(optionDto.getDocumentFileUrl());
 
           optionResponses.add(optionBuilder.build());
         }
@@ -410,6 +415,7 @@ public class ContentDtoMapper {
                         .description(optionDto.getDescription())
                         .price(optionDto.getPrice())
                         .contentDeliveryMethod(optionDto.getContentDeliveryMethod())
+                        .documentFileUrl(optionDto.getDocumentFileUrl())
                         .build();
                   } else {
                     log.warn("Unknown option type encountered in ContentOptionDto: {}", optionDto);

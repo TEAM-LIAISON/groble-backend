@@ -21,4 +21,7 @@ public class DocumentOptionDraftRequest extends BaseOptionDraftRequest {
       description = "콘텐츠 제공 방식 [IMMEDIATE_DOWNLOAD - 즉시 업로드], [FUTURE_UPLOAD - 추후 업로드]",
       example = "IMMEDIATE_DOWNLOAD")
   private String contentDeliveryMethod;
+
+  @Schema(description = "문서 파일 URL", example = "https://example.com/document.pdf")
+  private String documentFileUrl;
 }

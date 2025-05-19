@@ -77,7 +77,8 @@ public class ContentDetailResponse {
           "documentProvision": null,
           "coachingType": null,
           "coachingTypeDescription": null,
-          "contentDeliveryMethod": "IMMEDIATE_DOWNLOAD"
+          "contentDeliveryMethod": "IMMEDIATE_DOWNLOAD",
+          "documentFileUrl": "https://example.com/template.pdf"
         }
       ]
       """))

@@ -185,8 +185,10 @@ public class ContentService {
                         .coachingTypeDescription(coachingOption.getCoachingTypeDescription());
                   } else if (option instanceof DocumentOption) {
                     DocumentOption documentOption = (DocumentOption) option;
-                    builder.contentDeliveryMethod(
-                        safeEnumName(documentOption.getContentDeliveryMethod()));
+                    builder
+                        .contentDeliveryMethod(
+                            safeEnumName(documentOption.getContentDeliveryMethod()))
+                        .documentFileUrl(documentOption.getDocumentFileUrl());
                   }
 
                   return builder.build();
@@ -541,6 +543,7 @@ public class ContentService {
       try {
         option.setContentDeliveryMethod(
             ContentDeliveryMethod.valueOf(optionDto.getContentDeliveryMethod()));
+        option.setDocumentFileUrl(optionDto.getDocumentFileUrl());
       } catch (IllegalArgumentException e) {
         log.warn("유효하지 않은 콘텐츠 제공 방식: {}", optionDto.getContentDeliveryMethod());
       }
@@ -644,10 +647,15 @@ public class ContentService {
                       : null)
               .coachingTypeDescription(coachingOption.getCoachingTypeDescription());
         } else if (option instanceof DocumentOption documentOption) {
-          builder.contentDeliveryMethod(
-              documentOption.getContentDeliveryMethod() != null
-                  ? documentOption.getContentDeliveryMethod().name()
-                  : null);
+          builder
+              .contentDeliveryMethod(
+                  documentOption.getContentDeliveryMethod() != null
+                      ? documentOption.getContentDeliveryMethod().name()
+                      : null)
+              .documentFileUrl(
+                  documentOption.getDocumentFileUrl() != null
+                      ? documentOption.getDocumentFileUrl()
+                      : null);
         }
 
         optionDtos.add(builder.build());

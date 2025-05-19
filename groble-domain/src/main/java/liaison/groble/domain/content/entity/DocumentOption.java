@@ -2,9 +2,11 @@ package liaison.groble.domain.content.entity;
 
 import static jakarta.persistence.EnumType.STRING;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.Lob;
 
 import liaison.groble.domain.content.enums.ContentDeliveryMethod;
 
@@ -20,8 +22,16 @@ public class DocumentOption extends ContentOption {
   @Enumerated(value = STRING)
   private ContentDeliveryMethod contentDeliveryMethod;
 
+  @Lob
+  @Column(columnDefinition = "TEXT")
+  private String documentFileUrl;
+
   // Setter 메서드 추가
   public void setContentDeliveryMethod(ContentDeliveryMethod contentDeliveryMethod) {
     this.contentDeliveryMethod = contentDeliveryMethod;
+  }
+
+  public void setDocumentFileUrl(String documentFileUrl) {
+    this.documentFileUrl = documentFileUrl;
   }
 }
