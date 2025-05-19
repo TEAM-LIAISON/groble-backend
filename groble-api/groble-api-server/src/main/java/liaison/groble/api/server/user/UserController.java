@@ -118,6 +118,7 @@ public class UserController {
               .profileImageUrl(null)
               .canSwitchToSeller(false)
               .unreadNotificationCount(0)
+              .alreadyRegisteredAsSeller(false)
               .build();
 
       return ResponseEntity.ok(GrobleResponse.success(response, "사용자 정보 조회 성공"));

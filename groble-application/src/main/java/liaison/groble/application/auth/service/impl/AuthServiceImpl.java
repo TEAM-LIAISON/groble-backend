@@ -19,11 +19,16 @@ import liaison.groble.application.auth.dto.VerifyEmailCodeDto;
 import liaison.groble.application.auth.exception.AuthenticationFailedException;
 import liaison.groble.application.auth.exception.EmailAlreadyExistsException;
 import liaison.groble.application.auth.service.AuthService;
+import liaison.groble.application.notification.mapper.NotificationMapper;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.common.exception.DuplicateNicknameException;
 import liaison.groble.common.exception.EntityNotFoundException;
 import liaison.groble.common.port.security.SecurityPort;
 import liaison.groble.common.utils.CodeGenerator;
+import liaison.groble.domain.notification.entity.SystemDetails;
+import liaison.groble.domain.notification.enums.NotificationType;
+import liaison.groble.domain.notification.enums.SubNotificationType;
+import liaison.groble.domain.notification.repository.NotificationRepository;
 import liaison.groble.domain.port.EmailSenderPort;
 import liaison.groble.domain.port.VerificationCodePort;
 import liaison.groble.domain.role.Role;
@@ -59,6 +64,8 @@ public class AuthServiceImpl implements AuthService {
   private final VerifiedEmailRepository verifiedEmailRepository;
   private final UserWithdrawalHistoryRepository userWithdrawalHistoryRepository;
   private final UserReader userReader;
+  private final NotificationRepository notificationRepository;
+  private final NotificationMapper notificationMapper;
 
   @Override
   @Transactional
@@ -103,6 +110,16 @@ public class AuthServiceImpl implements AuthService {
     user.updateStatus(UserStatus.ACTIVE);
     // 사용자 저장 (CascadeType.ALL로 IntegratedAccount도 함께 저장됨)
     User savedUser = userRepository.save(user);
+
+    SystemDetails systemDetails =
+        SystemDetails.welcomeGroble(savedUser.getNickname(), "그로블에 오신 것을 환영합니다!");
+
+    notificationRepository.save(
+        notificationMapper.toNotification(
+            savedUser.getId(),
+            NotificationType.SYSTEM,
+            SubNotificationType.WELCOME_GROBLE,
+            systemDetails));
 
     TokenDto tokenDto = issueTokens(savedUser);
 

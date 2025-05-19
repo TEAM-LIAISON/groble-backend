@@ -76,6 +76,7 @@ public class UserDtoMapper {
         .profileImageUrl(userHeaderDto.getProfileImageUrl())
         .canSwitchToSeller(userHeaderDto.isCanSwitchToSeller())
         .unreadNotificationCount(userHeaderDto.getUnreadNotificationCount())
+        .alreadyRegisteredAsSeller(userHeaderDto.isAlreadyRegisteredAsSeller())
         .build();
   }
 }

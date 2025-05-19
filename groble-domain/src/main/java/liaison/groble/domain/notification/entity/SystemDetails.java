@@ -12,4 +12,9 @@ import lombok.NoArgsConstructor;
 public class SystemDetails {
   private String nickname;
   private String systemTitle;
+
+  // 그로블 환영 알림
+  public static SystemDetails welcomeGroble(final String nickname, final String systemTitle) {
+    return SystemDetails.builder().nickname(nickname).systemTitle(systemTitle).build();
+  }
 }

@@ -15,6 +15,7 @@ import liaison.groble.application.content.dto.ContentCardDto;
 import liaison.groble.application.content.dto.ContentDetailDto;
 import liaison.groble.application.content.dto.ContentDto;
 import liaison.groble.application.content.dto.ContentOptionDto;
+import liaison.groble.application.notification.mapper.NotificationMapper;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.common.exception.EntityNotFoundException;
 import liaison.groble.common.exception.ForbiddenException;
@@ -35,6 +36,10 @@ import liaison.groble.domain.content.enums.DocumentProvision;
 import liaison.groble.domain.content.repository.CategoryRepository;
 import liaison.groble.domain.content.repository.ContentCustomRepository;
 import liaison.groble.domain.content.repository.ContentRepository;
+import liaison.groble.domain.notification.entity.ReviewDetails;
+import liaison.groble.domain.notification.enums.NotificationType;
+import liaison.groble.domain.notification.enums.SubNotificationType;
+import liaison.groble.domain.notification.repository.NotificationRepository;
 import liaison.groble.domain.user.entity.User;
 
 import lombok.RequiredArgsConstructor;
@@ -49,6 +54,8 @@ public class ContentService {
   private final ContentCustomRepository contentCustomRepository;
   private final CategoryRepository categoryRepository;
   private final ContentReader contentReader;
+  private final NotificationRepository notificationRepository;
+  private final NotificationMapper notificationMapper;
 
   /**
    * 콘텐츠를 임시 저장하고 저장된 정보를 반환합니다.
@@ -284,9 +291,24 @@ public class ContentService {
 
   @Transactional
   public void approveContent(Long userId, Long contentId) {
+    // TODO : userId가 관리자인지 판단
+
     Content content = contentReader.getContentById(contentId);
     content.setStatus(ContentStatus.VALIDATED);
     saveAndConvertToDto(content);
+
+    ReviewDetails reviewDetails =
+        ReviewDetails.builder()
+            .contentId(content.getId())
+            .thumbnailUrl(content.getThumbnailUrl())
+            .build();
+
+    notificationRepository.save(
+        notificationMapper.toNotification(
+            content.getUser().getId(),
+            NotificationType.REVIEW,
+            SubNotificationType.CONTENT_REVIEW_APPROVED,
+            reviewDetails));
   }
 
   @Transactional
@@ -299,6 +321,19 @@ public class ContentService {
     log.info("콘텐츠 심사 거절 완료. 유저 ID: {}, 콘텐츠 ID: {}", userId, contentId);
 
     saveAndConvertToDto(content);
+
+    ReviewDetails reviewDetails =
+        ReviewDetails.builder()
+            .contentId(content.getId())
+            .thumbnailUrl(content.getThumbnailUrl())
+            .build();
+
+    notificationRepository.save(
+        notificationMapper.toNotification(
+            content.getUser().getId(),
+            NotificationType.REVIEW,
+            SubNotificationType.CONTENT_REVIEW_REJECTED,
+            reviewDetails));
   }
 
   // --- 유틸리티 메서드 ---

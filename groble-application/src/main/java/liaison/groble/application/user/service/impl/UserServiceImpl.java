@@ -234,6 +234,7 @@ public class UserServiceImpl implements UserService {
         .profileImageUrl(user.getProfileImageUrl())
         .canSwitchToSeller(user.isSeller())
         .unreadNotificationCount(0) // TODO: 알림 개수 조회 로직 추가
+        .alreadyRegisteredAsSeller(user.isSeller())
         .build();
   }
 

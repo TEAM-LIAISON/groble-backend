@@ -25,4 +25,7 @@ public class UserHeaderResponse {
 
   @Schema(description = "읽지 않은 알림 개수", example = "5")
   private long unreadNotificationCount;
+
+  @Schema(description = "판매자 등록 여부", example = "false")
+  private boolean alreadyRegisteredAsSeller;
 }

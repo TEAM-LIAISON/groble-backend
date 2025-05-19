@@ -17,4 +17,5 @@ public class UserHeaderDto {
   private String profileImageUrl;
   private boolean canSwitchToSeller;
   private long unreadNotificationCount;
+  private boolean alreadyRegisteredAsSeller;
 }

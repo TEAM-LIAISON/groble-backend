@@ -198,7 +198,7 @@ public class ContentController {
         .build();
   }
 
-  // 콘텐츠 심사 [반려]
+  // 콘텐츠 심사
   @Deprecated
   @ContentExamine
   @PostMapping("/{contentId}/examine")
