@@ -64,6 +64,24 @@ public class IntegratedAccount {
     return account;
   }
 
+  public static IntegratedAccount createSellerAccount(
+      String email,
+      String encodedPassword,
+      String nickname,
+      UserType userType,
+      String phoneNumber) {
+    IntegratedAccount account =
+        IntegratedAccount.builder()
+            .user(null)
+            .integratedAccountEmail(email)
+            .encodedPassword(encodedPassword)
+            .build();
+    // User 객체 생성 및 양방향 연결
+    User user = User.sellerFromIntegratedAccount(account, nickname, userType, phoneNumber);
+    account.setUser(user);
+    return account;
+  }
+
   public void setUser(User user) {
     this.user = user;
   }

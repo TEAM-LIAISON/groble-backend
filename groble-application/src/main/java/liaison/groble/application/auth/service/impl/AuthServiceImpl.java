@@ -71,7 +71,7 @@ public class AuthServiceImpl implements AuthService {
   @Override
   @Transactional
   public TokenDto signUp(SignUpDto signUpDto) {
-    // 통합 계정 이메일 중복 검사
+    // 사용자 유형 파싱
     UserType userType;
     try {
       userType = UserType.valueOf(signUpDto.getUserType().toUpperCase());
@@ -79,6 +79,7 @@ public class AuthServiceImpl implements AuthService {
       throw new IllegalArgumentException("유효하지 않은 사용자 유형입니다: " + signUpDto.getUserType());
     }
 
+    // 중복 검사
     if (integratedAccountRepository.existsByIntegratedAccountEmail(signUpDto.getEmail())) {
       throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
     }
@@ -94,24 +95,41 @@ public class AuthServiceImpl implements AuthService {
     // 비밀번호 암호화
     String encodedPassword = securityPort.encodePassword(signUpDto.getPassword());
 
-    // IntegratedAccount 생성 (내부적으로 User 객체 생성 및 연결)
-    IntegratedAccount integratedAccount =
-        IntegratedAccount.createAccount(
-            signUpDto.getEmail(), encodedPassword, signUpDto.getNickname(), userType);
+    // 공통 객체 선언
+    IntegratedAccount integratedAccount;
+    User user;
 
-    User user = integratedAccount.getUser();
+    // 통합 계정 생성
+    if (userType == UserType.SELLER) {
+      integratedAccount =
+          IntegratedAccount.createSellerAccount(
+              signUpDto.getEmail(),
+              encodedPassword,
+              signUpDto.getNickname(),
+              userType,
+              signUpDto.getPhoneNumber());
+    } else {
+      integratedAccount =
+          IntegratedAccount.createAccount(
+              signUpDto.getEmail(), encodedPassword, signUpDto.getNickname(), userType);
+    }
 
-    // 기본 사용자 역할 추가
+    user = integratedAccount.getUser();
+
+    // 기본 역할 설정
     Role userRole =
         roleRepository
             .findByName("ROLE_USER")
             .orElseThrow(() -> new RuntimeException("기본 역할(ROLE_USER)을 찾을 수 없습니다."));
     user.addRole(userRole);
-    // 사용자 상태 활성화 설정
+
+    // 상태 활성화
     user.updateStatus(UserStatus.ACTIVE);
-    // 사용자 저장 (CascadeType.ALL로 IntegratedAccount도 함께 저장됨)
+
+    // 저장
     User savedUser = userRepository.save(user);
 
+    // 알림
     SystemDetails systemDetails =
         SystemDetails.welcomeGroble(savedUser.getNickname(), "그로블에 오신 것을 환영합니다!");
 
@@ -122,13 +140,18 @@ public class AuthServiceImpl implements AuthService {
             SubNotificationType.WELCOME_GROBLE,
             systemDetails));
 
+    // 토큰 발급
     TokenDto tokenDto = issueTokens(savedUser);
 
+    // 리프레시 토큰 저장
     savedUser.updateRefreshToken(
         tokenDto.getRefreshToken(),
         securityPort.getRefreshTokenExpirationTime(tokenDto.getRefreshToken()));
     userRepository.save(savedUser);
+
+    // 인증 플래그 제거
     verificationCodePort.removeVerifiedFlag(signUpDto.getEmail());
+
     return tokenDto;
   }
 

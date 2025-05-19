@@ -168,6 +168,22 @@ public class User extends BaseTimeEntity {
     return user;
   }
 
+  public static User sellerFromIntegratedAccount(
+      IntegratedAccount integratedAccount, String nickname, UserType userType, String phoneNumber) {
+    User user =
+        User.builder()
+            .nickname(nickname)
+            .accountType(AccountType.INTEGRATED)
+            .status(UserStatus.ACTIVE) // 이메일 인증 대기 상태로 설정
+            .statusChangedAt(Instant.now())
+            .lastUserType(userType)
+            .phoneNumber(phoneNumber)
+            .build();
+
+    user.setIntegratedAccount(integratedAccount);
+    return user;
+  }
+
   /**
    * 소셜 계정으로부터 유저 생성 메서드 SocialAccount를 먼저 생성하고 그로부터 User를 생성
    *
