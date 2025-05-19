@@ -177,7 +177,7 @@ public class AuthServiceImpl implements AuthService {
       throw new IllegalArgumentException("이미 사용 중인 닉네임입니다.");
     }
 
-    // 4. 사용자 조회
+    // 4. 사용자 조회 및 검증
     User user =
         userRepository
             .findById(userId)
@@ -210,7 +210,7 @@ public class AuthServiceImpl implements AuthService {
             SubNotificationType.WELCOME_GROBLE,
             systemDetails));
 
-    // 8. 토큰 재발급
+    // 8. 토큰 발급 및 저장
     TokenDto tokenDto = issueTokens(user);
     user.updateRefreshToken(
         tokenDto.getRefreshToken(),

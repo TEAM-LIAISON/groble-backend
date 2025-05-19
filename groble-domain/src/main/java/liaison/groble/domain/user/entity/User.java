@@ -174,7 +174,7 @@ public class User extends BaseTimeEntity {
         User.builder()
             .nickname(nickname)
             .accountType(AccountType.INTEGRATED)
-            .status(UserStatus.ACTIVE) // 이메일 인증 대기 상태로 설정
+            .status(UserStatus.ACTIVE)
             .statusChangedAt(Instant.now())
             .lastUserType(userType)
             .phoneNumber(phoneNumber)
