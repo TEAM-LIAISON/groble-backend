@@ -30,9 +30,11 @@ public class SmtpEmailAdapter implements EmailSenderPort {
   public void sendVerificationEmail(String to, String verificationCode) {
     try {
       MimeMessage message = emailSender.createMimeMessage();
+
       MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
-      helper.setFrom(fromEmail);
+      helper.setFrom(String.format("Groble <%s>", fromEmail));
+      helper.setReplyTo("groble@groble.im");
       helper.setTo(to);
       helper.setSubject("Groble 서비스 이메일 인증 코드");
 
@@ -103,7 +105,8 @@ public class SmtpEmailAdapter implements EmailSenderPort {
 
       String resetUrl = frontendUrl + "/reset-password?token=" + resetToken;
 
-      helper.setFrom(fromEmail);
+      helper.setFrom(String.format("Groble <%s>", fromEmail));
+      helper.setReplyTo("groble@groble.im");
       helper.setTo(to);
       helper.setSubject("Groble 비밀번호 재설정");
 
