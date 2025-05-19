@@ -72,7 +72,6 @@ public class AuthServiceImpl implements AuthService {
   @Override
   @Transactional
   public TokenDto signUp(SignUpDto signUpDto) {
-    // 사용자 유형 파싱
     UserType userType;
     try {
       userType = UserType.valueOf(signUpDto.getUserType().toUpperCase());
