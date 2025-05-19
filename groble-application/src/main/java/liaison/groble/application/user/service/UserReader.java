@@ -86,4 +86,8 @@ public class UserReader {
   public boolean existsByIntegratedAccountEmail(String email) {
     return integratedAccountRepository.existsByIntegratedAccountEmail(email);
   }
+
+  public boolean existsByPhoneNumber(String phoneNumber) {
+    return userRepository.existsByPhoneNumber(phoneNumber);
+  }
 }

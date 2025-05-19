@@ -12,4 +12,6 @@ public interface UserRepository {
   boolean existsByNickname(String nickname);
 
   User saveAndFlush(User user);
+
+  boolean existsByPhoneNumber(String phoneNumber);
 }

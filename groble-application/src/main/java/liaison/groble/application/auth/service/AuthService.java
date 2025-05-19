@@ -2,6 +2,7 @@ package liaison.groble.application.auth.service;
 
 import liaison.groble.application.auth.dto.DeprecatedSignUpDto;
 import liaison.groble.application.auth.dto.EmailVerificationDto;
+import liaison.groble.application.auth.dto.PhoneNumberDto;
 import liaison.groble.application.auth.dto.SignInDto;
 import liaison.groble.application.auth.dto.SignUpDto;
 import liaison.groble.application.auth.dto.SocialSignUpDto;
@@ -111,4 +112,6 @@ public interface AuthService {
    * @param userWithdrawalDto 탈퇴 사유 및 기타 정보
    */
   void withdrawUser(Long userId, UserWithdrawalDto userWithdrawalDto);
+
+  void resetPhoneNumber(Long userId, PhoneNumberDto phoneNumberDto);
 }

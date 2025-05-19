@@ -18,12 +18,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 import liaison.groble.api.model.auth.request.DeprecatedSignUpRequest;
 import liaison.groble.api.model.auth.request.EmailVerificationRequest;
+import liaison.groble.api.model.auth.request.PhoneNumberRequest;
 import liaison.groble.api.model.auth.request.ResetPasswordRequest;
 import liaison.groble.api.model.auth.request.SignInRequest;
 import liaison.groble.api.model.auth.request.SignUpRequest;
 import liaison.groble.api.model.auth.request.SocialSignUpRequest;
 import liaison.groble.api.model.auth.request.UserWithdrawalRequest;
 import liaison.groble.api.model.auth.request.VerifyEmailCodeRequest;
+import liaison.groble.api.model.auth.response.PhoneNumberResponse;
 import liaison.groble.api.model.auth.response.SignInResponse;
 import liaison.groble.api.model.auth.response.SignUpResponse;
 import liaison.groble.api.model.auth.response.SocialSignUpResponse;
@@ -36,6 +38,7 @@ import liaison.groble.api.model.user.response.UpdateNicknameResponse;
 import liaison.groble.api.server.auth.mapper.AuthDtoMapper;
 import liaison.groble.application.auth.dto.DeprecatedSignUpDto;
 import liaison.groble.application.auth.dto.EmailVerificationDto;
+import liaison.groble.application.auth.dto.PhoneNumberDto;
 import liaison.groble.application.auth.dto.SignInDto;
 import liaison.groble.application.auth.dto.SignUpDto;
 import liaison.groble.application.auth.dto.SocialSignUpDto;
@@ -260,6 +263,25 @@ public class AuthController {
     authService.resetPassword(request.getToken(), request.getNewPassword());
 
     return ResponseEntity.ok().body(GrobleResponse.success(null, "비밀번호가 성공적으로 재설정되었습니다.", 200));
+  }
+
+  @Operation(summary = "전화번호 인증 요청", description = "전화번호를 인증합니다.")
+  @PostMapping("/phone-number/reset")
+  public ResponseEntity<GrobleResponse<PhoneNumberResponse>> resetPhoneNumber(
+      @Auth Accessor accessor,
+      @Parameter(description = "전화번호 인증 정보", required = true) @Valid @RequestBody
+          PhoneNumberRequest request) {
+    log.info("전화번호 인증 요청: {}", request.getPhoneNumber());
+
+    // 1. API DTO → 서비스 DTO 변환
+    PhoneNumberDto phoneNumberDto = authDtoMapper.toServicePhoneNumberDto(request);
+
+    // 2. 서비스 호출
+    authService.resetPhoneNumber(accessor.getUserId(), phoneNumberDto);
+
+    // 3. API 응답 생성
+    return ResponseEntity.status(HttpStatus.OK)
+        .body(GrobleResponse.success(null, "전화번호 인증이 성공적으로 완료되었습니다.", 200));
   }
 
   @Operation(summary = "통합 회원가입 이메일 인증 요청", description = "사용자가 기입한 이메일에 인증 코드를 발급합니다.")
