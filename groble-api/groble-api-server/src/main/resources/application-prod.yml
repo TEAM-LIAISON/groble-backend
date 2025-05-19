@@ -61,7 +61,7 @@ spring:
         order_inserts: true
         order_updates: true
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
   mvc:
     path match:
       matching-strategy: ant_path_matcher

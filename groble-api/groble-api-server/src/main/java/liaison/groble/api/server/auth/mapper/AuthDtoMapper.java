@@ -45,6 +45,7 @@ public class AuthDtoMapper {
         .userType(request.getUserType())
         .termsTypeStrings(request.getTermsTypes().stream().map(Enum::name).toList())
         .nickname(request.getNickname())
+        .phoneNumber(request.getPhoneNumber())
         .build();
   }
 
