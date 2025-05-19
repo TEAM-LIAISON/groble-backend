@@ -53,4 +53,8 @@ public class SignUpRequest {
       message = "닉네임은 한글, 영문, 숫자만 사용할 수 있으며 2~15자 이내여야 합니다.")
   @Schema(description = "닉네임", example = "nickname")
   private String nickname;
+
+  @Pattern(regexp = "^\\d{3}-\\d{3,4}-\\d{4}$", message = "전화번호는 000-0000-0000 형식으로 입력해주세요.")
+  @Schema(description = "전화번호", example = "010-1234-5678")
+  private String phoneNumber;
 }

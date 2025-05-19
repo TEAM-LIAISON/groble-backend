@@ -33,6 +33,7 @@ import liaison.groble.api.model.content.response.swagger.ContentsCoachingCategor
 import liaison.groble.api.model.content.response.swagger.ContentsDocumentCategory;
 import liaison.groble.api.model.content.response.swagger.HomeContents;
 import liaison.groble.api.model.content.response.swagger.UploadContentDetailImages;
+import liaison.groble.api.model.content.response.swagger.UploadContentDownloadFile;
 import liaison.groble.api.model.content.response.swagger.UploadContentThumbnail;
 import liaison.groble.api.model.file.response.FileUploadResponse;
 import liaison.groble.api.server.content.mapper.ContentDtoMapper;
@@ -201,7 +202,7 @@ public class ContentController {
   // 콘텐츠 심사
   @Deprecated
   @ContentExamine
-  @PostMapping("/{contentId}/examine")
+  @PostMapping("/content/{contentId}/examine")
   public ResponseEntity<GrobleResponse<Void>> examineContent(
       @Parameter(hidden = true) @Auth Accessor accessor,
       @PathVariable("contentId") Long contentId,
@@ -255,7 +256,7 @@ public class ContentController {
               fileDto.getOriginalFilename(),
               fileDto.getFileUrl(),
               fileDto.getContentType(),
-              "/contents/thumbnail");
+              "contents/thumbnail");
       return ResponseEntity.status(HttpStatus.CREATED)
           .body(
               GrobleResponse.success(
@@ -302,7 +303,7 @@ public class ContentController {
                 uploaded.getOriginalFilename(),
                 uploaded.getFileUrl(),
                 uploaded.getContentType(),
-                "/contents/detail"));
+                "contents/detail"));
       } catch (IOException e) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
             .body(
@@ -317,9 +318,59 @@ public class ContentController {
                 responses, "상세 이미지 업로드가 성공적으로 완료되었습니다.", HttpStatus.CREATED.value()));
   }
 
+  // 콘텐츠의 즉시 다운로드 파일 객체 저장 요청
+  @UploadContentDownloadFile
+  @PostMapping("/content/document/upload/file")
+  public ResponseEntity<GrobleResponse<?>> addContentDocumentFile(
+      @Auth Accessor accessor,
+      @RequestPart("contentDocumentFile")
+          @Parameter(
+              description = "콘텐츠 자료 파일",
+              required = true,
+              schema = @Schema(type = "string", format = "binary"))
+          @Valid
+          final MultipartFile contentDocumentFile) {
+    if (contentDocumentFile == null || contentDocumentFile.isEmpty()) {
+      return ResponseEntity.badRequest()
+          .body(GrobleResponse.error("콘텐츠 파일을 업로드해주세요.", HttpStatus.BAD_REQUEST.value()));
+    }
+
+    if (!isPdfAndZipFile(contentDocumentFile)) {
+      return ResponseEntity.badRequest()
+          .body(GrobleResponse.error("pdf/zip 파일만 업로드 가능합니다.", HttpStatus.BAD_REQUEST.value()));
+    }
+    try {
+      FileUploadDto fileUploadDto =
+          fileDtoMapper.toServiceFileUploadDto(contentDocumentFile, "contents/document");
+      FileDto fileDto = fileService.uploadFile(accessor.getUserId(), fileUploadDto);
+      FileUploadResponse response =
+          FileUploadResponse.of(
+              fileDto.getOriginalFilename(),
+              fileDto.getFileUrl(),
+              fileDto.getContentType(),
+              "contents/document");
+      return ResponseEntity.status(HttpStatus.CREATED)
+          .body(
+              GrobleResponse.success(
+                  response, "콘텐츠 자료 업로드가 성공적으로 완료되었습니다.", HttpStatus.CREATED.value()));
+    } catch (IOException ioe) {
+      // I/O 문제(파일 읽기 실패 등)
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .body(
+              GrobleResponse.error(
+                  "콘텐츠 자료 저장 중 오류가 발생했습니다. 다시 시도해주세요.", HttpStatus.INTERNAL_SERVER_ERROR.value()));
+    }
+  }
+
   /** 이미지 파일 여부 확인 */
   private boolean isImageFile(MultipartFile file) {
     String contentType = file.getContentType();
     return contentType != null && contentType.startsWith("image/");
+  }
+
+  private boolean isPdfAndZipFile(MultipartFile file) {
+    String contentType = file.getContentType();
+    return contentType != null
+        && (contentType.equals("application/pdf") || contentType.equals("application/zip"));
   }
 }
