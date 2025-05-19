@@ -20,12 +20,12 @@ public class UserHeaderResponse {
   @Schema(description = "프로필 이미지 URL", example = "https://example.com/profile.jpg")
   private String profileImageUrl;
 
-  @Schema(description = "판매자 전환 가능 여부", example = "false")
+  @Schema(description = "판매자 전환 가능 여부 [현재 BUYER라면 true, SELLER라면 false]", example = "false")
   private boolean canSwitchToSeller;
 
   @Schema(description = "읽지 않은 알림 개수", example = "5")
   private long unreadNotificationCount;
 
-  @Schema(description = "판매자 등록 여부", example = "false")
+  @Schema(description = "판매자 등록 여부 [사용자의 SELLER 소유 여부 판단]", example = "false")
   private boolean alreadyRegisteredAsSeller;
 }

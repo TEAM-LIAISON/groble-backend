@@ -37,6 +37,7 @@ public class UserDtoMapper {
         .profileImageUrl(dto.getProfileImageUrl())
         .userType(userType)
         .canSwitchToSeller(dto.isCanSwitchToSeller())
+        .alreadyRegisteredAsSeller(dto.isAlreadyRegisteredAsSeller())
         .build();
   }
 
@@ -48,6 +49,8 @@ public class UserDtoMapper {
         .nickname(dto.getNickname())
         .profileImageUrl(dto.getProfileImageUrl())
         .userType(userType)
+        .verificationStatus(dto.getVerificationStatusName())
+        .alreadyRegisteredAsSeller(dto.isAlreadyRegisteredAsSeller())
         .build();
   }
 

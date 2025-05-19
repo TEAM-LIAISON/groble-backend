@@ -10,6 +10,7 @@ public class UserMyPageSummaryDto {
   private String profileImageUrl;
   private String userTypeName;
   private boolean canSwitchToSeller;
+  private boolean alreadyRegisteredAsSeller;
 
   // 인증 상태 관련 필드
   private String verificationStatusName;
