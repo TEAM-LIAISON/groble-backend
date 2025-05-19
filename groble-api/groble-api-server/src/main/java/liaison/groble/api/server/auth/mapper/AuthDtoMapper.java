@@ -6,12 +6,14 @@ import liaison.groble.api.model.auth.request.DeprecatedSignUpRequest;
 import liaison.groble.api.model.auth.request.EmailVerificationRequest;
 import liaison.groble.api.model.auth.request.SignInRequest;
 import liaison.groble.api.model.auth.request.SignUpRequest;
+import liaison.groble.api.model.auth.request.SocialSignUpRequest;
 import liaison.groble.api.model.auth.request.UserWithdrawalRequest;
 import liaison.groble.api.model.auth.request.VerifyEmailCodeRequest;
 import liaison.groble.application.auth.dto.DeprecatedSignUpDto;
 import liaison.groble.application.auth.dto.EmailVerificationDto;
 import liaison.groble.application.auth.dto.SignInDto;
 import liaison.groble.application.auth.dto.SignUpDto;
+import liaison.groble.application.auth.dto.SocialSignUpDto;
 import liaison.groble.application.auth.dto.UserWithdrawalDto;
 import liaison.groble.application.auth.dto.VerifyEmailCodeDto;
 
@@ -31,6 +33,14 @@ public class AuthDtoMapper {
         .termsTypeStrings(request.getTermsTypes().stream().map(Enum::name).toList())
         .email(request.getEmail())
         .password(request.getPassword())
+        .nickname(request.getNickname())
+        .build();
+  }
+
+  public SocialSignUpDto toServiceSocialSignUpDto(SocialSignUpRequest request) {
+    return SocialSignUpDto.builder()
+        .userType(request.getUserType())
+        .termsTypeStrings(request.getTermsTypes().stream().map(Enum::name).toList())
         .nickname(request.getNickname())
         .build();
   }

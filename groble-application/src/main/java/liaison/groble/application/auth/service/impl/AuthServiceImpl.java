@@ -13,6 +13,7 @@ import liaison.groble.application.auth.dto.DeprecatedSignUpDto;
 import liaison.groble.application.auth.dto.EmailVerificationDto;
 import liaison.groble.application.auth.dto.SignInDto;
 import liaison.groble.application.auth.dto.SignUpDto;
+import liaison.groble.application.auth.dto.SocialSignUpDto;
 import liaison.groble.application.auth.dto.TokenDto;
 import liaison.groble.application.auth.dto.UserWithdrawalDto;
 import liaison.groble.application.auth.dto.VerifyEmailCodeDto;
@@ -128,6 +129,71 @@ public class AuthServiceImpl implements AuthService {
         securityPort.getRefreshTokenExpirationTime(tokenDto.getRefreshToken()));
     userRepository.save(savedUser);
     verificationCodePort.removeVerifiedFlag(signUpDto.getEmail());
+    return tokenDto;
+  }
+
+  @Override
+  @Transactional
+  public TokenDto socialSignUp(Long userId, SocialSignUpDto dto) {
+    // 1. userType 파싱
+    UserType userType;
+    try {
+      userType = UserType.valueOf(dto.getUserType().toUpperCase());
+    } catch (IllegalArgumentException | NullPointerException e) {
+      throw new IllegalArgumentException("유효하지 않은 사용자 유형입니다: " + dto.getUserType());
+    }
+
+    // 2. SELLER라면 phoneNumber 필수
+    if (userType == UserType.SELLER
+        && (dto.getPhoneNumber() == null || dto.getPhoneNumber().isBlank())) {
+      throw new IllegalArgumentException("판매자는 전화번호를 필수로 입력해야 합니다.");
+    }
+
+    // 3. 닉네임 중복 확인
+    if (userRepository.existsByNickname(dto.getNickname())) {
+      throw new IllegalArgumentException("이미 사용 중인 닉네임입니다.");
+    }
+
+    // 4. 사용자 조회
+    User user =
+        userRepository
+            .findById(userId)
+            .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
+
+    if (user.getAccountType() != AccountType.SOCIAL) {
+      throw new IllegalStateException("소셜 계정이 아닌 사용자입니다.");
+    }
+
+    // 5. 사용자 정보 업데이트
+    user.updateNickname(dto.getNickname());
+    user.updateLastUserType(userType);
+    user.updateStatus(UserStatus.ACTIVE);
+    user.updatePhoneNumber(dto.getPhoneNumber());
+
+    // 6. 기본 권한 부여
+    Role userRole =
+        roleRepository
+            .findByName("ROLE_USER")
+            .orElseThrow(() -> new RuntimeException("기본 역할(ROLE_USER)을 찾을 수 없습니다."));
+    user.addRole(userRole);
+
+    // 7. 환영 알림 발송
+    SystemDetails systemDetails =
+        SystemDetails.welcomeGroble(user.getNickname(), "그로블에 오신 것을 환영합니다!");
+    notificationRepository.save(
+        notificationMapper.toNotification(
+            user.getId(),
+            NotificationType.SYSTEM,
+            SubNotificationType.WELCOME_GROBLE,
+            systemDetails));
+
+    // 8. 토큰 재발급
+    TokenDto tokenDto = issueTokens(user);
+    user.updateRefreshToken(
+        tokenDto.getRefreshToken(),
+        securityPort.getRefreshTokenExpirationTime(tokenDto.getRefreshToken()));
+
+    userRepository.save(user);
     return tokenDto;
   }
 

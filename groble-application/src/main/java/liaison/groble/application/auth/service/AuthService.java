@@ -4,6 +4,7 @@ import liaison.groble.application.auth.dto.DeprecatedSignUpDto;
 import liaison.groble.application.auth.dto.EmailVerificationDto;
 import liaison.groble.application.auth.dto.SignInDto;
 import liaison.groble.application.auth.dto.SignUpDto;
+import liaison.groble.application.auth.dto.SocialSignUpDto;
 import liaison.groble.application.auth.dto.TokenDto;
 import liaison.groble.application.auth.dto.UserWithdrawalDto;
 import liaison.groble.application.auth.dto.VerifyEmailCodeDto;
@@ -16,6 +17,8 @@ public interface AuthService {
    * @param signUpDto 회원가입 정보
    */
   TokenDto signUp(SignUpDto signUpDto);
+
+  TokenDto socialSignUp(Long userId, SocialSignUpDto socialSignUpDto);
 
   /**
    * 회원가입 처리 (deprecated)

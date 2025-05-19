@@ -271,6 +271,10 @@ public class User extends BaseTimeEntity {
     this.statusChangedAt = Instant.now();
   }
 
+  public void updatePhoneNumber(String phoneNumber) {
+    this.phoneNumber = phoneNumber;
+  }
+
   /** 이메일 인증 완료 처리 인증 대기 상태인 경우만 활성화 */
   public void verifyEmail() {
     if (this.status == UserStatus.PENDING_VERIFICATION) {
