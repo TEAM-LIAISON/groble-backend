@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 
+import liaison.groble.api.model.auth.validation.ValidSellerPhoneNumber;
 import liaison.groble.api.model.terms.enums.TermsTypeDto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -19,6 +20,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@ValidSellerPhoneNumber
 public class SocialSignUpRequest {
 
   @NotNull(message = "사용자 유형은 필수 입력값입니다.")

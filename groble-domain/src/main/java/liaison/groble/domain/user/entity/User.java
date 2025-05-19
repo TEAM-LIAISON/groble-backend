@@ -129,8 +129,9 @@ public class User extends BaseTimeEntity {
   @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
   private Set<UserTerms> termsAgreements = new HashSet<>();
 
+  // SELLER /
   @Column(name = "is_seller")
-  private boolean isSeller;
+  private boolean isSeller = false;
 
   /**
    * 통합 계정으로부터 유저 생성 메서드 IntegratedAccount를 먼저 생성하고 그로부터 User를 생성

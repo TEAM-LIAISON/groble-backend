@@ -151,10 +151,7 @@ public class UserServiceImpl implements UserService {
 
   @Override
   public UserMyPageSummaryDto getUserMyPageSummary(Long userId) {
-    User user =
-        userRepository
-            .findById(userId)
-            .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
+    User user = userReader.getUserById(userId);
 
     return UserMyPageSummaryDto.builder()
         .nickname(user.getNickname())

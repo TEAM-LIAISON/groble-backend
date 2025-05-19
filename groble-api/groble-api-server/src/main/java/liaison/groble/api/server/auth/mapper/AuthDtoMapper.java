@@ -34,6 +34,7 @@ public class AuthDtoMapper {
         .email(request.getEmail())
         .password(request.getPassword())
         .nickname(request.getNickname())
+        .phoneNumber(request.getPhoneNumber())
         .build();
   }
 

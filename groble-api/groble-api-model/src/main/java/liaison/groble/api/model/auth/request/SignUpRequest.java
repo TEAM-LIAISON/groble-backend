@@ -9,6 +9,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
+import liaison.groble.api.model.auth.validation.ValidSellerPhoneNumber;
 import liaison.groble.api.model.terms.enums.TermsTypeDto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -21,6 +22,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@ValidSellerPhoneNumber
 public class SignUpRequest {
   @NotNull(message = "사용자 유형은 필수 입력값입니다.")
   @Pattern(regexp = "^(SELLER|BUYER)$", message = "사용자 유형은 SELLER 또는 BUYER만 가능합니다.")
