@@ -32,6 +32,12 @@ public class UserMyPageDetailResponse {
   @Schema(description = "전화번호", example = "010-1234-5678")
   private String phoneNumber;
 
+  @Schema(
+      description =
+          "판매자 계정 전환 가능 여부 (현재 userType : BUYER 경우에 TRUE / 현재 userType : SELLER 경우에 FALSE)",
+      example = "true")
+  private boolean canSwitchToSeller;
+
   @Schema(description = "판매자 계정 미생성 여부", example = "true")
   private boolean sellerAccountNotCreated;
 }

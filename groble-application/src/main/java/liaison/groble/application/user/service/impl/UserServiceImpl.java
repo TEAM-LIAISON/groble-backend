@@ -188,6 +188,11 @@ public class UserServiceImpl implements UserService {
       providerTypeName = account.getProviderType().name();
     }
 
+    boolean canSwitchToSeller = true;
+    if (user.isSeller() && user.getLastUserType().equals(UserType.SELLER)) {
+      canSwitchToSeller = false;
+    }
+
     boolean sellerAccountNotCreated = true;
 
     return UserMyPageDetailDto.builder()
@@ -198,6 +203,7 @@ public class UserServiceImpl implements UserService {
         .email(email)
         .profileImageUrl(user.getProfileImageUrl())
         .phoneNumber(phoneNumber)
+        .canSwitchToSeller(canSwitchToSeller)
         .sellerAccountNotCreated(sellerAccountNotCreated)
         .build();
   }

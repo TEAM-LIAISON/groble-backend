@@ -19,5 +19,6 @@ public class UserMyPageDetailDto {
   private String email;
   private String profileImageUrl;
   private String phoneNumber;
+  private boolean canSwitchToSeller;
   private boolean sellerAccountNotCreated;
 }
