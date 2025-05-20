@@ -158,6 +158,10 @@ public class UserServiceImpl implements UserService {
         .profileImageUrl(user.getUserProfile().getProfileImageUrl())
         .userTypeName(user.getLastUserType().name())
         .canSwitchToSeller(user.isSeller())
+        .alreadyRegisteredAsSeller(user.isSeller())
+        .verificationStatusName(user.getSellerInfo().getVerificationStatus().name())
+        .verificationStatusDisplayName(
+            user.getSellerInfo().getVerificationStatus().getDisplayName())
         .build();
   }
 

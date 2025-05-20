@@ -170,4 +170,16 @@ public class SellerInfo {
     this.bankAccountNumber = null;
     this.bankAccountOwner = null;
   }
+
+  /**
+   * 인증 상태 전용 팩토리
+   *
+   * @param status 초기 인증 상태
+   */
+  public static SellerInfo ofVerificationStatus(SellerVerificationStatus status) {
+    SellerInfo info = new SellerInfo();
+    info.verificationStatus = status;
+    info.verificationMessage = null;
+    return info;
+  }
 }
