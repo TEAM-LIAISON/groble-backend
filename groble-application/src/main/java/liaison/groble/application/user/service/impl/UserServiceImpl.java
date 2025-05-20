@@ -153,15 +153,24 @@ public class UserServiceImpl implements UserService {
   public UserMyPageSummaryDto getUserMyPageSummary(Long userId) {
     User user = userReader.getUserById(userId);
 
+    // sellerInfo 가 없거나, isSeller=false 이면 디폴트로 PENDING 처리
+    String verificationStatusName = "PENDING";
+    String verificationStatusDisplayName = "인증 필요";
+
+    if (user.isSeller() && user.getSellerInfo() != null) {
+      var status = user.getSellerInfo().getVerificationStatus();
+      verificationStatusName = status.name();
+      verificationStatusDisplayName = status.getDisplayName();
+    }
+
     return UserMyPageSummaryDto.builder()
         .nickname(user.getUserProfile().getNickname())
         .profileImageUrl(user.getUserProfile().getProfileImageUrl())
         .userTypeName(user.getLastUserType().name())
         .canSwitchToSeller(user.isSeller())
         .alreadyRegisteredAsSeller(user.isSeller())
-        .verificationStatusName(user.getSellerInfo().getVerificationStatus().name())
-        .verificationStatusDisplayName(
-            user.getSellerInfo().getVerificationStatus().getDisplayName())
+        .verificationStatusName(verificationStatusName)
+        .verificationStatusDisplayName(verificationStatusDisplayName)
         .build();
   }
 

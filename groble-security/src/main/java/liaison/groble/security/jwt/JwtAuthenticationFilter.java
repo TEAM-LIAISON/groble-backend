@@ -91,7 +91,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
   }
 
   /** 인증 필터 처리 */
-  /** 인증 필터 처리 */
   @Override
   protected void doFilterInternal(
       HttpServletRequest request, HttpServletResponse response, FilterChain chain)
@@ -306,15 +305,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     try {
       // 토큰에서 사용자 정보 추출
-      String email = jwtTokenProvider.getEmail(jwt, TokenType.ACCESS);
-      log.debug("인증 정보 설정 시도: {}", maskEmail(email));
+      Long userId = jwtTokenProvider.getUserId(jwt, TokenType.ACCESS);
+      log.debug("인증 정보 설정 시도: {}", maskToken(jwt));
 
-      UserDetails ud = userDetailsService.loadUserByUsername(email);
+      UserDetails ud = userDetailsService.loadUserByUsername(userId.toString());
       UsernamePasswordAuthenticationToken auth =
           new UsernamePasswordAuthenticationToken(ud, null, ud.getAuthorities());
       auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
       SecurityContextHolder.getContext().setAuthentication(auth);
-      log.debug("인증 정보 설정 완료: {}", maskEmail(email));
+      log.debug("인증 정보 설정 완료: {}", maskEmail(jwt));
     } catch (Exception e) {
       log.error("인증 처리 중 오류 발생: {}", e.getMessage());
     }

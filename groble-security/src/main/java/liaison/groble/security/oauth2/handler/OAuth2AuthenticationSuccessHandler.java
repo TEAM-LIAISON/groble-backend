@@ -73,6 +73,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     // OAuth2 사용자 정보 가져오기
     CustomOAuth2User oAuth2User = (CustomOAuth2User) authentication.getPrincipal();
     Long userId = oAuth2User.getId();
+    log.info("OAuth2 사용자 정보: ID={}, 이메일={}", userId, oAuth2User.getEmail());
 
     // 사용자 조회
     User user =
