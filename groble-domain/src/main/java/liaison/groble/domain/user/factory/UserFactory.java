@@ -13,7 +13,7 @@ import liaison.groble.domain.user.vo.UserProfile;
 import liaison.groble.domain.user.vo.UserStatusInfo;
 
 public class UserFactory {
-  public static User createIntegratedUser(
+  public static User createIntegratedBuyerUser(
       String email, String password, String nickname, UserType userType) {
     // 프로필 정보 생성
     UserProfile userProfile = UserProfile.builder().nickname(nickname).build();
@@ -44,7 +44,7 @@ public class UserFactory {
     return user;
   }
 
-  public static User createSellerUser(
+  public static User createIntegratedSellerUser(
       String email, String password, String nickname, UserType userType, String phoneNumber) {
     // 프로필 정보 생성
     UserProfile userProfile =

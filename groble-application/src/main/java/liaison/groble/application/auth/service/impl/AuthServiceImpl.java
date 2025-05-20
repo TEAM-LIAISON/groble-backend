@@ -2,8 +2,13 @@ package liaison.groble.application.auth.service.impl;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -25,6 +30,7 @@ import liaison.groble.application.user.service.UserReader;
 import liaison.groble.common.exception.DuplicateNicknameException;
 import liaison.groble.common.exception.EntityNotFoundException;
 import liaison.groble.common.port.security.SecurityPort;
+import liaison.groble.common.request.RequestUtil;
 import liaison.groble.common.utils.CodeGenerator;
 import liaison.groble.domain.notification.entity.SystemDetails;
 import liaison.groble.domain.notification.enums.NotificationType;
@@ -34,6 +40,9 @@ import liaison.groble.domain.port.EmailSenderPort;
 import liaison.groble.domain.port.VerificationCodePort;
 import liaison.groble.domain.role.Role;
 import liaison.groble.domain.role.repository.RoleRepository;
+import liaison.groble.domain.terms.Terms;
+import liaison.groble.domain.terms.enums.TermsType;
+import liaison.groble.domain.terms.repository.TermsRepository;
 import liaison.groble.domain.user.entity.IntegratedAccount;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.entity.UserWithdrawalHistory;
@@ -45,8 +54,8 @@ import liaison.groble.domain.user.repository.IntegratedAccountRepository;
 import liaison.groble.domain.user.repository.SocialAccountRepository;
 import liaison.groble.domain.user.repository.UserRepository;
 import liaison.groble.domain.user.repository.UserWithdrawalHistoryRepository;
-import liaison.groble.domain.user.repository.VerifiedEmailRepository;
 import liaison.groble.domain.user.service.UserStatusService;
+import liaison.groble.domain.user.service.UserTermsService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -62,18 +71,24 @@ public class AuthServiceImpl implements AuthService {
   private final RoleRepository roleRepository;
   private final IntegratedAccountRepository integratedAccountRepository;
   private final SocialAccountRepository socialAccountRepository;
-  private final VerifiedEmailRepository verifiedEmailRepository;
   private final UserWithdrawalHistoryRepository userWithdrawalHistoryRepository;
   private final UserReader userReader;
   private final NotificationRepository notificationRepository;
   private final NotificationMapper notificationMapper;
+  private final RequestUtil requestUtil;
+  private final TermsRepository termsRepository;
 
   @Override
   @Transactional
   public TokenDto signUp(SignUpDto signUpDto) {
     UserType userType = validateAndParseUserType(signUpDto.getUserType());
+    // 약관 유형 변환 및 필수 약관 검증
+    List<TermsType> agreedTermsTypes = convertToTermsTypes(signUpDto.getTermsTypeStrings());
+    validateRequiredTermsAgreement(agreedTermsTypes);
+
     validateUniqueConstraints(signUpDto.getEmail(), signUpDto.getNickname());
     validateEmailVerification(signUpDto.getEmail());
+
     // 2. 비밀번호 암호화
     String encodedPassword = securityPort.encodePassword(signUpDto.getPassword());
 
@@ -81,7 +96,7 @@ public class AuthServiceImpl implements AuthService {
     User user;
     if (userType == UserType.SELLER) {
       user =
-          UserFactory.createSellerUser(
+          UserFactory.createIntegratedSellerUser(
               signUpDto.getEmail(),
               encodedPassword,
               signUpDto.getNickname(),
@@ -89,7 +104,7 @@ public class AuthServiceImpl implements AuthService {
               signUpDto.getPhoneNumber());
     } else {
       user =
-          UserFactory.createIntegratedUser(
+          UserFactory.createIntegratedBuyerUser(
               signUpDto.getEmail(), encodedPassword, signUpDto.getNickname(), userType);
     }
 
@@ -99,6 +114,9 @@ public class AuthServiceImpl implements AuthService {
     // 5. 사용자 상태 활성화 (도메인 서비스 활용)
     UserStatusService userStatusService = new UserStatusService();
     userStatusService.activate(user);
+
+    // 약관 동의 처리
+    processTermsAgreements(user, agreedTermsTypes);
 
     // 6. 사용자 저장
     User savedUser = userRepository.save(user);
@@ -544,6 +562,59 @@ public class AuthServiceImpl implements AuthService {
     }
   }
 
+  /**
+   * 문자열 약관 유형 리스트를 TermsType enum 리스트로 변환합니다.
+   *
+   * @param termsTypeStrings 문자열 약관 유형 리스트
+   * @return 변환된 TermsType enum 리스트
+   * @throws IllegalArgumentException 유효하지 않은 약관 유형이 포함된 경우
+   */
+  private List<TermsType> convertToTermsTypes(List<String> termsTypeStrings) {
+    if (termsTypeStrings == null || termsTypeStrings.isEmpty()) {
+      return Collections.emptyList();
+    }
+
+    return termsTypeStrings.stream().map(this::parseTermsType).collect(Collectors.toList());
+  }
+
+  /**
+   * 문자열 약관 유형을 TermsType enum으로 변환합니다.
+   *
+   * @param termsTypeString 문자열 약관 유형
+   * @return 변환된 TermsType enum
+   * @throws IllegalArgumentException 유효하지 않은 약관 유형인 경우
+   */
+  private TermsType parseTermsType(String termsTypeString) {
+    try {
+      return TermsType.valueOf(termsTypeString.toUpperCase());
+    } catch (IllegalArgumentException | NullPointerException e) {
+      throw new IllegalArgumentException("유효하지 않은 약관 유형입니다: " + termsTypeString);
+    }
+  }
+
+  /** 필수 약관 동의 여부 검증 */
+  private void validateRequiredTermsAgreement(List<TermsType> agreedTermsTypes) {
+    // 모든 필수 약관 타입 목록
+    List<TermsType> requiredTermsTypes =
+        Arrays.stream(TermsType.values()).filter(TermsType::isRequired).toList();
+
+    // 동의하지 않은 필수 약관 찾기
+    List<TermsType> missingRequiredTerms =
+        requiredTermsTypes.stream()
+            .filter(requiredType -> !agreedTermsTypes.contains(requiredType))
+            .toList();
+
+    // 동의하지 않은 필수 약관이 있으면 예외 발생
+    if (!missingRequiredTerms.isEmpty()) {
+      String missingTerms =
+          missingRequiredTerms.stream()
+              .map(TermsType::getDescription)
+              .collect(Collectors.joining(", "));
+
+      throw new IllegalArgumentException("다음 필수 약관에 동의해주세요: " + missingTerms);
+    }
+  }
+
   private void validateEmailVerification(String email) {
     if (!verificationCodePort.validateVerifiedFlag(email)) {
       throw new IllegalArgumentException("이메일 인증이 완료되지 않았습니다.");
@@ -568,5 +639,34 @@ public class AuthServiceImpl implements AuthService {
             NotificationType.SYSTEM,
             SubNotificationType.WELCOME_GROBLE,
             systemDetails));
+  }
+
+  /**
+   * 사용자의 약관 동의 정보를 처리합니다.
+   *
+   * @param user 사용자 엔티티
+   * @param agreedTermsTypes 동의한 약관 유형 리스트
+   */
+  private void processTermsAgreements(User user, List<TermsType> agreedTermsTypes) {
+    UserTermsService userTermsService = new UserTermsService();
+    // 현재 IP 주소와 User-Agent 정보 가져오기
+    String clientIp = requestUtil.getClientIp();
+    String userAgent = requestUtil.getUserAgent();
+
+    // 현재 유효한 최신 약관 조회
+    Map<TermsType, Terms> latestTermsMap =
+        termsRepository.findAllLatestTerms().stream()
+            .collect(Collectors.toMap(Terms::getType, terms -> terms));
+
+    // 약관 동의 처리
+    for (TermsType termsType : TermsType.values()) {
+      Terms terms = latestTermsMap.get(termsType);
+      if (terms != null) {
+        // 동의한 약관에만 동의 정보 추가
+        if (agreedTermsTypes.contains(termsType)) {
+          userTermsService.agreeToTerms(user, terms, clientIp, userAgent);
+        }
+      }
+    }
   }
 }

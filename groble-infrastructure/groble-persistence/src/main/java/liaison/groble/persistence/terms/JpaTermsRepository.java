@@ -31,4 +31,7 @@ public interface JpaTermsRepository extends JpaRepository<Terms, Long> {
       "SELECT t FROM Terms t WHERE t.type = :type AND t.effectiveTo IS NULL ORDER BY t.effectiveFrom DESC")
   Optional<Terms> findTopByTypeAndEffectiveToIsNullOrderByEffectiveFromDesc(
       @Param("type") TermsType type);
+
+  @Query("SELECT t FROM Terms t WHERE t.effectiveTo IS NULL ORDER BY t.effectiveFrom DESC")
+  List<Terms> findAllLatestTerms();
 }

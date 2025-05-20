@@ -5,7 +5,6 @@ import java.util.Optional;
 import org.springframework.stereotype.Repository;
 
 import liaison.groble.domain.user.entity.VerifiedEmail;
-import liaison.groble.domain.user.repository.VerifiedEmailRepository;
 
 import lombok.AllArgsConstructor;
 

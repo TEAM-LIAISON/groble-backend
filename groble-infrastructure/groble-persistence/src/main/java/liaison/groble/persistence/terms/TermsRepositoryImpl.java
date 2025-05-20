@@ -59,4 +59,9 @@ public class TermsRepositoryImpl implements TermsRepository {
   public void saveAll(List<Terms> terms) {
     jpaTermsRepository.saveAll(terms);
   }
+
+  @Override
+  public List<Terms> findAllLatestTerms() {
+    return jpaTermsRepository.findAllLatestTerms();
+  }
 }
