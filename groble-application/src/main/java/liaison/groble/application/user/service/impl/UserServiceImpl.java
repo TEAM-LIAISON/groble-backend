@@ -62,7 +62,7 @@ public class UserServiceImpl implements UserService {
 
     // SELLER로 전환할 경우만 검증
     if (userType == UserType.SELLER) {
-      if (user.isSeller()) {
+      if (!user.isSeller()) {
         log.warn("전환 실패: 사용자 {}는 SELLER 프로필이 없습니다.", user.getId());
         return false;
       }
