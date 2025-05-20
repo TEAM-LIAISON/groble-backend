@@ -28,12 +28,12 @@ public class UserRepositoryImpl implements UserRepository {
 
   @Override
   public boolean existsByNickname(String nickname) {
-    return jpaUserRepository.existsByNickname(nickname);
+    return jpaUserRepository.existsByUserProfileNickname(nickname);
   }
 
   @Override
   public boolean existsByPhoneNumber(String phoneNumber) {
-    return jpaUserRepository.existsByPhoneNumber(phoneNumber);
+    return jpaUserRepository.existsByUserProfilePhoneNumber(phoneNumber);
   }
 
   @Override

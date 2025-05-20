@@ -64,12 +64,10 @@ public class Content extends BaseEntity {
   @JoinColumn(name = "user_id", nullable = false)
   private User user;
 
-  // 카테고리
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "category_id")
   private Category category;
 
-  // 콘텐츠 유형에 따른 옵션
   @OneToMany(mappedBy = "content", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<ContentOption> options = new ArrayList<>();
 

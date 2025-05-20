@@ -1,6 +1,5 @@
 package liaison.groble.application.auth.service;
 
-import liaison.groble.application.auth.dto.DeprecatedSignUpDto;
 import liaison.groble.application.auth.dto.EmailVerificationDto;
 import liaison.groble.application.auth.dto.PhoneNumberDto;
 import liaison.groble.application.auth.dto.SignInDto;
@@ -20,13 +19,6 @@ public interface AuthService {
   TokenDto signUp(SignUpDto signUpDto);
 
   TokenDto socialSignUp(Long userId, SocialSignUpDto socialSignUpDto);
-
-  /**
-   * 회원가입 처리 (deprecated)
-   *
-   * @param deprecatedSignUpDto 회원가입 정보
-   */
-  TokenDto signUp(DeprecatedSignUpDto deprecatedSignUpDto);
 
   /**
    * 로그인 처리 및 토큰 발급

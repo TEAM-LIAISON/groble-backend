@@ -14,12 +14,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import liaison.groble.application.user.service.PortOneIdentityVerificationService;
 import liaison.groble.common.exception.EntityNotFoundException;
-import liaison.groble.domain.user.entity.IdentityVerification;
 import liaison.groble.domain.user.entity.IdentityVerificationHistory;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.enums.IdentityVerificationStatus;
 import liaison.groble.domain.user.repository.IdentityVerificationHistoryRepository;
 import liaison.groble.domain.user.repository.UserRepository;
+import liaison.groble.domain.user.vo.IdentityVerification;
 import liaison.groble.external.config.PortOneProperties;
 import liaison.groble.external.payment.PortOneApiClient;
 
@@ -51,8 +51,8 @@ public class PortOneIdentityVerificationServiceImpl implements PortOneIdentityVe
     // 본인인증 요청 데이터 구성
     Map<String, Object> identityVerificationRequest = new HashMap<>();
     identityVerificationRequest.put("orderId", requestId);
-    identityVerificationRequest.put("name", user.getNickname());
-    identityVerificationRequest.put("phoneNumber", user.getPhoneNumber());
+    identityVerificationRequest.put("name", user.getUserProfile().getNickname());
+    identityVerificationRequest.put("phoneNumber", user.getUserProfile().getPhoneNumber());
 
     // 인증 방법에 따른 PG 및 방법 설정
     Map<String, Object> identityMethodOptions = new HashMap<>();

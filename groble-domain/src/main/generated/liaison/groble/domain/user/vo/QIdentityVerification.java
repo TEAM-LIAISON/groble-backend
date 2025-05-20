@@ -1,4 +1,4 @@
-package liaison.groble.domain.user.entity;
+package liaison.groble.domain.user.vo;
 
 import static com.querydsl.core.types.PathMetadataFactory.*;
 
@@ -12,7 +12,7 @@ import com.querydsl.core.types.dsl.*;
 @Generated("com.querydsl.codegen.DefaultEmbeddableSerializer")
 public class QIdentityVerification extends BeanPath<IdentityVerification> {
 
-  private static final long serialVersionUID = -1440228971L;
+  private static final long serialVersionUID = 1039515903L;
 
   public static final QIdentityVerification identityVerification =
       new QIdentityVerification("identityVerification");

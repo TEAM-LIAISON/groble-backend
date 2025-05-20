@@ -1,16 +1,12 @@
 package liaison.groble.domain.user.entity;
 
 import static jakarta.persistence.EnumType.STRING;
-import static liaison.groble.domain.user.enums.UserType.BUYER;
 import static lombok.AccessLevel.PROTECTED;
 
 import java.time.Instant;
-import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -34,6 +30,10 @@ import liaison.groble.domain.terms.enums.TermsType;
 import liaison.groble.domain.user.enums.AccountType;
 import liaison.groble.domain.user.enums.UserStatus;
 import liaison.groble.domain.user.enums.UserType;
+import liaison.groble.domain.user.vo.IdentityVerification;
+import liaison.groble.domain.user.vo.SellerInfo;
+import liaison.groble.domain.user.vo.UserProfile;
+import liaison.groble.domain.user.vo.UserStatusInfo;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -62,17 +62,30 @@ public class User extends BaseTimeEntity {
   @Column(name = "uuid", nullable = false, unique = true, updatable = false)
   private String uuid = UUID.randomUUID().toString();
 
-  /** 사용자 이름 (닉네임) */
-  @Column(name = "nickname", length = 50, unique = true)
-  private String nickname;
+  @Embedded private UserProfile userProfile;
+  @Embedded private UserStatusInfo userStatusInfo;
 
-  /** 사용자 프로필 이미지 URL */
-  @Column(name = "profile_image_url", columnDefinition = "TEXT")
-  private String profileImageUrl;
+  /** 계정 유형 INTEGRATED: 일반 로그인 계정 SOCIAL: 소셜 로그인 계정 */
+  @Builder.Default
+  @Column(name = "account_type", nullable = false)
+  @Enumerated(STRING)
+  private AccountType accountType = AccountType.INTEGRATED;
 
-  /** 사용자 전화번호 */
-  @Column(name = "phone_number", length = 20)
-  private String phoneNumber;
+  /** 리프레시 토큰 JWT 인증에서 재발급에 사용되는 토큰 */
+  @Column(name = "refresh_token", length = 500)
+  private String refreshToken;
+
+  @Column(name = "refresh_token_expires_at")
+  private Instant refreshTokenExpiresAt;
+
+  /** 마지막 로그인 시간 */
+  @Column(name = "last_login_at")
+  private Instant lastLoginAt;
+
+  /** 마지막으로 사용한 사용자 유형 (SELLER 또는 BUYER) */
+  @Enumerated(STRING)
+  @Column(name = "last_user_type", length = 20)
+  private UserType lastUserType;
 
   /** 통합 계정 정보 (일반 로그인) 양방향 관계로 IntegratedAccount와 연결 */
   @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -82,126 +95,19 @@ public class User extends BaseTimeEntity {
   @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
   private SocialAccount socialAccount;
 
-  @Embedded private SellerInfo sellerInfo;
-
-  // 본인인증 관련 필드 추가
-  @Embedded private IdentityVerification identityVerification;
-
-  /** 마지막 로그인 시간 */
-  @Column(name = "last_login_at")
-  private Instant lastLoginAt;
-
   @Builder.Default // 이 애노테이션 추가
   @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
   private Set<UserRole> userRoles = new HashSet<>();
 
-  /** 리프레시 토큰 JWT 인증에서 재발급에 사용되는 토큰 */
-  @Column(name = "refresh_token", length = 500)
-  private String refreshToken;
-
-  @Column(name = "refresh_token_expires_at")
-  private Instant refreshTokenExpiresAt;
-
-  /** 계정 유형 INTEGRATED: 일반 로그인 계정 SOCIAL: 소셜 로그인 계정 */
-  @Builder.Default
-  @Column(name = "account_type", nullable = false)
-  @Enumerated(STRING)
-  private AccountType accountType = AccountType.INTEGRATED;
-
-  /**
-   * 사용자 상태 ACTIVE: 활성 상태 INACTIVE: 비활성 상태 DORMANT: 휴면 상태 LOCKED: 잠금 상태 SUSPENDED: 정지 상태
-   * PENDING_VERIFICATION: 이메일 인증 대기 PENDING_WITHDRAWAL: 탈퇴 요청 상태 WITHDRAWN: 탈퇴 완료 상태
-   */
-  @Builder.Default
-  @Column(name = "status", nullable = false)
-  @Enumerated(STRING)
-  private UserStatus status = UserStatus.PENDING_VERIFICATION;
-
-  /** 상태 변경 시간 상태가 변경된 마지막 시간 (휴면 계정 전환, 계정 활성화 등을 추적) */
-  @Column(name = "status_changed_at", nullable = false)
-  private Instant statusChangedAt;
-
-  /** 마지막으로 사용한 사용자 유형 (SELLER 또는 BUYER) */
-  @Enumerated(STRING)
-  @Column(name = "last_user_type", length = 20)
-  private UserType lastUserType;
-
   @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
   private Set<UserTerms> termsAgreements = new HashSet<>();
+
+  @Embedded private SellerInfo sellerInfo;
+  @Embedded private IdentityVerification identityVerification;
 
   // SELLER /
   @Column(name = "is_seller")
   private boolean isSeller = false;
-
-  /**
-   * 통합 계정으로부터 유저 생성 메서드 IntegratedAccount를 먼저 생성하고 그로부터 User를 생성
-   *
-   * @param integratedAccount 통합 계정 정보
-   * @return 생성된 User 객체
-   */
-  public static User fromDeprecatedIntegratedAccount(IntegratedAccount integratedAccount) {
-    User user =
-        User.builder()
-            .accountType(AccountType.INTEGRATED)
-            .status(UserStatus.PENDING_VERIFICATION) // 이메일 인증 대기 상태로 설정
-            .statusChangedAt(Instant.now())
-            .lastUserType(BUYER) // 기본값으로 BUYER 설정
-            .build();
-
-    user.setIntegratedAccount(integratedAccount);
-    return user;
-  }
-
-  public static User fromIntegratedAccount(
-      IntegratedAccount integratedAccount, String nickname, UserType userType) {
-
-    User user =
-        User.builder()
-            .nickname(nickname)
-            .accountType(AccountType.INTEGRATED)
-            .status(UserStatus.ACTIVE) // 이메일 인증 대기 상태로 설정
-            .statusChangedAt(Instant.now())
-            .lastUserType(userType) // 기본값으로 BUYER 설정
-            .build();
-
-    user.setIntegratedAccount(integratedAccount);
-    return user;
-  }
-
-  public static User sellerFromIntegratedAccount(
-      IntegratedAccount integratedAccount, String nickname, UserType userType, String phoneNumber) {
-    User user =
-        User.builder()
-            .nickname(nickname)
-            .accountType(AccountType.INTEGRATED)
-            .status(UserStatus.ACTIVE)
-            .statusChangedAt(Instant.now())
-            .lastUserType(userType)
-            .phoneNumber(phoneNumber)
-            .build();
-
-    user.setIntegratedAccount(integratedAccount);
-    return user;
-  }
-
-  /**
-   * 소셜 계정으로부터 유저 생성 메서드 SocialAccount를 먼저 생성하고 그로부터 User를 생성
-   *
-   * @param socialAccount 소셜 계정 정보
-   * @return 생성된 User 객체
-   */
-  public static User fromSocialAccount(SocialAccount socialAccount) {
-    User user =
-        User.builder()
-            .accountType(AccountType.SOCIAL)
-            .status(UserStatus.ACTIVE) // 소셜 로그인은 즉시 활성화
-            .statusChangedAt(Instant.now())
-            .lastUserType(BUYER) // 기본값으로 BUYER 설정
-            .build();
-
-    user.setSocialAccount(socialAccount);
-    return user;
-  }
 
   /** IntegratedAccount 설정 (양방향 관계) */
   public void setIntegratedAccount(IntegratedAccount integratedAccount) {
@@ -213,9 +119,40 @@ public class User extends BaseTimeEntity {
     this.socialAccount = socialAccount;
   }
 
-  // User.java - addRole 메서드만 변경
+  /** 로그인 시간 업데이트 */
+  public void updateLoginTime() {
+    this.lastLoginAt = Instant.now();
+  }
+
+  public void updateRefreshToken(String refreshToken, Instant refreshTokenExpiresAt) {
+    this.refreshToken = refreshToken;
+    this.refreshTokenExpiresAt = refreshTokenExpiresAt;
+  }
+
+  public void clearRefreshToken() {
+    this.refreshToken = null;
+    this.refreshTokenExpiresAt = null;
+  }
+
+  public void updateLastUserType(UserType userType) {
+    this.lastUserType = userType;
+  }
+
+  // Value Object 설정 메서드
+  public void setSellerInfo(SellerInfo sellerInfo) {
+    this.sellerInfo = sellerInfo;
+  }
+
+  public void setIdentityVerification(IdentityVerification verification) {
+    this.identityVerification = verification;
+  }
+
+  public void setSeller(boolean isSeller) {
+    this.isSeller = isSeller;
+  }
+
+  // 역할 관리 메서드
   public void addRole(Role role) {
-    // null 체크와 초기화 추가
     if (this.userRoles == null) {
       this.userRoles = new HashSet<>();
     }
@@ -226,86 +163,21 @@ public class User extends BaseTimeEntity {
     this.userRoles.add(userRole);
   }
 
-  /** 로그인 시간 업데이트 */
-  public void updateLoginTime() {
-    this.lastLoginAt = Instant.now();
-  }
-
-  /**
-   * 리프레시 토큰 업데이트
-   *
-   * @param refreshToken 새 리프레시 토큰
-   */
-  public void updateRefreshToken(String refreshToken, Instant refreshTokenExpiresAt) {
-    this.refreshToken = refreshToken;
-    this.refreshTokenExpiresAt = refreshTokenExpiresAt;
-  }
-
-  /**
-   * 마지막 사용자 유형 업데이트
-   *
-   * @param userType 사용자 유형 (SELLER 또는 BUYER)
-   */
-  public void updateLastUserType(UserType userType) {
-    this.lastUserType = userType;
-  }
-
-  /**
-   * 이메일 조회 메서드 계정 타입에 따라 적절한 이메일 반환
-   *
-   * @return 사용자 이메일
-   */
+  // 유틸리티 메서드
   public String getEmail() {
     if (accountType == AccountType.INTEGRATED && integratedAccount != null) {
       return integratedAccount.getIntegratedAccountEmail();
     } else if (accountType == AccountType.SOCIAL && socialAccount != null) {
       return socialAccount.getSocialAccountEmail();
     }
-
     return null;
   }
 
-  /**
-   * 사용자 비밀번호 메서드
-   *
-   * @return 사용자 비밀번호
-   */
   public String getPassword() {
     if (accountType == AccountType.INTEGRATED && integratedAccount != null) {
       return integratedAccount.getPassword();
     }
-
     return null;
-  }
-
-  /**
-   * 사용자 상태 업데이트
-   *
-   * @param newStatus 새로운 상태
-   */
-  public void updateStatus(UserStatus newStatus) {
-    this.status = newStatus;
-    this.statusChangedAt = Instant.now();
-  }
-
-  public void updatePhoneNumber(String phoneNumber) {
-    this.phoneNumber = phoneNumber;
-  }
-
-  /** 이메일 인증 완료 처리 인증 대기 상태인 경우만 활성화 */
-  public void verifyEmail() {
-    if (this.status == UserStatus.PENDING_VERIFICATION) {
-      this.updateStatus(UserStatus.ACTIVE);
-    }
-  }
-
-  // 판매자 등록 메서드
-  public void registerAsSeller(SellerInfo sellerInfo) {
-    if (!this.isIdentityVerified()) {
-      throw new IllegalStateException("판매자 등록을 위해서는 본인인증이 필요합니다.");
-    }
-
-    this.sellerInfo = sellerInfo;
   }
 
   // 본인인증 완료 메서드
@@ -313,37 +185,9 @@ public class User extends BaseTimeEntity {
     this.identityVerification = verification;
   }
 
-  // 본인인증 여부 확인
-  public boolean isIdentityVerified() {
-    return identityVerification != null && identityVerification.isVerified();
-  }
-
-  public void addRole(UserRole role) {
-    this.userRoles.add(role);
-  }
-
-  public boolean hasRole(UserRole role) {
-    return this.userRoles.contains(role);
-  }
-
-  /** 사용자 계정 잠금 관리자에 의한 계정 잠금 처리 */
-  public void lock() {
-    this.updateStatus(UserStatus.LOCKED);
-  }
-
-  /** 사용자 계정 일시 정지 일정 기간 동안 계정 사용 제한 */
-  public void suspend() {
-    this.updateStatus(UserStatus.SUSPENDED);
-  }
-
-  /** 사용자 탈퇴 요청 즉시 탈퇴하지 않고 유예 기간을 둠 */
-  public void requestWithdrawal() {
-    this.updateStatus(UserStatus.PENDING_WITHDRAWAL);
-  }
-
   /** 회원 탈퇴 처리 즉시 탈퇴 처리하고 사용자 상태를 WITHDRAWN으로 변경 */
   public void withdraw() {
-    this.updateStatus(UserStatus.WITHDRAWN);
+    this.getUserStatusInfo().updateStatus(UserStatus.WITHDRAWN);
 
     // 리프레시 토큰 제거
     this.refreshToken = null;
@@ -354,15 +198,6 @@ public class User extends BaseTimeEntity {
 
   /** 사용자 정보 익명화 처리 GDPR 등 개인정보보호 규정 준수를 위한 비식별화 */
   public void anonymize() {
-    // 닉네임 익명화
-    this.nickname = "탈퇴한 사용자";
-
-    // 프로필 이미지 초기화
-    this.profileImageUrl = null;
-
-    // 전화번호 초기화
-    this.phoneNumber = null;
-
     // 계정 타입에 따른 이메일 익명화
     String anonymizedEmail =
         "withdrawn_"
@@ -388,45 +223,8 @@ public class User extends BaseTimeEntity {
     }
   }
 
-  /** 계정 활성화 */
-  public void activate() {
-    this.updateStatus(UserStatus.ACTIVE);
-  }
-
-  /** 계정 비활성화 */
-  public void deactivate() {
-    this.updateStatus(UserStatus.INACTIVE);
-  }
-
-  public boolean isAccessible() {
-    return this.status.isAccessible();
-  }
-
-  public boolean isLoginable() {
-    return this.status.isLoginable();
-  }
-
-  public void updateNickname(String nickname) {
-    this.nickname = nickname;
-  }
-
-  public void updateProfileImageUrl(String profileImageUrl) {
-    this.profileImageUrl = profileImageUrl;
-  }
-
-  public void agreeToTerms(Terms terms, String agreedIp, String agreedUserAgent) {
-    UserTerms agreement =
-        UserTerms.builder()
-            .user(this)
-            .terms(terms)
-            .agreed(true)
-            .agreedIp(agreedIp)
-            .agreedUserAgent(agreedUserAgent)
-            .build();
-
-    termsAgreements.add(agreement);
-  }
-
+  // 약관 관련 메서드
+  /** 특정 약관 동의 여부 확인 */
   public boolean hasAgreedTo(TermsType termsType) {
     return termsAgreements.stream()
         .anyMatch(
@@ -436,31 +234,9 @@ public class User extends BaseTimeEntity {
                     && agreement.getTerms().getEffectiveTo() == null);
   }
 
-  public boolean hasAgreedToAllRequiredTerms() {
-    return Arrays.stream(TermsType.values())
-        .filter(TermsType::isRequired)
-        .allMatch(this::hasAgreedTo);
-  }
-
-  public List<TermsType> getMissingRequiredTerms() {
-    return Arrays.stream(TermsType.values())
-        .filter(TermsType::isRequired)
-        .filter(type -> !hasAgreedTo(type))
-        .collect(Collectors.toList());
-  }
-
-  /**
-   * 광고성 정보 수신 동의 여부 확인
-   *
-   * @return true: 동의함, false: 미동의
-   */
+  /** 광고성 정보 수신 동의 여부 확인 */
   public boolean hasAgreedToAdvertising() {
-    return termsAgreements.stream()
-        .anyMatch(
-            agreement ->
-                agreement.getTerms().getType() == TermsType.ADVERTISING_POLICY
-                    && agreement.isAgreed()
-                    && agreement.getTerms().getEffectiveTo() == null);
+    return hasAgreedTo(TermsType.ADVERTISING_POLICY);
   }
 
   /**

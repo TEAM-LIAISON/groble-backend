@@ -1,4 +1,4 @@
-package liaison.groble.domain.user.entity;
+package liaison.groble.domain.user.vo;
 
 import static com.querydsl.core.types.PathMetadataFactory.*;
 
@@ -12,7 +12,7 @@ import com.querydsl.core.types.dsl.*;
 @Generated("com.querydsl.codegen.DefaultEmbeddableSerializer")
 public class QSellerInfo extends BeanPath<SellerInfo> {
 
-  private static final long serialVersionUID = 2109755241L;
+  private static final long serialVersionUID = -298151085L;
 
   public static final QSellerInfo sellerInfo = new QSellerInfo("sellerInfo");
 

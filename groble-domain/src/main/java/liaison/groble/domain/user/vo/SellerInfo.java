@@ -1,4 +1,4 @@
-package liaison.groble.domain.user.entity;
+package liaison.groble.domain.user.vo;
 
 import java.time.LocalDateTime;
 
@@ -11,6 +11,7 @@ import liaison.groble.domain.user.enums.BusinessType;
 import liaison.groble.domain.user.enums.SellerVerificationStatus;
 
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -18,8 +19,9 @@ import lombok.NoArgsConstructor;
 @Embeddable
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
+@Builder
 public class SellerInfo {
-
   /** 사업자 유형 (개인사업자-간이과세자, 개인사업자-일반과세자, 법인사업자) */
   @Column(name = "business_type")
   @Enumerated(EnumType.STRING)
@@ -82,36 +84,6 @@ public class SellerInfo {
   @Column(name = "last_verification_attempt")
   private LocalDateTime lastVerificationAttempt;
 
-  @Builder
-  public SellerInfo(
-      String businessName,
-      String businessNumber,
-      BusinessType businessType,
-      String businessSector,
-      String businessCategory,
-      String businessAddress,
-      String representativeName,
-      String businessLicenseFileUrl,
-      String taxInvoiceEmail,
-      String bankName,
-      String bankAccountNumber,
-      String bankAccountOwner) {
-    this.businessName = businessName;
-    this.businessNumber = businessNumber;
-    this.businessType = businessType;
-    this.businessSector = businessSector;
-    this.businessCategory = businessCategory;
-    this.businessAddress = businessAddress;
-    this.representativeName = representativeName;
-    this.businessLicenseFileUrl = businessLicenseFileUrl;
-    this.taxInvoiceEmail = taxInvoiceEmail;
-    this.bankName = bankName;
-    this.bankAccountNumber = bankAccountNumber;
-    this.bankAccountOwner = bankAccountOwner;
-    this.verificationStatus = SellerVerificationStatus.PENDING;
-    this.lastVerificationAttempt = LocalDateTime.now();
-  }
-
   /**
    * 판매자 인증 상태 업데이트
    *
@@ -122,6 +94,33 @@ public class SellerInfo {
     this.verificationStatus = status;
     this.verificationMessage = message;
     this.lastVerificationAttempt = LocalDateTime.now();
+  }
+
+  public void update(SellerInfo updatedInfo) {
+    if (updatedInfo.getBusinessName() != null) {
+      this.businessName = updatedInfo.getBusinessName();
+    }
+    if (updatedInfo.getBusinessSector() != null) {
+      this.businessSector = updatedInfo.getBusinessSector();
+    }
+    if (updatedInfo.getBusinessCategory() != null) {
+      this.businessCategory = updatedInfo.getBusinessCategory();
+    }
+    if (updatedInfo.getBusinessAddress() != null) {
+      this.businessAddress = updatedInfo.getBusinessAddress();
+    }
+    if (updatedInfo.getTaxInvoiceEmail() != null) {
+      this.taxInvoiceEmail = updatedInfo.getTaxInvoiceEmail();
+    }
+    if (updatedInfo.getBankName() != null) {
+      this.bankName = updatedInfo.getBankName();
+    }
+    if (updatedInfo.getBankAccountNumber() != null) {
+      this.bankAccountNumber = updatedInfo.getBankAccountNumber();
+    }
+    if (updatedInfo.getBankAccountOwner() != null) {
+      this.bankAccountOwner = updatedInfo.getBankAccountOwner();
+    }
   }
 
   /**
@@ -157,39 +156,18 @@ public class SellerInfo {
     return true;
   }
 
-  /**
-   * 판매자 정보 업데이트
-   *
-   * @param updatedInfo 업데이트할 정보가 담긴 SellerInfo 객체
-   */
-  public void update(SellerInfo updatedInfo) {
-    if (updatedInfo.getBusinessName() != null) {
-      this.businessName = updatedInfo.getBusinessName();
-    }
-    if (updatedInfo.getBusinessSector() != null) {
-      this.businessSector = updatedInfo.getBusinessSector();
-    }
-    if (updatedInfo.getBusinessCategory() != null) {
-      this.businessCategory = updatedInfo.getBusinessCategory();
-    }
-    if (updatedInfo.getBusinessAddress() != null) {
-      this.businessAddress = updatedInfo.getBusinessAddress();
-    }
-    if (updatedInfo.getTaxInvoiceEmail() != null) {
-      this.taxInvoiceEmail = updatedInfo.getTaxInvoiceEmail();
-    }
-    if (updatedInfo.getBankName() != null) {
-      this.bankName = updatedInfo.getBankName();
-    }
-    if (updatedInfo.getBankAccountNumber() != null) {
-      this.bankAccountNumber = updatedInfo.getBankAccountNumber();
-    }
-    if (updatedInfo.getBankAccountOwner() != null) {
-      this.bankAccountOwner = updatedInfo.getBankAccountOwner();
-    }
-  }
-
+  // 판매자 정보 익명화 로직
   public void anonymize() {
-    this.businessName = "탈퇴한 판매자";
+    this.businessName = null;
+    this.businessNumber = null;
+    this.businessSector = null;
+    this.businessCategory = null;
+    this.businessAddress = null;
+    this.representativeName = null;
+    this.businessLicenseFileUrl = null;
+    this.taxInvoiceEmail = null;
+    this.bankName = null;
+    this.bankAccountNumber = null;
+    this.bankAccountOwner = null;
   }
 }

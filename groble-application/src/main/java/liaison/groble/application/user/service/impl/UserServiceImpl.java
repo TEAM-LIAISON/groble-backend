@@ -154,8 +154,8 @@ public class UserServiceImpl implements UserService {
     User user = userReader.getUserById(userId);
 
     return UserMyPageSummaryDto.builder()
-        .nickname(user.getNickname())
-        .profileImageUrl(user.getProfileImageUrl())
+        .nickname(user.getUserProfile().getNickname())
+        .profileImageUrl(user.getUserProfile().getProfileImageUrl())
         .userTypeName(user.getLastUserType().name())
         .canSwitchToSeller(user.isSeller())
         .build();
@@ -177,11 +177,11 @@ public class UserServiceImpl implements UserService {
     if (accountType == AccountType.INTEGRATED && user.getIntegratedAccount() != null) {
       IntegratedAccount account = user.getIntegratedAccount();
       email = account.getIntegratedAccountEmail();
-      phoneNumber = user.getPhoneNumber();
+      phoneNumber = user.getUserProfile().getPhoneNumber();
     } else if (accountType == AccountType.SOCIAL && user.getSocialAccount() != null) {
       SocialAccount account = user.getSocialAccount();
       email = account.getSocialAccountEmail();
-      phoneNumber = user.getPhoneNumber();
+      phoneNumber = user.getUserProfile().getPhoneNumber();
       providerTypeName = account.getProviderType().name();
     }
 
@@ -193,12 +193,12 @@ public class UserServiceImpl implements UserService {
     boolean sellerAccountNotCreated = true;
 
     return UserMyPageDetailDto.builder()
-        .nickname(user.getNickname())
+        .nickname(user.getUserProfile().getNickname())
         .userTypeName(user.getLastUserType().name())
         .accountTypeName(user.getAccountType().name())
         .providerTypeName(providerTypeName)
         .email(email)
-        .profileImageUrl(user.getProfileImageUrl())
+        .profileImageUrl(user.getUserProfile().getProfileImageUrl())
         .phoneNumber(phoneNumber)
         .canSwitchToSeller(canSwitchToSeller)
         .sellerAccountNotCreated(sellerAccountNotCreated)
@@ -233,8 +233,8 @@ public class UserServiceImpl implements UserService {
 
     return UserHeaderDto.builder()
         .isLogin(true)
-        .nickname(user.getNickname())
-        .profileImageUrl(user.getProfileImageUrl())
+        .nickname(user.getUserProfile().getNickname())
+        .profileImageUrl(user.getUserProfile().getProfileImageUrl())
         .canSwitchToSeller(user.isSeller())
         .unreadNotificationCount(0) // TODO: 알림 개수 조회 로직 추가
         .alreadyRegisteredAsSeller(user.isSeller())
@@ -248,7 +248,7 @@ public class UserServiceImpl implements UserService {
             .findById(userId)
             .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
 
-    user.updateProfileImageUrl(profileImageUrl);
+    user.getUserProfile().updateProfileImageUrl(profileImageUrl);
     userRepository.save(user);
   }
 }

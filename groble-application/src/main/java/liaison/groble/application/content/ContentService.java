@@ -197,8 +197,9 @@ public class ContentService {
 
     // User 관련 정보 추출
     User seller = content.getUser();
-    String sellerProfileImageUrl = (seller != null) ? seller.getProfileImageUrl() : null;
-    String sellerName = (seller != null) ? seller.getNickname() : null;
+    String sellerProfileImageUrl =
+        (seller != null) ? seller.getUserProfile().getProfileImageUrl() : null;
+    String sellerName = (seller != null) ? seller.getUserProfile().getNickname() : null;
 
     return ContentDetailDto.builder()
         .contentId(content.getId())

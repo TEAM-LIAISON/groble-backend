@@ -30,7 +30,7 @@ public class QUser extends EntityPathBase<User> {
 
   public final NumberPath<Long> id = createNumber("id", Long.class);
 
-  public final QIdentityVerification identityVerification;
+  public final liaison.groble.domain.user.vo.QIdentityVerification identityVerification;
 
   public final QIntegratedAccount integratedAccount;
 
@@ -45,26 +45,14 @@ public class QUser extends EntityPathBase<User> {
   // inherited
   public final DateTimePath<java.time.Instant> modifiedAt = _super.modifiedAt;
 
-  public final StringPath nickname = createString("nickname");
-
-  public final StringPath phoneNumber = createString("phoneNumber");
-
-  public final StringPath profileImageUrl = createString("profileImageUrl");
-
   public final StringPath refreshToken = createString("refreshToken");
 
   public final DateTimePath<java.time.Instant> refreshTokenExpiresAt =
       createDateTime("refreshTokenExpiresAt", java.time.Instant.class);
 
-  public final QSellerInfo sellerInfo;
+  public final liaison.groble.domain.user.vo.QSellerInfo sellerInfo;
 
   public final QSocialAccount socialAccount;
-
-  public final EnumPath<liaison.groble.domain.user.enums.UserStatus> status =
-      createEnum("status", liaison.groble.domain.user.enums.UserStatus.class);
-
-  public final DateTimePath<java.time.Instant> statusChangedAt =
-      createDateTime("statusChangedAt", java.time.Instant.class);
 
   public final SetPath<
           liaison.groble.domain.terms.UserTerms, liaison.groble.domain.terms.QUserTerms>
@@ -77,6 +65,8 @@ public class QUser extends EntityPathBase<User> {
                       liaison.groble.domain.terms.QUserTerms.class,
                       PathInits.DIRECT2);
 
+  public final liaison.groble.domain.user.vo.QUserProfile userProfile;
+
   public final SetPath<liaison.groble.domain.role.UserRole, liaison.groble.domain.role.QUserRole>
       userRoles =
           this.<liaison.groble.domain.role.UserRole, liaison.groble.domain.role.QUserRole>createSet(
@@ -84,6 +74,8 @@ public class QUser extends EntityPathBase<User> {
               liaison.groble.domain.role.UserRole.class,
               liaison.groble.domain.role.QUserRole.class,
               PathInits.DIRECT2);
+
+  public final liaison.groble.domain.user.vo.QUserStatusInfo userStatusInfo;
 
   public final StringPath uuid = createString("uuid");
 
@@ -107,7 +99,8 @@ public class QUser extends EntityPathBase<User> {
     super(type, metadata, inits);
     this.identityVerification =
         inits.isInitialized("identityVerification")
-            ? new QIdentityVerification(forProperty("identityVerification"))
+            ? new liaison.groble.domain.user.vo.QIdentityVerification(
+                forProperty("identityVerification"))
             : null;
     this.integratedAccount =
         inits.isInitialized("integratedAccount")
@@ -115,10 +108,20 @@ public class QUser extends EntityPathBase<User> {
                 forProperty("integratedAccount"), inits.get("integratedAccount"))
             : null;
     this.sellerInfo =
-        inits.isInitialized("sellerInfo") ? new QSellerInfo(forProperty("sellerInfo")) : null;
+        inits.isInitialized("sellerInfo")
+            ? new liaison.groble.domain.user.vo.QSellerInfo(forProperty("sellerInfo"))
+            : null;
     this.socialAccount =
         inits.isInitialized("socialAccount")
             ? new QSocialAccount(forProperty("socialAccount"), inits.get("socialAccount"))
+            : null;
+    this.userProfile =
+        inits.isInitialized("userProfile")
+            ? new liaison.groble.domain.user.vo.QUserProfile(forProperty("userProfile"))
+            : null;
+    this.userStatusInfo =
+        inits.isInitialized("userStatusInfo")
+            ? new liaison.groble.domain.user.vo.QUserStatusInfo(forProperty("userStatusInfo"))
             : null;
   }
 }

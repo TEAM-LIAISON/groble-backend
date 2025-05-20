@@ -9,7 +9,7 @@ import liaison.groble.domain.user.entity.User;
 public interface JpaUserRepository extends JpaRepository<User, Long> {
   Optional<User> findById(Long id);
 
-  boolean existsByNickname(String nickname);
+  boolean existsByUserProfileNickname(String nickname);
 
-  boolean existsByPhoneNumber(String phoneNumber);
+  boolean existsByUserProfilePhoneNumber(String phoneNumber);
 }

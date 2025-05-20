@@ -9,7 +9,6 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import liaison.groble.application.auth.dto.DeprecatedSignUpDto;
 import liaison.groble.application.auth.dto.EmailVerificationDto;
 import liaison.groble.application.auth.dto.PhoneNumberDto;
 import liaison.groble.application.auth.dto.SignInDto;
@@ -38,16 +37,16 @@ import liaison.groble.domain.role.repository.RoleRepository;
 import liaison.groble.domain.user.entity.IntegratedAccount;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.entity.UserWithdrawalHistory;
-import liaison.groble.domain.user.entity.VerifiedEmail;
 import liaison.groble.domain.user.enums.AccountType;
-import liaison.groble.domain.user.enums.UserStatus;
 import liaison.groble.domain.user.enums.UserType;
 import liaison.groble.domain.user.enums.WithdrawalReason;
+import liaison.groble.domain.user.factory.UserFactory;
 import liaison.groble.domain.user.repository.IntegratedAccountRepository;
 import liaison.groble.domain.user.repository.SocialAccountRepository;
 import liaison.groble.domain.user.repository.UserRepository;
 import liaison.groble.domain.user.repository.UserWithdrawalHistoryRepository;
 import liaison.groble.domain.user.repository.VerifiedEmailRepository;
+import liaison.groble.domain.user.service.UserStatusService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -72,84 +71,51 @@ public class AuthServiceImpl implements AuthService {
   @Override
   @Transactional
   public TokenDto signUp(SignUpDto signUpDto) {
-    UserType userType;
-    try {
-      userType = UserType.valueOf(signUpDto.getUserType().toUpperCase());
-    } catch (IllegalArgumentException | NullPointerException e) {
-      throw new IllegalArgumentException("유효하지 않은 사용자 유형입니다: " + signUpDto.getUserType());
-    }
-
-    // 중복 검사
-    if (integratedAccountRepository.existsByIntegratedAccountEmail(signUpDto.getEmail())) {
-      throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
-    }
-
-    if (userRepository.existsByNickname(signUpDto.getNickname())) {
-      throw new IllegalArgumentException("이미 사용 중인 닉네임입니다.");
-    }
-
-    if (!verificationCodePort.validateVerifiedFlag(signUpDto.getEmail())) {
-      throw new IllegalArgumentException("이메일 인증이 완료되지 않았습니다.");
-    }
-
-    // 비밀번호 암호화
+    UserType userType = validateAndParseUserType(signUpDto.getUserType());
+    validateUniqueConstraints(signUpDto.getEmail(), signUpDto.getNickname());
+    validateEmailVerification(signUpDto.getEmail());
+    // 2. 비밀번호 암호화
     String encodedPassword = securityPort.encodePassword(signUpDto.getPassword());
 
-    // 공통 객체 선언
-    IntegratedAccount integratedAccount;
+    // 3. 사용자 생성 (팩토리 패턴 활용)
     User user;
-
-    // 통합 계정 생성
     if (userType == UserType.SELLER) {
-      integratedAccount =
-          IntegratedAccount.createSellerAccount(
+      user =
+          UserFactory.createSellerUser(
               signUpDto.getEmail(),
               encodedPassword,
               signUpDto.getNickname(),
               userType,
               signUpDto.getPhoneNumber());
     } else {
-      integratedAccount =
-          IntegratedAccount.createAccount(
+      user =
+          UserFactory.createIntegratedUser(
               signUpDto.getEmail(), encodedPassword, signUpDto.getNickname(), userType);
     }
 
-    user = integratedAccount.getUser();
+    // 4. 기본 역할 추가
+    addDefaultRole(user);
 
-    // 기본 역할 설정
-    Role userRole =
-        roleRepository
-            .findByName("ROLE_USER")
-            .orElseThrow(() -> new RuntimeException("기본 역할(ROLE_USER)을 찾을 수 없습니다."));
-    user.addRole(userRole);
+    // 5. 사용자 상태 활성화 (도메인 서비스 활용)
+    UserStatusService userStatusService = new UserStatusService();
+    userStatusService.activate(user);
 
-    // 상태 활성화
-    user.updateStatus(UserStatus.ACTIVE);
-
-    // 저장
+    // 6. 사용자 저장
     User savedUser = userRepository.save(user);
 
-    // 알림
-    SystemDetails systemDetails =
-        SystemDetails.welcomeGroble(savedUser.getNickname(), "그로블에 오신 것을 환영합니다!");
+    // 7. 환영 알림 생성 및 저장
+    createWelcomeNotification(savedUser);
 
-    notificationRepository.save(
-        notificationMapper.toNotification(
-            savedUser.getId(),
-            NotificationType.SYSTEM,
-            SubNotificationType.WELCOME_GROBLE,
-            systemDetails));
-
-    // 토큰 발급
+    // 8. 토큰 발급
     TokenDto tokenDto = issueTokens(savedUser);
 
-    // 리프레시 토큰 저장
+    // 9. 리프레시 토큰 저장
     savedUser.updateRefreshToken(
         tokenDto.getRefreshToken(),
         securityPort.getRefreshTokenExpirationTime(tokenDto.getRefreshToken()));
     userRepository.save(savedUser);
 
-    // 인증 플래그 제거
+    // 10. 인증 플래그 제거
     verificationCodePort.removeVerifiedFlag(signUpDto.getEmail());
 
     return tokenDto;
@@ -159,12 +125,7 @@ public class AuthServiceImpl implements AuthService {
   @Transactional
   public TokenDto socialSignUp(Long userId, SocialSignUpDto dto) {
     // 1. userType 파싱
-    UserType userType;
-    try {
-      userType = UserType.valueOf(dto.getUserType().toUpperCase());
-    } catch (IllegalArgumentException | NullPointerException e) {
-      throw new IllegalArgumentException("유효하지 않은 사용자 유형입니다: " + dto.getUserType());
-    }
+    UserType userType = validateAndParseUserType(dto.getUserType());
 
     // 2. SELLER라면 phoneNumber 필수
     if (userType == UserType.SELLER
@@ -187,28 +148,19 @@ public class AuthServiceImpl implements AuthService {
       throw new IllegalStateException("소셜 계정이 아닌 사용자입니다.");
     }
 
+    UserStatusService userStatusService = new UserStatusService();
+
     // 5. 사용자 정보 업데이트
-    user.updateNickname(dto.getNickname());
+    user.getUserProfile().updateNickname(dto.getNickname());
     user.updateLastUserType(userType);
-    user.updateStatus(UserStatus.ACTIVE);
-    user.updatePhoneNumber(dto.getPhoneNumber());
+    userStatusService.activate(user);
+    user.getUserProfile().updatePhoneNumber(dto.getPhoneNumber());
 
     // 6. 기본 권한 부여
-    Role userRole =
-        roleRepository
-            .findByName("ROLE_USER")
-            .orElseThrow(() -> new RuntimeException("기본 역할(ROLE_USER)을 찾을 수 없습니다."));
-    user.addRole(userRole);
+    addDefaultRole(user);
 
-    // 7. 환영 알림 발송
-    SystemDetails systemDetails =
-        SystemDetails.welcomeGroble(user.getNickname(), "그로블에 오신 것을 환영합니다!");
-    notificationRepository.save(
-        notificationMapper.toNotification(
-            user.getId(),
-            NotificationType.SYSTEM,
-            SubNotificationType.WELCOME_GROBLE,
-            systemDetails));
+    // 7. 사용자 저장
+    createWelcomeNotification(user);
 
     // 8. 토큰 발급 및 저장
     TokenDto tokenDto = issueTokens(user);
@@ -217,51 +169,6 @@ public class AuthServiceImpl implements AuthService {
         securityPort.getRefreshTokenExpirationTime(tokenDto.getRefreshToken()));
 
     userRepository.save(user);
-    return tokenDto;
-  }
-
-  @Override
-  @Transactional
-  public TokenDto signUp(DeprecatedSignUpDto deprecatedSignUpDto) {
-    // 통합 계정 이메일 중복 검사
-    if (integratedAccountRepository.existsByIntegratedAccountEmail(
-        deprecatedSignUpDto.getEmail())) {
-      throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
-    }
-
-    VerifiedEmail verifiedEmail =
-        verifiedEmailRepository
-            .findByEmail(deprecatedSignUpDto.getEmail())
-            .orElseThrow(() -> new IllegalArgumentException("인증 완료되지 않은 이메일입니다."));
-
-    // 비밀번호 암호화
-    String encodedPassword = securityPort.encodePassword(deprecatedSignUpDto.getPassword());
-
-    // IntegratedAccount 생성 (내부적으로 User 객체 생성 및 연결)
-    IntegratedAccount integratedAccount =
-        IntegratedAccount.createAccount(
-            verifiedEmail.getEmail(), encodedPassword, "nickname", UserType.BUYER);
-
-    User user = integratedAccount.getUser();
-
-    // 기본 사용자 역할 추가
-    Role userRole =
-        roleRepository
-            .findByName("ROLE_USER")
-            .orElseThrow(() -> new RuntimeException("기본 역할(ROLE_USER)을 찾을 수 없습니다."));
-    user.addRole(userRole);
-    // 사용자 상태 활성화 설정
-    user.updateStatus(UserStatus.ACTIVE);
-    // 사용자 저장 (CascadeType.ALL로 IntegratedAccount도 함께 저장됨)
-    User savedUser = userRepository.save(user);
-
-    TokenDto tokenDto = issueTokens(savedUser);
-
-    savedUser.updateRefreshToken(
-        tokenDto.getRefreshToken(),
-        securityPort.getRefreshTokenExpirationTime(tokenDto.getRefreshToken()));
-    userRepository.save(savedUser);
-    verifiedEmailRepository.deleteByEmail(verifiedEmail.getEmail());
     return tokenDto;
   }
 
@@ -280,14 +187,18 @@ public class AuthServiceImpl implements AuthService {
     }
 
     User user = account.getUser();
+
     // 사용자 상태 확인 (로그인 가능 상태인지)
-    if (!user.isLoginable()) {
-      throw new IllegalArgumentException("로그인할 수 없는 계정 상태입니다: " + user.getStatus());
+    if (!user.getUserStatusInfo().isLoginable()) {
+      throw new IllegalArgumentException(
+          "로그인할 수 없는 계정 상태입니다: " + user.getUserStatusInfo().getStatus());
     }
 
     // 로그인 시간 업데이트
     user.updateLoginTime();
     userRepository.save(user);
+
+    log.info("로그인 성공: {}", user.getEmail());
 
     log.info("로그인 성공: {}", user.getEmail());
 
@@ -526,8 +437,8 @@ public class AuthServiceImpl implements AuthService {
     String newNick = (nickname == null) ? null : nickname.strip();
 
     // 3) 기존 닉네임과 같으면 바로 반환
-    if (Objects.equals(user.getNickname(), newNick)) {
-      return user.getNickname();
+    if (Objects.equals(user.getUserProfile().getNickname(), newNick)) {
+      return user.getUserProfile().getNickname();
     }
 
     // 4) 중복 검사 (새 닉네임이 null 이면 중복 검사 생략)
@@ -536,7 +447,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     // 5) 엔티티에 반영
-    user.updateNickname(newNick);
+    user.getUserProfile().updateNickname(newNick);
 
     // 6) DB 최종 유니크 제약 검사
     try {
@@ -545,7 +456,7 @@ public class AuthServiceImpl implements AuthService {
       throw new DuplicateNicknameException("이미 사용 중인 닉네임입니다.");
     }
 
-    return user.getNickname();
+    return user.getUserProfile().getNickname();
   }
 
   /** 닉네임 중복 확인 */
@@ -602,7 +513,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     // 3. 전화번호 업데이트
-    user.updatePhoneNumber(phoneNumberDto.getPhoneNumber());
+    user.getUserProfile().updatePhoneNumber(phoneNumberDto.getPhoneNumber());
 
     // 4. 저장
     userRepository.save(user);
@@ -612,5 +523,50 @@ public class AuthServiceImpl implements AuthService {
     if (integratedAccountRepository.existsByIntegratedAccountEmail(email)) {
       throw new EmailAlreadyExistsException();
     }
+  }
+
+  // 보조 메서드들: 관심사 분리로 가독성 향상
+  private UserType validateAndParseUserType(String userTypeStr) {
+    try {
+      return UserType.valueOf(userTypeStr.toUpperCase());
+    } catch (IllegalArgumentException | NullPointerException e) {
+      throw new IllegalArgumentException("유효하지 않은 사용자 유형입니다: " + userTypeStr);
+    }
+  }
+
+  private void validateUniqueConstraints(String email, String nickname) {
+    if (integratedAccountRepository.existsByIntegratedAccountEmail(email)) {
+      throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
+    }
+
+    if (userRepository.existsByNickname(nickname)) {
+      throw new IllegalArgumentException("이미 사용 중인 닉네임입니다.");
+    }
+  }
+
+  private void validateEmailVerification(String email) {
+    if (!verificationCodePort.validateVerifiedFlag(email)) {
+      throw new IllegalArgumentException("이메일 인증이 완료되지 않았습니다.");
+    }
+  }
+
+  private void addDefaultRole(User user) {
+    Role userRole =
+        roleRepository
+            .findByName("ROLE_USER")
+            .orElseThrow(() -> new RuntimeException("기본 역할(ROLE_USER)을 찾을 수 없습니다."));
+    user.addRole(userRole);
+  }
+
+  private void createWelcomeNotification(User savedUser) {
+    SystemDetails systemDetails =
+        SystemDetails.welcomeGroble(savedUser.getUserProfile().getNickname(), "그로블에 오신 것을 환영합니다!");
+
+    notificationRepository.save(
+        notificationMapper.toNotification(
+            savedUser.getId(),
+            NotificationType.SYSTEM,
+            SubNotificationType.WELCOME_GROBLE,
+            systemDetails));
   }
 }

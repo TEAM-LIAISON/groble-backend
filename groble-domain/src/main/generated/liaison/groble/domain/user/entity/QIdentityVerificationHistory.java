@@ -70,8 +70,11 @@ public class QIdentityVerificationHistory extends EntityPathBase<IdentityVerific
 
   public final StringPath userAgent = createString("userAgent");
 
-  public final EnumPath<IdentityVerification.VerificationMethod> verificationMethod =
-      createEnum("verificationMethod", IdentityVerification.VerificationMethod.class);
+  public final EnumPath<liaison.groble.domain.user.vo.IdentityVerification.VerificationMethod>
+      verificationMethod =
+          createEnum(
+              "verificationMethod",
+              liaison.groble.domain.user.vo.IdentityVerification.VerificationMethod.class);
 
   public QIdentityVerificationHistory(String variable) {
     this(IdentityVerificationHistory.class, forVariable(variable), INITS);

@@ -111,20 +111,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
       if (refreshTokenOpt.isPresent()) {
         refreshToken = refreshTokenOpt.get().getValue();
-        log.debug("리프레시 토큰 발견: {}", maskToken(refreshToken));
 
         try {
           jwtTokenProvider.parseClaimsJws(refreshToken, TokenType.REFRESH);
-          log.debug("리프레시 토큰 유효함");
           validRefreshToken = true;
         } catch (ExpiredJwtException e) {
-          log.info("리프레시 토큰 만료됨, 모든 인증 쿠키 삭제");
           deleteAuthCookies(request, response);
         } catch (JwtException e) {
           log.warn("유효하지 않은 리프레시 토큰: {}", e.getMessage());
         }
-      } else {
-        log.debug("리프레시 토큰 쿠키 없음");
       }
 
       // 3) 액세스 토큰 처리
@@ -132,18 +127,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         log.debug("액세스 토큰 발견: {}", maskToken(accessJwt));
         try {
           jwtTokenProvider.parseClaimsJws(accessJwt, TokenType.ACCESS);
-          log.debug("액세스 토큰 유효함, 인증 진행...");
           authenticate(accessJwt, request);
         } catch (ExpiredJwtException exp) {
-          log.debug("액세스 토큰 만료됨, 재발급 시도");
           handleTokenRefresh(refreshToken, validRefreshToken, response, request);
         } catch (JwtException | IllegalArgumentException bad) {
-          log.debug("유효하지 않은 액세스 토큰: {}", bad.getMessage());
           response.addHeader("X-Token-Refresh-Status", "invalid-access");
 
           // 액세스 토큰이 유효하지 않지만 리프레시 토큰이 유효한 경우 새 액세스 토큰 발급
           if (validRefreshToken) {
-            log.debug("유효하지 않은 액세스 토큰이지만 유효한 리프레시 토큰이 있어 재발급 시도");
             handleTokenRefresh(refreshToken, true, response, request);
           }
         }
@@ -159,9 +150,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
       // 4) 처리 완료 후 상태 로깅
       var auth = SecurityContextHolder.getContext().getAuthentication();
-      if (auth != null && auth.isAuthenticated()) {
-        log.debug("인증 성공: {}", auth.getName());
-      }
 
     } catch (Exception e) {
       log.error("JWT 필터 처리 중 예외 발생", e);

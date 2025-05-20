@@ -23,6 +23,7 @@ import liaison.groble.domain.user.entity.SocialAccount;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.enums.ProviderType;
 import liaison.groble.domain.user.enums.UserStatus;
+import liaison.groble.domain.user.factory.UserFactory;
 import liaison.groble.domain.user.repository.SocialAccountRepository;
 import liaison.groble.domain.user.repository.UserRepository;
 import liaison.groble.security.oauth2.exception.OAuth2AuthenticationProcessingException;
@@ -81,23 +82,34 @@ public class OAuth2AuthService extends DefaultOAuth2UserService {
    */
   @Transactional
   public User registerNewUser(OAuth2UserInfo userInfo, ProviderType providerType) {
-    // 새 사용자 생성
-    SocialAccount socialAccount =
-        SocialAccount.createAccount(userInfo.getId(), providerType, userInfo.getEmail());
+    // Use the UserFactory to create a social user
+    // This is better than direct SocialAccount.createAccount which might create coupling issues
+    User user =
+        UserFactory.createSocialUser(
+            providerType.name(), // Provider name (GOOGLE, KAKAO, NAVER)
+            userInfo.getId(), // Provider-specific ID
+            userInfo.getEmail(), // Email from the provider
+            userInfo.getName() // Name from the provider (or null if not available)
+            );
 
-    User savedUser = socialAccount.getUser();
+    // Set profile image if available from social provider
+    if (StringUtils.hasText(userInfo.getImageUrl())) {
+      user.getUserProfile().updateProfileImageUrl(userInfo.getImageUrl());
+    }
 
-    // 기본 역할 설정 (ROLE_USER)
+    // Add default role (ROLE_USER)
     Role userRole =
         roleRepository
             .findByName(RoleType.ROLE_USER.toString())
             .orElseThrow(() -> new RuntimeException("기본 역할(ROLE_USER)을 찾을 수 없습니다."));
-    savedUser.addRole(userRole);
+    user.addRole(userRole);
 
-    // 소셜 로그인은 즉시 활성화 상태로 설정
-    savedUser.updateStatus(UserStatus.ACTIVE);
+    // Social login accounts are immediately activated
+    // Note: UserFactory might have already set this, but we ensure it here
+    user.getUserStatusInfo().updateStatus(UserStatus.ACTIVE);
 
-    return userRepository.save(savedUser);
+    // Save the user to the database
+    return userRepository.save(user);
   }
 
   /**

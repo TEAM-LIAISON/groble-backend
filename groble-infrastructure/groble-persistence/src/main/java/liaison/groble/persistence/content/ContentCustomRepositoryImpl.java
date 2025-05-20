@@ -51,7 +51,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     qContent.createdAt.as("createdAt"),
                     qContent.title.as("title"),
                     qContent.thumbnailUrl.as("thumbnailUrl"),
-                    qUser.nickname.as("sellerName"),
+                    qUser.userProfile.nickname.as("sellerName"),
                     qContent.lowestPrice.as("lowestPrice"),
                     qContent.status.stringValue().as("status")))
             .from(qContent)
@@ -75,7 +75,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                 qContent.createdAt.as("createdAt"),
                 qContent.title.as("title"),
                 qContent.thumbnailUrl.as("thumbnailUrl"),
-                qUser.nickname.as("sellerName"),
+                qUser.userProfile.nickname.as("sellerName"),
                 qContent.status.stringValue().as("status")))
         .from(qContent)
         .where(qContent.user.id.eq(userId))
@@ -98,7 +98,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                 qContent.createdAt.as("createdAt"),
                 qContent.title.as("title"),
                 qContent.thumbnailUrl.as("thumbnailUrl"),
-                qUser.nickname.as("sellerName"),
+                qUser.userProfile.nickname.as("sellerName"),
                 qContent.lowestPrice.as("lowestPrice"),
                 qContent.status.stringValue().as("status")))
         .from(qContent)
@@ -142,7 +142,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     qContent.createdAt.as("createdAt"),
                     qContent.title.as("title"),
                     qContent.thumbnailUrl.as("thumbnailUrl"),
-                    qUser.nickname.as("sellerName"),
+                    qUser.userProfile.nickname.as("sellerName"),
                     qContent.status.stringValue().as("status")))
             .from(qContent)
             .leftJoin(qContent.user, qUser)
@@ -211,7 +211,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     qContent.createdAt.as("createdAt"),
                     qContent.title.as("title"),
                     qContent.thumbnailUrl.as("thumbnailUrl"),
-                    qUser.nickname.as("sellerName"),
+                    qUser.userProfile.nickname.as("sellerName"),
                     qContent.lowestPrice.as("lowestPrice"),
                     qContent.status.stringValue().as("status")))
             .from(qContent)
@@ -256,6 +256,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
       Long lastContentId, int size, ContentType contentType) {
     QContent qContent = QContent.content;
     QUser qUser = QUser.user;
+
     // 기본 조건 설정
     BooleanExpression conditions = qContent.contentType.eq(contentType);
     // 커서 조건 추가
@@ -276,7 +277,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     qContent.createdAt.as("createdAt"),
                     qContent.title.as("title"),
                     qContent.thumbnailUrl.as("thumbnailUrl"),
-                    qUser.nickname.as("sellerName"),
+                    qUser.userProfile.nickname.as("sellerName"),
                     qContent.status.stringValue().as("status")))
             .from(qContent)
             .leftJoin(qContent.user, qUser)
@@ -358,7 +359,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     q.createdAt.as("createdAt"),
                     q.title.as("title"),
                     q.thumbnailUrl.as("thumbnailUrl"),
-                    u.nickname.as("sellerName"),
+                    u.userProfile.nickname.as("sellerName"),
                     q.lowestPrice.as("lowestPrice"),
                     q.status.stringValue().as("status")))
             .from(q)
@@ -403,7 +404,6 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
       List<String> categoryCodes, ContentType type, Pageable pageable) {
     QContent qContent = QContent.content;
     QUser qUser = QUser.user;
-
     // 1) 기본 조건
     BooleanExpression cond =
         qContent
@@ -422,7 +422,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     qContent.createdAt.as("createdAt"),
                     qContent.title.as("title"),
                     qContent.thumbnailUrl.as("thumbnailUrl"),
-                    qUser.nickname.as("sellerName"),
+                    qUser.userProfile.nickname.as("sellerName"),
                     qContent.lowestPrice.as("lowestPrice"),
                     qContent.status.stringValue().as("status")))
             .from(qContent)

@@ -2,9 +2,9 @@ package liaison.groble.application.user.service;
 
 import java.util.Map;
 
-import liaison.groble.domain.user.entity.IdentityVerification;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.enums.IdentityVerificationStatus;
+import liaison.groble.domain.user.vo.IdentityVerification;
 
 public interface PortOneIdentityVerificationService {
 

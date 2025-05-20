@@ -7,6 +7,7 @@ import jakarta.persistence.*;
 import liaison.groble.domain.common.entity.BaseEntity;
 import liaison.groble.domain.common.utils.MapToJsonConverter;
 import liaison.groble.domain.user.enums.IdentityVerificationStatus;
+import liaison.groble.domain.user.vo.IdentityVerification;
 
 import lombok.AccessLevel;
 import lombok.Builder;

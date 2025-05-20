@@ -251,6 +251,29 @@ public class CookieUtils {
   }
 
   /**
+   * 도메인을 지정하여 쿠키 삭제 (편의성 메서드)
+   *
+   * @param request HTTP 요청
+   * @param response HTTP 응답
+   * @param name 삭제할 쿠키 이름
+   * @param domain 쿠키 도메인 (null이면 현재 도메인)
+   */
+  public static void deleteCookieWithDomain(
+      HttpServletRequest request, HttpServletResponse response, String name, String domain) {
+
+    // 기본 설정값 사용
+    deleteCookie(
+        request,
+        response,
+        name,
+        DEFAULT_PATH,
+        domain,
+        DEFAULT_SAME_SITE,
+        DEFAULT_HTTP_ONLY,
+        isSecureEnvironment());
+  }
+
+  /**
    * 직렬화된 객체를 쿠키에 저장
    *
    * @param response HTTP 응답
