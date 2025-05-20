@@ -95,10 +95,11 @@ public class User extends BaseTimeEntity {
   @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
   private SocialAccount socialAccount;
 
-  @Builder.Default // 이 애노테이션 추가
+  @Builder.Default
   @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
   private Set<UserRole> userRoles = new HashSet<>();
 
+  @Builder.Default
   @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
   private Set<UserTerms> termsAgreements = new HashSet<>();
 

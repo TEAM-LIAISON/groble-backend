@@ -1,5 +1,6 @@
 package liaison.groble.domain.terms.repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,4 +26,6 @@ public interface TermsRepository {
 
   /** 현재 유효한(effectiveTo가 null인) 모든 최신 약관 조회 회원가입 및 약관 동의 처리 시 사용 */
   List<Terms> findAllLatestTerms();
+
+  List<Terms> findAllLatestTerms(LocalDateTime now);
 }

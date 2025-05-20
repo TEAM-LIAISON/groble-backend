@@ -77,6 +77,7 @@ public class AuthServiceImpl implements AuthService {
   private final NotificationMapper notificationMapper;
   private final RequestUtil requestUtil;
   private final TermsRepository termsRepository;
+  private final UserTermsService userTermsService;
 
   @Override
   @Transactional
@@ -115,7 +116,7 @@ public class AuthServiceImpl implements AuthService {
     UserStatusService userStatusService = new UserStatusService();
     userStatusService.activate(user);
 
-    // 약관 동의 처리
+    // 5.1. 약관 동의 처리
     processTermsAgreements(user, agreedTermsTypes);
 
     // 6. 사용자 저장
@@ -648,25 +649,50 @@ public class AuthServiceImpl implements AuthService {
    * @param agreedTermsTypes 동의한 약관 유형 리스트
    */
   private void processTermsAgreements(User user, List<TermsType> agreedTermsTypes) {
-    UserTermsService userTermsService = new UserTermsService();
+    log.info("약관 동의 처리 시작 - 사용자 ID: {}, 동의한 약관 수: {}", user.getId(), agreedTermsTypes.size());
+
     // 현재 IP 주소와 User-Agent 정보 가져오기
     String clientIp = requestUtil.getClientIp();
     String userAgent = requestUtil.getUserAgent();
+    log.debug("클라이언트 정보 - IP: {}, UserAgent: {}", clientIp, userAgent);
 
-    // 현재 유효한 최신 약관 조회
-    Map<TermsType, Terms> latestTermsMap =
-        termsRepository.findAllLatestTerms().stream()
-            .collect(Collectors.toMap(Terms::getType, terms -> terms));
+    try {
+      // 현재 유효한 최신 약관 조회
+      List<Terms> latestTerms = termsRepository.findAllLatestTerms(LocalDateTime.now());
+      log.info("최신 약관 조회 완료 - 약관 수: {}", latestTerms.size());
 
-    // 약관 동의 처리
-    for (TermsType termsType : TermsType.values()) {
-      Terms terms = latestTermsMap.get(termsType);
-      if (terms != null) {
-        // 동의한 약관에만 동의 정보 추가
-        if (agreedTermsTypes.contains(termsType)) {
-          userTermsService.agreeToTerms(user, terms, clientIp, userAgent);
+      Map<TermsType, Terms> latestTermsMap =
+          latestTerms.stream().collect(Collectors.toMap(Terms::getType, terms -> terms));
+
+      log.debug(
+          "약관 유형별 매핑 완료: {}",
+          latestTermsMap.keySet().stream().map(Enum::name).collect(Collectors.joining(", ")));
+
+      // 약관 동의 처리
+      for (TermsType termsType : TermsType.values()) {
+        Terms terms = latestTermsMap.get(termsType);
+        if (terms != null) {
+          boolean agreed = agreedTermsTypes.contains(termsType);
+          log.debug("약관 처리 - 유형: {}, 동의 여부: {}, 약관ID: {}", termsType, agreed, terms.getId());
+
+          // 동의한 약관에만 동의 정보 추가
+          if (agreed) {
+            userTermsService.agreeToTerms(user, terms, clientIp, userAgent);
+            log.debug("약관 {} 동의 정보 추가 완료", termsType);
+          }
+        } else {
+          log.warn("약관 유형 {}에 해당하는 최신 약관을 찾을 수 없습니다", termsType);
         }
       }
+
+      // 약관 동의 정보가 사용자 객체에 제대로 추가되었는지 확인
+      log.info("사용자의 약관 동의 정보 수: {}", user.getTermsAgreements().size());
+
+    } catch (Exception e) {
+      log.error("약관 동의 처리 중 오류 발생", e);
+      throw e;
     }
+
+    log.info("약관 동의 처리 완료");
   }
 }

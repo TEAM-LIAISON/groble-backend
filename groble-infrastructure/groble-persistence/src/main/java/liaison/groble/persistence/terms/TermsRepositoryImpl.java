@@ -64,4 +64,9 @@ public class TermsRepositoryImpl implements TermsRepository {
   public List<Terms> findAllLatestTerms() {
     return jpaTermsRepository.findAllLatestTerms();
   }
+
+  @Override
+  public List<Terms> findAllLatestTerms(LocalDateTime now) {
+    return jpaTermsRepository.findAllLatestTerms(now);
+  }
 }
