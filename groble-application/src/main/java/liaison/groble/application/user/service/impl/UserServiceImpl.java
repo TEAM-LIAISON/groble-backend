@@ -153,6 +153,14 @@ public class UserServiceImpl implements UserService {
   public UserMyPageSummaryDto getUserMyPageSummary(Long userId) {
     User user = userReader.getUserById(userId);
 
+    var profile = user.getUserProfile();
+    String nickname =
+        (profile != null && profile.getNickname() != null) ? profile.getNickname() : null; // 기본 닉네임
+    String profileImageUrl =
+        (profile != null && profile.getProfileImageUrl() != null)
+            ? profile.getProfileImageUrl()
+            : null; // 기본 이미지
+
     // sellerInfo 가 없거나, isSeller=false 이면 디폴트로 PENDING 처리
     String verificationStatusName = "PENDING";
     String verificationStatusDisplayName = "인증 필요";
@@ -164,8 +172,8 @@ public class UserServiceImpl implements UserService {
     }
 
     return UserMyPageSummaryDto.builder()
-        .nickname(user.getUserProfile().getNickname())
-        .profileImageUrl(user.getUserProfile().getProfileImageUrl())
+        .nickname(nickname)
+        .profileImageUrl(profileImageUrl)
         .userTypeName(user.getLastUserType().name())
         .canSwitchToSeller(user.isSeller())
         .alreadyRegisteredAsSeller(user.isSeller())
@@ -239,15 +247,22 @@ public class UserServiceImpl implements UserService {
 
   @Override
   public UserHeaderDto getUserHeaderInform(Long userId) {
-    User user =
-        userRepository
-            .findById(userId)
-            .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
+    User user = userReader.getUserById(userId);
+    // 1) null-safe UserProfile 꺼내기
+    var profile = user.getUserProfile();
+    String nickname =
+        (profile != null && profile.getNickname() != null)
+            ? profile.getNickname()
+            : "닉네임 없음"; // 기본 닉네임
+    String profileImageUrl =
+        (profile != null && profile.getProfileImageUrl() != null)
+            ? profile.getProfileImageUrl()
+            : null; // 기본 이미지
 
     return UserHeaderDto.builder()
         .isLogin(true)
-        .nickname(user.getUserProfile().getNickname())
-        .profileImageUrl(user.getUserProfile().getProfileImageUrl())
+        .nickname(nickname)
+        .profileImageUrl(profileImageUrl)
         .canSwitchToSeller(user.isSeller())
         .unreadNotificationCount(0) // TODO: 알림 개수 조회 로직 추가
         .alreadyRegisteredAsSeller(user.isSeller())

@@ -89,7 +89,7 @@ public class OAuth2AuthService extends DefaultOAuth2UserService {
             providerType.name(), // Provider name (GOOGLE, KAKAO, NAVER)
             userInfo.getId(), // Provider-specific ID
             userInfo.getEmail(), // Email from the provider
-            userInfo.getName() // Name from the provider (or null if not available)
+            null // Name from the provider (or null if not available)
             );
 
     // Set profile image if available from social provider
