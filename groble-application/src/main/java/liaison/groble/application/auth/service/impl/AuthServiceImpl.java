@@ -165,6 +165,13 @@ public class AuthServiceImpl implements AuthService {
     // 5. 사용자 정보 업데이트
     user.updateNickname(dto.getNickname());
     user.updateLastUserType(userType);
+    // SELLER 타입이면 isSeller 플래그도 설정
+    if (userType == UserType.SELLER) {
+      user.setSeller(true);
+    } else {
+      user.setSeller(false); // BUYER인 경우 명시적으로 false 설정
+    }
+
     userStatusService.activate(user);
     user.updatePhoneNumber(dto.getPhoneNumber());
 
