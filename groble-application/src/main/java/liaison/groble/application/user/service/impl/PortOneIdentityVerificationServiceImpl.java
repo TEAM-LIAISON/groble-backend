@@ -51,8 +51,8 @@ public class PortOneIdentityVerificationServiceImpl implements PortOneIdentityVe
     // 본인인증 요청 데이터 구성
     Map<String, Object> identityVerificationRequest = new HashMap<>();
     identityVerificationRequest.put("orderId", requestId);
-    identityVerificationRequest.put("name", user.getUserProfile().getNickname());
-    identityVerificationRequest.put("phoneNumber", user.getUserProfile().getPhoneNumber());
+    identityVerificationRequest.put("name", user.getNickname());
+    identityVerificationRequest.put("phoneNumber", user.getPhoneNumber());
 
     // 인증 방법에 따른 PG 및 방법 설정
     Map<String, Object> identityMethodOptions = new HashMap<>();

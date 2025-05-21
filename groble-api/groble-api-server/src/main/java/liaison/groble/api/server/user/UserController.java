@@ -132,6 +132,7 @@ public class UserController {
   }
 
   /** 사용자 프로필 이미지 업로드 */
+  // 프로필 이미지 추가 업로드 및 수정 진행
   @UploadUserProfileImage
   @PostMapping(value = "/users/me/profile-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<GrobleResponse<?>> uploadProfileImage(

@@ -58,9 +58,9 @@ public class OrderService {
 
     Purchaser purchaser =
         Purchaser.builder()
-            .name(user.getUserProfile().getNickname())
+            .name(user.getNickname())
             .email(user.getEmail())
-            .phone(user.getUserProfile().getPhoneNumber())
+            .phone(user.getPhoneNumber())
             .build();
 
     Order order =

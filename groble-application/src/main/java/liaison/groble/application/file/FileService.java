@@ -103,9 +103,8 @@ public class FileService {
   /** 사용자 프로필 이미지를 업데이트합니다. */
   private void updateUserProfileImage(Long userId, FileInfo fileInfo) {
     User user = userReader.getUserById(userId);
-    if (user.getUserProfile().getProfileImageUrl() != null) {
-      FileInfo oldImageInfo =
-          fileRepository.findByFileUrl(user.getUserProfile().getProfileImageUrl());
+    if (user.getProfileImageUrl() != null) {
+      FileInfo oldImageInfo = fileRepository.findByFileUrl(user.getProfileImageUrl());
       if (oldImageInfo != null) {
         fileStorageService.deleteFile(oldImageInfo.getStoragePath());
         fileRepository.delete(oldImageInfo);

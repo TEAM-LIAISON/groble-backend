@@ -272,4 +272,17 @@ public class User extends BaseTimeEntity {
       termsAgreements.add(newAgreement);
     }
   }
+
+  // 안전한 편의성 메서드
+  public String getNickname() {
+    return userProfile != null ? userProfile.getNickname() : null;
+  }
+
+  public String getProfileImageUrl() {
+    return userProfile != null ? userProfile.getProfileImageUrl() : null;
+  }
+
+  public String getPhoneNumber() {
+    return userProfile != null ? userProfile.getPhoneNumber() : null;
+  }
 }

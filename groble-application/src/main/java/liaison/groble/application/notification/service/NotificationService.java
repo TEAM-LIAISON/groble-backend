@@ -124,7 +124,7 @@ public class NotificationService {
   @Transactional
   public void sendWelcomeNotification(User user) {
     SystemDetails systemDetails =
-        SystemDetails.welcomeGroble(user.getUserProfile().getNickname(), "그로블에 오신 것을 환영합니다!");
+        SystemDetails.welcomeGroble(user.getNickname(), "그로블에 오신 것을 환영합니다!");
 
     Notification notification =
         notificationMapper.toNotification(

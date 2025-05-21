@@ -452,8 +452,8 @@ public class AuthServiceImpl implements AuthService {
     String newNick = (nickname == null) ? null : nickname.strip();
 
     // 3) 기존 닉네임과 같으면 바로 반환
-    if (Objects.equals(user.getUserProfile().getNickname(), newNick)) {
-      return user.getUserProfile().getNickname();
+    if (Objects.equals(user.getNickname(), newNick)) {
+      return user.getNickname();
     }
 
     // 4) 중복 검사 (새 닉네임이 null 이면 중복 검사 생략)
@@ -471,7 +471,7 @@ public class AuthServiceImpl implements AuthService {
       throw new DuplicateNicknameException("이미 사용 중인 닉네임입니다.");
     }
 
-    return user.getUserProfile().getNickname();
+    return user.getNickname();
   }
 
   /** 닉네임 중복 확인 */

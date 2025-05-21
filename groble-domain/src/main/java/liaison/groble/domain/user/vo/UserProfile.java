@@ -2,6 +2,7 @@ package liaison.groble.domain.user.vo;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
+import jakarta.persistence.Lob;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -18,6 +19,7 @@ public class UserProfile {
   @Column(name = "nickname", length = 50, unique = true)
   private String nickname;
 
+  @Lob
   @Column(name = "profile_image_url", columnDefinition = "TEXT")
   private String profileImageUrl;
 
