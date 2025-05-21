@@ -41,6 +41,7 @@ import liaison.groble.domain.notification.enums.NotificationType;
 import liaison.groble.domain.notification.enums.SubNotificationType;
 import liaison.groble.domain.notification.repository.NotificationRepository;
 import liaison.groble.domain.user.entity.User;
+import liaison.groble.domain.user.vo.UserProfile;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -197,10 +198,16 @@ public class ContentService {
 
     // User 관련 정보 추출
     User seller = content.getUser();
-    String sellerProfileImageUrl =
-        (seller != null) ? seller.getUserProfile().getProfileImageUrl() : null;
-    String sellerName = (seller != null) ? seller.getUserProfile().getNickname() : null;
+    String sellerProfileImageUrl = null;
+    String sellerName = null;
 
+    if (seller != null) {
+      UserProfile userProfile = seller.getUserProfile();
+      if (userProfile != null) {
+        sellerProfileImageUrl = userProfile.getProfileImageUrl();
+        sellerName = userProfile.getNickname();
+      }
+    }
     return ContentDetailDto.builder()
         .contentId(content.getId())
         .status(safeEnumName(content.getStatus()))
