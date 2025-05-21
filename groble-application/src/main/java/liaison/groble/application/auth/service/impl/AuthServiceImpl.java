@@ -43,6 +43,7 @@ import liaison.groble.domain.user.entity.IntegratedAccount;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.entity.UserWithdrawalHistory;
 import liaison.groble.domain.user.enums.AccountType;
+import liaison.groble.domain.user.enums.SellerVerificationStatus;
 import liaison.groble.domain.user.enums.UserType;
 import liaison.groble.domain.user.enums.WithdrawalReason;
 import liaison.groble.domain.user.factory.UserFactory;
@@ -52,6 +53,7 @@ import liaison.groble.domain.user.repository.UserRepository;
 import liaison.groble.domain.user.repository.UserWithdrawalHistoryRepository;
 import liaison.groble.domain.user.service.UserStatusService;
 import liaison.groble.domain.user.service.UserTermsService;
+import liaison.groble.domain.user.vo.SellerInfo;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -171,6 +173,7 @@ public class AuthServiceImpl implements AuthService {
     } else {
       user.setSeller(false); // BUYER인 경우 명시적으로 false 설정
     }
+    user.setSellerInfo(SellerInfo.ofVerificationStatus(SellerVerificationStatus.PENDING));
 
     userStatusService.activate(user);
     user.updatePhoneNumber(dto.getPhoneNumber());

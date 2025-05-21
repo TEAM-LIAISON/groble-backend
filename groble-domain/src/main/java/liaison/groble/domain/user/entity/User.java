@@ -273,19 +273,22 @@ public class User extends BaseTimeEntity {
     }
   }
 
-  // 안전한 편의성 메서드
+  // 닉네임 조회
   public String getNickname() {
     return userProfile != null ? userProfile.getNickname() : null;
   }
 
+  // 프로필 이미지 URL 조회
   public String getProfileImageUrl() {
     return userProfile != null ? userProfile.getProfileImageUrl() : null;
   }
 
+  // 전화번호 조회
   public String getPhoneNumber() {
     return userProfile != null ? userProfile.getPhoneNumber() : null;
   }
 
+  // 닉네임 업데이트
   public void updateNickname(String nickname) {
     if (userProfile == null) {
       userProfile = UserProfile.builder().build();
@@ -293,6 +296,7 @@ public class User extends BaseTimeEntity {
     userProfile.updateNickname(nickname);
   }
 
+  // 프로필 이미지 URL 업데이트
   public void updateProfileImageUrl(String profileImageUrl) {
     if (userProfile == null) {
       userProfile = UserProfile.builder().build();
@@ -300,6 +304,7 @@ public class User extends BaseTimeEntity {
     userProfile.updateProfileImageUrl(profileImageUrl);
   }
 
+  // 전화번호 업데이트
   public void updatePhoneNumber(String phoneNumber) {
     if (userProfile == null) {
       userProfile = UserProfile.builder().build();
