@@ -29,6 +29,7 @@ public class IdentityVerification {
   @Enumerated(EnumType.STRING)
   private VerificationMethod verificationMethod;
 
+  // 본인 인증 식별 시간
   @Column(name = "verified_at")
   private LocalDateTime verifiedAt;
 

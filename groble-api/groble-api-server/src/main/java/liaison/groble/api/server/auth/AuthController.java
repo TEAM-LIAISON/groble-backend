@@ -118,6 +118,7 @@ public class AuthController {
       HttpServletResponse response) {
     // 1. API DTO → 서비스 DTO 변환
     SocialSignUpDto socialSignUpDto = authDtoMapper.toServiceSocialSignUpDto(request);
+
     // 2. 서비스 호출
     TokenDto tokenDto = authService.socialSignUp(accessor.getUserId(), socialSignUpDto);
 
