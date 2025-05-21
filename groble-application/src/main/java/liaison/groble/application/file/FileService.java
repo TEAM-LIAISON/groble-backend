@@ -111,7 +111,7 @@ public class FileService {
       }
     }
 
-    user.getUserProfile().updateProfileImageUrl(fileInfo.getFileUrl());
+    user.updateProfileImageUrl(fileInfo.getFileUrl());
     userRepository.save(user);
   }
 

@@ -154,10 +154,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     // 4. 사용자 조회 및 검증
-    User user =
-        userRepository
-            .findById(userId)
-            .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
+    User user = userReader.getUserById(userId);
 
     if (user.getAccountType() != AccountType.SOCIAL) {
       throw new IllegalStateException("소셜 계정이 아닌 사용자입니다.");
@@ -166,10 +163,10 @@ public class AuthServiceImpl implements AuthService {
     UserStatusService userStatusService = new UserStatusService();
 
     // 5. 사용자 정보 업데이트
-    user.getUserProfile().updateNickname(dto.getNickname());
+    user.updateNickname(dto.getNickname());
     user.updateLastUserType(userType);
     userStatusService.activate(user);
-    user.getUserProfile().updatePhoneNumber(dto.getPhoneNumber());
+    user.updatePhoneNumber(dto.getPhoneNumber());
 
     // 6. 기본 권한 부여
     addDefaultRole(user);
@@ -462,7 +459,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     // 5) 엔티티에 반영
-    user.getUserProfile().updateNickname(newNick);
+    user.updateNickname(newNick);
 
     // 6) DB 최종 유니크 제약 검사
     try {
@@ -528,7 +525,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     // 3. 전화번호 업데이트
-    user.getUserProfile().updatePhoneNumber(phoneNumberDto.getPhoneNumber());
+    user.updatePhoneNumber(phoneNumberDto.getPhoneNumber());
 
     // 4. 저장
     userRepository.save(user);

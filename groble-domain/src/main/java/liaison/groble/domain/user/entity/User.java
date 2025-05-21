@@ -285,4 +285,25 @@ public class User extends BaseTimeEntity {
   public String getPhoneNumber() {
     return userProfile != null ? userProfile.getPhoneNumber() : null;
   }
+
+  public void updateNickname(String nickname) {
+    if (userProfile == null) {
+      userProfile = UserProfile.builder().build();
+    }
+    userProfile.updateNickname(nickname);
+  }
+
+  public void updateProfileImageUrl(String profileImageUrl) {
+    if (userProfile == null) {
+      userProfile = UserProfile.builder().build();
+    }
+    userProfile.updateProfileImageUrl(profileImageUrl);
+  }
+
+  public void updatePhoneNumber(String phoneNumber) {
+    if (userProfile == null) {
+      userProfile = UserProfile.builder().build();
+    }
+    userProfile.updatePhoneNumber(phoneNumber);
+  }
 }

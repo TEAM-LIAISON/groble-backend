@@ -252,7 +252,7 @@ public class UserServiceImpl implements UserService {
   public void updateProfileImageUrl(Long userId, String profileImageUrl) {
     User user = userReader.getUserById(userId);
 
-    user.getUserProfile().updateProfileImageUrl(profileImageUrl);
+    user.updateProfileImageUrl(profileImageUrl);
     userRepository.save(user);
   }
 }
