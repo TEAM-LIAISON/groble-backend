@@ -92,11 +92,6 @@ public class OAuth2AuthService extends DefaultOAuth2UserService {
             null // Name from the provider (or null if not available)
             );
 
-    // Set profile image if available from social provider
-    if (StringUtils.hasText(userInfo.getImageUrl())) {
-      user.getUserProfile().updateProfileImageUrl(userInfo.getImageUrl());
-    }
-
     // Add default role (ROLE_USER)
     Role userRole =
         roleRepository
