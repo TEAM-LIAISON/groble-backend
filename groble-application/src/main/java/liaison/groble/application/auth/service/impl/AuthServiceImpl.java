@@ -170,10 +170,10 @@ public class AuthServiceImpl implements AuthService {
     // SELLER 타입이면 isSeller 플래그도 설정
     if (userType == UserType.SELLER) {
       user.setSeller(true);
+      user.setSellerInfo(SellerInfo.ofVerificationStatus(SellerVerificationStatus.PENDING));
     } else {
       user.setSeller(false); // BUYER인 경우 명시적으로 false 설정
     }
-    user.setSellerInfo(SellerInfo.ofVerificationStatus(SellerVerificationStatus.PENDING));
 
     userStatusService.activate(user);
     user.updatePhoneNumber(dto.getPhoneNumber());
