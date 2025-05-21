@@ -39,7 +39,7 @@ public class SocialAccount {
   @Column(name = "provider_type", nullable = false)
   private ProviderType providerType;
 
-  @Column(nullable = false, unique = true)
+  @Column(nullable = false)
   private String socialAccountEmail;
 
   @Builder
