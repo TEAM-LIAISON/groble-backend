@@ -245,6 +245,7 @@ public class UserServiceImpl implements UserService {
         .canSwitchToSeller(user.isSeller())
         .unreadNotificationCount(0) // TODO: 알림 개수 조회 로직 추가
         .alreadyRegisteredAsSeller(user.isSeller())
+        .lastUserType(user.getLastUserType().name())
         .build();
   }
 

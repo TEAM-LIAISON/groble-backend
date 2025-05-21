@@ -80,6 +80,7 @@ public class UserDtoMapper {
         .canSwitchToSeller(userHeaderDto.isCanSwitchToSeller())
         .unreadNotificationCount(userHeaderDto.getUnreadNotificationCount())
         .alreadyRegisteredAsSeller(userHeaderDto.isAlreadyRegisteredAsSeller())
+        .lastUserType(userHeaderDto.getLastUserType())
         .build();
   }
 }

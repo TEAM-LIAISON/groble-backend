@@ -57,8 +57,8 @@ public class IntegratedAccount {
     this.integratedAccountEmail = email;
   }
 
+  // IntegratedAccount.java
   public void anonymizeEmail(String anonymizedEmail) {
     this.integratedAccountEmail = anonymizedEmail;
-    this.password = null;
   }
 }

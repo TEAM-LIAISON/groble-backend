@@ -28,4 +28,7 @@ public class UserHeaderResponse {
 
   @Schema(description = "판매자 등록 여부 [사용자의 SELLER 소유 여부 판단]", example = "false")
   private boolean alreadyRegisteredAsSeller;
+
+  @Schema(description = "마지막으로 사용한 사용자 유형", example = "SELLER")
+  private String lastUserType;
 }

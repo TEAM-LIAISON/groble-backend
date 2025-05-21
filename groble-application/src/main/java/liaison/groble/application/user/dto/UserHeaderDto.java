@@ -18,4 +18,5 @@ public class UserHeaderDto {
   private boolean canSwitchToSeller;
   private long unreadNotificationCount;
   private boolean alreadyRegisteredAsSeller;
+  private String lastUserType;
 }
