@@ -25,17 +25,13 @@ import liaison.groble.application.auth.dto.VerifyEmailCodeDto;
 import liaison.groble.application.auth.exception.AuthenticationFailedException;
 import liaison.groble.application.auth.exception.EmailAlreadyExistsException;
 import liaison.groble.application.auth.service.AuthService;
-import liaison.groble.application.notification.mapper.NotificationMapper;
+import liaison.groble.application.notification.service.NotificationService;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.common.exception.DuplicateNicknameException;
 import liaison.groble.common.exception.EntityNotFoundException;
 import liaison.groble.common.port.security.SecurityPort;
 import liaison.groble.common.request.RequestUtil;
 import liaison.groble.common.utils.CodeGenerator;
-import liaison.groble.domain.notification.entity.SystemDetails;
-import liaison.groble.domain.notification.enums.NotificationType;
-import liaison.groble.domain.notification.enums.SubNotificationType;
-import liaison.groble.domain.notification.repository.NotificationRepository;
 import liaison.groble.domain.port.EmailSenderPort;
 import liaison.groble.domain.port.VerificationCodePort;
 import liaison.groble.domain.role.Role;
@@ -64,6 +60,7 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
+  private final UserReader userReader;
   private final UserRepository userRepository;
   private final SecurityPort securityPort;
   private final EmailSenderPort emailSenderPort;
@@ -72,12 +69,11 @@ public class AuthServiceImpl implements AuthService {
   private final IntegratedAccountRepository integratedAccountRepository;
   private final SocialAccountRepository socialAccountRepository;
   private final UserWithdrawalHistoryRepository userWithdrawalHistoryRepository;
-  private final UserReader userReader;
-  private final NotificationRepository notificationRepository;
-  private final NotificationMapper notificationMapper;
+
   private final RequestUtil requestUtil;
   private final TermsRepository termsRepository;
   private final UserTermsService userTermsService;
+  private final NotificationService notificationService;
 
   @Override
   @Transactional
@@ -87,7 +83,7 @@ public class AuthServiceImpl implements AuthService {
     List<TermsType> agreedTermsTypes = convertToTermsTypes(signUpDto.getTermsTypeStrings());
     validateRequiredTermsAgreement(agreedTermsTypes);
 
-    validateUniqueConstraints(signUpDto.getEmail(), signUpDto.getNickname());
+    // 기입한 이메일 인증 여부 판단
     validateEmailVerification(signUpDto.getEmail());
 
     // 2. 비밀번호 암호화
@@ -122,8 +118,8 @@ public class AuthServiceImpl implements AuthService {
     // 6. 사용자 저장
     User savedUser = userRepository.save(user);
 
-    // 7. 환영 알림 생성 및 저장
-    createWelcomeNotification(savedUser);
+    // 7) 알림은 오직 이 한 줄만!
+    notificationService.sendWelcomeNotification(savedUser);
 
     // 8. 토큰 발급
     TokenDto tokenDto = issueTokens(savedUser);
@@ -179,7 +175,7 @@ public class AuthServiceImpl implements AuthService {
     addDefaultRole(user);
 
     // 7. 사용자 저장
-    createWelcomeNotification(user);
+    notificationService.sendWelcomeNotification(user);
 
     // 8. 토큰 발급 및 저장
     TokenDto tokenDto = issueTokens(user);
@@ -482,7 +478,7 @@ public class AuthServiceImpl implements AuthService {
   @Override
   @Transactional(readOnly = true)
   public boolean isNicknameTaken(String nickname) {
-    return userRepository.existsByNickname(nickname);
+    return userReader.isNicknameTaken(nickname);
   }
 
   @Override
@@ -553,16 +549,6 @@ public class AuthServiceImpl implements AuthService {
     }
   }
 
-  private void validateUniqueConstraints(String email, String nickname) {
-    if (integratedAccountRepository.existsByIntegratedAccountEmail(email)) {
-      throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
-    }
-
-    if (userRepository.existsByNickname(nickname)) {
-      throw new IllegalArgumentException("이미 사용 중인 닉네임입니다.");
-    }
-  }
-
   /**
    * 문자열 약관 유형 리스트를 TermsType enum 리스트로 변환합니다.
    *
@@ -628,18 +614,6 @@ public class AuthServiceImpl implements AuthService {
             .findByName("ROLE_USER")
             .orElseThrow(() -> new RuntimeException("기본 역할(ROLE_USER)을 찾을 수 없습니다."));
     user.addRole(userRole);
-  }
-
-  private void createWelcomeNotification(User savedUser) {
-    SystemDetails systemDetails =
-        SystemDetails.welcomeGroble(savedUser.getUserProfile().getNickname(), "그로블에 오신 것을 환영합니다!");
-
-    notificationRepository.save(
-        notificationMapper.toNotification(
-            savedUser.getId(),
-            NotificationType.SYSTEM,
-            SubNotificationType.WELCOME_GROBLE,
-            systemDetails));
   }
 
   /**

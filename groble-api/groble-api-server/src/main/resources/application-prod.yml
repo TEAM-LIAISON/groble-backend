@@ -122,13 +122,17 @@ springdoc:
 #      exposure:
 #        include: health,info,metrics,prometheus
 
-# Logging
+
 logging:
   level:
     root: INFO
-    liaison: DEBUG
-    org.springdoc: DEBUG
-    io.swagger.v3: DEBUG
+    com.yourcompany.groble: INFO  # Set your application package
+    org.springdoc: INFO
+    io.swagger.v3: INFO
+    # These are the critical ones causing problems
+    org.apache.http: WARN         # Set HTTP client to WARN level
+    org.apache.http.wire: WARN    # Specifically disable wire logging
+    com.amazonaws: INFO           # Control AWS SDK logging
 
 # 포트원 결제 관련 설정
 portone:

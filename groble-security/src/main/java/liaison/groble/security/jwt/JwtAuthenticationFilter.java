@@ -313,7 +313,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
           new UsernamePasswordAuthenticationToken(ud, null, ud.getAuthorities());
       auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
       SecurityContextHolder.getContext().setAuthentication(auth);
-      log.debug("인증 정보 설정 완료: {}", maskEmail(jwt));
+      log.debug("인증 정보 설정 완료: {}", maskToken(jwt));
     } catch (Exception e) {
       log.error("인증 처리 중 오류 발생: {}", e.getMessage());
     }

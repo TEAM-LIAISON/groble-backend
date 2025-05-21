@@ -8,10 +8,14 @@ import org.springframework.transaction.annotation.Transactional;
 import liaison.groble.application.notification.dto.NotificationDetailsDto;
 import liaison.groble.application.notification.dto.NotificationItemDto;
 import liaison.groble.application.notification.dto.NotificationItemsDto;
+import liaison.groble.application.notification.mapper.NotificationMapper;
 import liaison.groble.domain.notification.entity.Notification;
+import liaison.groble.domain.notification.entity.SystemDetails;
 import liaison.groble.domain.notification.enums.NotificationType;
 import liaison.groble.domain.notification.enums.SubNotificationType;
 import liaison.groble.domain.notification.repository.NotificationCustomRepository;
+import liaison.groble.domain.notification.repository.NotificationRepository;
+import liaison.groble.domain.user.entity.User;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +25,8 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class NotificationService {
   private final NotificationCustomRepository notificationCustomRepository;
+  private final NotificationRepository notificationRepository;
+  private final NotificationMapper notificationMapper;
 
   public NotificationItemsDto getNotificationItems(final Long userId) {
     List<Notification> notifications =
@@ -113,5 +119,21 @@ public class NotificationService {
           notification.getSystemDetails().getSystemTitle());
     }
     return null;
+  }
+
+  @Transactional
+  public void sendWelcomeNotification(User user) {
+    SystemDetails systemDetails =
+        SystemDetails.welcomeGroble(user.getUserProfile().getNickname(), "그로블에 오신 것을 환영합니다!");
+
+    Notification notification =
+        notificationMapper.toNotification(
+            user.getId(),
+            NotificationType.SYSTEM,
+            SubNotificationType.WELCOME_GROBLE,
+            systemDetails);
+
+    notificationRepository.save(notification);
+    log.info("환영 알림 발송: userId={}", user.getId());
   }
 }
