@@ -154,9 +154,8 @@ public class OAuth2AuthService extends DefaultOAuth2UserService {
     // (1) 기존 소셜 계정 조회
     Optional<SocialAccount> socialAccountOptional =
         socialAccountRepository
-            .findByProviderIdAndProviderType(userInfo.getId(), providerType)
-            // ↓ UserStatus가 WITHDRAWN 이면 신규 가입 플로우로!
-            .filter(sa -> sa.getUser().getUserStatusInfo().getStatus() != UserStatus.WITHDRAWN);
+            .findFirstByProviderIdAndProviderTypeAndUserUserStatusInfoStatusNotOrderByIdDesc(
+                userInfo.getId(), providerType, UserStatus.WITHDRAWN);
 
     User user;
     if (socialAccountOptional.isPresent()) {
