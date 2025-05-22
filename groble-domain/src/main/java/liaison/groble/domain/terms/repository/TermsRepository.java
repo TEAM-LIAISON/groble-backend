@@ -20,7 +20,7 @@ public interface TermsRepository {
 
   Terms save(Terms terms);
 
-  Optional<Terms> findTopByTypeAndEffectiveToIsNullOrderByEffectiveFromDesc(TermsType type);
+  Optional<Terms> findLatestByTypeAndEffectiveAt(TermsType type, LocalDateTime now);
 
   void saveAll(List<Terms> terms);
 

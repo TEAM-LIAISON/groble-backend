@@ -72,14 +72,26 @@ public class UserController {
   @PostMapping("/users/switch-role")
   public ResponseEntity<GrobleResponse<Void>> switchUserType(
       @Auth Accessor accessor, @Valid @RequestBody UserTypeRequest request) {
+
     boolean success = userService.switchUserType(accessor.getUserId(), request.getUserType());
 
     if (success) {
       return ResponseEntity.status(HttpStatus.NO_CONTENT)
           .body(GrobleResponse.success(null, "가입 유형이 전환되었습니다.", 204));
     } else {
-      return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-          .body(GrobleResponse.fail("해당 역할이 할당되어 있지 않습니다.", 400));
+      String target = request.getUserType().toUpperCase();
+      String message;
+      if ("BUYER".equals(target)) {
+        // 판매자 → 구매자 전환 실패
+        message = "구매자 전환을 진행할 수 없습니다.";
+      } else if ("SELLER".equals(target)) {
+        // 구매자 → 판매자 전환 실패
+        message = "판매자 인증이 필요합니다.";
+      } else {
+        message = "유효하지 않은 전환 요청입니다.";
+      }
+      return ResponseEntity.badRequest()
+          .body(GrobleResponse.fail(message, HttpStatus.BAD_REQUEST.value()));
     }
   }
 

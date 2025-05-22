@@ -51,8 +51,8 @@ public class TermsRepositoryImpl implements TermsRepository {
   }
 
   @Override
-  public Optional<Terms> findTopByTypeAndEffectiveToIsNullOrderByEffectiveFromDesc(TermsType type) {
-    return jpaTermsRepository.findTopByTypeAndEffectiveToIsNullOrderByEffectiveFromDesc(type);
+  public Optional<Terms> findLatestByTypeAndEffectiveAt(TermsType type, LocalDateTime now) {
+    return jpaTermsRepository.findLatestByTypeAndEffectiveAt(type, now);
   }
 
   @Override

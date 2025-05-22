@@ -3,6 +3,7 @@ package liaison.groble.application.terms.service.impl;
 import static liaison.groble.domain.terms.enums.TermsType.ADVERTISING_POLICY;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -11,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import liaison.groble.application.terms.dto.TermsAgreementDto;
 import liaison.groble.application.terms.service.TermsService;
+import liaison.groble.application.user.service.UserReader;
 import liaison.groble.common.exception.EntityNotFoundException;
 import liaison.groble.common.exception.ForbiddenException;
 import liaison.groble.domain.terms.Terms;
@@ -31,6 +33,7 @@ public class TermsServiceImpl implements TermsService {
   private final TermsRepository termsRepository;
   private final UserRepository userRepository;
   private final UserTermsRepository userTermsRepository;
+  private final UserReader userReader;
 
   @Transactional
   public TermsAgreementDto agreeToTerms(TermsAgreementDto dto) {
@@ -182,14 +185,11 @@ public class TermsServiceImpl implements TermsService {
   @Override
   public void updateAdvertisingAgreementStatus(
       Long userId, boolean agreed, String ipAddress, String userAgent) {
-    User user =
-        userRepository
-            .findById(userId)
-            .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
+    User user = userReader.getUserById(userId);
 
     Terms advertisingTerms =
         termsRepository
-            .findTopByTypeAndEffectiveToIsNullOrderByEffectiveFromDesc(ADVERTISING_POLICY)
+            .findLatestByTypeAndEffectiveAt(ADVERTISING_POLICY, LocalDateTime.now())
             .orElseThrow(() -> new IllegalStateException("현재 유효한 광고성 정보 약관이 없습니다."));
 
     user.updateAdvertisingAgreement(advertisingTerms, agreed, ipAddress, userAgent);
