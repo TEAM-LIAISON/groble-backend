@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import liaison.groble.application.auth.dto.EmailVerificationDto;
-import liaison.groble.application.auth.dto.PhoneNumberDto;
+import liaison.groble.application.auth.dto.PhoneNumberVerifyRequestDto;
 import liaison.groble.application.auth.dto.SignInDto;
 import liaison.groble.application.auth.dto.SignUpDto;
 import liaison.groble.application.auth.dto.SocialSignUpDto;
@@ -530,17 +530,18 @@ public class AuthServiceImpl implements AuthService {
 
   @Override
   @Transactional
-  public void resetPhoneNumber(Long userId, PhoneNumberDto phoneNumberDto) {
+  public void resetPhoneNumber(
+      Long userId, PhoneNumberVerifyRequestDto phoneNumberVerifyRequestDto) {
     // 1. 사용자 조회
     User user = userReader.getUserById(userId);
 
     // 2. 전화번호 중복 검사
-    if (userReader.existsByPhoneNumber(phoneNumberDto.getPhoneNumber())) {
+    if (userReader.existsByPhoneNumber(phoneNumberVerifyRequestDto.getPhoneNumber())) {
       throw new IllegalArgumentException("이미 사용 중인 전화번호입니다.");
     }
 
     // 3. 전화번호 업데이트
-    user.updatePhoneNumber(phoneNumberDto.getPhoneNumber());
+    user.updatePhoneNumber(phoneNumberVerifyRequestDto.getPhoneNumber());
 
     // 4. 저장
     userRepository.save(user);

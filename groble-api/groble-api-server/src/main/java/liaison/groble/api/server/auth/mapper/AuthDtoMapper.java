@@ -4,7 +4,8 @@ import org.springframework.stereotype.Component;
 
 import liaison.groble.api.model.auth.request.DeprecatedSignUpRequest;
 import liaison.groble.api.model.auth.request.EmailVerificationRequest;
-import liaison.groble.api.model.auth.request.PhoneNumberRequest;
+import liaison.groble.api.model.auth.request.PhoneNumberVerifyCodeRequest;
+import liaison.groble.api.model.auth.request.PhoneNumberVerifyRequest;
 import liaison.groble.api.model.auth.request.SignInRequest;
 import liaison.groble.api.model.auth.request.SignUpRequest;
 import liaison.groble.api.model.auth.request.SocialSignUpRequest;
@@ -12,7 +13,8 @@ import liaison.groble.api.model.auth.request.UserWithdrawalRequest;
 import liaison.groble.api.model.auth.request.VerifyEmailCodeRequest;
 import liaison.groble.application.auth.dto.DeprecatedSignUpDto;
 import liaison.groble.application.auth.dto.EmailVerificationDto;
-import liaison.groble.application.auth.dto.PhoneNumberDto;
+import liaison.groble.application.auth.dto.PhoneNumberVerifyCodeRequestDto;
+import liaison.groble.application.auth.dto.PhoneNumberVerifyRequestDto;
 import liaison.groble.application.auth.dto.SignInDto;
 import liaison.groble.application.auth.dto.SignUpDto;
 import liaison.groble.application.auth.dto.SocialSignUpDto;
@@ -72,7 +74,15 @@ public class AuthDtoMapper {
         .build();
   }
 
-  public PhoneNumberDto toServicePhoneNumberDto(PhoneNumberRequest request) {
-    return PhoneNumberDto.builder().phoneNumber(request.getPhoneNumber()).build();
+  public PhoneNumberVerifyRequestDto toServicePhoneNumberDto(PhoneNumberVerifyRequest request) {
+    return PhoneNumberVerifyRequestDto.builder().phoneNumber(request.getPhoneNumber()).build();
+  }
+
+  public PhoneNumberVerifyCodeRequestDto toServicePhoneNumberVerifyCodeRequestDto(
+      PhoneNumberVerifyCodeRequest request) {
+    return PhoneNumberVerifyCodeRequestDto.builder()
+        .phoneNumber(request.getPhoneNumber())
+        .verifyCode(request.getVerificationCode())
+        .build();
   }
 }

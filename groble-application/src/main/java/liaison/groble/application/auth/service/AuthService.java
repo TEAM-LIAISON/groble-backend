@@ -1,7 +1,7 @@
 package liaison.groble.application.auth.service;
 
 import liaison.groble.application.auth.dto.EmailVerificationDto;
-import liaison.groble.application.auth.dto.PhoneNumberDto;
+import liaison.groble.application.auth.dto.PhoneNumberVerifyRequestDto;
 import liaison.groble.application.auth.dto.SignInDto;
 import liaison.groble.application.auth.dto.SignUpDto;
 import liaison.groble.application.auth.dto.SocialSignUpDto;
@@ -105,5 +105,5 @@ public interface AuthService {
    */
   void withdrawUser(Long userId, UserWithdrawalDto userWithdrawalDto);
 
-  void resetPhoneNumber(Long userId, PhoneNumberDto phoneNumberDto);
+  void resetPhoneNumber(Long userId, PhoneNumberVerifyRequestDto phoneNumberVerifyRequestDto);
 }

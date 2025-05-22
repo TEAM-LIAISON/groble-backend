@@ -24,5 +24,8 @@ public interface VerificationCodePort {
 
   void removeVerifiedFlag(String email);
 
+  // 전화번호 관련
   void saveVerificationCodeForPhone(String phoneNumber, String code, long expirationTimeInMinutes);
+
+  boolean validateVerificationCodeForPhone(String phoneNumber, String code);
 }

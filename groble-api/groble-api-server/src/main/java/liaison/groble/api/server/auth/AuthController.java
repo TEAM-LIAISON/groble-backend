@@ -17,7 +17,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import liaison.groble.api.model.auth.request.EmailVerificationRequest;
-import liaison.groble.api.model.auth.request.PhoneNumberRequest;
+import liaison.groble.api.model.auth.request.PhoneNumberVerifyCodeRequest;
+import liaison.groble.api.model.auth.request.PhoneNumberVerifyRequest;
 import liaison.groble.api.model.auth.request.ResetPasswordRequest;
 import liaison.groble.api.model.auth.request.SignInRequest;
 import liaison.groble.api.model.auth.request.SignUpRequest;
@@ -36,7 +37,8 @@ import liaison.groble.api.model.user.response.NicknameDuplicateCheckResponse;
 import liaison.groble.api.model.user.response.UpdateNicknameResponse;
 import liaison.groble.api.server.auth.mapper.AuthDtoMapper;
 import liaison.groble.application.auth.dto.EmailVerificationDto;
-import liaison.groble.application.auth.dto.PhoneNumberDto;
+import liaison.groble.application.auth.dto.PhoneNumberVerifyCodeRequestDto;
+import liaison.groble.application.auth.dto.PhoneNumberVerifyRequestDto;
 import liaison.groble.application.auth.dto.SignInDto;
 import liaison.groble.application.auth.dto.SignUpDto;
 import liaison.groble.application.auth.dto.SocialSignUpDto;
@@ -239,18 +241,39 @@ public class AuthController {
   }
 
   @Operation(summary = "전화번호 인증 요청", description = "전화번호를 인증합니다.")
-  @PostMapping("/phone-number/auth-request")
+  @PostMapping("/phone-number/verify-request")
   public ResponseEntity<GrobleResponse<PhoneNumberResponse>> authPhoneNumber(
       @Parameter(description = "전화번호 인증 정보", required = true) @Valid @RequestBody
-          PhoneNumberRequest request) {
+          PhoneNumberVerifyRequest request) {
     log.info("전화번호 인증 요청: {}", request.getPhoneNumber());
 
-    PhoneNumberDto phoneNumberDto = authDtoMapper.toServicePhoneNumberDto(request);
+    PhoneNumberVerifyRequestDto phoneNumberVerifyRequestDto =
+        authDtoMapper.toServicePhoneNumberDto(request);
 
-    phoneAuthService.sendVerificationCode(phoneNumberDto.getPhoneNumber());
+    phoneAuthService.sendVerificationCode(phoneNumberVerifyRequestDto.getPhoneNumber());
 
     return ResponseEntity.status(HttpStatus.OK)
         .body(GrobleResponse.success(null, "전화번호 인증 요청이 성공적으로 완료되었습니다.", 200));
+  }
+
+  @Operation(
+      summary = "전화번호 인증 코드 검증",
+      description = "전화번호로 발송된 인증 코드를 검증합니다. 인증이 완료되면 사용자의 전화번호를 업데이트합니다.")
+  @PostMapping("/phone-number/verify-code")
+  public ResponseEntity<GrobleResponse<PhoneNumberResponse>> verifyPhoneNumber(
+      @Parameter(description = "전화번호 인증 정보", required = true) @Valid @RequestBody
+          PhoneNumberVerifyCodeRequest request) {
+    log.info("전화번호 인증 코드 검증 요청: {}", request.getPhoneNumber());
+
+    PhoneNumberVerifyCodeRequestDto phoneNumberVerifyCodeRequestDto =
+        authDtoMapper.toServicePhoneNumberVerifyCodeRequestDto(request);
+
+    phoneAuthService.verifyCode(
+        phoneNumberVerifyCodeRequestDto.getPhoneNumber(),
+        phoneNumberVerifyCodeRequestDto.getVerifyCode());
+
+    return ResponseEntity.status(HttpStatus.OK)
+        .body(GrobleResponse.success(null, "전화번호 인증이 성공적으로 완료되었습니다.", 200));
   }
 
   @Operation(summary = "통합 회원가입 이메일 인증 요청", description = "사용자가 기입한 이메일에 인증 코드를 발급합니다.")

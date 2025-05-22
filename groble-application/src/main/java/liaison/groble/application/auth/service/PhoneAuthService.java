@@ -41,6 +41,19 @@ public class PhoneAuthService {
     }
   }
 
+  public void verifyCode(String phoneNumber, String code) {
+    log.info("▶ verifyCode 시작: phoneNumber={}, code={}", phoneNumber, code);
+    String sanitized = phoneNumber.replaceAll("\\D", ""); // 하이픈·공백 제거
+    log.debug("정규화된 전화번호: {}", sanitized);
+
+    boolean isValid = verificationCodePort.validateVerificationCodeForPhone(sanitized, code);
+    if (!isValid) {
+      log.warn("인증 코드 검증 실패: phoneNumber={}, code={}", sanitized, code);
+      throw new IllegalArgumentException("인증 코드가 유효하지 않습니다.");
+    }
+    log.info("인증 코드 검증 성공: phoneNumber={}", sanitized);
+  }
+
   private void saveAndSendVerificationCode(String phoneNumber, String code) {
     log.debug(
         "Redis 저장 호출: phoneNumber={}, code={}, ttl={}분", phoneNumber, code, CODE_TTL.toMinutes());

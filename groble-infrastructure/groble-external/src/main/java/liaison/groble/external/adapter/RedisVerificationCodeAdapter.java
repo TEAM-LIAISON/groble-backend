@@ -157,6 +157,18 @@ public class RedisVerificationCodeAdapter implements VerificationCodePort {
     }
   }
 
+  @Override
+  public boolean validateVerificationCodeForPhone(String phoneNumber, String code) {
+    String key = verificationPhoneKey(phoneNumber);
+    try {
+      String storedCode = redisTemplate.opsForValue().get(key);
+      return storedCode != null && storedCode.equals(code);
+    } catch (DataAccessException e) {
+      log.error("Redis에서 인증 코드 검증 실패: key={}, error={}", key, e.getMessage());
+      return false;
+    }
+  }
+
   private String verificationKey(String email) {
     return EMAIL_VERIFICATION_PREFIX + email;
   }

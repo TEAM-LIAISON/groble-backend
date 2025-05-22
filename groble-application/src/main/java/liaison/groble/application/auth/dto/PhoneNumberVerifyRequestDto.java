@@ -5,6 +5,6 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public class PhoneNumberDto {
+public class PhoneNumberVerifyRequestDto {
   private String phoneNumber;
 }
