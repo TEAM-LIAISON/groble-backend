@@ -151,21 +151,22 @@ public class OAuth2AuthService extends DefaultOAuth2UserService {
         userInfo.getId(),
         providerType);
 
-    // 기존 사용자 조회 (소셜 계정 기준)
+    // (1) 기존 소셜 계정 조회
     Optional<SocialAccount> socialAccountOptional =
-        socialAccountRepository.findByProviderIdAndProviderType(userInfo.getId(), providerType);
+        socialAccountRepository
+            .findByProviderIdAndProviderType(userInfo.getId(), providerType)
+            // ↓ UserStatus가 WITHDRAWN 이면 신규 가입 플로우로!
+            .filter(sa -> sa.getUser().getUserStatusInfo().getStatus() != UserStatus.WITHDRAWN);
 
     User user;
-
     if (socialAccountOptional.isPresent()) {
-      // 기존 소셜 계정으로 로그인하는 경우
+      // (2) ACTIVE/DORMANT 등 살아있는 계정으로 로그인
       user = socialAccountOptional.get().getUser();
       log.info("기존 소셜 계정으로 로그인: {}, 제공자: {}", userInfo.getEmail(), providerType);
-
-      // 소셜 계정 정보 업데이트 필요 시 처리 (예: 프로필 이미지 변경)
       updateExistingSocialUser(user, userInfo);
+
     } else {
-      // 신규 사용자 등록 (새 소셜 계정)
+      // (3) WITHDRAWN 이거나, 아예 존재하지 않으면 신규 가입
       user = registerNewUser(userInfo, providerType);
       log.info("신규 소셜 사용자 등록 완료: {}, 제공자: {}", userInfo.getEmail(), providerType);
     }
