@@ -55,7 +55,9 @@ import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/v1")
 @Tag(name = "콘텐츠 관련 API", description = "콘텐츠 상세 조회, 홈화면 콘텐츠 조회")
@@ -77,12 +79,35 @@ public class ContentController {
     this.fileDtoMapper = fileDtoMapper;
   }
 
-  // 콘텐츠 상세 조회
+  /**
+   * 콘텐츠 상세 조회 - Optional 인증
+   *
+   * @param contentId 콘텐츠 ID
+   * @param accessor 사용자 정보 (Optional)
+   */
   @ContentDetail
   @GetMapping("/content/{contentId}")
   public ResponseEntity<GrobleResponse<ContentDetailResponse>> getContentDetail(
+      @Auth(required = false) Accessor accessor, // Optional 인증
       @PathVariable("contentId") Long contentId) {
-    ContentDetailDto contentDetailDto = contentService.getContentDetail(contentId);
+
+    log.info(
+        "콘텐츠 상세 조회 요청: contentId={}, isAuthenticated={}", contentId, accessor.isAuthenticated());
+
+    ContentDetailDto contentDetailDto;
+
+    if (accessor.isAuthenticated()) {
+      // 로그인 사용자: 내 콘텐츠인지 확인
+      log.info("로그인 사용자 콘텐츠 조회: userId={}, contentId={}", accessor.getId(), contentId);
+
+      contentDetailDto = contentService.getContentDetailForUser(accessor.getId(), contentId);
+    } else {
+      // 비로그인 사용자: 공개 콘텐츠만 조회
+      log.info("비로그인 사용자 콘텐츠 조회: contentId={}", contentId);
+
+      contentDetailDto = contentService.getPublicContentDetail(contentId);
+    }
+
     ContentDetailResponse response = contentDtoMapper.toContentDetailResponse(contentDetailDto);
     return ResponseEntity.ok(GrobleResponse.success(response, "콘텐츠 상세 조회 성공"));
   }

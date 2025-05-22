@@ -144,19 +144,129 @@ public class ContentService {
     return saveAndConvertToDto(content);
   }
 
+  @Transactional
+  public ContentDetailDto getContentDetailForUser(Long userId, Long contentId) {
+    log.info("로그인 사용자 콘텐츠 조회: userId={}, contentId={}", userId, contentId);
+
+    // 1. 사용자 및 콘텐츠 조회
+    User user = userReader.getUserById(userId);
+    Content content = contentReader.getContentById(contentId);
+
+    // 2. 콘텐츠 소유권 확인
+    boolean isOwner = content.getUser().getId().equals(userId);
+
+    if (isOwner) {
+      // 내 콘텐츠인 경우: 모든 상태 조회 가능, 조회수 증가 안함
+      log.info("내 콘텐츠 조회: contentId={}, status={}", contentId, content.getStatus());
+    } else {
+      // 다른 사용자의 콘텐츠인 경우: ACTIVE 상태만 조회 가능
+      if (!ContentStatus.ACTIVE.equals(content.getStatus())) {
+        log.warn(
+            "비활성 콘텐츠 접근 시도: userId={}, contentId={}, status={}",
+            userId,
+            contentId,
+            content.getStatus());
+        throw new IllegalArgumentException("현재 판매 중이지 않은 콘텐츠입니다.");
+      }
+
+      // 조회수 증가 (다른 사용자의 콘텐츠 조회 시에만)
+      content.incrementViewCount();
+      contentRepository.save(content);
+
+      log.info("다른 사용자 콘텐츠 조회: contentId={}, newViewCount={}", contentId, content.getViewCount());
+    }
+
+    // 3. getPublicContentDetail과 동일한 방식으로 DTO 변환
+    // 콘텐츠 이미지 URL 목록 (현재는 썸네일만 있음)
+    List<String> contentImageUrls = new ArrayList<>();
+    if (content.getThumbnailUrl() != null) {
+      contentImageUrls.add(content.getThumbnailUrl());
+    }
+
+    // 옵션 목록 변환 - ContentOptionDto 사용
+    List<ContentOptionDto> optionDtos =
+        content.getOptions().stream()
+            .map(
+                option -> {
+                  ContentOptionDto.ContentOptionDtoBuilder builder =
+                      ContentOptionDto.builder()
+                          .contentOptionId(option.getId())
+                          .name(option.getName())
+                          .description(option.getDescription())
+                          .price(option.getPrice());
+
+                  // 옵션 타입별 필드 설정
+                  if (option instanceof CoachingOption) {
+                    CoachingOption coachingOption = (CoachingOption) option;
+                    builder
+                        .coachingPeriod(safeEnumName(coachingOption.getCoachingPeriod()))
+                        .documentProvision(safeEnumName(coachingOption.getDocumentProvision()))
+                        .coachingType(safeEnumName(coachingOption.getCoachingType()))
+                        .coachingTypeDescription(coachingOption.getCoachingTypeDescription());
+                  } else if (option instanceof DocumentOption) {
+                    DocumentOption documentOption = (DocumentOption) option;
+                    builder
+                        .contentDeliveryMethod(
+                            safeEnumName(documentOption.getContentDeliveryMethod()))
+                        .documentFileUrl(documentOption.getDocumentFileUrl());
+                  }
+
+                  return builder.build();
+                })
+            .collect(Collectors.toList());
+
+    // User 관련 정보 추출
+    User seller = content.getUser();
+    String sellerProfileImageUrl = null;
+    String sellerName = null;
+
+    if (seller != null) {
+      UserProfile userProfile = seller.getUserProfile();
+      if (userProfile != null) {
+        sellerProfileImageUrl = userProfile.getProfileImageUrl();
+        sellerName = userProfile.getNickname();
+      }
+    }
+
+    return ContentDetailDto.builder()
+        .contentId(content.getId())
+        .status(safeEnumName(content.getStatus()))
+        .thumbnailUrl(content.getThumbnailUrl())
+        .contentType(safeEnumName(content.getContentType()))
+        .categoryId(content.getCategory() != null ? content.getCategory().getCode() : null)
+        .title(content.getTitle())
+        .sellerProfileImageUrl(sellerProfileImageUrl)
+        .sellerName(sellerName)
+        .lowestPrice(content.getLowestPrice())
+        .options(optionDtos)
+        .contentIntroduction(content.getContentIntroduction())
+        .serviceTarget(content.getServiceTarget())
+        .serviceProcess(content.getServiceProcess())
+        .makerIntro(content.getMakerIntro())
+        .build();
+  }
+
   /**
    * 콘텐츠 상세 정보를 조회합니다.
    *
    * @param contentId 상품 ID
    * @return 상품 상세 정보
    */
-  @Transactional(readOnly = true)
-  public ContentDetailDto getContentDetail(Long contentId) {
+  @Transactional
+  public ContentDetailDto getPublicContentDetail(Long contentId) {
     Content content = contentReader.getContentById(contentId);
 
-    // 1) 조회수 증가
+    // ACTIVE 상태인지 확인
+    if (!ContentStatus.ACTIVE.equals(content.getStatus())) {
+      log.warn("비활성 콘텐츠 접근 시도 (비로그인): contentId={}, status={}", contentId, content.getStatus());
+      throw new IllegalArgumentException("현재 판매 중이지 않은 콘텐츠입니다.");
+    }
+
+    // 조회수 증가
     content.incrementViewCount();
-    // 변경 감지를 위해 save 불필요 (영속 상태이므로 flush 시 반영됨)
+    contentRepository.save(content);
+
+    log.info("비로그인 사용자 콘텐츠 조회: contentId={}, newViewCount={}", contentId, content.getViewCount());
 
     // 콘텐츠 이미지 URL 목록 (현재는 썸네일만 있음)
     List<String> contentImageUrls = new ArrayList<>();
