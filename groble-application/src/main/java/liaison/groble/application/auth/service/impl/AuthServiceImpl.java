@@ -143,6 +143,9 @@ public class AuthServiceImpl implements AuthService {
   public TokenDto socialSignUp(Long userId, SocialSignUpDto dto) {
     // 1. userType 파싱
     UserType userType = validateAndParseUserType(dto.getUserType());
+    // 약관 유형 변환 및 필수 약관 검증
+    List<TermsType> agreedTermsTypes = convertToTermsTypes(dto.getTermsTypeStrings());
+    validateRequiredTermsAgreement(agreedTermsTypes);
 
     // 2. SELLER라면 phoneNumber 필수
     if (userType == UserType.SELLER
@@ -176,6 +179,8 @@ public class AuthServiceImpl implements AuthService {
     }
 
     userStatusService.activate(user);
+    // 5.1. 약관 동의 처리
+    processTermsAgreements(user, agreedTermsTypes);
     user.updatePhoneNumber(dto.getPhoneNumber());
 
     // 6. 기본 권한 부여

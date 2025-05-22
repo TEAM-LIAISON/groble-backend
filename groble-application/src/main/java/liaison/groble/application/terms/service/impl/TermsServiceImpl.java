@@ -175,10 +175,7 @@ public class TermsServiceImpl implements TermsService {
 
   @Override
   public boolean getAdvertisingAgreementStatus(Long userId) {
-    User user =
-        userRepository
-            .findById(userId)
-            .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
+    User user = userReader.getUserById(userId);
     return user.hasAgreedToAdvertising();
   }
 

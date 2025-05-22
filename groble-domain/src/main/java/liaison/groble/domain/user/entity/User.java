@@ -224,15 +224,17 @@ public class User extends BaseTimeEntity {
     }
   }
 
-  // 약관 관련 메서드
-  /** 특정 약관 동의 여부 확인 */
+  /**
+   * 특정 약관 동의 여부 확인
+   *
+   * @param termsType 확인하려는 약관 타입
+   * @return true: 한 번이라도 동의했으면 true, 아니면 false
+   */
   public boolean hasAgreedTo(TermsType termsType) {
     return termsAgreements.stream()
-        .anyMatch(
-            agreement ->
-                agreement.getTerms().getType() == termsType
-                    && agreement.isAgreed()
-                    && agreement.getTerms().getEffectiveTo() == null);
+        .filter(UserTerms::isAgreed) // 동의된 내역만
+        .map(UserTerms::getTerms) // 해당 약관 엔티티
+        .anyMatch(t -> t.getType() == termsType); // 타입이 일치하면 OK
   }
 
   /** 광고성 정보 수신 동의 여부 확인 */

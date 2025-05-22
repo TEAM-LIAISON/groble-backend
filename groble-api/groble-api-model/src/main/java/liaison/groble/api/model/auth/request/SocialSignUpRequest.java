@@ -28,11 +28,20 @@ public class SocialSignUpRequest {
   @Schema(description = "사용자 유형", example = "SELLER")
   private String userType;
 
-  @NotEmpty(message = "약관 유형은 필수입니다.")
+  @NotEmpty(message = "약관 동의 유형은 필수입니다.")
   @Schema(
       description = "약관 동의 유형",
-      example = "[\"MARKETING\", \"TERMS\"]",
-      allowableValues = {"ACTIVE", "DRAFT", "PENDING", "VALIDATED", "REJECTED"})
+      example =
+          "[\"AGE_POLICY\", \"PRIVACY_POLICY\", \"SERVICE_TERMS_POLICY\", \"SELLER_TERMS_POLICY\", \"SALES_TERMS_POLICY\"]",
+      allowableValues = {
+        "AGE_POLICY",
+        "SELLER_TERMS_POLICY",
+        "PRIVACY_POLICY",
+        "SERVICE_TERMS_POLICY",
+        "SALES_TERMS_POLICY",
+        "MARKETING_POLICY",
+        "ADVERTISING_POLICY"
+      })
   private List<TermsTypeDto> termsTypes;
 
   @NotBlank(message = "닉네임은 필수 입력값입니다.")
