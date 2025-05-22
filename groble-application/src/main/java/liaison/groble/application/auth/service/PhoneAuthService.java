@@ -48,6 +48,6 @@ public class PhoneAuthService {
   }
 
   private String generateRandomCode() {
-    return CodeGenerator.generateVerificationCode(6);
+    return CodeGenerator.generateVerificationCode(4);
   }
 }

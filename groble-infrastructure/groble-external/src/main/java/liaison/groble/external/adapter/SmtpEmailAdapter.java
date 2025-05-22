@@ -30,6 +30,7 @@ public class SmtpEmailAdapter implements EmailSenderPort {
   public void sendVerificationEmail(String to, String verificationCode) {
     try {
       MimeMessage message = emailSender.createMimeMessage();
+      message.addHeader("List-Unsubscribe", "<mailto:groble@groble.im>");
       MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
       // ── 헤더 설정
@@ -37,7 +38,6 @@ public class SmtpEmailAdapter implements EmailSenderPort {
       helper.setReplyTo("groble@groble.im");
       helper.setTo(to);
       helper.setSubject("Groble 서비스 이메일 인증 코드");
-      helper.setHeader("List-Unsubscribe", "<mailto:unsubscribe@groble.im>");
 
       // ── 플레인 텍스트
       String plainText =
@@ -46,7 +46,7 @@ public class SmtpEmailAdapter implements EmailSenderPort {
               + verificationCode
               + "\n\n"
               + "문의: groble@groble.im\n"
-              + "수신거부: unsubscribe@groble.im";
+              + "수신거부: groble@groble.im";
 
       // ── HTML 본문
       String htmlContent =
@@ -78,7 +78,7 @@ public class SmtpEmailAdapter implements EmailSenderPort {
               + "        <div style=\"border-top:1px solid #e5e7eb;padding-top:32px;color:#C2C4C8;font-size:11px;line-height:1.6;text-align:left;\">\n"
               + "          본 메일은 발신전용이며, 문의에 대한 회신은 처리되지 않습니다.<br/>\n"
               + "          Groble에 관하여 궁금하신 점이나 불편한 사항은 언제라도 <a href=\"mailto:groble@groble.im\">groble@groble.im</a>으로 연락해주세요.<br/>\n"
-              + "          수신거부는 <a href=\"mailto:unsubscribe@groble.im\">여기</a>를 클릭해 주세요.\n"
+              + "          수신거부는 <a href=\"mailto:groble@groble.im\">여기</a>를 클릭해 주세요.\n"
               + "        </div>\n"
               + "      </td></tr>\n"
               + "      <tr><td style=\"height:40px;\"></td></tr>\n"
@@ -102,13 +102,13 @@ public class SmtpEmailAdapter implements EmailSenderPort {
   public void sendPasswordResetEmail(String to, String resetToken) {
     try {
       MimeMessage message = emailSender.createMimeMessage();
+      message.addHeader("List-Unsubscribe", "<mailto:groble@groble.im>");
       MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
       helper.setFrom(String.format("Groble <%s>", fromEmail));
       helper.setReplyTo("groble@groble.im");
       helper.setTo(to);
       helper.setSubject("Groble 비밀번호 재설정");
-      helper.setHeader("List-Unsubscribe", "<mailto:unsubscribe@groble.im>");
 
       String resetUrl = frontendUrl + "/reset-password?token=" + resetToken;
 
@@ -119,7 +119,7 @@ public class SmtpEmailAdapter implements EmailSenderPort {
               + resetUrl
               + "\n\n"
               + "문의: groble@groble.im\n"
-              + "수신거부: unsubscribe@groble.im";
+              + "수신거부: groble@groble.im";
 
       // ── HTML 본문
       String htmlContent =
@@ -152,7 +152,7 @@ public class SmtpEmailAdapter implements EmailSenderPort {
               + "      <tr><td style=\"border-top:1px solid #e5e7eb;padding:32px 20px;color:#C2C4C8;font-size:11px;line-height:1.6;text-align:left;\">\n"
               + "        본 메일은 발신전용이며, 문의에 대한 회신은 처리되지 않습니다.<br/>\n"
               + "        문의: <a href=\"mailto:groble@groble.im\">groble@groble.im</a><br/>\n"
-              + "        수신거부: <a href=\"mailto:unsubscribe@groble.im\">여기</a>\n"
+              + "        수신거부: <a href=\"mailto:groble@groble.im\">여기</a>\n"
               + "      </td></tr>\n"
               + "      <tr><td style=\"height:40px;\"></td></tr>\n"
               + "    </table>\n"

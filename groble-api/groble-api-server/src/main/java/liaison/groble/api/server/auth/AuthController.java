@@ -245,17 +245,12 @@ public class AuthController {
           PhoneNumberRequest request) {
     log.info("전화번호 인증 요청: {}", request.getPhoneNumber());
 
-    // 1. API DTO → 서비스 DTO 변환
     PhoneNumberDto phoneNumberDto = authDtoMapper.toServicePhoneNumberDto(request);
 
     phoneAuthService.sendVerificationCode(phoneNumberDto.getPhoneNumber());
 
-    //    // 2. 서비스 호출
-    //    authService.resetPhoneNumber(accessor.getUserId(), phoneNumberDto);
-
-    // 3. API 응답 생성
     return ResponseEntity.status(HttpStatus.OK)
-        .body(GrobleResponse.success(null, "전화번호 인증이 성공적으로 완료되었습니다.", 200));
+        .body(GrobleResponse.success(null, "전화번호 인증 요청이 성공적으로 완료되었습니다.", 200));
   }
 
   @Operation(summary = "통합 회원가입 이메일 인증 요청", description = "사용자가 기입한 이메일에 인증 코드를 발급합니다.")
