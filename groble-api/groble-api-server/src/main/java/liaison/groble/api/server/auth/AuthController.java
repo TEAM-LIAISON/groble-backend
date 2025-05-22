@@ -37,8 +37,6 @@ import liaison.groble.api.model.user.response.NicknameDuplicateCheckResponse;
 import liaison.groble.api.model.user.response.UpdateNicknameResponse;
 import liaison.groble.api.server.auth.mapper.AuthDtoMapper;
 import liaison.groble.application.auth.dto.EmailVerificationDto;
-import liaison.groble.application.auth.dto.PhoneNumberVerifyCodeRequestDto;
-import liaison.groble.application.auth.dto.PhoneNumberVerifyRequestDto;
 import liaison.groble.application.auth.dto.SignInDto;
 import liaison.groble.application.auth.dto.SignUpDto;
 import liaison.groble.application.auth.dto.SocialSignUpDto;
@@ -240,37 +238,51 @@ public class AuthController {
     return ResponseEntity.ok().body(GrobleResponse.success(null, "비밀번호가 성공적으로 재설정되었습니다.", 200));
   }
 
-  @Operation(summary = "전화번호 인증 요청", description = "전화번호를 인증합니다.")
+  /** 전화번호 인증 요청 - Optional 인증 로그인 사용자: 기존 사용자의 전화번호 변경/추가 인증 비로그인 사용자: 회원가입 전 전화번호 인증 */
+  @Operation(summary = "전화번호 인증 요청", description = "전화번호 인증 코드를 발송합니다.")
   @PostMapping("/phone-number/verify-request")
   public ResponseEntity<GrobleResponse<PhoneNumberResponse>> authPhoneNumber(
+      @Auth(required = false) Accessor accessor, // Optional 인증
       @Parameter(description = "전화번호 인증 정보", required = true) @Valid @RequestBody
           PhoneNumberVerifyRequest request) {
-    log.info("전화번호 인증 요청: {}", request.getPhoneNumber());
 
-    PhoneNumberVerifyRequestDto phoneNumberVerifyRequestDto =
-        authDtoMapper.toServicePhoneNumberDto(request);
+    if (accessor.isAuthenticated()) {
+      // 로그인한 사용자의 경우
+      log.info("로그인 사용자 전화번호 인증 요청: {} (userId: {})", request.getPhoneNumber(), accessor.getId());
 
-    phoneAuthService.sendVerificationCode(phoneNumberVerifyRequestDto.getPhoneNumber());
+      phoneAuthService.sendVerificationCodeForUser(accessor.getId(), request.getPhoneNumber());
+    } else {
+      // 비로그인 사용자의 경우 (회원가입)
+      log.info("비로그인 사용자 전화번호 인증 요청: {}", request.getPhoneNumber());
+
+      phoneAuthService.sendVerificationCodeForSignup(request.getPhoneNumber());
+    }
 
     return ResponseEntity.status(HttpStatus.OK)
         .body(GrobleResponse.success(null, "전화번호 인증 요청이 성공적으로 완료되었습니다.", 200));
   }
 
-  @Operation(
-      summary = "전화번호 인증 코드 검증",
-      description = "전화번호로 발송된 인증 코드를 검증합니다. 인증이 완료되면 사용자의 전화번호를 업데이트합니다.")
+  /** 전화번호 인증 코드 검증 - Optional 인증 로그인 사용자: 사용자별 인증 코드 검증 비로그인 사용자: 비회원 인증 코드 검증 */
+  @Operation(summary = "전화번호 인증 코드 검증", description = "전화번호로 발송된 인증 코드를 검증합니다.")
   @PostMapping("/phone-number/verify-code")
   public ResponseEntity<GrobleResponse<PhoneNumberResponse>> verifyPhoneNumber(
+      @Auth(required = false) Accessor accessor, // Optional 인증 추가
       @Parameter(description = "전화번호 인증 정보", required = true) @Valid @RequestBody
           PhoneNumberVerifyCodeRequest request) {
-    log.info("전화번호 인증 코드 검증 요청: {}", request.getPhoneNumber());
 
-    PhoneNumberVerifyCodeRequestDto phoneNumberVerifyCodeRequestDto =
-        authDtoMapper.toServicePhoneNumberVerifyCodeRequestDto(request);
+    if (accessor.isAuthenticated()) {
+      // 로그인한 사용자의 경우
+      log.info(
+          "로그인 사용자 전화번호 인증 코드 검증: {} (userId: {})", request.getPhoneNumber(), accessor.getId());
 
-    phoneAuthService.verifyCode(
-        phoneNumberVerifyCodeRequestDto.getPhoneNumber(),
-        phoneNumberVerifyCodeRequestDto.getVerifyCode());
+      phoneAuthService.verifyCodeForUser(
+          accessor.getId(), request.getPhoneNumber(), request.getVerificationCode());
+    } else {
+      // 비로그인 사용자의 경우
+      log.info("비로그인 사용자 전화번호 인증 코드 검증: {}", request.getPhoneNumber());
+
+      phoneAuthService.verifyCodeForSignup(request.getPhoneNumber(), request.getVerificationCode());
+    }
 
     return ResponseEntity.status(HttpStatus.OK)
         .body(GrobleResponse.success(null, "전화번호 인증이 성공적으로 완료되었습니다.", 200));

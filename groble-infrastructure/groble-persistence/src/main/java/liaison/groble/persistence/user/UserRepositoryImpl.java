@@ -37,6 +37,11 @@ public class UserRepositoryImpl implements UserRepository {
   }
 
   @Override
+  public Optional<User> findByPhoneNumber(String phoneNumber) {
+    return jpaUserRepository.findByUserProfilePhoneNumber(phoneNumber);
+  }
+
+  @Override
   @Transactional
   public User saveAndFlush(User user) {
     return jpaUserRepository.saveAndFlush(user);

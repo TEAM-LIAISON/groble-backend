@@ -14,9 +14,21 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 public class RedisVerificationCodeAdapter implements VerificationCodePort {
   private final RedisTemplate<String, String> redisTemplate;
+
+  // Redis Key Prefixes
   private static final String EMAIL_VERIFICATION_PREFIX = "email:verification:";
   private static final String EMAIL_VERIFIED_PREFIX = "email:verified:";
   private static final String EMAIL_PASSWORD_RESET_PREFIX = "email:password_reset:";
+
+  // 로그인 사용자 전화번호 인증
+  private static final String PHONE_AUTH_USER_PREFIX = "phone:auth:user:";
+  private static final String PHONE_VERIFIED_USER_PREFIX = "phone:verified:user:";
+
+  // 비회원 전화번호 인증
+  private static final String PHONE_AUTH_GUEST_PREFIX = "phone:auth:guest:";
+  private static final String PHONE_VERIFIED_GUEST_PREFIX = "phone:verified:guest:";
+
+  // Deprecated - 하위 호환성
   private static final String PHONE_VERIFICATION_PREFIX = "phone:auth:";
   private static final String PHONE_VERIFIED_PREFIX = "phone:verified:";
 
@@ -24,11 +36,12 @@ public class RedisVerificationCodeAdapter implements VerificationCodePort {
     this.redisTemplate = redisTemplate;
   }
 
+  // === 이메일 인증 관련 (기존 코드 그대로) ===
+
   @Override
   public void saveVerificationCode(String email, String code, long expirationTimeInMinutes) {
     String key = verificationKey(email);
     try {
-      // 덮어쓰기
       redisTemplate.opsForValue().set(key, code, expirationTimeInMinutes, TimeUnit.MINUTES);
     } catch (DataAccessException e) {
       log.error("Redis에 인증 코드 저장 실패: key={}, error={}", key, e.getMessage());
@@ -68,6 +81,41 @@ public class RedisVerificationCodeAdapter implements VerificationCodePort {
       log.warn("Redis에서 인증 코드 삭제 실패: key={}, error={}", key, e.getMessage());
     }
   }
+
+  @Override
+  public void saveVerifiedFlag(String email, long expirationTimeInMinutes) {
+    String key = verifiedKey(email);
+    try {
+      redisTemplate.opsForValue().set(key, "verified", expirationTimeInMinutes, TimeUnit.MINUTES);
+    } catch (DataAccessException e) {
+      log.error("Redis에 인증 플래그 저장 실패: key={}, error={}", key, e.getMessage());
+      throw new RuntimeException("인증 플래그를 저장하는 중 오류가 발생했습니다.", e);
+    }
+  }
+
+  @Override
+  public boolean validateVerifiedFlag(String email) {
+    String key = verifiedKey(email);
+    try {
+      String storedValue = redisTemplate.opsForValue().get(key);
+      return storedValue != null && storedValue.equals("verified");
+    } catch (DataAccessException e) {
+      log.error("Redis에서 인증 플래그 검증 실패: key={}, error={}", key, e.getMessage());
+      return false;
+    }
+  }
+
+  @Override
+  public void removeVerifiedFlag(String email) {
+    String key = verifiedKey(email);
+    try {
+      redisTemplate.delete(key);
+    } catch (DataAccessException e) {
+      log.warn("Redis에서 인증 플래그 삭제 실패: key={}, error={}", key, e.getMessage());
+    }
+  }
+
+  // === 비밀번호 재설정 관련 (기존 코드 그대로) ===
 
   @Override
   public void savePasswordResetCode(String email, String token, long expirationTimeInMinutes) {
@@ -113,105 +161,209 @@ public class RedisVerificationCodeAdapter implements VerificationCodePort {
     }
   }
 
-  @Override
-  public void saveVerifiedFlag(String email, long expirationTimeInMinutes) {
-    String key = verifiedKey(email);
-    try {
-      redisTemplate.opsForValue().set(key, "verified", expirationTimeInMinutes, TimeUnit.MINUTES);
-    } catch (DataAccessException e) {
-      log.error("Redis에 인증 플래그 저장 실패: key={}, error={}", key, e.getMessage());
-      throw new RuntimeException("인증 플래그를 저장하는 중 오류가 발생했습니다.", e);
-    }
-  }
+  // === 로그인 사용자 전화번호 인증 관련 ===
 
   @Override
-  public boolean validateVerifiedFlag(String email) {
-    String key = verifiedKey(email);
-    try {
-      String storedValue = redisTemplate.opsForValue().get(key);
-      return storedValue != null && storedValue.equals("verified");
-    } catch (DataAccessException e) {
-      log.error("Redis에서 인증 플래그 검증 실패: key={}, error={}", key, e.getMessage());
-      return false;
-    }
-  }
-
-  @Override
-  public void removeVerifiedFlag(String email) {
-    String key = verifiedKey(email);
-    try {
-      redisTemplate.delete(key);
-    } catch (DataAccessException e) {
-      log.warn("Redis에서 인증 플래그 삭제 실패: key={}, error={}", key, e.getMessage());
-    }
-  }
-
-  @Override
-  public void saveVerificationCodeForPhone(
-      String phoneNumber, String code, long expirationTimeInMinutes) {
-    String key = verificationPhoneKey(phoneNumber);
+  public void saveVerificationCodeForUser(
+      Long userId, String phoneNumber, String code, long expirationTimeInMinutes) {
+    String key = userPhoneAuthKey(userId, phoneNumber);
     try {
       redisTemplate.opsForValue().set(key, code, expirationTimeInMinutes, TimeUnit.MINUTES);
+      log.debug("로그인 사용자 전화번호 인증 코드 저장: key={}", key);
     } catch (DataAccessException e) {
-      log.error("Redis에 인증 코드 저장 실패: key={}, error={}", key, e.getMessage());
+      log.error("Redis에 로그인 사용자 전화번호 인증 코드 저장 실패: key={}, error={}", key, e.getMessage());
       throw new RuntimeException("인증 코드를 저장하는 중 오류가 발생했습니다.", e);
     }
   }
 
   @Override
-  public boolean validateVerificationCodeForPhone(String phoneNumber, String code) {
-    String key = verificationPhoneKey(phoneNumber);
+  public boolean validateVerificationCodeForUser(Long userId, String phoneNumber, String code) {
+    String key = userPhoneAuthKey(userId, phoneNumber);
     try {
       String storedCode = redisTemplate.opsForValue().get(key);
-      return storedCode != null && storedCode.equals(code);
+      boolean isValid = storedCode != null && storedCode.equals(code);
+      log.debug("로그인 사용자 전화번호 인증 코드 검증: key={}, valid={}", key, isValid);
+      return isValid;
     } catch (DataAccessException e) {
-      log.error("Redis에서 인증 코드 검증 실패: key={}, error={}", key, e.getMessage());
+      log.error("Redis에서 로그인 사용자 전화번호 인증 코드 검증 실패: key={}, error={}", key, e.getMessage());
       return false;
     }
   }
 
   @Override
-  public void removeVerificationCodeForPhone(String phoneNumber) {
-    String key = verificationPhoneKey(phoneNumber);
+  public void removeVerificationCodeForUser(Long userId, String phoneNumber) {
+    String key = userPhoneAuthKey(userId, phoneNumber);
     try {
       redisTemplate.delete(key);
     } catch (DataAccessException e) {
-      log.warn("Redis에서 인증 코드 삭제 실패: key={}, error={}", key, e.getMessage());
+      log.warn("Redis에서 로그인 사용자 전화번호 인증 코드 삭제 실패: key={}, error={}", key, e.getMessage());
     }
   }
 
   @Override
-  public void saveVerifiedPhoneFlag(String phoneNumber, long expirationTimeInMinutes) {
-    String key = verifiedPhoneKey(phoneNumber);
+  public void saveVerifiedUserPhoneFlag(
+      Long userId, String phoneNumber, long expirationTimeInMinutes) {
+    String key = userPhoneVerifiedKey(userId, phoneNumber);
     try {
       redisTemplate.opsForValue().set(key, "verified", expirationTimeInMinutes, TimeUnit.MINUTES);
+      log.debug("로그인 사용자 전화번호 인증 완료 플래그 저장: key={}", key);
     } catch (DataAccessException e) {
-      log.error("Redis에 전화번호 인증 플래그 저장 실패: key={}, error={}", key, e.getMessage());
-      throw new RuntimeException("전화번호 인증 플래그를 저장하는 중 오류가 발생했습니다.", e);
+      log.error("Redis에 로그인 사용자 전화번호 인증 완료 플래그 저장 실패: key={}, error={}", key, e.getMessage());
+      throw new RuntimeException("인증 완료 플래그를 저장하는 중 오류가 발생했습니다.", e);
     }
   }
 
   @Override
-  public boolean validateVerifiedPhoneFlag(String phoneNumber) {
-    String key = verifiedPhoneKey(phoneNumber);
+  public boolean validateVerifiedUserPhoneFlag(Long userId, String phoneNumber) {
+    String key = userPhoneVerifiedKey(userId, phoneNumber);
     try {
       String storedValue = redisTemplate.opsForValue().get(key);
-      return storedValue != null && storedValue.equals("verified");
+      boolean isVerified = storedValue != null && storedValue.equals("verified");
+      log.debug("로그인 사용자 전화번호 인증 완료 플래그 검증: key={}, verified={}", key, isVerified);
+      return isVerified;
     } catch (DataAccessException e) {
-      log.error("Redis에서 전화번호 인증 플래그 검증 실패: key={}, error={}", key, e.getMessage());
+      log.error("Redis에서 로그인 사용자 전화번호 인증 완료 플래그 검증 실패: key={}, error={}", key, e.getMessage());
       return false;
     }
   }
 
   @Override
-  public void removeVerifiedPhoneFlag(String phoneNumber) {
-    String key = verifiedPhoneKey(phoneNumber);
+  public void removeVerifiedUserPhoneFlag(Long userId, String phoneNumber) {
+    String key = userPhoneVerifiedKey(userId, phoneNumber);
     try {
       redisTemplate.delete(key);
     } catch (DataAccessException e) {
-      log.warn("Redis에서 인증 플래그 삭제 실패: key={}, error={}", key, e.getMessage());
+      log.warn("Redis에서 로그인 사용자 전화번호 인증 완료 플래그 삭제 실패: key={}, error={}", key, e.getMessage());
     }
   }
+
+  // === 비회원 전화번호 인증 관련 ===
+
+  @Override
+  public void saveVerificationCodeForGuest(
+      String phoneNumber, String code, long expirationTimeInMinutes) {
+    String key = guestPhoneAuthKey(phoneNumber);
+    try {
+      redisTemplate.opsForValue().set(key, code, expirationTimeInMinutes, TimeUnit.MINUTES);
+      log.debug("비회원 전화번호 인증 코드 저장: key={}", key);
+    } catch (DataAccessException e) {
+      log.error("Redis에 비회원 전화번호 인증 코드 저장 실패: key={}, error={}", key, e.getMessage());
+      throw new RuntimeException("인증 코드를 저장하는 중 오류가 발생했습니다.", e);
+    }
+  }
+
+  @Override
+  public boolean validateVerificationCodeForGuest(String phoneNumber, String code) {
+    String key = guestPhoneAuthKey(phoneNumber);
+    try {
+      String storedCode = redisTemplate.opsForValue().get(key);
+      boolean isValid = storedCode != null && storedCode.equals(code);
+      log.debug("비회원 전화번호 인증 코드 검증: key={}, valid={}", key, isValid);
+      return isValid;
+    } catch (DataAccessException e) {
+      log.error("Redis에서 비회원 전화번호 인증 코드 검증 실패: key={}, error={}", key, e.getMessage());
+      return false;
+    }
+  }
+
+  @Override
+  public void removeVerificationCodeForGuest(String phoneNumber) {
+    String key = guestPhoneAuthKey(phoneNumber);
+    try {
+      redisTemplate.delete(key);
+    } catch (DataAccessException e) {
+      log.warn("Redis에서 비회원 전화번호 인증 코드 삭제 실패: key={}, error={}", key, e.getMessage());
+    }
+  }
+
+  @Override
+  public void saveVerifiedGuestPhoneFlag(String phoneNumber, long expirationTimeInMinutes) {
+    String key = guestPhoneVerifiedKey(phoneNumber);
+    try {
+      redisTemplate.opsForValue().set(key, "verified", expirationTimeInMinutes, TimeUnit.MINUTES);
+      log.debug("비회원 전화번호 인증 완료 플래그 저장: key={}", key);
+    } catch (DataAccessException e) {
+      log.error("Redis에 비회원 전화번호 인증 완료 플래그 저장 실패: key={}, error={}", key, e.getMessage());
+      throw new RuntimeException("인증 완료 플래그를 저장하는 중 오류가 발생했습니다.", e);
+    }
+  }
+
+  @Override
+  public boolean validateVerifiedGuestPhoneFlag(String phoneNumber) {
+    String key = guestPhoneVerifiedKey(phoneNumber);
+    try {
+      String storedValue = redisTemplate.opsForValue().get(key);
+      boolean isVerified = storedValue != null && storedValue.equals("verified");
+      log.debug("비회원 전화번호 인증 완료 플래그 검증: key={}, verified={}", key, isVerified);
+      return isVerified;
+    } catch (DataAccessException e) {
+      log.error("Redis에서 비회원 전화번호 인증 완료 플래그 검증 실패: key={}, error={}", key, e.getMessage());
+      return false;
+    }
+  }
+
+  @Override
+  public void removeVerifiedGuestPhoneFlag(String phoneNumber) {
+    String key = guestPhoneVerifiedKey(phoneNumber);
+    try {
+      redisTemplate.delete(key);
+    } catch (DataAccessException e) {
+      log.warn("Redis에서 비회원 전화번호 인증 완료 플래그 삭제 실패: key={}, error={}", key, e.getMessage());
+    }
+  }
+
+  // === Deprecated 메서드들 (하위 호환성) ===
+
+  @Override
+  @Deprecated
+  public void saveVerificationCodeForPhone(
+      String phoneNumber, String code, long expirationTimeInMinutes) {
+    log.warn(
+        "Deprecated method called: saveVerificationCodeForPhone. Consider using saveVerificationCodeForGuest.");
+    saveVerificationCodeForGuest(phoneNumber, code, expirationTimeInMinutes);
+  }
+
+  @Override
+  @Deprecated
+  public boolean validateVerificationCodeForPhone(String phoneNumber, String code) {
+    log.warn(
+        "Deprecated method called: validateVerificationCodeForPhone. Consider using validateVerificationCodeForGuest.");
+    return validateVerificationCodeForGuest(phoneNumber, code);
+  }
+
+  @Override
+  @Deprecated
+  public void removeVerificationCodeForPhone(String phoneNumber) {
+    log.warn(
+        "Deprecated method called: removeVerificationCodeForPhone. Consider using removeVerificationCodeForGuest.");
+    removeVerificationCodeForGuest(phoneNumber);
+  }
+
+  @Override
+  @Deprecated
+  public void saveVerifiedPhoneFlag(String phoneNumber, long expirationTimeInMinutes) {
+    log.warn(
+        "Deprecated method called: saveVerifiedPhoneFlag. Consider using saveVerifiedGuestPhoneFlag.");
+    saveVerifiedGuestPhoneFlag(phoneNumber, expirationTimeInMinutes);
+  }
+
+  @Override
+  @Deprecated
+  public boolean validateVerifiedPhoneFlag(String phoneNumber) {
+    log.warn(
+        "Deprecated method called: validateVerifiedPhoneFlag. Consider using validateVerifiedGuestPhoneFlag.");
+    return validateVerifiedGuestPhoneFlag(phoneNumber);
+  }
+
+  @Override
+  @Deprecated
+  public void removeVerifiedPhoneFlag(String phoneNumber) {
+    log.warn(
+        "Deprecated method called: removeVerifiedPhoneFlag. Consider using removeVerifiedGuestPhoneFlag.");
+    removeVerifiedGuestPhoneFlag(phoneNumber);
+  }
+
+  // === Private Key Generation Methods ===
 
   private String verificationKey(String email) {
     return EMAIL_VERIFICATION_PREFIX + email;
@@ -221,15 +373,34 @@ public class RedisVerificationCodeAdapter implements VerificationCodePort {
     return EMAIL_VERIFIED_PREFIX + email;
   }
 
+  private String passwordResetKey(String token) {
+    return EMAIL_PASSWORD_RESET_PREFIX + token;
+  }
+
+  private String userPhoneAuthKey(Long userId, String phoneNumber) {
+    return PHONE_AUTH_USER_PREFIX + userId + ":" + phoneNumber;
+  }
+
+  private String userPhoneVerifiedKey(Long userId, String phoneNumber) {
+    return PHONE_VERIFIED_USER_PREFIX + userId + ":" + phoneNumber;
+  }
+
+  private String guestPhoneAuthKey(String phoneNumber) {
+    return PHONE_AUTH_GUEST_PREFIX + phoneNumber;
+  }
+
+  private String guestPhoneVerifiedKey(String phoneNumber) {
+    return PHONE_VERIFIED_GUEST_PREFIX + phoneNumber;
+  }
+
+  // Deprecated key methods
+  @Deprecated
   private String verificationPhoneKey(String phoneNumber) {
     return PHONE_VERIFICATION_PREFIX + phoneNumber;
   }
 
+  @Deprecated
   private String verifiedPhoneKey(String phoneNumber) {
     return PHONE_VERIFIED_PREFIX + phoneNumber;
-  }
-
-  private String passwordResetKey(String token) {
-    return EMAIL_PASSWORD_RESET_PREFIX + token;
   }
 }
