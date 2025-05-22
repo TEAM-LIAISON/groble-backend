@@ -1,8 +1,6 @@
 title,contentType,version,contentUrl,effectiveFrom,effectiveTo
-만 14세 이상입니다,AGE_POLICY,2025V1,https://dev.groble.im/terms/age-policy/v1,2025-05-01 00:00:00,2026-05-31 23:59:59
-판매자 이용약관 동의,SELLER_TERMS_POLICY,2025V1,https://dev.groble.im/terms/seller-terms-policy/v1,2025-05-01 00:00:00,2026-05-31 23:59:59
-개인정보 수집 및 이용 동의,PRIVACY_POLICY,2025V1,https://dev.groble.im/terms/privacy-policy/v1,2025-05-01 00:00:00,2026-05-31 23:59:59
-서비스 이용약관 동의,SERVICE_TERMS_POLICY,2025V1,https://dev.groble.im/terms/service-terms-policy/v1,2025-05-01 00:00:00,2026-05-31 23:59:59
-판매 이용약관 동의,SALES_TERMS_POLICY,2025V1,https://dev.groble.im/terms/sales-terms-policy/v1,2025-05-01 00:00:00,2026-05-31 23:59:59
-마케팅 활용 동의,MARKETING_POLICY,2025V1,https://dev.groble.im/terms/marketing-policy/v1,2025-05-01 00:00:00,2026-05-31 23:59:59
-광고성 정보 수신 동의,ADVERTISING_POLICY,2025V1,https://dev.groble.im/terms/advertising-policy/v1,2025-05-01 00:00:00,2026-05-31 23:59:59
+만 14세 이상입니다,AGE_POLICY,2025V1,null,2025-05-01 00:00:00,2026-06-25 23:59:59
+개인정보 수집 및 이용 동의,PRIVACY_POLICY,2025V1,https://paint-crowley-ff2.notion.site/1f2c158365ac808cb22ecd38fe6d3ef7?pvs=4,2025-05-01 00:00:00,2026-06-25 23:59:59
+서비스 이용약관 동의,SERVICE_TERMS_POLICY,2025V1,https://paint-crowley-ff2.notion.site/1f2c158365ac80c39fc3ef1b8764f53a?pvs=4,2025-05-01 00:00:00,2026-06-25 23:59:59
+마케팅 활용 및 수신 동의,MARKETING_POLICY,2025V1,null,2025-05-01 00:00:00,2026-06-25 23:59:59
+메이커 이용약관 동의,SELLER_TERMS_POLICY,2025V1,https://paint-crowley-ff2.notion.site/1f2c158365ac80afafe6c9d7c1011d39?pvs=4,2025-05-01 00:00:00,2026-06-25 23:59:59

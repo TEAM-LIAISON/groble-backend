@@ -32,15 +32,13 @@ public class SocialSignUpRequest {
   @Schema(
       description = "약관 동의 유형",
       example =
-          "[\"AGE_POLICY\", \"PRIVACY_POLICY\", \"SERVICE_TERMS_POLICY\", \"SELLER_TERMS_POLICY\", \"SALES_TERMS_POLICY\"]",
+          "[\"AGE_POLICY\", \"PRIVACY_POLICY\", \"SERVICE_TERMS_POLICY\", \"SELLER_TERMS_POLICY\", \"MARKETING_POLICY\"]",
       allowableValues = {
         "AGE_POLICY",
-        "SELLER_TERMS_POLICY",
         "PRIVACY_POLICY",
         "SERVICE_TERMS_POLICY",
-        "SALES_TERMS_POLICY",
-        "MARKETING_POLICY",
-        "ADVERTISING_POLICY"
+        "SELLER_TERMS_POLICY",
+        "MARKETING_POLICY"
       })
   private List<TermsTypeDto> termsTypes;
 
