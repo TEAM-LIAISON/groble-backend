@@ -17,6 +17,7 @@ public class RedisVerificationCodeAdapter implements VerificationCodePort {
   private static final String EMAIL_VERIFICATION_PREFIX = "email:verification:";
   private static final String EMAIL_VERIFIED_PREFIX = "email:verified:";
   private static final String EMAIL_PASSWORD_RESET_PREFIX = "email:password_reset:";
+  private static final String PHONE_VERIFICATION_PREFIX = "phone:auth:";
 
   public RedisVerificationCodeAdapter(RedisTemplate<String, String> redisTemplate) {
     this.redisTemplate = redisTemplate;
@@ -144,12 +145,28 @@ public class RedisVerificationCodeAdapter implements VerificationCodePort {
     }
   }
 
+  @Override
+  public void saveVerificationCodeForPhone(
+      String phoneNumber, String code, long expirationTimeInMinutes) {
+    String key = verificationPhoneKey(phoneNumber);
+    try {
+      redisTemplate.opsForValue().set(key, code, expirationTimeInMinutes, TimeUnit.MINUTES);
+    } catch (DataAccessException e) {
+      log.error("Redis에 인증 코드 저장 실패: key={}, error={}", key, e.getMessage());
+      throw new RuntimeException("인증 코드를 저장하는 중 오류가 발생했습니다.", e);
+    }
+  }
+
   private String verificationKey(String email) {
     return EMAIL_VERIFICATION_PREFIX + email;
   }
 
   private String verifiedKey(String email) {
     return EMAIL_VERIFIED_PREFIX + email;
+  }
+
+  private String verificationPhoneKey(String phoneNumber) {
+    return PHONE_VERIFICATION_PREFIX + phoneNumber;
   }
 
   private String passwordResetKey(String token) {

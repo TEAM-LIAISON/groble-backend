@@ -23,4 +23,6 @@ public interface VerificationCodePort {
   boolean validateVerifiedFlag(String email);
 
   void removeVerifiedFlag(String email);
+
+  void saveVerificationCodeForPhone(String phoneNumber, String code, long expirationTimeInMinutes);
 }

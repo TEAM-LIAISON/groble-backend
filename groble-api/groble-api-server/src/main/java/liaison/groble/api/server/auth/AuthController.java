@@ -44,6 +44,7 @@ import liaison.groble.application.auth.dto.TokenDto;
 import liaison.groble.application.auth.dto.UserWithdrawalDto;
 import liaison.groble.application.auth.dto.VerifyEmailCodeDto;
 import liaison.groble.application.auth.service.AuthService;
+import liaison.groble.application.auth.service.PhoneAuthService;
 import liaison.groble.application.user.service.UserService;
 import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.model.Accessor;
@@ -68,12 +69,17 @@ public class AuthController {
   private final AuthService authService;
   private final UserService userService;
   private final AuthDtoMapper authDtoMapper;
+  private final PhoneAuthService phoneAuthService;
 
   public AuthController(
-      AuthService authService, UserService userService, AuthDtoMapper authDtoMapper) {
+      AuthService authService,
+      UserService userService,
+      AuthDtoMapper authDtoMapper,
+      PhoneAuthService phoneAuthService) {
     this.authService = authService;
     this.userService = userService;
     this.authDtoMapper = authDtoMapper;
+    this.phoneAuthService = phoneAuthService;
   }
 
   // 쿠키 설정값
@@ -233,9 +239,8 @@ public class AuthController {
   }
 
   @Operation(summary = "전화번호 인증 요청", description = "전화번호를 인증합니다.")
-  @PostMapping("/phone-number/reset")
-  public ResponseEntity<GrobleResponse<PhoneNumberResponse>> resetPhoneNumber(
-      @Auth Accessor accessor,
+  @PostMapping("/phone-number/auth-request")
+  public ResponseEntity<GrobleResponse<PhoneNumberResponse>> authPhoneNumber(
       @Parameter(description = "전화번호 인증 정보", required = true) @Valid @RequestBody
           PhoneNumberRequest request) {
     log.info("전화번호 인증 요청: {}", request.getPhoneNumber());
@@ -243,8 +248,10 @@ public class AuthController {
     // 1. API DTO → 서비스 DTO 변환
     PhoneNumberDto phoneNumberDto = authDtoMapper.toServicePhoneNumberDto(request);
 
-    // 2. 서비스 호출
-    authService.resetPhoneNumber(accessor.getUserId(), phoneNumberDto);
+    phoneAuthService.sendVerificationCode(phoneNumberDto.getPhoneNumber());
+
+    //    // 2. 서비스 호출
+    //    authService.resetPhoneNumber(accessor.getUserId(), phoneNumberDto);
 
     // 3. API 응답 생성
     return ResponseEntity.status(HttpStatus.OK)
