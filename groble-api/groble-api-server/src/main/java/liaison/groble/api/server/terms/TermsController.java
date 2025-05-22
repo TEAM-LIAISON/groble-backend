@@ -116,7 +116,7 @@ public class TermsController {
     @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터"),
     @ApiResponse(responseCode = "401", description = "인증 실패")
   })
-  @PostMapping("/maker/terms/agree")
+  @PostMapping("/maker/agree")
   public ResponseEntity<GrobleResponse<MakerTermsAgreementResponse>> agreeMakerTerms(
       @Auth Accessor accessor,
       @Parameter(description = "메이커 약관 동의 정보", required = true) @Valid @RequestBody
