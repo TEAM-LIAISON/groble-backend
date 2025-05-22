@@ -242,6 +242,11 @@ public class User extends BaseTimeEntity {
     return hasAgreedTo(TermsType.MARKETING_POLICY);
   }
 
+  /** 메이커 약관 동의 여부 확인 */
+  public boolean isMakerTermsAgreed() {
+    return hasAgreedTo(TermsType.SELLER_TERMS_POLICY);
+  }
+
   /**
    * 광고성 정보 수신 동의 여부 업데이트
    *
@@ -265,6 +270,45 @@ public class User extends BaseTimeEntity {
           UserTerms.builder()
               .user(this)
               .terms(advertisingTerms)
+              .agreed(agreed)
+              .agreedAt(Instant.now())
+              .agreedIp(ip)
+              .agreedUserAgent(userAgent)
+              .build();
+
+      termsAgreements.add(newAgreement);
+    }
+  }
+
+  /**
+   * 메이커 약관 동의 처리
+   *
+   * @param makerTerms 현재 유효한 메이커 약관
+   * @param agreed 동의 여부 (true만 허용)
+   * @param ip 동의 시 IP 주소
+   * @param userAgent 동의 시 User-Agent
+   */
+  public void updateMakerTermsAgreement(
+      Terms makerTerms, boolean agreed, String ip, String userAgent) {
+    if (!agreed) {
+      throw new IllegalArgumentException("메이커 약관은 반드시 동의해야 합니다.");
+    }
+
+    UserTerms existingAgreement =
+        termsAgreements.stream()
+            .filter(a -> a.getTerms().getType() == TermsType.SELLER_TERMS_POLICY)
+            .findFirst()
+            .orElse(null);
+
+    if (existingAgreement != null) {
+      // 기존 동의 내역 업데이트
+      existingAgreement.updateAgreement(agreed, Instant.now(), ip, userAgent);
+    } else {
+      // 새로운 동의 내역 생성
+      UserTerms newAgreement =
+          UserTerms.builder()
+              .user(this)
+              .terms(makerTerms)
               .agreed(agreed)
               .agreedAt(Instant.now())
               .agreedIp(ip)

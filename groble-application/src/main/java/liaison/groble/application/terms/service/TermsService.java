@@ -2,6 +2,7 @@ package liaison.groble.application.terms.service;
 
 import java.util.List;
 
+import liaison.groble.application.terms.dto.MakerTermsAgreementDto;
 import liaison.groble.application.terms.dto.TermsAgreementDto;
 
 public interface TermsService {
@@ -18,4 +19,7 @@ public interface TermsService {
 
   void updateAdvertisingAgreementStatus(
       Long userId, boolean agreed, String ipAddress, String userAgent);
+
+  MakerTermsAgreementDto agreeMakerTerms(
+      MakerTermsAgreementDto dto, String clientIp, String userAgent);
 }

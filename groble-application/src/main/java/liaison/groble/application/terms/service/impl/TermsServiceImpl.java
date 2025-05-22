@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import liaison.groble.application.terms.dto.MakerTermsAgreementDto;
 import liaison.groble.application.terms.dto.TermsAgreementDto;
 import liaison.groble.application.terms.service.TermsService;
 import liaison.groble.application.user.service.UserReader;
@@ -192,5 +193,45 @@ public class TermsServiceImpl implements TermsService {
     user.updateAdvertisingAgreement(advertisingTerms, agreed, ipAddress, userAgent);
 
     userRepository.save(user);
+  }
+
+  @Override
+  @Transactional
+  public MakerTermsAgreementDto agreeMakerTerms(
+      MakerTermsAgreementDto agreementDto, String clientIp, String userAgent) {
+    log.info("메이커 이용약관 동의 처리: userId={}", agreementDto.getUserId());
+
+    // 1. 사용자 조회
+    User user = userReader.getUserById(agreementDto.getUserId());
+
+    // 2. 현재 유효한 메이커 약관 조회
+    Terms currentMakerTerms =
+        termsRepository
+            .findLatestByTypeAndEffectiveAt(TermsType.SELLER_TERMS_POLICY, LocalDateTime.now())
+            .orElseThrow(() -> new IllegalStateException("현재 유효한 메이커 약관을 찾을 수 없습니다."));
+
+    // 3. 이미 동의한 사용자인지 확인
+    if (user.isMakerTermsAgreed()) {
+      log.info("이미 메이커 약관에 동의한 사용자: userId={}", agreementDto.getUserId());
+
+      return MakerTermsAgreementDto.builder()
+          .userId(user.getId())
+          .makerTermsAgreement(true)
+          .build();
+    }
+
+    // 4. 메이커 약관 동의 처리
+    user.updateMakerTermsAgreement(currentMakerTerms, true, clientIp, userAgent);
+
+    // 5. 사용자 저장
+    User savedUser = userRepository.save(user);
+
+    log.info("메이커 이용약관 동의 완료: userId={}", savedUser.getId());
+
+    // 6. 결과 반환
+    return MakerTermsAgreementDto.builder()
+        .userId(savedUser.getId())
+        .makerTermsAgreement(true)
+        .build();
   }
 }
