@@ -94,8 +94,7 @@ public class SellController {
   @ContentExamineReject
   @GetMapping("/content/{contentId}/examine/reject")
   public ResponseEntity<GrobleResponse<String>> getExamineRejectReason(
-      @Parameter(hidden = true) @Auth Accessor accessor,
-      @PathVariable("contentId") Long contentId) {
+      @Auth Accessor accessor, @PathVariable("contentId") Long contentId) {
     String rejectReason = contentService.getExamineRejectReason(accessor.getUserId(), contentId);
     return ResponseEntity.ok(GrobleResponse.success(rejectReason, "콘텐츠 심사 거절 사유 조회 성공"));
   }
