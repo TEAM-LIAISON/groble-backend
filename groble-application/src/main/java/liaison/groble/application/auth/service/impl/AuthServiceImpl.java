@@ -94,6 +94,7 @@ public class AuthServiceImpl implements AuthService {
     // 3. 사용자 생성 (팩토리 패턴 활용)
     User user;
     if (userType == UserType.SELLER) {
+      validatePhoneNumberVerification(signUpDto.getPhoneNumber());
       user =
           UserFactory.createIntegratedSellerUser(
               signUpDto.getEmail(),
@@ -134,7 +135,7 @@ public class AuthServiceImpl implements AuthService {
 
     // 10. 인증 플래그 제거
     verificationCodePort.removeVerifiedFlag(signUpDto.getEmail());
-
+    verificationCodePort.removeVerifiedPhoneFlag(signUpDto.getPhoneNumber());
     return tokenDto;
   }
 
@@ -143,6 +144,10 @@ public class AuthServiceImpl implements AuthService {
   public TokenDto socialSignUp(Long userId, SocialSignUpDto dto) {
     // 1. userType 파싱
     UserType userType = validateAndParseUserType(dto.getUserType());
+    if (userType.equals(UserType.SELLER)) {
+      validatePhoneNumberVerification(dto.getPhoneNumber());
+    }
+
     // 약관 유형 변환 및 필수 약관 검증
     List<TermsType> agreedTermsTypes = convertToTermsTypes(dto.getTermsTypeStrings());
     validateRequiredTermsAgreement(agreedTermsTypes, userType);
@@ -196,6 +201,7 @@ public class AuthServiceImpl implements AuthService {
         securityPort.getRefreshTokenExpirationTime(tokenDto.getRefreshToken()));
 
     userRepository.save(user);
+    verificationCodePort.removeVerifiedPhoneFlag(dto.getPhoneNumber());
     return tokenDto;
   }
 
@@ -620,6 +626,12 @@ public class AuthServiceImpl implements AuthService {
   private void validateEmailVerification(String email) {
     if (!verificationCodePort.validateVerifiedFlag(email)) {
       throw new IllegalArgumentException("이메일 인증이 완료되지 않았습니다.");
+    }
+  }
+
+  private void validatePhoneNumberVerification(String phoneNumber) {
+    if (!verificationCodePort.validateVerifiedPhoneFlag(phoneNumber)) {
+      throw new IllegalArgumentException("전화번호 인증이 완료되지 않았습니다.");
     }
   }
 

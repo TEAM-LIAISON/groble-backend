@@ -29,7 +29,8 @@ public class PhoneAuthService {
     String code = generateRandomCode();
     saveAndSendVerificationCode(sanitized, code);
 
-    Message message = Message.builder().to(sanitized).content("[Groble] 인증코드: " + code).build();
+    String smsContent = "[Groble] 인증코드 [" + code + "]를 입력해주세요.";
+    Message message = Message.builder().to(sanitized).content(smsContent).build();
 
     try {
       log.info("SMS 전송 시도: to={}, content={}", message.getTo(), message.getContent());
@@ -52,6 +53,8 @@ public class PhoneAuthService {
       throw new IllegalArgumentException("인증 코드가 유효하지 않습니다.");
     }
     log.info("인증 코드 검증 성공: phoneNumber={}", sanitized);
+    verificationCodePort.saveVerifiedPhoneFlag(sanitized, CODE_TTL.toMinutes());
+    verificationCodePort.removeVerificationCodeForPhone(sanitized);
   }
 
   private void saveAndSendVerificationCode(String phoneNumber, String code) {

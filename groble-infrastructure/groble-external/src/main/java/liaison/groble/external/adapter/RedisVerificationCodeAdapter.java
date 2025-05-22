@@ -18,6 +18,7 @@ public class RedisVerificationCodeAdapter implements VerificationCodePort {
   private static final String EMAIL_VERIFIED_PREFIX = "email:verified:";
   private static final String EMAIL_PASSWORD_RESET_PREFIX = "email:password_reset:";
   private static final String PHONE_VERIFICATION_PREFIX = "phone:auth:";
+  private static final String PHONE_VERIFIED_PREFIX = "phone:verified:";
 
   public RedisVerificationCodeAdapter(RedisTemplate<String, String> redisTemplate) {
     this.redisTemplate = redisTemplate;
@@ -169,6 +170,49 @@ public class RedisVerificationCodeAdapter implements VerificationCodePort {
     }
   }
 
+  @Override
+  public void removeVerificationCodeForPhone(String phoneNumber) {
+    String key = verificationPhoneKey(phoneNumber);
+    try {
+      redisTemplate.delete(key);
+    } catch (DataAccessException e) {
+      log.warn("Redis에서 인증 코드 삭제 실패: key={}, error={}", key, e.getMessage());
+    }
+  }
+
+  @Override
+  public void saveVerifiedPhoneFlag(String phoneNumber, long expirationTimeInMinutes) {
+    String key = verifiedPhoneKey(phoneNumber);
+    try {
+      redisTemplate.opsForValue().set(key, "verified", expirationTimeInMinutes, TimeUnit.MINUTES);
+    } catch (DataAccessException e) {
+      log.error("Redis에 전화번호 인증 플래그 저장 실패: key={}, error={}", key, e.getMessage());
+      throw new RuntimeException("전화번호 인증 플래그를 저장하는 중 오류가 발생했습니다.", e);
+    }
+  }
+
+  @Override
+  public boolean validateVerifiedPhoneFlag(String phoneNumber) {
+    String key = verifiedPhoneKey(phoneNumber);
+    try {
+      String storedValue = redisTemplate.opsForValue().get(key);
+      return storedValue != null && storedValue.equals("verified");
+    } catch (DataAccessException e) {
+      log.error("Redis에서 전화번호 인증 플래그 검증 실패: key={}, error={}", key, e.getMessage());
+      return false;
+    }
+  }
+
+  @Override
+  public void removeVerifiedPhoneFlag(String phoneNumber) {
+    String key = verifiedPhoneKey(phoneNumber);
+    try {
+      redisTemplate.delete(key);
+    } catch (DataAccessException e) {
+      log.warn("Redis에서 인증 플래그 삭제 실패: key={}, error={}", key, e.getMessage());
+    }
+  }
+
   private String verificationKey(String email) {
     return EMAIL_VERIFICATION_PREFIX + email;
   }
@@ -179,6 +223,10 @@ public class RedisVerificationCodeAdapter implements VerificationCodePort {
 
   private String verificationPhoneKey(String phoneNumber) {
     return PHONE_VERIFICATION_PREFIX + phoneNumber;
+  }
+
+  private String verifiedPhoneKey(String phoneNumber) {
+    return PHONE_VERIFIED_PREFIX + phoneNumber;
   }
 
   private String passwordResetKey(String token) {

@@ -28,4 +28,12 @@ public interface VerificationCodePort {
   void saveVerificationCodeForPhone(String phoneNumber, String code, long expirationTimeInMinutes);
 
   boolean validateVerificationCodeForPhone(String phoneNumber, String code);
+
+  void removeVerificationCodeForPhone(String phoneNumber);
+
+  void saveVerifiedPhoneFlag(String phoneNumber, long expirationTimeInMinutes);
+
+  boolean validateVerifiedPhoneFlag(String phoneNumber);
+
+  void removeVerifiedPhoneFlag(String phoneNumber);
 }
