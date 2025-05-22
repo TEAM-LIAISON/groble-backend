@@ -32,7 +32,7 @@ public class SocialAccount {
   @JoinColumn(name = "user_id", unique = true, nullable = false)
   private User user;
 
-  @Column(nullable = false, unique = true)
+  @Column(nullable = false)
   private String providerId;
 
   @Enumerated(value = STRING)
