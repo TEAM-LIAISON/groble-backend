@@ -83,7 +83,7 @@ public class AuthServiceImpl implements AuthService {
     UserType userType = validateAndParseUserType(signUpDto.getUserType());
     // 약관 유형 변환 및 필수 약관 검증
     List<TermsType> agreedTermsTypes = convertToTermsTypes(signUpDto.getTermsTypeStrings());
-    validateRequiredTermsAgreement(agreedTermsTypes);
+    validateRequiredTermsAgreement(agreedTermsTypes, userType);
 
     // 기입한 이메일 인증 여부 판단
     validateEmailVerification(signUpDto.getEmail());
@@ -145,7 +145,7 @@ public class AuthServiceImpl implements AuthService {
     UserType userType = validateAndParseUserType(dto.getUserType());
     // 약관 유형 변환 및 필수 약관 검증
     List<TermsType> agreedTermsTypes = convertToTermsTypes(dto.getTermsTypeStrings());
-    validateRequiredTermsAgreement(agreedTermsTypes);
+    validateRequiredTermsAgreement(agreedTermsTypes, userType);
 
     // 2. SELLER라면 phoneNumber 필수
     if (userType == UserType.SELLER
@@ -591,25 +591,27 @@ public class AuthServiceImpl implements AuthService {
     }
   }
 
-  /** 필수 약관 동의 여부 검증 */
-  private void validateRequiredTermsAgreement(List<TermsType> agreedTermsTypes) {
-    // 모든 필수 약관 타입 목록
-    List<TermsType> requiredTermsTypes =
-        Arrays.stream(TermsType.values()).filter(TermsType::isRequired).toList();
+  private void validateRequiredTermsAgreement(List<TermsType> agreedTermsTypes, UserType userType) {
 
-    // 동의하지 않은 필수 약관 찾기
-    List<TermsType> missingRequiredTerms =
-        requiredTermsTypes.stream()
-            .filter(requiredType -> !agreedTermsTypes.contains(requiredType))
+    // 모든 TermsType 중에서
+    // required == true 이고, (SELLER_TERMS_POLICY == false 이고, userType == SELLER)
+    List<TermsType> requiredTermsTypes =
+        Arrays.stream(TermsType.values())
+            .filter(
+                t ->
+                    t.isRequired()
+                        && (t != TermsType.SELLER_TERMS_POLICY || userType == UserType.SELLER))
             .toList();
 
-    // 동의하지 않은 필수 약관이 있으면 예외 발생
+    // 同様に未同意のものを探す
+    List<TermsType> missingRequiredTerms =
+        requiredTermsTypes.stream().filter(req -> !agreedTermsTypes.contains(req)).toList();
+
     if (!missingRequiredTerms.isEmpty()) {
       String missingTerms =
           missingRequiredTerms.stream()
               .map(TermsType::getDescription)
               .collect(Collectors.joining(", "));
-
       throw new IllegalArgumentException("다음 필수 약관에 동의해주세요: " + missingTerms);
     }
   }
