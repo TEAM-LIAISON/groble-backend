@@ -58,7 +58,7 @@ public class UserTermsService {
   }
 
   public boolean hasAgreedToAdvertising(User user) {
-    return hasAgreedTo(user, TermsType.ADVERTISING_POLICY);
+    return hasAgreedTo(user, TermsType.MARKETING_POLICY);
   }
 
   public void updateAdvertisingAgreement(

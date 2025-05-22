@@ -1,6 +1,6 @@
 package liaison.groble.application.terms.service.impl;
 
-import static liaison.groble.domain.terms.enums.TermsType.ADVERTISING_POLICY;
+import static liaison.groble.domain.terms.enums.TermsType.MARKETING_POLICY;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -186,7 +186,7 @@ public class TermsServiceImpl implements TermsService {
 
     Terms advertisingTerms =
         termsRepository
-            .findLatestByTypeAndEffectiveAt(ADVERTISING_POLICY, LocalDateTime.now())
+            .findLatestByTypeAndEffectiveAt(MARKETING_POLICY, LocalDateTime.now())
             .orElseThrow(() -> new IllegalStateException("현재 유효한 광고성 정보 약관이 없습니다."));
 
     user.updateAdvertisingAgreement(advertisingTerms, agreed, ipAddress, userAgent);

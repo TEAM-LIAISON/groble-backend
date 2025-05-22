@@ -239,7 +239,7 @@ public class User extends BaseTimeEntity {
 
   /** 광고성 정보 수신 동의 여부 확인 */
   public boolean hasAgreedToAdvertising() {
-    return hasAgreedTo(TermsType.ADVERTISING_POLICY);
+    return hasAgreedTo(TermsType.MARKETING_POLICY);
   }
 
   /**
