@@ -8,7 +8,9 @@ import liaison.groble.application.user.service.UserReader;
 import liaison.groble.common.utils.CodeGenerator;
 import liaison.groble.domain.port.VerificationCodePort;
 import liaison.groble.domain.user.entity.User;
+import liaison.groble.domain.user.enums.SellerVerificationStatus;
 import liaison.groble.domain.user.repository.UserRepository;
+import liaison.groble.domain.user.vo.SellerInfo;
 import liaison.groble.external.sms.Message;
 import liaison.groble.external.sms.SmsSender;
 import liaison.groble.external.sms.exception.SmsSendException;
@@ -35,10 +37,7 @@ public class PhoneAuthService {
     // 1. 기존 사용자의 전화번호와 동일한지 체크
     validatePhoneNumberForUser(userId, sanitized);
 
-    // 2. 다른 사용자가 이미 사용 중인 전화번호인지 체크
-    validatePhoneNumberNotUsedByOthers(userId, sanitized);
-
-    // 3. 인증 코드 생성 및 발송
+    // 2. 인증 코드 생성 및 발송
     String code = generateRandomCode();
     verificationCodePort.saveVerificationCodeForUser(userId, sanitized, code, CODE_TTL.toMinutes());
 
@@ -72,11 +71,18 @@ public class PhoneAuthService {
       throw new IllegalArgumentException("인증 코드가 유효하지 않습니다.");
     }
 
-    // 인증 성공 처리
-    verificationCodePort.saveVerifiedUserPhoneFlag(userId, sanitized, CODE_TTL.toMinutes());
+    User user = userReader.getUserById(userId);
+    if (user.getNickname() != null) {
+      user.setSeller(true);
+      user.setSellerInfo(SellerInfo.ofVerificationStatus(SellerVerificationStatus.PENDING));
+      userRepository.save(user);
+      log.info("로그인한 기존 사용자 전화번호 인증 성공: userId={}", userId);
+    } else {
+      verificationCodePort.saveVerifiedUserPhoneFlag(userId, sanitized, CODE_TTL.toMinutes());
+      log.info("로그인한 신규 사용자 전화번호 인증 성공: userId={}", userId);
+    }
     verificationCodePort.removeVerificationCodeForUser(userId, sanitized);
-
-    log.info("로그인 사용자 전화번호 인증 성공: userId={}", userId);
+    // 인증 성공 처리
   }
 
   /** 비회원 전화번호 인증 코드 검증 */
@@ -111,17 +117,6 @@ public class PhoneAuthService {
     if (phoneNumber.equals(user.getPhoneNumber())) {
       log.info("동일한 전화번호로 재인증 요청: userId={}", userId);
     }
-  }
-
-  private void validatePhoneNumberNotUsedByOthers(Long userId, String phoneNumber) {
-    // 다른 사용자가 이미 사용 중인 전화번호인지 체크
-    userRepository
-        .findByPhoneNumber(phoneNumber)
-        .filter(user -> !user.getId().equals(userId))
-        .ifPresent(
-            user -> {
-              throw new IllegalArgumentException("이미 다른 사용자가 사용 중인 전화번호입니다.");
-            });
   }
 
   private void sendSms(String phoneNumber, String code) {
