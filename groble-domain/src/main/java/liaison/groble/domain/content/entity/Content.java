@@ -53,6 +53,7 @@ public class Content extends BaseEntity {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
+  @Column(length = 30)
   private String title;
 
   // 콘텐츠 유형

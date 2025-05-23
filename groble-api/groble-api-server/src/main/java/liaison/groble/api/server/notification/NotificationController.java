@@ -18,20 +18,16 @@ import liaison.groble.common.response.GrobleResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/v1/notifications")
 @Tag(name = "알림 관련 API", description = "알림 삭제, 알림 조회 API")
 public class NotificationController {
 
   private final NotificationService notificationService;
   private final NotificationDtoMapper notificationDtoMapper;
-
-  public NotificationController(
-      NotificationService notificationService, NotificationDtoMapper notificationDtoMapper) {
-    this.notificationService = notificationService;
-    this.notificationDtoMapper = notificationDtoMapper;
-  }
 
   // 알림 전체 삭제
   @Operation(summary = "알림 전체 삭제", description = "사용자의 모든 알림을 삭제합니다.")

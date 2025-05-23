@@ -58,11 +58,13 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /** 인증 관련 API 컨트롤러 회원가입, 로그인, 이메일 인증, 토큰 갱신 등의 엔드포인트 제공 */
 @Slf4j
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/v1/auth")
 @Tag(name = "인증 API", description = "통합 회원가입, 통합 로그인, 이메일 인증, 토큰 갱신 등의 인증 관련 API")
 public class AuthController {
@@ -70,17 +72,6 @@ public class AuthController {
   private final UserService userService;
   private final AuthDtoMapper authDtoMapper;
   private final PhoneAuthService phoneAuthService;
-
-  public AuthController(
-      AuthService authService,
-      UserService userService,
-      AuthDtoMapper authDtoMapper,
-      PhoneAuthService phoneAuthService) {
-    this.authService = authService;
-    this.userService = userService;
-    this.authDtoMapper = authDtoMapper;
-    this.phoneAuthService = phoneAuthService;
-  }
 
   // 쿠키 설정값
   private static final int ACCESS_TOKEN_MAX_AGE = 60 * 60; // 1시간
@@ -508,8 +499,9 @@ public class AuthController {
 
     // 4. 도메인 설정 (app.cookie.domain 프로퍼티 사용)
     String domain = null;
-    if (!isLocal) {
-      domain = cookieDomain; // 개발/운영 환경: groble.im
+    if (!isLocal && cookieDomain != null && !cookieDomain.isEmpty()) {
+      // 서브도메인에서도 쿠키 공유를 위해 .을 추가
+      domain = cookieDomain.startsWith(".") ? cookieDomain : "." + cookieDomain;
     }
     // 로컬 환경에서는 domain 명시적으로 설정하지 않음 (기본값 사용)
 

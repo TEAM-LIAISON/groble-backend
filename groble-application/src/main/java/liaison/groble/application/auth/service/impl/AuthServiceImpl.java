@@ -135,7 +135,14 @@ public class AuthServiceImpl implements AuthService {
 
     // 10. 인증 플래그 제거
     verificationCodePort.removeVerifiedEmailFlag(signUpDto.getEmail());
-    verificationCodePort.removeVerifiedGuestPhoneFlag(signUpDto.getPhoneNumber());
+    // 전화번호 정규화 후 플래그 제거
+    String sanitizedPhoneNumber =
+        signUpDto.getPhoneNumber() != null
+            ? signUpDto.getPhoneNumber().replaceAll("\\D", "")
+            : null;
+    if (sanitizedPhoneNumber != null) {
+      verificationCodePort.removeVerifiedGuestPhoneFlag(sanitizedPhoneNumber);
+    }
     return tokenDto;
   }
 
@@ -174,6 +181,7 @@ public class AuthServiceImpl implements AuthService {
     user.updateLastUserType(userType);
     // SELLER 타입이면 isSeller 플래그도 설정
     if (userType == UserType.SELLER) {
+      log.info("판매자 전화번호 인증: {}", dto.getPhoneNumber());
       validateVerifiedGuestPhoneFlag(dto.getPhoneNumber());
       user.setSeller(true);
       user.setSellerInfo(SellerInfo.ofVerificationStatus(SellerVerificationStatus.PENDING));
@@ -199,7 +207,12 @@ public class AuthServiceImpl implements AuthService {
         securityPort.getRefreshTokenExpirationTime(tokenDto.getRefreshToken()));
 
     userRepository.save(user);
-    verificationCodePort.removeVerifiedGuestPhoneFlag(dto.getPhoneNumber());
+    // 전화번호 정규화 후 플래그 제거
+    String sanitizedPhoneNumber =
+        dto.getPhoneNumber() != null ? dto.getPhoneNumber().replaceAll("\\D", "") : null;
+    if (sanitizedPhoneNumber != null) {
+      verificationCodePort.removeVerifiedGuestPhoneFlag(sanitizedPhoneNumber);
+    }
     return tokenDto;
   }
 
@@ -628,7 +641,10 @@ public class AuthServiceImpl implements AuthService {
   }
 
   private void validateVerifiedGuestPhoneFlag(String phoneNumber) {
-    if (!verificationCodePort.validateVerifiedGuestPhoneFlag(phoneNumber)) {
+    // 전화번호 정규화 (하이픈, 공백 등 제거)
+    String sanitizedPhoneNumber = phoneNumber.replaceAll("\\D", "");
+
+    if (!verificationCodePort.validateVerifiedGuestPhoneFlag(sanitizedPhoneNumber)) {
       throw new IllegalArgumentException("전화번호 인증이 완료되지 않았습니다.");
     }
   }

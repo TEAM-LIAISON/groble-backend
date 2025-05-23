@@ -40,9 +40,11 @@ import liaison.groble.common.response.GrobleResponse;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 
 /** 사용자 정보 관련 API 컨트롤러 */
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/v1")
 @Tag(name = "사용자 정보 관련 API", description = "마이페이지 조회 및 가입 유형 전환 API")
 public class UserController {
@@ -51,22 +53,6 @@ public class UserController {
   private final UserDtoMapper userDtoMapper;
   private final FileService fileService;
   private final FileDtoMapper fileDtoMapper;
-
-  public UserController(
-      UserService userService,
-      UserDtoMapper userDtoMapper,
-      FileService fileService,
-      FileDtoMapper fileDtoMapper) {
-    this.userService = userService;
-    this.userDtoMapper = userDtoMapper;
-    this.fileService = fileService;
-    this.fileDtoMapper = fileDtoMapper;
-  }
-
-  private boolean isImageFile(MultipartFile file) {
-    String ct = file.getContentType();
-    return ct != null && ct.startsWith("image/");
-  }
 
   @SwitchRole
   @PostMapping("/users/switch-role")
@@ -195,5 +181,10 @@ public class UserController {
               GrobleResponse.error(
                   "프로필 이미지 저장 중 오류가 발생했습니다. 다시 시도해주세요.", HttpStatus.INTERNAL_SERVER_ERROR.value()));
     }
+  }
+
+  private boolean isImageFile(MultipartFile file) {
+    String ct = file.getContentType();
+    return ct != null && ct.startsWith("image/");
   }
 }

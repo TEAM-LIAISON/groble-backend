@@ -2,7 +2,6 @@ package liaison.groble.api.server.auth.mapper;
 
 import org.springframework.stereotype.Component;
 
-import liaison.groble.api.model.auth.request.DeprecatedSignUpRequest;
 import liaison.groble.api.model.auth.request.EmailVerificationRequest;
 import liaison.groble.api.model.auth.request.PhoneNumberVerifyCodeRequest;
 import liaison.groble.api.model.auth.request.PhoneNumberVerifyRequest;
@@ -11,7 +10,6 @@ import liaison.groble.api.model.auth.request.SignUpRequest;
 import liaison.groble.api.model.auth.request.SocialSignUpRequest;
 import liaison.groble.api.model.auth.request.UserWithdrawalRequest;
 import liaison.groble.api.model.auth.request.VerifyEmailCodeRequest;
-import liaison.groble.application.auth.dto.DeprecatedSignUpDto;
 import liaison.groble.application.auth.dto.EmailVerificationDto;
 import liaison.groble.application.auth.dto.PhoneNumberVerifyCodeRequestDto;
 import liaison.groble.application.auth.dto.PhoneNumberVerifyRequestDto;
@@ -23,13 +21,6 @@ import liaison.groble.application.auth.dto.VerifyEmailCodeDto;
 
 @Component
 public class AuthDtoMapper {
-
-  public DeprecatedSignUpDto toServiceDeprecatedSignUpDto(DeprecatedSignUpRequest request) {
-    return DeprecatedSignUpDto.builder()
-        .email(request.getEmail())
-        .password(request.getPassword())
-        .build();
-  }
 
   public SignUpDto toServiceSignUpDto(SignUpRequest request) {
     return SignUpDto.builder()

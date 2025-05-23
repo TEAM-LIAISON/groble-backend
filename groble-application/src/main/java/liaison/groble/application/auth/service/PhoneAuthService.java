@@ -98,21 +98,6 @@ public class PhoneAuthService {
     log.info("비회원 전화번호 인증 성공: phoneNumber={}", sanitized);
   }
 
-  // === Deprecated 메서드들 (하위 호환성) ===
-
-  @Deprecated
-  public void sendVerificationCode(String phoneNumber) {
-    log.warn(
-        "Deprecated method called: sendVerificationCode. Use sendVerificationCodeForSignup instead.");
-    sendVerificationCodeForSignup(phoneNumber);
-  }
-
-  @Deprecated
-  public void verifyCode(String phoneNumber, String code) {
-    log.warn("Deprecated method called: verifyCode. Use verifyCodeForSignup instead.");
-    verifyCodeForSignup(phoneNumber, code);
-  }
-
   // === Private Helper Methods ===
 
   private String sanitizePhoneNumber(String phoneNumber) {
@@ -136,16 +121,6 @@ public class PhoneAuthService {
         .ifPresent(
             user -> {
               throw new IllegalArgumentException("이미 다른 사용자가 사용 중인 전화번호입니다.");
-            });
-  }
-
-  private void validatePhoneNumberNotRegistered(String phoneNumber) {
-    // 이미 가입된 전화번호인지 체크
-    userRepository
-        .findByPhoneNumber(phoneNumber)
-        .ifPresent(
-            user -> {
-              throw new IllegalArgumentException("이미 가입된 전화번호입니다. 로그인을 해주세요.");
             });
   }
 
