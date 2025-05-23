@@ -75,6 +75,7 @@ public class PhoneAuthService {
     if (user.getNickname() != null) {
       user.setSeller(true);
       user.setSellerInfo(SellerInfo.ofVerificationStatus(SellerVerificationStatus.PENDING));
+      user.updatePhoneNumber(phoneNumber);
       userRepository.save(user);
       log.info("로그인한 기존 사용자 전화번호 인증 성공: userId={}", userId);
     } else {
