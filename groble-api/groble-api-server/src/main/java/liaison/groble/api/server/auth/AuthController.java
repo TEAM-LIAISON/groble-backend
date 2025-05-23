@@ -500,8 +500,9 @@ public class AuthController {
     // 4. 도메인 설정 (app.cookie.domain 프로퍼티 사용)
     String domain = null;
     if (!isLocal && cookieDomain != null && !cookieDomain.isEmpty()) {
-      // 서브도메인에서도 쿠키 공유를 위해 .을 추가
-      domain = cookieDomain.startsWith(".") ? cookieDomain : "." + cookieDomain;
+      // 점으로 시작하지 않는 도메인 사용 (RFC 6265 준수)
+      domain = cookieDomain.startsWith(".") ? cookieDomain.substring(1) : cookieDomain;
+      // 또는 더 간단하게: domain = cookieDomain;
     }
     // 로컬 환경에서는 domain 명시적으로 설정하지 않음 (기본값 사용)
 
