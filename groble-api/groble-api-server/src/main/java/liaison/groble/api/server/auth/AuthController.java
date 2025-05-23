@@ -109,7 +109,7 @@ public class AuthController {
   @SocialSignUp
   @PostMapping("/sign-up/social")
   public ResponseEntity<GrobleResponse<SocialSignUpResponse>> signUpSocial(
-      @Auth Accessor accessor,
+      @Auth(required = false) Accessor accessor,
       @Parameter(description = "회원가입 정보", required = true) @Valid @RequestBody
           SocialSignUpRequest request,
       HttpServletResponse response) {

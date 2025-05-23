@@ -182,7 +182,7 @@ public class AuthServiceImpl implements AuthService {
     // SELLER 타입이면 isSeller 플래그도 설정
     if (userType == UserType.SELLER) {
       log.info("판매자 전화번호 인증: {}", dto.getPhoneNumber());
-      validateVerifiedGuestPhoneFlag(dto.getPhoneNumber());
+      validateVerifiedUserPhoneFlag(userId, dto.getPhoneNumber());
       user.setSeller(true);
       user.setSellerInfo(SellerInfo.ofVerificationStatus(SellerVerificationStatus.PENDING));
     } else {
@@ -645,6 +645,15 @@ public class AuthServiceImpl implements AuthService {
     String sanitizedPhoneNumber = phoneNumber.replaceAll("\\D", "");
 
     if (!verificationCodePort.validateVerifiedGuestPhoneFlag(sanitizedPhoneNumber)) {
+      throw new IllegalArgumentException("전화번호 인증이 완료되지 않았습니다.");
+    }
+  }
+
+  private void validateVerifiedUserPhoneFlag(Long userId, String phoneNumber) {
+    // 전화번호 정규화 (하이픈, 공백 등 제거)
+    String sanitizedPhoneNumber = phoneNumber.replaceAll("\\D", "");
+
+    if (!verificationCodePort.validateVerifiedUserPhoneFlag(userId, sanitizedPhoneNumber)) {
       throw new IllegalArgumentException("전화번호 인증이 완료되지 않았습니다.");
     }
   }
