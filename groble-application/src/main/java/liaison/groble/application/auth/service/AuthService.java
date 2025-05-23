@@ -11,11 +11,6 @@ import liaison.groble.application.auth.dto.VerifyEmailCodeDto;
 
 public interface AuthService {
 
-  /**
-   * 회원가입 처리
-   *
-   * @param signUpDto 회원가입 정보
-   */
   TokenDto signUp(SignUpDto signUpDto);
 
   TokenDto socialSignUp(Long userId, SocialSignUpDto socialSignUpDto);
