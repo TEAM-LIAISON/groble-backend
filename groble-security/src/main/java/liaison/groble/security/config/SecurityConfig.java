@@ -186,8 +186,6 @@ public class SecurityConfig {
                     .permitAll()
                     .requestMatchers("/login/**")
                     .permitAll()
-                    .requestMatchers("/login")
-                    .permitAll()
                     .requestMatchers("/error")
                     .permitAll()
                     .requestMatchers("/")
