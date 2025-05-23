@@ -11,6 +11,7 @@ import liaison.groble.application.user.service.UserReader;
 import liaison.groble.application.user.service.UserService;
 import liaison.groble.common.exception.EntityNotFoundException;
 import liaison.groble.common.port.security.SecurityPort;
+import liaison.groble.domain.terms.enums.TermsType;
 import liaison.groble.domain.user.entity.IntegratedAccount;
 import liaison.groble.domain.user.entity.SocialAccount;
 import liaison.groble.domain.user.entity.User;
@@ -196,11 +197,14 @@ public class UserServiceImpl implements UserService {
     }
 
     boolean canSwitchToSeller = true;
-    if (user.isSeller() && user.getLastUserType().equals(UserType.SELLER)) {
+    if (user.isSeller() && user.getLastUserType().equals(UserType.BUYER)) {
       canSwitchToSeller = false;
     }
 
     boolean sellerAccountNotCreated = true;
+    if (user.hasAgreedTo(TermsType.SELLER_TERMS_POLICY) && user.getPhoneNumber() != null) {
+      sellerAccountNotCreated = false;
+    }
 
     return UserMyPageDetailDto.builder()
         .nickname(user.getNickname())
