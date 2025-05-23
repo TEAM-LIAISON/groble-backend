@@ -94,7 +94,7 @@ public class AuthServiceImpl implements AuthService {
     // 3. 사용자 생성 (팩토리 패턴 활용)
     User user;
     if (userType == UserType.SELLER) {
-      validatePhoneNumberVerification(signUpDto.getPhoneNumber());
+      validateVerifiedGuestPhoneFlag(signUpDto.getPhoneNumber());
       user =
           UserFactory.createIntegratedSellerUser(
               signUpDto.getEmail(),
@@ -134,8 +134,8 @@ public class AuthServiceImpl implements AuthService {
     userRepository.save(savedUser);
 
     // 10. 인증 플래그 제거
-    verificationCodePort.removeVerifiedFlag(signUpDto.getEmail());
-    verificationCodePort.removeVerifiedPhoneFlag(signUpDto.getPhoneNumber());
+    verificationCodePort.removeVerifiedEmailFlag(signUpDto.getEmail());
+    verificationCodePort.removeVerifiedGuestPhoneFlag(signUpDto.getPhoneNumber());
     return tokenDto;
   }
 
@@ -144,9 +144,6 @@ public class AuthServiceImpl implements AuthService {
   public TokenDto socialSignUp(Long userId, SocialSignUpDto dto) {
     // 1. userType 파싱
     UserType userType = validateAndParseUserType(dto.getUserType());
-    if (userType.equals(UserType.SELLER)) {
-      validatePhoneNumberVerification(dto.getPhoneNumber());
-    }
 
     // 약관 유형 변환 및 필수 약관 검증
     List<TermsType> agreedTermsTypes = convertToTermsTypes(dto.getTermsTypeStrings());
@@ -177,6 +174,7 @@ public class AuthServiceImpl implements AuthService {
     user.updateLastUserType(userType);
     // SELLER 타입이면 isSeller 플래그도 설정
     if (userType == UserType.SELLER) {
+      validateVerifiedGuestPhoneFlag(dto.getPhoneNumber());
       user.setSeller(true);
       user.setSellerInfo(SellerInfo.ofVerificationStatus(SellerVerificationStatus.PENDING));
     } else {
@@ -201,7 +199,7 @@ public class AuthServiceImpl implements AuthService {
         securityPort.getRefreshTokenExpirationTime(tokenDto.getRefreshToken()));
 
     userRepository.save(user);
-    verificationCodePort.removeVerifiedPhoneFlag(dto.getPhoneNumber());
+    verificationCodePort.removeVerifiedGuestPhoneFlag(dto.getPhoneNumber());
     return tokenDto;
   }
 
@@ -629,8 +627,8 @@ public class AuthServiceImpl implements AuthService {
     }
   }
 
-  private void validatePhoneNumberVerification(String phoneNumber) {
-    if (!verificationCodePort.validateVerifiedPhoneFlag(phoneNumber)) {
+  private void validateVerifiedGuestPhoneFlag(String phoneNumber) {
+    if (!verificationCodePort.validateVerifiedGuestPhoneFlag(phoneNumber)) {
       throw new IllegalArgumentException("전화번호 인증이 완료되지 않았습니다.");
     }
   }

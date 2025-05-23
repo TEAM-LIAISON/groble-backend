@@ -106,7 +106,7 @@ public class RedisVerificationCodeAdapter implements VerificationCodePort {
   }
 
   @Override
-  public void removeVerifiedFlag(String email) {
+  public void removeVerifiedEmailFlag(String email) {
     String key = verifiedKey(email);
     try {
       redisTemplate.delete(key);
@@ -310,57 +310,6 @@ public class RedisVerificationCodeAdapter implements VerificationCodePort {
     } catch (DataAccessException e) {
       log.warn("Redis에서 비회원 전화번호 인증 완료 플래그 삭제 실패: key={}, error={}", key, e.getMessage());
     }
-  }
-
-  // === Deprecated 메서드들 (하위 호환성) ===
-
-  @Override
-  @Deprecated
-  public void saveVerificationCodeForPhone(
-      String phoneNumber, String code, long expirationTimeInMinutes) {
-    log.warn(
-        "Deprecated method called: saveVerificationCodeForPhone. Consider using saveVerificationCodeForGuest.");
-    saveVerificationCodeForGuest(phoneNumber, code, expirationTimeInMinutes);
-  }
-
-  @Override
-  @Deprecated
-  public boolean validateVerificationCodeForPhone(String phoneNumber, String code) {
-    log.warn(
-        "Deprecated method called: validateVerificationCodeForPhone. Consider using validateVerificationCodeForGuest.");
-    return validateVerificationCodeForGuest(phoneNumber, code);
-  }
-
-  @Override
-  @Deprecated
-  public void removeVerificationCodeForPhone(String phoneNumber) {
-    log.warn(
-        "Deprecated method called: removeVerificationCodeForPhone. Consider using removeVerificationCodeForGuest.");
-    removeVerificationCodeForGuest(phoneNumber);
-  }
-
-  @Override
-  @Deprecated
-  public void saveVerifiedPhoneFlag(String phoneNumber, long expirationTimeInMinutes) {
-    log.warn(
-        "Deprecated method called: saveVerifiedPhoneFlag. Consider using saveVerifiedGuestPhoneFlag.");
-    saveVerifiedGuestPhoneFlag(phoneNumber, expirationTimeInMinutes);
-  }
-
-  @Override
-  @Deprecated
-  public boolean validateVerifiedPhoneFlag(String phoneNumber) {
-    log.warn(
-        "Deprecated method called: validateVerifiedPhoneFlag. Consider using validateVerifiedGuestPhoneFlag.");
-    return validateVerifiedGuestPhoneFlag(phoneNumber);
-  }
-
-  @Override
-  @Deprecated
-  public void removeVerifiedPhoneFlag(String phoneNumber) {
-    log.warn(
-        "Deprecated method called: removeVerifiedPhoneFlag. Consider using removeVerifiedGuestPhoneFlag.");
-    removeVerifiedGuestPhoneFlag(phoneNumber);
   }
 
   // === Private Key Generation Methods ===

@@ -14,7 +14,7 @@ public interface VerificationCodePort {
 
   boolean validateVerifiedFlag(String email);
 
-  void removeVerifiedFlag(String email);
+  void removeVerifiedEmailFlag(String email);
 
   // === 비밀번호 재설정 관련 ===
   void savePasswordResetCode(String email, String token, long expirationTimeInMinutes);
@@ -63,23 +63,4 @@ public interface VerificationCodePort {
 
   /** 비회원의 전화번호 인증 완료 플래그 삭제 */
   void removeVerifiedGuestPhoneFlag(String phoneNumber);
-
-  // === 하위 호환성을 위한 Deprecated 메서드들 ===
-  @Deprecated
-  void saveVerificationCodeForPhone(String phoneNumber, String code, long expirationTimeInMinutes);
-
-  @Deprecated
-  boolean validateVerificationCodeForPhone(String phoneNumber, String code);
-
-  @Deprecated
-  void removeVerificationCodeForPhone(String phoneNumber);
-
-  @Deprecated
-  void saveVerifiedPhoneFlag(String phoneNumber, long expirationTimeInMinutes);
-
-  @Deprecated
-  boolean validateVerifiedPhoneFlag(String phoneNumber);
-
-  @Deprecated
-  void removeVerifiedPhoneFlag(String phoneNumber);
 }

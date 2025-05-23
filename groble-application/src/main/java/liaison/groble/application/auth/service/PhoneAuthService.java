@@ -52,9 +52,6 @@ public class PhoneAuthService {
 
     String sanitized = sanitizePhoneNumber(phoneNumber);
 
-    // 1. 이미 가입된 전화번호인지 체크
-    validatePhoneNumberNotRegistered(sanitized);
-
     // 2. 인증 코드 생성 및 발송
     String code = generateRandomCode();
     verificationCodePort.saveVerificationCodeForGuest(sanitized, code, CODE_TTL.toMinutes());
