@@ -196,15 +196,11 @@ public class UserServiceImpl implements UserService {
       providerTypeName = account.getProviderType().name();
     }
 
-    boolean canSwitchToSeller = false;
-    if (user.isSeller() && user.getLastUserType().equals(UserType.BUYER)) {
-      canSwitchToSeller = true;
-    }
-
-    boolean sellerAccountNotCreated = true;
-    if (user.hasAgreedTo(TermsType.SELLER_TERMS_POLICY) && user.getPhoneNumber() != null) {
-      sellerAccountNotCreated = false;
-    }
+    boolean canSwitchToSeller = user.isSeller() && user.getLastUserType().equals(UserType.BUYER);
+    log.info("canSwitchToSeller: {}", canSwitchToSeller);
+    boolean sellerAccountNotCreated =
+        !user.hasAgreedTo(TermsType.SELLER_TERMS_POLICY) || user.getPhoneNumber() == null;
+    log.info("sellerAccountNotCreated: {}", sellerAccountNotCreated);
 
     return UserMyPageDetailDto.builder()
         .nickname(user.getNickname())

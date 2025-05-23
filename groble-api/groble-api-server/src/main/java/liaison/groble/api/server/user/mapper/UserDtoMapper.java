@@ -68,6 +68,7 @@ public class UserDtoMapper {
         .email(userMyPageDetailDto.getEmail())
         .profileImageUrl(userMyPageDetailDto.getProfileImageUrl())
         .phoneNumber(userMyPageDetailDto.getPhoneNumber())
+        .canSwitchToSeller(userMyPageDetailDto.isCanSwitchToSeller())
         .sellerAccountNotCreated(userMyPageDetailDto.isSellerAccountNotCreated())
         .build();
   }
