@@ -8,9 +8,7 @@ import liaison.groble.application.user.service.UserReader;
 import liaison.groble.common.utils.CodeGenerator;
 import liaison.groble.domain.port.VerificationCodePort;
 import liaison.groble.domain.user.entity.User;
-import liaison.groble.domain.user.enums.SellerVerificationStatus;
 import liaison.groble.domain.user.repository.UserRepository;
-import liaison.groble.domain.user.vo.SellerInfo;
 import liaison.groble.external.sms.Message;
 import liaison.groble.external.sms.SmsSender;
 import liaison.groble.external.sms.exception.SmsSendException;
@@ -73,8 +71,8 @@ public class PhoneAuthService {
 
     User user = userReader.getUserById(userId);
     if (user.getNickname() != null) {
-      user.setSeller(true);
-      user.setSellerInfo(SellerInfo.ofVerificationStatus(SellerVerificationStatus.PENDING));
+      //      user.setSeller(true);
+      //      user.setSellerInfo(SellerInfo.ofVerificationStatus(SellerVerificationStatus.PENDING));
       user.updatePhoneNumber(phoneNumber);
       userRepository.save(user);
       log.info("로그인한 기존 사용자 전화번호 인증 성공: userId={}", userId);

@@ -22,7 +22,9 @@ import liaison.groble.domain.terms.enums.TermsType;
 import liaison.groble.domain.terms.repository.TermsRepository;
 import liaison.groble.domain.terms.repository.UserTermsRepository;
 import liaison.groble.domain.user.entity.User;
+import liaison.groble.domain.user.enums.SellerVerificationStatus;
 import liaison.groble.domain.user.repository.UserRepository;
+import liaison.groble.domain.user.vo.SellerInfo;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -222,6 +224,8 @@ public class TermsServiceImpl implements TermsService {
 
     // 4. 메이커 약관 동의 처리
     user.updateMakerTermsAgreement(currentMakerTerms, true, clientIp, userAgent);
+    user.setSeller(true);
+    user.setSellerInfo(SellerInfo.ofVerificationStatus(SellerVerificationStatus.PENDING));
 
     // 5. 사용자 저장
     User savedUser = userRepository.save(user);
