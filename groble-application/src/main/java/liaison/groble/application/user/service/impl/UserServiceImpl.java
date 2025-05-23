@@ -196,9 +196,9 @@ public class UserServiceImpl implements UserService {
       providerTypeName = account.getProviderType().name();
     }
 
-    boolean canSwitchToSeller = true;
+    boolean canSwitchToSeller = false;
     if (user.isSeller() && user.getLastUserType().equals(UserType.BUYER)) {
-      canSwitchToSeller = false;
+      canSwitchToSeller = true;
     }
 
     boolean sellerAccountNotCreated = true;
