@@ -1,0 +1,87 @@
+type Query {
+    """사용자 정보 조회"""
+    me: User
+    
+    """마이페이지 요약 정보"""
+    myPageSummary: MyPageSummary
+}
+
+type Mutation {
+    """사용자 역할 전환"""
+    switchRole(input: SwitchRoleInput!): SwitchRolePayload
+    
+    """프로필 이미지 업로드"""
+    uploadProfileImage(file: Upload!): UploadProfileImagePayload
+}
+
+"""사용자 기본 정보"""
+type User {
+    id: ID!
+    nickname: String!
+    profileImageUrl: String
+    userType: UserType!
+    createdAt: DateTime!
+}
+
+"""사용자 타입"""
+enum UserType {
+    BUYER
+    SELLER
+}
+
+"""마이페이지 요약 정보 - Interface 패턴 사용"""
+interface MyPageSummary {
+    nickname: String!
+    profileImageUrl: String
+    userType: UserType!
+}
+
+"""구매자 마이페이지"""
+type BuyerMyPageSummary implements MyPageSummary {
+    nickname: String!
+    profileImageUrl: String
+    userType: UserType!
+    canSwitchToSeller: Boolean!
+}
+
+"""판매자 마이페이지"""
+type SellerMyPageSummary implements MyPageSummary {
+    nickname: String!
+    profileImageUrl: String
+    userType: UserType!
+    verificationStatus: VerificationStatus!
+}
+
+"""판매자 인증 상태"""
+type VerificationStatus {
+    code: VerificationStatusCode!
+    description: String!
+}
+
+enum VerificationStatusCode {
+    PENDING
+    APPROVED
+    REJECTED
+}
+
+"""역할 전환 입력"""
+input SwitchRoleInput {
+    targetRole: UserType!
+}
+
+"""역할 전환 결과"""
+type SwitchRolePayload {
+    success: Boolean!
+    message: String
+    user: User
+}
+
+"""프로필 이미지 업로드 결과"""
+type UploadProfileImagePayload {
+    success: Boolean!
+    imageUrl: String
+    error: String
+}
+
+scalar DateTime
+scalar Upload

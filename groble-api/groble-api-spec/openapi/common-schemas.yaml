@@ -1,0 +1,288 @@
+openapi: 3.0.3
+info:
+  title: Groble Common Schemas
+  version: 1.0.0
+  description: 모든 API에서 공통으로 사용하는 스키마 정의
+
+components:
+  schemas:
+    # 표준 API Response 래퍼
+    ApiResponse:
+      type: object
+      required:
+        - status
+        - code
+        - message
+      properties:
+        status:
+          type: string
+          enum: [SUCCESS, ERROR]
+          description: 응답 상태
+        code:
+          type: integer
+          description: HTTP 상태 코드
+        message:
+          type: string
+          description: 응답 메시지
+        data:
+          type: object
+          description: 실제 데이터 (제네릭)
+
+    # 성공 응답 (데이터 포함)
+    SuccessResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            status:
+              type: string
+              enum: [SUCCESS]
+
+    # 에러 응답
+    ErrorResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            status:
+              type: string
+              enum: [ERROR]
+            errors:
+              type: array
+              items:
+                $ref: '#/components/schemas/FieldError'
+
+    # 필드 에러 상세
+    FieldError:
+      type: object
+      properties:
+        field:
+          type: string
+          description: 에러가 발생한 필드명
+        code:
+          type: string
+          description: 에러 코드
+        message:
+          type: string
+          description: 에러 메시지
+
+    # 페이지네이션 정보
+    PageInfo:
+      type: object
+      required:
+        - page
+        - size
+        - totalElements
+        - totalPages
+      properties:
+        page:
+          type: integer
+          minimum: 0
+          description: 현재 페이지 (0부터 시작)
+        size:
+          type: integer
+          minimum: 1
+          description: 페이지 크기
+        totalElements:
+          type: integer
+          minimum: 0
+          description: 전체 요소 수
+        totalPages:
+          type: integer
+          minimum: 0
+          description: 전체 페이지 수
+        hasNext:
+          type: boolean
+          description: 다음 페이지 존재 여부
+        hasPrevious:
+          type: boolean
+          description: 이전 페이지 존재 여부
+
+    # 페이지네이션을 포함한 목록 응답
+    PagedResponse:
+      type: object
+      required:
+        - content
+        - page
+      properties:
+        content:
+          type: array
+          items:
+            type: object
+          description: 실제 데이터 목록
+        page:
+          $ref: '#/components/schemas/PageInfo'
+
+    # 파일 업로드 응답
+    FileUploadResponse:
+      type: object
+      required:
+        - fileName
+        - fileUrl
+        - contentType
+      properties:
+        fileName:
+          type: string
+          description: 원본 파일명
+        fileUrl:
+          type: string
+          format: uri
+          description: 업로드된 파일 URL
+        contentType:
+          type: string
+          description: 파일 MIME 타입
+        fileSize:
+          type: integer
+          format: int64
+          description: 파일 크기 (bytes)
+        directory:
+          type: string
+          description: 저장 디렉토리
+
+    # 공통 사용자 정보
+    UserProfile:
+      type: object
+      required:
+        - userId
+        - nickname
+      properties:
+        userId:
+          type: integer
+          format: int64
+        nickname:
+          type: string
+        profileImageUrl:
+          type: string
+          format: uri
+          nullable: true
+        userType:
+          $ref: '#/components/schemas/UserType'
+
+    # 사용자 타입
+    UserType:
+      type: string
+      enum: [BUYER, SELLER]
+      description: 사용자 유형
+
+    # 공통 날짜/시간 필드
+    TimestampInfo:
+      type: object
+      properties:
+        createdAt:
+          type: string
+          format: date-time
+          description: 생성 일시
+        updatedAt:
+          type: string
+          format: date-time
+          description: 수정 일시
+
+    # 공통 주소 정보
+    Address:
+      type: object
+      required:
+        - zipCode
+        - address
+      properties:
+        zipCode:
+          type: string
+          pattern: '^[0-9]{5}$'
+          description: 우편번호 (5자리)
+        address:
+          type: string
+          description: 기본 주소
+        detailAddress:
+          type: string
+          description: 상세 주소
+
+    # 금액 정보 (원화 기준)
+    Amount:
+      type: object
+      required:
+        - value
+        - currency
+      properties:
+        value:
+          type: integer
+          minimum: 0
+          description: 금액 (원)
+        currency:
+          type: string
+          enum: [KRW]
+          default: KRW
+
+  # 공통 보안 스키마
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT Bearer 토큰
+
+  # 공통 파라미터
+  parameters:
+    PageParam:
+      name: page
+      in: query
+      description: 페이지 번호 (0부터 시작)
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+
+    SizeParam:
+      name: size
+      in: query
+      description: 페이지 크기
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+
+    SortParam:
+      name: sort
+      in: query
+      description: 정렬 기준 (예: createdAt,desc)
+      required: false
+      schema:
+        type: string
+
+  # 공통 응답
+  responses:
+    BadRequest:
+      description: 잘못된 요청
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Unauthorized:
+      description: 인증 실패
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Forbidden:
+      description: 권한 없음
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    NotFound:
+      description: 리소스를 찾을 수 없음
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    InternalServerError:
+      description: 서버 내부 오류
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'

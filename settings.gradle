@@ -8,6 +8,7 @@ buildCache {
 }
 
 include 'groble-api'
+include 'groble-api:groble-api-spec'
 include 'groble-api:groble-api-model'
 include 'groble-api:groble-api-server'
 include 'groble-application'

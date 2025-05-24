@@ -1,0 +1,145 @@
+openapi: 3.0.3
+info:
+  title: Groble User API
+  version: 1.0.0
+  description: 사용자 관련 API 명세
+
+servers:
+  - url: http://localhost:8080
+    description: 로컬 개발 서버
+  - url: https://api.groble.com
+    description: 운영 서버
+
+paths:
+  /api/v1/users/me/summary:
+    get:
+      tags:
+        - User
+      summary: 마이페이지 요약 정보 조회
+      operationId: getUserMyPageSummary
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MyPageSummaryResponse'
+              examples:
+                buyer:
+                  summary: 구매자 응답
+                  value:
+                    status: SUCCESS
+                    code: 200
+                    message: 요청이 성공적으로 처리되었습니다
+                    data:
+                      nickname: 권동민
+                      profileImageUrl: null
+                      userType: BUYER
+                      canSwitchToSeller: false
+                seller:
+                  summary: 판매자 응답  
+                  value:
+                    status: SUCCESS
+                    code: 200
+                    message: 요청이 성공적으로 처리되었습니다
+                    data:
+                      nickname: 김판매
+                      profileImageUrl: https://example.com/profile.jpg
+                      userType: SELLER
+                      verificationStatus:
+                        code: APPROVED
+                        description: 승인됨
+
+  /api/v1/users/switch-role:
+    post:
+      tags:
+        - User
+      summary: 사용자 역할 전환
+      operationId: switchUserRole
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserTypeRequest'
+      responses:
+        '204':
+          description: 역할 전환 성공
+        '400':
+          description: 역할 전환 실패
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    MyPageSummaryResponse:
+      oneOf:
+        - $ref: '#/components/schemas/BuyerMyPageSummary'
+        - $ref: '#/components/schemas/SellerMyPageSummary'
+      discriminator:
+        propertyName: userType
+        mapping:
+          BUYER: '#/components/schemas/BuyerMyPageSummary'
+          SELLER: '#/components/schemas/SellerMyPageSummary'
+
+    BuyerMyPageSummary:
+      type: object
+      required:
+        - nickname
+        - userType
+        - canSwitchToSeller
+      properties:
+        nickname:
+          type: string
+        profileImageUrl:
+          type: string
+          nullable: true
+        userType:
+          type: string
+          enum: [BUYER]
+        canSwitchToSeller:
+          type: boolean
+
+    SellerMyPageSummary:
+      type: object
+      required:
+        - nickname
+        - userType
+        - verificationStatus
+      properties:
+        nickname:
+          type: string
+        profileImageUrl:
+          type: string
+          nullable: true
+        userType:
+          type: string
+          enum: [SELLER]
+        verificationStatus:
+          $ref: '#/components/schemas/VerificationStatus'
+
+    VerificationStatus:
+      type: object
+      properties:
+        code:
+          type: string
+          enum: [PENDING, APPROVED, REJECTED]
+        description:
+          type: string
+
+    UserTypeRequest:
+      type: object
+      required:
+        - userType
+      properties:
+        userType:
+          type: string
+          enum: [BUYER, SELLER]
