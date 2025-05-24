@@ -96,59 +96,159 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
       HttpServletRequest request, HttpServletResponse response, FilterChain chain)
       throws ServletException, IOException {
     try {
-      // 디버깅 정보: 요청 정보 로깅
-      log.debug("JWT 필터 처리 시작 - 경로: {}, 메소드: {}", request.getRequestURI(), request.getMethod());
+      // =================================================================
+      // 1단계: 기본 요청 정보 로깅 - 요청의 전체 컨텍스트를 파악
+      // =================================================================
+      log.debug("=== JWT 필터 디버깅 시작 ===");
+      log.debug("요청 URI: {}", request.getRequestURI());
+      log.debug("요청 메소드: {}", request.getMethod());
+      log.debug("요청 URL: {}", request.getRequestURL());
+      log.debug("서버 이름: {}", request.getServerName());
+      log.debug("서버 포트: {}", request.getServerPort());
+      log.debug("프로토콜: {}", request.getScheme());
+      log.debug("리모트 주소: {}", request.getRemoteAddr());
 
-      // 1) 액세스 토큰 확인
+      // =================================================================
+      // 2단계: HTTP 헤더 전체 분석 - 브라우저가 실제로 무엇을 보냈는지 확인
+      // =================================================================
+      log.debug("=== 요청 헤더 분석 ===");
+      java.util.Enumeration<String> headerNames = request.getHeaderNames();
+      while (headerNames.hasMoreElements()) {
+        String headerName = headerNames.nextElement();
+        String headerValue = request.getHeader(headerName);
+        // Cookie 헤더는 특별히 강조해서 로깅
+        if ("Cookie".equalsIgnoreCase(headerName)) {
+          log.debug("🍪 Cookie 헤더 발견: {}", headerValue);
+        } else {
+          log.debug("헤더 - {}: {}", headerName, headerValue);
+        }
+      }
+
+      // =================================================================
+      // 3단계: 쿠키 상세 분석 - 개별 쿠키들의 속성까지 모두 확인
+      // =================================================================
+      log.debug("=== 쿠키 상세 분석 ===");
+      jakarta.servlet.http.Cookie[] cookies = request.getCookies();
+      if (cookies != null && cookies.length > 0) {
+        log.debug("총 쿠키 개수: {}", cookies.length);
+        for (int i = 0; i < cookies.length; i++) {
+          jakarta.servlet.http.Cookie cookie = cookies[i];
+          log.debug(
+              "쿠키[{}] - 이름: '{}', 값: '{}', 도메인: '{}', 경로: '{}', Secure: {}, HttpOnly: {}",
+              i,
+              cookie.getName(),
+              maskToken(cookie.getValue()),
+              cookie.getDomain(),
+              cookie.getPath(),
+              cookie.getSecure(),
+              cookie.isHttpOnly());
+        }
+      } else {
+        log.debug("❌ 요청에 쿠키가 전혀 없습니다!");
+      }
+
+      // =================================================================
+      // 4단계: 토큰 추출 과정 상세 분석 - 각 방법별로 시도해보기
+      // =================================================================
+      log.debug("=== 토큰 추출 과정 분석 ===");
+
+      // 4-1: Authorization 헤더에서 토큰 추출 시도
+      String authHeader = request.getHeader("Authorization");
+      log.debug("Authorization 헤더: {}", authHeader != null ? authHeader : "없음");
+      String tokenFromHeader = jwtTokenProvider.resolveToken(authHeader);
+      log.debug("헤더에서 추출된 토큰: {}", tokenFromHeader != null ? maskToken(tokenFromHeader) : "없음");
+
+      // 4-2: CookieUtils를 사용한 토큰 추출 시도
+      var cookieOptional = CookieUtils.getCookie(request, "accessToken");
+      String tokenFromCookieUtils = cookieOptional.map(c -> c.getValue()).orElse(null);
+      log.debug(
+          "CookieUtils로 추출한 accessToken: {}",
+          tokenFromCookieUtils != null ? maskToken(tokenFromCookieUtils) : "없음");
+
+      // 4-3: 직접 구현된 메서드로 토큰 추출 시도
+      String tokenFromDirect = extractTokenFromCookie(request, "accessToken");
+      log.debug(
+          "직접 구현 메서드로 추출한 accessToken: {}",
+          tokenFromDirect != null ? maskToken(tokenFromDirect) : "없음");
+
+      // 4-4: 최종 토큰 결정
       String accessJwt = extractToken(request);
       boolean accessTokenPresent = StringUtils.hasText(accessJwt);
+      log.debug("최종 결정된 accessToken: {}", accessJwt != null ? maskToken(accessJwt) : "없음");
+      log.debug("토큰 존재 여부: {}", accessTokenPresent);
 
-      // 2) 리프레시 토큰 확인
+      // =================================================================
+      // 5단계: 리프레시 토큰 추출 과정 분석
+      // =================================================================
+      log.debug("=== 리프레시 토큰 추출 과정 분석 ===");
       var refreshTokenOpt = CookieUtils.getCookie(request, "refreshToken");
       boolean validRefreshToken = false;
       String refreshToken = null;
 
       if (refreshTokenOpt.isPresent()) {
         refreshToken = refreshTokenOpt.get().getValue();
+        log.debug("리프레시 토큰 발견: {}", maskToken(refreshToken));
 
         try {
           jwtTokenProvider.parseClaimsJws(refreshToken, TokenType.REFRESH);
           validRefreshToken = true;
+          log.debug("✅ 리프레시 토큰 유효성 검증 성공");
         } catch (ExpiredJwtException e) {
+          log.debug("❌ 리프레시 토큰 만료: {}", e.getMessage());
           deleteAuthCookies(request, response);
         } catch (JwtException e) {
-          log.warn("유효하지 않은 리프레시 토큰: {}", e.getMessage());
+          log.warn("❌ 유효하지 않은 리프레시 토큰: {}", e.getMessage());
         }
+      } else {
+        log.debug("리프레시 토큰 없음");
       }
 
-      // 3) 액세스 토큰 처리
+      // =================================================================
+      // 6단계: 액세스 토큰 처리 로직
+      // =================================================================
+      log.debug("=== 액세스 토큰 처리 ===");
       if (accessTokenPresent) {
-        log.debug("액세스 토큰 발견: {}", maskToken(accessJwt));
+        log.debug("✅ 액세스 토큰이 존재합니다: {}", maskToken(accessJwt));
         try {
           jwtTokenProvider.parseClaimsJws(accessJwt, TokenType.ACCESS);
+          log.debug("✅ 액세스 토큰 유효성 검증 성공");
           authenticate(accessJwt, request);
         } catch (ExpiredJwtException exp) {
+          log.debug("❌ 액세스 토큰 만료, 리프레시 토큰으로 재발급 시도");
           handleTokenRefresh(refreshToken, validRefreshToken, response, request);
         } catch (JwtException | IllegalArgumentException bad) {
+          log.debug("❌ 액세스 토큰 유효하지 않음: {}", bad.getMessage());
           response.addHeader("X-Token-Refresh-Status", "invalid-access");
 
           // 액세스 토큰이 유효하지 않지만 리프레시 토큰이 유효한 경우 새 액세스 토큰 발급
           if (validRefreshToken) {
+            log.debug("리프레시 토큰이 유효하므로 새 액세스 토큰 발급 시도");
             handleTokenRefresh(refreshToken, true, response, request);
           }
         }
       } else {
-        log.debug("액세스 토큰 없음");
+        log.debug("❌ 액세스 토큰이 없습니다");
 
         // 액세스 토큰이 없지만 유효한 리프레시 토큰이 있는 경우 새 액세스 토큰 발급
         if (validRefreshToken) {
-          log.debug("액세스 토큰 없음, 유효한 리프레시 토큰으로 액세스 토큰 발급 시도");
+          log.debug("액세스 토큰은 없지만 유효한 리프레시 토큰이 있어 새 액세스 토큰 발급 시도");
           handleTokenRefresh(refreshToken, true, response, request);
+        } else {
+          log.debug("액세스 토큰도 없고 유효한 리프레시 토큰도 없어 인증 없이 진행");
         }
       }
 
-      // 4) 처리 완료 후 상태 로깅
+      // =================================================================
+      // 7단계: 최종 인증 상태 확인
+      // =================================================================
       var auth = SecurityContextHolder.getContext().getAuthentication();
+      if (auth != null && auth.isAuthenticated()) {
+        log.debug("✅ 최종 인증 상태: 인증됨 - 사용자: {}", auth.getName());
+      } else {
+        log.debug("❌ 최종 인증 상태: 인증되지 않음 (익명 사용자)");
+      }
+
+      log.debug("=== JWT 필터 디버깅 완료 ===");
 
     } catch (Exception e) {
       log.error("JWT 필터 처리 중 예외 발생", e);
