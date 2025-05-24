@@ -27,6 +27,7 @@ import liaison.groble.api.model.auth.request.UserWithdrawalRequest;
 import liaison.groble.api.model.auth.request.VerifyEmailCodeRequest;
 import liaison.groble.api.model.auth.response.PhoneNumberResponse;
 import liaison.groble.api.model.auth.response.SignInResponse;
+import liaison.groble.api.model.auth.response.SignInTestResponse;
 import liaison.groble.api.model.auth.response.SignUpResponse;
 import liaison.groble.api.model.auth.response.SocialSignUpResponse;
 import liaison.groble.api.model.auth.response.swagger.SignUp;
@@ -174,6 +175,50 @@ public class AuthController {
     // 7. API 응답 생성
     return ResponseEntity.status(HttpStatus.OK)
         .body(GrobleResponse.success(signInResponse, "로그인이 성공적으로 완료되었습니다.", 200));
+  }
+
+  @Operation(summary = "로그인", description = "이메일과 비밀번호로 로그인하고 인증 토큰을 발급합니다.")
+  @ApiResponses({
+    @ApiResponse(
+        responseCode = "200",
+        description = "로그인 성공",
+        content = @Content(schema = @Schema(implementation = GrobleResponse.class))),
+    @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터"),
+    @ApiResponse(responseCode = "401", description = "인증 실패")
+  })
+  @PostMapping("/sign-in/local/test")
+  public ResponseEntity<GrobleResponse<SignInTestResponse>> signInTest(
+      @Parameter(description = "로그인 정보", required = true) @Valid @RequestBody SignInRequest request,
+      HttpServletResponse response) {
+    log.info("로그인 요청: {}", request.getEmail());
+
+    // 1. API DTO → 서비스 DTO 변환
+    SignInDto signInDto = authDtoMapper.toServiceSignInDto(request);
+
+    // 2. 서비스 호출
+    TokenDto tokenDto = authService.signIn(signInDto);
+
+    // 3. 사용자 역할 및 정보 상태 확인
+    String userType = userService.getUserType(signInDto.getEmail());
+
+    // 4. 사용자 라우팅 경로 설정
+    String nextRoutePath = userService.getNextRoutePath(signInDto.getEmail());
+
+    // 5. 토큰을 쿠키로 설정
+    addTokenCookies(response, tokenDto.getAccessToken(), tokenDto.getRefreshToken());
+
+    // 6. 사용자 정보와 역할 정보를 응답 본문에 포함
+    SignInTestResponse signInTestResponse =
+        SignInTestResponse.of(
+            request.getEmail(),
+            userType,
+            nextRoutePath,
+            tokenDto.getAccessToken(),
+            tokenDto.getRefreshToken());
+
+    // 7. API 응답 생성
+    return ResponseEntity.status(HttpStatus.OK)
+        .body(GrobleResponse.success(signInTestResponse, "로그인이 성공적으로 완료되었습니다.", 200));
   }
 
   /** 로그아웃 API - 토큰 무효화 및 쿠키 삭제 */

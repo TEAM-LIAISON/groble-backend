@@ -40,7 +40,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
   private final JwtTokenProvider jwtTokenProvider;
   private final UserDetailsService userDetailsService;
-  private final UserCacheService userCacheService;
 
   // 인증이 필요없는 경로 패턴 목록
   private static final List<String> PUBLIC_PATHS =
@@ -49,6 +48,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
           "/api/v1/home",
           "/api/v1/auth/sign-up",
           "/api/v1/auth/sign-in",
+          "/api/v1/auth/sign-in/local/test",
           "/api/v1/auth/email-verification/sign-up",
           "/api/v1/auth/verify-code/sign-up",
           "/api/v1/auth/password/reset-request",
