@@ -133,3 +133,11 @@ logging:
 #  identity-redirect-url: "http://localhost:3000/identity/verify"
 #  bank-callback-url: "http://localhost:3000/bank/callback"
 #  webhook-secret: "whsec_3ltrVN8oqF50N4fEXaaPryHSvQBl6PxwklNdIdyeQJM="
+
+# Payple 결제 관련 설정
+payple:
+  cst-id: test
+  cust-key: abcd1234567890
+  refund-key: a41ce010ede9fcbfb3be86b24858806596a9db68b79d138b147c3e563e1829a0
+  client-key: test_DF55F29DA654A8CBC0F0A9DD4B556486
+  test-mode: true
