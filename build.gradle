@@ -138,13 +138,6 @@ project(':groble-api') {
     }
 }
 
-project(':groble-api:groble-api-spec') {
-    dependencies {
-        implementation 'io.projectreactor:reactor-core'
-        implementation 'org.openapitools:jackson-databind-nullable:0.2.6'
-    }
-}
-
 // 모듈 간 의존성 설정 - 클린 아키텍처 원칙에 따라 의존성 방향 설정
 project(':groble-api:groble-api-server') {
     dependencies {
