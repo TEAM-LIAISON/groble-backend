@@ -425,6 +425,10 @@ public class ContentDtoMapper {
             .filter(Objects::nonNull) // null 반환된 옵션 제거
             .collect(Collectors.toList());
 
+    // 2) priceOptionLength 계산 (price != null 인 옵션 개수)
+    int priceOptionLength =
+        (int) contentDetailDto.getOptions().stream().filter(dto -> dto.getPrice() != null).count();
+
     return ContentDetailResponse.builder()
         .contentId(contentDetailDto.getContentId())
         .status(contentDetailDto.getStatus())
@@ -435,6 +439,7 @@ public class ContentDtoMapper {
         .sellerProfileImageUrl(contentDetailDto.getSellerProfileImageUrl())
         .sellerName(contentDetailDto.getSellerName())
         .lowestPrice(contentDetailDto.getLowestPrice())
+        .priceOptionLength(priceOptionLength)
         .options(optionResponses)
         .contentIntroduction(contentDetailDto.getContentIntroduction())
         .serviceTarget(contentDetailDto.getServiceTarget())

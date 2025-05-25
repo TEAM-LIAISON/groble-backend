@@ -47,6 +47,9 @@ public class ContentDetailResponse {
   @Schema(description = "콘텐츠 최저가", example = "10000")
   private BigDecimal lowestPrice;
 
+  @Schema(description = "가격 옵션 개수", example = "3")
+  private int priceOptionLength;
+
   @ArraySchema(
       schema =
           @Schema(
