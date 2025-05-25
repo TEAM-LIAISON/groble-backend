@@ -59,7 +59,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     qUser.userProfile.nickname.as("sellerName"),
                     qContent.lowestPrice.as("lowestPrice"),
                     ExpressionUtils.as(
-                        select(qContentOption.count())
+                        select(qContentOption.count().intValue())
                             .from(qContentOption)
                             .where(qContentOption.content.eq(qContent)),
                         "priceOptionLength"),
@@ -88,7 +88,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                 qContent.thumbnailUrl.as("thumbnailUrl"),
                 qUser.userProfile.nickname.as("sellerName"),
                 ExpressionUtils.as(
-                    select(qContentOption.count())
+                    select(qContentOption.count().intValue())
                         .from(qContentOption)
                         .where(qContentOption.content.eq(qContent)),
                     "priceOptionLength"),
@@ -118,7 +118,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                 qUser.userProfile.nickname.as("sellerName"),
                 qContent.lowestPrice.as("lowestPrice"),
                 ExpressionUtils.as(
-                    select(qContentOption.count())
+                    select(qContentOption.count().intValue())
                         .from(qContentOption)
                         .where(qContentOption.content.eq(qContent)),
                     "priceOptionLength"),
@@ -168,7 +168,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     qUser.userProfile.nickname.as("sellerName"),
                     qContent.lowestPrice.as("lowestPrice"),
                     ExpressionUtils.as(
-                        select(qContentOption.count())
+                        select(qContentOption.count().intValue())
                             .from(qContentOption)
                             .where(qContentOption.content.eq(qContent)),
                         "priceOptionLength"),
@@ -244,7 +244,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     qUser.userProfile.nickname.as("sellerName"),
                     qContent.lowestPrice.as("lowestPrice"),
                     ExpressionUtils.as(
-                        select(qContentOption.count())
+                        select(qContentOption.count().intValue())
                             .from(qContentOption)
                             .where(qContentOption.content.eq(qContent)),
                         "priceOptionLength"),
@@ -316,7 +316,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     qUser.userProfile.nickname.as("sellerName"),
                     qContent.lowestPrice.as("lowestPrice"),
                     ExpressionUtils.as(
-                        select(qContentOption.count())
+                        select(qContentOption.count().intValue())
                             .from(qContentOption)
                             .where(qContentOption.content.eq(qContent)),
                         "priceOptionLength"),
@@ -405,7 +405,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     u.userProfile.nickname.as("sellerName"),
                     q.lowestPrice.as("lowestPrice"),
                     ExpressionUtils.as(
-                        select(qContentOption.count())
+                        select(qContentOption.count().intValue())
                             .from(qContentOption)
                             .where(qContentOption.content.eq(q)),
                         "priceOptionLength"),
@@ -474,7 +474,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     qUser.userProfile.nickname.as("sellerName"),
                     qContent.lowestPrice.as("lowestPrice"),
                     ExpressionUtils.as(
-                        select(qContentOption.count())
+                        select(qContentOption.count().intValue())
                             .from(qContentOption)
                             .where(qContentOption.content.eq(qContent)),
                         "priceOptionLength"),
