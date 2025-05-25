@@ -81,7 +81,8 @@ public class ContentDetailResponse {
           "coachingType": null,
           "coachingTypeDescription": null,
           "contentDeliveryMethod": "IMMEDIATE_DOWNLOAD",
-          "documentFileUrl": "https://example.com/template.pdf"
+          "documentFileUrl": "https://example.com/template.pdf",
+          "documentLinkUrl": "https://example.com/template-link"
         }
       ]
       """))

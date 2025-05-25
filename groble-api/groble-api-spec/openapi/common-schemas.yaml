@@ -286,3 +286,56 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
+            
+  # Groble 공통 응답 스키마
+  schemas:
+    # GrobleResponse 구조를 반영한 공통 응답 형식
+    GrobleResponse:
+      type: object
+      required:
+        - status
+        - code
+        - message
+        - timestamp
+      properties:
+        status:
+          type: string
+          enum: [SUCCESS, ERROR, FAIL]
+          description: 응답 상태
+          example: SUCCESS
+        code:
+          type: integer
+          description: HTTP 상태 코드 또는 커스텀 코드
+          example: 200
+        message:
+          type: string
+          description: 응답 메시지
+          example: "요청이 성공적으로 처리되었습니다."
+        data:
+          type: object
+          description: 응답 데이터 (요청 성공 시)
+          nullable: true
+        error:
+          $ref: '#/components/schemas/ErrorDetail'
+          nullable: true
+        timestamp:
+          type: string
+          format: date-time
+          description: 응답 생성 시간
+          example: "2025-05-06 04:26:26"
+    
+    ErrorDetail:
+      type: object
+      properties:
+        exception:
+          type: string
+          description: 예외 클래스명
+        message:
+          type: string
+          description: 에러 메시지
+        field:
+          type: string
+          description: 에러가 발생한 필드
+        value:
+          type: string
+          description: 문제가 된 값

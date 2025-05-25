@@ -297,6 +297,7 @@ public class ContentDtoMapper {
     java.math.BigDecimal price = null;
     String contentDeliveryMethod = null;
     String documentFileUrl = null;
+    String documentLinkUrl = null;
 
     // 타입에 따라 데이터 추출
     if (optionRequest instanceof DocumentOptionDraftRequest) {
@@ -306,6 +307,7 @@ public class ContentDtoMapper {
       price = request.getPrice();
       contentDeliveryMethod = request.getContentDeliveryMethod();
       documentFileUrl = request.getDocumentFileUrl();
+      documentLinkUrl = request.getDocumentLinkUrl();
     } else {
       DocumentOptionRegisterRequest request = (DocumentOptionRegisterRequest) optionRequest;
       name = request.getName();
@@ -313,6 +315,7 @@ public class ContentDtoMapper {
       price = request.getPrice();
       contentDeliveryMethod = request.getContentDeliveryMethod();
       documentFileUrl = request.getDocumentFileUrl();
+      documentLinkUrl = request.getDocumentLinkUrl();
 
       // Register 타입에 대한 추가 유효성 검사
       if (name == null || price == null || contentDeliveryMethod == null) {
@@ -328,6 +331,7 @@ public class ContentDtoMapper {
         .price(price)
         .contentDeliveryMethod(contentDeliveryMethod)
         .documentFileUrl(documentFileUrl)
+        .documentLinkUrl(documentLinkUrl)
         .build();
   }
 
@@ -356,6 +360,7 @@ public class ContentDtoMapper {
           optionBuilder.coachingTypeDescription(optionDto.getCoachingTypeDescription());
           optionBuilder.contentDeliveryMethod(optionDto.getContentDeliveryMethod());
           optionBuilder.documentFileUrl(optionDto.getDocumentFileUrl());
+          optionBuilder.documentLinkUrl(optionDto.getDocumentLinkUrl());
 
           optionResponses.add(optionBuilder.build());
         }
@@ -416,6 +421,7 @@ public class ContentDtoMapper {
                         .price(optionDto.getPrice())
                         .contentDeliveryMethod(optionDto.getContentDeliveryMethod())
                         .documentFileUrl(optionDto.getDocumentFileUrl())
+                        .documentLinkUrl(optionDto.getDocumentLinkUrl())
                         .build();
                   } else {
                     log.warn("Unknown option type encountered in ContentOptionDto: {}", optionDto);

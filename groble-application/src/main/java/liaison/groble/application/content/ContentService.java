@@ -208,7 +208,8 @@ public class ContentService {
                     builder
                         .contentDeliveryMethod(
                             safeEnumName(documentOption.getContentDeliveryMethod()))
-                        .documentFileUrl(documentOption.getDocumentFileUrl());
+                        .documentFileUrl(documentOption.getDocumentFileUrl())
+                        .documentLinkUrl(documentOption.getDocumentLinkUrl());
                   }
 
                   return builder.build();
@@ -299,7 +300,8 @@ public class ContentService {
                     builder
                         .contentDeliveryMethod(
                             safeEnumName(documentOption.getContentDeliveryMethod()))
-                        .documentFileUrl(documentOption.getDocumentFileUrl());
+                        .documentFileUrl(documentOption.getDocumentFileUrl())
+                        .documentLinkUrl(documentOption.getDocumentLinkUrl());
                   }
 
                   return builder.build();
@@ -662,6 +664,7 @@ public class ContentService {
         option.setContentDeliveryMethod(
             ContentDeliveryMethod.valueOf(optionDto.getContentDeliveryMethod()));
         option.setDocumentFileUrl(optionDto.getDocumentFileUrl());
+        option.setDocumentLinkUrl(optionDto.getDocumentLinkUrl());
       } catch (IllegalArgumentException e) {
         log.warn("유효하지 않은 콘텐츠 제공 방식: {}", optionDto.getContentDeliveryMethod());
       }
@@ -774,6 +777,10 @@ public class ContentService {
               .documentFileUrl(
                   documentOption.getDocumentFileUrl() != null
                       ? documentOption.getDocumentFileUrl()
+                      : null)
+              .documentLinkUrl(
+                  documentOption.getDocumentLinkUrl() != null
+                      ? documentOption.getDocumentLinkUrl()
                       : null);
         }
 

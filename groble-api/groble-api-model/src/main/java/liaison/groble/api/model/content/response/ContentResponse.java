@@ -86,5 +86,8 @@ public class ContentResponse {
 
     @Schema(description = "문서 파일 URL", example = "https://example.com/document.pdf")
     private String documentFileUrl;
+
+    @Schema(description = "자료 링크 URL", example = "https://example.com/document-link")
+    private String documentLinkUrl;
   }
 }

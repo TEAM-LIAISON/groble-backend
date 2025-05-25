@@ -1,11 +1,6 @@
-// 임시로 OpenAPI Generator 비활성화 - 단계적 마이그레이션을 위해
-// plugins {
-//     id 'java'
-//     id 'org.openapi.generator' version '7.3.0'
-// }
-
 plugins {
     id 'java'
+    id 'org.openapi.generator' version '7.3.0'
 }
 
 // 향후 OpenAPI Generator 활성화시 사용할 설정 (주석처리)
@@ -13,7 +8,8 @@ plugins {
 // 공통 설정
 def apiSpecs = [
     'user': 'user-api.yaml',
-    'order': 'order-api.yaml'
+    'order': 'order-api.yaml',
+    'notification': 'notification-api.yaml'
 ]
 
 def generatedDir = "$buildDir/generated"
