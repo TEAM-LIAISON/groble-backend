@@ -1,0 +1,75 @@
+// Next.js 클라이언트 SDK 생성을 위한 Gradle 설정
+import org.openapitools.generator.gradle.plugin.tasks.GenerateTask
+
+ext {
+    // 클라이언트 생성 경로 설정
+    clientOutputDir = "${rootProject.projectDir}/generated-clients"
+    nextjsProjectPath = "${rootProject.projectDir}/../groble-nextjs" // Next.js 프로젝트 경로
+}
+
+// TypeScript Axios 클라이언트 생성 태스크
+task generateTypeScriptClient(type: GenerateTask) {
+    generatorName = "typescript-axios"
+    inputSpec = "$projectDir/openapi/notification-api.yaml"
+    outputDir = "$clientOutputDir/typescript"
+    
+    configOptions = [
+        // 기본 설정
+        supportsES6: "true",
+        npmName: "@groble/api-client",
+        npmVersion: "1.0.0",
+        
+        // Axios 설정
+        withSeparateModelsAndApi: "true",
+        modelPackage: "models",
+        apiPackage: "api",
+        
+        // TypeScript 설정
+        enumPropertyNaming: "PascalCase",
+        modelPropertyNaming: "camelCase",
+        paramNaming: "camelCase",
+        
+        // 추가 옵션
+        withInterfaces: "true",
+        useSingleRequestParameter: "true"
+    ]
+}
+
+// React Query hooks 생성 태스크
+task generateReactQueryHooks(type: GenerateTask) {
+    generatorName = "typescript-react-query"
+    inputSpec = "$projectDir/openapi/notification-api.yaml"
+    outputDir = "$clientOutputDir/react-query"
+    
+    configOptions = [
+        supportsES6: "true",
+        npmName: "@groble/react-query-hooks",
+        npmVersion: "1.0.0",
+        withHooks: "true"
+    ]
+}
+
+// Next.js 프로젝트로 복사하는 태스크
+task copyToNextJs(type: Copy) {
+    dependsOn generateTypeScriptClient
+    
+    from "$clientOutputDir/typescript"
+    into "$nextjsProjectPath/src/lib/api/generated"
+    
+    doLast {
+        println "SDK가 Next.js 프로젝트로 복사되었습니다: $nextjsProjectPath/src/lib/api/generated"
+    }
+}
+
+// 모든 클라이언트 생성 태스크
+task generateAllClients {
+    dependsOn generateTypeScriptClient, generateReactQueryHooks
+    description = "모든 클라이언트 SDK 생성"
+}
+
+// 클린업 태스크
+task cleanGeneratedClients(type: Delete) {
+    delete clientOutputDir
+}
+
+clean.dependsOn cleanGeneratedClients

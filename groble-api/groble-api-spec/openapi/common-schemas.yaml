@@ -210,85 +210,7 @@ components:
           type: string
           enum: [KRW]
           default: KRW
-
-  # 공통 보안 스키마
-  securitySchemes:
-    bearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-      description: JWT Bearer 토큰
-
-  # 공통 파라미터
-  parameters:
-    PageParam:
-      name: page
-      in: query
-      description: 페이지 번호 (0부터 시작)
-      required: false
-      schema:
-        type: integer
-        minimum: 0
-        default: 0
-
-    SizeParam:
-      name: size
-      in: query
-      description: 페이지 크기
-      required: false
-      schema:
-        type: integer
-        minimum: 1
-        maximum: 100
-        default: 20
-
-    SortParam:
-      name: sort
-      in: query
-      description: 정렬 기준 (예: createdAt,desc)
-      required: false
-      schema:
-        type: string
-
-  # 공통 응답
-  responses:
-    BadRequest:
-      description: 잘못된 요청
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-
-    Unauthorized:
-      description: 인증 실패
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-
-    Forbidden:
-      description: 권한 없음
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-
-    NotFound:
-      description: 리소스를 찾을 수 없음
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-
-    InternalServerError:
-      description: 서버 내부 오류
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-            
-  # Groble 공통 응답 스키마
-  schemas:
+          
     # GrobleResponse 구조를 반영한 공통 응답 형식
     GrobleResponse:
       type: object
@@ -339,3 +261,79 @@ components:
         value:
           type: string
           description: 문제가 된 값
+
+  # 공통 보안 스키마
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT Bearer 토큰
+
+  # 공통 파라미터
+  parameters:
+    PageParam:
+      name: page
+      in: query
+      description: 페이지 번호 (0부터 시작)
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+
+    SizeParam:
+      name: size
+      in: query
+      description: 페이지 크기
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+
+    SortParam:
+      name: sort
+      in: query
+      description: "정렬 기준 (예: createdAt,desc)"
+      required: false
+      schema:
+        type: string
+
+  # 공통 응답
+  responses:
+    BadRequest:
+      description: 잘못된 요청
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Unauthorized:
+      description: 인증 실패
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Forbidden:
+      description: 권한 없음
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    NotFound:
+      description: 리소스를 찾을 수 없음
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    InternalServerError:
+      description: 서버 내부 오류
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
