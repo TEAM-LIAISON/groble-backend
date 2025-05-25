@@ -57,6 +57,8 @@ public class PurchaseService {
         .title(flat.getTitle())
         .thumbnailUrl(flat.getThumbnailUrl())
         .sellerName(flat.getSellerName())
+        .lowestPrice(flat.getLowestPrice())
+        .priceOptionLength(flat.getPriceOptionLength())
         .status(flat.getStatus())
         .build();
   }

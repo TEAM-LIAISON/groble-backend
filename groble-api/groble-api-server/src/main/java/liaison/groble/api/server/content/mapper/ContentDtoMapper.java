@@ -451,6 +451,7 @@ public class ContentDtoMapper {
         .thumbnailUrl(cardDto.getThumbnailUrl())
         .sellerName(cardDto.getSellerName())
         .lowestPrice(cardDto.getLowestPrice())
+        .priceOptionLength(cardDto.getPriceOptionLength())
         .status(cardDto.getStatus())
         .build();
   }
