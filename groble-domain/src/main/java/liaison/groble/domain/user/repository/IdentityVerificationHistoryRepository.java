@@ -8,6 +8,4 @@ public interface IdentityVerificationHistoryRepository {
   IdentityVerificationHistory save(IdentityVerificationHistory identityVerificationHistory);
 
   Optional<IdentityVerificationHistory> findByTransactionId(String merchantUid);
-
-  Optional<IdentityVerificationHistory> findByPortOneRequestId(String requestId);
 }

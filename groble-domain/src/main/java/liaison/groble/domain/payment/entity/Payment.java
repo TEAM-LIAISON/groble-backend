@@ -66,7 +66,7 @@ public class Payment extends BaseEntity {
 
   @Column(name = "pg_provider", nullable = false)
   @Enumerated(EnumType.STRING)
-  private PgProvider pgProvider = PgProvider.PORTONE;
+  private PgProvider pgProvider = PgProvider.INICIS;
 
   @Column(name = "pg_tid")
   private String pgTid; // PG사 거래 고유번호
@@ -158,13 +158,6 @@ public class Payment extends BaseEntity {
 
   @Column(name = "fail_reason")
   private String failReason;
-
-  // 포트원 로그 추적
-  @Column(name = "port_one_request_id")
-  private String portOneRequestId;
-
-  @Column(name = "port_one_webhook_id")
-  private String portOneWebhookId;
 
   // 요청/응답 데이터를 JSON으로 저장
   @Convert(converter = MapToJsonConverter.class)
@@ -343,12 +336,6 @@ public class Payment extends BaseEntity {
     this.logs.add(log);
   }
 
-  // 웹훅 정보 업데이트
-  public void updateFromWebhook(Map<String, Object> webhookData) {
-    this.portOneWebhookId = (String) webhookData.get("webhookId");
-    this.metaData = webhookData;
-  }
-
   // 열거형
   public enum PaymentStatus {
     READY("결제준비"),
@@ -373,7 +360,6 @@ public class Payment extends BaseEntity {
   }
 
   public enum PgProvider {
-    PORTONE("포트원"),
     INICIS("KG이니시스"),
     KAKAO("카카오페이"),
     TOSS("토스페이먼츠"),

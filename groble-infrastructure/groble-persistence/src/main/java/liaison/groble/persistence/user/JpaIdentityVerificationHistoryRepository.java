@@ -9,6 +9,4 @@ import liaison.groble.domain.user.entity.IdentityVerificationHistory;
 public interface JpaIdentityVerificationHistoryRepository
     extends JpaRepository<IdentityVerificationHistory, Long> {
   Optional<IdentityVerificationHistory> findByTransactionId(String transactionId);
-
-  Optional<IdentityVerificationHistory> findByPortOneRequestId(String requestId);
 }

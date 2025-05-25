@@ -57,9 +57,6 @@ public class IdentityVerificationHistory extends BaseEntity {
   @Column(name = "transaction_id")
   private String transactionId;
 
-  @Column(name = "port_one_request_id")
-  private String portOneRequestId;
-
   @Column(name = "error_code")
   private String errorCode;
 
@@ -82,7 +79,6 @@ public class IdentityVerificationHistory extends BaseEntity {
       IdentityVerification.VerificationMethod verificationMethod,
       IdentityVerificationStatus beforeStatus,
       String transactionId,
-      String portOneRequestId,
       Map<String, Object> rawRequest) {
     this.user = user;
     this.requestIp = requestIp;
@@ -90,7 +86,6 @@ public class IdentityVerificationHistory extends BaseEntity {
     this.verificationMethod = verificationMethod;
     this.beforeStatus = beforeStatus;
     this.transactionId = transactionId;
-    this.portOneRequestId = portOneRequestId;
     this.rawRequest = rawRequest;
     this.success = false; // 초기값
   }

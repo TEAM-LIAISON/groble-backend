@@ -93,10 +93,6 @@ public class QPayment extends EntityPathBase<Payment> {
 
     public final StringPath pgTid = createString("pgTid");
 
-    public final StringPath portOneRequestId = createString("portOneRequestId");
-
-    public final StringPath portOneWebhookId = createString("portOneWebhookId");
-
     public final StringPath receiptUrl = createString("receiptUrl");
 
     public final MapPath<String, Object, SimplePath<Object>> requestParams = this.<String, Object, SimplePath<Object>>createMap("requestParams", String.class, Object.class, SimplePath.class);

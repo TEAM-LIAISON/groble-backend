@@ -106,7 +106,8 @@ public class User extends BaseTimeEntity {
   @Embedded private SellerInfo sellerInfo;
   @Embedded private IdentityVerification identityVerification;
 
-  // SELLER /
+  // SELLER
+  @Builder.Default
   @Column(name = "is_seller")
   private boolean isSeller = false;
 

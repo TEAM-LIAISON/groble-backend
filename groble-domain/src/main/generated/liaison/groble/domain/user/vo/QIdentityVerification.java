@@ -29,10 +29,6 @@ public class QIdentityVerification extends BeanPath<IdentityVerification> {
 
     public final DateTimePath<java.time.LocalDateTime> expiredAt = createDateTime("expiredAt", java.time.LocalDateTime.class);
 
-    public final StringPath portOneRequestId = createString("portOneRequestId");
-
-    public final StringPath portOneTransactionId = createString("portOneTransactionId");
-
     public final EnumPath<liaison.groble.domain.user.enums.IdentityVerificationStatus> status = createEnum("status", liaison.groble.domain.user.enums.IdentityVerificationStatus.class);
 
     public final MapPath<String, Object, SimplePath<Object>> verificationData = this.<String, Object, SimplePath<Object>>createMap("verificationData", String.class, Object.class, SimplePath.class);

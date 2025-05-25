@@ -43,8 +43,6 @@ public class QIdentityVerificationHistory extends EntityPathBase<IdentityVerific
 
     public final NumberPath<Long> id = createNumber("id", Long.class);
 
-    public final StringPath portOneRequestId = createString("portOneRequestId");
-
     public final MapPath<String, Object, SimplePath<Object>> rawRequest = this.<String, Object, SimplePath<Object>>createMap("rawRequest", String.class, Object.class, SimplePath.class);
 
     public final MapPath<String, Object, SimplePath<Object>> rawResponse = this.<String, Object, SimplePath<Object>>createMap("rawResponse", String.class, Object.class, SimplePath.class);

@@ -24,9 +24,4 @@ public class IdentityVerificationHistoryRepositoryImpl
   public Optional<IdentityVerificationHistory> findByTransactionId(String merchantUid) {
     return jpaIdentityVerificationHistoryRepository.findByTransactionId(merchantUid);
   }
-
-  @Override
-  public Optional<IdentityVerificationHistory> findByPortOneRequestId(String requestId) {
-    return jpaIdentityVerificationHistoryRepository.findByPortOneRequestId(requestId);
-  }
 }

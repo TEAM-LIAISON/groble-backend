@@ -60,13 +60,6 @@ public class IdentityVerification {
   @Column(name = "certification_txid")
   private String certificationTxId; // 인증 트랜잭션 ID
 
-  // 포트원 특정 필드
-  @Column(name = "port_one_request_id")
-  private String portOneRequestId;
-
-  @Column(name = "port_one_transaction_id")
-  private String portOneTransactionId;
-
   @Column(name = "identity_status")
   @Enumerated(EnumType.STRING)
   private IdentityVerificationStatus status = IdentityVerificationStatus.NONE;
@@ -90,8 +83,6 @@ public class IdentityVerification {
       String di,
       String certificationProvider,
       String certificationTxId,
-      String portOneRequestId,
-      String portOneTransactionId,
       Map<String, Object> verificationData) {
     this.verified = true;
     this.verificationMethod = verificationMethod;
@@ -105,8 +96,6 @@ public class IdentityVerification {
     this.di = di;
     this.certificationProvider = certificationProvider;
     this.certificationTxId = certificationTxId;
-    this.portOneRequestId = portOneRequestId;
-    this.portOneTransactionId = portOneTransactionId;
     this.status = IdentityVerificationStatus.VERIFIED;
     this.verificationData = verificationData;
   }
