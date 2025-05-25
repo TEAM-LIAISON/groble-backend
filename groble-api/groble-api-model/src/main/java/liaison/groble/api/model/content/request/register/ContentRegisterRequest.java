@@ -51,7 +51,6 @@ public class ContentRegisterRequest {
   @Schema(description = "문서 옵션 목록 (contentType이 DOCUMENT인 경우)")
   private List<DocumentOptionRegisterRequest> documentOptions;
 
-  @NotBlank(message = "콘텐츠 소개는 필수 입력 항목입니다")
   @Schema(description = "콘텐츠 소개", example = "사업계획서 컨설팅")
   private String contentIntroduction;
 
