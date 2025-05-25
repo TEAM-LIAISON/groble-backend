@@ -16,8 +16,7 @@ public class PayplePaymentPageController {
 
   @GetMapping("/payment/payple")
   public String payplePage(Model model) {
-    String paymentJsUrl = payplePaymentService.getPaymentJsUrl();
-    model.addAttribute("paypleJsUrl", paymentJsUrl);
-    return "payment/payple-payment";
+    model.addAttribute("paypleJsUrl", payplePaymentService.getPaymentJsUrl());
+    return "payment/payple-payment"; // 확장자 `.html`은 생략
   }
 }
