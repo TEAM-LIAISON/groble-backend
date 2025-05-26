@@ -427,11 +427,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
   /** 재발급된 accessToken 으로 SecurityContext 를 업데이트 */
   private void setAuthentication(String newAccessToken, HttpServletRequest request) {
     try {
-      // 토큰에서 사용자 정보 추출
-      String email = jwtTokenProvider.getEmail(newAccessToken, TokenType.ACCESS);
-      log.debug("새 토큰으로 인증 정보 설정: {}", maskEmail(email));
+      // ✅ 토큰에서 사용자 ID 추출
+      Long userId = jwtTokenProvider.getUserId(newAccessToken, TokenType.ACCESS);
+      log.debug("새 토큰으로 인증 정보 설정 - userId: {}", userId);
 
-      UserDetails ud = userDetailsService.loadUserByUsername(email);
+      // ✅ userId 기반으로 사용자 정보 조회
+      UserDetails ud = userDetailsService.loadUserByUsername(userId.toString());
+
       UsernamePasswordAuthenticationToken auth =
           new UsernamePasswordAuthenticationToken(ud, null, ud.getAuthorities());
       auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));

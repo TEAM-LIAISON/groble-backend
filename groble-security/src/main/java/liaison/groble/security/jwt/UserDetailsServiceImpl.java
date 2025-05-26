@@ -19,13 +19,6 @@ import lombok.extern.slf4j.Slf4j;
 public class UserDetailsServiceImpl implements UserDetailsService {
   private final UserRepository userRepository;
 
-  /**
-   * 사용자 이름(이메일)으로 사용자를 조회하여 UserDetails 객체로 반환 통합 계정 이메일과 소셜 계정 이메일 모두에서 검색합니다.
-   *
-   * @param username 사용자 이름(이메일)
-   * @return UserDetails 객체
-   * @throws UsernameNotFoundException 사용자를 찾을 수 없는 경우 발생
-   */
   @Override
   @Transactional
   public UserDetails loadUserByUsername(final String username) throws UsernameNotFoundException {
