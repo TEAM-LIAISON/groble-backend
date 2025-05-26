@@ -22,7 +22,7 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 
-import liaison.groble.domain.common.entity.BaseEntity;
+import liaison.groble.domain.common.entity.BaseTimeEntity;
 import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.content.enums.ContentStatus;
 import liaison.groble.domain.coupon.entity.UserCoupon;
@@ -40,14 +40,13 @@ import lombok.NoArgsConstructor;
     name = "orders",
     indexes = {
       @Index(name = "idx_order_user", columnList = "user_id"),
-      @Index(name = "idx_order_merchant_uid", columnList = "merchant_uid", unique = true),
       @Index(name = "idx_order_status", columnList = "status"),
       @Index(name = "idx_order_created_at", columnList = "created_at"),
       @Index(name = "idx_order_coupon", columnList = "applied_coupon_id")
     })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Order extends BaseEntity {
+public class Order extends BaseTimeEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)

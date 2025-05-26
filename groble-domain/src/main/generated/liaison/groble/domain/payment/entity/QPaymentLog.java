@@ -22,7 +22,7 @@ public class QPaymentLog extends EntityPathBase<PaymentLog> {
 
     public static final QPaymentLog paymentLog = new QPaymentLog("paymentLog");
 
-    public final liaison.groble.domain.common.entity.QBaseEntity _super = new liaison.groble.domain.common.entity.QBaseEntity(this);
+    public final liaison.groble.domain.common.entity.QBaseTimeEntity _super = new liaison.groble.domain.common.entity.QBaseTimeEntity(this);
 
     public final EnumPath<Payment.PaymentStatus> afterStatus = createEnum("afterStatus", Payment.PaymentStatus.class);
 
@@ -30,12 +30,6 @@ public class QPaymentLog extends EntityPathBase<PaymentLog> {
 
     //inherited
     public final DateTimePath<java.time.LocalDateTime> createdAt = _super.createdAt;
-
-    //inherited
-    public final StringPath createdBy = _super.createdBy;
-
-    //inherited
-    public final BooleanPath deleted = _super.deleted;
 
     public final StringPath description = createString("description");
 
@@ -53,9 +47,6 @@ public class QPaymentLog extends EntityPathBase<PaymentLog> {
 
     //inherited
     public final DateTimePath<java.time.LocalDateTime> updatedAt = _super.updatedAt;
-
-    //inherited
-    public final StringPath updatedBy = _super.updatedBy;
 
     public final StringPath userAgent = createString("userAgent");
 

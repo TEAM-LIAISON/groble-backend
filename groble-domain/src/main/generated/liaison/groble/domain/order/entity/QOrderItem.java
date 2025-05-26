@@ -22,7 +22,7 @@ public class QOrderItem extends EntityPathBase<OrderItem> {
 
     public static final QOrderItem orderItem = new QOrderItem("orderItem");
 
-    public final liaison.groble.domain.common.entity.QBaseEntity _super = new liaison.groble.domain.common.entity.QBaseEntity(this);
+    public final liaison.groble.domain.common.entity.QBaseTimeEntity _super = new liaison.groble.domain.common.entity.QBaseTimeEntity(this);
 
     public final liaison.groble.domain.content.entity.QContent content;
 
@@ -30,12 +30,6 @@ public class QOrderItem extends EntityPathBase<OrderItem> {
 
     //inherited
     public final DateTimePath<java.time.LocalDateTime> createdAt = _super.createdAt;
-
-    //inherited
-    public final StringPath createdBy = _super.createdBy;
-
-    //inherited
-    public final BooleanPath deleted = _super.deleted;
 
     public final NumberPath<Long> id = createNumber("id", Long.class);
 
@@ -51,9 +45,6 @@ public class QOrderItem extends EntityPathBase<OrderItem> {
 
     //inherited
     public final DateTimePath<java.time.LocalDateTime> updatedAt = _super.updatedAt;
-
-    //inherited
-    public final StringPath updatedBy = _super.updatedBy;
 
     public QOrderItem(String variable) {
         this(OrderItem.class, forVariable(variable), INITS);

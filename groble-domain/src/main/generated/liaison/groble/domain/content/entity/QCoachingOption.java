@@ -34,7 +34,7 @@ public class QCoachingOption extends EntityPathBase<CoachingOption> {
     public final QContent content;
 
     //inherited
-    public final DateTimePath<java.time.Instant> createdAt;
+    public final DateTimePath<java.time.LocalDateTime> createdAt;
 
     //inherited
     public final StringPath description;
@@ -45,13 +45,13 @@ public class QCoachingOption extends EntityPathBase<CoachingOption> {
     public final NumberPath<Long> id;
 
     //inherited
-    public final DateTimePath<java.time.Instant> modifiedAt;
-
-    //inherited
     public final StringPath name;
 
     //inherited
     public final NumberPath<java.math.BigDecimal> price;
+
+    //inherited
+    public final DateTimePath<java.time.LocalDateTime> updatedAt;
 
     public QCoachingOption(String variable) {
         this(CoachingOption.class, forVariable(variable), INITS);
@@ -76,9 +76,9 @@ public class QCoachingOption extends EntityPathBase<CoachingOption> {
         this.createdAt = _super.createdAt;
         this.description = _super.description;
         this.id = _super.id;
-        this.modifiedAt = _super.modifiedAt;
         this.name = _super.name;
         this.price = _super.price;
+        this.updatedAt = _super.updatedAt;
     }
 
 }

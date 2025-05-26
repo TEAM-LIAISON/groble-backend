@@ -29,6 +29,7 @@ import liaison.groble.application.content.ContentService;
 import liaison.groble.application.content.dto.ContentCardDto;
 import liaison.groble.application.content.dto.ContentDto;
 import liaison.groble.common.annotation.Auth;
+import liaison.groble.common.annotation.RequireRole;
 import liaison.groble.common.model.Accessor;
 import liaison.groble.common.request.CursorRequest;
 import liaison.groble.common.response.CursorResponse;
@@ -68,6 +69,7 @@ public class SellController {
 
   // 콘텐츠 심사 요청
   @ContentRegister
+  @RequireRole("ROLE_SELLER")
   @PostMapping("/content/register")
   public ResponseEntity<GrobleResponse<ContentResponse>> registerContent(
       @Parameter(hidden = true) @Auth Accessor accessor,

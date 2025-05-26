@@ -27,7 +27,7 @@ public class QUser extends EntityPathBase<User> {
     public final EnumPath<liaison.groble.domain.user.enums.AccountType> accountType = createEnum("accountType", liaison.groble.domain.user.enums.AccountType.class);
 
     //inherited
-    public final DateTimePath<java.time.Instant> createdAt = _super.createdAt;
+    public final DateTimePath<java.time.LocalDateTime> createdAt = _super.createdAt;
 
     public final NumberPath<Long> id = createNumber("id", Long.class);
 
@@ -41,9 +41,6 @@ public class QUser extends EntityPathBase<User> {
 
     public final EnumPath<liaison.groble.domain.user.enums.UserType> lastUserType = createEnum("lastUserType", liaison.groble.domain.user.enums.UserType.class);
 
-    //inherited
-    public final DateTimePath<java.time.Instant> modifiedAt = _super.modifiedAt;
-
     public final StringPath refreshToken = createString("refreshToken");
 
     public final DateTimePath<java.time.Instant> refreshTokenExpiresAt = createDateTime("refreshTokenExpiresAt", java.time.Instant.class);
@@ -53,6 +50,9 @@ public class QUser extends EntityPathBase<User> {
     public final QSocialAccount socialAccount;
 
     public final SetPath<liaison.groble.domain.terms.UserTerms, liaison.groble.domain.terms.QUserTerms> termsAgreements = this.<liaison.groble.domain.terms.UserTerms, liaison.groble.domain.terms.QUserTerms>createSet("termsAgreements", liaison.groble.domain.terms.UserTerms.class, liaison.groble.domain.terms.QUserTerms.class, PathInits.DIRECT2);
+
+    //inherited
+    public final DateTimePath<java.time.LocalDateTime> updatedAt = _super.updatedAt;
 
     public final liaison.groble.domain.user.vo.QUserProfile userProfile;
 

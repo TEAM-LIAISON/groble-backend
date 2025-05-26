@@ -30,7 +30,7 @@ public class QDocumentOption extends EntityPathBase<DocumentOption> {
     public final EnumPath<liaison.groble.domain.content.enums.ContentDeliveryMethod> contentDeliveryMethod = createEnum("contentDeliveryMethod", liaison.groble.domain.content.enums.ContentDeliveryMethod.class);
 
     //inherited
-    public final DateTimePath<java.time.Instant> createdAt;
+    public final DateTimePath<java.time.LocalDateTime> createdAt;
 
     //inherited
     public final StringPath description;
@@ -43,13 +43,13 @@ public class QDocumentOption extends EntityPathBase<DocumentOption> {
     public final NumberPath<Long> id;
 
     //inherited
-    public final DateTimePath<java.time.Instant> modifiedAt;
-
-    //inherited
     public final StringPath name;
 
     //inherited
     public final NumberPath<java.math.BigDecimal> price;
+
+    //inherited
+    public final DateTimePath<java.time.LocalDateTime> updatedAt;
 
     public QDocumentOption(String variable) {
         this(DocumentOption.class, forVariable(variable), INITS);
@@ -74,9 +74,9 @@ public class QDocumentOption extends EntityPathBase<DocumentOption> {
         this.createdAt = _super.createdAt;
         this.description = _super.description;
         this.id = _super.id;
-        this.modifiedAt = _super.modifiedAt;
         this.name = _super.name;
         this.price = _super.price;
+        this.updatedAt = _super.updatedAt;
     }
 
 }

@@ -33,14 +33,14 @@ public class QUserTerms extends EntityPathBase<UserTerms> {
     public final StringPath agreedUserAgent = createString("agreedUserAgent");
 
     //inherited
-    public final DateTimePath<java.time.Instant> createdAt = _super.createdAt;
+    public final DateTimePath<java.time.LocalDateTime> createdAt = _super.createdAt;
 
     public final NumberPath<Long> id = createNumber("id", Long.class);
 
-    //inherited
-    public final DateTimePath<java.time.Instant> modifiedAt = _super.modifiedAt;
-
     public final QTerms terms;
+
+    //inherited
+    public final DateTimePath<java.time.LocalDateTime> updatedAt = _super.updatedAt;
 
     public final liaison.groble.domain.user.entity.QUser user;
 

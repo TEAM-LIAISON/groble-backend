@@ -17,7 +17,7 @@ import jakarta.persistence.Index;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
-import liaison.groble.domain.common.entity.BaseEntity;
+import liaison.groble.domain.common.entity.BaseTimeEntity;
 import liaison.groble.domain.coupon.enums.CouponType;
 
 import lombok.AccessLevel;
@@ -36,7 +36,7 @@ import lombok.NoArgsConstructor;
     })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class CouponTemplate extends BaseEntity {
+public class CouponTemplate extends BaseTimeEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -22,16 +22,10 @@ public class QCouponUsageHistory extends EntityPathBase<CouponUsageHistory> {
 
     public static final QCouponUsageHistory couponUsageHistory = new QCouponUsageHistory("couponUsageHistory");
 
-    public final liaison.groble.domain.common.entity.QBaseEntity _super = new liaison.groble.domain.common.entity.QBaseEntity(this);
+    public final liaison.groble.domain.common.entity.QBaseTimeEntity _super = new liaison.groble.domain.common.entity.QBaseTimeEntity(this);
 
     //inherited
     public final DateTimePath<java.time.LocalDateTime> createdAt = _super.createdAt;
-
-    //inherited
-    public final StringPath createdBy = _super.createdBy;
-
-    //inherited
-    public final BooleanPath deleted = _super.deleted;
 
     public final NumberPath<java.math.BigDecimal> discountAmount = createNumber("discountAmount", java.math.BigDecimal.class);
 
@@ -45,9 +39,6 @@ public class QCouponUsageHistory extends EntityPathBase<CouponUsageHistory> {
 
     //inherited
     public final DateTimePath<java.time.LocalDateTime> updatedAt = _super.updatedAt;
-
-    //inherited
-    public final StringPath updatedBy = _super.updatedBy;
 
     public final QUserCoupon userCoupon;
 

@@ -26,7 +26,7 @@ import jakarta.persistence.Table;
 
 import org.hibernate.annotations.DynamicUpdate;
 
-import liaison.groble.domain.common.entity.BaseEntity;
+import liaison.groble.domain.common.entity.BaseTimeEntity;
 import liaison.groble.domain.content.enums.ContentStatus;
 import liaison.groble.domain.content.enums.ContentType;
 import liaison.groble.domain.user.entity.User;
@@ -48,7 +48,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @DynamicUpdate
-public class Content extends BaseEntity {
+public class Content extends BaseTimeEntity {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;

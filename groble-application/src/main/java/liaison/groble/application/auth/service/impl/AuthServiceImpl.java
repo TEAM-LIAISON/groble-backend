@@ -94,6 +94,11 @@ public class AuthServiceImpl implements AuthService {
     // 2. 비밀번호 암호화
     String encodedPassword = securityPort.encodePassword(signUpDto.getPassword());
 
+    // 3. 닉네임 중복 확인
+    if (userReader.isNicknameTaken(signUpDto.getNickname(), UserStatus.ACTIVE)) {
+      throw new IllegalArgumentException("이미 사용 중인 닉네임입니다.");
+    }
+
     // 3. 사용자 생성 (팩토리 패턴 활용)
     User user;
     if (userType == UserType.SELLER) {

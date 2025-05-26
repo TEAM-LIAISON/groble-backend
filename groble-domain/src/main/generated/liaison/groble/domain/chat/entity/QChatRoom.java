@@ -31,16 +31,13 @@ public class QChatRoom extends EntityPathBase<ChatRoom> {
     public final liaison.groble.domain.content.entity.QContent content;
 
     //inherited
-    public final DateTimePath<java.time.Instant> createdAt = _super.createdAt;
+    public final DateTimePath<java.time.LocalDateTime> createdAt = _super.createdAt;
 
     public final NumberPath<Long> id = createNumber("id", Long.class);
 
     public final StringPath lastMessage = createString("lastMessage");
 
     public final DateTimePath<java.time.Instant> lastMessageTime = createDateTime("lastMessageTime", java.time.Instant.class);
-
-    //inherited
-    public final DateTimePath<java.time.Instant> modifiedAt = _super.modifiedAt;
 
     public final liaison.groble.domain.user.entity.QUser seller;
 
@@ -49,6 +46,9 @@ public class QChatRoom extends EntityPathBase<ChatRoom> {
     public final EnumPath<liaison.groble.domain.chat.enums.ChatRoomStatus> status = createEnum("status", liaison.groble.domain.chat.enums.ChatRoomStatus.class);
 
     public final StringPath title = createString("title");
+
+    //inherited
+    public final DateTimePath<java.time.LocalDateTime> updatedAt = _super.updatedAt;
 
     public QChatRoom(String variable) {
         this(ChatRoom.class, forVariable(variable), INITS);

@@ -20,20 +20,14 @@ public class QCouponTemplate extends EntityPathBase<CouponTemplate> {
 
     public static final QCouponTemplate couponTemplate = new QCouponTemplate("couponTemplate");
 
-    public final liaison.groble.domain.common.entity.QBaseEntity _super = new liaison.groble.domain.common.entity.QBaseEntity(this);
+    public final liaison.groble.domain.common.entity.QBaseTimeEntity _super = new liaison.groble.domain.common.entity.QBaseTimeEntity(this);
 
     public final EnumPath<liaison.groble.domain.coupon.enums.CouponType> couponType = createEnum("couponType", liaison.groble.domain.coupon.enums.CouponType.class);
 
     //inherited
     public final DateTimePath<java.time.LocalDateTime> createdAt = _super.createdAt;
 
-    //inherited
-    public final StringPath createdBy = _super.createdBy;
-
     public final NumberPath<Integer> currentUsageCount = createNumber("currentUsageCount", Integer.class);
-
-    //inherited
-    public final BooleanPath deleted = _super.deleted;
 
     public final StringPath description = createString("description");
 
@@ -53,9 +47,6 @@ public class QCouponTemplate extends EntityPathBase<CouponTemplate> {
 
     //inherited
     public final DateTimePath<java.time.LocalDateTime> updatedAt = _super.updatedAt;
-
-    //inherited
-    public final StringPath updatedBy = _super.updatedBy;
 
     public final NumberPath<Integer> usageLimitPerUser = createNumber("usageLimitPerUser", Integer.class);
 

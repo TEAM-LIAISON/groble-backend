@@ -19,7 +19,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
-import liaison.groble.domain.common.entity.BaseEntity;
+import liaison.groble.domain.common.entity.BaseTimeEntity;
 import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.coupon.entity.UserCoupon;
 import liaison.groble.domain.order.entity.Order;
@@ -47,7 +47,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor(access = PROTECTED)
-public class Purchase extends BaseEntity {
+public class Purchase extends BaseTimeEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -27,12 +27,12 @@ public class QContentScrap extends EntityPathBase<ContentScrap> {
     public final liaison.groble.domain.content.entity.QContent content;
 
     //inherited
-    public final DateTimePath<java.time.Instant> createdAt = _super.createdAt;
+    public final DateTimePath<java.time.LocalDateTime> createdAt = _super.createdAt;
 
     public final NumberPath<Long> id = createNumber("id", Long.class);
 
     //inherited
-    public final DateTimePath<java.time.Instant> modifiedAt = _super.modifiedAt;
+    public final DateTimePath<java.time.LocalDateTime> updatedAt = _super.updatedAt;
 
     public final liaison.groble.domain.user.entity.QUser user;
 

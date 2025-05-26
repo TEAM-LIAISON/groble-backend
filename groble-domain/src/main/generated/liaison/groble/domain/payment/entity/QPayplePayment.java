@@ -19,7 +19,7 @@ public class QPayplePayment extends EntityPathBase<PayplePayment> {
 
     public static final QPayplePayment payplePayment = new QPayplePayment("payplePayment");
 
-    public final liaison.groble.domain.common.entity.QBaseEntity _super = new liaison.groble.domain.common.entity.QBaseEntity(this);
+    public final liaison.groble.domain.common.entity.QBaseTimeEntity _super = new liaison.groble.domain.common.entity.QBaseTimeEntity(this);
 
     public final NumberPath<java.math.BigDecimal> amount = createNumber("amount", java.math.BigDecimal.class);
 
@@ -39,12 +39,6 @@ public class QPayplePayment extends EntityPathBase<PayplePayment> {
 
     //inherited
     public final DateTimePath<java.time.LocalDateTime> createdAt = _super.createdAt;
-
-    //inherited
-    public final StringPath createdBy = _super.createdBy;
-
-    //inherited
-    public final BooleanPath deleted = _super.deleted;
 
     public final StringPath failReason = createString("failReason");
 
@@ -66,9 +60,6 @@ public class QPayplePayment extends EntityPathBase<PayplePayment> {
 
     //inherited
     public final DateTimePath<java.time.LocalDateTime> updatedAt = _super.updatedAt;
-
-    //inherited
-    public final StringPath updatedBy = _super.updatedBy;
 
     public final NumberPath<Long> userId = createNumber("userId", Long.class);
 

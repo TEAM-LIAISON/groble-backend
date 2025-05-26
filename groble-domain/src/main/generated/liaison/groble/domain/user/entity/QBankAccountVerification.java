@@ -27,7 +27,7 @@ public class QBankAccountVerification extends EntityPathBase<BankAccountVerifica
     public final QBankAccount bankAccount;
 
     //inherited
-    public final DateTimePath<java.time.Instant> createdAt = _super.createdAt;
+    public final DateTimePath<java.time.LocalDateTime> createdAt = _super.createdAt;
 
     public final StringPath depositAccountNumber = createString("depositAccountNumber");
 
@@ -39,9 +39,6 @@ public class QBankAccountVerification extends EntityPathBase<BankAccountVerifica
 
     public final NumberPath<Long> id = createNumber("id", Long.class);
 
-    //inherited
-    public final DateTimePath<java.time.Instant> modifiedAt = _super.modifiedAt;
-
     public final MapPath<String, Object, SimplePath<Object>> requestData = this.<String, Object, SimplePath<Object>>createMap("requestData", String.class, Object.class, SimplePath.class);
 
     public final MapPath<String, Object, SimplePath<Object>> responseData = this.<String, Object, SimplePath<Object>>createMap("responseData", String.class, Object.class, SimplePath.class);
@@ -49,6 +46,9 @@ public class QBankAccountVerification extends EntityPathBase<BankAccountVerifica
     public final EnumPath<liaison.groble.domain.user.enums.BankAccountVerificationStatus> status = createEnum("status", liaison.groble.domain.user.enums.BankAccountVerificationStatus.class);
 
     public final EnumPath<liaison.groble.domain.user.enums.BankAccountVerificationType> type = createEnum("type", liaison.groble.domain.user.enums.BankAccountVerificationType.class);
+
+    //inherited
+    public final DateTimePath<java.time.LocalDateTime> updatedAt = _super.updatedAt;
 
     public final StringPath verificationKey = createString("verificationKey");
 

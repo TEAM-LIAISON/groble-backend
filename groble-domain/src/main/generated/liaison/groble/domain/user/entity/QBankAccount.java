@@ -37,16 +37,16 @@ public class QBankAccount extends EntityPathBase<BankAccount> {
     public final StringPath bankName = createString("bankName");
 
     //inherited
-    public final DateTimePath<java.time.Instant> createdAt = _super.createdAt;
+    public final DateTimePath<java.time.LocalDateTime> createdAt = _super.createdAt;
 
     public final NumberPath<Long> id = createNumber("id", Long.class);
 
     public final BooleanPath isPrimary = createBoolean("isPrimary");
 
-    //inherited
-    public final DateTimePath<java.time.Instant> modifiedAt = _super.modifiedAt;
-
     public final EnumPath<liaison.groble.domain.user.enums.BankAccountStatus> status = createEnum("status", liaison.groble.domain.user.enums.BankAccountStatus.class);
+
+    //inherited
+    public final DateTimePath<java.time.LocalDateTime> updatedAt = _super.updatedAt;
 
     public final QUser user;
 

@@ -22,7 +22,7 @@ public class QIdentityVerificationHistory extends EntityPathBase<IdentityVerific
 
     public static final QIdentityVerificationHistory identityVerificationHistory = new QIdentityVerificationHistory("identityVerificationHistory");
 
-    public final liaison.groble.domain.common.entity.QBaseEntity _super = new liaison.groble.domain.common.entity.QBaseEntity(this);
+    public final liaison.groble.domain.common.entity.QBaseTimeEntity _super = new liaison.groble.domain.common.entity.QBaseTimeEntity(this);
 
     public final EnumPath<liaison.groble.domain.user.enums.IdentityVerificationStatus> afterStatus = createEnum("afterStatus", liaison.groble.domain.user.enums.IdentityVerificationStatus.class);
 
@@ -30,12 +30,6 @@ public class QIdentityVerificationHistory extends EntityPathBase<IdentityVerific
 
     //inherited
     public final DateTimePath<java.time.LocalDateTime> createdAt = _super.createdAt;
-
-    //inherited
-    public final StringPath createdBy = _super.createdBy;
-
-    //inherited
-    public final BooleanPath deleted = _super.deleted;
 
     public final StringPath errorCode = createString("errorCode");
 
@@ -55,9 +49,6 @@ public class QIdentityVerificationHistory extends EntityPathBase<IdentityVerific
 
     //inherited
     public final DateTimePath<java.time.LocalDateTime> updatedAt = _super.updatedAt;
-
-    //inherited
-    public final StringPath updatedBy = _super.updatedBy;
 
     public final QUser user;
 

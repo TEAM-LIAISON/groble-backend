@@ -31,14 +31,11 @@ public class QPaymentCancel extends EntityPathBase<PaymentCancel> {
     public final DateTimePath<java.time.LocalDateTime> cancelledAt = createDateTime("cancelledAt", java.time.LocalDateTime.class);
 
     //inherited
-    public final DateTimePath<java.time.Instant> createdAt = _super.createdAt;
+    public final DateTimePath<java.time.LocalDateTime> createdAt = _super.createdAt;
 
     public final NumberPath<Long> id = createNumber("id", Long.class);
 
     public final MapPath<String, Object, SimplePath<Object>> metaData = this.<String, Object, SimplePath<Object>>createMap("metaData", String.class, Object.class, SimplePath.class);
-
-    //inherited
-    public final DateTimePath<java.time.Instant> modifiedAt = _super.modifiedAt;
 
     public final QPayment payment;
 
@@ -47,6 +44,9 @@ public class QPaymentCancel extends EntityPathBase<PaymentCancel> {
     public final EnumPath<liaison.groble.domain.payment.enums.PaymentCancelStatus> status = createEnum("status", liaison.groble.domain.payment.enums.PaymentCancelStatus.class);
 
     public final StringPath taxFreeAmount = createString("taxFreeAmount");
+
+    //inherited
+    public final DateTimePath<java.time.LocalDateTime> updatedAt = _super.updatedAt;
 
     public QPaymentCancel(String variable) {
         this(PaymentCancel.class, forVariable(variable), INITS);
