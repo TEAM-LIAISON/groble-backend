@@ -165,6 +165,8 @@ public class SecurityConfig {
                         "/api/v1/auth/sign-in/local/test",
                         "/api/v1/auth/email-verification/sign-up",
                         "/api/v1/auth/verify-code/sign-up",
+                        "/api/v1/auth/phone-number/verify-request",
+                        "/api/v1/auth/phone-number/verify-code",
                         "/api/v1/auth/password/reset-request",
                         "/api/v1/auth/password/reset")
                     .permitAll()
