@@ -58,8 +58,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
           "/payple-payment",
           "/api/v1/groble/contents",
           "/api/v1/payments/**",
-          "/api/v1/auth/phone-number/verify-request",
-          "/api/v1/auth/phone-number/verify-code",
           "/api/v1/home/contents",
           "/swagger-ui/**",
           "/swagger-ui.html",
