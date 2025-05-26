@@ -54,6 +54,7 @@ public class SellController {
 
   // 콘텐츠 임시 저장
   @ContentDraft
+  @RequireRole("ROLE_SELLER")
   @PostMapping("/content/draft")
   public ResponseEntity<GrobleResponse<ContentResponse>> saveDraft(
       @Parameter(hidden = true) @Auth Accessor accessor,
@@ -83,6 +84,7 @@ public class SellController {
 
   // 콘텐츠 심사 완료(승인) 이후 콘텐츠 판매중으로 활성화
   @Operation(summary = "콘텐츠 활성화", description = "심사 완료 콘텐츠 중 승인이 완료된 콘텐츠를 활성화합니다.")
+  @RequireRole("ROLE_SELLER")
   @PostMapping("/content/{contentId}/active")
   public ResponseEntity<GrobleResponse<ContentStatusResponse>> activateContent(
       @Parameter(hidden = true) @Auth Accessor accessor,
@@ -93,6 +95,7 @@ public class SellController {
   }
 
   @Operation(summary = "콘텐츠 판매 중단", description = "판매 중인 콘텐츠를 판매 중단합니다.")
+  @RequireRole("ROLE_SELLER")
   @PostMapping("/content/{contentId}/stop")
   public ResponseEntity<GrobleResponse<ContentStatusResponse>> stopContent(
       @Parameter(hidden = true) @Auth Accessor accessor,
@@ -103,6 +106,7 @@ public class SellController {
   }
 
   @Operation(summary = "콘텐츠 삭제", description = "작성 중인 콘텐츠를 삭제합니다. 판매 중단된 콘텐츠는 삭제할 수 없습니다.")
+  @RequireRole("ROLE_SELLER")
   @PostMapping("/content/{contentId}/delete")
   public ResponseEntity<GrobleResponse<Void>> deleteContent(
       @Parameter(hidden = true) @Auth Accessor accessor,
@@ -113,6 +117,7 @@ public class SellController {
 
   // 심사 거절된 콘텐츠의 거절 사유를 조회
   @ContentExamineReject
+  @RequireRole("ROLE_SELLER")
   @GetMapping("/content/{contentId}/examine/reject")
   public ResponseEntity<GrobleResponse<String>> getExamineRejectReason(
       @Auth Accessor accessor, @PathVariable("contentId") Long contentId) {
@@ -121,6 +126,7 @@ public class SellController {
   }
 
   @MySellingContents
+  @RequireRole("ROLE_SELLER")
   @GetMapping("/content/my/selling-contents")
   public ResponseEntity<GrobleResponse<CursorResponse<ContentPreviewCardResponse>>>
       getMySellingContents(
