@@ -100,6 +100,15 @@ public class SellController {
     return ResponseEntity.ok(GrobleResponse.success(response, "콘텐츠 판매 중단 성공"));
   }
 
+  @Operation(summary = "콘텐츠 삭제", description = "작성 중인 콘텐츠를 삭제합니다. 판매 중단된 콘텐츠는 삭제할 수 없습니다.")
+  @PostMapping("/content/{contentId}/delete")
+  public ResponseEntity<GrobleResponse<Void>> deleteContent(
+      @Parameter(hidden = true) @Auth Accessor accessor,
+      @PathVariable("contentId") Long contentId) {
+    contentService.deleteContent(accessor.getUserId(), contentId);
+    return ResponseEntity.ok(GrobleResponse.success(null, "콘텐츠 삭제 성공"));
+  }
+
   // 심사 거절된 콘텐츠의 거절 사유를 조회
   @ContentExamineReject
   @GetMapping("/content/{contentId}/examine/reject")

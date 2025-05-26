@@ -945,6 +945,16 @@ public class ContentService {
     return saveAndConvertToDto(content);
   }
 
+  @Transactional
+  public void deleteContent(Long userId, Long contentId) {
+    // 1. Content 조회 및 권한 검증
+    Content content = findAndValidateUserContent(userId, contentId);
+
+    // 2. 삭제
+    contentRepository.delete(content);
+    log.info("콘텐츠 삭제 완료. 유저 ID: {}, 콘텐츠 ID: {}", userId, contentId);
+  }
+
   /** 카테고리 ID가 null 이면 타입만, 아니면 카테고리＋타입으로 조회 */
   @Transactional(readOnly = true)
   public PageResponse<ContentCardDto> getCoachingContentsByCategory(
