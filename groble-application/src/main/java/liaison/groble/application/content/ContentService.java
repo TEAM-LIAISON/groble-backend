@@ -494,6 +494,17 @@ public class ContentService {
     return content;
   }
 
+  /** 사용자의 심사 완료된 Content를 찾고 접근 권한을 검증합니다. */
+  private Content findAndValidateUserActiveContent(Long userId, Long contentId) {
+    Content content = contentReader.getContentByStatusAndId(contentId, ContentStatus.ACTIVE);
+
+    if (!content.getUser().getId().equals(userId)) {
+      throw new ForbiddenException("해당 콘텐츠를 수정할 권한이 없습니다.");
+    }
+
+    return content;
+  }
+
   /** 카테고리 ID로 카테고리를 조회합니다. */
   private Category findCategoryByCode(String categoryId) {
     if (categoryId == null) {
@@ -917,6 +928,18 @@ public class ContentService {
 
     // 2. 상태 업데이트
     content.setStatus(ContentStatus.ACTIVE);
+
+    // 3. 저장 및 변환
+    return saveAndConvertToDto(content);
+  }
+
+  @Transactional
+  public ContentDto stopContent(Long userId, Long contentId) {
+    // 1. Content 조회 및 권한 검증
+    Content content = findAndValidateUserActiveContent(userId, contentId);
+
+    // 2. 상태 업데이트
+    content.setStatus(ContentStatus.VALIDATED);
 
     // 3. 저장 및 변환
     return saveAndConvertToDto(content);

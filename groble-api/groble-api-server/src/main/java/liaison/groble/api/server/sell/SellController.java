@@ -90,6 +90,16 @@ public class SellController {
     return ResponseEntity.ok(GrobleResponse.success(response, "콘텐츠 활성화 성공"));
   }
 
+  @Operation(summary = "콘텐츠 판매 중단", description = "판매 중인 콘텐츠를 판매 중단합니다.")
+  @PostMapping("/content/{contentId}/stop")
+  public ResponseEntity<GrobleResponse<ContentStatusResponse>> stopContent(
+      @Parameter(hidden = true) @Auth Accessor accessor,
+      @PathVariable("contentId") Long contentId) {
+    ContentDto contentDto = contentService.stopContent(accessor.getUserId(), contentId);
+    ContentStatusResponse response = contentDtoMapper.toContentStatusResponse(contentDto);
+    return ResponseEntity.ok(GrobleResponse.success(response, "콘텐츠 판매 중단 성공"));
+  }
+
   // 심사 거절된 콘텐츠의 거절 사유를 조회
   @ContentExamineReject
   @GetMapping("/content/{contentId}/examine/reject")
