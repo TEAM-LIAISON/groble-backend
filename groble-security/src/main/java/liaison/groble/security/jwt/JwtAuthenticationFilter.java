@@ -38,6 +38,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
   @Value("${app.cookie.domain}")
   private String cookieDomain;
 
+  @Value("${server.env:local}")
+  private String serverEnv;
+
   private final JwtTokenProvider jwtTokenProvider;
   private final UserDetailsService userDetailsService;
 
@@ -100,6 +103,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
   protected void doFilterInternal(
       HttpServletRequest request, HttpServletResponse response, FilterChain chain)
       throws ServletException, IOException {
+
+    // ✅ 중요: 매 요청마다 SecurityContext 초기화
+    SecurityContextHolder.clearContext();
+
     try {
       // =================================================================
       // 1단계: 기본 요청 정보 로깅 - 요청의 전체 컨텍스트를 파악
@@ -257,8 +264,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     } catch (Exception e) {
       log.error("JWT 필터 처리 중 예외 발생", e);
+      // ✅ 예외 발생 시에도 SecurityContext 클리어
+      SecurityContextHolder.clearContext();
     } finally {
-      chain.doFilter(request, response);
+      try {
+        chain.doFilter(request, response);
+      } finally {
+        // ✅ 중요: 요청 처리 완료 후 SecurityContext 클리어
+        SecurityContextHolder.clearContext();
+      }
     }
   }
 
@@ -297,8 +311,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
       response.addHeader("X-Token-Refresh-Status", "success");
 
       // 쿠키에 새 액세스 토큰 추가 (수정된 최대 수명으로)
+      // ✅ 보안 강화: HttpOnly, Secure, SameSite 설정
+      String sameSite = isProductionEnvironment() ? "Strict" : "None";
       CookieUtils.addCookie(
-          response, "accessToken", newAccess, maxAge, "/", true, true, "None", cookieDomain);
+          response, "accessToken", newAccess, maxAge, "/", true, true, sameSite, cookieDomain);
 
       // 인증 설정
       setAuthentication(newAccess, request);
@@ -310,10 +326,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
   /** 인증용 쿠키 삭제 헬퍼 메소드 */
   private void deleteAuthCookies(HttpServletRequest request, HttpServletResponse response) {
+    String sameSite = isProductionEnvironment() ? "Strict" : "None";
     CookieUtils.deleteCookie(
-        request, response, "accessToken", "/", cookieDomain, "None", true, true);
+        request, response, "accessToken", "/", cookieDomain, sameSite, true, true);
     CookieUtils.deleteCookie(
-        request, response, "refreshToken", "/", cookieDomain, "None", true, true);
+        request, response, "refreshToken", "/", cookieDomain, sameSite, true, true);
+  }
+
+  /** 운영 환경인지 확인 */
+  private boolean isProductionEnvironment() {
+    return "blue".equals(serverEnv) || "green".equals(serverEnv) || "prod".equals(serverEnv);
   }
 
   /** 토큰 마스킹 헬퍼 메소드 (로깅 시 보안을 위해) */
@@ -402,25 +424,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
   /** 주어진 accessToken 으로 인증 정보를 생성하여 SecurityContext 에 설정 */
   private void authenticate(String jwt, HttpServletRequest request) {
-    // 이미 context에 인증 정보가 있을 때만 설정
-    if (SecurityContextHolder.getContext().getAuthentication() != null) {
-      log.debug("이미 인증 정보가 있습니다.");
-      return;
-    }
-
     try {
       // 토큰에서 사용자 정보 추출
       Long userId = jwtTokenProvider.getUserId(jwt, TokenType.ACCESS);
-      log.debug("인증 정보 설정 시도: {}", maskToken(jwt));
+      log.debug("인증 정보 설정 시도 - userId: {}, token: {}", userId, maskToken(jwt));
 
+      // ✅ 중요: 매번 새로운 인증 정보로 교체 (기존 인증 정보 무시)
       UserDetails ud = userDetailsService.loadUserByUsername(userId.toString());
       UsernamePasswordAuthenticationToken auth =
           new UsernamePasswordAuthenticationToken(ud, null, ud.getAuthorities());
       auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+      // ✅ SecurityContext를 명시적으로 설정
       SecurityContextHolder.getContext().setAuthentication(auth);
-      log.debug("인증 정보 설정 완료: {}", maskToken(jwt));
+      log.debug("인증 정보 설정 완료 - userId: {}", userId);
     } catch (Exception e) {
       log.error("인증 처리 중 오류 발생: {}", e.getMessage());
+      // ✅ 오류 발생 시 SecurityContext 클리어
+      SecurityContextHolder.clearContext();
     }
   }
 

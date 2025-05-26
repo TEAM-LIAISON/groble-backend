@@ -20,22 +20,20 @@ public class UserDetailsServiceImpl implements UserDetailsService {
   private final UserRepository userRepository;
 
   @Override
-  @Transactional
+  @Transactional(readOnly = true) // 읽기 전용 트랜잭션으로 변경
   public UserDetails loadUserByUsername(final String username) throws UsernameNotFoundException {
-    User user;
-
     Long userId = Long.valueOf(username);
-    user =
+    User user =
         userRepository
             .findById(userId)
             .orElseThrow(
                 () -> new UsernameNotFoundException("ID '" + userId + "'의 사용자를 찾을 수 없습니다."));
 
-    log.debug("사용자 로드 완료: {}", username);
+    log.debug("사용자 로드 완료 - userId: {}", userId);
 
-    // 3) 로그인 시간 업데이트
-    user.updateLoginTime();
-    userRepository.save(user);
+    // ✅ 로그인 시간 업데이트는 별도의 비동기 작업으로 처리하거나
+    // 별도의 서비스 메서드에서 처리하는 것을 권장
+    // 현재는 읽기 전용 트랜잭션으로 변경하여 동시성 문제 방지
 
     return UserDetailsImpl.build(user);
   }
