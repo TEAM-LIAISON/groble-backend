@@ -42,7 +42,7 @@ public class PayplePaymentController {
   /** 결제창 호출을 위한 인증 정보 조회 */
   @GetMapping("/auth")
   public ResponseEntity<GrobleResponse<PaypleAuthResponse>> getPaymentAuth(
-      @RequestParam(required = false) String payWork) {
+      @RequestParam(value = "payWork", required = false) String payWork) {
 
     PaypleAuthResponseDto paypleAuthResponseDto = payplePaymentService.getPaymentAuth(payWork);
     PaypleAuthResponse authResponse =
