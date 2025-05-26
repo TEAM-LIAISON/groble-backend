@@ -16,7 +16,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class UserProfile {
-  @Column(name = "nickname", length = 50, unique = true)
+  @Column(name = "nickname", length = 50)
   private String nickname;
 
   @Lob

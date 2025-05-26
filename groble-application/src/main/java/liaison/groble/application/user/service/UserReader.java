@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import liaison.groble.common.exception.EntityNotFoundException;
 import liaison.groble.domain.user.entity.IntegratedAccount;
 import liaison.groble.domain.user.entity.User;
+import liaison.groble.domain.user.enums.UserStatus;
 import liaison.groble.domain.user.repository.IntegratedAccountRepository;
 import liaison.groble.domain.user.repository.SocialAccountRepository;
 import liaison.groble.domain.user.repository.UserRepository;
@@ -59,7 +60,7 @@ public class UserReader {
    * @return 닉네임 사용 여부 (true: 사용 중, false: 사용 가능)
    */
   public boolean isNicknameTaken(String nickname) {
-    return userRepository.existsByNickname(nickname);
+    return userRepository.existsByNicknameAndStatusNot(nickname, UserStatus.WITHDRAWN);
   }
 
   // ===== 이메일로 User 조회 =====

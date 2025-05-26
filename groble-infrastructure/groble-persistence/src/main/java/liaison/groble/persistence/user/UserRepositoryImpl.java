@@ -6,6 +6,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import liaison.groble.domain.user.entity.User;
+import liaison.groble.domain.user.enums.UserStatus;
 import liaison.groble.domain.user.repository.UserRepository;
 
 import lombok.AllArgsConstructor;
@@ -29,6 +30,12 @@ public class UserRepositoryImpl implements UserRepository {
   @Override
   public boolean existsByNickname(String nickname) {
     return jpaUserRepository.existsByUserProfileNickname(nickname);
+  }
+
+  @Override
+  public boolean existsByNicknameAndStatusNot(String nickname, UserStatus status) {
+    return jpaUserRepository.existsByUserProfileNicknameAndUserStatusInfo_StatusNot(
+        nickname, status);
   }
 
   @Override
