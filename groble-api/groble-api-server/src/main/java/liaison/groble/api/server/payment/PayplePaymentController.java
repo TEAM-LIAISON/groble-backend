@@ -1,145 +1,217 @@
-package liaison.groble.api.server.payment;
-
-import jakarta.servlet.http.HttpServletRequest;
-
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import liaison.groble.api.model.payment.request.PaymentCancelRequest;
-import liaison.groble.api.model.payment.request.PaymentRequest;
-import liaison.groble.api.model.payment.response.PaymentCancelResponse;
-import liaison.groble.api.model.payment.response.PaymentCompleteResponse;
-import liaison.groble.api.model.payment.response.PaymentInfo;
-import liaison.groble.api.model.payment.response.PaymentRequestResponse;
-import liaison.groble.api.model.payment.response.PaypleAuthResponse;
-import liaison.groble.api.server.payment.mapper.PayplePaymentMapper;
-import liaison.groble.application.payment.dto.PaymentCancelResponseDto;
-import liaison.groble.application.payment.dto.PaymentCompleteResponseDto;
-import liaison.groble.application.payment.dto.PaymentInfoDto;
-import liaison.groble.application.payment.dto.PaymentRequestDto;
-import liaison.groble.application.payment.dto.PaymentRequestResponseDto;
-import liaison.groble.application.payment.dto.PaypleAuthResponseDto;
-import liaison.groble.application.payment.dto.PayplePaymentResult;
-import liaison.groble.application.payment.dto.PayplePaymentResultDto;
-import liaison.groble.application.payment.service.PayplePaymentService;
-import liaison.groble.common.annotation.Auth;
-import liaison.groble.common.model.Accessor;
-import liaison.groble.common.response.ApiResponse;
-import liaison.groble.common.response.GrobleResponse;
-
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
-@RestController
-@RequestMapping("/api/v1/payments/payple")
-@RequiredArgsConstructor
-public class PayplePaymentController {
-
-  private final PayplePaymentService payplePaymentService;
-  private final PayplePaymentMapper payplePaymentMapper;
-
-  /** 결제창 호출을 위한 인증 정보 조회 */
-  @GetMapping("/auth")
-  public ResponseEntity<GrobleResponse<PaypleAuthResponse>> getPaymentAuth(
-      @RequestParam(value = "payWork", required = false) String payWork) {
-
-    PaypleAuthResponseDto paypleAuthResponseDto = payplePaymentService.getPaymentAuth(payWork);
-    PaypleAuthResponse authResponse =
-        payplePaymentMapper.toPaypleAuthResponse(paypleAuthResponseDto);
-
-    return ResponseEntity.ok(GrobleResponse.success(authResponse));
-  }
-
-  /** 결제 요청 생성 */
-  @PostMapping("/request")
-  public ResponseEntity<GrobleResponse<PaymentRequestResponse>> createPaymentRequest(
-      @Auth Accessor accessor, @RequestBody PaymentRequest paymentRequest) {
-
-    PaymentRequestDto paymentRequestDto = payplePaymentMapper.toPaymentRequestDto(paymentRequest);
-
-    PaymentRequestResponseDto paymentRequestResponseDto =
-        payplePaymentService.processPayment(accessor.getUserId(), paymentRequestDto);
-    PaymentRequestResponse paymentRequestResponse =
-        payplePaymentMapper.toPaymentRequestResponse(paymentRequestResponseDto);
-
-    return ResponseEntity.ok(GrobleResponse.success(paymentRequestResponse));
-  }
-
-  /** 결제 완료 처리 (결제창에서 리턴) */
-  @PostMapping("/complete")
-  public ResponseEntity<ApiResponse<PaymentCompleteResponse>> completePayment(
-      HttpServletRequest request) {
-
-    // Payple 결제창에서 전달받은 파라미터 매핑
-    PayplePaymentResult result =
-        PayplePaymentResult.builder()
-            .payRst(request.getParameter("PCD_PAY_RST"))
-            .payMsg(request.getParameter("PCD_PAY_MSG"))
-            .payOid(request.getParameter("PCD_PAY_OID"))
-            .payerId(request.getParameter("PCD_PAYER_ID"))
-            .payTime(request.getParameter("PCD_PAY_TIME"))
-            .payCardName(request.getParameter("PCD_PAY_CARDNAME"))
-            .payCardNum(request.getParameter("PCD_PAY_CARDNUM"))
-            .payBankName(request.getParameter("PCD_PAY_BANKNAME"))
-            .payBankNum(request.getParameter("PCD_PAY_BANKNUM"))
-            .build();
-
-    PayplePaymentResultDto payplePaymentResultDto = payplePaymentMapper.toPaymentResultDto(result);
-
-    PaymentCompleteResponseDto paymentCompleteResponseDto =
-        payplePaymentService.completePayment(payplePaymentResultDto);
-    PaymentCompleteResponse response =
-        payplePaymentMapper.toPaymentCompleteResponse(paymentCompleteResponseDto);
-
-    return ResponseEntity.ok(ApiResponse.success(response));
-  }
-
-  /** 결제 취소 */
-  @PostMapping("/{orderId}/cancel")
-  public ResponseEntity<GrobleResponse<PaymentCancelResponse>> cancelPayment(
-      @PathVariable String orderId, @RequestBody PaymentCancelRequest request) {
-
-    PaymentCancelResponseDto paymentCancelResponseDto =
-        payplePaymentService.cancelPayment(orderId, request.getReason());
-    PaymentCancelResponse paymentCancelResponse =
-        payplePaymentMapper.toPaymentCancelResponse(paymentCancelResponseDto);
-    return ResponseEntity.ok(GrobleResponse.success(paymentCancelResponse));
-  }
-
-  //    /**
-  //     * 정기결제 실행 (빌링키 결제)
-  //     */
-  //    @PostMapping("/billing")
-  //    public ResponseEntity<ApiResponse<BillingPaymentResponseDto>> processBillingPayment(
-  //            @Auth Accessor accessor,
-  //            @RequestBody BillingPaymentRequestDto request) {
-  //
-  //        var billingRequest = request.toServiceDto(accessor.getUserId());
-  //        PayplePayment payment = payplePaymentService.processBillingPayment(billingRequest);
-  //
-  //        return ResponseEntity.ok(ApiResponse.success(
-  //            BillingPaymentResponseDto.from(payment)
-  //        ));
-  //    }
-
-  /** 결제 정보 조회 */
-  @GetMapping("/{orderId}")
-  public ResponseEntity<GrobleResponse<PaymentInfo>> getPaymentInfo(@PathVariable String orderId) {
-
-    PaymentInfoDto paymentInfoDto = payplePaymentService.getPaymentInfo(orderId);
-    PaymentInfo paymentInfo = payplePaymentMapper.toPaymentInfo(paymentInfoDto);
-
-    return ResponseEntity.ok(GrobleResponse.success(paymentInfo));
-  }
-
-  /** 빌링키 해지 */
-  @DeleteMapping("/billing/{billingKey}")
-  public ResponseEntity<GrobleResponse<Void>> deleteBillingKey(
-      @Auth Accessor accessor, @PathVariable String billingKey) {
-
-    payplePaymentService.deleteBillingKey(accessor.getUserId(), billingKey);
-
-    return ResponseEntity.ok(GrobleResponse.success());
-  }
-}
+// package liaison.groble.api.server.payment;
+//
+// import org.springframework.http.ResponseEntity;
+// import org.springframework.web.bind.annotation.*;
+//
+// import io.swagger.v3.oas.annotations.Operation;
+// import io.swagger.v3.oas.annotations.tags.Tag;
+// import liaison.groble.api.model.payment.request.PaymentRequest;
+// import liaison.groble.api.model.payment.response.PaymentCompleteResponse;
+// import liaison.groble.api.model.payment.response.PaymentRequestResponse;
+// import liaison.groble.application.payment.dto.PayplePaymentResultDto;
+// import liaison.groble.application.payment.service.PayplePaymentService;
+// import liaison.groble.security.annotations.CurrentUser;
+// import lombok.RequiredArgsConstructor;
+// import lombok.extern.slf4j.Slf4j;
+//
+/// **
+// * 페이플 결제 플로우 설명:
+// *
+// * 1. 사용자가 콘텐츠 구매 요청
+// *    - 쿠폰 적용 여부 확인
+// *    - 최종 결제 금액 계산
+// *
+// * 2. 주문(Order) 생성
+// *    - Order 엔티티에 사용자, 콘텐츠, 쿠폰 정보 저장
+// *    - 상태: PENDING
+// *
+// * 3. 결제 요청 (/api/v1/payments/payple/request)
+// *    - PayplePayment 엔티티 생성 (PENDING 상태)
+// *    - 페이플 인증 정보 반환
+// *
+// * 4. 프론트엔드에서 페이플 결제창 호출
+// *    - 페이플 JS SDK를 사용하여 결제 진행
+// *
+// * 5. 결제 완료 콜백 (/api/v1/payments/payple/complete)
+// *    - 페이플로부터 결제 결과 수신
+// *    - PayplePayment 상태 업데이트 (COMPLETED/FAILED)
+// *    - Order 상태 업데이트 (PAID/FAILED)
+// *    - Payment 엔티티 생성 및 상태 업데이트
+// *    - Purchase 엔티티 생성 (구매 완료)
+// *    - 쿠폰 사용 처리
+// *
+// * 6. 결제 실패 시
+// *    - 모든 엔티티 상태를 FAILED로 업데이트
+// *    - 쿠폰 사용 취소
+// *
+// * 7. 결제 취소 요청 시
+// *    - 페이플 환불 API 호출
+// *    - 모든 엔티티 상태를 CANCELLED로 업데이트
+// *    - 쿠폰 사용 취소
+// */
+// @Slf4j
+// @Tag(name = "Payment", description = "결제 관련 API")
+// @RestController
+// @RequestMapping("/api/v1/payments/payple")
+// @RequiredArgsConstructor
+// public class PayplePaymentController {
+//
+//    private final PayplePaymentService payplePaymentService;
+//    private final OrderService orderService;
+//    private final PaymentService paymentService;
+//    private final PurchaseService purchaseService;
+//
+//    @Operation(summary = "결제 요청", description = "페이플 결제를 위한 초기 요청")
+//    @PostMapping("/request")
+//    public ResponseEntity<PaymentRequestResponse> requestPayment(
+//            @CurrentUser Long userId,
+//            @RequestBody PaymentRequest request) {
+//
+//        // 1. Order 생성 (쿠폰 적용 포함)
+//        Order order = orderService.createOrder(
+//            userId,
+//            request.getContentId(),
+//            request.getOptionType(),
+//            request.getOptionId(),
+//            request.getCouponId()
+//        );
+//
+//        // 2. PayplePayment 생성 (PENDING 상태)
+//        PaymentRequestDto paymentRequestDto = PaymentRequestDto.builder()
+//            .orderId(order.getMerchantUid())
+//            .amount(order.getFinalAmount())
+//            .payMethod(request.getPayMethod())
+//            .productName(request.getProductName())
+//            .build();
+//
+//        PaymentRequestResponseDto response = payplePaymentService.processPayment(userId,
+// paymentRequestDto);
+//
+//        // 3. 페이플 인증 정보 조회
+//        PaypleAuthResponseDto authInfo =
+// payplePaymentService.getPaymentAuth(request.getPayWork());
+//
+//        return ResponseEntity.ok(
+//            PaymentRequestResponse.builder()
+//                .orderId(order.getMerchantUid())
+//                .amount(order.getFinalAmount())
+//                .authKey(authInfo.getAuthKey())
+//                .clientKey(authInfo.getClientKey())
+//                .returnUrl(authInfo.getReturnUrl())
+//                .build()
+//        );
+//    }
+//
+//    @Operation(summary = "결제 완료 처리", description = "페이플 결제 완료 후 콜백 처리")
+//    @PostMapping("/complete")
+//    public ResponseEntity<PaymentCompleteResponse> completePayment(
+//            @CurrentUser Long userId,
+//            @RequestBody PayplePaymentResultDto resultDto) {
+//
+//        // 1. PayplePayment 상태 업데이트
+//        PaymentCompleteResponseDto paypleResponse =
+// payplePaymentService.completePayment(resultDto);
+//
+//        // 2. Order 조회
+//        Order order = orderService.findByMerchantUid(resultDto.getPayOid());
+//
+//        if ("SUCCESS".equals(paypleResponse.getStatus())) {
+//            // 3. Payment 엔티티 생성 및 저장
+//            Payment payment = Payment.builder()
+//                .order(order)
+//                .paymentKey(resultDto.getPayKey())
+//                .paymentMethod(PaymentMethod.valueOf(resultDto.getPayMethod()))
+//                .amount(order.getFinalAmount())
+//                .selectedOptionType(order.getOrderItems().get(0).getOptionType())
+//                .selectedOptionId(order.getOrderItems().get(0).getOptionId())
+//                .customerName(resultDto.getPayerName())
+//                .customerEmail(resultDto.getPayerEmail())
+//                .customerMobilePhone(resultDto.getPayerHp())
+//                .build();
+//
+//            payment.markAsPaid(
+//                resultDto.getPayKey(),
+//                resultDto.getPayTid(),
+//                resultDto.toMap()
+//            );
+//
+//            Payment savedPayment = paymentService.save(payment);
+//
+//            // 4. Order 상태 업데이트
+//            order.completePayment();
+//            orderService.save(order);
+//
+//            // 5. Purchase 생성
+//            Purchase purchase = Purchase.createFromOrder(order);
+//            purchase.complete();
+//            purchaseService.save(purchase);
+//
+//            // 6. 쿠폰 사용 처리 (Order.completePayment()에서 처리됨)
+//
+//            return ResponseEntity.ok(
+//                PaymentCompleteResponse.builder()
+//                    .orderId(order.getMerchantUid())
+//                    .status("SUCCESS")
+//                    .message("결제가 완료되었습니다.")
+//                    .purchaseId(purchase.getId())
+//                    .build()
+//            );
+//        } else {
+//            // 결제 실패 처리
+//            order.failOrder("결제 실패: " + paypleResponse.getMessage());
+//            orderService.save(order);
+//
+//            return ResponseEntity.ok(
+//                PaymentCompleteResponse.builder()
+//                    .orderId(order.getMerchantUid())
+//                    .status("FAILED")
+//                    .message(paypleResponse.getMessage())
+//                    .build()
+//            );
+//        }
+//    }
+//
+//    @Operation(summary = "결제 취소", description = "결제 취소 요청")
+//    @PostMapping("/cancel")
+//    public ResponseEntity<PaymentCancelResponse> cancelPayment(
+//            @CurrentUser Long userId,
+//            @RequestBody PaymentCancelRequest request) {
+//
+//        // 1. Order 조회
+//        Order order = orderService.findByMerchantUid(request.getOrderId());
+//
+//        // 권한 확인
+//        if (!order.getUser().getId().equals(userId)) {
+//            throw new UnauthorizedException("결제 취소 권한이 없습니다.");
+//        }
+//
+//        // 2. PayplePayment 취소
+//        PaymentCancelResponseDto cancelResponse = payplePaymentService.cancelPayment(
+//            request.getOrderId(),
+//            request.getReason()
+//        );
+//
+//        // 3. Payment 취소 처리
+//        Payment payment = order.getPayment();
+//        payment.cancel(request.getReason(), payment.getAmount());
+//        paymentService.save(payment);
+//
+//        // 4. Order 취소 처리 (쿠폰 사용 취소 포함)
+//        order.cancelOrder(request.getReason());
+//        orderService.save(order);
+//
+//        // 5. Purchase 취소 처리
+//        Purchase purchase = purchaseService.findByOrder(order);
+//        purchase.cancel(request.getReason());
+//        purchaseService.save(purchase);
+//
+//        return ResponseEntity.ok(
+//            PaymentCancelResponse.builder()
+//                .orderId(order.getMerchantUid())
+//                .status("CANCELLED")
+//                .message("결제가 취소되었습니다.")
+//                .cancelledAt(LocalDateTime.now())
+//                .build()
+//        );
+//    }
+// }

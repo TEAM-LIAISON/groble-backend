@@ -180,6 +180,8 @@ public class SecurityConfig {
                     .permitAll()
                     .requestMatchers("/payment/**")
                     .permitAll()
+                    .requestMatchers("/api/v1/groble/contents")
+                    .permitAll()
                     .requestMatchers("/api/v1/payments/**")
                     .permitAll()
                     .requestMatchers(

@@ -15,6 +15,7 @@ import liaison.groble.application.content.dto.ContentCardDto;
 import liaison.groble.application.content.dto.ContentDetailDto;
 import liaison.groble.application.content.dto.ContentDto;
 import liaison.groble.application.content.dto.ContentOptionDto;
+import liaison.groble.application.content.dto.DynamicContentDto;
 import liaison.groble.application.notification.mapper.NotificationMapper;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.common.exception.EntityNotFoundException;
@@ -22,6 +23,7 @@ import liaison.groble.common.exception.ForbiddenException;
 import liaison.groble.common.response.CursorResponse;
 import liaison.groble.common.response.PageResponse;
 import liaison.groble.domain.content.dto.FlatContentPreviewDTO;
+import liaison.groble.domain.content.dto.FlatDynamicContentDTO;
 import liaison.groble.domain.content.entity.Category;
 import liaison.groble.domain.content.entity.CoachingOption;
 import liaison.groble.domain.content.entity.Content;
@@ -976,6 +978,23 @@ public class ContentService {
             .build();
 
     return PageResponse.from(page, items, meta);
+  }
+
+  public List<DynamicContentDto> getDynamicContents() {
+    List<FlatDynamicContentDTO> flatDynamicContentDTOS =
+        contentCustomRepository.findAllDynamicContents();
+    return flatDynamicContentDTOS.stream().map(this::convertFlatDtoToDynamicDto).toList();
+  }
+
+  /** FlatPreviewContentDTO를 ContentCardDto로 변환합니다. */
+  private DynamicContentDto convertFlatDtoToDynamicDto(FlatDynamicContentDTO flat) {
+    return DynamicContentDto.builder()
+        .contentId(flat.getContentId())
+        .title(flat.getTitle())
+        .contentType(flat.getContentType())
+        .thumbnailUrl(flat.getThumbnailUrl())
+        .updatedAt(flat.getUpdatedAt())
+        .build();
   }
 
   private String safeEnumName(Enum<?> e) {

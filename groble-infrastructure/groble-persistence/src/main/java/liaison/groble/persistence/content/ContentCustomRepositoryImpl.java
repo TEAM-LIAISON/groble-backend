@@ -25,6 +25,7 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 
 import liaison.groble.common.response.CursorResponse;
 import liaison.groble.domain.content.dto.FlatContentPreviewDTO;
+import liaison.groble.domain.content.dto.FlatDynamicContentDTO;
 import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.content.entity.QContent;
 import liaison.groble.domain.content.entity.QContentOption;
@@ -515,5 +516,26 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                 queryFactory.select(qContent.count()).from(qContent).where(cond).fetchOne())
             .orElse(0L);
     return new PageImpl<>(items, pageable, total);
+  }
+
+  @Override
+  public List<FlatDynamicContentDTO> findAllDynamicContents() {
+    QContent qContent = QContent.content;
+
+    BooleanExpression cond = qContent.status.eq(ContentStatus.ACTIVE);
+
+    return queryFactory
+        .select(
+            Projections.constructor(
+                FlatDynamicContentDTO.class,
+                qContent.id.as("contentId"),
+                qContent.title.as("title"),
+                qContent.contentType.stringValue().as("contentType"),
+                qContent.thumbnailUrl.as("thumbnailUrl"),
+                qContent.updatedAt.as("updatedAt")))
+        .from(qContent)
+        .where(cond)
+        .orderBy(qContent.id.desc())
+        .fetch();
   }
 }
