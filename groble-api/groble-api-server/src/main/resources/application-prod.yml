@@ -85,7 +85,7 @@ app:
       expiration-ms: 3600000 # 1 hour
     refresh-token:
       secret: bZvf0E0wsJXugzxv2m25c5zHvJrNfvsQIjzU6eBScbk=
-      expiration-ms: 604800000 # 7 days
+      expiration-ms: 7200000 # 2 hours
     issuer: groble-auth-service
   frontend-url: https://groble.im
   backend-url: https://api.groble.im
