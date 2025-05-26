@@ -75,8 +75,8 @@ public class AuthController {
   private final PhoneAuthService phoneAuthService;
 
   // 쿠키 설정값
-  private static final int ACCESS_TOKEN_MAX_AGE = 60 * 60; // 1시간
-  private static final int REFRESH_TOKEN_MAX_AGE = 60 * 60 * 2; // 3시간
+  private static final int ACCESS_TOKEN_MAX_AGE = 60 * 30; // 30분
+  private static final int REFRESH_TOKEN_MAX_AGE = 60 * 60; // 2시간
   private static final String ACCESS_TOKEN_COOKIE_NAME = "accessToken";
   private static final String REFRESH_TOKEN_COOKIE_NAME = "refreshToken";
 
