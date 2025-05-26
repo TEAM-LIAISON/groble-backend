@@ -163,7 +163,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     // 3. 닉네임 중복 확인
-    if (userRepository.existsByNickname(dto.getNickname())) {
+    if (userReader.isNicknameTaken(dto.getNickname())) {
       throw new IllegalArgumentException("이미 사용 중인 닉네임입니다.");
     }
 

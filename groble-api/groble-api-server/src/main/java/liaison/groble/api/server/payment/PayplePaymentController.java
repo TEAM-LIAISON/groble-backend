@@ -1,5 +1,25 @@
-// package liaison.groble.api.server.payment;
-//
+package liaison.groble.api.server.payment;
+
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import liaison.groble.application.order.OrderService;
+import liaison.groble.application.payment.service.PayplePaymentService;
+
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+@Tag(name = "결제 관련 API", description = "페이플 결제 관련 API")
+@RestController
+@RequestMapping("/api/v1/payments/payple")
+@RequiredArgsConstructor
+public class PayplePaymentController {
+  private final PayplePaymentService payplePaymentService;
+  private final OrderService orderService;
+}
+
 // import org.springframework.http.ResponseEntity;
 // import org.springframework.web.bind.annotation.*;
 //
@@ -14,7 +34,7 @@
 // import lombok.RequiredArgsConstructor;
 // import lombok.extern.slf4j.Slf4j;
 //
-/// **
+
 // * 페이플 결제 플로우 설명:
 // *
 // * 1. 사용자가 콘텐츠 구매 요청
@@ -49,12 +69,7 @@
 // *    - 모든 엔티티 상태를 CANCELLED로 업데이트
 // *    - 쿠폰 사용 취소
 // */
-// @Slf4j
-// @Tag(name = "Payment", description = "결제 관련 API")
-// @RestController
-// @RequestMapping("/api/v1/payments/payple")
-// @RequiredArgsConstructor
-// public class PayplePaymentController {
+
 //
 //    private final PayplePaymentService payplePaymentService;
 //    private final OrderService orderService;
