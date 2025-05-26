@@ -220,8 +220,15 @@ public class AuthServiceImpl implements AuthService {
     // 전화번호 정규화 후 플래그 제거
     String sanitizedPhoneNumber =
         dto.getPhoneNumber() != null ? dto.getPhoneNumber().replaceAll("\\D", "") : null;
+
     if (sanitizedPhoneNumber != null) {
-      verificationCodePort.removeVerifiedGuestPhoneFlag(sanitizedPhoneNumber);
+      TransactionSynchronizationManager.registerSynchronization(
+          new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+              verificationCodePort.removeVerifiedGuestPhoneFlag(sanitizedPhoneNumber);
+            }
+          });
     }
     return tokenDto;
   }
