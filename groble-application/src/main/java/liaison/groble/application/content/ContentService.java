@@ -951,7 +951,8 @@ public class ContentService {
     Content content = findAndValidateUserContent(userId, contentId);
 
     // 2. 삭제
-    contentRepository.delete(content);
+    content.setStatus(ContentStatus.DELETED);
+    contentRepository.save(content);
     log.info("콘텐츠 삭제 완료. 유저 ID: {}, 콘텐츠 ID: {}", userId, contentId);
   }
 

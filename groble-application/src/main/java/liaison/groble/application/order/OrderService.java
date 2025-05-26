@@ -94,6 +94,7 @@ public class OrderService {
         savedOrder.getFinalAmount());
 
     return OrderCreateDto.builder()
+        .orderId(savedOrder.getId())
         .contentId(contentId)
         .optionId(optionId)
         .price(price)
