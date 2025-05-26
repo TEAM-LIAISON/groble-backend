@@ -126,7 +126,6 @@ public class SellController {
   }
 
   @MySellingContents
-  @RequireRole("ROLE_SELLER")
   @GetMapping("/content/my/selling-contents")
   public ResponseEntity<GrobleResponse<CursorResponse<ContentPreviewCardResponse>>>
       getMySellingContents(
