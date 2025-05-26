@@ -2,6 +2,8 @@ package liaison.groble.api.model.content.response;
 
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import lombok.Builder;
 import lombok.Getter;
 
@@ -12,5 +14,7 @@ public class DynamicContentResponse {
   private String title;
   private String contentType;
   private String thumbnailUrl;
+
+  @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
   private LocalDateTime updatedAt;
 }
