@@ -42,8 +42,8 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
   private String cookieDomain;
 
   // 쿠키 설정값
-  private static final int ACCESS_TOKEN_MAX_AGE = 60 * 30; // 30분
-  private static final int REFRESH_TOKEN_MAX_AGE = 60 * 60; // 1시간
+  private static final int ACCESS_TOKEN_MAX_AGE = 60 * 60; // 1시간
+  private static final int REFRESH_TOKEN_MAX_AGE = 60 * 60 * 24 * 7; // 1주일
   private static final String ACCESS_TOKEN_COOKIE_NAME = "accessToken";
   private static final String REFRESH_TOKEN_COOKIE_NAME = "refreshToken";
 

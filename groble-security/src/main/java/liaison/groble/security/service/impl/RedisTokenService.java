@@ -14,7 +14,7 @@ import lombok.RequiredArgsConstructor;
 public class RedisTokenService implements TokenService {
   private final RedisTemplate<String, String> redisTemplate;
   private static final String REFRESH_TOKEN_KEY_PREFIX = "refresh_token:";
-  private static final long REFRESH_TOKEN_EXPIRATION = 60 * 60; // 1시간 (초 단위)
+  private static final long REFRESH_TOKEN_EXPIRATION = 60 * 60 * 24 * 7; // 1주일
 
   @Override
   public void saveRefreshToken(String userId, String refreshToken) {
