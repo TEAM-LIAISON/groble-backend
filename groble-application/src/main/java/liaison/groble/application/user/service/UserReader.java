@@ -59,8 +59,8 @@ public class UserReader {
    * @param nickname 확인할 닉네임
    * @return 닉네임 사용 여부 (true: 사용 중, false: 사용 가능)
    */
-  public boolean isNicknameTaken(String nickname) {
-    return userRepository.existsByNicknameAndStatusNot(nickname, UserStatus.ACTIVE);
+  public boolean isNicknameTaken(String nickname, UserStatus userStatus) {
+    return userRepository.existsByNicknameAndStatus(nickname, userStatus);
   }
 
   // ===== 이메일로 User 조회 =====

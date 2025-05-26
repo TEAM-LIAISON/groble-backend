@@ -13,6 +13,8 @@ import java.util.stream.Collectors;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import liaison.groble.application.auth.dto.EmailVerificationDto;
 import liaison.groble.application.auth.dto.PhoneNumberVerifyRequestDto;
@@ -44,6 +46,7 @@ import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.entity.UserWithdrawalHistory;
 import liaison.groble.domain.user.enums.AccountType;
 import liaison.groble.domain.user.enums.SellerVerificationStatus;
+import liaison.groble.domain.user.enums.UserStatus;
 import liaison.groble.domain.user.enums.UserType;
 import liaison.groble.domain.user.enums.WithdrawalReason;
 import liaison.groble.domain.user.factory.UserFactory;
@@ -133,16 +136,23 @@ public class AuthServiceImpl implements AuthService {
         securityPort.getRefreshTokenExpirationTime(tokenDto.getRefreshToken()));
     userRepository.save(savedUser);
 
-    // 10. 인증 플래그 제거
-    verificationCodePort.removeVerifiedEmailFlag(signUpDto.getEmail());
-    // 전화번호 정규화 후 플래그 제거
+    // 10. 인증 플래그 제거 (트랜잭션 커밋 이후 실행)
+    String email = signUpDto.getEmail();
     String sanitizedPhoneNumber =
         signUpDto.getPhoneNumber() != null
             ? signUpDto.getPhoneNumber().replaceAll("\\D", "")
             : null;
-    if (sanitizedPhoneNumber != null) {
-      verificationCodePort.removeVerifiedGuestPhoneFlag(sanitizedPhoneNumber);
-    }
+
+    TransactionSynchronizationManager.registerSynchronization(
+        new TransactionSynchronization() {
+          @Override
+          public void afterCommit() {
+            verificationCodePort.removeVerifiedEmailFlag(email);
+            if (sanitizedPhoneNumber != null) {
+              verificationCodePort.removeVerifiedGuestPhoneFlag(sanitizedPhoneNumber);
+            }
+          }
+        });
     return tokenDto;
   }
 
@@ -163,7 +173,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     // 3. 닉네임 중복 확인
-    if (userReader.isNicknameTaken(dto.getNickname())) {
+    if (userReader.isNicknameTaken(dto.getNickname(), UserStatus.ACTIVE)) {
       throw new IllegalArgumentException("이미 사용 중인 닉네임입니다.");
     }
 
@@ -486,7 +496,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     // 4) 중복 검사 (새 닉네임이 null 이면 중복 검사 생략)
-    if (newNick != null && userReader.isNicknameTaken(newNick)) {
+    if (newNick != null && userReader.isNicknameTaken(newNick, UserStatus.ACTIVE)) {
       throw new DuplicateNicknameException("이미 사용 중인 닉네임입니다.");
     }
 
@@ -507,7 +517,7 @@ public class AuthServiceImpl implements AuthService {
   @Override
   @Transactional(readOnly = true)
   public boolean isNicknameTaken(String nickname) {
-    return userReader.isNicknameTaken(nickname);
+    return userReader.isNicknameTaken(nickname, UserStatus.ACTIVE);
   }
 
   @Override

@@ -28,9 +28,8 @@ public class UserRepositoryImpl implements UserRepository {
   }
 
   @Override
-  public boolean existsByNicknameAndStatusNot(String nickname, UserStatus status) {
-    return jpaUserRepository.existsByUserProfileNicknameAndUserStatusInfo_StatusNot(
-        nickname, status);
+  public boolean existsByNicknameAndStatus(String nickname, UserStatus status) {
+    return jpaUserRepository.existsByUserProfileNicknameAndUserStatusInfo_Status(nickname, status);
   }
 
   @Override

@@ -197,6 +197,8 @@ public class SecurityConfig {
                     .permitAll()
                     .requestMatchers("/api/v1/auth/phone-number/verify-code")
                     .permitAll()
+                    .requestMatchers("/api/v1/auth/nickname/check")
+                    .permitAll()
                     .requestMatchers("/login/**")
                     .permitAll()
                     .requestMatchers("/error")

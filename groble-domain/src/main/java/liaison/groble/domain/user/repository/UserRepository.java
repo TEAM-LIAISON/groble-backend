@@ -10,7 +10,7 @@ public interface UserRepository {
 
   User save(User user);
 
-  boolean existsByNicknameAndStatusNot(String nickname, UserStatus status);
+  boolean existsByNicknameAndStatus(String nickname, UserStatus status);
 
   User saveAndFlush(User user);
 

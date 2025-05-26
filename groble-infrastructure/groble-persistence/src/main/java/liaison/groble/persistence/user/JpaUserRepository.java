@@ -10,8 +10,7 @@ import liaison.groble.domain.user.enums.UserStatus;
 public interface JpaUserRepository extends JpaRepository<User, Long> {
   Optional<User> findById(Long id);
 
-  boolean existsByUserProfileNicknameAndUserStatusInfo_StatusNot(
-      String nickname, UserStatus status);
+  boolean existsByUserProfileNicknameAndUserStatusInfo_Status(String nickname, UserStatus status);
 
   boolean existsByUserProfilePhoneNumber(String phoneNumber);
 
