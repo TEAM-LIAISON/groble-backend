@@ -194,7 +194,7 @@ public class AuthServiceImpl implements AuthService {
       log.info("판매자 전화번호 인증: {}", dto.getPhoneNumber());
       validateVerifiedUserPhoneFlag(userId, dto.getPhoneNumber());
       user.setSeller(true);
-      user.setSellerInfo(SellerInfo.ofVerificationStatus(SellerVerificationStatus.VERIFIED));
+      user.setSellerInfo(SellerInfo.ofVerificationStatus(SellerVerificationStatus.PENDING));
     } else {
       user.setSeller(false); // BUYER인 경우 명시적으로 false 설정
     }

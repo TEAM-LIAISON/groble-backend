@@ -54,7 +54,6 @@ public class Order extends BaseEntity {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  // 숫자 8자리 이상
   @Column(name = "merchant_uid", nullable = false, unique = true)
   private String merchantUid;
 

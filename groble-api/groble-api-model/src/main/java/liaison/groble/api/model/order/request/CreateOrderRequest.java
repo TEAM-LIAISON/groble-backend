@@ -28,6 +28,6 @@ public class CreateOrderRequest {
   @Schema(description = "옵션 ID", example = "1")
   private Long optionId;
 
-  @Schema(description = "쿠폰 ID (선택사항)", example = "100")
-  private Long couponId;
+  @Schema(description = "쿠폰 코드 (선택사항)", example = "XYZ1Q5DS311SAZ")
+  private String couponCode;
 }

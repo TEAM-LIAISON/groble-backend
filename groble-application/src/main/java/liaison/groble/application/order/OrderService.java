@@ -15,6 +15,7 @@ import liaison.groble.domain.content.entity.ContentOption;
 import liaison.groble.domain.content.enums.ContentType;
 import liaison.groble.domain.content.repository.ContentRepository;
 import liaison.groble.domain.coupon.entity.UserCoupon;
+import liaison.groble.domain.coupon.repository.UserCouponRepository;
 import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.order.entity.OrderItem;
 import liaison.groble.domain.order.repository.OrderRepository;
@@ -32,6 +33,7 @@ public class OrderService {
   private final ContentReader contentReader;
   private final ContentRepository contentRepository;
   private final OrderRepository orderRepository;
+  private final UserCouponRepository userCouponRepository;
 
   //  private final UserCouponRepository userCouponRepository;
 
@@ -55,12 +57,12 @@ public class OrderService {
     // Get the selected option
     ContentOption selectedOption =
         content.getOptions().stream()
-            .filter(option -> option.getId().equals(orderCreateDto.getContentOptionId()))
+            .filter(option -> option.getId().equals(orderCreateDto.getOptionId()))
             .findFirst()
             .orElseThrow(
                 () ->
                     new EntityNotFoundException(
-                        "해당 옵션을 가진 콘텐츠를 찾을 수 없습니다. ID: " + orderCreateDto.getContentOptionId()));
+                        "해당 옵션을 가진 콘텐츠를 찾을 수 없습니다. ID: " + orderCreateDto.getOptionId()));
 
     Purchaser purchaser =
         Purchaser.builder()
@@ -99,16 +101,12 @@ public class OrderService {
 
   /** 페이플 결제를 위한 주문 생성 메서드 - 쿠폰 적용 지원 - 옵션 타입 문자열로 받아 처리 */
   @Transactional
-  public Order createOrder(
-      Long userId, Long contentId, String optionTypeStr, Long optionId, Long couponId) {
+  public OrderCreateDto createOrder(
+      Long userId, Long contentId, String optionTypeStr, Long optionId, String couponCode) {
 
-    // 1. 사용자 조회
     User user = userReader.getUserById(userId);
-
-    // 2. 콘텐츠 조회
     Content content = contentReader.getContentById(contentId);
 
-    // 3. 옵션 타입 변환
     OrderItem.OptionType optionType = null;
     if (optionTypeStr != null && !optionTypeStr.isEmpty()) {
       try {
@@ -132,9 +130,11 @@ public class OrderService {
 
     // 6. 쿠폰 조회 및 검증 (선택사항)
     UserCoupon userCoupon = null;
-    if (couponId != null) {
-      //      userCoupon = userCouponRepository.findById(couponId)
-      //          .orElseThrow(() -> new IllegalArgumentException("쿠폰을 찾을 수 없습니다."));
+    if (couponCode != null) {
+      userCoupon =
+          userCouponRepository
+              .findByCouponCode(couponCode)
+              .orElseThrow(() -> new IllegalArgumentException("쿠폰을 찾을 수 없습니다."));
 
       // 쿠폰 사용 가능 여부 검증
       if (!userCoupon.isUsable()) {
@@ -162,7 +162,13 @@ public class OrderService {
         contentId,
         savedOrder.getFinalAmount());
 
-    return savedOrder;
+    return OrderCreateDto.builder()
+        .contentId(contentId)
+        .optionId(optionId)
+        .price(price)
+        .quantity(1) // 기본 수량 1로 설정
+        .totalPrice(price)
+        .build();
   }
 
   /** 주문 조회 (merchantUid로) */
