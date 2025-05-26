@@ -24,6 +24,10 @@ public class QOrder extends EntityPathBase<Order> {
 
     public final liaison.groble.domain.common.entity.QBaseEntity _super = new liaison.groble.domain.common.entity.QBaseEntity(this);
 
+    public final liaison.groble.domain.coupon.entity.QUserCoupon appliedCoupon;
+
+    public final NumberPath<java.math.BigDecimal> couponDiscountAmount = createNumber("couponDiscountAmount", java.math.BigDecimal.class);
+
     //inherited
     public final DateTimePath<java.time.LocalDateTime> createdAt = _super.createdAt;
 
@@ -33,6 +37,10 @@ public class QOrder extends EntityPathBase<Order> {
     //inherited
     public final BooleanPath deleted = _super.deleted;
 
+    public final NumberPath<java.math.BigDecimal> discountAmount = createNumber("discountAmount", java.math.BigDecimal.class);
+
+    public final NumberPath<java.math.BigDecimal> finalAmount = createNumber("finalAmount", java.math.BigDecimal.class);
+
     public final NumberPath<Long> id = createNumber("id", Long.class);
 
     public final StringPath merchantUid = createString("merchantUid");
@@ -41,13 +49,13 @@ public class QOrder extends EntityPathBase<Order> {
 
     public final StringPath orderNote = createString("orderNote");
 
+    public final NumberPath<java.math.BigDecimal> originalAmount = createNumber("originalAmount", java.math.BigDecimal.class);
+
     public final liaison.groble.domain.payment.entity.QPayment payment;
 
     public final liaison.groble.domain.purchase.entity.QPurchaser purchaser;
 
     public final EnumPath<Order.OrderStatus> status = createEnum("status", Order.OrderStatus.class);
-
-    public final NumberPath<java.math.BigDecimal> totalAmount = createNumber("totalAmount", java.math.BigDecimal.class);
 
     //inherited
     public final DateTimePath<java.time.LocalDateTime> updatedAt = _super.updatedAt;
@@ -77,6 +85,7 @@ public class QOrder extends EntityPathBase<Order> {
 
     public QOrder(Class<? extends Order> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
+        this.appliedCoupon = inits.isInitialized("appliedCoupon") ? new liaison.groble.domain.coupon.entity.QUserCoupon(forProperty("appliedCoupon"), inits.get("appliedCoupon")) : null;
         this.payment = inits.isInitialized("payment") ? new liaison.groble.domain.payment.entity.QPayment(forProperty("payment"), inits.get("payment")) : null;
         this.purchaser = inits.isInitialized("purchaser") ? new liaison.groble.domain.purchase.entity.QPurchaser(forProperty("purchaser")) : null;
         this.user = inits.isInitialized("user") ? new liaison.groble.domain.user.entity.QUser(forProperty("user"), inits.get("user")) : null;
