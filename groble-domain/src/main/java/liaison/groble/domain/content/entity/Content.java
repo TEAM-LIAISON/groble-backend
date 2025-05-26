@@ -86,7 +86,11 @@ public class Content extends BaseTimeEntity {
   private List<String> contentDetailImageUrls = new ArrayList<>();
 
   private String serviceTarget; // 서비스 타겟
+
+  @Column(name = "service_process", length = 1000)
   private String serviceProcess; // 제공 절차
+
+  @Column(name = "maker_intro", length = 1000)
   private String makerIntro; // 메이커 소개
 
   @Column(name = "sale_count")
