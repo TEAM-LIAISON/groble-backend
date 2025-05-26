@@ -82,15 +82,6 @@ public class PayplePaymentController {
 //            @CurrentUser Long userId,
 //            @RequestBody PaymentRequest request) {
 //
-//        // 1. Order 생성 (쿠폰 적용 포함)
-//        Order order = orderService.createOrder(
-//            userId,
-//            request.getContentId(),
-//            request.getOptionType(),
-//            request.getOptionId(),
-//            request.getCouponId()
-//        );
-//
 //        // 2. PayplePayment 생성 (PENDING 상태)
 //        PaymentRequestDto paymentRequestDto = PaymentRequestDto.builder()
 //            .orderId(order.getMerchantUid())

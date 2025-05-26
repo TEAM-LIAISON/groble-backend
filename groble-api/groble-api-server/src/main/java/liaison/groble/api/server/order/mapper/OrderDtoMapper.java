@@ -10,7 +10,7 @@ import liaison.groble.application.order.dto.OrderCreateDto;
 public class OrderDtoMapper {
   public OrderResponse toOrderResponse(OrderCreateDto orderCreateDto) {
     return OrderResponse.builder()
-        .merchantUid(orderCreateDto.getMerchantUid())
+        .orderId(orderCreateDto.getOrderId())
         .contentId(orderCreateDto.getContentId())
         .optionId(orderCreateDto.getOptionId())
         .price(orderCreateDto.getPrice())

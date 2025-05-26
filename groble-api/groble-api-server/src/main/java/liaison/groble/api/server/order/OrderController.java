@@ -21,10 +21,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@Tag(name = "Order", description = "주문 관련 API")
 @RestController
-@RequestMapping("/api/v1/orders")
 @RequiredArgsConstructor
+@RequestMapping("/api/v1/orders")
+@Tag(name = "Order", description = "주문 관련 API")
 public class OrderController {
 
   private final OrderService orderService;

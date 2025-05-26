@@ -3,7 +3,6 @@ package liaison.groble.domain.order.entity;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -53,9 +52,6 @@ public class Order extends BaseEntity {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
-
-  @Column(name = "merchant_uid", nullable = false, unique = true)
-  private String merchantUid;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "user_id", nullable = false)
@@ -109,7 +105,6 @@ public class Order extends BaseEntity {
     this.appliedCoupon = appliedCoupon;
     this.purchaser = purchaser;
     this.orderNote = orderNote;
-    this.merchantUid = generateMerchantUid();
 
     // 쿠폰 할인 금액 계산
     if (appliedCoupon != null) {
@@ -245,14 +240,6 @@ public class Order extends BaseEntity {
 
   public void setPayment(Payment payment) {
     this.payment = payment;
-  }
-
-  // 유틸리티 메서드
-  private String generateMerchantUid() {
-    return "ORD_"
-        + UUID.randomUUID().toString().replaceAll("-", "").substring(0, 10)
-        + "_"
-        + System.currentTimeMillis();
   }
 
   // 팩토리 메서드 수정 (쿠폰 지원)

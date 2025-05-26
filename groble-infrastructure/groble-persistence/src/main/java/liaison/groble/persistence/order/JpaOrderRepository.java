@@ -7,5 +7,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import liaison.groble.domain.order.entity.Order;
 
 public interface JpaOrderRepository extends JpaRepository<Order, Long> {
-  Optional<Order> findByMerchantUid(String merchantUid);
+  Optional<Order> findById(Long orderId);
 }

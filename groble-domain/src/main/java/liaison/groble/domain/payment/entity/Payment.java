@@ -210,7 +210,6 @@ public class Payment extends BaseEntity {
     this.customerName = customerName;
     this.customerEmail = customerEmail;
     this.customerMobilePhone = customerMobilePhone;
-    this.merchantUid = order.getMerchantUid();
     order.setPayment(this);
   }
 

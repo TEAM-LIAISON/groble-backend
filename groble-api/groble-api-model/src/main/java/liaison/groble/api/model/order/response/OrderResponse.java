@@ -15,8 +15,8 @@ import lombok.NoArgsConstructor;
 @Schema(description = "주문 응답")
 public class OrderResponse {
 
-  @Schema(description = "주문 ID (merchantUid)", example = "12345678")
-  private String merchantUid;
+  @Schema(description = "주문 ID (orderId)", example = "12345678")
+  private Long orderId;
 
   @Schema(description = "콘텐츠 ID", example = "1")
   private Long contentId;

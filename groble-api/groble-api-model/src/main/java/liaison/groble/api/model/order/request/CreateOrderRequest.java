@@ -19,14 +19,14 @@ public class CreateOrderRequest {
   @Schema(description = "콘텐츠 ID", example = "1", required = true)
   private Long contentId;
 
+  @Schema(description = "옵션 ID", example = "1")
+  private Long optionId;
+
   @Schema(
       description = "옵션 타입",
       example = "COACHING_OPTION",
       allowableValues = {"COACHING_OPTION", "DOCUMENT_OPTION"})
   private String optionType;
-
-  @Schema(description = "옵션 ID", example = "1")
-  private Long optionId;
 
   @Schema(description = "쿠폰 코드 (선택사항)", example = "XYZ1Q5DS311SAZ")
   private String couponCode;
