@@ -77,7 +77,7 @@ public class UserFactory {
     user.setIntegratedAccount(account);
 
     // 여기서 SellerInfo는 “인증 대기” 상태만 셋팅
-    user.setSellerInfo(SellerInfo.ofVerificationStatus(SellerVerificationStatus.PENDING));
+    user.setSellerInfo(SellerInfo.ofVerificationStatus(SellerVerificationStatus.VERIFIED));
 
     return user;
   }
