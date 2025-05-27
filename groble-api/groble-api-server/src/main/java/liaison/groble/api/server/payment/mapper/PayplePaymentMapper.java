@@ -3,17 +3,21 @@ package liaison.groble.api.server.payment.mapper;
 import org.springframework.stereotype.Component;
 
 import liaison.groble.api.model.payment.request.PaymentRequest;
+import liaison.groble.api.model.payment.request.PayplePaymentLinkRequest;
 import liaison.groble.api.model.payment.response.PaymentCancelResponse;
 import liaison.groble.api.model.payment.response.PaymentCompleteResponse;
 import liaison.groble.api.model.payment.response.PaymentInfo;
 import liaison.groble.api.model.payment.response.PaymentRequestResponse;
 import liaison.groble.api.model.payment.response.PaypleAuthResponse;
+import liaison.groble.api.model.payment.response.PaypleLinkResponse;
 import liaison.groble.application.payment.dto.PaymentCancelResponseDto;
 import liaison.groble.application.payment.dto.PaymentCompleteResponseDto;
 import liaison.groble.application.payment.dto.PaymentInfoDto;
 import liaison.groble.application.payment.dto.PaymentRequestDto;
 import liaison.groble.application.payment.dto.PaymentRequestResponseDto;
 import liaison.groble.application.payment.dto.PaypleAuthResponseDto;
+import liaison.groble.application.payment.dto.PaypleLinkResponseDto;
+import liaison.groble.application.payment.dto.PayplePaymentLinkRequestDto;
 import liaison.groble.application.payment.dto.PayplePaymentResult;
 import liaison.groble.application.payment.dto.PayplePaymentResultDto;
 
@@ -98,6 +102,25 @@ public class PayplePaymentMapper {
         .cardName(paymentInfoDto.getCardName())
         .cardNumber(paymentInfoDto.getCardNumber())
         .receiptUrl(paymentInfoDto.getReceiptUrl())
+        .build();
+  }
+
+  public PayplePaymentLinkRequestDto toPayplePaymentLinkRequestDto(
+      PayplePaymentLinkRequest payplePaymentLinkRequest) {
+    return PayplePaymentLinkRequestDto.builder()
+        .orderId(payplePaymentLinkRequest.getOrderId())
+        .contentId(payplePaymentLinkRequest.getContentId())
+        .optionId(payplePaymentLinkRequest.getOptionId())
+        .price(payplePaymentLinkRequest.getPrice())
+        .quantity(payplePaymentLinkRequest.getQuantity())
+        .totalPrice(payplePaymentLinkRequest.getTotalPrice())
+        .build();
+  }
+
+  public PaypleLinkResponse toPaypleLinkResponse(PaypleLinkResponseDto paypleLinkResponseDto) {
+    return PaypleLinkResponse.builder()
+        .paymentResult(paypleLinkResponseDto.getPaymentResult())
+        .paymentLinkUrl(paypleLinkResponseDto.getPaymentLinkUrl())
         .build();
   }
 }

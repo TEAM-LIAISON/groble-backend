@@ -566,6 +566,8 @@ public class ContentService {
     if (dto.getMakerIntro() != null) {
       content.setMakerIntro(dto.getMakerIntro());
     }
+
+    content.setStatus(ContentStatus.DRAFT);
   }
 
   /** 옵션을 Content에 추가하고 최저가를 설정합니다. */

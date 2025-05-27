@@ -31,4 +31,10 @@ public class PaypleConfig {
         ? "https://democpay.payple.kr/php/auth.php"
         : "https://cpay.payple.kr/php/auth.php";
   }
+
+  public String getLinkApiUrl() {
+    return testMode
+        ? "https://democpay.payple.kr/php/link/api/LinkRegAct.php?ACT_=LINKREG"
+        : "https://cpay.payple.kr/php/link/api/LinkRegAct.php?ACT_=LINKREG";
+  }
 }

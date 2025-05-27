@@ -1,5 +1,6 @@
 package liaison.groble.external.adapter.payment;
 
+import java.math.BigDecimal;
 import java.util.Map;
 
 import org.json.simple.JSONObject;
@@ -53,4 +54,12 @@ public interface PaypleService {
    * @return 해지 결과
    */
   JSONObject payUserDel(String payerId);
+
+  /**
+   * 링크 생성 요청
+   *
+   * @param
+   * @return
+   */
+  JSONObject payLinkCreate(Map<String, String> params, Map<String, BigDecimal> amounts);
 }

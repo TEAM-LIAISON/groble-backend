@@ -1,11 +1,24 @@
 package liaison.groble.api.server.payment;
 
+import jakarta.validation.Valid;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import liaison.groble.api.model.payment.request.PayplePaymentLinkRequest;
+import liaison.groble.api.model.payment.response.PaypleLinkResponse;
+import liaison.groble.api.server.payment.mapper.PayplePaymentMapper;
 import liaison.groble.application.order.OrderService;
+import liaison.groble.application.payment.dto.PaypleAuthResponseDto;
+import liaison.groble.application.payment.dto.PaypleLinkResponseDto;
+import liaison.groble.application.payment.dto.PayplePaymentLinkRequestDto;
 import liaison.groble.application.payment.service.PayplePaymentService;
+import liaison.groble.common.response.GrobleResponse;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +31,33 @@ import lombok.extern.slf4j.Slf4j;
 public class PayplePaymentController {
   private final PayplePaymentService payplePaymentService;
   private final OrderService orderService;
+  private final PayplePaymentMapper payplePaymentMapper;
+
+  // 링크 결제 요청이 들어온다
+  // 1. 파트너 인증 요청을 페이플 서버에 보낸다
+  // 2. 인증 결과를 받아온다.
+  // 3. 해당 인증 결과를 바탕으로 링크 생성 요청을 페이플 서버에 보낸다.
+  // 4. 링크 생성 결과를 받아온다.
+  // 5. 링크 생성 결과를 클라이언트에 반환한다.
+
+  @Operation(summary = "페이플 링크 결제 요청", description = "링크 결제를 요청하고 결제 링크를 받아옵니다.")
+  @PostMapping("/link-payment")
+  public ResponseEntity<GrobleResponse<PaypleLinkResponse>> requestPaypleLinkPayment(
+      @Valid @RequestBody PayplePaymentLinkRequest payplePaymentLinkRequest) {
+    PayplePaymentLinkRequestDto payplePaymentLinkRequestDto =
+        payplePaymentMapper.toPayplePaymentLinkRequestDto(payplePaymentLinkRequest);
+    PaypleAuthResponseDto paypleAuthResponseDto = payplePaymentService.getPaymentAuth("LINKREG");
+    log.info(
+        "페이플 링크 결제 요청 - authKey: {}, clientKey: {}, returnUrl: {}",
+        paypleAuthResponseDto.getAuthKey(),
+        paypleAuthResponseDto.getClientKey(),
+        paypleAuthResponseDto.getReturnUrl());
+    PaypleLinkResponseDto paypleLinkResponseDto =
+        payplePaymentService.processLinkPayment(payplePaymentLinkRequestDto, paypleAuthResponseDto);
+    PaypleLinkResponse paypleLinkResponse =
+        payplePaymentMapper.toPaypleLinkResponse(paypleLinkResponseDto);
+    return ResponseEntity.ok(GrobleResponse.success(paypleLinkResponse));
+  }
 }
 
 // import org.springframework.http.ResponseEntity;

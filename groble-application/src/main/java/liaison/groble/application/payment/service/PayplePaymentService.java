@@ -1,5 +1,6 @@
 package liaison.groble.application.payment.service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
@@ -17,7 +18,11 @@ import liaison.groble.application.payment.dto.PaymentInfoDto;
 import liaison.groble.application.payment.dto.PaymentRequestDto;
 import liaison.groble.application.payment.dto.PaymentRequestResponseDto;
 import liaison.groble.application.payment.dto.PaypleAuthResponseDto;
+import liaison.groble.application.payment.dto.PaypleLinkResponseDto;
+import liaison.groble.application.payment.dto.PayplePaymentLinkRequestDto;
 import liaison.groble.application.payment.dto.PayplePaymentResultDto;
+import liaison.groble.domain.order.entity.Order;
+import liaison.groble.domain.order.repository.OrderRepository;
 import liaison.groble.domain.payment.entity.PayplePayment;
 import liaison.groble.domain.payment.enums.PayplePaymentStatus;
 import liaison.groble.domain.payment.repository.PayplePaymentRepository;
@@ -38,8 +43,40 @@ public class PayplePaymentService {
   private final PaypleConfig paypleConfig;
   private final PaypleService paypleService;
   private final PayplePaymentRepository payplePaymentRepository;
+  private final OrderRepository orderRepository;
+
+  public PaypleLinkResponseDto processLinkPayment(
+      PayplePaymentLinkRequestDto payplePaymentLinkRequestDto,
+      PaypleAuthResponseDto paypleAuthResponseDto) {
+    // 주문 요청자와 결제 요청자 동일 여부 검증 필요
+
+    Long orderId = payplePaymentLinkRequestDto.getOrderId();
+    Order order =
+        orderRepository
+            .findById(orderId)
+            .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다."));
+    String contentTitle = order.getOrderItems().get(0).getContent().getTitle();
+
+    Map<String, String> params = new HashMap<>();
+    if (paypleAuthResponseDto != null) {
+      params.put("PCD_AUTH_KEY", paypleAuthResponseDto.getAuthKey());
+      params.put("PCD_PAY_WORK", "LINKREG");
+      params.put("PCD_PAY_GOODS", contentTitle);
+    }
+
+    Map<String, BigDecimal> amounts = new HashMap<>();
+    amounts.put("PCD_PAY_TOTAL", order.getFinalAmount());
+
+    JSONObject linkPayResult = paypleService.payLinkCreate(params, amounts);
+
+    return PaypleLinkResponseDto.builder()
+        .paymentResult((String) linkPayResult.get("PCD_PAY_RST"))
+        .paymentLinkUrl((String) linkPayResult.get("PCD_LINK_URL"))
+        .build();
+  }
 
   /** 결제 인증 정보 조회 */
+  // payWork
   public PaypleAuthResponseDto getPaymentAuth(String payWork) {
     Map<String, String> params = new HashMap<>();
     if (payWork != null) {

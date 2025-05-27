@@ -35,13 +35,6 @@ public class OrderController {
   public ResponseEntity<GrobleResponse<OrderResponse>> createOrder(
       @Auth Accessor accessor, @RequestBody CreateOrderRequest request) {
 
-    log.info(
-        "주문 생성 요청 - userId: {}, contentId: {}, couponCode: {}",
-        accessor.getUserId(),
-        request.getContentId(),
-        request.getCouponCode());
-
-    // 주문 생성 (쿠폰 적용 포함)
     OrderCreateDto orderCreateDto =
         orderService.createOrder(
             accessor.getUserId(),
