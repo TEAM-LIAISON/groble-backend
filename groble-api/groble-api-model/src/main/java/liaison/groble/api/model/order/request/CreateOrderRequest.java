@@ -15,13 +15,15 @@ import lombok.NoArgsConstructor;
 @Schema(description = "주문 생성 요청")
 public class CreateOrderRequest {
 
-  @NotNull
+  @NotNull(message = "콘텐츠 ID는 필수입니다")
   @Schema(description = "콘텐츠 ID", example = "1", required = true)
   private Long contentId;
 
+  @NotNull(message = "옵션 ID는 필수입니다")
   @Schema(description = "옵션 ID", example = "1")
   private Long optionId;
 
+  @NotNull(message = "옵션 타입은 필수입니다")
   @Schema(
       description = "옵션 타입",
       example = "COACHING_OPTION",
