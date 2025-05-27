@@ -209,9 +209,6 @@ public class AuthServiceImpl implements AuthService {
     processTermsAgreements(user, agreedTermsTypes);
     user.updatePhoneNumber(dto.getPhoneNumber());
 
-    // 6. 기본 권한 부여
-    addDefaultRole(user);
-
     // 7. 사용자 저장
     notificationService.sendWelcomeNotification(user);
 
