@@ -12,14 +12,16 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "주문 응답")
-public class OrderResponse {
-
+@Schema(description = "초기 주문 응답")
+public class InitialOrderResponse {
   @Schema(description = "주문 식별 ID (merchant_uid)", example = "123456789012345")
   private String merchantUid;
 
   @Schema(description = "콘텐츠 ID", example = "1")
   private Long contentId;
+
+  @Schema(description = "콘텐츠 제목", example = "Java 프로그래밍 코칭")
+  private String title;
 
   @Schema(description = "선택된 옵션 ID", example = "1")
   private Long optionId;

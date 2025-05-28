@@ -1,6 +1,10 @@
 package liaison.groble.api.server.order;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -8,11 +12,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import liaison.groble.api.model.order.request.CreateInitialOrderRequest;
 import liaison.groble.api.model.order.request.CreateOrderRequest;
 import liaison.groble.api.model.order.response.OrderResponse;
 import liaison.groble.api.server.order.mapper.OrderDtoMapper;
 import liaison.groble.api.server.terms.mapper.TermsDtoMapper;
 import liaison.groble.application.order.OrderService;
+import liaison.groble.application.order.dto.CreateInitialOrderDto;
+import liaison.groble.application.order.dto.InitialOrderResponse;
 import liaison.groble.application.order.dto.OrderCreateDto;
 import liaison.groble.application.terms.dto.TermsAgreementDto;
 import liaison.groble.application.terms.service.OrderTermsService;
@@ -38,8 +45,28 @@ public class OrderController {
   private final OrderDtoMapper orderDtoMapper;
   private final TermsDtoMapper termsDtoMapper;
 
-  @Operation(summary = "주문 생성", description = "콘텐츠 구매를 위한 주문을 생성합니다. 쿠폰 적용 가능")
-  @PostMapping
+  @Operation(summary = "초기 주문 생성", description = "콘텐츠 구매를 위한 초기 주문을 생성합니다. 쿠폰 적용 불가능")
+  @PostMapping("/initial")
+  public ResponseEntity<GrobleResponse<InitialOrderResponse>> createInitialOrder(
+      @Auth Accessor accessor, @Valid @RequestBody CreateInitialOrderRequest request) {
+
+    // API 모델을 Application DTO로 변환
+    CreateInitialOrderDto createInitialOrderDto =
+        CreateInitialOrderDto.builder()
+            .userId(accessor.getUserId())
+            .contentId(request.getContentId())
+            .options(convertToOptionDtos(request.getOptions()))
+            .orderNote(request.getOrderNote())
+            .build();
+
+    // 서비스 호출
+    InitialOrderResponse response = orderService.createInitialOrder(createInitialOrderDto);
+
+    return ResponseEntity.ok().body(GrobleResponse.success(response));
+  }
+
+  @Operation(summary = "최종 주문 발행", description = "콘텐츠 구매를 위한 최종 주문을 발행합니다. 쿠폰 적용 가능")
+  @PostMapping("/{orderId}/finalize")
   public ResponseEntity<GrobleResponse<OrderResponse>> createOrder(
       @Auth Accessor accessor,
       @RequestBody CreateOrderRequest request,
@@ -66,5 +93,20 @@ public class OrderController {
     termsAgreementDto.setUserAgent(httpRequest.getHeader("User-Agent"));
     orderTermsService.agreeToOrderTerms(termsAgreementDto);
     return ResponseEntity.ok().body(GrobleResponse.success(orderResponse));
+  }
+
+  // 변환 헬퍼 메서드
+  private List<CreateInitialOrderDto.OrderOptionDto> convertToOptionDtos(
+      List<CreateInitialOrderRequest.OrderOptionRequest> requests) {
+    return requests.stream()
+        .map(
+            req ->
+                CreateInitialOrderDto.OrderOptionDto.builder()
+                    .optionId(req.getOptionId())
+                    .optionType(
+                        CreateInitialOrderDto.OptionType.valueOf(req.getOptionType().name()))
+                    .quantity(req.getQuantity())
+                    .build())
+        .collect(Collectors.toList());
   }
 }

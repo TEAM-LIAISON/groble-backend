@@ -8,7 +8,7 @@ import lombok.Getter;
 @Getter
 @Builder
 public class OrderCreateDto {
-  private Long orderId;
+  private String merchantUid;
   private Long contentId;
   private Long optionId;
   private BigDecimal price;

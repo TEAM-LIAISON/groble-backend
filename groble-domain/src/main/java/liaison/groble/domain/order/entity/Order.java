@@ -28,6 +28,7 @@ import liaison.groble.domain.common.entity.BaseTimeEntity;
 import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.content.enums.ContentStatus;
 import liaison.groble.domain.coupon.entity.UserCoupon;
+import liaison.groble.domain.order.vo.OrderOptionInfo;
 import liaison.groble.domain.payment.entity.Payment;
 import liaison.groble.domain.purchase.entity.Purchaser;
 import liaison.groble.domain.user.entity.User;
@@ -283,6 +284,68 @@ public class Order extends BaseTimeEntity {
       BigDecimal price,
       Purchaser purchaser) {
     return createOrderWithCoupon(user, content, optionType, optionId, price, null, purchaser);
+  }
+
+  /**
+   * 여러 옵션을 지원하는 새로운 팩토리 메서드
+   *
+   * <p>이 메서드는 한 콘텐츠에서 여러 옵션을 선택하여 구매하는 경우를 처리합니다. 각 옵션은 서로 다른 수량을 가질 수 있으며, 총 금액은 모든 옵션의 합계입니다.
+   *
+   * <p>아키텍처 설계 포인트: - Domain 계층은 Application 계층의 DTO를 알 필요가 없습니다 - OrderOptionInfo 값 객체를 통해 필요한 정보만
+   * 전달받습니다 - 이를 통해 계층 간 의존성을 올바르게 유지합니다
+   *
+   * @param user 구매자
+   * @param content 구매할 콘텐츠
+   * @param options 검증된 옵션 정보 리스트
+   * @param purchaser 구매자 상세 정보
+   * @param orderNote 주문 메모
+   * @return 생성된 주문
+   */
+  public static Order createOrderWithMultipleOptions(
+      User user,
+      Content content,
+      List<OrderOptionInfo> options,
+      Purchaser purchaser,
+      String orderNote) {
+
+    // 콘텐츠 판매 상태 검증
+    if (content.getStatus() != ContentStatus.ACTIVE) {
+      throw new IllegalArgumentException("판매중인 콘텐츠만 구매할 수 있습니다: " + content.getTitle());
+    }
+
+    // 옵션이 비어있는지 검증
+    if (options == null || options.isEmpty()) {
+      throw new IllegalArgumentException("최소 하나 이상의 옵션을 선택해야 합니다");
+    }
+
+    // 총 금액 계산 - 각 옵션의 (가격 × 수량)의 합계
+    BigDecimal totalAmount =
+        options.stream()
+            .map(OrderOptionInfo::getTotalPrice)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+    // 주문 엔티티 생성 - 빌더 패턴 사용
+    Order order =
+        Order.builder()
+            .user(user)
+            .originalAmount(totalAmount)
+            .appliedCoupon(null) // 초기 주문에서는 쿠폰 미적용
+            .purchaser(purchaser)
+            .orderNote(orderNote)
+            .build();
+
+    // 각 옵션에 대해 OrderItem 추가
+    // addOrderItem 메서드는 Order와 OrderItem 간의 양방향 관계를 설정합니다
+    for (OrderOptionInfo optionInfo : options) {
+      order.addOrderItem(
+          content,
+          optionInfo.getPrice(),
+          optionInfo.getOptionType(),
+          optionInfo.getOptionId(),
+          optionInfo.getQuantity());
+    }
+
+    return order;
   }
 
   // Getter 메서드들 추가
