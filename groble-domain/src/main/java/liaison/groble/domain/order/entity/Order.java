@@ -66,7 +66,7 @@ public class Order extends BaseTimeEntity {
   @Column(nullable = false)
   private OrderStatus status = OrderStatus.PENDING;
 
-  @Column(name = "merchant_uid", nullable = false, unique = true, length = 30)
+  @Column(name = "merchant_uid", unique = true, length = 30)
   private String merchantUid;
 
   // 가격 관련 필드들
@@ -298,15 +298,10 @@ public class Order extends BaseTimeEntity {
    * @param content 구매할 콘텐츠
    * @param options 검증된 옵션 정보 리스트
    * @param purchaser 구매자 상세 정보
-   * @param orderNote 주문 메모
    * @return 생성된 주문
    */
   public static Order createOrderWithMultipleOptions(
-      User user,
-      Content content,
-      List<OrderOptionInfo> options,
-      Purchaser purchaser,
-      String orderNote) {
+      User user, Content content, List<OrderOptionInfo> options, Purchaser purchaser) {
 
     // 콘텐츠 판매 상태 검증
     if (content.getStatus() != ContentStatus.ACTIVE) {
@@ -331,7 +326,6 @@ public class Order extends BaseTimeEntity {
             .originalAmount(totalAmount)
             .appliedCoupon(null) // 초기 주문에서는 쿠폰 미적용
             .purchaser(purchaser)
-            .orderNote(orderNote)
             .build();
 
     // 각 옵션에 대해 OrderItem 추가

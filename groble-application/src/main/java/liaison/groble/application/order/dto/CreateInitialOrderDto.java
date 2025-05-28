@@ -11,7 +11,6 @@ public class CreateInitialOrderDto {
   private final Long userId;
   private final Long contentId;
   private final List<OrderOptionDto> options;
-  private final String orderNote;
 
   @Getter
   @Builder

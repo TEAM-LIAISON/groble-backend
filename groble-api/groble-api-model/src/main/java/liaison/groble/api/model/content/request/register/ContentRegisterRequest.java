@@ -54,12 +54,6 @@ public class ContentRegisterRequest {
   @Schema(description = "콘텐츠 소개", example = "사업계획서 컨설팅")
   private String contentIntroduction;
 
-  //  @NotNull(message = "콘텐츠 상세 이미지 URL 목록은 필수 입력 항목입니다")
-  //  @Schema(
-  //      description = "콘텐츠 상세 이미지 URL 목록",
-  //      example = "[\"https://example.com/image1.jpg\", \"https://example.com/image2.jpg\"]")
-  //  private List<String> contentDetailImageUrls;
-
   @NotBlank(message = "서비스 타겟은 필수 입력 항목입니다")
   @Schema(description = "서비스 타겟", example = "초창패, 창중, 예창패, 청창사 등을 준비하는 분")
   private String serviceTarget;

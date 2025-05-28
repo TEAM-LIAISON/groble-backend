@@ -56,7 +56,6 @@ public class OrderController {
             .userId(accessor.getUserId())
             .contentId(request.getContentId())
             .options(convertToOptionDtos(request.getOptions()))
-            .orderNote(request.getOrderNote())
             .build();
 
     // 서비스 호출

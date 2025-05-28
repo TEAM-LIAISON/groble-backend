@@ -48,7 +48,6 @@ public class OrderService {
   @Transactional
   public InitialOrderResponse createInitialOrder(CreateInitialOrderDto dto) {
     // 1단계: 사용자와 콘텐츠 조회
-    // UserReader와 ContentReader를 사용하여 일관된 조회 로직을 유지합니다
     User user = userReader.getUserById(dto.getUserId());
     Content content = contentReader.getContentById(dto.getContentId());
 
@@ -89,8 +88,7 @@ public class OrderService {
             user,
             content,
             domainOptions, // Domain 값 객체 사용
-            purchaser,
-            dto.getOrderNote());
+            purchaser);
 
     // 6단계: 주문 저장 및 merchantUid 생성
     order = orderRepository.save(order);

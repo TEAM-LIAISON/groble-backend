@@ -29,9 +29,6 @@ public class CreateInitialOrderRequest {
   @Schema(description = "선택한 옵션 목록")
   private List<OrderOptionRequest> options;
 
-  @Schema(description = "주문 메모", example = "빠른 배송 부탁드립니다")
-  private String orderNote;
-
   @Data
   @Builder
   @NoArgsConstructor
