@@ -48,13 +48,13 @@ public class PaymentLog extends BaseTimeEntity {
   @Column(nullable = false)
   private PaymentLogType type;
 
-  @Enumerated(EnumType.STRING)
-  @Column(nullable = false)
-  private Payment.PaymentStatus beforeStatus;
-
-  @Enumerated(EnumType.STRING)
-  @Column(nullable = false)
-  private Payment.PaymentStatus afterStatus;
+  //  @Enumerated(EnumType.STRING)
+  //  @Column(nullable = false)
+  //  private Payment.PaymentStatus beforeStatus;
+  //
+  //  @Enumerated(EnumType.STRING)
+  //  @Column(nullable = false)
+  //  private Payment.PaymentStatus afterStatus;
 
   @Column(nullable = false)
   private String description;
@@ -76,8 +76,8 @@ public class PaymentLog extends BaseTimeEntity {
   public PaymentLog(
       Payment payment,
       PaymentLogType type,
-      Payment.PaymentStatus beforeStatus,
-      Payment.PaymentStatus afterStatus,
+      //      Payment.PaymentStatus beforeStatus,
+      //      Payment.PaymentStatus afterStatus,
       String description,
       Map<String, Object> requestData,
       Map<String, Object> responseData,
@@ -85,8 +85,8 @@ public class PaymentLog extends BaseTimeEntity {
       String userAgent) {
     this.payment = payment;
     this.type = type;
-    this.beforeStatus = beforeStatus;
-    this.afterStatus = afterStatus;
+    //    this.beforeStatus = beforeStatus;
+    //    this.afterStatus = afterStatus;
     this.description = description;
     this.requestData = requestData;
     this.responseData = responseData;

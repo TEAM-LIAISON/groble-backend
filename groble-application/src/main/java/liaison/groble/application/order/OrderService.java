@@ -49,7 +49,6 @@ public class OrderService {
 
     // 4. 옵션에 따른 가격 조회
     BigDecimal price = getOptionPrice(content, optionType, optionId);
-    String optionName = getOptionName(content, optionType, optionId);
 
     // 5. 구매자 정보 생성
     Purchaser purchaser =
@@ -81,7 +80,7 @@ public class OrderService {
     // 7. 주문 생성 (쿠폰 적용 포함)
     Order order =
         Order.createOrderWithCoupon(
-            user, content, optionType, optionId, optionName, price, userCoupon, purchaser);
+            user, content, optionType, optionId, price, userCoupon, purchaser);
 
     // 8. 주문 저장
     Order savedOrder = orderRepository.save(order);

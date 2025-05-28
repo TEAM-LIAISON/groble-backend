@@ -17,7 +17,7 @@ public class PaymentCancelResponseDto {
 
   public static PaymentCancelResponseDto from(PayplePayment payment) {
     return PaymentCancelResponseDto.builder()
-        .orderId(payment.getOrderId())
+        //        .orderId(payment.getOrderId())
         .status(payment.getStatus().name())
         .canceledAt(payment.getCanceledAt())
         .cancelReason(payment.getCancelReason())

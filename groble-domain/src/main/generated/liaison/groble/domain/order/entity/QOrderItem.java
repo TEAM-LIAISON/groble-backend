@@ -26,8 +26,6 @@ public class QOrderItem extends EntityPathBase<OrderItem> {
 
     public final liaison.groble.domain.content.entity.QContent content;
 
-    public final StringPath contentName = createString("contentName");
-
     //inherited
     public final DateTimePath<java.time.LocalDateTime> createdAt = _super.createdAt;
 

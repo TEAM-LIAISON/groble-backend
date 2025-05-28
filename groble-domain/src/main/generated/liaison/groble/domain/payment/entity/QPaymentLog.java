@@ -24,10 +24,6 @@ public class QPaymentLog extends EntityPathBase<PaymentLog> {
 
     public final liaison.groble.domain.common.entity.QBaseTimeEntity _super = new liaison.groble.domain.common.entity.QBaseTimeEntity(this);
 
-    public final EnumPath<Payment.PaymentStatus> afterStatus = createEnum("afterStatus", Payment.PaymentStatus.class);
-
-    public final EnumPath<Payment.PaymentStatus> beforeStatus = createEnum("beforeStatus", Payment.PaymentStatus.class);
-
     //inherited
     public final DateTimePath<java.time.LocalDateTime> createdAt = _super.createdAt;
 

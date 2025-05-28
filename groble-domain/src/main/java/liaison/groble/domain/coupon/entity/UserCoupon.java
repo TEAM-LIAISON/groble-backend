@@ -13,7 +13,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
 import liaison.groble.domain.common.entity.BaseTimeEntity;
@@ -65,10 +64,6 @@ public class UserCoupon extends BaseTimeEntity {
   @Column(name = "used_at")
   private LocalDateTime usedAt;
 
-  @OneToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "order_id")
-  private Order order; // 사용된 주문
-
   @Builder
   public UserCoupon(User user, CouponTemplate couponTemplate, String couponCode) {
     this.user = user;
@@ -89,7 +84,6 @@ public class UserCoupon extends BaseTimeEntity {
 
     this.status = CouponStatus.USED;
     this.usedAt = LocalDateTime.now();
-    this.order = order;
 
     // 쿠폰 템플릿의 사용 횟수 증가
     couponTemplate.incrementUsageCount();
@@ -105,7 +99,6 @@ public class UserCoupon extends BaseTimeEntity {
     if (status == CouponStatus.USED) {
       this.status = CouponStatus.ISSUED;
       this.usedAt = null;
-      this.order = null;
 
       // 쿠폰 템플릿의 사용 횟수 감소
       couponTemplate.decrementUsageCount();

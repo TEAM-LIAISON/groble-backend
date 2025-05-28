@@ -17,9 +17,9 @@ public class PaymentRequestResponseDto {
 
   public static PaymentRequestResponseDto from(PayplePayment payment) {
     return PaymentRequestResponseDto.builder()
-        .orderId(payment.getOrderId())
-        .amount(payment.getAmount())
-        .productName(payment.getProductName())
+        //        .orderId(payment.getOrderId())
+        //        .amount(payment.getAmount())
+        //        .productName(payment.getProductName())
         .status(payment.getStatus().name())
         .build();
   }

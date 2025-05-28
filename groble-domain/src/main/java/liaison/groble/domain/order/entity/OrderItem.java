@@ -46,10 +46,7 @@ public class OrderItem extends BaseTimeEntity {
   @Column(nullable = false)
   private int quantity;
 
-  @Column(name = "content_name", nullable = false)
-  private String contentName;
-
-  @Column(name = "option_id")
+  @Column(name = "option_id", nullable = false)
   private Long optionId;
 
   // 옵션 관련 필드 추가
@@ -65,13 +62,11 @@ public class OrderItem extends BaseTimeEntity {
       BigDecimal price,
       int quantity,
       OptionType optionType,
-      Long optionId,
-      String optionName) {
+      Long optionId) {
     this.order = order;
     this.content = content;
     this.price = price;
     this.quantity = quantity;
-    this.contentName = content.getTitle();
     this.optionType = optionType;
     this.optionId = optionId;
   }

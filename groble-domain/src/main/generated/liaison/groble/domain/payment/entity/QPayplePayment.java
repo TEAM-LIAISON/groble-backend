@@ -23,19 +23,9 @@ public class QPayplePayment extends EntityPathBase<PayplePayment> {
 
     public final NumberPath<java.math.BigDecimal> amount = createNumber("amount", java.math.BigDecimal.class);
 
-    public final StringPath bankAccount = createString("bankAccount");
-
-    public final StringPath bankName = createString("bankName");
-
-    public final StringPath billingKey = createString("billingKey");
-
     public final DateTimePath<java.time.LocalDateTime> canceledAt = createDateTime("canceledAt", java.time.LocalDateTime.class);
 
     public final StringPath cancelReason = createString("cancelReason");
-
-    public final StringPath cardName = createString("cardName");
-
-    public final StringPath cardNumber = createString("cardNumber");
 
     //inherited
     public final DateTimePath<java.time.LocalDateTime> createdAt = _super.createdAt;
@@ -44,24 +34,58 @@ public class QPayplePayment extends EntityPathBase<PayplePayment> {
 
     public final NumberPath<Long> id = createNumber("id", Long.class);
 
-    public final StringPath orderId = createString("orderId");
-
-    public final StringPath payerId = createString("payerId");
-
     public final DateTimePath<java.time.LocalDateTime> paymentDate = createDateTime("paymentDate", java.time.LocalDateTime.class);
 
-    public final StringPath payMethod = createString("payMethod");
+    public final StringPath pcdPayCardAuthNo = createString("pcdPayCardAuthNo");
 
-    public final StringPath productName = createString("productName");
+    public final StringPath pcdPayCardName = createString("pcdPayCardName");
 
-    public final StringPath receiptUrl = createString("receiptUrl");
+    public final StringPath pcdPayCardNum = createString("pcdPayCardNum");
+
+    public final StringPath pcdPayCardReceipt = createString("pcdPayCardReceipt");
+
+    public final StringPath pcdPayCardTradeNum = createString("pcdPayCardTradeNum");
+
+    public final StringPath pcdPayCode = createString("pcdPayCode");
+
+    public final StringPath pcdPayerEmail = createString("pcdPayerEmail");
+
+    public final StringPath pcdPayerHp = createString("pcdPayerHp");
+
+    public final StringPath pcdPayerName = createString("pcdPayerName");
+
+    public final StringPath pcdPayerNo = createString("pcdPayerNo");
+
+    public final StringPath pcdPayGoods = createString("pcdPayGoods");
+
+    public final StringPath pcdPayIsTax = createString("pcdPayIsTax");
+
+    public final StringPath pcdPayMsg = createString("pcdPayMsg");
+
+    public final StringPath pcdPayOid = createString("pcdPayOid");
+
+    public final StringPath pcdPayReqKey = createString("pcdPayReqKey");
+
+    public final StringPath pcdPayRst = createString("pcdPayRst");
+
+    public final StringPath pcdPayTaxTotal = createString("pcdPayTaxTotal");
+
+    public final StringPath pcdPayTime = createString("pcdPayTime");
+
+    public final StringPath pcdPayTotal = createString("pcdPayTotal");
+
+    public final StringPath pcdPayType = createString("pcdPayType");
+
+    public final StringPath pcdSimpleFlag = createString("pcdSimpleFlag");
+
+    public final StringPath pcdUserDefine1 = createString("pcdUserDefine1");
+
+    public final StringPath pcdUserDefine2 = createString("pcdUserDefine2");
 
     public final EnumPath<liaison.groble.domain.payment.enums.PayplePaymentStatus> status = createEnum("status", liaison.groble.domain.payment.enums.PayplePaymentStatus.class);
 
     //inherited
     public final DateTimePath<java.time.LocalDateTime> updatedAt = _super.updatedAt;
-
-    public final NumberPath<Long> userId = createNumber("userId", Long.class);
 
     public QPayplePayment(String variable) {
         super(PayplePayment.class, forVariable(variable));

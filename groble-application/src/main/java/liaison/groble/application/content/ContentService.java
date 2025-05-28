@@ -20,6 +20,7 @@ import liaison.groble.application.notification.mapper.NotificationMapper;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.common.exception.EntityNotFoundException;
 import liaison.groble.common.exception.ForbiddenException;
+import liaison.groble.common.exception.InActiveContentException;
 import liaison.groble.common.response.CursorResponse;
 import liaison.groble.common.response.PageResponse;
 import liaison.groble.domain.content.dto.FlatContentPreviewDTO;
@@ -168,7 +169,7 @@ public class ContentService {
             userId,
             contentId,
             content.getStatus());
-        throw new IllegalArgumentException("현재 판매 중이지 않은 콘텐츠입니다.");
+        throw new InActiveContentException("현재 판매 중이지 않은 콘텐츠입니다.");
       }
 
       // 조회수 증가 (다른 사용자의 콘텐츠 조회 시에만)
@@ -262,7 +263,7 @@ public class ContentService {
     // ACTIVE 상태인지 확인
     if (!ContentStatus.ACTIVE.equals(content.getStatus())) {
       log.warn("비활성 콘텐츠 접근 시도 (비로그인): contentId={}, status={}", contentId, content.getStatus());
-      throw new IllegalArgumentException("현재 판매 중이지 않은 콘텐츠입니다.");
+      throw new InActiveContentException("현재 판매 중이지 않은 콘텐츠입니다.");
     }
 
     // 조회수 증가

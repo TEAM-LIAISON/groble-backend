@@ -72,6 +72,8 @@ public class Content extends BaseTimeEntity {
   @OneToMany(mappedBy = "content", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<ContentOption> options = new ArrayList<>();
 
+  @Lob
+  @Column(columnDefinition = "TEXT")
   private String thumbnailUrl; // 썸네일 URL
 
   @Lob
@@ -85,6 +87,7 @@ public class Content extends BaseTimeEntity {
   @Column(name = "image_url")
   private List<String> contentDetailImageUrls = new ArrayList<>();
 
+  @Column(name = "service_target", length = 1000)
   private String serviceTarget; // 서비스 타겟
 
   @Column(name = "service_process", length = 1000)
@@ -103,7 +106,8 @@ public class Content extends BaseTimeEntity {
   @Column(name = "lowest_price")
   private BigDecimal lowestPrice; // 최저가
 
-  @Column(name = "reject_reason")
+  @Lob
+  @Column(name = "reject_reason", columnDefinition = "TEXT")
   private String rejectReason;
 
   /** 조회수 */

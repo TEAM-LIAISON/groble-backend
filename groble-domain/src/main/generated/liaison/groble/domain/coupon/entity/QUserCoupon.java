@@ -35,8 +35,6 @@ public class QUserCoupon extends EntityPathBase<UserCoupon> {
 
     public final DateTimePath<java.time.LocalDateTime> issuedAt = createDateTime("issuedAt", java.time.LocalDateTime.class);
 
-    public final liaison.groble.domain.order.entity.QOrder order;
-
     public final EnumPath<liaison.groble.domain.coupon.enums.CouponStatus> status = createEnum("status", liaison.groble.domain.coupon.enums.CouponStatus.class);
 
     //inherited
@@ -65,7 +63,6 @@ public class QUserCoupon extends EntityPathBase<UserCoupon> {
     public QUserCoupon(Class<? extends UserCoupon> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
         this.couponTemplate = inits.isInitialized("couponTemplate") ? new QCouponTemplate(forProperty("couponTemplate")) : null;
-        this.order = inits.isInitialized("order") ? new liaison.groble.domain.order.entity.QOrder(forProperty("order"), inits.get("order")) : null;
         this.user = inits.isInitialized("user") ? new liaison.groble.domain.user.entity.QUser(forProperty("user"), inits.get("user")) : null;
     }
 

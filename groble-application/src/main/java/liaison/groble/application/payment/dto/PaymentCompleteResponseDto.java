@@ -20,12 +20,12 @@ public class PaymentCompleteResponseDto {
 
   public static PaymentCompleteResponseDto from(PayplePayment payment) {
     return PaymentCompleteResponseDto.builder()
-        .orderId(payment.getOrderId())
-        .status(payment.getStatus().name())
-        .amount(payment.getAmount())
-        .productName(payment.getProductName())
-        .paymentDate(payment.getPaymentDate())
-        .billingKey(payment.getBillingKey())
+        //        .orderId(payment.getOrderId())
+        //        .status(payment.getStatus().name())
+        //        .amount(payment.getAmount())
+        //        .productName(payment.getProductName())
+        //        .paymentDate(payment.getPaymentDate())
+        //        .billingKey(payment.getBillingKey())
         .build();
   }
 }

@@ -17,7 +17,6 @@ import liaison.groble.domain.common.entity.BaseTimeEntity;
 import liaison.groble.domain.payment.enums.PayplePaymentStatus;
 
 import lombok.AccessLevel;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -39,108 +38,95 @@ public class PayplePayment extends BaseTimeEntity {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @Column(name = "order_id", nullable = false, unique = true)
-  private String orderId;
-
-  @Column(name = "user_id", nullable = false)
-  private Long userId;
-
   @Column(nullable = false)
   private BigDecimal amount;
-
-  @Column(name = "pay_method", nullable = false)
-  private String payMethod; // transfer, card
 
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
   private PayplePaymentStatus status = PayplePaymentStatus.PENDING;
 
-  @Column(name = "product_name", nullable = false)
-  private String productName;
+  // 페이플 인증 결과
+  private String pcdPayRst;
 
-  @Column(name = "billing_key")
-  private String billingKey; // 빌링키 (정기결제용)
+  // 페이플 결제 응답 코드
+  private String pcdPayCode;
 
-  @Column(name = "payer_id")
-  private String payerId; // Payple 결제자 고유 ID
+  // 페이플 응답 메시지
+  private String pcdPayMsg;
 
+  // 페이플 결제수단(카드/계좌) card/transfer
+  private String pcdPayType;
+
+  // 승인 요청 결제키
+  private String pcdPayReqKey;
+
+  // 주문번호 (파트너에서 미전송 시 페이플에서 발급한 주문번호 응답)
+  private String pcdPayOid;
+
+  // 그로블에서 이용하는 회원번호
+  private String pcdPayerNo;
+
+  // 구매자 이름
+  private String pcdPayerName;
+
+  // 구매자 핸드폰번호
+  private String pcdPayerHp;
+
+  // 구매자 이메일
+  private String pcdPayerEmail;
+
+  // 상품명
+  private String pcdPayGoods;
+
+  // 총 결제금액
+  private String pcdPayTotal;
+
+  // 복합과세 부가세
+  private String pcdPayTaxTotal;
+
+  // 과세 여부
+  private String pcdPayIsTax;
+
+  // 결제 요청 시간
+  private String pcdPayTime;
+
+  // 카드사명
+  private String pcdPayCardName;
+
+  // 카드번호
+  private String pcdPayCardNum;
+
+  // 해당 거래의 고유 키
+  private String pcdPayCardTradeNum;
+
+  // 승인번호
+  private String pcdPayCardAuthNo;
+
+  // 매출 전표(영수증) 출력 URL
+  private String pcdPayCardReceipt;
+
+  // 정기(빌링), 비밀번호 간편결제 시 필요한 설정값
+  private String pcdSimpleFlag;
+
+  // 파트너에서 입력한 값 1
+  private String pcdUserDefine1;
+
+  // 파트너에서 입력한 값 2
+  private String pcdUserDefine2;
+
+  /** 결제 완료 시각 (PCD_PAY_TIME) - 실제 결제가 승인된 시각 - 형식: yyyyMMddHHmmss */
   @Column(name = "payment_date")
   private LocalDateTime paymentDate;
 
-  @Column(name = "card_name")
-  private String cardName;
-
-  @Column(name = "card_number")
-  private String cardNumber;
-
-  @Column(name = "bank_name")
-  private String bankName;
-
-  @Column(name = "bank_account")
-  private String bankAccount;
-
+  /** 실패 사유 (PCD_PAY_MSG) - 결제 실패 시 페이플에서 반환하는 메시지 - 사용자에게 보여줄 수 있는 친화적인 메시지 */
   @Column(name = "fail_reason")
   private String failReason;
 
+  /** 취소 사유 - 결제 취소 요청 시 입력한 사유 - 관리자 또는 사용자가 입력 */
   @Column(name = "cancel_reason")
   private String cancelReason;
 
+  /** 취소 시각 - 결제가 취소된 시각 - 환불 처리 추적에 사용 */
   @Column(name = "canceled_at")
   private LocalDateTime canceledAt;
-
-  @Column(name = "receipt_url")
-  private String receiptUrl;
-
-  @Builder
-  public PayplePayment(
-      String orderId,
-      Long userId,
-      BigDecimal amount,
-      String payMethod,
-      PayplePaymentStatus status,
-      String productName,
-      String billingKey) {
-    this.orderId = orderId;
-    this.userId = userId;
-    this.amount = amount;
-    this.payMethod = payMethod;
-    this.status = status;
-    this.productName = productName;
-    this.billingKey = billingKey;
-  }
-
-  // 비즈니스 메서드
-  public void complete(String payerId, String paymentTime, String cardName, String cardNumber) {
-    this.status = PayplePaymentStatus.COMPLETED;
-    this.payerId = payerId;
-    this.paymentDate = LocalDateTime.now();
-    this.cardName = cardName;
-    this.cardNumber = cardNumber;
-  }
-
-  public void fail(String reason) {
-    this.status = PayplePaymentStatus.FAILED;
-    this.failReason = reason;
-  }
-
-  public void cancel(String reason) {
-    this.status = PayplePaymentStatus.CANCELLED;
-    this.cancelReason = reason;
-    this.canceledAt = LocalDateTime.now();
-  }
-
-  public void invalidateBillingKey() {
-    this.billingKey = null;
-  }
-
-  public void updateAuthInfo(String authKey, String payReqKey, String payerId) {
-    if (payerId != null && !payerId.isEmpty()) {
-      this.payerId = payerId;
-    }
-    // 필요한 경우 authKey와 payReqKey를 저장할 필드를 추가할 수 있습니다
-  }
-
-  public void setReceiptUrl(String receiptUrl) {
-    this.receiptUrl = receiptUrl;
-  }
 }

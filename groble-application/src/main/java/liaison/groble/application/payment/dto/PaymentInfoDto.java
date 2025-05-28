@@ -27,17 +27,17 @@ public class PaymentInfoDto {
 
   public static PaymentInfoDto from(PayplePayment payment, JSONObject apiResponse) {
     return PaymentInfoDto.builder()
-        .orderId(payment.getOrderId())
-        .userId(payment.getUserId())
-        .amount(payment.getAmount())
-        .payMethod(payment.getPayMethod())
-        .status(payment.getStatus().name())
-        .productName(payment.getProductName())
-        .paymentDate(payment.getPaymentDate())
-        .billingKey(payment.getBillingKey())
-        .cardName((String) apiResponse.get("PCD_PAY_CARDNAME"))
-        .cardNumber((String) apiResponse.get("PCD_PAY_CARDNUM"))
-        .receiptUrl((String) apiResponse.get("PCD_PAY_CARDRECEIPT"))
+        //        .orderId(payment.getOrderId())
+        //        .userId(payment.getUserId())
+        //        .amount(payment.getAmount())
+        //        .payMethod(payment.getPayMethod())
+        //        .status(payment.getStatus().name())
+        //        .productName(payment.getProductName())
+        //        .paymentDate(payment.getPaymentDate())
+        //        .billingKey(payment.getBillingKey())
+        //        .cardName((String) apiResponse.get("PCD_PAY_CARDNAME"))
+        //        .cardNumber((String) apiResponse.get("PCD_PAY_CARDNUM"))
+        //        .receiptUrl((String) apiResponse.get("PCD_PAY_CARDRECEIPT"))
         .build();
   }
 }

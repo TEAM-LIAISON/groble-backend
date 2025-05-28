@@ -221,7 +221,6 @@ public class Order extends BaseTimeEntity {
       BigDecimal price,
       OrderItem.OptionType optionType,
       Long optionId,
-      String optionName,
       int quantity) {
     OrderItem orderItem =
         OrderItem.builder()
@@ -231,7 +230,6 @@ public class Order extends BaseTimeEntity {
             .quantity(quantity)
             .optionType(optionType)
             .optionId(optionId)
-            .optionName(optionName)
             .build();
 
     this.orderItems.add(orderItem);
@@ -247,7 +245,6 @@ public class Order extends BaseTimeEntity {
       Content content,
       OrderItem.OptionType optionType,
       Long optionId,
-      String optionName,
       BigDecimal price,
       UserCoupon coupon,
       Purchaser purchaser) {
@@ -264,7 +261,7 @@ public class Order extends BaseTimeEntity {
             .purchaser(purchaser)
             .build();
 
-    order.addOrderItem(content, price, optionType, optionId, optionName, 1);
+    order.addOrderItem(content, price, optionType, optionId, 1);
     return order;
   }
 
@@ -274,11 +271,9 @@ public class Order extends BaseTimeEntity {
       Content content,
       OrderItem.OptionType optionType,
       Long optionId,
-      String optionName,
       BigDecimal price,
       Purchaser purchaser) {
-    return createOrderWithCoupon(
-        user, content, optionType, optionId, optionName, price, null, purchaser);
+    return createOrderWithCoupon(user, content, optionType, optionId, price, null, purchaser);
   }
 
   // Getter 메서드들 추가
