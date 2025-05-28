@@ -1,5 +1,6 @@
 package liaison.groble.api.model.order.request;
 
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotNull;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -33,6 +34,7 @@ public class CreateOrderRequest {
   @Schema(description = "쿠폰 코드 (선택사항)", example = "XYZ1Q5DS311SAZ")
   private String couponCode;
 
+  @AssertTrue(message = "주문 약관에 반드시 동의해야 합니다")
   @Schema(description = "주문 약관 동의", example = "true")
   private boolean orderTermsAgreed;
 }
