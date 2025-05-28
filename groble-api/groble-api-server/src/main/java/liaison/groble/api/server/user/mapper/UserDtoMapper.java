@@ -37,6 +37,7 @@ public class UserDtoMapper {
         .profileImageUrl(dto.getProfileImageUrl())
         .userType(userType)
         .canSwitchToSeller(dto.isCanSwitchToSeller())
+        .alreadyRegisteredAsSeller(dto.isAlreadyRegisteredAsSeller())
         .build();
   }
 
@@ -48,6 +49,8 @@ public class UserDtoMapper {
         .nickname(dto.getNickname())
         .profileImageUrl(dto.getProfileImageUrl())
         .userType(userType)
+        .verificationStatus(dto.getVerificationStatusName())
+        .alreadyRegisteredAsSeller(dto.isAlreadyRegisteredAsSeller())
         .build();
   }
 
@@ -59,11 +62,13 @@ public class UserDtoMapper {
 
     return UserMyPageDetailResponse.builder()
         .nickname(userMyPageDetailDto.getNickname())
+        .userType(userMyPageDetailDto.getUserTypeName())
         .accountType(accountType)
         .providerType(providerType)
         .email(userMyPageDetailDto.getEmail())
         .profileImageUrl(userMyPageDetailDto.getProfileImageUrl())
         .phoneNumber(userMyPageDetailDto.getPhoneNumber())
+        .canSwitchToSeller(userMyPageDetailDto.isCanSwitchToSeller())
         .sellerAccountNotCreated(userMyPageDetailDto.isSellerAccountNotCreated())
         .build();
   }
@@ -75,6 +80,8 @@ public class UserDtoMapper {
         .profileImageUrl(userHeaderDto.getProfileImageUrl())
         .canSwitchToSeller(userHeaderDto.isCanSwitchToSeller())
         .unreadNotificationCount(userHeaderDto.getUnreadNotificationCount())
+        .alreadyRegisteredAsSeller(userHeaderDto.isAlreadyRegisteredAsSeller())
+        .lastUserType(userHeaderDto.getLastUserType())
         .build();
   }
 }

@@ -53,10 +53,8 @@ public class NotificationDtoMapper {
 
     return NotificationDetails.builder()
         .nickname(dto.getNickname())
-        .isVerified(dto.getIsVerified())
         .contentId(dto.getContentId())
         .thumbnailUrl(dto.getThumbnailUrl())
-        .isContentApproved(dto.getIsContentApproved())
         .systemTitle(dto.getSystemTitle())
         .build();
   }

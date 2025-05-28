@@ -1,28 +1,19 @@
 package liaison.groble.application.auth.service;
 
-import liaison.groble.application.auth.dto.DeprecatedSignUpDto;
 import liaison.groble.application.auth.dto.EmailVerificationDto;
+import liaison.groble.application.auth.dto.PhoneNumberVerifyRequestDto;
 import liaison.groble.application.auth.dto.SignInDto;
 import liaison.groble.application.auth.dto.SignUpDto;
+import liaison.groble.application.auth.dto.SocialSignUpDto;
 import liaison.groble.application.auth.dto.TokenDto;
 import liaison.groble.application.auth.dto.UserWithdrawalDto;
 import liaison.groble.application.auth.dto.VerifyEmailCodeDto;
 
 public interface AuthService {
 
-  /**
-   * 회원가입 처리
-   *
-   * @param signUpDto 회원가입 정보
-   */
   TokenDto signUp(SignUpDto signUpDto);
 
-  /**
-   * 회원가입 처리 (deprecated)
-   *
-   * @param deprecatedSignUpDto 회원가입 정보
-   */
-  TokenDto signUp(DeprecatedSignUpDto deprecatedSignUpDto);
+  TokenDto socialSignUp(Long userId, SocialSignUpDto socialSignUpDto);
 
   /**
    * 로그인 처리 및 토큰 발급
@@ -60,13 +51,7 @@ public interface AuthService {
    */
   void sendPasswordResetEmail(String email);
 
-  /**
-   * 비밀번호 재설정
-   *
-   * @param token 비밀번호 재설정 토큰
-   * @param newPassword 새로운 비밀번호
-   */
-  void resetPassword(Long userId, String token, String newPassword);
+  void resetPassword(String token, String newPassword);
 
   /**
    * 이메일 인증 코드 검증
@@ -107,5 +92,13 @@ public interface AuthService {
    */
   String updateNickname(Long userId, String nickname);
 
+  /**
+   * 사용자 탈퇴 처리
+   *
+   * @param userId 사용자 식별 PK
+   * @param userWithdrawalDto 탈퇴 사유 및 기타 정보
+   */
   void withdrawUser(Long userId, UserWithdrawalDto userWithdrawalDto);
+
+  void resetPhoneNumber(Long userId, PhoneNumberVerifyRequestDto phoneNumberVerifyRequestDto);
 }

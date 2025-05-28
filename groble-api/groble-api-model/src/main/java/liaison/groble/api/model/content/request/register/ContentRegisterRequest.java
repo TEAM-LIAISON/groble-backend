@@ -37,7 +37,7 @@ public class ContentRegisterRequest {
 
   @NotNull(message = "카테고리 ID는 필수 입력 항목입니다")
   @Schema(description = "카테고리 ID", example = "1")
-  private Long categoryId;
+  private String categoryId;
 
   @NotBlank(message = "썸네일 이미지 URL은 필수 입력 항목입니다")
   @Schema(description = "썸네일 이미지 URL", example = "https://example.com/thumbnail.jpg")
@@ -51,15 +51,14 @@ public class ContentRegisterRequest {
   @Schema(description = "문서 옵션 목록 (contentType이 DOCUMENT인 경우)")
   private List<DocumentOptionRegisterRequest> documentOptions;
 
-  @NotBlank(message = "콘텐츠 소개는 필수 입력 항목입니다")
   @Schema(description = "콘텐츠 소개", example = "사업계획서 컨설팅")
   private String contentIntroduction;
 
-  @NotNull(message = "콘텐츠 상세 이미지 URL 목록은 필수 입력 항목입니다")
-  @Schema(
-      description = "콘텐츠 상세 이미지 URL 목록",
-      example = "[\"https://example.com/image1.jpg\", \"https://example.com/image2.jpg\"]")
-  private List<String> contentDetailImageUrls;
+  //  @NotNull(message = "콘텐츠 상세 이미지 URL 목록은 필수 입력 항목입니다")
+  //  @Schema(
+  //      description = "콘텐츠 상세 이미지 URL 목록",
+  //      example = "[\"https://example.com/image1.jpg\", \"https://example.com/image2.jpg\"]")
+  //  private List<String> contentDetailImageUrls;
 
   @NotBlank(message = "서비스 타겟은 필수 입력 항목입니다")
   @Schema(description = "서비스 타겟", example = "초창패, 창중, 예창패, 청창사 등을 준비하는 분")

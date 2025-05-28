@@ -1,3 +1,7 @@
 package liaison.groble.domain.notification.repository;
 
-public interface NotificationRepository {}
+import liaison.groble.domain.notification.entity.Notification;
+
+public interface NotificationRepository {
+  Notification save(Notification notification);
+}

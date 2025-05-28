@@ -6,6 +6,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,11 +15,16 @@ import liaison.groble.application.content.dto.ContentCardDto;
 import liaison.groble.application.content.dto.ContentDetailDto;
 import liaison.groble.application.content.dto.ContentDto;
 import liaison.groble.application.content.dto.ContentOptionDto;
+import liaison.groble.application.content.dto.DynamicContentDto;
+import liaison.groble.application.content.exception.InActiveContentException;
+import liaison.groble.application.notification.mapper.NotificationMapper;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.common.exception.EntityNotFoundException;
 import liaison.groble.common.exception.ForbiddenException;
 import liaison.groble.common.response.CursorResponse;
+import liaison.groble.common.response.PageResponse;
 import liaison.groble.domain.content.dto.FlatContentPreviewDTO;
+import liaison.groble.domain.content.dto.FlatDynamicContentDTO;
 import liaison.groble.domain.content.entity.Category;
 import liaison.groble.domain.content.entity.CoachingOption;
 import liaison.groble.domain.content.entity.Content;
@@ -32,7 +39,12 @@ import liaison.groble.domain.content.enums.DocumentProvision;
 import liaison.groble.domain.content.repository.CategoryRepository;
 import liaison.groble.domain.content.repository.ContentCustomRepository;
 import liaison.groble.domain.content.repository.ContentRepository;
+import liaison.groble.domain.notification.entity.ReviewDetails;
+import liaison.groble.domain.notification.enums.NotificationType;
+import liaison.groble.domain.notification.enums.SubNotificationType;
+import liaison.groble.domain.notification.repository.NotificationRepository;
 import liaison.groble.domain.user.entity.User;
+import liaison.groble.domain.user.vo.UserProfile;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -46,6 +58,8 @@ public class ContentService {
   private final ContentCustomRepository contentCustomRepository;
   private final CategoryRepository categoryRepository;
   private final ContentReader contentReader;
+  private final NotificationRepository notificationRepository;
+  private final NotificationMapper notificationMapper;
 
   /**
    * 콘텐츠를 임시 저장하고 저장된 정보를 반환합니다.
@@ -112,7 +126,7 @@ public class ContentService {
     }
 
     // 4. 카테고리 조회 및 설정 (심사 요청 시 필수)
-    Category category = findCategoryById(contentDto.getCategoryId());
+    Category category = findCategoryByCode(contentDto.getCategoryId());
 
     // 5. Content 필드 업데이트
     updateContentFromDto(content, contentDto);
@@ -133,22 +147,44 @@ public class ContentService {
     return saveAndConvertToDto(content);
   }
 
-  /**
-   * 콘텐츠 상세 정보를 조회합니다.
-   *
-   * @param contentId 상품 ID
-   * @return 상품 상세 정보
-   */
-  @Transactional(readOnly = true)
-  public ContentDetailDto getContentDetail(Long contentId) {
+  @Transactional
+  public ContentDetailDto getContentDetailForUser(Long userId, Long contentId) {
+    log.info("로그인 사용자 콘텐츠 조회: userId={}, contentId={}", userId, contentId);
+
+    // 1. 사용자 및 콘텐츠 조회
+    User user = userReader.getUserById(userId);
     Content content = contentReader.getContentById(contentId);
 
+    // 2. 콘텐츠 소유권 확인
+    boolean isOwner = content.getUser().getId().equals(userId);
+
+    if (isOwner) {
+      // 내 콘텐츠인 경우: 모든 상태 조회 가능, 조회수 증가 안함
+      log.info("내 콘텐츠 조회: contentId={}, status={}", contentId, content.getStatus());
+    } else {
+      // 다른 사용자의 콘텐츠인 경우: ACTIVE 상태만 조회 가능
+      if (!ContentStatus.ACTIVE.equals(content.getStatus())) {
+        log.warn(
+            "비활성 콘텐츠 접근 시도: userId={}, contentId={}, status={}",
+            userId,
+            contentId,
+            content.getStatus());
+        throw new InActiveContentException("현재 판매 중이지 않은 콘텐츠입니다.");
+      }
+
+      // 조회수 증가 (다른 사용자의 콘텐츠 조회 시에만)
+      content.incrementViewCount();
+      contentRepository.save(content);
+
+      log.info("다른 사용자 콘텐츠 조회: contentId={}, newViewCount={}", contentId, content.getViewCount());
+    }
+
+    // 3. getPublicContentDetail과 동일한 방식으로 DTO 변환
     // 콘텐츠 이미지 URL 목록 (현재는 썸네일만 있음)
     List<String> contentImageUrls = new ArrayList<>();
     if (content.getThumbnailUrl() != null) {
       contentImageUrls.add(content.getThumbnailUrl());
     }
-    // 추가 이미지가 있다면 여기서 처리
 
     // 옵션 목록 변환 - ContentOptionDto 사용
     List<ContentOptionDto> optionDtos =
@@ -166,13 +202,17 @@ public class ContentService {
                   if (option instanceof CoachingOption) {
                     CoachingOption coachingOption = (CoachingOption) option;
                     builder
-                        .coachingPeriod(coachingOption.getCoachingPeriod().name())
-                        .documentProvision(coachingOption.getDocumentProvision().name())
-                        .coachingType(coachingOption.getCoachingType().name())
+                        .coachingPeriod(safeEnumName(coachingOption.getCoachingPeriod()))
+                        .documentProvision(safeEnumName(coachingOption.getDocumentProvision()))
+                        .coachingType(safeEnumName(coachingOption.getCoachingType()))
                         .coachingTypeDescription(coachingOption.getCoachingTypeDescription());
                   } else if (option instanceof DocumentOption) {
                     DocumentOption documentOption = (DocumentOption) option;
-                    builder.contentDeliveryMethod(documentOption.getContentDeliveryMethod().name());
+                    builder
+                        .contentDeliveryMethod(
+                            safeEnumName(documentOption.getContentDeliveryMethod()))
+                        .documentFileUrl(documentOption.getDocumentFileUrl())
+                        .documentLinkUrl(documentOption.getDocumentLinkUrl());
                   }
 
                   return builder.build();
@@ -181,22 +221,120 @@ public class ContentService {
 
     // User 관련 정보 추출
     User seller = content.getUser();
-    String sellerProfileImageUrl = (seller != null) ? seller.getProfileImageUrl() : null;
-    String sellerName = (seller != null) ? seller.getNickname() : null;
+    String sellerProfileImageUrl = null;
+    String sellerName = null;
+
+    if (seller != null) {
+      UserProfile userProfile = seller.getUserProfile();
+      if (userProfile != null) {
+        sellerProfileImageUrl = userProfile.getProfileImageUrl();
+        sellerName = userProfile.getNickname();
+      }
+    }
 
     return ContentDetailDto.builder()
         .contentId(content.getId())
-        .status(content.getStatus().name())
-        .contentsImageUrls(contentImageUrls)
-        .contentType(content.getContentType().name())
-        .categoryId(content.getCategory() != null ? content.getCategory().getId() : null)
+        .status(safeEnumName(content.getStatus()))
+        .thumbnailUrl(content.getThumbnailUrl())
+        .contentType(safeEnumName(content.getContentType()))
+        .categoryId(content.getCategory() != null ? content.getCategory().getCode() : null)
         .title(content.getTitle())
         .sellerProfileImageUrl(sellerProfileImageUrl)
         .sellerName(sellerName)
         .lowestPrice(content.getLowestPrice())
         .options(optionDtos)
         .contentIntroduction(content.getContentIntroduction())
-        .contentDetailImageUrls(content.getContentDetailImageUrls())
+        .serviceTarget(content.getServiceTarget())
+        .serviceProcess(content.getServiceProcess())
+        .makerIntro(content.getMakerIntro())
+        .build();
+  }
+
+  /**
+   * 콘텐츠 상세 정보를 조회합니다.
+   *
+   * @param contentId 상품 ID
+   * @return 상품 상세 정보
+   */
+  @Transactional
+  public ContentDetailDto getPublicContentDetail(Long contentId) {
+    Content content = contentReader.getContentById(contentId);
+
+    // ACTIVE 상태인지 확인
+    if (!ContentStatus.ACTIVE.equals(content.getStatus())) {
+      log.warn("비활성 콘텐츠 접근 시도 (비로그인): contentId={}, status={}", contentId, content.getStatus());
+      throw new InActiveContentException("현재 판매 중이지 않은 콘텐츠입니다.");
+    }
+
+    // 조회수 증가
+    content.incrementViewCount();
+    contentRepository.save(content);
+
+    log.info("비로그인 사용자 콘텐츠 조회: contentId={}, newViewCount={}", contentId, content.getViewCount());
+
+    // 콘텐츠 이미지 URL 목록 (현재는 썸네일만 있음)
+    List<String> contentImageUrls = new ArrayList<>();
+    if (content.getThumbnailUrl() != null) {
+      contentImageUrls.add(content.getThumbnailUrl());
+    }
+
+    // 옵션 목록 변환 - ContentOptionDto 사용
+    List<ContentOptionDto> optionDtos =
+        content.getOptions().stream()
+            .map(
+                option -> {
+                  ContentOptionDto.ContentOptionDtoBuilder builder =
+                      ContentOptionDto.builder()
+                          .contentOptionId(option.getId())
+                          .name(option.getName())
+                          .description(option.getDescription())
+                          .price(option.getPrice());
+
+                  // 옵션 타입별 필드 설정
+                  if (option instanceof CoachingOption) {
+                    CoachingOption coachingOption = (CoachingOption) option;
+                    builder
+                        .coachingPeriod(safeEnumName(coachingOption.getCoachingPeriod()))
+                        .documentProvision(safeEnumName(coachingOption.getDocumentProvision()))
+                        .coachingType(safeEnumName(coachingOption.getCoachingType()))
+                        .coachingTypeDescription(coachingOption.getCoachingTypeDescription());
+                  } else if (option instanceof DocumentOption) {
+                    DocumentOption documentOption = (DocumentOption) option;
+                    builder
+                        .contentDeliveryMethod(
+                            safeEnumName(documentOption.getContentDeliveryMethod()))
+                        .documentFileUrl(documentOption.getDocumentFileUrl())
+                        .documentLinkUrl(documentOption.getDocumentLinkUrl());
+                  }
+
+                  return builder.build();
+                })
+            .collect(Collectors.toList());
+
+    // User 관련 정보 추출
+    User seller = content.getUser();
+    String sellerProfileImageUrl = null;
+    String sellerName = null;
+
+    if (seller != null) {
+      UserProfile userProfile = seller.getUserProfile();
+      if (userProfile != null) {
+        sellerProfileImageUrl = userProfile.getProfileImageUrl();
+        sellerName = userProfile.getNickname();
+      }
+    }
+    return ContentDetailDto.builder()
+        .contentId(content.getId())
+        .status(safeEnumName(content.getStatus()))
+        .thumbnailUrl(content.getThumbnailUrl())
+        .contentType(safeEnumName(content.getContentType()))
+        .categoryId(content.getCategory() != null ? content.getCategory().getCode() : null)
+        .title(content.getTitle())
+        .sellerProfileImageUrl(sellerProfileImageUrl)
+        .sellerName(sellerName)
+        .lowestPrice(content.getLowestPrice())
+        .options(optionDtos)
+        .contentIntroduction(content.getContentIntroduction())
         .serviceTarget(content.getServiceTarget())
         .serviceProcess(content.getServiceProcess())
         .makerIntro(content.getMakerIntro())
@@ -278,9 +416,24 @@ public class ContentService {
 
   @Transactional
   public void approveContent(Long userId, Long contentId) {
+    // TODO : userId가 관리자인지 판단
+
     Content content = contentReader.getContentById(contentId);
     content.setStatus(ContentStatus.VALIDATED);
     saveAndConvertToDto(content);
+
+    ReviewDetails reviewDetails =
+        ReviewDetails.builder()
+            .contentId(content.getId())
+            .thumbnailUrl(content.getThumbnailUrl())
+            .build();
+
+    notificationRepository.save(
+        notificationMapper.toNotification(
+            content.getUser().getId(),
+            NotificationType.REVIEW,
+            SubNotificationType.CONTENT_REVIEW_APPROVED,
+            reviewDetails));
   }
 
   @Transactional
@@ -293,6 +446,19 @@ public class ContentService {
     log.info("콘텐츠 심사 거절 완료. 유저 ID: {}, 콘텐츠 ID: {}", userId, contentId);
 
     saveAndConvertToDto(content);
+
+    ReviewDetails reviewDetails =
+        ReviewDetails.builder()
+            .contentId(content.getId())
+            .thumbnailUrl(content.getThumbnailUrl())
+            .build();
+
+    notificationRepository.save(
+        notificationMapper.toNotification(
+            content.getUser().getId(),
+            NotificationType.REVIEW,
+            SubNotificationType.CONTENT_REVIEW_REJECTED,
+            reviewDetails));
   }
 
   // --- 유틸리티 메서드 ---
@@ -329,14 +495,25 @@ public class ContentService {
     return content;
   }
 
+  /** 사용자의 심사 완료된 Content를 찾고 접근 권한을 검증합니다. */
+  private Content findAndValidateUserActiveContent(Long userId, Long contentId) {
+    Content content = contentReader.getContentByStatusAndId(contentId, ContentStatus.ACTIVE);
+
+    if (!content.getUser().getId().equals(userId)) {
+      throw new ForbiddenException("해당 콘텐츠를 수정할 권한이 없습니다.");
+    }
+
+    return content;
+  }
+
   /** 카테고리 ID로 카테고리를 조회합니다. */
-  private Category findCategoryById(Long categoryId) {
+  private Category findCategoryByCode(String categoryId) {
     if (categoryId == null) {
       throw new IllegalArgumentException("카테고리 ID는 필수입니다.");
     }
 
     return categoryRepository
-        .findById(categoryId)
+        .findByCode(categoryId)
         .orElseThrow(() -> new EntityNotFoundException("카테고리를 찾을 수 없습니다. ID: " + categoryId));
   }
 
@@ -364,7 +541,7 @@ public class ContentService {
     // 카테고리 업데이트 (있는 경우에만)
     if (dto.getCategoryId() != null) {
       try {
-        Category category = findCategoryById(dto.getCategoryId());
+        Category category = findCategoryByCode(dto.getCategoryId());
         content.setCategory(category);
       } catch (EntityNotFoundException e) {
         log.warn("카테고리를 찾을 수 없습니다: {}", dto.getCategoryId());
@@ -376,10 +553,10 @@ public class ContentService {
       content.setContentIntroduction(dto.getContentIntroduction());
     }
     // 콘텐츠 상세 이미지 URL 목록 업데이트
-    if (dto.getContentDetailImageUrls() != null) {
-      content.getContentDetailImageUrls().clear();
-      content.getContentDetailImageUrls().addAll(dto.getContentDetailImageUrls());
-    }
+    //    if (dto.getContentDetailImageUrls() != null) {
+    //      content.getContentDetailImageUrls().clear();
+    //      content.getContentDetailImageUrls().addAll(dto.getContentDetailImageUrls());
+    //    }
     // 서비스 타겟, 프로세스, 제작자 소개 업데이트
     if (dto.getServiceTarget() != null) {
       content.setServiceTarget(dto.getServiceTarget());
@@ -390,6 +567,8 @@ public class ContentService {
     if (dto.getMakerIntro() != null) {
       content.setMakerIntro(dto.getMakerIntro());
     }
+
+    content.setStatus(ContentStatus.DRAFT);
   }
 
   /** 옵션을 Content에 추가하고 최저가를 설정합니다. */
@@ -500,6 +679,8 @@ public class ContentService {
       try {
         option.setContentDeliveryMethod(
             ContentDeliveryMethod.valueOf(optionDto.getContentDeliveryMethod()));
+        option.setDocumentFileUrl(optionDto.getDocumentFileUrl());
+        option.setDocumentLinkUrl(optionDto.getDocumentLinkUrl());
       } catch (IllegalArgumentException e) {
         log.warn("유효하지 않은 콘텐츠 제공 방식: {}", optionDto.getContentDeliveryMethod());
       }
@@ -517,6 +698,7 @@ public class ContentService {
         .thumbnailUrl(flat.getThumbnailUrl())
         .sellerName(flat.getSellerName())
         .lowestPrice(flat.getLowestPrice())
+        .priceOptionLength(flat.getPriceOptionLength())
         .status(flat.getStatus())
         .build();
   }
@@ -603,10 +785,19 @@ public class ContentService {
                       : null)
               .coachingTypeDescription(coachingOption.getCoachingTypeDescription());
         } else if (option instanceof DocumentOption documentOption) {
-          builder.contentDeliveryMethod(
-              documentOption.getContentDeliveryMethod() != null
-                  ? documentOption.getContentDeliveryMethod().name()
-                  : null);
+          builder
+              .contentDeliveryMethod(
+                  documentOption.getContentDeliveryMethod() != null
+                      ? documentOption.getContentDeliveryMethod().name()
+                      : null)
+              .documentFileUrl(
+                  documentOption.getDocumentFileUrl() != null
+                      ? documentOption.getDocumentFileUrl()
+                      : null)
+              .documentLinkUrl(
+                  documentOption.getDocumentLinkUrl() != null
+                      ? documentOption.getDocumentLinkUrl()
+                      : null);
         }
 
         optionDtos.add(builder.build());
@@ -634,7 +825,7 @@ public class ContentService {
 
     // 카테고리가 null이 아닌 경우에만 ID 설정
     if (content.getCategory() != null) {
-      dtoBuilder.categoryId(content.getCategory().getId());
+      dtoBuilder.categoryId(content.getCategory().getCode());
     }
 
     // 콘텐츠 소개와 상세 이미지 URL 추가
@@ -643,10 +834,10 @@ public class ContentService {
     }
 
     // 상세 이미지 URL 목록이 비어있지 않은 경우에만 추가
-    if (content.getContentDetailImageUrls() != null
-        && !content.getContentDetailImageUrls().isEmpty()) {
-      dtoBuilder.contentDetailImageUrls(new ArrayList<>(content.getContentDetailImageUrls()));
-    }
+    //    if (content.getContentDetailImageUrls() != null
+    //        && !content.getContentDetailImageUrls().isEmpty()) {
+    //      dtoBuilder.contentDetailImageUrls(new ArrayList<>(content.getContentDetailImageUrls()));
+    //    }
 
     if (content.getServiceTarget() != null) {
       dtoBuilder.serviceTarget(content.getServiceTarget());
@@ -684,10 +875,10 @@ public class ContentService {
       missingFields.add("썸네일 이미지");
     }
 
-    if (contentDto.getContentDetailImageUrls() == null
-        || contentDto.getContentDetailImageUrls().isEmpty()) {
-      missingFields.add("콘텐츠 상세 이미지");
-    }
+    //    if (contentDto.getContentDetailImageUrls() == null
+    //        || contentDto.getContentDetailImageUrls().isEmpty()) {
+    //      missingFields.add("콘텐츠 상세 이미지");
+    //    }
 
     if (contentDto.getContentIntroduction() == null
         || contentDto.getContentIntroduction().trim().isEmpty()) {
@@ -743,5 +934,107 @@ public class ContentService {
 
     // 3. 저장 및 변환
     return saveAndConvertToDto(content);
+  }
+
+  @Transactional
+  public ContentDto stopContent(Long userId, Long contentId) {
+    // 1. Content 조회 및 권한 검증
+    Content content = findAndValidateUserActiveContent(userId, contentId);
+
+    // 2. 상태 업데이트
+    content.setStatus(ContentStatus.VALIDATED);
+
+    // 3. 저장 및 변환
+    return saveAndConvertToDto(content);
+  }
+
+  @Transactional
+  public void deleteContent(Long userId, Long contentId) {
+    // 1. Content 조회 및 권한 검증
+    Content content = findAndValidateUserContent(userId, contentId);
+
+    // 2. 삭제
+    content.setStatus(ContentStatus.DELETED);
+    contentRepository.save(content);
+    log.info("콘텐츠 삭제 완료. 유저 ID: {}, 콘텐츠 ID: {}", userId, contentId);
+  }
+
+  /** 카테고리 ID가 null 이면 타입만, 아니면 카테고리＋타입으로 조회 */
+  @Transactional(readOnly = true)
+  public PageResponse<ContentCardDto> getCoachingContentsByCategory(
+      List<String> categoryIds, Pageable pageable) {
+
+    if (categoryIds == null || categoryIds.isEmpty()) {
+      // no filter: just by type
+      return getContentsByType(ContentType.COACHING, pageable);
+    } else {
+      // filter by any of the passed categories
+      return getContentsByCategoriesAndType(categoryIds, ContentType.COACHING, pageable);
+    }
+  }
+
+  @Transactional(readOnly = true)
+  public PageResponse<ContentCardDto> getDocumentContentsByCategory(
+      List<String> categoryIds, Pageable pageable) {
+    if (categoryIds == null || categoryIds.isEmpty()) {
+      return getContentsByType(ContentType.DOCUMENT, pageable);
+    } else {
+      return getContentsByCategoriesAndType(categoryIds, ContentType.DOCUMENT, pageable);
+    }
+  }
+
+  // 타입만 조회
+  private PageResponse<ContentCardDto> getContentsByType(ContentType type, Pageable pageable) {
+    Page<FlatContentPreviewDTO> page = contentCustomRepository.findContentsByType(type, pageable);
+    List<ContentCardDto> items =
+        page.getContent().stream().map(this::convertFlatDtoToCardDto).toList();
+
+    PageResponse.MetaData meta =
+        PageResponse.MetaData.builder()
+            .sortBy(pageable.getSort().iterator().next().getProperty())
+            .sortDirection(pageable.getSort().iterator().next().getDirection().name())
+            .build();
+
+    return PageResponse.from(page, items, meta);
+  }
+
+  // 기존 카테고리＋타입 조회
+  private PageResponse<ContentCardDto> getContentsByCategoriesAndType(
+      List<String> categoryIds, ContentType type, Pageable pageable) {
+    Page<FlatContentPreviewDTO> page =
+        contentCustomRepository.findContentsByCategoriesAndType(categoryIds, type, pageable);
+
+    List<ContentCardDto> items =
+        page.getContent().stream().map(this::convertFlatDtoToCardDto).toList();
+
+    PageResponse.MetaData meta =
+        PageResponse.MetaData.builder()
+            .categoryIds(categoryIds)
+            .sortBy(pageable.getSort().iterator().next().getProperty())
+            .sortDirection(pageable.getSort().iterator().next().getDirection().name())
+            .build();
+
+    return PageResponse.from(page, items, meta);
+  }
+
+  public List<DynamicContentDto> getDynamicContents() {
+    List<FlatDynamicContentDTO> flatDynamicContentDTOS =
+        contentCustomRepository.findAllDynamicContents();
+    return flatDynamicContentDTOS.stream().map(this::convertFlatDtoToDynamicDto).toList();
+  }
+
+  /** FlatPreviewContentDTO를 ContentCardDto로 변환합니다. */
+  private DynamicContentDto convertFlatDtoToDynamicDto(FlatDynamicContentDTO flat) {
+    return DynamicContentDto.builder()
+        .contentId(flat.getContentId())
+        .title(flat.getTitle())
+        .contentType(flat.getContentType())
+        .thumbnailUrl(flat.getThumbnailUrl())
+        .updatedAt(flat.getUpdatedAt())
+        .build();
+  }
+
+  private String safeEnumName(Enum<?> e) {
+    return e != null ? e.name() : null;
   }
 }

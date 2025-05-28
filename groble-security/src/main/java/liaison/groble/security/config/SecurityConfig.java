@@ -7,6 +7,7 @@ import java.util.List;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -24,11 +25,10 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequ
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.util.matcher.RegexRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import liaison.groble.security.jwt.JwtAuthenticationFilter;
 import liaison.groble.security.jwt.UserDetailsServiceImpl;
@@ -49,8 +49,9 @@ public class SecurityConfig {
   private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
   private final JwtTokenAuthenticationEntryPoint jwtTokenAuthenticationEntryPoint;
   private final JwtTokenAccessDeniedHandler jwtTokenAccessDeniedHandler;
-  private final ObjectMapper objectMapper;
   private final OAuth2UserService<OAuth2UserRequest, OAuth2User> oAuth2UserService;
+  private final HttpCookieOAuth2AuthorizationRequestRepository
+      httpCookieOAuth2AuthorizationRequestRepository;
 
   public SecurityConfig(
       UserDetailsServiceImpl userDetailsService,
@@ -58,15 +59,17 @@ public class SecurityConfig {
       OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler,
       JwtTokenAuthenticationEntryPoint jwtTokenAuthenticationEntryPoint,
       JwtTokenAccessDeniedHandler jwtTokenAccessDeniedHandler,
-      ObjectMapper objectMapper,
-      OAuth2UserService<OAuth2UserRequest, OAuth2User> oAuth2UserService) {
+      OAuth2UserService<OAuth2UserRequest, OAuth2User> oAuth2UserService,
+      HttpCookieOAuth2AuthorizationRequestRepository
+          httpCookieOAuth2AuthorizationRequestRepository) {
     this.userDetailsService = userDetailsService;
     this.jwtAuthenticationFilter = jwtAuthenticationFilter;
     this.oAuth2AuthenticationSuccessHandler = oAuth2AuthenticationSuccessHandler;
     this.jwtTokenAuthenticationEntryPoint = jwtTokenAuthenticationEntryPoint;
     this.jwtTokenAccessDeniedHandler = jwtTokenAccessDeniedHandler;
-    this.objectMapper = objectMapper;
     this.oAuth2UserService = oAuth2UserService;
+    this.httpCookieOAuth2AuthorizationRequestRepository =
+        httpCookieOAuth2AuthorizationRequestRepository;
   }
 
   /** 비밀번호 인코더 빈 설정 */
@@ -94,20 +97,14 @@ public class SecurityConfig {
   @Bean
   public CorsConfigurationSource corsConfigurationSource() {
     CorsConfiguration configuration = new CorsConfiguration();
-    configuration.setAllowedOrigins(
-        List.of(
-            "http://localhost:3000",
-            "https://dev.groble.im",
-            "https://api.dev.groble.im",
-            "https://api.groble.im",
-            "https://groble.im")); // 프론트엔드 URL 및 API URL
+    configuration.setAllowedOriginPatterns(List.of("https://*.groble.im", "http://localhost:3000"));
     configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
 
     // 이 부분 수정: 더 많은 헤더 허용
     configuration.setAllowedHeaders(
         Arrays.asList(
             "Authorization",
-            "Content-Type", // Content-ContentType 대신 Content-Type으로 수정
+            "Content-Type",
             "X-Auth-Token",
             "Access-Control-Allow-Origin",
             "Access-Control-Allow-Credentials",
@@ -133,7 +130,7 @@ public class SecurityConfig {
   @Bean
   public AuthorizationRequestRepository<OAuth2AuthorizationRequest>
       authorizationRequestRepository() {
-    return new HttpCookieOAuth2AuthorizationRequestRepository(objectMapper);
+    return httpCookieOAuth2AuthorizationRequestRepository;
   }
 
   @Bean
@@ -165,8 +162,11 @@ public class SecurityConfig {
                     .requestMatchers(
                         "/api/v1/auth/sign-up",
                         "/api/v1/auth/sign-in",
+                        "/api/v1/auth/sign-in/local/test",
                         "/api/v1/auth/email-verification/sign-up",
                         "/api/v1/auth/verify-code/sign-up",
+                        "/api/v1/auth/phone-number/verify-request",
+                        "/api/v1/auth/phone-number/verify-code",
                         "/api/v1/auth/password/reset-request",
                         "/api/v1/auth/password/reset")
                     .permitAll()
@@ -175,14 +175,29 @@ public class SecurityConfig {
                     .requestMatchers("/oauth2/**")
                     .permitAll()
                     .requestMatchers("/api/v1/me")
-                    .permitAll() // 이 부분 추가
+                    .permitAll()
                     .requestMatchers("/api/v1/home/contents")
-                    .permitAll() // 이 부분 추가
+                    .permitAll()
+                    .requestMatchers("/payple-payment")
+                    .permitAll()
+                    .requestMatchers("/payment/**")
+                    .permitAll()
+                    .requestMatchers("/api/v1/groble/contents")
+                    .permitAll()
                     .requestMatchers("/api/v1/payments/**")
                     .permitAll()
-                    .requestMatchers("/login/**")
+                    .requestMatchers(
+                        new RegexRequestMatcher("^/api/v1/content/\\d+$", HttpMethod.GET.name()))
                     .permitAll()
-                    .requestMatchers("/login")
+                    .requestMatchers("/api/v1/contents/document/category")
+                    .permitAll()
+                    .requestMatchers("/api/v1/contents/coaching/category")
+                    .permitAll()
+                    .requestMatchers("/api/v1/payments/**")
+                    .permitAll()
+                    .requestMatchers("/api/v1/auth/nickname/check")
+                    .permitAll()
+                    .requestMatchers("/login/**")
                     .permitAll()
                     .requestMatchers("/error")
                     .permitAll()
@@ -231,7 +246,6 @@ public class SecurityConfig {
 
         // HTTP 기본 인증 비활성화
         .httpBasic(AbstractHttpConfigurer::disable)
-
         // JWT 필터 추가
         .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
 

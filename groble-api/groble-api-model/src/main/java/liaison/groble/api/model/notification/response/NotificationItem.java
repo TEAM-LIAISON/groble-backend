@@ -2,6 +2,8 @@ package liaison.groble.api.model.notification.response;
 
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -39,6 +41,7 @@ public class NotificationItem {
   private String notificationReadStatus;
 
   @Schema(description = "알림 발생 시간 (상대적 시간 표시, 예: '3일 전')")
+  @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
   private LocalDateTime notificationOccurTime;
 
   @Schema(description = "알림 상세 정보")

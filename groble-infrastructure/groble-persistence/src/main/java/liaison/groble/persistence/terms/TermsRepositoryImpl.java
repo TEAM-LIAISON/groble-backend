@@ -6,7 +6,7 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Repository;
 
-import liaison.groble.domain.terms.Terms;
+import liaison.groble.domain.terms.entity.Terms;
 import liaison.groble.domain.terms.enums.TermsType;
 import liaison.groble.domain.terms.repository.TermsRepository;
 
@@ -51,12 +51,22 @@ public class TermsRepositoryImpl implements TermsRepository {
   }
 
   @Override
-  public Optional<Terms> findTopByTypeAndEffectiveToIsNullOrderByEffectiveFromDesc(TermsType type) {
-    return jpaTermsRepository.findTopByTypeAndEffectiveToIsNullOrderByEffectiveFromDesc(type);
+  public Optional<Terms> findLatestByTypeAndEffectiveAt(TermsType type, LocalDateTime now) {
+    return jpaTermsRepository.findLatestByTypeAndEffectiveAt(type, now);
   }
 
   @Override
   public void saveAll(List<Terms> terms) {
     jpaTermsRepository.saveAll(terms);
+  }
+
+  @Override
+  public List<Terms> findAllLatestTerms() {
+    return jpaTermsRepository.findAllLatestTerms();
+  }
+
+  @Override
+  public List<Terms> findAllLatestTerms(LocalDateTime now) {
+    return jpaTermsRepository.findAllLatestTerms(now);
   }
 }

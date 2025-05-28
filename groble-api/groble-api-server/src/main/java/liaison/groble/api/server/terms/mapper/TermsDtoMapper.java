@@ -46,4 +46,13 @@ public class TermsDtoMapper {
       List<TermsAgreementDto> dtos) {
     return dtos.stream().map(this::toApiTermsAgreementResponse).collect(Collectors.toList());
   }
+
+  public TermsAgreementDto toServiceOrderTermsAgreementDto() {
+    List<String> termTypeStrs =
+        List.of("ELECTRONIC_FINANCIAL", "PURCHASE_POLICY", "PERSONAL_INFORMATION");
+
+    return TermsAgreementDto.builder()
+        .termsTypeStrings(termTypeStrs) // 문자열 리스트로 전달
+        .build();
+  }
 }

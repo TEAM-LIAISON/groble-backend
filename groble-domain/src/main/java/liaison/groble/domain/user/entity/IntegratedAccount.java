@@ -11,8 +11,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
-import liaison.groble.domain.user.enums.UserType;
-
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -33,10 +31,10 @@ public class IntegratedAccount {
   @JoinColumn(name = "user_id", unique = true, nullable = false)
   private User user;
 
-  @Column(nullable = false, unique = true)
+  @Column(nullable = false)
   private String integratedAccountEmail;
 
-  @Column(nullable = false, unique = true)
+  @Column(nullable = false)
   private String password;
 
   @Builder
@@ -46,40 +44,21 @@ public class IntegratedAccount {
     this.password = encodedPassword;
   }
 
-  // 통합 계정 생성 메서드 - 개선된 버전 (User 생성 전)
-  public static IntegratedAccount createAccount(
-      String email, String encodedPassword, String nickname, UserType userType) {
-
-    IntegratedAccount account =
-        IntegratedAccount.builder()
-            .user(null)
-            .integratedAccountEmail(email)
-            .encodedPassword(encodedPassword)
-            .build();
-
-    // User 객체 생성 및 양방향 연결
-    User user = User.fromIntegratedAccount(account, nickname, userType);
-    account.setUser(user);
-
-    return account;
-  }
-
+  // 필수 메서드만 유지
   public void setUser(User user) {
     this.user = user;
   }
 
-  // 비밀번호 업데이트
   public void updatePassword(String encodedPassword) {
     this.password = encodedPassword;
   }
 
-  // 이메일 업데이트 (계정 탈퇴 등의 경우)
-  public void updateEmail(String newEmail) {
-    this.integratedAccountEmail = newEmail;
+  public void updateEmail(String email) {
+    this.integratedAccountEmail = email;
   }
 
+  // IntegratedAccount.java
   public void anonymizeEmail(String anonymizedEmail) {
     this.integratedAccountEmail = anonymizedEmail;
-    this.password = null; // 비밀번호도 제거
   }
 }

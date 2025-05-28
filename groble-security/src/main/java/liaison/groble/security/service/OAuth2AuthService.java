@@ -23,6 +23,7 @@ import liaison.groble.domain.user.entity.SocialAccount;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.enums.ProviderType;
 import liaison.groble.domain.user.enums.UserStatus;
+import liaison.groble.domain.user.factory.UserFactory;
 import liaison.groble.domain.user.repository.SocialAccountRepository;
 import liaison.groble.domain.user.repository.UserRepository;
 import liaison.groble.security.oauth2.exception.OAuth2AuthenticationProcessingException;
@@ -81,23 +82,29 @@ public class OAuth2AuthService extends DefaultOAuth2UserService {
    */
   @Transactional
   public User registerNewUser(OAuth2UserInfo userInfo, ProviderType providerType) {
-    // 새 사용자 생성
-    SocialAccount socialAccount =
-        SocialAccount.createAccount(userInfo.getId(), providerType, userInfo.getEmail());
+    // Use the UserFactory to create a social user
+    // This is better than direct SocialAccount.createAccount which might create coupling issues
+    User user =
+        UserFactory.createSocialUser(
+            providerType.name(), // Provider name (GOOGLE, KAKAO, NAVER)
+            userInfo.getId(), // Provider-specific ID
+            userInfo.getEmail(), // Email from the provider
+            null // Name from the provider (or null if not available)
+            );
 
-    User savedUser = socialAccount.getUser();
-
-    // 기본 역할 설정 (ROLE_USER)
+    // Add default role (ROLE_USER)
     Role userRole =
         roleRepository
             .findByName(RoleType.ROLE_USER.toString())
             .orElseThrow(() -> new RuntimeException("기본 역할(ROLE_USER)을 찾을 수 없습니다."));
-    savedUser.addRole(userRole);
+    user.addRole(userRole);
 
-    // 소셜 로그인은 즉시 활성화 상태로 설정
-    savedUser.updateStatus(UserStatus.ACTIVE);
+    // Social login accounts are immediately activated
+    // Note: UserFactory might have already set this, but we ensure it here
+    user.getUserStatusInfo().updateStatus(UserStatus.ACTIVE);
 
-    return userRepository.save(savedUser);
+    // Save the user to the database
+    return userRepository.save(user);
   }
 
   /**
@@ -144,21 +151,21 @@ public class OAuth2AuthService extends DefaultOAuth2UserService {
         userInfo.getId(),
         providerType);
 
-    // 기존 사용자 조회 (소셜 계정 기준)
+    // (1) 기존 소셜 계정 조회
     Optional<SocialAccount> socialAccountOptional =
-        socialAccountRepository.findByProviderIdAndProviderType(userInfo.getId(), providerType);
+        socialAccountRepository
+            .findFirstByProviderIdAndProviderTypeAndUserUserStatusInfoStatusNotOrderByIdDesc(
+                userInfo.getId(), providerType, UserStatus.WITHDRAWN);
 
     User user;
-
     if (socialAccountOptional.isPresent()) {
-      // 기존 소셜 계정으로 로그인하는 경우
+      // (2) ACTIVE/DORMANT 등 살아있는 계정으로 로그인
       user = socialAccountOptional.get().getUser();
       log.info("기존 소셜 계정으로 로그인: {}, 제공자: {}", userInfo.getEmail(), providerType);
-
-      // 소셜 계정 정보 업데이트 필요 시 처리 (예: 프로필 이미지 변경)
       updateExistingSocialUser(user, userInfo);
+
     } else {
-      // 신규 사용자 등록 (새 소셜 계정)
+      // (3) WITHDRAWN 이거나, 아예 존재하지 않으면 신규 가입
       user = registerNewUser(userInfo, providerType);
       log.info("신규 소셜 사용자 등록 완료: {}, 제공자: {}", userInfo.getEmail(), providerType);
     }

@@ -14,6 +14,8 @@ public interface ContentRepository {
 
   Content save(Content content);
 
+  void delete(Content content);
+
   Optional<FlatContentPreviewDTO> findFlatContentById(Long contentId);
 
   List<FlatContentPreviewDTO> findFlatContentsByUserId(Long userId);

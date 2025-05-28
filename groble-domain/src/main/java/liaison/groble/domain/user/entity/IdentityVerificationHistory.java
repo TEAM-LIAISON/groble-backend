@@ -2,11 +2,24 @@ package liaison.groble.domain.user.entity;
 
 import java.util.Map;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 
-import liaison.groble.domain.common.entity.BaseEntity;
+import liaison.groble.domain.common.entity.BaseTimeEntity;
 import liaison.groble.domain.common.utils.MapToJsonConverter;
 import liaison.groble.domain.user.enums.IdentityVerificationStatus;
+import liaison.groble.domain.user.vo.IdentityVerification;
 
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -22,7 +35,7 @@ import lombok.NoArgsConstructor;
     })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class IdentityVerificationHistory extends BaseEntity {
+public class IdentityVerificationHistory extends BaseTimeEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -56,9 +69,6 @@ public class IdentityVerificationHistory extends BaseEntity {
   @Column(name = "transaction_id")
   private String transactionId;
 
-  @Column(name = "port_one_request_id")
-  private String portOneRequestId;
-
   @Column(name = "error_code")
   private String errorCode;
 
@@ -81,7 +91,6 @@ public class IdentityVerificationHistory extends BaseEntity {
       IdentityVerification.VerificationMethod verificationMethod,
       IdentityVerificationStatus beforeStatus,
       String transactionId,
-      String portOneRequestId,
       Map<String, Object> rawRequest) {
     this.user = user;
     this.requestIp = requestIp;
@@ -89,7 +98,6 @@ public class IdentityVerificationHistory extends BaseEntity {
     this.verificationMethod = verificationMethod;
     this.beforeStatus = beforeStatus;
     this.transactionId = transactionId;
-    this.portOneRequestId = portOneRequestId;
     this.rawRequest = rawRequest;
     this.success = false; // 초기값
   }

@@ -2,78 +2,82 @@ package liaison.groble.domain.content.entity;
 
 import static com.querydsl.core.types.PathMetadataFactory.*;
 
-import javax.annotation.processing.Generated;
-
-import com.querydsl.core.types.Path;
-import com.querydsl.core.types.PathMetadata;
 import com.querydsl.core.types.dsl.*;
+
+import com.querydsl.core.types.PathMetadata;
+import javax.annotation.processing.Generated;
+import com.querydsl.core.types.Path;
 import com.querydsl.core.types.dsl.PathInits;
 
-/** QDocumentOption is a Querydsl query type for DocumentOption */
+
+/**
+ * QDocumentOption is a Querydsl query type for DocumentOption
+ */
 @Generated("com.querydsl.codegen.DefaultEntitySerializer")
 public class QDocumentOption extends EntityPathBase<DocumentOption> {
 
-  private static final long serialVersionUID = -522649134L;
+    private static final long serialVersionUID = -522649134L;
 
-  private static final PathInits INITS = PathInits.DIRECT2;
+    private static final PathInits INITS = PathInits.DIRECT2;
 
-  public static final QDocumentOption documentOption = new QDocumentOption("documentOption");
+    public static final QDocumentOption documentOption = new QDocumentOption("documentOption");
 
-  public final QContentOption _super;
+    public final QContentOption _super;
 
-  // inherited
-  public final QContent content;
+    // inherited
+    public final QContent content;
 
-  public final EnumPath<liaison.groble.domain.content.enums.ContentDeliveryMethod>
-      contentDeliveryMethod =
-          createEnum(
-              "contentDeliveryMethod",
-              liaison.groble.domain.content.enums.ContentDeliveryMethod.class);
+    public final EnumPath<liaison.groble.domain.content.enums.ContentDeliveryMethod> contentDeliveryMethod = createEnum("contentDeliveryMethod", liaison.groble.domain.content.enums.ContentDeliveryMethod.class);
 
-  // inherited
-  public final DateTimePath<java.time.Instant> createdAt;
+    //inherited
+    public final DateTimePath<java.time.LocalDateTime> createdAt;
 
-  // inherited
-  public final StringPath description;
+    //inherited
+    public final StringPath description;
 
-  // inherited
-  public final NumberPath<Long> id;
+    public final StringPath documentFileUrl = createString("documentFileUrl");
 
-  // inherited
-  public final DateTimePath<java.time.Instant> modifiedAt;
+    public final StringPath documentLinkUrl = createString("documentLinkUrl");
 
-  // inherited
-  public final StringPath name;
+    //inherited
+    public final NumberPath<Long> id;
 
-  // inherited
-  public final NumberPath<java.math.BigDecimal> price;
+    //inherited
+    public final StringPath name;
 
-  public QDocumentOption(String variable) {
-    this(DocumentOption.class, forVariable(variable), INITS);
-  }
+    //inherited
+    public final NumberPath<java.math.BigDecimal> price;
 
-  public QDocumentOption(Path<? extends DocumentOption> path) {
-    this(path.getType(), path.getMetadata(), PathInits.getFor(path.getMetadata(), INITS));
-  }
+    //inherited
+    public final DateTimePath<java.time.LocalDateTime> updatedAt;
 
-  public QDocumentOption(PathMetadata metadata) {
-    this(metadata, PathInits.getFor(metadata, INITS));
-  }
+    public QDocumentOption(String variable) {
+        this(DocumentOption.class, forVariable(variable), INITS);
+    }
 
-  public QDocumentOption(PathMetadata metadata, PathInits inits) {
-    this(DocumentOption.class, metadata, inits);
-  }
+    public QDocumentOption(Path<? extends DocumentOption> path) {
+        this(path.getType(), path.getMetadata(), PathInits.getFor(path.getMetadata(), INITS));
+    }
 
-  public QDocumentOption(
-      Class<? extends DocumentOption> type, PathMetadata metadata, PathInits inits) {
-    super(type, metadata, inits);
-    this._super = new QContentOption(type, metadata, inits);
-    this.content = _super.content;
-    this.createdAt = _super.createdAt;
-    this.description = _super.description;
-    this.id = _super.id;
-    this.modifiedAt = _super.modifiedAt;
-    this.name = _super.name;
-    this.price = _super.price;
-  }
+    public QDocumentOption(PathMetadata metadata) {
+        this(metadata, PathInits.getFor(metadata, INITS));
+    }
+
+    public QDocumentOption(PathMetadata metadata, PathInits inits) {
+        this(DocumentOption.class, metadata, inits);
+    }
+
+    public QDocumentOption(Class<? extends DocumentOption> type, PathMetadata metadata, PathInits inits) {
+        super(type, metadata, inits);
+        this._super = new QContentOption(type, metadata, inits);
+        this.content = _super.content;
+        this.createdAt = _super.createdAt;
+        this.description = _super.description;
+        this.id = _super.id;
+        this.name = _super.name;
+        this.price = _super.price;
+        this.updatedAt = _super.updatedAt;
+    }
+
 }
+

@@ -2,89 +2,70 @@ package liaison.groble.domain.payment.entity;
 
 import static com.querydsl.core.types.PathMetadataFactory.*;
 
-import javax.annotation.processing.Generated;
-
-import com.querydsl.core.types.Path;
-import com.querydsl.core.types.PathMetadata;
 import com.querydsl.core.types.dsl.*;
+
+import com.querydsl.core.types.PathMetadata;
+import javax.annotation.processing.Generated;
+import com.querydsl.core.types.Path;
 import com.querydsl.core.types.dsl.PathInits;
 
-/** QPaymentLog is a Querydsl query type for PaymentLog */
+
+/**
+ * QPaymentLog is a Querydsl query type for PaymentLog
+ */
 @Generated("com.querydsl.codegen.DefaultEntitySerializer")
 public class QPaymentLog extends EntityPathBase<PaymentLog> {
 
-  private static final long serialVersionUID = -773798643L;
+    private static final long serialVersionUID = -773798643L;
 
-  private static final PathInits INITS = PathInits.DIRECT2;
+    private static final PathInits INITS = PathInits.DIRECT2;
 
-  public static final QPaymentLog paymentLog = new QPaymentLog("paymentLog");
+    public static final QPaymentLog paymentLog = new QPaymentLog("paymentLog");
 
-  public final liaison.groble.domain.common.entity.QBaseEntity _super =
-      new liaison.groble.domain.common.entity.QBaseEntity(this);
+    public final liaison.groble.domain.common.entity.QBaseTimeEntity _super = new liaison.groble.domain.common.entity.QBaseTimeEntity(this);
 
-  public final EnumPath<Payment.PaymentStatus> afterStatus =
-      createEnum("afterStatus", Payment.PaymentStatus.class);
+    //inherited
+    public final DateTimePath<java.time.LocalDateTime> createdAt = _super.createdAt;
 
-  public final EnumPath<Payment.PaymentStatus> beforeStatus =
-      createEnum("beforeStatus", Payment.PaymentStatus.class);
+    public final StringPath description = createString("description");
 
-  // inherited
-  public final DateTimePath<java.time.LocalDateTime> createdAt = _super.createdAt;
+    public final NumberPath<Long> id = createNumber("id", Long.class);
 
-  // inherited
-  public final StringPath createdBy = _super.createdBy;
+    public final StringPath ipAddress = createString("ipAddress");
 
-  // inherited
-  public final BooleanPath deleted = _super.deleted;
+    public final QPayment payment;
 
-  public final StringPath description = createString("description");
+    public final MapPath<String, Object, SimplePath<Object>> requestData = this.<String, Object, SimplePath<Object>>createMap("requestData", String.class, Object.class, SimplePath.class);
 
-  public final NumberPath<Long> id = createNumber("id", Long.class);
+    public final MapPath<String, Object, SimplePath<Object>> responseData = this.<String, Object, SimplePath<Object>>createMap("responseData", String.class, Object.class, SimplePath.class);
 
-  public final StringPath ipAddress = createString("ipAddress");
+    public final EnumPath<liaison.groble.domain.payment.enums.PaymentLogType> type = createEnum("type", liaison.groble.domain.payment.enums.PaymentLogType.class);
 
-  public final QPayment payment;
+    //inherited
+    public final DateTimePath<java.time.LocalDateTime> updatedAt = _super.updatedAt;
 
-  public final MapPath<String, Object, SimplePath<Object>> requestData =
-      this.<String, Object, SimplePath<Object>>createMap(
-          "requestData", String.class, Object.class, SimplePath.class);
+    public final StringPath userAgent = createString("userAgent");
 
-  public final MapPath<String, Object, SimplePath<Object>> responseData =
-      this.<String, Object, SimplePath<Object>>createMap(
-          "responseData", String.class, Object.class, SimplePath.class);
+    public QPaymentLog(String variable) {
+        this(PaymentLog.class, forVariable(variable), INITS);
+    }
 
-  public final EnumPath<liaison.groble.domain.payment.enums.PaymentLogType> type =
-      createEnum("type", liaison.groble.domain.payment.enums.PaymentLogType.class);
+    public QPaymentLog(Path<? extends PaymentLog> path) {
+        this(path.getType(), path.getMetadata(), PathInits.getFor(path.getMetadata(), INITS));
+    }
 
-  // inherited
-  public final DateTimePath<java.time.LocalDateTime> updatedAt = _super.updatedAt;
+    public QPaymentLog(PathMetadata metadata) {
+        this(metadata, PathInits.getFor(metadata, INITS));
+    }
 
-  // inherited
-  public final StringPath updatedBy = _super.updatedBy;
+    public QPaymentLog(PathMetadata metadata, PathInits inits) {
+        this(PaymentLog.class, metadata, inits);
+    }
 
-  public final StringPath userAgent = createString("userAgent");
+    public QPaymentLog(Class<? extends PaymentLog> type, PathMetadata metadata, PathInits inits) {
+        super(type, metadata, inits);
+        this.payment = inits.isInitialized("payment") ? new QPayment(forProperty("payment"), inits.get("payment")) : null;
+    }
 
-  public QPaymentLog(String variable) {
-    this(PaymentLog.class, forVariable(variable), INITS);
-  }
-
-  public QPaymentLog(Path<? extends PaymentLog> path) {
-    this(path.getType(), path.getMetadata(), PathInits.getFor(path.getMetadata(), INITS));
-  }
-
-  public QPaymentLog(PathMetadata metadata) {
-    this(metadata, PathInits.getFor(metadata, INITS));
-  }
-
-  public QPaymentLog(PathMetadata metadata, PathInits inits) {
-    this(PaymentLog.class, metadata, inits);
-  }
-
-  public QPaymentLog(Class<? extends PaymentLog> type, PathMetadata metadata, PathInits inits) {
-    super(type, metadata, inits);
-    this.payment =
-        inits.isInitialized("payment")
-            ? new QPayment(forProperty("payment"), inits.get("payment"))
-            : null;
-  }
 }
+

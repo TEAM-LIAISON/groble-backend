@@ -4,8 +4,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 public class NotificationExamples {
 
-  @Schema(description = "판매자 인증 성공 알림 예제")
-  public static class SellerVerifiedExample {
+  @Schema(description = "메이커 인증 성공 알림 예제")
+  public static class MakerCertifiedExample {
     public static final String EXAMPLE =
         """
             {
@@ -15,13 +15,12 @@ public class NotificationExamples {
                 "notificationItems": [
                   {
                     "notificationId": 1,
-                    "notificationType": "SELLER",
-                    "subNotificationType": "SELLER_VERIFIED",
+                    "notificationType": "CERTIFY",
+                    "subNotificationType": "MAKER_CERTIFIED",
                     "notificationReadStatus": "UNREAD",
                     "notificationOccurTime": "3시간 전",
                     "notificationDetails": {
-                      "nickname": "seller123",
-                      "isVerified": true
+                      "nickname": "seller123"
                     }
                   }
                 ]
@@ -31,7 +30,7 @@ public class NotificationExamples {
   }
 
   @Schema(description = "판매자 인증 거부 알림 예제")
-  public static class SellerRejectedExample {
+  public static class MakerCertifyRejectedExample {
     public static final String EXAMPLE =
         """
             {
@@ -41,13 +40,12 @@ public class NotificationExamples {
                 "notificationItems": [
                   {
                     "notificationId": 2,
-                    "notificationType": "SELLER",
-                    "subNotificationType": "SELLER_REJECTED",
+                    "notificationType": "CERTIFY",
+                    "subNotificationType": "MAKER_CERTIFY_REJECTED",
                     "notificationReadStatus": "UNREAD",
                     "notificationOccurTime": "2시간 전",
                     "notificationDetails": {
-                      "nickname": "seller456",
-                      "isVerified": false
+                      "nickname": "seller456"
                     }
                   }
                 ]
@@ -57,7 +55,7 @@ public class NotificationExamples {
   }
 
   @Schema(description = "콘텐츠 승인 알림 예제")
-  public static class ContentApprovedExample {
+  public static class ContentReviewApprovedExample {
     public static final String EXAMPLE =
         """
             {
@@ -67,14 +65,13 @@ public class NotificationExamples {
                 "notificationItems": [
                   {
                     "notificationId": 3,
-                    "notificationType": "CONTENT",
-                    "subNotificationType": "CONTENT_APPROVED",
+                    "notificationType": "REVIEW",
+                    "subNotificationType": "CONTENT_REVIEW_APPROVED",
                     "notificationReadStatus": "READ",
                     "notificationOccurTime": "1일 전",
                     "notificationDetails": {
                       "contentId": 12345,
-                      "thumbnailUrl": "https://example.com/thumbnail.jpg",
-                      "isContentApproved": true
+                      "thumbnailUrl": "https://example.com/thumbnail.jpg"
                     }
                   }
                 ]
@@ -83,8 +80,8 @@ public class NotificationExamples {
             """;
   }
 
-  @Schema(description = "콘텐츠 거부 알림 예제")
-  public static class ContentRejectedExample {
+  @Schema(description = "콘텐츠 심사 거부 알림 예제")
+  public static class ContentReviewRejectedExample {
     public static final String EXAMPLE =
         """
             {
@@ -94,14 +91,13 @@ public class NotificationExamples {
                 "notificationItems": [
                   {
                     "notificationId": 4,
-                    "notificationType": "CONTENT",
-                    "subNotificationType": "CONTENT_REJECTED",
+                    "notificationType": "REVIEW",
+                    "subNotificationType": "CONTENT_REVIEW_REJECTED",
                     "notificationReadStatus": "UNREAD",
                     "notificationOccurTime": "5시간 전",
                     "notificationDetails": {
                       "contentId": 54321,
-                      "thumbnailUrl": "https://example.com/rejected-thumbnail.jpg",
-                      "isContentApproved": false
+                      "thumbnailUrl": "https://example.com/rejected-thumbnail.jpg"
                     }
                   }
                 ]
@@ -158,37 +154,34 @@ public class NotificationExamples {
                   },
                   {
                     "notificationId": 2,
-                    "notificationType": "SELLER",
-                    "subNotificationType": "SELLER_VERIFIED",
+                    "notificationType": "CERTIFY",
+                    "subNotificationType": "MAKER_CERTIFIED",
                     "notificationReadStatus": "UNREAD",
                     "notificationOccurTime": "3시간 전",
                     "notificationDetails": {
-                      "nickname": "seller123",
-                      "isVerified": true
+                      "nickname": "seller123"
                     }
                   },
                   {
                     "notificationId": 3,
-                    "notificationType": "CONTENT",
-                    "subNotificationType": "CONTENT_APPROVED",
+                    "notificationType": "REVIEW",
+                    "subNotificationType": "CONTENT_REVIEW_APPROVED",
                     "notificationReadStatus": "READ",
                     "notificationOccurTime": "1일 전",
                     "notificationDetails": {
                       "contentId": 12345,
-                      "thumbnailUrl": "https://example.com/thumbnail.jpg",
-                      "isContentApproved": true
+                      "thumbnailUrl": "https://example.com/thumbnail.jpg"
                     }
                   },
                   {
                     "notificationId": 4,
-                    "notificationType": "CONTENT",
-                    "subNotificationType": "CONTENT_REJECTED",
+                    "notificationType": "REVIEW",
+                    "subNotificationType": "CONTENT_REVIEW_REJECTED",
                     "notificationReadStatus": "UNREAD",
                     "notificationOccurTime": "2일 전",
                     "notificationDetails": {
                       "contentId": 54321,
-                      "thumbnailUrl": "https://example.com/rejected-content.jpg",
-                      "isContentApproved": false
+                      "thumbnailUrl": "https://example.com/rejected-content.jpg"
                     }
                   }
                 ]

@@ -18,7 +18,7 @@ public class CookieUtils {
   private static final boolean DEFAULT_HTTP_ONLY = true;
   private static final boolean DEFAULT_SECURE_DEV = false; // 개발 환경
   private static final boolean DEFAULT_SECURE_PROD = true; // 운영 환경
-  private static final String DEFAULT_SAME_SITE = "None"; // Lax, Strict, None
+  private static final String DEFAULT_SAME_SITE = "Lax"; // 기본값을 Lax로 변경 (보안과 편의성 균형)
 
   /**
    * 요청에서 특정 이름의 쿠키 가져오기
@@ -108,6 +108,17 @@ public class CookieUtils {
       String sameSite,
       String domain) {
 
+    // SameSite=None인 경우 Secure 플래그 강제 설정 (브라우저 요구사항)
+    if ("None".equalsIgnoreCase(sameSite)) {
+      secure = true;
+    }
+
+    // Local 환경에서는 domain을 설정하지 않음 (localhost에서 동작하도록)
+    boolean isLocalEnv = isLocalEnvironment();
+    if (isLocalEnv) {
+      domain = null;
+    }
+
     // 기본 쿠키 생성
     Cookie cookie = new Cookie(name, value);
     cookie.setPath(path);
@@ -116,8 +127,9 @@ public class CookieUtils {
     cookie.setSecure(secure);
 
     // 도메인 설정 (null이 아닌 경우에만)
-    if (domain != null && !domain.isEmpty()) {
+    if (domain != null && !domain.isEmpty() && !isLocalEnv) {
       cookie.setDomain(domain);
+      log.debug("쿠키 도메인 설정: {}", domain);
     }
 
     // jakarta.servlet.http.Cookie에는 SameSite 설정이 없으므로 헤더로 추가
@@ -134,7 +146,7 @@ public class CookieUtils {
       cookieHeader.append("; Secure");
     }
 
-    if (domain != null && !domain.isEmpty()) {
+    if (domain != null && !domain.isEmpty() && !isLocalEnv) {
       cookieHeader.append(String.format("; Domain=%s", domain));
     }
 
@@ -164,28 +176,101 @@ public class CookieUtils {
    */
   public static void deleteCookie(
       HttpServletRequest request, HttpServletResponse response, String name) {
-    Cookie[] cookies = request.getCookies();
-    if (cookies != null && cookies.length > 0) {
-      Arrays.stream(cookies)
-          .filter(cookie -> cookie.getName().equals(name))
-          .forEach(
-              cookie -> {
-                // 쿠키 삭제를 위해 빈 값과 0 만료시간 설정
-                cookie.setValue("");
-                cookie.setPath(DEFAULT_PATH);
-                cookie.setMaxAge(0);
-                response.addCookie(cookie);
-
-                // SameSite 속성 유지를 위해 헤더 추가
-                String cookieHeader =
-                    String.format(
-                        "%s=; Path=%s; Max-Age=0; HttpOnly; SameSite=%s",
-                        name, DEFAULT_PATH, DEFAULT_SAME_SITE);
-                response.addHeader("Set-Cookie", cookieHeader);
-
-                log.debug("쿠키 삭제: {}", name);
-              });
+    // 요청에 붙어있는 원본 쿠키 가져오기
+    Optional<Cookie> maybe = getCookie(request, name);
+    if (maybe.isEmpty()) {
+      return;
     }
+
+    Cookie original = maybe.get();
+
+    // 삭제용 쿠키 객체 생성 (속성은 원본과 똑같이)
+    Cookie cookie = new Cookie(name, "");
+    cookie.setPath(original.getPath() != null ? original.getPath() : DEFAULT_PATH);
+    cookie.setHttpOnly(original.isHttpOnly());
+    cookie.setSecure(original.getSecure());
+    cookie.setMaxAge(0);
+
+    // Domain 이 설정되어 있었다면 동일하게 지정
+    if (original.getDomain() != null) {
+      cookie.setDomain(original.getDomain());
+    }
+
+    response.addCookie(cookie);
+
+    // 중복 방지를 위해 헤더 방식도 추가
+    StringBuilder header =
+        new StringBuilder()
+            .append(name)
+            .append("=; Path=")
+            .append(cookie.getPath())
+            .append("; Max-Age=0");
+    if (cookie.isHttpOnly()) {
+      header.append("; HttpOnly");
+    }
+    if (cookie.getSecure()) {
+      header.append("; Secure");
+    }
+    if (original.getDomain() != null) {
+      header.append("; Domain=").append(original.getDomain());
+    }
+    // 원본 SameSite 값도 유지
+    header.append("; SameSite=").append(DEFAULT_SAME_SITE);
+
+    response.addHeader("Set-Cookie", header.toString());
+  }
+
+  public static void deleteCookie(
+      HttpServletRequest request,
+      HttpServletResponse response,
+      String name,
+      String path,
+      String domain,
+      String sameSite,
+      boolean httpOnly,
+      boolean secure) {
+    // Path, Domain, SameSite, HttpOnly, Secure 값을 일치시켜 만료 쿠키 설정
+    Cookie cookie = new Cookie(name, "");
+    cookie.setPath(path);
+    cookie.setHttpOnly(httpOnly);
+    cookie.setSecure(secure);
+    cookie.setMaxAge(0);
+    if (domain != null && !domain.isEmpty()) {
+      cookie.setDomain(domain);
+    }
+    response.addCookie(cookie);
+
+    // 헤더 방식으로도 제거
+    StringBuilder header = new StringBuilder();
+    header.append(name).append("=; Path=").append(path).append("; Max-Age=0");
+    if (httpOnly) header.append("; HttpOnly");
+    if (secure) header.append("; Secure");
+    if (domain != null && !domain.isEmpty()) header.append("; Domain=").append(domain);
+    if (sameSite != null && !sameSite.isEmpty()) header.append("; SameSite=").append(sameSite);
+    response.addHeader("Set-Cookie", header.toString());
+  }
+
+  /**
+   * 도메인을 지정하여 쿠키 삭제 (편의성 메서드)
+   *
+   * @param request HTTP 요청
+   * @param response HTTP 응답
+   * @param name 삭제할 쿠키 이름
+   * @param domain 쿠키 도메인 (null이면 현재 도메인)
+   */
+  public static void deleteCookieWithDomain(
+      HttpServletRequest request, HttpServletResponse response, String name, String domain) {
+
+    // 기본 설정값 사용
+    deleteCookie(
+        request,
+        response,
+        name,
+        DEFAULT_PATH,
+        domain,
+        DEFAULT_SAME_SITE,
+        DEFAULT_HTTP_ONLY,
+        isSecureEnvironment());
   }
 
   /**
@@ -232,13 +317,27 @@ public class CookieUtils {
   }
 
   /**
-   * 현재 환경이 보안 환경(운영)인지 확인
+   * 현재 환경이 보안 환경(운영 또는 개발)인지 확인
    *
    * @return 보안 환경 여부
    */
   private static boolean isSecureEnvironment() {
-    String env = System.getProperty("spring.profiles.active", "dev");
-    return env.equalsIgnoreCase("prod") || env.equalsIgnoreCase("production");
+    String env = System.getProperty("spring.profiles.active", "local");
+    // 운영 또는 개발 환경인 경우 true 반환 (HTTPS 사용)
+    return env.contains("prod")
+        || env.contains("dev")
+        || env.contains("blue")
+        || env.contains("green");
+  }
+
+  /**
+   * 현재 환경이 로컬 환경인지 확인
+   *
+   * @return 로컬 환경 여부
+   */
+  private static boolean isLocalEnvironment() {
+    String env = System.getProperty("spring.profiles.active", "local");
+    return env.contains("local") || env.isEmpty();
   }
 
   /** 쿠키 직렬화 관련 예외 클래스 */

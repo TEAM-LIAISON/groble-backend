@@ -1,0 +1,118 @@
+package liaison.groble.domain.payment.entity;
+
+import java.time.LocalDateTime;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
+
+import liaison.groble.domain.common.entity.BaseTimeEntity;
+import liaison.groble.domain.payment.enums.PayplePaymentStatus;
+
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+@Entity
+@Table(
+    name = "payple_payments",
+    indexes = {
+      @Index(name = "idx_pcd_pay_oid", columnList = "pcd_pay_oid"),
+      @Index(name = "idx_pcd_payer_no", columnList = "pcd_payer_no"),
+      @Index(name = "idx_payple_payment_status", columnList = "status"),
+      @Index(name = "idx_payple_payment_created_at", columnList = "created_at")
+    })
+@Getter
+@Builder
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+public class PayplePayment extends BaseTimeEntity {
+
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
+
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
+  private PayplePaymentStatus status = PayplePaymentStatus.PENDING;
+
+  private String pcdPayRst; // 페이플 인증 결과 (SUCESS/ERROR/CLOSE)
+  private String pcdPayCode; // 페이플 결제 응답 코드 (0000)
+  private String pcdPayMsg; // 페이플 응답 메시지
+  private String pcdPayType; // 페이플 결제수단(카드/계좌) card/transfer
+  private String pcdPayReqKey; // 승인 요청 결제키
+
+  @Column(name = "pcd_pay_oid", unique = true)
+  private String pcdPayOid; // 주문번호 (orderId - PK)
+
+  private String pcdPayerNo; // 그로블에서 이용하는 회원번호 (userId - PK)
+  private String pcdPayerName; // 구매자 이름
+  private String pcdPayerHp; // 구매자 핸드폰번호
+  private String pcdPayerEmail; // 구매자 이메일
+  private String pcdPayGoods; // 상품명
+  private String pcdPayTotal; // 총 결제금액
+  private String pcdPayTaxTotal; // 복합과세 부가세
+  private String pcdPayIsTax; // 과세 여부
+  private String pcdPayTime; // 결제 요청 시간
+  private String pcdPayCardName; // 카드사명
+
+  @Column(name = "pcd_pay_card_num")
+  private String pcdPayCardNum; // 마스킹된 상태로 저장돼야 함
+
+  private String pcdPayCardTradeNum; // 해당 거래의 고유 키
+  private String pcdPayCardAuthNo; // 승인번호
+  private String pcdPayCardReceipt; // 매출 전표(영수증) 출력 URL
+  private String pcdSimpleFlag; // 정기(빌링), 비밀번호 간편결제 시 필요한 설정값
+  private String pcdUserDefine1; // 파트너에서 입력한 값 1
+  private String pcdUserDefine2; // 파트너에서 입력한 값 2
+  private LocalDateTime paymentDate; // 결제 완료 시간
+  private LocalDateTime canceledAt; // 결제 취소 시간
+
+  private String failReason;
+  private String cancelReason;
+
+  // 결제 완료
+  public void complete(
+      String payRst,
+      String payCode,
+      String payMsg,
+      String cardName,
+      String cardNum,
+      String cardTradeNum,
+      String cardAuthNo,
+      String receiptUrl,
+      LocalDateTime paymentDate) {
+    this.status = PayplePaymentStatus.COMPLETED;
+    this.pcdPayRst = payRst;
+    this.pcdPayCode = payCode;
+    this.pcdPayMsg = payMsg;
+    this.pcdPayCardName = cardName;
+    this.pcdPayCardNum = cardNum;
+    this.pcdPayCardTradeNum = cardTradeNum;
+    this.pcdPayCardAuthNo = cardAuthNo;
+    this.pcdPayCardReceipt = receiptUrl;
+    this.paymentDate = paymentDate != null ? paymentDate : LocalDateTime.now();
+  }
+
+  // 결제 실패
+  public void fail(String payMsg, String failReason) {
+    this.status = PayplePaymentStatus.FAILED;
+    this.pcdPayMsg = payMsg;
+    this.failReason = failReason;
+  }
+
+  // 결제 취소
+  public void cancel(String cancelReason, LocalDateTime cancelTime) {
+    this.status = PayplePaymentStatus.CANCELLED;
+    this.cancelReason = cancelReason;
+    this.canceledAt = cancelTime != null ? cancelTime : LocalDateTime.now();
+  }
+}

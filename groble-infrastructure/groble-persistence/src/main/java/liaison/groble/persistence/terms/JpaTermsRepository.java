@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import liaison.groble.domain.terms.Terms;
+import liaison.groble.domain.terms.entity.Terms;
 import liaison.groble.domain.terms.enums.TermsType;
 
 public interface JpaTermsRepository extends JpaRepository<Terms, Long> {
@@ -27,8 +27,27 @@ public interface JpaTermsRepository extends JpaRepository<Terms, Long> {
 
   List<Terms> findByTypeIn(List<TermsType> types);
 
+  /** 주어진 시점(now)에 유효한, 특정 타입의 최신 약관 한 건을 조회합니다. */
   @Query(
-      "SELECT t FROM Terms t WHERE t.type = :type AND t.effectiveTo IS NULL ORDER BY t.effectiveFrom DESC")
-  Optional<Terms> findTopByTypeAndEffectiveToIsNullOrderByEffectiveFromDesc(
-      @Param("type") TermsType type);
+      """
+    SELECT t
+      FROM Terms t
+     WHERE t.type = :type
+       AND t.effectiveFrom <= :now
+       AND (t.effectiveTo   IS NULL
+            OR t.effectiveTo >  :now)
+     ORDER BY t.effectiveFrom DESC
+    """)
+  Optional<Terms> findLatestByTypeAndEffectiveAt(
+      @Param("type") TermsType type, @Param("now") LocalDateTime now);
+
+  @Query(
+      "SELECT t FROM Terms t WHERE t.effectiveFrom <= CURRENT_TIMESTAMP "
+          + "AND (t.effectiveTo IS NULL OR t.effectiveTo > CURRENT_TIMESTAMP)")
+  List<Terms> findAllLatestTerms();
+
+  @Query(
+      "SELECT t FROM Terms t WHERE t.effectiveFrom <= :now "
+          + "AND (t.effectiveTo IS NULL OR t.effectiveTo > :now)")
+  List<Terms> findAllLatestTerms(@Param("now") LocalDateTime now);
 }

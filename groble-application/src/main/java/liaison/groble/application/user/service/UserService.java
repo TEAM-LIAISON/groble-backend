@@ -84,4 +84,6 @@ public interface UserService {
    * @return UserHeaderDto 사용자 헤더 정보
    */
   UserHeaderDto getUserHeaderInform(Long userId);
+
+  void updateProfileImageUrl(Long userId, String profileImagePath);
 }

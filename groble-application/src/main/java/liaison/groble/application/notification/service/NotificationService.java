@@ -8,10 +8,14 @@ import org.springframework.transaction.annotation.Transactional;
 import liaison.groble.application.notification.dto.NotificationDetailsDto;
 import liaison.groble.application.notification.dto.NotificationItemDto;
 import liaison.groble.application.notification.dto.NotificationItemsDto;
+import liaison.groble.application.notification.mapper.NotificationMapper;
 import liaison.groble.domain.notification.entity.Notification;
+import liaison.groble.domain.notification.entity.SystemDetails;
 import liaison.groble.domain.notification.enums.NotificationType;
 import liaison.groble.domain.notification.enums.SubNotificationType;
 import liaison.groble.domain.notification.repository.NotificationCustomRepository;
+import liaison.groble.domain.notification.repository.NotificationRepository;
+import liaison.groble.domain.user.entity.User;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +25,8 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class NotificationService {
   private final NotificationCustomRepository notificationCustomRepository;
+  private final NotificationRepository notificationRepository;
+  private final NotificationMapper notificationMapper;
 
   public NotificationItemsDto getNotificationItems(final Long userId) {
     List<Notification> notifications =
@@ -73,39 +79,34 @@ public class NotificationService {
 
     // Switch based on notification type and subtype to create appropriate details
     return switch (type) {
-      case SELLER -> createSellerDetails(notification, subType);
-      case CONTENT -> createContentDetails(notification, subType);
+      case CERTIFY -> createCertifyDetails(notification, subType);
+      case REVIEW -> createReviewDetails(notification, subType);
       case SYSTEM -> createSystemDetails(notification, subType);
       default -> null;
     };
   }
 
-  private NotificationDetailsDto createSellerDetails(
+  private NotificationDetailsDto createCertifyDetails(
       Notification notification, SubNotificationType subNotificationType) {
-    if (subNotificationType == SubNotificationType.SELLER_VERIFIED) {
-      return NotificationDetailsDto.sellerVerified(
-          notification.getSellerDetails().getNickname(),
-          notification.getSellerDetails().getIsVerified());
-    } else if (subNotificationType == SubNotificationType.SELLER_REJECTED) {
-      return NotificationDetailsDto.sellerRejected(
-          notification.getSellerDetails().getNickname(),
-          notification.getSellerDetails().getIsVerified());
+    if (subNotificationType == SubNotificationType.MAKER_CERTIFIED) {
+      return NotificationDetailsDto.makerCertified(notification.getCertifyDetails().getNickname());
+    } else if (subNotificationType == SubNotificationType.MAKER_CERTIFY_REJECTED) {
+      return NotificationDetailsDto.makerCertifyRejected(
+          notification.getCertifyDetails().getNickname());
     }
     return null;
   }
 
-  private NotificationDetailsDto createContentDetails(
+  private NotificationDetailsDto createReviewDetails(
       Notification notification, SubNotificationType subNotificationType) {
-    if (subNotificationType == SubNotificationType.CONTENT_APPROVED) {
-      return NotificationDetailsDto.contentApproved(
-          notification.getContentDetails().getContentId(),
-          notification.getContentDetails().getThumbnailUrl(),
-          notification.getContentDetails().getIsContentApproved());
-    } else if (subNotificationType == SubNotificationType.CONTENT_REJECTED) {
-      return NotificationDetailsDto.contentRejected(
-          notification.getContentDetails().getContentId(),
-          notification.getContentDetails().getThumbnailUrl(),
-          notification.getContentDetails().getIsContentApproved());
+    if (subNotificationType == SubNotificationType.CONTENT_REVIEW_APPROVED) {
+      return NotificationDetailsDto.contentReviewApproved(
+          notification.getReviewDetails().getContentId(),
+          notification.getReviewDetails().getThumbnailUrl());
+    } else if (subNotificationType == SubNotificationType.CONTENT_REVIEW_REJECTED) {
+      return NotificationDetailsDto.contentReviewRejected(
+          notification.getReviewDetails().getContentId(),
+          notification.getReviewDetails().getThumbnailUrl());
     }
     return null;
   }
@@ -118,5 +119,21 @@ public class NotificationService {
           notification.getSystemDetails().getSystemTitle());
     }
     return null;
+  }
+
+  @Transactional
+  public void sendWelcomeNotification(User user) {
+    SystemDetails systemDetails =
+        SystemDetails.welcomeGroble(user.getNickname(), "그로블에 오신 것을 환영합니다!");
+
+    Notification notification =
+        notificationMapper.toNotification(
+            user.getId(),
+            NotificationType.SYSTEM,
+            SubNotificationType.WELCOME_GROBLE,
+            systemDetails);
+
+    notificationRepository.save(notification);
+    log.info("환영 알림 발송: userId={}", user.getId());
   }
 }

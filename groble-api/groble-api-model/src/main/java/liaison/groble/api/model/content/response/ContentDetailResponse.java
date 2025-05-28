@@ -3,6 +3,7 @@ package liaison.groble.api.model.content.response;
 import java.math.BigDecimal;
 import java.util.List;
 
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -25,17 +26,14 @@ public class ContentDetailResponse {
       allowableValues = {"ACTIVE", "DRAFT", "PENDING", "VALIDATED", "REJECTED"})
   private String status;
 
-  // TODO: 콘텐츠에 등록된 모든 이미지들의 URL
-  @Schema(
-      description = "콘텐츠 이미지 URL 목록",
-      example = "[\"https://example.com/image1.jpg\", \"https://example.com/image2.jpg\"]")
-  private List<String> contentsImageUrls;
+  @Schema(description = "썸네일 이미지 URL", example = "https://example.com/thumbnail1.jpg")
+  private String thumbnailUrl;
 
   @Schema(description = "콘텐츠 유형 [COACHING - 코칭], [DOCUMENT - 자료]", example = "COACHING")
   private String contentType;
 
   @Schema(description = "카테고리 ID", example = "1")
-  private Long categoryId;
+  private String categoryId;
 
   @Schema(description = "콘텐츠 이름", example = "사업계획서 컨설팅")
   private String title;
@@ -49,14 +47,49 @@ public class ContentDetailResponse {
   @Schema(description = "콘텐츠 최저가", example = "10000")
   private BigDecimal lowestPrice;
 
-  @Schema(description = "콘텐츠 옵션 목록")
-  private List<BaseOptionResponse> options;
+  @Schema(description = "가격 옵션 개수", example = "3")
+  private int priceOptionLength;
+
+  @ArraySchema(
+      schema =
+          @Schema(
+              implementation = OptionResponseDoc.class, // ← 문서용 DTO
+              description = "콘텐츠 옵션 목록",
+              example =
+                  """
+      [
+        {
+          "optionId": 1,
+          "optionType": "COACHING_OPTION",
+          "name": "1시간 코칭",
+          "description": "1:1 전문가 코칭 1시간",
+          "price": 50000,
+          "coachingPeriod": "ONE_DAY",
+          "documentProvision": "PROVIDED",
+          "coachingType": "ONLINE",
+          "coachingTypeDescription": "줌을 통한 온라인 미팅",
+          "contentDeliveryMethod": null
+        },
+        {
+          "optionId": 3,
+          "optionType": "DOCUMENT_OPTION",
+          "name": "기본 템플릿",
+          "description": "기본적인 사업계획서 템플릿",
+          "price": 15000,
+          "coachingPeriod": null,
+          "documentProvision": null,
+          "coachingType": null,
+          "coachingTypeDescription": null,
+          "contentDeliveryMethod": "IMMEDIATE_DOWNLOAD",
+          "documentFileUrl": "https://example.com/template.pdf",
+          "documentLinkUrl": "https://example.com/template-link"
+        }
+      ]
+      """))
+  private List<?> options; // 실제론 BaseOptionResponse 계열이지만, 문서에선 와일드카드로 처리
 
   @Schema(description = "콘텐츠 소개")
   private String contentIntroduction;
-
-  @Schema(description = "콘텐츠 상세 이미지 URL 목록")
-  private List<String> contentDetailImageUrls;
 
   @Schema(description = "서비스 타겟", example = "초창패, 창중, 예창패, 청창사 등을 준비하는 분")
   private String serviceTarget;

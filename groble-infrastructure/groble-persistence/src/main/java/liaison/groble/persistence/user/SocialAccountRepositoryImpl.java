@@ -6,6 +6,7 @@ import org.springframework.stereotype.Repository;
 
 import liaison.groble.domain.user.entity.SocialAccount;
 import liaison.groble.domain.user.enums.ProviderType;
+import liaison.groble.domain.user.enums.UserStatus;
 import liaison.groble.domain.user.repository.SocialAccountRepository;
 
 import lombok.AllArgsConstructor;
@@ -25,10 +26,12 @@ public class SocialAccountRepositoryImpl implements SocialAccountRepository {
     return jpaSocialAccountRepository.existsBySocialAccountEmail(socialAccountEmail);
   }
 
-  @Override
-  public Optional<SocialAccount> findByProviderIdAndProviderType(
-      String providerId, ProviderType providerType) {
-    return jpaSocialAccountRepository.findByProviderIdAndProviderType(providerId, providerType);
+  public Optional<SocialAccount>
+      findFirstByProviderIdAndProviderTypeAndUserUserStatusInfoStatusNotOrderByIdDesc(
+          String providerId, ProviderType providerType, UserStatus excludedStatus) {
+    return jpaSocialAccountRepository
+        .findFirstByProviderIdAndProviderTypeAndUserUserStatusInfoStatusNotOrderByIdDesc(
+            providerId, providerType, excludedStatus);
   }
 
   @Override

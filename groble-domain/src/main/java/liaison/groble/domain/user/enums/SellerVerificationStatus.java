@@ -1,5 +1,8 @@
 package liaison.groble.domain.user.enums;
 
+import lombok.Getter;
+
+@Getter
 public enum SellerVerificationStatus {
   PENDING("인증 필요", "판매자 등록을 위해 인증이 필요합니다"),
   IN_PROGRESS("인증 진행 중", "인증 절차가 진행 중입니다"),
@@ -12,13 +15,5 @@ public enum SellerVerificationStatus {
   SellerVerificationStatus(String displayName, String description) {
     this.displayName = displayName;
     this.description = description;
-  }
-
-  public String getDisplayName() {
-    return displayName;
-  }
-
-  public String getDescription() {
-    return description;
   }
 }

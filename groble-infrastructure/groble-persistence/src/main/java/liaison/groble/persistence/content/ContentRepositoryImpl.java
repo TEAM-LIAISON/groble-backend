@@ -34,6 +34,11 @@ public class ContentRepositoryImpl implements ContentRepository {
     return jpaContentRepository.save(content);
   }
 
+  @Override
+  public void delete(Content content) {
+    jpaContentRepository.delete(content);
+  }
+
   public Optional<FlatContentPreviewDTO> findFlatContentById(Long contentId) {
     return contentCustomRepository.findFlatContentById(contentId);
   }

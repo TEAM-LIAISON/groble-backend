@@ -13,8 +13,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import liaison.groble.api.model.content.response.swagger.UploadContentThumbnail;
 import liaison.groble.api.model.file.response.FileUploadResponse;
-import liaison.groble.api.model.file.response.swagger.UploadContentThumbnail;
 import liaison.groble.api.model.file.response.swagger.UploadFile;
 import liaison.groble.api.model.file.response.swagger.UploadMultipleFiles;
 import liaison.groble.api.server.file.mapper.FileDtoMapper;
@@ -30,6 +30,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+@Deprecated
 @Slf4j
 @RestController
 @RequestMapping("/api/v1")
@@ -39,6 +40,7 @@ public class FileController {
   private final FileService fileService;
   private final FileDtoMapper fileDtoMapper;
 
+  @Deprecated
   @UploadFile
   @PostMapping(value = "/file", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<GrobleResponse<FileUploadResponse>> uploadFile(
@@ -69,6 +71,7 @@ public class FileController {
   }
 
   // 썸네일 이미지를 업로드해서 URL 경로를 반환 받음
+  @Deprecated
   @UploadContentThumbnail
   @PostMapping(value = "/content/thumbnail", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<GrobleResponse<FileUploadResponse>> uploadContentThumbnail(
@@ -104,6 +107,7 @@ public class FileController {
     }
   }
 
+  @Deprecated
   @UploadMultipleFiles
   @PostMapping(value = "/content/direct-contents", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<GrobleResponse<List<FileUploadResponse>>> uploadContentsFiles(

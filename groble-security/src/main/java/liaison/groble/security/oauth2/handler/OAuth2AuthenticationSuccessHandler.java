@@ -17,6 +17,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 
+import liaison.groble.common.exception.EntityNotFoundException;
 import liaison.groble.common.utils.CookieUtils;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.repository.UserRepository;
@@ -41,8 +42,8 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
   private String cookieDomain;
 
   // 쿠키 설정값
-  private static final int ACCESS_TOKEN_MAX_AGE = 60 * 30; // 30분
-  private static final int REFRESH_TOKEN_MAX_AGE = 60 * 60 * 24 * 7; // 7일
+  private static final int ACCESS_TOKEN_MAX_AGE = 60 * 60; // 1시간
+  private static final int REFRESH_TOKEN_MAX_AGE = 60 * 60 * 24 * 7; // 1주일
   private static final String ACCESS_TOKEN_COOKIE_NAME = "accessToken";
   private static final String REFRESH_TOKEN_COOKIE_NAME = "refreshToken";
 
@@ -72,12 +73,13 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     // OAuth2 사용자 정보 가져오기
     CustomOAuth2User oAuth2User = (CustomOAuth2User) authentication.getPrincipal();
     Long userId = oAuth2User.getId();
+    log.info("OAuth2 사용자 정보: ID={}, 이메일={}", userId, oAuth2User.getEmail());
 
     // 사용자 조회
     User user =
         userRepository
             .findById(userId)
-            .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + userId));
+            .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다: " + userId));
 
     // 직접 토큰 생성
     String accessToken = jwtTokenProvider.createAccessToken(user.getId(), user.getEmail());
@@ -134,28 +136,37 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
   private void addTokenCookies(
       HttpServletResponse response, String accessToken, String refreshToken) {
 
-    boolean isSecure = !isLocalEnvironment();
+    // 현재 활성화된 프로필에 따른 환경 설정
+    boolean isLocal = isLocalEnvironment();
 
-    // 리다이렉트 URI의 도메인을 분석하여 쿠키 도메인 설정
-    String domain = null;
+    // 개발 및 운영 환경에서는 HTTPS 사용하므로 Secure=true
+    boolean isSecure = !isLocal;
 
-    // 운영 환경에서는 브라우저와 공유할 수 있도록 상위 도메인 설정
-    // 예: dev.groble.im, groble.im 등
-    if (isProduction() || isDevelopment()) {
-      domain = cookieDomain; // 설정에서 가져오기
+    // SameSite 설정: OAuth2 리다이렉트 처리를 위해 'None' 설정 필수
+    // 브라우저 요구사항: SameSite=None인 경우 항상 Secure=true여야 함
+    String sameSite = "None";
+    if (sameSite.equals("None")) {
+      isSecure = true;
     }
 
-    // Access Token - HttpOnly 설정
+    // 도메인 설정: 로컬 환경에서는 설정하지 않음
+    // 개발/운영 환경에서는 app.cookie.domain 설정 사용 (groble.im)
+    String domain = null;
+    if (!isLocal) {
+      domain = cookieDomain;
+    }
+
+    // Access Token
     CookieUtils.addCookie(
         response,
         ACCESS_TOKEN_COOKIE_NAME,
         accessToken,
         ACCESS_TOKEN_MAX_AGE,
         "/",
-        true,
-        isSecure,
-        "None",
-        domain);
+        true, // httpOnly
+        isSecure, // secure
+        sameSite, // sameSite
+        domain); // domain
 
     // Refresh Token
     CookieUtils.addCookie(
@@ -164,25 +175,18 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         refreshToken,
         REFRESH_TOKEN_MAX_AGE,
         "/",
-        true,
-        isSecure,
-        "None",
-        domain);
+        true, // httpOnly
+        isSecure, // secure
+        sameSite, // sameSite
+        domain); // domain
 
+    String activeProfile = getActiveProfile();
     log.debug(
-        "토큰 쿠키 추가 완료: domain={}, accessToken({}초), refreshToken({}초)",
-        domain != null ? domain : "localhost",
-        ACCESS_TOKEN_MAX_AGE,
-        REFRESH_TOKEN_MAX_AGE);
-  }
-
-  private boolean isDevelopment() {
-    return Arrays.asList(environment.getActiveProfiles()).contains("dev");
-  }
-
-  private boolean isProduction() {
-    return Arrays.asList(environment.getActiveProfiles()).contains("prod")
-        || Arrays.asList(environment.getActiveProfiles()).contains("production");
+        "OAuth2 토큰 쿠키 추가 완료: env={}, domain={}, secure={}, sameSite={}",
+        activeProfile,
+        domain != null ? domain : "기본값(localhost)",
+        isSecure,
+        sameSite);
   }
 
   private boolean isLocalEnvironment() {

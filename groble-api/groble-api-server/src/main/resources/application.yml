@@ -54,6 +54,19 @@ spring:
     path match:
       matching-strategy: ant_path_matcher
 
+  servlet:
+    multipart:
+      enabled: true # 멀티파트 업로드 지원 여부
+      file-size-threshold: 0B # 파일을 디스크에 저장하지 않고 메모리에 저장하는 최소 크기 (default: 0B)
+      max-file-size: 60MB # 한 개 파일의 최대 사이즈
+      max-request-size: 60MB # 한 개 요청의 최대 사이즈
+  thymeleaf:
+    enabled: true
+    prefix: classpath:/templates/
+    suffix: .html
+    mode: HTML
+    cache: false
+
 storage:
   provider: local
 
@@ -64,12 +77,16 @@ app:
       expiration-ms: 3600000 # 1 hour
     refresh-token:
       secret: bZvf0E0wsJXugzxv2m25c5zHvJrNfvsQIjzU6eBScbk=
-      expiration-ms: 604800000 # 7 days
+      expiration-ms: 604800000 # 1 hour
     issuer: groble-auth-service
   frontend-url: http://localhost:3000
   backend-url: http://localhost:8080
   cookie:
     domain: localhost
+  reset:
+    base-url: http://localhost:3000
+    path: /reset-password
+    expiration-minutes: 200000
 
 # Springdoc OpenAPI Configuration
 springdoc:
@@ -112,13 +129,21 @@ logging:
 
 
 # 포트원 결제 관련 설정
-portone:
-  api-url-v2: https://api.portone.io
-  store-id: "store-79cd1897-c594-4ca9-abec-eedce5321197"
-  channel-key: "channel-key-13d64b34-b616-4b01-9a8c-c4cfb6c18ca2"
-  api-secret: "8q1r4uoQvToCPixwJH8IZBBtribsZta2F96K1Wwlob1SQ4JuhAMrRS7PzQgsPTxcqYos8hZvQjs8H09g"
-  default-pg: "tosspayments"
-  payment-redirect-url: "http://localhost:3000/payment"
-  identity-redirect-url: "http://localhost:3000/identity/verify"
-  bank-callback-url: "http://localhost:3000/bank/callback"
-  webhook-secret: "whsec_3ltrVN8oqF50N4fEXaaPryHSvQBl6PxwklNdIdyeQJM="
+#portone:
+#  api-url-v2: https://api.portone.io
+#  store-id: "store-79cd1897-c594-4ca9-abec-eedce5321197"
+#  channel-key: "channel-key-13d64b34-b616-4b01-9a8c-c4cfb6c18ca2"
+#  api-secret: "8q1r4uoQvToCPixwJH8IZBBtribsZta2F96K1Wwlob1SQ4JuhAMrRS7PzQgsPTxcqYos8hZvQjs8H09g"
+#  default-pg: "tosspayments"
+#  payment-redirect-url: "http://localhost:3000/payment"
+#  identity-redirect-url: "http://localhost:3000/identity/verify"
+#  bank-callback-url: "http://localhost:3000/bank/callback"
+#  webhook-secret: "whsec_3ltrVN8oqF50N4fEXaaPryHSvQBl6PxwklNdIdyeQJM="
+
+# Payple 결제 관련 설정
+payple:
+  cst-id: test
+  cust-key: abcd1234567890
+  refund-key: a41ce010ede9fcbfb3be86b24858806596a9db68b79d138b147c3e563e1829a0
+  client-key: test_DF55F29DA654A8CBC0F0A9DD4B556486
+  test-mode: true

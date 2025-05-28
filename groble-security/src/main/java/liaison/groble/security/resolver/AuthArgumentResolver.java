@@ -35,17 +35,43 @@ public class AuthArgumentResolver implements HandlerMethodArgumentResolver {
       ModelAndViewContainer mavContainer,
       NativeWebRequest webRequest,
       WebDataBinderFactory binderFactory) {
+
+    Auth authAnnotation = parameter.getParameterAnnotation(Auth.class);
+    boolean required = authAnnotation != null ? authAnnotation.required() : true;
+
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
+    // 인증 정보가 없거나 인증되지 않은 경우
     if (authentication == null || !authentication.isAuthenticated()) {
-      throw new UnauthorizedException("인증 정보가 없습니다.");
+      if (required) {
+        throw new UnauthorizedException("인증 정보가 없습니다.");
+      } else {
+        // Optional 인증인 경우 익명 사용자 Accessor 반환
+        return createAnonymousAccessor();
+      }
     }
 
     Object principal = authentication.getPrincipal();
-    if (!(principal instanceof liaison.groble.security.jwt.UserDetailsImpl)) {
-      throw new UnauthorizedException("인증 정보가 유효하지 않습니다.");
+
+    // 익명 사용자인 경우 (예: "anonymousUser")
+    if (principal instanceof String && "anonymousUser".equals(principal)) {
+      if (required) {
+        throw new UnauthorizedException("인증 정보가 유효하지 않습니다.");
+      } else {
+        return createAnonymousAccessor();
+      }
     }
 
+    // UserDetailsImpl이 아닌 경우
+    if (!(principal instanceof liaison.groble.security.jwt.UserDetailsImpl)) {
+      if (required) {
+        throw new UnauthorizedException("인증 정보가 유효하지 않습니다.");
+      } else {
+        return createAnonymousAccessor();
+      }
+    }
+
+    // 인증된 사용자 정보로 Accessor 생성
     liaison.groble.security.jwt.UserDetailsImpl userDetails =
         (liaison.groble.security.jwt.UserDetailsImpl) principal;
 
@@ -67,6 +93,17 @@ public class AuthArgumentResolver implements HandlerMethodArgumentResolver {
         .roles(roles)
         .userType(userType)
         .accountType(accountType)
+        .build();
+  }
+
+  /** 익명 사용자를 위한 Accessor 생성 */
+  private Accessor createAnonymousAccessor() {
+    return Accessor.builder()
+        .id(null)
+        .email(null)
+        .roles(Set.of())
+        .userType("ANONYMOUS")
+        .accountType(null)
         .build();
   }
 }

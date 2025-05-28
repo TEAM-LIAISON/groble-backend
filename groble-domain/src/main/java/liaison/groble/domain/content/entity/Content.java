@@ -26,7 +26,7 @@ import jakarta.persistence.Table;
 
 import org.hibernate.annotations.DynamicUpdate;
 
-import liaison.groble.domain.common.entity.BaseEntity;
+import liaison.groble.domain.common.entity.BaseTimeEntity;
 import liaison.groble.domain.content.enums.ContentStatus;
 import liaison.groble.domain.content.enums.ContentType;
 import liaison.groble.domain.user.entity.User;
@@ -48,13 +48,12 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @DynamicUpdate
-public class Content extends BaseEntity {
+public class Content extends BaseTimeEntity {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  // 콘텐츠 이름
-  @Column(nullable = false)
+  @Column(length = 30)
   private String title;
 
   // 콘텐츠 유형
@@ -66,15 +65,15 @@ public class Content extends BaseEntity {
   @JoinColumn(name = "user_id", nullable = false)
   private User user;
 
-  // 카테고리
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "category_id")
   private Category category;
 
-  // 콘텐츠 유형에 따른 옵션
   @OneToMany(mappedBy = "content", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<ContentOption> options = new ArrayList<>();
 
+  @Lob
+  @Column(columnDefinition = "TEXT")
   private String thumbnailUrl; // 썸네일 URL
 
   @Lob
@@ -88,8 +87,13 @@ public class Content extends BaseEntity {
   @Column(name = "image_url")
   private List<String> contentDetailImageUrls = new ArrayList<>();
 
+  @Column(name = "service_target", length = 1000)
   private String serviceTarget; // 서비스 타겟
+
+  @Column(name = "service_process", length = 1000)
   private String serviceProcess; // 제공 절차
+
+  @Column(name = "maker_intro", length = 1000)
   private String makerIntro; // 메이커 소개
 
   @Column(name = "sale_count")
@@ -102,8 +106,13 @@ public class Content extends BaseEntity {
   @Column(name = "lowest_price")
   private BigDecimal lowestPrice; // 최저가
 
-  @Column(name = "reject_reason")
+  @Lob
+  @Column(name = "reject_reason", columnDefinition = "TEXT")
   private String rejectReason;
+
+  /** 조회수 */
+  @Column(name = "view_count", nullable = false)
+  private Long viewCount = 0L;
 
   // 비즈니스 로직으로 옵션 유형 검증
   public void addOption(ContentOption option) {
@@ -186,6 +195,11 @@ public class Content extends BaseEntity {
 
   public void incrementSaleCount() {
     this.saleCount = this.saleCount + 1;
+  }
+
+  /** 조회수 1 증가 */
+  public void incrementViewCount() {
+    this.viewCount = this.viewCount + 1;
   }
 
   public Content(User user) {

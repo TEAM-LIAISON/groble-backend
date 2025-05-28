@@ -19,5 +19,6 @@ public class FlatContentPreviewDTO {
   private String thumbnailUrl;
   private String sellerName;
   private BigDecimal lowestPrice;
+  private int priceOptionLength;
   private String status;
 }
