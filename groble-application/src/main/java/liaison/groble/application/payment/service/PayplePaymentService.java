@@ -1,4 +1,5 @@
-// package liaison.groble.application.payment.service;
+package liaison.groble.application.payment.service;
+
 //
 // import java.math.BigDecimal;
 // import java.time.LocalDateTime;
@@ -11,7 +12,6 @@
 // import org.springframework.stereotype.Service;
 // import org.springframework.transaction.annotation.Transactional;
 //
-// import liaison.groble.application.payment.dto.BillingPaymentRequest;
 // import liaison.groble.application.payment.dto.PaymentCancelResponseDto;
 // import liaison.groble.application.payment.dto.PaymentCompleteResponseDto;
 // import liaison.groble.application.payment.dto.PaymentInfoDto;
@@ -33,18 +33,55 @@
 // import liaison.groble.external.adapter.payment.PaypleSimplePayRequest;
 // import liaison.groble.external.config.PaypleConfig;
 //
-// import lombok.RequiredArgsConstructor;
-// import lombok.extern.slf4j.Slf4j;
-//
-// @Slf4j
-// @Service
-// @RequiredArgsConstructor
-// @Transactional(readOnly = true)
-// public class PayplePaymentService {
-//  private final PaypleConfig paypleConfig;
-//  private final PaypleService paypleService;
-//  private final PayplePaymentRepository payplePaymentRepository;
-//  private final OrderRepository orderRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import liaison.groble.application.payment.dto.PaypleAuthResultDto;
+import liaison.groble.domain.order.repository.OrderRepository;
+import liaison.groble.domain.payment.entity.PayplePayment;
+import liaison.groble.domain.payment.enums.PayplePaymentStatus;
+import liaison.groble.domain.payment.repository.PayplePaymentRepository;
+import liaison.groble.external.adapter.payment.PaypleService;
+import liaison.groble.external.config.PaypleConfig;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class PayplePaymentService {
+  private final PaypleConfig paypleConfig;
+  private final PaypleService paypleService;
+  private final PayplePaymentRepository payplePaymentRepository;
+  private final OrderRepository orderRepository;
+
+  // 앱카드 결제 과정에서 페이플로부터 받은 인증 값을 DB에 저장한다.
+  @Transactional
+  public void saveAppCardAuthResponse(PaypleAuthResultDto dto) {
+    PayplePayment payplePayment =
+        PayplePayment.builder()
+            .pcdPayReqKey(dto.getPayReqKey())
+            .pcdPayOid(dto.getPayOid())
+            .pcdPayerNo(dto.getPayerNo())
+            .pcdPayerName(dto.getPayerName())
+            .pcdPayerHp(dto.getPayerHp())
+            .pcdPayerEmail(dto.getPayerEmail())
+            .pcdPayGoods(dto.getPayGoods())
+            .pcdPayTotal(dto.getPayTotal())
+            .pcdPayTaxTotal(dto.getPayTaxTotal())
+            .pcdPayIsTax(dto.getPayIsTax())
+            .pcdPayTime(dto.getPayTime())
+            .pcdPayType(dto.getPayType())
+            .pcdPayRst(dto.getPayRst())
+            .pcdPayCode(dto.getPayCode())
+            .pcdPayMsg(dto.getPayMsg())
+            .status(PayplePaymentStatus.PENDING) // 명시해도 되고 builder 기본값으로 둘 수도 있음
+            .build();
+
+    payplePaymentRepository.save(payplePayment);
+  }
+}
 //
 //  public PaypleLinkResponseDto processLinkPayment(
 //      PayplePaymentLinkRequestDto payplePaymentLinkRequestDto,
@@ -166,54 +203,7 @@
 //    }
 //  }
 //
-//  /** 정기결제 (빌링) 실행 */
-//  @Transactional
-//  public PayplePayment processBillingPayment(BillingPaymentRequest request) {
-//    // Payment 엔티티 생성
-//    String orderId = generateOrderId();
-////    PayplePayment payment =
-////        PayplePayment.builder()
-////            .orderId(orderId)
-////            .userId(request.getUserId())
-////            .amount(request.getAmount())
-////            .payMethod("CARD")
-////            .status(PayplePaymentStatus.PENDING)
-////            .productName(request.getProductName())
-////            .billingKey(request.getBillingKey())
-////            .build();
-////
-////    payment = payplePaymentRepository.save(payment);
-//
-//    // 빌링 결제 실행
-//    PaypleSimplePayRequest simplePayRequest =
-//        PaypleSimplePayRequest.builder()
-//            .payType("card")
-//            .payerId(request.getBillingKey())
-//            .payGoods(request.getProductName())
-//            .payTotal(request.getAmount().toString())
-//            .payOid(orderId)
-//            .payerNo(request.getUserId().toString())
-//            .payerName(request.getUserName())
-//            .payerHp(request.getUserPhone())
-//            .payerEmail(request.getUserEmail())
-//            .payIstax("Y")
-//            .build();
-//
-//    JSONObject result = paypleService.paySimple(simplePayRequest);
-//
-////    if ("success".equals(result.get("PCD_PAY_RST"))) {
-////      payment.complete(
-////          (String) result.get("PCD_PAYER_ID"),
-////          (String) result.get("PCD_PAY_TIME"),
-////          (String) result.get("PCD_PAY_CARDNAME"),
-////          (String) result.get("PCD_PAY_CARDNUM"));
-////    } else {
-////      payment.fail((String) result.get("PCD_PAY_MSG"));
-////    }
-//
-//    return null;
-//  }
-//
+
 //  /** 결제 정보 조회 */
 //  public PaymentInfoDto getPaymentInfo(String orderId) {
 //    PayplePayment payment =
@@ -234,25 +224,6 @@
 //    return PaymentInfoDto.from(payment, payInfo);
 //  }
 //
-//  /** 빌링키 해지 */
-//  @Transactional
-//  public void deleteBillingKey(Long userId, String billingKey) {
-//    // 빌링키 해지 API 호출
-//    JSONObject result = paypleService.payUserDel(billingKey);
-//
-//    if (!"success".equals(result.get("PCD_PAY_RST"))) {
-//      throw new RuntimeException("빌링키 해지 실패: " + result.get("PCD_PAY_MSG"));
-//    }
-//
-//    // 해당 빌링키를 사용하는 모든 결제 정보 업데이트
-//    payplePaymentRepository
-//        .findByUserIdAndBillingKey(userId, billingKey)
-//        .forEach(
-//            payment -> {
-//              payment.invalidateBillingKey();
-//              payplePaymentRepository.save(payment);
-//            });
-//  }
 //
 //  private String generateOrderId() {
 //    return LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"))

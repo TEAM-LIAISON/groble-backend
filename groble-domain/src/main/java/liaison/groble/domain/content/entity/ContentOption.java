@@ -2,6 +2,7 @@ package liaison.groble.domain.content.entity;
 
 import java.math.BigDecimal;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorColumn;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -33,9 +34,11 @@ public abstract class ContentOption extends BaseTimeEntity {
   private Content content;
 
   // 옵션 제목
+  @Column(length = 20)
   private String name;
 
   // 옵션 설명
+  @Column(length = 60)
   private String description;
 
   // 옵션 가격

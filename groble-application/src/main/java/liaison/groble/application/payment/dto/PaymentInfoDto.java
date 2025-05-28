@@ -20,7 +20,7 @@ public class PaymentInfoDto {
   private String status;
   private String productName;
   private LocalDateTime paymentDate;
-  private String billingKey;
+
   private String cardName;
   private String cardNumber;
   private String receiptUrl;
@@ -34,7 +34,6 @@ public class PaymentInfoDto {
         //        .status(payment.getStatus().name())
         //        .productName(payment.getProductName())
         //        .paymentDate(payment.getPaymentDate())
-        //        .billingKey(payment.getBillingKey())
         //        .cardName((String) apiResponse.get("PCD_PAY_CARDNAME"))
         //        .cardNumber((String) apiResponse.get("PCD_PAY_CARDNUM"))
         //        .receiptUrl((String) apiResponse.get("PCD_PAY_CARDRECEIPT"))

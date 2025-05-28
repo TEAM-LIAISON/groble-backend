@@ -32,4 +32,7 @@ public class CreateOrderRequest {
 
   @Schema(description = "쿠폰 코드 (선택사항)", example = "XYZ1Q5DS311SAZ")
   private String couponCode;
+
+  @Schema(description = "주문 약관 동의", example = "true")
+  private boolean orderTermsAgreed;
 }

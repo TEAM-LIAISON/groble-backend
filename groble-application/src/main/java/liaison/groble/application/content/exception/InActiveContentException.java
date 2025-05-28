@@ -1,4 +1,6 @@
-package liaison.groble.common.exception;
+package liaison.groble.application.content.exception;
+
+import liaison.groble.common.exception.GrobleException;
 
 public class InActiveContentException extends GrobleException {
   public InActiveContentException(String message) {

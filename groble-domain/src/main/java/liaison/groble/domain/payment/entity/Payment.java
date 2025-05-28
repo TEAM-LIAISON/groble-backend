@@ -1,11 +1,11 @@
 package liaison.groble.domain.payment.entity;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
@@ -19,14 +19,14 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Table(
-    name = "payments",
-    indexes = {
-      @Index(name = "idx_payment_order", columnList = "order_id"),
-      @Index(name = "idx_payment_pg_tid", columnList = "pg_tid"),
-      @Index(name = "idx_payment_payment_key", columnList = "payment_key"),
-      @Index(name = "idx_payment_status", columnList = "status"),
-      @Index(name = "idx_payment_created_at", columnList = "created_at")
-    })
+    name = "payments"
+    //    indexes = {
+    //      @Index(name = "idx_payment_order", columnList = "order_id"),
+    //      @Index(name = "idx_payment_pg_tid", columnList = "pg_tid"),
+    //      @Index(name = "idx_payment_payment_key", columnList = "payment_key"),
+    //      @Index(name = "idx_payment_status", columnList = "status"),
+    //      @Index(name = "idx_payment_created_at", columnList = "created_at")
+    )
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Payment extends BaseTimeEntity {
@@ -39,6 +39,10 @@ public class Payment extends BaseTimeEntity {
   @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "order_id", nullable = false, unique = true)
   private Order order;
+
+  /** 취소 사유 - 결제 취소 요청 시 입력한 사유 - 관리자 또는 사용자가 입력 */
+  @Column(name = "cancel_reason")
+  private String cancelReason;
   //
   //    /**
   //     * PG사 고유 결제 키

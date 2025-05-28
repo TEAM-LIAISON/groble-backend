@@ -85,6 +85,9 @@ public class OrderService {
     // 8. 주문 저장
     Order savedOrder = orderRepository.save(order);
 
+    String merchantUid = Order.generateMerchantUid(order.getId());
+    order.setMerchantUid(merchantUid);
+
     log.info(
         "주문 생성 완료 - orderId: {}, userId: {}, contentId: {}, finalAmount: {}",
         savedOrder.getId(),

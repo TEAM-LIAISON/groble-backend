@@ -40,11 +40,7 @@ public class TermsServiceImpl implements TermsService {
 
   @Transactional
   public TermsAgreementDto agreeToTerms(TermsAgreementDto dto) {
-    User user =
-        userRepository
-            .findById(dto.getUserId())
-            .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다: " + dto.getUserId()));
-
+    User user = userReader.getUserById(dto.getUserId());
     // 문자열 타입을 domain TermsType으로 변환
     List<TermsType> termsTypes =
         dto.getTermsTypeStrings().stream().map(TermsType::valueOf).collect(Collectors.toList());

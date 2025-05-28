@@ -16,7 +16,6 @@ public class PaymentCompleteResponseDto {
   private BigDecimal amount;
   private String productName;
   private LocalDateTime paymentDate;
-  private String billingKey;
 
   public static PaymentCompleteResponseDto from(PayplePayment payment) {
     return PaymentCompleteResponseDto.builder()
@@ -25,7 +24,6 @@ public class PaymentCompleteResponseDto {
         //        .amount(payment.getAmount())
         //        .productName(payment.getProductName())
         //        .paymentDate(payment.getPaymentDate())
-        //        .billingKey(payment.getBillingKey())
         .build();
   }
 }

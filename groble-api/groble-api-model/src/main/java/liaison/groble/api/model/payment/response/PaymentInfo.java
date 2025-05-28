@@ -16,7 +16,6 @@ public class PaymentInfo {
   private String status;
   private String productName;
   private LocalDateTime paymentDate;
-  private String billingKey;
   private String cardName;
   private String cardNumber;
   private String receiptUrl;

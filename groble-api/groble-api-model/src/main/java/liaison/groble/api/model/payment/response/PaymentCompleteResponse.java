@@ -14,5 +14,4 @@ public class PaymentCompleteResponse {
   private BigDecimal amount;
   private String productName;
   private LocalDateTime paymentDate;
-  private String billingKey;
 }

@@ -75,7 +75,6 @@ public class PayplePaymentMapper {
         .amount(paymentCompleteResponseDto.getAmount())
         .productName(paymentCompleteResponseDto.getProductName())
         .paymentDate(paymentCompleteResponseDto.getPaymentDate())
-        .billingKey(paymentCompleteResponseDto.getBillingKey())
         .build();
   }
 
@@ -98,7 +97,6 @@ public class PayplePaymentMapper {
         .status(paymentInfoDto.getStatus())
         .productName(paymentInfoDto.getProductName())
         .paymentDate(paymentInfoDto.getPaymentDate())
-        .billingKey(paymentInfoDto.getBillingKey())
         .cardName(paymentInfoDto.getCardName())
         .cardNumber(paymentInfoDto.getCardNumber())
         .receiptUrl(paymentInfoDto.getReceiptUrl())

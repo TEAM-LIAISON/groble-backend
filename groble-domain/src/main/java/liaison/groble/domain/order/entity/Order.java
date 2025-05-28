@@ -1,6 +1,8 @@
 package liaison.groble.domain.order.entity;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -62,6 +64,9 @@ public class Order extends BaseTimeEntity {
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
   private OrderStatus status = OrderStatus.PENDING;
+
+  @Column(name = "merchant_uid", nullable = false, unique = true, length = 30)
+  private String merchantUid;
 
   // 가격 관련 필드들
   @Column(name = "original_amount", nullable = false, precision = 10, scale = 2)
@@ -239,6 +244,10 @@ public class Order extends BaseTimeEntity {
     this.payment = payment;
   }
 
+  public void setMerchantUid(String merchantUid) {
+    this.merchantUid = merchantUid;
+  }
+
   // 팩토리 메서드 수정 (쿠폰 지원)
   public static Order createOrderWithCoupon(
       User user,
@@ -307,5 +316,9 @@ public class Order extends BaseTimeEntity {
     public String getDescription() {
       return description;
     }
+  }
+
+  public static String generateMerchantUid(Long orderId) {
+    return LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")) + orderId;
   }
 }
