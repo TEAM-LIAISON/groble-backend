@@ -16,7 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 public class CouponService {
-  private UserCouponCustomRepository userCouponCustomRepository;
+  private final UserCouponCustomRepository userCouponCustomRepository;
 
   public List<UserCouponResponseDto> getUserCoupons(Long userId) {
     // 내가 사용 가능한 쿠폰들 조회 [쿠폰 상태가 발급됨, 유효 기간이 남아있는 쿠폰들 조회, 쿠폰 활성화 되어야 함]

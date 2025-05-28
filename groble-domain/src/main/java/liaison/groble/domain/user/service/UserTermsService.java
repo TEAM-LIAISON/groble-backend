@@ -7,8 +7,8 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
-import liaison.groble.domain.terms.Terms;
-import liaison.groble.domain.terms.UserTerms;
+import liaison.groble.domain.terms.entity.Terms;
+import liaison.groble.domain.terms.entity.UserTerms;
 import liaison.groble.domain.terms.enums.TermsType;
 import liaison.groble.domain.user.entity.User;
 

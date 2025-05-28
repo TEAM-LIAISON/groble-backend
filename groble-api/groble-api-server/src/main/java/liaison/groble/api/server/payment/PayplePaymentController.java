@@ -12,7 +12,9 @@ import liaison.groble.api.model.payment.request.PayplePaymentLinkRequest;
 import liaison.groble.api.model.payment.response.PaypleLinkResponse;
 import liaison.groble.api.server.payment.mapper.PayplePaymentMapper;
 import liaison.groble.application.order.OrderService;
+import liaison.groble.application.payment.dto.PaymentCompleteResponseDto;
 import liaison.groble.application.payment.dto.PaypleAuthResponseDto;
+import liaison.groble.application.payment.dto.PaypleAuthResultDto;
 import liaison.groble.application.payment.dto.PaypleLinkResponseDto;
 import liaison.groble.application.payment.dto.PayplePaymentLinkRequestDto;
 import liaison.groble.application.payment.service.PayplePaymentService;
@@ -32,6 +34,36 @@ public class PayplePaymentController {
   private final PayplePaymentService payplePaymentService;
   private final OrderService orderService;
   private final PayplePaymentMapper payplePaymentMapper;
+
+  // 앱카드 결제 인증 결과를 수신하고 승인 요청을 페이플에 보낸다.
+  @Operation(summary = "페이플 인증 결과 수신 및 승인 요청", description = "페이플 인증 결과를 수신하고 승인 요청을 처리합니다.")
+  @PostMapping("/auth-result")
+  public ResponseEntity<GrobleResponse<PaymentCompleteResponseDto>> receivePaypleAuthResult(
+      @Valid @RequestBody PaypleAuthResultDto authResult) {
+    log.info(
+        "페이플 인증 결과 수신 - 결과: {}, 코드: {}, 메시지: {}, 주문번호: {}",
+        authResult.getPayRst(),
+        authResult.getPayCode(),
+        authResult.getPayMsg(),
+        authResult.getPayOid());
+
+    // 인증 결과 검증
+    if (authResult.isError()) {
+      log.error("페이플 인증 실패 - 코드: {}, 메시지: {}", authResult.getPayCode(), authResult.getPayMsg());
+      throw new RuntimeException("페이플 인증 실패: " + authResult.getPayMsg());
+    }
+
+    if (authResult.isClosed()) {
+      log.warn("페이플 인증 취소 - 사용자가 결제창을 닫음");
+      return ResponseEntity.ok(
+          GrobleResponse.success(PaymentCompleteResponseDto.builder().status("CANCELLED").build()));
+    }
+
+    // 인증 성공 시 승인 요청 처리
+    PaymentCompleteResponseDto response = payplePaymentService.processAuthResult(authResult);
+
+    return ResponseEntity.ok(GrobleResponse.success(response));
+  }
 
   // 링크 결제 요청이 들어온다
   // 1. 파트너 인증 요청을 페이플 서버에 보낸다

@@ -1,4 +1,4 @@
-package liaison.groble.domain.terms;
+package liaison.groble.domain.terms.entity;
 
 import static lombok.AccessLevel.PROTECTED;
 
@@ -17,7 +17,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
-import liaison.groble.domain.terms.enums.TermsType;
+import liaison.groble.domain.terms.enums.OrderTermsType;
 
 import lombok.Builder;
 import lombok.Getter;
@@ -25,44 +25,43 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Table(
-    name = "terms",
+    name = "order_terms",
     uniqueConstraints = {
       @UniqueConstraint(
-          name = "uk_terms_type_version",
+          name = "uk_order_terms_type_version",
           columnNames = {"type", "version"})
     })
 @Getter
 @NoArgsConstructor(access = PROTECTED)
-public class Terms {
-
+public class OrderTerms {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @Column(name = "terms_title", nullable = false)
+  @Column(name = "order_terms_title", nullable = false)
   private String title;
 
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
-  private TermsType type;
+  private OrderTermsType type;
 
   @Column(nullable = false)
-  private String version; // ex: 20240410.173000
+  private String version;
 
-  private String contentUrl; // 외부 Notion, PDF, CMS 링크 등
+  private String contentUrl;
 
   @Column(nullable = false)
   private LocalDateTime effectiveFrom;
 
   @Column private LocalDateTime effectiveTo;
 
-  @OneToMany(mappedBy = "terms")
-  private List<UserTerms> agreements = new ArrayList<>();
+  @OneToMany(mappedBy = "orderTerms")
+  private List<UserOrderTerms> agreements = new ArrayList<>();
 
   @Builder
-  public Terms(
+  public OrderTerms(
       String title,
-      TermsType type,
+      OrderTermsType type,
       String version,
       String contentUrl,
       LocalDateTime effectiveFrom) {

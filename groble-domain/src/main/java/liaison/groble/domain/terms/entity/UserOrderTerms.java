@@ -1,4 +1,4 @@
-package liaison.groble.domain.terms;
+package liaison.groble.domain.terms.entity;
 
 import static lombok.AccessLevel.PROTECTED;
 
@@ -15,7 +15,6 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
-import liaison.groble.domain.common.entity.BaseTimeEntity;
 import liaison.groble.domain.user.entity.User;
 
 import lombok.Builder;
@@ -24,16 +23,15 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Table(
-    name = "user_terms",
+    name = "user_order_terms",
     uniqueConstraints = {
       @UniqueConstraint(
-          name = "uk_user_terms",
-          columnNames = {"user_id", "terms_id"})
+          name = "uk_user_order_terms",
+          columnNames = {"user_id", "order_terms_id"})
     })
 @Getter
 @NoArgsConstructor(access = PROTECTED)
-public class UserTerms extends BaseTimeEntity {
-
+public class UserOrderTerms {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
@@ -45,8 +43,8 @@ public class UserTerms extends BaseTimeEntity {
 
   /** 동의한 약관 */
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "terms_id", nullable = false)
-  private Terms terms;
+  @JoinColumn(name = "order_terms_id", nullable = false)
+  private OrderTerms orderTerms;
 
   /** 동의 여부 */
   @Column(nullable = false)
@@ -65,15 +63,15 @@ public class UserTerms extends BaseTimeEntity {
   private String agreedUserAgent;
 
   @Builder
-  public UserTerms(
+  public UserOrderTerms(
       User user,
-      Terms terms,
+      OrderTerms orderTerms,
       boolean agreed,
       Instant agreedAt,
       String agreedIp,
       String agreedUserAgent) {
     this.user = user;
-    this.terms = terms;
+    this.orderTerms = orderTerms;
     this.agreed = agreed;
     this.agreedAt = agreedAt;
     this.agreedIp = agreedIp;

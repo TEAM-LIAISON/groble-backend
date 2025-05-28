@@ -17,9 +17,10 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import liaison.groble.domain.terms.entity.OrderTerms;
 import liaison.groble.domain.terms.entity.Terms;
-import liaison.groble.domain.terms.enums.TermsType;
-import liaison.groble.domain.terms.repository.TermsRepository;
+import liaison.groble.domain.terms.enums.OrderTermsType;
+import liaison.groble.domain.terms.repository.OrderTermsRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,35 +28,36 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class TermsDataInitializer implements ApplicationRunner {
-  private final TermsRepository termsRepository;
+public class OrderTermsDataInitializer implements ApplicationRunner {
+  private final OrderTermsRepository orderTermsRepository;
   private static final DateTimeFormatter DATE_TIME_FORMATTER =
       DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
   @Override
   @Transactional
   public void run(ApplicationArguments args) {
-    log.info("Initializing terms data...");
-    initializeTermsData();
-    log.info("Terms data initialization completed");
+    log.info("Initializing order_terms data...");
+    initializeOrderTermsData();
+    log.info("Order Terms data initialization completed");
   }
 
   @Transactional
-  protected void initializeTermsData() {
+  protected void initializeOrderTermsData() {
     try {
       // 기존 데이터 조회
-      List<Terms> existingTerms = termsRepository.findAll();
-      Map<String, Terms> existingTermsMap =
-          existingTerms.stream()
+      List<OrderTerms> existingOrderTerms = orderTermsRepository.findAll();
+      Map<String, OrderTerms> existingOrderTermsMap =
+          existingOrderTerms.stream()
               .collect(
                   Collectors.toMap(
-                      terms -> terms.getType() + "_" + terms.getVersion(), terms -> terms));
+                      orderTerms -> orderTerms.getType() + "_" + orderTerms.getVersion(),
+                      orderTerms -> orderTerms));
 
-      List<Terms> newTerms = new ArrayList<>();
-      List<Terms> updatedTerms = new ArrayList<>();
+      List<OrderTerms> newOrderTerms = new ArrayList<>();
+      List<OrderTerms> updatedOrderTerms = new ArrayList<>();
 
       // CSV 파일에서 데이터 읽기
-      ClassPathResource resource = new ClassPathResource("data/terms.csv");
+      ClassPathResource resource = new ClassPathResource("data/orderTerms.csv");
       try (BufferedReader reader =
           new BufferedReader(
               new InputStreamReader(resource.getInputStream(), StandardCharsets.UTF_8))) {
@@ -67,12 +69,12 @@ public class TermsDataInitializer implements ApplicationRunner {
         while ((line = reader.readLine()) != null) {
           String[] data = line.split(",");
           if (data.length < 5) {
-            log.warn("Invalid terms data format: {}", line);
+            log.warn("Invalid order terms data format: {}", line);
             continue;
           }
 
           String title = data[0].trim();
-          TermsType type = TermsType.valueOf(data[1].trim());
+          OrderTermsType type = OrderTermsType.valueOf(data[1].trim());
           String version = data[2].trim();
           String contentUrl = data[3].trim();
           LocalDateTime effectiveFrom = LocalDateTime.parse(data[4].trim(), DATE_TIME_FORMATTER);
@@ -83,18 +85,18 @@ public class TermsDataInitializer implements ApplicationRunner {
 
           String key = type + "_" + version;
 
-          if (existingTermsMap.containsKey(key)) {
+          if (existingOrderTermsMap.containsKey(key)) {
             // 기존 데이터 업데이트 필요 여부 확인
-            Terms existingTerm = existingTermsMap.get(key);
+            OrderTerms existingOrderTerm = existingOrderTermsMap.get(key);
             boolean needsUpdate =
-                !Objects.equals(existingTerm.getTitle(), title)
-                    || !Objects.equals(existingTerm.getContentUrl(), contentUrl)
-                    || !Objects.equals(existingTerm.getEffectiveFrom(), effectiveFrom)
-                    || !Objects.equals(existingTerm.getEffectiveTo(), effectiveTo);
+                !Objects.equals(existingOrderTerm.getTitle(), title)
+                    || !Objects.equals(existingOrderTerm.getContentUrl(), contentUrl)
+                    || !Objects.equals(existingOrderTerm.getEffectiveFrom(), effectiveFrom)
+                    || !Objects.equals(existingOrderTerm.getEffectiveTo(), effectiveTo);
 
             if (needsUpdate) {
-              Terms updatedTerm =
-                  Terms.builder()
+              OrderTerms updatedOrderTerm =
+                  OrderTerms.builder()
                       .title(title)
                       .type(type)
                       .version(version)
@@ -103,16 +105,16 @@ public class TermsDataInitializer implements ApplicationRunner {
                       .build();
 
               if (effectiveTo != null) {
-                updatedTerm.updateEffectiveTo(effectiveTo);
+                updatedOrderTerm.updateEffectiveTo(effectiveTo);
               }
 
-              updatedTerm = setId(updatedTerm, existingTerm.getId());
-              updatedTerms.add(updatedTerm);
+              updatedOrderTerm = setId(updatedOrderTerm, existingOrderTerm.getId());
+              updatedOrderTerms.add(updatedOrderTerm);
             }
           } else {
             // 새로운 데이터 추가
-            Terms newTerm =
-                Terms.builder()
+            OrderTerms newOrderTerm =
+                OrderTerms.builder()
                     .title(title)
                     .type(type)
                     .version(version)
@@ -121,44 +123,44 @@ public class TermsDataInitializer implements ApplicationRunner {
                     .build();
 
             if (effectiveTo != null) {
-              newTerm.updateEffectiveTo(effectiveTo);
+              newOrderTerm.updateEffectiveTo(effectiveTo);
             }
 
-            newTerms.add(newTerm);
+            newOrderTerms.add(newOrderTerm);
           }
         }
 
         // 벌크 저장/업데이트
-        if (!newTerms.isEmpty()) {
-          termsRepository.saveAll(newTerms);
-          log.info("Added {} new terms", newTerms.size());
+        if (!newOrderTerms.isEmpty()) {
+          orderTermsRepository.saveAll(newOrderTerms);
+          log.info("Added {} new terms", newOrderTerms.size());
         }
 
-        if (!updatedTerms.isEmpty()) {
-          termsRepository.saveAll(updatedTerms);
-          log.info("Updated {} existing terms", updatedTerms.size());
+        if (!updatedOrderTerms.isEmpty()) {
+          orderTermsRepository.saveAll(updatedOrderTerms);
+          log.info("Updated {} existing order terms", updatedOrderTerms.size());
         }
 
-        if (newTerms.isEmpty() && updatedTerms.isEmpty()) {
-          log.info("Terms data is already up to date");
+        if (newOrderTerms.isEmpty() && updatedOrderTerms.isEmpty()) {
+          log.info("Order Terms data is already up to date");
         }
       }
     } catch (Exception e) {
-      log.error("Error initializing terms data", e);
+      log.error("Error initializing order terms data", e);
       // 에러가 발생해도 애플리케이션 시작에 영향을 주지 않도록 처리
     }
   }
 
   // ID를 설정하기 위한 헬퍼 메서드 (리플렉션이나 다른 방법으로 대체 가능)
-  private Terms setId(Terms terms, Long id) {
+  private OrderTerms setId(OrderTerms orderTerms, Long id) {
     try {
       java.lang.reflect.Field field = Terms.class.getDeclaredField("id");
       field.setAccessible(true);
-      field.set(terms, id);
-      return terms;
+      field.set(orderTerms, id);
+      return orderTerms;
     } catch (Exception e) {
       log.error("Error setting ID field", e);
-      return terms;
+      return orderTerms;
     }
   }
 }

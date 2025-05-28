@@ -1,4 +1,4 @@
-package liaison.groble.domain.terms;
+package liaison.groble.domain.terms.entity;
 
 import static com.querydsl.core.types.PathMetadataFactory.*;
 
@@ -16,7 +16,7 @@ import com.querydsl.core.types.dsl.PathInits;
 @Generated("com.querydsl.codegen.DefaultEntitySerializer")
 public class QUserTerms extends EntityPathBase<UserTerms> {
 
-    private static final long serialVersionUID = -1456231359L;
+    private static final long serialVersionUID = 2001401996L;
 
     private static final PathInits INITS = PathInits.DIRECT2;
 

@@ -18,6 +18,7 @@ import liaison.groble.application.payment.dto.PaymentInfoDto;
 import liaison.groble.application.payment.dto.PaymentRequestDto;
 import liaison.groble.application.payment.dto.PaymentRequestResponseDto;
 import liaison.groble.application.payment.dto.PaypleAuthResponseDto;
+import liaison.groble.application.payment.dto.PaypleAuthResultDto;
 import liaison.groble.application.payment.dto.PaypleLinkResponseDto;
 import liaison.groble.application.payment.dto.PayplePaymentLinkRequestDto;
 import liaison.groble.application.payment.dto.PayplePaymentResultDto;
@@ -260,5 +261,100 @@ public class PayplePaymentService {
 
   public String getPaymentJsUrl() {
     return paypleConfig.getPaymentJsUrl();
+  }
+
+  /** 페이플 인증 결과 처리 */
+  @Transactional
+  public PaymentCompleteResponseDto processAuthResult(PaypleAuthResultDto authResult) {
+    log.info("페이플 인증 결과 처리 시작 - 주문번호: {}", authResult.getPayOid());
+
+    // 주문 및 결제 정보 조회
+    PayplePayment payment =
+        payplePaymentRepository
+            .findByOrderId(authResult.getPayOid())
+            .orElseThrow(() -> new IllegalArgumentException("결제 정보를 찾을 수 없습니다."));
+
+    try {
+      // 결제 수단에 따른 승인 요청 처리
+      JSONObject approvalResult;
+
+      if ("card".equals(authResult.getPayType()) && "02".equals(authResult.getCardVer())) {
+        // 앱카드 결제 승인 요청
+        approvalResult = processAppCardApproval(authResult);
+      } else if ("card".equals(authResult.getPayType())) {
+        // 일반 카드 결제 승인 요청
+        approvalResult = processCardApproval(authResult);
+      } else if ("transfer".equals(authResult.getPayType())) {
+        // 계좌이체 승인 요청
+        approvalResult = processTransferApproval(authResult);
+      } else {
+        throw new IllegalArgumentException("지원하지 않는 결제 수단입니다: " + authResult.getPayType());
+      }
+
+      // 승인 결과 처리
+      if ("success".equals(approvalResult.get("PCD_PAY_RST"))) {
+        payment.complete(
+            (String) approvalResult.get("PCD_PAYER_ID"),
+            (String) approvalResult.get("PCD_PAY_TIME"),
+            (String) approvalResult.get("PCD_PAY_CARDNAME"),
+            (String) approvalResult.get("PCD_PAY_CARDNUM"));
+
+        // 영수증 URL 저장
+        if (approvalResult.get("PCD_PAY_CARDRECEIPT") != null) {
+          payment.setReceiptUrl((String) approvalResult.get("PCD_PAY_CARDRECEIPT"));
+        }
+      } else {
+        payment.fail((String) approvalResult.get("PCD_PAY_MSG"));
+      }
+
+      return PaymentCompleteResponseDto.from(payplePaymentRepository.save(payment));
+
+    } catch (Exception e) {
+      log.error("페이플 승인 요청 실패 - 주문번호: {}", authResult.getPayOid(), e);
+      payment.fail("승인 요청 실패: " + e.getMessage());
+      payplePaymentRepository.save(payment);
+      throw new RuntimeException("결제 승인 처리 중 오류가 발생했습니다.", e);
+    }
+  }
+
+  /** 앱카드 승인 요청 처리 */
+  private JSONObject processAppCardApproval(PaypleAuthResultDto authResult) {
+    Map<String, String> params = new HashMap<>();
+    params.put("PCD_CST_ID", paypleConfig.getCstId());
+    params.put("PCD_CUST_KEY", paypleConfig.getCustKey());
+    params.put("PCD_AUTH_KEY", authResult.getAuthKey());
+    params.put("PCD_PAY_REQKEY", authResult.getPayReqKey());
+    params.put("PCD_PAYER_ID", authResult.getPayerId());
+
+    log.info("앱카드 승인 요청 - 주문번호: {}", authResult.getPayOid());
+    return paypleService.payAppCard(params);
+  }
+
+  /** 일반 카드 승인 요청 처리 */
+  private JSONObject processCardApproval(PaypleAuthResultDto authResult) {
+    Map<String, String> params = new HashMap<>();
+    params.put("PCD_CST_ID", paypleConfig.getCstId());
+    params.put("PCD_CUST_KEY", paypleConfig.getCustKey());
+    params.put("PCD_AUTH_KEY", authResult.getAuthKey());
+    params.put("PCD_PAY_REQKEY", authResult.getPayReqKey());
+    params.put("PCD_PAYER_ID", authResult.getPayerId());
+    params.put("PCD_PAY_OID", authResult.getPayOid());
+
+    log.info("카드 승인 요청 - 주문번호: {}", authResult.getPayOid());
+    return paypleService.payConfirm(params);
+  }
+
+  /** 계좌이체 승인 요청 처리 */
+  private JSONObject processTransferApproval(PaypleAuthResultDto authResult) {
+    Map<String, String> params = new HashMap<>();
+    params.put("PCD_CST_ID", paypleConfig.getCstId());
+    params.put("PCD_CUST_KEY", paypleConfig.getCustKey());
+    params.put("PCD_AUTH_KEY", authResult.getAuthKey());
+    params.put("PCD_PAY_REQKEY", authResult.getPayReqKey());
+    params.put("PCD_PAYER_ID", authResult.getPayerId());
+    params.put("PCD_PAY_OID", authResult.getPayOid());
+
+    log.info("계좌이체 승인 요청 - 주문번호: {}", authResult.getPayOid());
+    return paypleService.payConfirm(params);
   }
 }

@@ -37,4 +37,20 @@ public class PaypleConfig {
         ? "https://democpay.payple.kr/php/link/api/LinkRegAct.php?ACT_=LINKREG"
         : "https://cpay.payple.kr/php/link/api/LinkRegAct.php?ACT_=LINKREG";
   }
+
+  public String getAppCardPaymentUrl() {
+    return testMode
+        ? "https://democpay.payple.kr/php/PayCardConfirmAct.php?ACT_=PAYM"
+        : "https://cpay.payple.kr/php/PayCardConfirmAct.php?ACT_=PAYM";
+  }
+
+  public String getPayConfirmUrl() {
+    return testMode
+        ? "https://democpay.payple.kr/php/PayConfirmAct.php"
+        : "https://cpay.payple.kr/php/PayConfirmAct.php";
+  }
+
+  public String getRefererUrl() {
+    return testMode ? "https://test.groble.im" : "https://groble.im";
+  }
 }

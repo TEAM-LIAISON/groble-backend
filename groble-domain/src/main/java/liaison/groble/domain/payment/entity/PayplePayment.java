@@ -132,4 +132,15 @@ public class PayplePayment extends BaseTimeEntity {
   public void invalidateBillingKey() {
     this.billingKey = null;
   }
+
+  public void updateAuthInfo(String authKey, String payReqKey, String payerId) {
+    if (payerId != null && !payerId.isEmpty()) {
+      this.payerId = payerId;
+    }
+    // 필요한 경우 authKey와 payReqKey를 저장할 필드를 추가할 수 있습니다
+  }
+
+  public void setReceiptUrl(String receiptUrl) {
+    this.receiptUrl = receiptUrl;
+  }
 }

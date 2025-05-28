@@ -7,6 +7,17 @@ import org.json.simple.JSONObject;
 
 public interface PaypleService {
 
+  // 앱카드 결제
+  JSONObject payAppCard(Map<String, String> params);
+
+  /**
+   * 결제 승인 요청
+   *
+   * @param params 승인 요청 파라미터
+   * @return 승인 결과
+   */
+  JSONObject payConfirm(Map<String, String> params);
+
   /**
    * 파트너 인증
    *

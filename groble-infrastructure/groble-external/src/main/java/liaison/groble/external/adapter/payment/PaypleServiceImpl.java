@@ -26,6 +26,119 @@ public class PaypleServiceImpl implements PaypleService {
   private final PaypleConfig paypleConfig;
 
   @Override
+  public JSONObject payAppCard(Map<String, String> params) {
+    JSONObject jsonObject = new JSONObject();
+    JSONParser jsonParser = new JSONParser();
+
+    try {
+      // 앱카드 승인 요청 URL
+      String appCardPaymentUrl = paypleConfig.getAppCardPaymentUrl();
+
+      // 요청 파라미터 구성
+      JSONObject obj = new JSONObject();
+      obj.put("PCD_CST_ID", params.get("PCD_CST_ID"));
+      obj.put("PCD_CUST_KEY", params.get("PCD_CUST_KEY"));
+      obj.put("PCD_AUTH_KEY", params.get("PCD_AUTH_KEY"));
+      obj.put("PCD_PAY_REQKEY", params.get("PCD_PAY_REQKEY"));
+      obj.put("PCD_PAYER_ID", params.get("PCD_PAYER_ID"));
+
+      log.info("페이플 앱카드 승인 요청: {}", obj.toString());
+
+      URL url = new URL(appCardPaymentUrl);
+      HttpURLConnection con = (HttpURLConnection) url.openConnection();
+
+      con.setRequestMethod("POST");
+      con.setRequestProperty("content-type", "application/json");
+      con.setRequestProperty("charset", "UTF-8");
+      con.setRequestProperty("referer", paypleConfig.getRefererUrl());
+      con.setDoOutput(true);
+
+      DataOutputStream wr = new DataOutputStream(con.getOutputStream());
+      wr.write(obj.toString().getBytes());
+      wr.flush();
+      wr.close();
+
+      int responseCode = con.getResponseCode();
+      BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+      String inputLine;
+      StringBuffer response = new StringBuffer();
+
+      while ((inputLine = in.readLine()) != null) {
+        response.append(inputLine);
+      }
+      in.close();
+
+      jsonObject = (JSONObject) jsonParser.parse(response.toString());
+
+      log.info("페이플 앱카드 승인 응답: {}", jsonObject.toString());
+
+    } catch (Exception e) {
+      log.error("Payple 앱카드 결제 오류: ", e);
+      jsonObject.put("PCD_PAY_RST", "error");
+      jsonObject.put("PCD_PAY_MSG", "앱카드 결제 처리 중 오류가 발생했습니다: " + e.getMessage());
+    }
+
+    return jsonObject;
+  }
+
+  @Override
+  public JSONObject payConfirm(Map<String, String> params) {
+    JSONObject jsonObject = new JSONObject();
+    JSONParser jsonParser = new JSONParser();
+
+    try {
+      // 결제 승인 요청 URL
+      String confirmUrl = paypleConfig.getPayConfirmUrl();
+
+      // 요청 파라미터 구성
+      JSONObject obj = new JSONObject();
+      obj.put("PCD_CST_ID", params.get("PCD_CST_ID"));
+      obj.put("PCD_CUST_KEY", params.get("PCD_CUST_KEY"));
+      obj.put("PCD_AUTH_KEY", params.get("PCD_AUTH_KEY"));
+      obj.put("PCD_PAY_REQKEY", params.get("PCD_PAY_REQKEY"));
+      obj.put("PCD_PAYER_ID", params.get("PCD_PAYER_ID"));
+      obj.put("PCD_PAY_OID", params.get("PCD_PAY_OID"));
+
+      log.info("페이플 결제 승인 요청: {}", obj.toString());
+
+      URL url = new URL(confirmUrl);
+      HttpURLConnection con = (HttpURLConnection) url.openConnection();
+
+      con.setRequestMethod("POST");
+      con.setRequestProperty("content-type", "application/json");
+      con.setRequestProperty("charset", "UTF-8");
+      con.setRequestProperty("referer", paypleConfig.getRefererUrl());
+      con.setDoOutput(true);
+
+      DataOutputStream wr = new DataOutputStream(con.getOutputStream());
+      wr.write(obj.toString().getBytes());
+      wr.flush();
+      wr.close();
+
+      int responseCode = con.getResponseCode();
+      BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+      String inputLine;
+      StringBuffer response = new StringBuffer();
+
+      while ((inputLine = in.readLine()) != null) {
+        response.append(inputLine);
+      }
+      in.close();
+
+      jsonObject = (JSONObject) jsonParser.parse(response.toString());
+
+      log.info("페이플 결제 승인 응답: {}", jsonObject.toString());
+
+    } catch (Exception e) {
+      log.error("Payple 결제 승인 오류: ", e);
+      jsonObject.put("PCD_PAY_RST", "error");
+      jsonObject.put("PCD_PAY_MSG", "결제 승인 처리 중 오류가 발생했습니다: " + e.getMessage());
+    }
+
+    return jsonObject;
+  }
+
+  @Override
   public JSONObject payLinkCreate(Map<String, String> params, Map<String, BigDecimal> amounts) {
     JSONObject jsonObject = new JSONObject();
     JSONParser jsonParser = new JSONParser();

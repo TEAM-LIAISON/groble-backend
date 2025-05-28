@@ -5,7 +5,7 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Repository;
 
-import liaison.groble.domain.terms.UserTerms;
+import liaison.groble.domain.terms.entity.UserTerms;
 import liaison.groble.domain.terms.repository.UserTermsRepository;
 
 import lombok.AllArgsConstructor;

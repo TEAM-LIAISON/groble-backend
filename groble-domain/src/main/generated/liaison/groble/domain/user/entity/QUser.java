@@ -49,7 +49,7 @@ public class QUser extends EntityPathBase<User> {
 
     public final QSocialAccount socialAccount;
 
-    public final SetPath<liaison.groble.domain.terms.UserTerms, liaison.groble.domain.terms.QUserTerms> termsAgreements = this.<liaison.groble.domain.terms.UserTerms, liaison.groble.domain.terms.QUserTerms>createSet("termsAgreements", liaison.groble.domain.terms.UserTerms.class, liaison.groble.domain.terms.QUserTerms.class, PathInits.DIRECT2);
+    public final SetPath<liaison.groble.domain.terms.entity.UserTerms, liaison.groble.domain.terms.entity.QUserTerms> termsAgreements = this.<liaison.groble.domain.terms.entity.UserTerms, liaison.groble.domain.terms.entity.QUserTerms>createSet("termsAgreements", liaison.groble.domain.terms.entity.UserTerms.class, liaison.groble.domain.terms.entity.QUserTerms.class, PathInits.DIRECT2);
 
     //inherited
     public final DateTimePath<java.time.LocalDateTime> updatedAt = _super.updatedAt;

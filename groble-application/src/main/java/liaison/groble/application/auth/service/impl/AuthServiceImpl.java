@@ -38,7 +38,7 @@ import liaison.groble.domain.port.EmailSenderPort;
 import liaison.groble.domain.port.VerificationCodePort;
 import liaison.groble.domain.role.Role;
 import liaison.groble.domain.role.repository.RoleRepository;
-import liaison.groble.domain.terms.Terms;
+import liaison.groble.domain.terms.entity.Terms;
 import liaison.groble.domain.terms.enums.TermsType;
 import liaison.groble.domain.terms.repository.TermsRepository;
 import liaison.groble.domain.user.entity.IntegratedAccount;
