@@ -17,6 +17,7 @@ import liaison.groble.application.order.dto.OrderCreateDto;
 import liaison.groble.application.terms.dto.TermsAgreementDto;
 import liaison.groble.application.terms.service.OrderTermsService;
 import liaison.groble.common.annotation.Auth;
+import liaison.groble.common.exception.InvalidRequestException;
 import liaison.groble.common.model.Accessor;
 import liaison.groble.common.response.GrobleResponse;
 
@@ -44,7 +45,9 @@ public class OrderController {
       @RequestBody CreateOrderRequest request,
       HttpServletRequest httpRequest) {
 
-    if (!request.isOrderTermsAgreed()) {}
+    if (!request.isOrderTermsAgreed()) {
+      throw new InvalidRequestException("주문 약관에 동의해야 합니다.");
+    }
 
     OrderCreateDto orderCreateDto =
         orderService.createOrder(
@@ -56,9 +59,8 @@ public class OrderController {
 
     OrderResponse orderResponse = orderDtoMapper.toOrderResponse(orderCreateDto);
 
-    // 1. API DTO → 서비스 DTO 변환
     TermsAgreementDto termsAgreementDto = termsDtoMapper.toServiceOrderTermsAgreementDto();
-
+    termsAgreementDto.setUserId(accessor.getUserId());
     // IP 및 User-Agent 설정
     termsAgreementDto.setIpAddress(httpRequest.getRemoteAddr());
     termsAgreementDto.setUserAgent(httpRequest.getHeader("User-Agent"));
