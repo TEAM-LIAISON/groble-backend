@@ -9,10 +9,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import liaison.groble.application.content.ContentReader;
+import liaison.groble.application.order.dto.CreateFinalizeOrderDto;
 import liaison.groble.application.order.dto.CreateInitialOrderDto;
+import liaison.groble.application.order.dto.FinalizeOrderResponse;
 import liaison.groble.application.order.dto.InitialOrderResponse;
-import liaison.groble.application.order.dto.OrderCreateDto;
 import liaison.groble.application.order.dto.ValidatedOrderOptionDto;
+import liaison.groble.application.order.service.OrderReader;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.domain.content.entity.CoachingOption;
 import liaison.groble.domain.content.entity.Content;
@@ -38,6 +40,7 @@ public class OrderService {
   private final ContentReader contentReader;
   private final OrderRepository orderRepository;
   private final UserCouponRepository userCouponRepository;
+  private final OrderReader orderReader;
 
   /**
    * 초기 주문 생성 - 여러 옵션 지원
@@ -100,7 +103,7 @@ public class OrderService {
         dto.getUserId(),
         dto.getContentId(),
         validatedOptions.size(),
-        order.getFinalAmount());
+        order.getFinalPrice());
 
     // 7단계: 응답 생성
     return buildInitialOrderResponse(order);
@@ -193,139 +196,245 @@ public class OrderService {
     return InitialOrderResponse.builder()
         .orderId(order.getId())
         .merchantUid(order.getMerchantUid())
-        .originalAmount(order.getOriginalAmount())
-        .discountAmount(order.getDiscountAmount())
-        .finalAmount(order.getFinalAmount())
+        .originalPrice(order.getOriginalPrice())
+        .discountPrice(order.getDiscountPrice())
+        .finalPrice(order.getFinalPrice())
         .orderItems(orderItemResponses)
         .build();
   }
 
-  /** 페이플 결제를 위한 주문 생성 메서드 - 쿠폰 적용 지원 - 옵션 타입 문자열로 받아 처리 */
+  /**
+   * 최종 주문 확정 메서드 - 쿠폰 적용 및 결제 준비
+   *
+   * <p>이 메서드는 초기 주문(Initial Order)을 최종 확정하는 단계입니다. 주요 기능: 1. 기존 주문 검증 2. 쿠폰 적용 (여러 쿠폰 중 최적 선택) 3.
+   * 최종 금액 확정 4. 결제 준비 상태로 전환
+   */
   @Transactional
-  public OrderCreateDto createOrder(
-      Long userId, Long contentId, String optionTypeStr, Long optionId, String couponCode) {
+  public FinalizeOrderResponse createFinalizeOrder(CreateFinalizeOrderDto dto) {
+    // 1단계: 필요한 엔티티 조회
+    User user = userReader.getUserById(dto.getUserId());
+    Content content = contentReader.getContentById(dto.getContentId());
 
-    User user = userReader.getUserById(userId);
-    Content content = contentReader.getContentById(contentId);
+    // merchantUid로 기존 주문 조회 - 초기 주문이 이미 생성되어 있어야 함
+    Order order = orderReader.getOrderByMerchantUid(dto.getMerchantUid());
 
-    OrderItem.OptionType optionType = null;
-    if (optionTypeStr != null && !optionTypeStr.isEmpty()) {
+    // 2단계: 주문 상태 및 소유권 검증
+    validateOrderForFinalization(order, user, content);
+
+    // 3단계: 요청된 옵션과 기존 주문 항목 비교 검증
+    // 초기 주문과 최종 주문의 옵션이 일치하는지 확인
+    validateOrderItemsMatch(order, dto.getOptions());
+
+    // 4단계: 쿠폰 검증 및 적용
+    // 여러 쿠폰 중 가장 유리한 하나만 적용하는 것이 일반적
+    UserCoupon appliedCoupon = null;
+    if (dto.getCouponCodes() != null && !dto.getCouponCodes().isEmpty()) {
+      appliedCoupon =
+          findAndValidateBestCoupon(user, dto.getCouponCodes(), order.getOriginalPrice());
+
+      if (appliedCoupon != null) {
+        order.applyCoupon(appliedCoupon);
+        log.info(
+            "쿠폰 적용 완료 - orderId: {}, couponCode: {}, 할인금액: {}",
+            order.getId(),
+            appliedCoupon.getCouponCode(),
+            order.getCouponDiscountPrice());
+      }
+    }
+
+    // 5단계: 주문 저장
+    order = orderRepository.save(order);
+
+    // 6단계: 응답 생성
+    return buildFinalizeOrderResponse(order, appliedCoupon);
+  }
+
+  /** 주문 최종화 가능 여부 검증 */
+  private void validateOrderForFinalization(Order order, User user, Content content) {
+    // 주문 상태 확인 - PENDING 상태에서만 최종화 가능
+    if (order.getStatus() != Order.OrderStatus.PENDING) {
+      throw new IllegalStateException(
+          String.format("주문 상태가 올바르지 않습니다. 현재 상태: %s", order.getStatus()));
+    }
+
+    // 주문 소유자 확인
+    if (!order.getUser().getId().equals(user.getId())) {
+      throw new IllegalArgumentException("본인의 주문만 확정할 수 있습니다");
+    }
+
+    // 콘텐츠 일치 확인
+    boolean contentMatches =
+        order.getOrderItems().stream()
+            .allMatch(item -> item.getContent().getId().equals(content.getId()));
+
+    if (!contentMatches) {
+      throw new IllegalArgumentException("주문의 콘텐츠와 요청한 콘텐츠가 일치하지 않습니다");
+    }
+  }
+
+  /**
+   * 요청된 옵션과 기존 주문 항목 비교
+   *
+   * <p>초기 주문 생성 시의 옵션과 최종 확정 시의 옵션이 일치하는지 검증합니다. 이는 주문 무결성을 보장하기 위한 중요한 검증입니다.
+   */
+  private void validateOrderItemsMatch(
+      Order order, List<CreateFinalizeOrderDto.OrderOptionDto> requestedOptions) {
+    // 옵션 개수 확인
+    if (order.getOrderItems().size() != requestedOptions.size()) {
+      throw new IllegalArgumentException("주문 항목 수가 일치하지 않습니다");
+    }
+
+    // 각 옵션의 상세 내용 확인
+    for (CreateFinalizeOrderDto.OrderOptionDto requested : requestedOptions) {
+      boolean found =
+          order.getOrderItems().stream()
+              .anyMatch(
+                  item ->
+                      item.getOptionId().equals(requested.getOptionId())
+                          && item.getOptionType().name().equals(requested.getOptionType().name())
+                          && item.getQuantity() == requested.getQuantity());
+
+      if (!found) {
+        throw new IllegalArgumentException(
+            String.format("주문 항목이 일치하지 않습니다. 옵션ID: %d", requested.getOptionId()));
+      }
+    }
+  }
+
+  /**
+   * 가장 유리한 쿠폰 찾기 및 검증
+   *
+   * <p>여러 쿠폰 중 할인 금액이 가장 큰 쿠폰을 선택합니다. 각 쿠폰의 사용 가능 여부를 검증하고, 할인 금액을 계산하여 비교합니다.
+   */
+  private UserCoupon findAndValidateBestCoupon(
+      User user, List<String> couponCodes, BigDecimal orderPrice) {
+    UserCoupon bestCoupon = null;
+    BigDecimal maxDiscount = BigDecimal.ZERO;
+
+    for (String couponCode : couponCodes) {
       try {
-        optionType = OrderItem.OptionType.valueOf(optionTypeStr);
-      } catch (IllegalArgumentException e) {
-        throw new IllegalArgumentException("잘못된 옵션 타입입니다: " + optionTypeStr);
+        UserCoupon coupon = userCouponRepository.findByCouponCode(couponCode).orElse(null);
+
+        if (coupon == null) {
+          log.warn("쿠폰을 찾을 수 없습니다: {}", couponCode);
+          continue;
+        }
+
+        // 쿠폰 소유자 확인
+        if (!coupon.getUser().getId().equals(user.getId())) {
+          log.warn("본인 소유가 아닌 쿠폰: {}", couponCode);
+          continue;
+        }
+
+        // 쿠폰 사용 가능 여부 확인
+        if (!coupon.isUsable()) {
+          log.warn("사용할 수 없는 쿠폰: {}", couponCode);
+          continue;
+        }
+
+        // 할인 금액 계산
+        BigDecimal discountPrice = coupon.getCouponTemplate().calculateDiscountPrice(orderPrice);
+
+        // 가장 할인이 큰 쿠폰 선택
+        if (discountPrice.compareTo(maxDiscount) > 0) {
+          maxDiscount = discountPrice;
+          bestCoupon = coupon;
+        }
+
+      } catch (Exception e) {
+        log.error("쿠폰 검증 중 오류 발생 - couponCode: {}", couponCode, e);
       }
     }
 
-    // 4. 옵션에 따른 가격 조회
-    BigDecimal price = getOptionPrice(content, optionType, optionId);
-
-    // 5. 구매자 정보 생성
-    Purchaser purchaser =
-        Purchaser.builder()
-            .name(user.getNickname())
-            .email(user.getEmail())
-            .phone(user.getPhoneNumber())
-            .build();
-
-    // 6. 쿠폰 조회 및 검증 (선택사항)
-    UserCoupon userCoupon = null;
-    if (couponCode != null) {
-      userCoupon =
-          userCouponRepository
-              .findByCouponCode(couponCode)
-              .orElseThrow(() -> new IllegalArgumentException("쿠폰을 찾을 수 없습니다."));
-
-      // 쿠폰 사용 가능 여부 검증
-      if (!userCoupon.isUsable()) {
-        throw new IllegalArgumentException("사용할 수 없는 쿠폰입니다.");
-      }
-
-      // 쿠폰 소유자 검증
-      if (!userCoupon.getUser().getId().equals(userId)) {
-        throw new IllegalArgumentException("본인의 쿠폰만 사용할 수 있습니다.");
-      }
+    if (bestCoupon != null) {
+      log.info("최적 쿠폰 선택 완료 - couponCode: {}, 할인금액: {}", bestCoupon.getCouponCode(), maxDiscount);
     }
 
-    // 7. 주문 생성 (쿠폰 적용 포함)
-    Order order =
-        Order.createOrderWithCoupon(
-            user, content, optionType, optionId, price, userCoupon, purchaser);
+    return bestCoupon;
+  }
 
-    // 8. 주문 저장
-    Order savedOrder = orderRepository.save(order);
+  /**
+   * FinalizeOrderResponse 생성
+   *
+   * <p>확정된 주문 정보를 바탕으로 클라이언트에 반환할 응답을 구성합니다. 쿠폰 적용 정보와 최종 금액을 포함합니다.
+   */
+  private FinalizeOrderResponse buildFinalizeOrderResponse(Order order, UserCoupon appliedCoupon) {
+    // 주문 항목 정보 구성
+    List<FinalizeOrderResponse.OrderItemInfo> orderItems =
+        order.getOrderItems().stream()
+            .map(
+                item -> {
+                  // 옵션명 조회
+                  String optionName =
+                      getOptionName(item.getContent(), item.getOptionType(), item.getOptionId());
 
-    String merchantUid = Order.generateMerchantUid(order.getId());
-    order.setMerchantUid(merchantUid);
+                  return FinalizeOrderResponse.OrderItemInfo.builder()
+                      .optionId(item.getOptionId())
+                      .optionType(item.getOptionType().name())
+                      .optionName(optionName)
+                      .quantity(item.getQuantity())
+                      .price(item.getPrice())
+                      .totalPrice(item.getTotalPrice())
+                      .build();
+                })
+            .collect(Collectors.toList());
 
-    log.info(
-        "주문 생성 완료 - merchantUid: {}, userId: {}, contentId: {}, finalAmount: {}",
-        savedOrder.getMerchantUid(),
-        userId,
-        contentId,
-        savedOrder.getFinalAmount());
+    // 쿠폰 정보 구성
+    List<FinalizeOrderResponse.AppliedCouponInfo> appliedCoupons = new ArrayList<>();
+    if (appliedCoupon != null) {
+      appliedCoupons.add(
+          FinalizeOrderResponse.AppliedCouponInfo.builder()
+              .couponCode(appliedCoupon.getCouponCode())
+              .couponName(appliedCoupon.getCouponTemplate().getName())
+              .discountPrice(order.getCouponDiscountPrice())
+              .discountType(appliedCoupon.getCouponTemplate().getCouponType().name())
+              .build());
+    }
 
-    return OrderCreateDto.builder()
-        .merchantUid(savedOrder.getMerchantUid())
-        .contentId(contentId)
-        .optionId(optionId)
-        .price(price)
-        .quantity(1) // 기본 수량 1로 설정
-        .totalPrice(price)
+    return FinalizeOrderResponse.builder()
+        .orderId(order.getId())
+        .merchantUid(order.getMerchantUid())
+        .originalPrice(order.getOriginalPrice())
+        .couponDiscountPrice(order.getCouponDiscountPrice())
+        .finalPrice(order.getFinalPrice())
+        .appliedCoupons(appliedCoupons)
+        .orderItems(orderItems)
+        .readyForPayment(true)
+        .paymentMessage("결제를 진행해주세요")
         .build();
   }
 
-  //  /**
-  //   * 사용자별 주문 목록 조회
-  //   */
-  //  @Transactional(readOnly = true)
-  //  public List<Order> findByUserId(Long userId, int page, int size) {
-  //    PageRequest pageRequest = PageRequest.of(page, size);
-  //    return orderRepository.findByUserIdOrderByCreatedAtDesc(userId, pageRequest);
-  //  }
-
-  /** 주문 취소 (결제 전 상태에서만 가능) */
-  @Transactional
-  public void cancelOrder(Order order, String reason) {
-    if (order.getStatus() != Order.OrderStatus.PENDING) {
-      throw new IllegalStateException("결제 대기 상태에서만 취소 가능합니다.");
-    }
-
-    order.cancelOrder(reason);
-    orderRepository.save(order);
-
-    log.info("주문 취소 완료 - orderId: {}, reason: {}", order.getId(), reason);
-  }
-
-  /** 주문 저장 */
-  @Transactional
-  public Order save(Order order) {
-    return orderRepository.save(order);
-  }
-
-  /** 옵션별 가격 조회 */
-  private BigDecimal getOptionPrice(
-      Content content, OrderItem.OptionType optionType, Long optionId) {
-    ContentOption option =
-        content.getOptions().stream()
-            .filter(opt -> opt.getId().equals(optionId))
-            .findFirst()
-            .orElseThrow(() -> new IllegalArgumentException("옵션을 찾을 수 없습니다: " + optionId));
-
-    return option.getPrice();
-  }
-
-  /** 옵션명 조회 */
+  /**
+   * 옵션명 조회
+   *
+   * <p>ContentOption에서 옵션명을 가져옵니다. 옵션이 없는 경우 기본값을 반환합니다.
+   */
   private String getOptionName(Content content, OrderItem.OptionType optionType, Long optionId) {
     if (optionType == null || optionId == null) {
       return "기본 옵션";
     }
 
+    // Content의 옵션 리스트에서 해당 ID의 옵션을 찾습니다
     ContentOption option =
         content.getOptions().stream()
             .filter(opt -> opt.getId().equals(optionId))
             .findFirst()
-            .orElseThrow(() -> new IllegalArgumentException("옵션을 찾을 수 없습니다: " + optionId));
+            .orElse(null);
+
+    if (option == null) {
+      log.warn("옵션을 찾을 수 없습니다 - contentId: {}, optionId: {}", content.getId(), optionId);
+      return "알 수 없는 옵션";
+    }
+
+    // 옵션 타입에 따른 추가 검증 (선택사항)
+    if (optionType == OrderItem.OptionType.COACHING_OPTION && !(option instanceof CoachingOption)) {
+      log.warn(
+          "옵션 타입 불일치 - expected: COACHING_OPTION, actual: {}", option.getClass().getSimpleName());
+    } else if (optionType == OrderItem.OptionType.DOCUMENT_OPTION
+        && !(option instanceof DocumentOption)) {
+      log.warn(
+          "옵션 타입 불일치 - expected: DOCUMENT_OPTION, actual: {}", option.getClass().getSimpleName());
+    }
 
     return option.getName();
   }

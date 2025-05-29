@@ -31,9 +31,9 @@ public class QBankAccountVerification extends EntityPathBase<BankAccountVerifica
 
     public final StringPath depositAccountNumber = createString("depositAccountNumber");
 
-    public final NumberPath<java.math.BigDecimal> depositAmount = createNumber("depositAmount", java.math.BigDecimal.class);
-
     public final StringPath depositBank = createString("depositBank");
+
+    public final NumberPath<java.math.BigDecimal> depositPrice = createNumber("depositPrice", java.math.BigDecimal.class);
 
     public final DateTimePath<java.time.LocalDateTime> expiredAt = createDateTime("expiredAt", java.time.LocalDateTime.class);
 

@@ -77,8 +77,8 @@ public class Purchase extends BaseTimeEntity {
   @Column(name = "original_price", nullable = false, precision = 10, scale = 2)
   private BigDecimal originalPrice;
 
-  @Column(name = "discount_amount", precision = 10, scale = 2)
-  private BigDecimal discountAmount = BigDecimal.ZERO;
+  @Column(name = "discount_price", precision = 10, scale = 2)
+  private BigDecimal discountPrice = BigDecimal.ZERO;
 
   @Column(name = "final_price", nullable = false, precision = 10, scale = 2)
   private BigDecimal finalPrice;
@@ -91,8 +91,8 @@ public class Purchase extends BaseTimeEntity {
   @Column(name = "coupon_code")
   private String couponCode;
 
-  @Column(name = "coupon_discount_amount", precision = 10, scale = 2)
-  private BigDecimal couponDiscountAmount = BigDecimal.ZERO;
+  @Column(name = "coupon_discount_price", precision = 10, scale = 2)
+  private BigDecimal couponDiscountPrice = BigDecimal.ZERO;
 
   // 선택된 옵션 정보
   @Column(name = "selected_option_type")
@@ -196,13 +196,13 @@ public class Purchase extends BaseTimeEntity {
         .order(order)
         .payment(order.getPayment())
         .status(PurchaseStatus.PENDING)
-        .originalPrice(order.getOriginalAmount())
-        .discountAmount(order.getDiscountAmount())
-        .finalPrice(order.getFinalAmount())
+        .originalPrice(order.getOriginalPrice())
+        .discountPrice(order.getDiscountPrice())
+        .finalPrice(order.getFinalPrice())
         .usedCoupon(order.getAppliedCoupon())
         .couponCode(
             order.getAppliedCoupon() != null ? order.getAppliedCoupon().getCouponCode() : null)
-        .couponDiscountAmount(order.getCouponDiscountAmount())
+        .couponDiscountPrice(order.getCouponDiscountPrice())
         .selectedOptionType(
             orderItem.getOptionType() != null
                 ? OptionType.valueOf(orderItem.getOptionType().name())
@@ -226,7 +226,7 @@ public class Purchase extends BaseTimeEntity {
   }
 
   public boolean hasDiscount() {
-    return discountAmount.compareTo(BigDecimal.ZERO) > 0;
+    return discountPrice.compareTo(BigDecimal.ZERO) > 0;
   }
 
   public boolean hasCouponApplied() {

@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import liaison.groble.api.server.payment.mapper.PayplePaymentMapper;
 import liaison.groble.application.payment.dto.PaypleAuthResultDto;
 import liaison.groble.application.payment.service.PayplePaymentService;
 import liaison.groble.common.response.GrobleResponse;
@@ -24,7 +23,6 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class PayplePaymentController {
   private final PayplePaymentService payplePaymentService;
-  private final PayplePaymentMapper payplePaymentMapper;
 
   // 앱카드 결제 인증 결과를 수신하고 결제 승인 요청을 페이플 서버에 보낸다.
   @PostMapping("/app-card/request")

@@ -31,12 +31,12 @@ public class PaymentCancel extends BaseTimeEntity {
   @Column private String cancelKey; // 포트원 취소 키
 
   @Column(nullable = false)
-  private BigDecimal amount;
+  private BigDecimal price;
 
   @Column(nullable = false)
   private String reason;
 
-  @Column private String taxFreeAmount;
+  @Column private String taxFreePrice;
 
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
@@ -50,9 +50,9 @@ public class PaymentCancel extends BaseTimeEntity {
 
   @Builder
   public PaymentCancel(
-      Payment payment, BigDecimal amount, String reason, PaymentCancelStatus status) {
+      Payment payment, BigDecimal price, String reason, PaymentCancelStatus status) {
     this.payment = payment;
-    this.amount = amount;
+    this.price = price;
     this.reason = reason;
     this.status = status;
   }

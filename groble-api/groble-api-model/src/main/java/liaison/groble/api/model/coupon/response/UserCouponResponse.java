@@ -24,7 +24,7 @@ public class UserCouponResponse {
   @Schema(
       description = "쿠폰 유형",
       example = "PERCENTAGE",
-      allowableValues = {"PERCENTAGE", "FIXED_AMOUNT"})
+      allowableValues = {"PERCENTAGE", "FIXED_PRICE"})
   private String couponType;
 
   @Schema(description = "할인 금액 (couponType 따라 다름)", example = "n(%/원)")
@@ -34,5 +34,5 @@ public class UserCouponResponse {
   private LocalDateTime validUntil;
 
   @Schema(description = "최소 주문 금액", example = "10000")
-  private BigDecimal minOrderAmount;
+  private BigDecimal minOrderPrice;
 }

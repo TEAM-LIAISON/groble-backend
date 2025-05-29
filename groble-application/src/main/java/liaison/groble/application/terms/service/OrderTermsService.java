@@ -33,6 +33,11 @@ public class OrderTermsService {
     List<OrderTermsType> orderTermsTypes =
         dto.getTermsTypeStrings().stream().map(OrderTermsType::valueOf).toList();
 
+    log.info(
+        "User {} is agreeing to order terms: {}",
+        user.getId(),
+        orderTermsTypes.stream().map(Enum::name).toList());
+
     List<OrderTerms> activeOrderTermsList =
         orderTermsRepository.findActiveOrderTermsByTypes(orderTermsTypes);
 
@@ -40,15 +45,15 @@ public class OrderTermsService {
       throw new EntityNotFoundException("요청한 주문 약관 유형에 대한 활성화된 약관이 없습니다.");
     }
 
-    // 첫 번째 주문 약관을 기준으로 DTO를 작성합니다 (여러 약관 처리는 별도 고려 필요)
-    OrderTerms firstOrderTerms = activeOrderTermsList.get(0);
+    // ✅ 모든 약관에 대해 동의 처리
+    for (OrderTerms orderTerms : activeOrderTermsList) {
+      UserOrderTerms agreement =
+          processOrderTermsAgreement(
+              user, orderTerms, true, dto.getIpAddress(), dto.getUserAgent());
 
-    // 약관 동의 처리
-    UserOrderTerms agreement =
-        processOrderTermsAgreement(
-            user, firstOrderTerms, true, dto.getIpAddress(), dto.getUserAgent());
-
-    createOrderTermsAgreementDto(agreement);
+      // 필요한 경우 각 동의에 대해 로그 기록 또는 후처리
+      createOrderTermsAgreementDto(agreement); // <- 리턴값 저장하지 않더라도 후처리에 필요하면 유지
+    }
   }
 
   // 약관 동의 또는 철회 처리 헬퍼 메서드

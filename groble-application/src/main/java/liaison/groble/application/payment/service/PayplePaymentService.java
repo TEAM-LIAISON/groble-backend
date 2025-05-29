@@ -33,16 +33,14 @@ package liaison.groble.application.payment.service;
 // import liaison.groble.external.adapter.payment.PaypleSimplePayRequest;
 // import liaison.groble.external.config.PaypleConfig;
 //
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import liaison.groble.application.payment.dto.PaypleAuthResultDto;
-import liaison.groble.domain.order.repository.OrderRepository;
 import liaison.groble.domain.payment.entity.PayplePayment;
 import liaison.groble.domain.payment.enums.PayplePaymentStatus;
 import liaison.groble.domain.payment.repository.PayplePaymentRepository;
-import liaison.groble.external.adapter.payment.PaypleService;
-import liaison.groble.external.config.PaypleConfig;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -51,10 +49,7 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 public class PayplePaymentService {
-  private final PaypleConfig paypleConfig;
-  private final PaypleService paypleService;
   private final PayplePaymentRepository payplePaymentRepository;
-  private final OrderRepository orderRepository;
 
   // 앱카드 결제 과정에서 페이플로부터 받은 인증 값을 DB에 저장한다.
   @Transactional

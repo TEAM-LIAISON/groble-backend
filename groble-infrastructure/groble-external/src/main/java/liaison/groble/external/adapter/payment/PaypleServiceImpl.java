@@ -139,7 +139,7 @@ public class PaypleServiceImpl implements PaypleService {
   }
 
   @Override
-  public JSONObject payLinkCreate(Map<String, String> params, Map<String, BigDecimal> amounts) {
+  public JSONObject payLinkCreate(Map<String, String> params, Map<String, BigDecimal> prices) {
     JSONObject jsonObject = new JSONObject();
     JSONParser jsonParser = new JSONParser();
 
@@ -160,8 +160,8 @@ public class PaypleServiceImpl implements PaypleService {
       }
 
       // PCD_PAY_TOTAL
-      if (amounts != null) {
-        for (Map.Entry<String, BigDecimal> entry : amounts.entrySet()) {
+      if (prices != null) {
+        for (Map.Entry<String, BigDecimal> entry : prices.entrySet()) {
           obj.put(entry.getKey(), entry.getValue().toString());
         }
       }

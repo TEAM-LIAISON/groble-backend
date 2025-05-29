@@ -36,7 +36,7 @@ public class CouponService {
         .couponType(flat.getCouponType())
         .discountValue(flat.getDiscountValue())
         .validUntil(flat.getValidUntil())
-        .minOrderAmount(flat.getMinOrderAmount())
+        .minOrderPrice(flat.getMinOrderPrice())
         .build();
   }
 }
