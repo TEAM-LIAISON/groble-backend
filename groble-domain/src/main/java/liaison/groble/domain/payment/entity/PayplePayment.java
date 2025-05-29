@@ -48,7 +48,12 @@ public class PayplePayment extends BaseTimeEntity {
   private String pcdPayCode; // 페이플 결제 응답 코드 (0000)
   private String pcdPayMsg; // 페이플 응답 메시지
   private String pcdPayType; // 페이플 결제수단(카드/계좌) card/transfer
+  private String pcdPayCardVer; // 카드 인증 버전 (02 등)
+  private String pcdPayWork; // 승인 요청 방식 결과 (CERT 등)
+  private String pcdPayAuthKey; // 파트너 인증 키
   private String pcdPayReqKey; // 승인 요청 결제키
+  private String pcdPayHost; // 페이플 접속 주소
+  private String pcdPayCofUrl; // 승인 요청 Request URL
 
   @Column(name = "pcd_pay_oid", unique = true)
   private String pcdPayOid; // 주문번호 (orderId - PK)
@@ -61,16 +66,23 @@ public class PayplePayment extends BaseTimeEntity {
   private String pcdPayTotal; // 총 결제금액
   private String pcdPayTaxTotal; // 복합과세 부가세
   private String pcdPayIsTax; // 과세 여부
-  private String pcdPayTime; // 결제 요청 시간
+
   private String pcdPayCardName; // 카드사명
 
   @Column(name = "pcd_pay_card_num")
   private String pcdPayCardNum; // 마스킹된 상태로 저장돼야 함
 
+  private String pcdPayCardQuota; // 할부 개월 수
   private String pcdPayCardTradeNum; // 해당 거래의 고유 키
   private String pcdPayCardAuthNo; // 승인번호
   private String pcdPayCardReceipt; // 매출 전표(영수증) 출력 URL
+  private String pcdPayTime; // 결제 요청 시간
+  private String pcdRegulerFlag; // 월 중복방지 거래 설정 여부
+  private String pcdPayYear; // 월 중복방지 거래 - 년(Year)
+  private String pcdPayMonth; // 월 중복방지 거래 - 월(Month)
   private String pcdSimpleFlag; // 정기(빌링), 비밀번호 간편결제 시 필요한 설정값
+  private String pcdRstUrl; // 결제 정보 인증 결과가 POST 방식으로 전송되는 경로
+
   private String pcdUserDefine1; // 파트너에서 입력한 값 1
   private String pcdUserDefine2; // 파트너에서 입력한 값 2
   private LocalDateTime paymentDate; // 결제 완료 시간

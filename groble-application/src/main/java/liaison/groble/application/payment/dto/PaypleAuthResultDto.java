@@ -39,14 +39,8 @@ public class PaypleAuthResultDto {
   @JsonProperty("PCD_PAY_HOST")
   private String payHost; // 페이플 접속 주소
 
-  @JsonProperty("PCD_PAY_URL")
-  private String payUrl;
-
   @JsonProperty("PCD_PAY_COFURL")
   private String payCofUrl; // 승인 요청 URL
-
-  @JsonProperty("PCD_PAYER_ID")
-  private String payerId; // 빌링키
 
   @JsonProperty("PCD_PAYER_NO")
   private String payerNo; // 회원번호
@@ -110,15 +104,6 @@ public class PaypleAuthResultDto {
 
   @JsonProperty("PCD_RST_URL")
   private String rstUrl; // 결과 전송 URL
-
-  @JsonProperty("PCD_PAY_AMOUNT")
-  private String payAmount;
-
-  @JsonProperty("PCD_PAY_DISCOUNT")
-  private String payDiscount;
-
-  @JsonProperty("PCD_PAY_AMOUNT_REAL")
-  private String payAmountReal;
 
   @JsonProperty("PCD_USER_DEFINE1")
   private String userDefine1;

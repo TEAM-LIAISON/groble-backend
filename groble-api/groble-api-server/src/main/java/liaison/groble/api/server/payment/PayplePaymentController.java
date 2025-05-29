@@ -24,11 +24,11 @@ import lombok.extern.slf4j.Slf4j;
 public class PayplePaymentController {
   private final PayplePaymentService payplePaymentService;
 
+  // 아래 API 호출 순서 [1. 결제하기 버튼, 2. 결제창 호출 요청, 3. 결제창 띄우기, 4. 결제정보 입력, 인증 요청]
   // 앱카드 결제 인증 결과를 수신하고 결제 승인 요청을 페이플 서버에 보낸다.
   @PostMapping("/app-card/request")
   public ResponseEntity<GrobleResponse<Void>> requestAppCardPayment(
       @Valid @RequestBody PaypleAuthResultDto authResultDto) {
-    // 수신한 앱카드 결제 인증 결과를 저장
     payplePaymentService.saveAppCardAuthResponse(authResultDto);
 
     return ResponseEntity.ok(GrobleResponse.success(null));
