@@ -25,20 +25,17 @@ import liaison.groble.common.response.GrobleResponse;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestController
 @RequestMapping("/api/v1/purchase")
+@RequiredArgsConstructor
 @Tag(name = "구매 관련 API", description = "내가 구매한 콘텐츠 조회, 내가 구매한 콘텐츠(자료) 다운로드 등")
 public class PurchaseController {
   private final PurchaseService purchaseService;
   private final ContentDtoMapper contentDtoMapper;
-
-  public PurchaseController(PurchaseService purchaseService, ContentDtoMapper contentDtoMapper) {
-    this.purchaseService = purchaseService;
-    this.contentDtoMapper = contentDtoMapper;
-  }
 
   @Deprecated
   @MyPurchaseContents
