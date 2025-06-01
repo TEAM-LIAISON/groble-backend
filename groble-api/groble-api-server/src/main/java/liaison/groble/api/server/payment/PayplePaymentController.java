@@ -51,8 +51,10 @@ public class PayplePaymentController {
           GrobleResponse.success(AppCardPayplePaymentResponse.builder().build()));
     }
 
+    // 인증 결과 저장
     payplePaymentService.saveAppCardAuthResponse(authResultDto);
 
+    // 인증 성공에 대한 결제 요청 처리
     return ResponseEntity.ok(GrobleResponse.success(null));
   }
 }

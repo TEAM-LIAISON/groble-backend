@@ -89,7 +89,7 @@ public class PayplePaymentService {
             .pcdRstUrl(dto.getRstUrl())
             .pcdUserDefine1(dto.getUserDefine1())
             .pcdUserDefine2(dto.getUserDefine2())
-            .status(PayplePaymentStatus.PENDING) // 명시해도 되고 builder 기본값으로 둘 수도 있음
+            .status(PayplePaymentStatus.PENDING)
             .build();
 
     payplePaymentRepository.save(payplePayment);
