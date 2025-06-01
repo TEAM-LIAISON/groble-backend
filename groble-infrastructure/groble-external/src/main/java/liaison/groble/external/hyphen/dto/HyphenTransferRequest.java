@@ -1,10 +1,14 @@
 package liaison.groble.external.hyphen.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
-@Data
+@Getter
 @Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class HyphenTransferRequest {
   private String WD_ACCT_NO;
   private String WD_BANK_CODE;
