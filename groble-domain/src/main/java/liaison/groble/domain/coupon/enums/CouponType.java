@@ -5,5 +5,5 @@ import lombok.Getter;
 @Getter
 public enum CouponType {
   PERCENTAGE,
-  FIXED_AMOUNT
+  FIXED_PRICE
 }

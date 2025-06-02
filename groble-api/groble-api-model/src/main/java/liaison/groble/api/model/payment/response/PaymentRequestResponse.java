@@ -9,7 +9,7 @@ import lombok.Getter;
 @Builder
 public class PaymentRequestResponse {
   private String orderId;
-  private BigDecimal amount;
+  private BigDecimal price;
   private String productName;
   private String status;
 }

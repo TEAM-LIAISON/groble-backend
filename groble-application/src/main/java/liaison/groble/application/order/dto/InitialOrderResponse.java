@@ -20,9 +20,9 @@ public class InitialOrderResponse {
   private final String merchantUid; // 결제 시스템에서 사용할 고유 주문번호
 
   // 금액 정보 - 쿠폰 적용 전후 금액을 모두 제공
-  private final BigDecimal originalAmount; // 원래 금액 (할인 전)
-  private final BigDecimal discountAmount; // 할인 금액
-  private final BigDecimal finalAmount; // 최종 결제 금액
+  private final BigDecimal originalPrice; // 원래 금액 (할인 전)
+  private final BigDecimal discountPrice; // 할인 금액
+  private final BigDecimal finalPrice; // 최종 결제 금액
 
   // 주문 항목 상세
   private final List<OrderItemResponse> orderItems;

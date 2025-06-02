@@ -37,9 +37,9 @@ public class QCouponTemplate extends EntityPathBase<CouponTemplate> {
 
     public final BooleanPath isActive = createBoolean("isActive");
 
-    public final NumberPath<java.math.BigDecimal> maxDiscountAmount = createNumber("maxDiscountAmount", java.math.BigDecimal.class);
+    public final NumberPath<java.math.BigDecimal> maxDiscountPrice = createNumber("maxDiscountPrice", java.math.BigDecimal.class);
 
-    public final NumberPath<java.math.BigDecimal> minOrderAmount = createNumber("minOrderAmount", java.math.BigDecimal.class);
+    public final NumberPath<java.math.BigDecimal> minOrderPrice = createNumber("minOrderPrice", java.math.BigDecimal.class);
 
     public final StringPath name = createString("name");
 

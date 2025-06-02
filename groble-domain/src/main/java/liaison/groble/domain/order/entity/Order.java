@@ -66,26 +66,26 @@ public class Order extends BaseTimeEntity {
   @Column(nullable = false)
   private OrderStatus status = OrderStatus.PENDING;
 
-  @Column(name = "merchant_uid", nullable = false, unique = true, length = 30)
+  @Column(name = "merchant_uid", unique = true, length = 30)
   private String merchantUid;
 
   // 가격 관련 필드들
-  @Column(name = "original_amount", nullable = false, precision = 10, scale = 2)
-  private BigDecimal originalAmount; // 원래 금액 (할인 적용 전)
+  @Column(name = "original_price", nullable = false, precision = 10, scale = 2)
+  private BigDecimal originalPrice; // 원래 금액 (할인 적용 전)
 
-  @Column(name = "discount_amount", nullable = false, precision = 10, scale = 2)
-  private BigDecimal discountAmount = BigDecimal.ZERO; // 할인 금액
+  @Column(name = "discount_price", nullable = false, precision = 10, scale = 2)
+  private BigDecimal discountPrice = BigDecimal.ZERO; // 할인 금액
 
-  @Column(name = "final_amount", nullable = false, precision = 10, scale = 2)
-  private BigDecimal finalAmount; // 최종 결제 금액
+  @Column(name = "final_price", nullable = false, precision = 10, scale = 2)
+  private BigDecimal finalPrice; // 최종 결제 금액
 
   // 쿠폰 관련 필드들
   @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "applied_coupon_id")
   private UserCoupon appliedCoupon; // 적용된 쿠폰
 
-  @Column(name = "coupon_discount_amount", precision = 10, scale = 2)
-  private BigDecimal couponDiscountAmount = BigDecimal.ZERO; // 쿠폰 할인 금액
+  @Column(name = "coupon_discount_price", precision = 10, scale = 2)
+  private BigDecimal couponDiscountPrice = BigDecimal.ZERO; // 쿠폰 할인 금액
 
   @OneToOne(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
   private Payment payment;
@@ -101,25 +101,25 @@ public class Order extends BaseTimeEntity {
   @Builder(access = AccessLevel.PACKAGE)
   private Order(
       User user,
-      BigDecimal originalAmount,
+      BigDecimal originalPrice,
       UserCoupon appliedCoupon,
       Purchaser purchaser,
       String orderNote) {
     this.user = user;
-    this.originalAmount = originalAmount;
+    this.originalPrice = originalPrice;
     this.appliedCoupon = appliedCoupon;
     this.purchaser = purchaser;
     this.orderNote = orderNote;
 
     // 쿠폰 할인 금액 계산
     if (appliedCoupon != null) {
-      this.couponDiscountAmount =
-          appliedCoupon.getCouponTemplate().calculateDiscountAmount(originalAmount);
+      this.couponDiscountPrice =
+          appliedCoupon.getCouponTemplate().calculateDiscountPrice(originalPrice);
     }
 
     // 총 할인 금액 및 최종 금액 계산
-    this.discountAmount = this.couponDiscountAmount;
-    this.finalAmount = this.originalAmount.subtract(this.discountAmount);
+    this.discountPrice = this.couponDiscountPrice;
+    this.finalPrice = this.originalPrice.subtract(this.discountPrice);
   }
 
   // 비즈니스 메서드
@@ -171,29 +171,29 @@ public class Order extends BaseTimeEntity {
     }
 
     this.appliedCoupon = coupon;
-    this.couponDiscountAmount =
-        coupon.getCouponTemplate().calculateDiscountAmount(this.originalAmount);
+    this.couponDiscountPrice =
+        coupon.getCouponTemplate().calculateDiscountPrice(this.originalPrice);
 
     // 할인 금액 및 최종 금액 재계산
-    recalculateAmounts();
+    recalculatePrices();
   }
 
   // 쿠폰 제거 메서드
   public void removeCoupon() {
     this.appliedCoupon = null;
-    this.couponDiscountAmount = BigDecimal.ZERO;
-    recalculateAmounts();
+    this.couponDiscountPrice = BigDecimal.ZERO;
+    recalculatePrices();
   }
 
   // 금액 재계산 메서드
-  private void recalculateAmounts() {
-    this.discountAmount = this.couponDiscountAmount;
-    this.finalAmount = this.originalAmount.subtract(this.discountAmount);
+  private void recalculatePrices() {
+    this.discountPrice = this.couponDiscountPrice;
+    this.finalPrice = this.originalPrice.subtract(this.discountPrice);
 
     // 최종 금액이 0보다 작을 수 없음
-    if (this.finalAmount.compareTo(BigDecimal.ZERO) < 0) {
-      this.finalAmount = BigDecimal.ZERO;
-      this.discountAmount = this.originalAmount;
+    if (this.finalPrice.compareTo(BigDecimal.ZERO) < 0) {
+      this.finalPrice = BigDecimal.ZERO;
+      this.discountPrice = this.originalPrice;
     }
   }
 
@@ -266,7 +266,7 @@ public class Order extends BaseTimeEntity {
     Order order =
         Order.builder()
             .user(user)
-            .originalAmount(price)
+            .originalPrice(price)
             .appliedCoupon(coupon)
             .purchaser(purchaser)
             .build();
@@ -298,15 +298,10 @@ public class Order extends BaseTimeEntity {
    * @param content 구매할 콘텐츠
    * @param options 검증된 옵션 정보 리스트
    * @param purchaser 구매자 상세 정보
-   * @param orderNote 주문 메모
    * @return 생성된 주문
    */
   public static Order createOrderWithMultipleOptions(
-      User user,
-      Content content,
-      List<OrderOptionInfo> options,
-      Purchaser purchaser,
-      String orderNote) {
+      User user, Content content, List<OrderOptionInfo> options, Purchaser purchaser) {
 
     // 콘텐츠 판매 상태 검증
     if (content.getStatus() != ContentStatus.ACTIVE) {
@@ -319,7 +314,7 @@ public class Order extends BaseTimeEntity {
     }
 
     // 총 금액 계산 - 각 옵션의 (가격 × 수량)의 합계
-    BigDecimal totalAmount =
+    BigDecimal totalPrice =
         options.stream()
             .map(OrderOptionInfo::getTotalPrice)
             .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -328,10 +323,9 @@ public class Order extends BaseTimeEntity {
     Order order =
         Order.builder()
             .user(user)
-            .originalAmount(totalAmount)
+            .originalPrice(totalPrice)
             .appliedCoupon(null) // 초기 주문에서는 쿠폰 미적용
             .purchaser(purchaser)
-            .orderNote(orderNote)
             .build();
 
     // 각 옵션에 대해 OrderItem 추가
@@ -349,8 +343,8 @@ public class Order extends BaseTimeEntity {
   }
 
   // Getter 메서드들 추가
-  public BigDecimal getTotalAmount() {
-    return this.finalAmount; // 기존 코드 호환성을 위해
+  public BigDecimal getTotalPrice() {
+    return this.finalPrice; // 기존 코드 호환성을 위해
   }
 
   // 할인 정보 확인 메서드들
@@ -359,7 +353,7 @@ public class Order extends BaseTimeEntity {
   }
 
   public boolean hasDiscount() {
-    return discountAmount.compareTo(BigDecimal.ZERO) > 0;
+    return discountPrice.compareTo(BigDecimal.ZERO) > 0;
   }
 
   // 내부 클래스

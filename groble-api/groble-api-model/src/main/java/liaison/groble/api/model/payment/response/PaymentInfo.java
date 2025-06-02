@@ -11,7 +11,7 @@ import lombok.Getter;
 public class PaymentInfo {
   private String orderId;
   private Long userId;
-  private BigDecimal amount;
+  private BigDecimal price;
   private String payMethod;
   private String status;
   private String productName;

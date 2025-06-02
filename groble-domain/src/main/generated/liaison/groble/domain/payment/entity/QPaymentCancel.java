@@ -24,8 +24,6 @@ public class QPaymentCancel extends EntityPathBase<PaymentCancel> {
 
     public final liaison.groble.domain.common.entity.QBaseTimeEntity _super = new liaison.groble.domain.common.entity.QBaseTimeEntity(this);
 
-    public final NumberPath<java.math.BigDecimal> amount = createNumber("amount", java.math.BigDecimal.class);
-
     public final StringPath cancelKey = createString("cancelKey");
 
     public final DateTimePath<java.time.LocalDateTime> cancelledAt = createDateTime("cancelledAt", java.time.LocalDateTime.class);
@@ -39,11 +37,13 @@ public class QPaymentCancel extends EntityPathBase<PaymentCancel> {
 
     public final QPayment payment;
 
+    public final NumberPath<java.math.BigDecimal> price = createNumber("price", java.math.BigDecimal.class);
+
     public final StringPath reason = createString("reason");
 
     public final EnumPath<liaison.groble.domain.payment.enums.PaymentCancelStatus> status = createEnum("status", liaison.groble.domain.payment.enums.PaymentCancelStatus.class);
 
-    public final StringPath taxFreeAmount = createString("taxFreeAmount");
+    public final StringPath taxFreePrice = createString("taxFreePrice");
 
     //inherited
     public final DateTimePath<java.time.LocalDateTime> updatedAt = _super.updatedAt;

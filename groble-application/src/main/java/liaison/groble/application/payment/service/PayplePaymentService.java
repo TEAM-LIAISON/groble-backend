@@ -33,16 +33,14 @@ package liaison.groble.application.payment.service;
 // import liaison.groble.external.adapter.payment.PaypleSimplePayRequest;
 // import liaison.groble.external.config.PaypleConfig;
 //
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import liaison.groble.application.payment.dto.PaypleAuthResultDto;
-import liaison.groble.domain.order.repository.OrderRepository;
 import liaison.groble.domain.payment.entity.PayplePayment;
 import liaison.groble.domain.payment.enums.PayplePaymentStatus;
 import liaison.groble.domain.payment.repository.PayplePaymentRepository;
-import liaison.groble.external.adapter.payment.PaypleService;
-import liaison.groble.external.config.PaypleConfig;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -51,32 +49,47 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 public class PayplePaymentService {
-  private final PaypleConfig paypleConfig;
-  private final PaypleService paypleService;
   private final PayplePaymentRepository payplePaymentRepository;
-  private final OrderRepository orderRepository;
 
   // 앱카드 결제 과정에서 페이플로부터 받은 인증 값을 DB에 저장한다.
   @Transactional
   public void saveAppCardAuthResponse(PaypleAuthResultDto dto) {
     PayplePayment payplePayment =
         PayplePayment.builder()
+            .pcdPayRst(dto.getPayRst())
+            .pcdPayCode(dto.getPayCode())
+            .pcdPayMsg(dto.getPayMsg())
+            .pcdPayType(dto.getPayType())
+            .pcdPayCardVer(dto.getCardVer())
+            .pcdPayWork(dto.getPayWork())
+            .pcdPayAuthKey(dto.getAuthKey())
             .pcdPayReqKey(dto.getPayReqKey())
-            .pcdPayOid(dto.getPayOid())
+            .pcdPayHost(dto.getPayHost())
+            .pcdPayCofUrl(dto.getPayCofUrl())
             .pcdPayerNo(dto.getPayerNo())
             .pcdPayerName(dto.getPayerName())
             .pcdPayerHp(dto.getPayerHp())
             .pcdPayerEmail(dto.getPayerEmail())
+            .pcdPayOid(dto.getPayOid())
             .pcdPayGoods(dto.getPayGoods())
             .pcdPayTotal(dto.getPayTotal())
             .pcdPayTaxTotal(dto.getPayTaxTotal())
             .pcdPayIsTax(dto.getPayIsTax())
+            .pcdPayCardName(dto.getPayCardName())
+            .pcdPayCardNum(dto.getPayCardNum())
+            .pcdPayCardQuota(dto.getPayCardQuota())
+            .pcdPayCardTradeNum(dto.getPayCardTradeNum())
+            .pcdPayCardAuthNo(dto.getPayCardAuthNo())
+            .pcdPayCardReceipt(dto.getPayCardReceipt())
             .pcdPayTime(dto.getPayTime())
-            .pcdPayType(dto.getPayType())
-            .pcdPayRst(dto.getPayRst())
-            .pcdPayCode(dto.getPayCode())
-            .pcdPayMsg(dto.getPayMsg())
-            .status(PayplePaymentStatus.PENDING) // 명시해도 되고 builder 기본값으로 둘 수도 있음
+            .pcdRegulerFlag(dto.getRegulerFlag())
+            .pcdPayYear(dto.getPayYear())
+            .pcdPayMonth(dto.getPayMonth())
+            .pcdSimpleFlag(dto.getSimpleFlag())
+            .pcdRstUrl(dto.getRstUrl())
+            .pcdUserDefine1(dto.getUserDefine1())
+            .pcdUserDefine2(dto.getUserDefine2())
+            .status(PayplePaymentStatus.PENDING)
             .build();
 
     payplePaymentRepository.save(payplePayment);

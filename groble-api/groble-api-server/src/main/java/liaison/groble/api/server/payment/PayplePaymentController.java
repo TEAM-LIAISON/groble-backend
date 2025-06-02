@@ -8,8 +8,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import liaison.groble.api.server.payment.mapper.PayplePaymentMapper;
+import liaison.groble.application.payment.dto.AppCardPayplePaymentResponse;
 import liaison.groble.application.payment.dto.PaypleAuthResultDto;
+import liaison.groble.application.payment.exception.PayplePaymentAuthException;
 import liaison.groble.application.payment.service.PayplePaymentService;
 import liaison.groble.common.response.GrobleResponse;
 
@@ -24,43 +25,40 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class PayplePaymentController {
   private final PayplePaymentService payplePaymentService;
-  private final PayplePaymentMapper payplePaymentMapper;
 
+  // 아래 API 호출 순서 [1. 결제하기 버튼, 2. 결제창 호출 요청, 3. 결제창 띄우기, 4. 결제정보 입력, 인증 요청]
   // 앱카드 결제 인증 결과를 수신하고 결제 승인 요청을 페이플 서버에 보낸다.
   @PostMapping("/app-card/request")
-  public ResponseEntity<GrobleResponse<Void>> requestAppCardPayment(
+  public ResponseEntity<GrobleResponse<AppCardPayplePaymentResponse>> requestAppCardPayment(
       @Valid @RequestBody PaypleAuthResultDto authResultDto) {
-    // 수신한 앱카드 결제 인증 결과를 저장
+
+    log.info(
+        "페이플 인증 결과 수신 - 결과: {}, 코드: {}, 메시지: {}, 주문번호: {}",
+        authResultDto.getPayRst(),
+        authResultDto.getPayCode(),
+        authResultDto.getPayMsg(),
+        authResultDto.getPayOid());
+
+    if (authResultDto.isError()) {
+      log.error(
+          "페이플 인증 실패 - 코드: {}, 메시지: {}", authResultDto.getPayCode(), authResultDto.getPayMsg());
+      throw new PayplePaymentAuthException("페이플 인증 실패: " + authResultDto.getPayMsg());
+    }
+
+    if (authResultDto.isClosed()) {
+      log.warn("페이플 인증 취소 - 사용자가 결제창을 닫음");
+      return ResponseEntity.ok(
+          GrobleResponse.success(AppCardPayplePaymentResponse.builder().build()));
+    }
+
+    // 인증 결과 저장
     payplePaymentService.saveAppCardAuthResponse(authResultDto);
 
+    // 인증 성공에 대한 결제 요청 처리
     return ResponseEntity.ok(GrobleResponse.success(null));
   }
 }
-//
-//
-//  @Operation(summary = "페이플 인증 결과 수신 및 승인 요청", description = "페이플 인증 결과를 수신하고 승인 요청을 처리합니다.")
-//  @PostMapping("/auth-result")
-//  public ResponseEntity<GrobleResponse<PaymentCompleteResponseDto>> receivePaypleAuthResult(
-//      @Valid @RequestBody PaypleAuthResultDto authResult) {
-//    log.info(
-//        "페이플 인증 결과 수신 - 결과: {}, 코드: {}, 메시지: {}, 주문번호: {}",
-//        authResult.getPayRst(),
-//        authResult.getPayCode(),
-//        authResult.getPayMsg(),
-//        authResult.getPayOid());
-//
-//    // 인증 결과 검증
-//    if (authResult.isError()) {
-//      log.error("페이플 인증 실패 - 코드: {}, 메시지: {}", authResult.getPayCode(), authResult.getPayMsg());
-//      throw new RuntimeException("페이플 인증 실패: " + authResult.getPayMsg());
-//    }
-//
-//    if (authResult.isClosed()) {
-//      log.warn("페이플 인증 취소 - 사용자가 결제창을 닫음");
-//      return ResponseEntity.ok(
-//
-// GrobleResponse.success(PaymentCompleteResponseDto.builder().status("CANCELLED").build()));
-//    }
+
 //
 //    // 인증 성공 시 승인 요청 처리
 //    PaymentCompleteResponseDto response = payplePaymentService.processAuthResult(authResult);

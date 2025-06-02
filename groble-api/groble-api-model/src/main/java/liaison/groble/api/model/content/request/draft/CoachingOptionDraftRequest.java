@@ -1,6 +1,7 @@
 package liaison.groble.api.model.content.request.draft;
 
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -29,6 +30,7 @@ public class CoachingOptionDraftRequest extends BaseOptionDraftRequest {
   @Schema(description = "코칭 방식 [ONLINE - 온라인], [OFFLINE - 오프라인]", example = "ONLINE")
   private String coachingType;
 
+  @Size(max = 20, message = "코칭 방식 설명은 20자 이하여야 합니다")
   @Schema(description = "코칭 방식 설명", example = "줌을 통한 온라인 미팅으로 진행됩니다.")
   private String coachingTypeDescription;
 }

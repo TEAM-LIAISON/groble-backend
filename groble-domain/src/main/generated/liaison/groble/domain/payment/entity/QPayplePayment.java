@@ -34,17 +34,25 @@ public class QPayplePayment extends EntityPathBase<PayplePayment> {
 
     public final DateTimePath<java.time.LocalDateTime> paymentDate = createDateTime("paymentDate", java.time.LocalDateTime.class);
 
+    public final StringPath pcdPayAuthKey = createString("pcdPayAuthKey");
+
     public final StringPath pcdPayCardAuthNo = createString("pcdPayCardAuthNo");
 
     public final StringPath pcdPayCardName = createString("pcdPayCardName");
 
     public final StringPath pcdPayCardNum = createString("pcdPayCardNum");
 
+    public final StringPath pcdPayCardQuota = createString("pcdPayCardQuota");
+
     public final StringPath pcdPayCardReceipt = createString("pcdPayCardReceipt");
 
     public final StringPath pcdPayCardTradeNum = createString("pcdPayCardTradeNum");
 
+    public final StringPath pcdPayCardVer = createString("pcdPayCardVer");
+
     public final StringPath pcdPayCode = createString("pcdPayCode");
+
+    public final StringPath pcdPayCofUrl = createString("pcdPayCofUrl");
 
     public final StringPath pcdPayerEmail = createString("pcdPayerEmail");
 
@@ -56,7 +64,11 @@ public class QPayplePayment extends EntityPathBase<PayplePayment> {
 
     public final StringPath pcdPayGoods = createString("pcdPayGoods");
 
+    public final StringPath pcdPayHost = createString("pcdPayHost");
+
     public final StringPath pcdPayIsTax = createString("pcdPayIsTax");
+
+    public final StringPath pcdPayMonth = createString("pcdPayMonth");
 
     public final StringPath pcdPayMsg = createString("pcdPayMsg");
 
@@ -73,6 +85,14 @@ public class QPayplePayment extends EntityPathBase<PayplePayment> {
     public final StringPath pcdPayTotal = createString("pcdPayTotal");
 
     public final StringPath pcdPayType = createString("pcdPayType");
+
+    public final StringPath pcdPayWork = createString("pcdPayWork");
+
+    public final StringPath pcdPayYear = createString("pcdPayYear");
+
+    public final StringPath pcdRegulerFlag = createString("pcdRegulerFlag");
+
+    public final StringPath pcdRstUrl = createString("pcdRstUrl");
 
     public final StringPath pcdSimpleFlag = createString("pcdSimpleFlag");
 

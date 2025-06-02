@@ -26,14 +26,14 @@ public class QOrder extends EntityPathBase<Order> {
 
     public final liaison.groble.domain.coupon.entity.QUserCoupon appliedCoupon;
 
-    public final NumberPath<java.math.BigDecimal> couponDiscountAmount = createNumber("couponDiscountAmount", java.math.BigDecimal.class);
+    public final NumberPath<java.math.BigDecimal> couponDiscountPrice = createNumber("couponDiscountPrice", java.math.BigDecimal.class);
 
     //inherited
     public final DateTimePath<java.time.LocalDateTime> createdAt = _super.createdAt;
 
-    public final NumberPath<java.math.BigDecimal> discountAmount = createNumber("discountAmount", java.math.BigDecimal.class);
+    public final NumberPath<java.math.BigDecimal> discountPrice = createNumber("discountPrice", java.math.BigDecimal.class);
 
-    public final NumberPath<java.math.BigDecimal> finalAmount = createNumber("finalAmount", java.math.BigDecimal.class);
+    public final NumberPath<java.math.BigDecimal> finalPrice = createNumber("finalPrice", java.math.BigDecimal.class);
 
     public final NumberPath<Long> id = createNumber("id", Long.class);
 
@@ -43,7 +43,7 @@ public class QOrder extends EntityPathBase<Order> {
 
     public final StringPath orderNote = createString("orderNote");
 
-    public final NumberPath<java.math.BigDecimal> originalAmount = createNumber("originalAmount", java.math.BigDecimal.class);
+    public final NumberPath<java.math.BigDecimal> originalPrice = createNumber("originalPrice", java.math.BigDecimal.class);
 
     public final liaison.groble.domain.payment.entity.QPayment payment;
 

@@ -11,7 +11,7 @@ import lombok.Getter;
 @Builder
 public class PaymentRequestResponseDto {
   private String orderId;
-  private BigDecimal amount;
+  private BigDecimal price;
   private String productName;
   private String status;
 

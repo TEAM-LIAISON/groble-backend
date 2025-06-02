@@ -11,7 +11,7 @@ import lombok.Getter;
 public class PaymentCompleteResponse {
   private String orderId;
   private String status;
-  private BigDecimal amount;
+  private BigDecimal price;
   private String productName;
   private LocalDateTime paymentDate;
 }

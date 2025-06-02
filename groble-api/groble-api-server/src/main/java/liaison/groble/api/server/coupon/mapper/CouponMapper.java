@@ -14,7 +14,7 @@ public class CouponMapper {
         .couponType(userCouponResponseDto.getCouponType())
         .discountValue(userCouponResponseDto.getDiscountValue())
         .validUntil(userCouponResponseDto.getValidUntil())
-        .minOrderAmount(userCouponResponseDto.getMinOrderAmount())
+        .minOrderPrice(userCouponResponseDto.getMinOrderPrice())
         .build();
   }
 
@@ -26,7 +26,7 @@ public class CouponMapper {
         .couponType(userCouponResponseDto.getCouponType())
         .discountValue(userCouponResponseDto.getDiscountValue())
         .validUntil(userCouponResponseDto.getValidUntil())
-        .minOrderAmount(userCouponResponseDto.getMinOrderAmount())
+        .minOrderPrice(userCouponResponseDto.getMinOrderPrice())
         .build();
   }
 }

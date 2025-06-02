@@ -35,7 +35,7 @@ public class UserCouponCustomRepositoryImpl implements UserCouponCustomRepositor
                 qCouponTemplate.couponType.stringValue().as("couponType"),
                 qCouponTemplate.discountValue.as("discountValue"),
                 qCouponTemplate.validUntil.as("validUntil"),
-                qCouponTemplate.minOrderAmount.as("minOrderAmount")))
+                qCouponTemplate.minOrderPrice.as("minOrderPrice")))
         .from(qUserCoupon)
         .leftJoin(qUserCoupon.couponTemplate, qCouponTemplate)
         .where(

@@ -15,7 +15,7 @@ import lombok.Getter;
 public class PaymentInfoDto {
   private String orderId;
   private Long userId;
-  private BigDecimal amount;
+  private BigDecimal price;
   private String payMethod;
   private String status;
   private String productName;

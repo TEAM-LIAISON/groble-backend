@@ -34,12 +34,12 @@ public class QPurchase extends EntityPathBase<Purchase> {
 
     public final StringPath couponCode = createString("couponCode");
 
-    public final NumberPath<java.math.BigDecimal> couponDiscountAmount = createNumber("couponDiscountAmount", java.math.BigDecimal.class);
+    public final NumberPath<java.math.BigDecimal> couponDiscountPrice = createNumber("couponDiscountPrice", java.math.BigDecimal.class);
 
     //inherited
     public final DateTimePath<java.time.LocalDateTime> createdAt = _super.createdAt;
 
-    public final NumberPath<java.math.BigDecimal> discountAmount = createNumber("discountAmount", java.math.BigDecimal.class);
+    public final NumberPath<java.math.BigDecimal> discountPrice = createNumber("discountPrice", java.math.BigDecimal.class);
 
     public final NumberPath<java.math.BigDecimal> finalPrice = createNumber("finalPrice", java.math.BigDecimal.class);
 

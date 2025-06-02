@@ -2,6 +2,7 @@ package liaison.groble.domain.content.entity;
 
 import static jakarta.persistence.EnumType.STRING;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Enumerated;
@@ -31,6 +32,7 @@ public class CoachingOption extends ContentOption {
   private CoachingType coachingType;
 
   // 코칭 방식 설명
+  @Column(length = 20)
   private String coachingTypeDescription;
 
   // Setter 메서드 추가

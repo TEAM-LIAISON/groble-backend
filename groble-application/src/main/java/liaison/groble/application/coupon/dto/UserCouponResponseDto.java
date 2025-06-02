@@ -14,5 +14,5 @@ public class UserCouponResponseDto {
   private String couponType;
   private BigDecimal discountValue;
   private LocalDateTime validUntil;
-  private BigDecimal minOrderAmount;
+  private BigDecimal minOrderPrice;
 }

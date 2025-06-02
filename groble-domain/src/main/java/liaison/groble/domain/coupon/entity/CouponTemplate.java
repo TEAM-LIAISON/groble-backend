@@ -55,11 +55,11 @@ public class CouponTemplate extends BaseTimeEntity {
   @Column(name = "discount_value", nullable = false, precision = 10, scale = 2)
   private BigDecimal discountValue; // 퍼센트 또는 고정금액
 
-  @Column(name = "min_order_amount", precision = 10, scale = 2)
-  private BigDecimal minOrderAmount; // 최소 주문금액
+  @Column(name = "min_order_price", precision = 10, scale = 2)
+  private BigDecimal minOrderPrice; // 최소 주문금액
 
-  @Column(name = "max_discount_amount", precision = 10, scale = 2)
-  private BigDecimal maxDiscountAmount; // 최대 할인금액 (퍼센트 쿠폰용)
+  @Column(name = "max_discount_price", precision = 10, scale = 2)
+  private BigDecimal maxDiscountPrice; // 최대 할인금액 (퍼센트 쿠폰용)
 
   @Column(name = "usage_limit_per_user")
   private Integer usageLimitPerUser = 1; // 사용자당 사용횟수 제한
@@ -88,8 +88,8 @@ public class CouponTemplate extends BaseTimeEntity {
       String description,
       CouponType couponType,
       BigDecimal discountValue,
-      BigDecimal minOrderAmount,
-      BigDecimal maxDiscountAmount,
+      BigDecimal minOrderPrice,
+      BigDecimal maxDiscountPrice,
       Integer usageLimitPerUser,
       Integer totalUsageLimit,
       LocalDateTime validFrom,
@@ -98,8 +98,8 @@ public class CouponTemplate extends BaseTimeEntity {
     this.description = description;
     this.couponType = couponType;
     this.discountValue = discountValue;
-    this.minOrderAmount = minOrderAmount;
-    this.maxDiscountAmount = maxDiscountAmount;
+    this.minOrderPrice = minOrderPrice;
+    this.maxDiscountPrice = maxDiscountPrice;
     this.usageLimitPerUser = usageLimitPerUser;
     this.totalUsageLimit = totalUsageLimit;
     this.validFrom = validFrom;
@@ -125,37 +125,37 @@ public class CouponTemplate extends BaseTimeEntity {
     }
   }
 
-  public BigDecimal calculateDiscountAmount(BigDecimal orderAmount) {
-    if (orderAmount == null || orderAmount.compareTo(BigDecimal.ZERO) <= 0) {
+  public BigDecimal calculateDiscountPrice(BigDecimal orderPrice) {
+    if (orderPrice == null || orderPrice.compareTo(BigDecimal.ZERO) <= 0) {
       return BigDecimal.ZERO;
     }
 
     // 최소 주문금액 체크
-    if (minOrderAmount != null && orderAmount.compareTo(minOrderAmount) < 0) {
+    if (minOrderPrice != null && orderPrice.compareTo(minOrderPrice) < 0) {
       return BigDecimal.ZERO;
     }
 
-    BigDecimal discountAmount = BigDecimal.ZERO;
+    BigDecimal discountPrice = BigDecimal.ZERO;
 
     switch (couponType) {
       case PERCENTAGE:
-        discountAmount = orderAmount.multiply(discountValue).divide(BigDecimal.valueOf(100));
+        discountPrice = orderPrice.multiply(discountValue).divide(BigDecimal.valueOf(100));
 
         // 최대 할인금액 제한
-        if (maxDiscountAmount != null && discountAmount.compareTo(maxDiscountAmount) > 0) {
-          discountAmount = maxDiscountAmount;
+        if (maxDiscountPrice != null && discountPrice.compareTo(maxDiscountPrice) > 0) {
+          discountPrice = maxDiscountPrice;
         }
         break;
 
-      case FIXED_AMOUNT:
-        discountAmount = discountValue;
+      case FIXED_PRICE:
+        discountPrice = discountValue;
         // 주문금액보다 클 수 없음
-        if (discountAmount.compareTo(orderAmount) > 0) {
-          discountAmount = orderAmount;
+        if (discountPrice.compareTo(orderPrice) > 0) {
+          discountPrice = orderPrice;
         }
         break;
     }
 
-    return discountAmount;
+    return discountPrice;
   }
 }

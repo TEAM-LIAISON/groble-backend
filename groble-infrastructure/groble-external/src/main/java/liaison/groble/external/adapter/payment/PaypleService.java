@@ -15,5 +15,5 @@ public interface PaypleService {
 
   JSONObject payRefund(PaypleRefundRequest request);
 
-  JSONObject payLinkCreate(Map<String, String> params, Map<String, BigDecimal> amounts);
+  JSONObject payLinkCreate(Map<String, String> params, Map<String, BigDecimal> prices);
 }

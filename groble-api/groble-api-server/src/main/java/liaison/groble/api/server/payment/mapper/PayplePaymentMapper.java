@@ -34,7 +34,7 @@ public class PayplePaymentMapper {
 
   public PaymentRequestDto toPaymentRequestDto(PaymentRequest paymentRequest) {
     return PaymentRequestDto.builder()
-        .amount(paymentRequest.getAmount())
+        .price(paymentRequest.getPrice())
         .payMethod(paymentRequest.getPayMethod())
         .productName(paymentRequest.getProductName())
         .userName(paymentRequest.getUserName())
@@ -47,7 +47,7 @@ public class PayplePaymentMapper {
       PaymentRequestResponseDto paymentRequestResponseDto) {
     return PaymentRequestResponse.builder()
         .orderId(paymentRequestResponseDto.getOrderId())
-        .amount(paymentRequestResponseDto.getAmount())
+        .price(paymentRequestResponseDto.getPrice())
         .productName(paymentRequestResponseDto.getProductName())
         .status(paymentRequestResponseDto.getStatus())
         .build();
@@ -72,7 +72,7 @@ public class PayplePaymentMapper {
     return PaymentCompleteResponse.builder()
         .orderId(paymentCompleteResponseDto.getOrderId())
         .status(paymentCompleteResponseDto.getStatus())
-        .amount(paymentCompleteResponseDto.getAmount())
+        .price(paymentCompleteResponseDto.getPrice())
         .productName(paymentCompleteResponseDto.getProductName())
         .paymentDate(paymentCompleteResponseDto.getPaymentDate())
         .build();
@@ -92,7 +92,7 @@ public class PayplePaymentMapper {
     return PaymentInfo.builder()
         .orderId(paymentInfoDto.getOrderId())
         .userId(paymentInfoDto.getUserId())
-        .amount(paymentInfoDto.getAmount())
+        .price(paymentInfoDto.getPrice())
         .payMethod(paymentInfoDto.getPayMethod())
         .status(paymentInfoDto.getStatus())
         .productName(paymentInfoDto.getProductName())

@@ -7,16 +7,18 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public class CreateInitialOrderDto {
+public class CreateFinalizeOrderDto {
   private final Long userId;
   private final Long contentId;
-  private final List<OrderOptionDto> options;
+  private final String merchantUid;
+  private final List<CreateFinalizeOrderDto.OrderOptionDto> options;
+  private final List<String> couponCodes;
 
   @Getter
   @Builder
   public static class OrderOptionDto {
     private final Long optionId;
-    private final OptionType optionType;
+    private final CreateFinalizeOrderDto.OptionType optionType;
     private final Integer quantity;
   }
 

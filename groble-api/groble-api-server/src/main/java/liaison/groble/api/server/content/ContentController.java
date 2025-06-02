@@ -55,11 +55,13 @@ import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestController
 @RequestMapping("/api/v1")
+@RequiredArgsConstructor
 @Tag(name = "콘텐츠 관련 API", description = "콘텐츠 상세 조회, 홈화면 콘텐츠 조회")
 public class ContentController {
 
@@ -67,17 +69,6 @@ public class ContentController {
   private final ContentDtoMapper contentDtoMapper;
   private final FileService fileService;
   private final FileDtoMapper fileDtoMapper;
-
-  public ContentController(
-      ContentService contentService,
-      ContentDtoMapper contentDtoMapper,
-      FileService fileService,
-      FileDtoMapper fileDtoMapper) {
-    this.contentService = contentService;
-    this.contentDtoMapper = contentDtoMapper;
-    this.fileService = fileService;
-    this.fileDtoMapper = fileDtoMapper;
-  }
 
   /**
    * 콘텐츠 상세 조회 - Optional 인증

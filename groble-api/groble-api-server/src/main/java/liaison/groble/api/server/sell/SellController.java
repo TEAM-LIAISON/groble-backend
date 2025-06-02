@@ -39,18 +39,15 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/v1/sell")
+@RequiredArgsConstructor
 @Tag(name = "판매 관련 API", description = "콘텐츠 임시 저장 및 심사 요청, 콘텐츠 활성화, 나의 판매 콘텐츠 조회 등")
 public class SellController {
   private final ContentService contentService;
   private final ContentDtoMapper contentDtoMapper;
-
-  public SellController(ContentService contentService, ContentDtoMapper contentDtoMapper) {
-    this.contentService = contentService;
-    this.contentDtoMapper = contentDtoMapper;
-  }
 
   // 콘텐츠 임시 저장
   @ContentDraft

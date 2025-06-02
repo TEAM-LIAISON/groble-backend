@@ -8,7 +8,7 @@ import lombok.Getter;
 @Getter
 @Builder
 public class PaymentRequestDto {
-  private BigDecimal amount;
+  private BigDecimal price;
   private String payMethod;
   private String productName;
   private String userName;
