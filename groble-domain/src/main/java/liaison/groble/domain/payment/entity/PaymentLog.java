@@ -2,9 +2,21 @@ package liaison.groble.domain.payment.entity;
 
 import java.util.Map;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 
-import liaison.groble.domain.common.entity.BaseEntity;
+import liaison.groble.domain.common.entity.BaseTimeEntity;
 import liaison.groble.domain.common.utils.MapToJsonConverter;
 import liaison.groble.domain.payment.enums.PaymentLogType;
 
@@ -22,7 +34,7 @@ import lombok.NoArgsConstructor;
     })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class PaymentLog extends BaseEntity {
+public class PaymentLog extends BaseTimeEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -36,13 +48,13 @@ public class PaymentLog extends BaseEntity {
   @Column(nullable = false)
   private PaymentLogType type;
 
-  @Enumerated(EnumType.STRING)
-  @Column(nullable = false)
-  private Payment.PaymentStatus beforeStatus;
-
-  @Enumerated(EnumType.STRING)
-  @Column(nullable = false)
-  private Payment.PaymentStatus afterStatus;
+  //  @Enumerated(EnumType.STRING)
+  //  @Column(nullable = false)
+  //  private Payment.PaymentStatus beforeStatus;
+  //
+  //  @Enumerated(EnumType.STRING)
+  //  @Column(nullable = false)
+  //  private Payment.PaymentStatus afterStatus;
 
   @Column(nullable = false)
   private String description;
@@ -64,8 +76,8 @@ public class PaymentLog extends BaseEntity {
   public PaymentLog(
       Payment payment,
       PaymentLogType type,
-      Payment.PaymentStatus beforeStatus,
-      Payment.PaymentStatus afterStatus,
+      //      Payment.PaymentStatus beforeStatus,
+      //      Payment.PaymentStatus afterStatus,
       String description,
       Map<String, Object> requestData,
       Map<String, Object> responseData,
@@ -73,8 +85,8 @@ public class PaymentLog extends BaseEntity {
       String userAgent) {
     this.payment = payment;
     this.type = type;
-    this.beforeStatus = beforeStatus;
-    this.afterStatus = afterStatus;
+    //    this.beforeStatus = beforeStatus;
+    //    this.afterStatus = afterStatus;
     this.description = description;
     this.requestData = requestData;
     this.responseData = responseData;

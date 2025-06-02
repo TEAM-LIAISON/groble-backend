@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>페이플 결제 프론트엔드 예제</title>
+    <!-- 페이플 JS SDK -->
+    <script src="https://cdn.payple.kr/js/v1/payment.js"></script>
+</head>
+<body>
+    <h1>페이플 결제 구현 예제</h1>
+    
+    <script>
+    /**
+     * 페이플 결제 프론트엔드 구현 예제
+     * 
+     * 이 코드는 React/Vue/Angular 등에서도 동일한 방식으로 구현 가능합니다.
+     */
+    
+    // 1. 구매 버튼 클릭 시 호출되는 함수
+    async function purchaseContent(contentId, optionId, couponId) {
+        try {
+            // Step 1: 주문 생성
+            const orderResponse = await fetch('/api/v1/orders/create', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + getAuthToken()
+                },
+                body: JSON.stringify({
+                    contentId: contentId,
+                    optionType: 'COACHING_OPTION',
+                    optionId: optionId,
+                    couponId: couponId // 선택사항
+                })
+            });
+            
+            const orderData = await orderResponse.json();
+            console.log('주문 생성 완료:', orderData);
+            
+            // Step 2: 결제 요청
+            const paymentResponse = await fetch('/api/v1/payments/payple/request', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + getAuthToken()
+                },
+                body: JSON.stringify({
+                    orderId: orderData.orderId,
+                    payMethod: 'card',
+                    productName: orderData.productName,
+                    price: orderData.finalPrice
+                })
+            });
+            
+            const paymentData = await paymentResponse.json();
+            console.log('결제 인증 정보:', paymentData);
+            
+            // Step 3: 페이플 결제창 호출
+            payplePayment(paymentData);
+            
+        } catch (error) {
+            console.error('결제 요청 실패:', error);
+            alert('결제 요청 중 오류가 발생했습니다.');
+        }
+    }
+    
+    // 2. 페이플 결제창 호출 함수
+    function payplePayment(paymentData) {
+        const paypleParam = {
+            // 페이플 인증 정보
+            PCD_AUTH_KEY: paymentData.authKey,
+            PCD_PAY_WORK: 'PAY',
+            
+            // 결제 정보
+            PCD_PAY_TYPE: 'card',                    // 결제 수단 (card, transfer)
+            PCD_PAY_OID: paymentData.orderId,        // 주문번호
+            PCD_PAY_GOODS: paymentData.productName,  // 상품명
+            PCD_PAY_TOTAL: paymentData.amount,       // 결제 금액
+            
+            // 구매자 정보
+            PCD_PAYER_NO: getUserId(),               // 구매자 고유번호
+            PCD_PAYER_NAME: getUserName(),           // 구매자 이름
+            PCD_PAYER_HP: getUserPhone(),            // 구매자 휴대폰
+            PCD_PAYER_EMAIL: getUserEmail(),         // 구매자 이메일
+            
+            // 콜백 URL
+            PCD_RST_URL: '/api/v1/payments/payple/complete',
+            
+            // 기타 옵션
+            PCD_SIMPLE_FLAG: 'Y',                    // 간편결제 사용 여부
+            PCD_CARD_VER: '02',                      // 카드 결제창 버전
+            
+            // 결제 완료 후 콜백 함수
+            callbackFunction: paypleCallbackFunction
+        };
+        
+        // 페이플 결제창 호출
+        PaypleCpayAuthCheck(paypleParam);
+    }
+    
+    // 3. 페이플 결제 완료 콜백 함수
+    async function paypleCallbackFunction(result) {
+        console.log('페이플 결제 결과:', result);
+        
+        if (result.PCD_PAY_RST === 'success') {
+            // 결제 성공
+            try {
+                // 백엔드에 결제 완료 처리 요청
+                const completeResponse = await fetch('/api/v1/payments/payple/complete', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + getAuthToken()
+                    },
+                    body: JSON.stringify(result)
+                });
+                
+                const completeData = await completeResponse.json();
+                
+                if (completeData.status === 'SUCCESS') {
+                    alert('결제가 완료되었습니다!');
+                    // 구매 완료 페이지로 이동
+                    window.location.href = '/purchase/complete/' + completeData.purchaseId;
+                } else {
+                    alert('결제 처리 중 오류가 발생했습니다.');
+                }
+                
+            } catch (error) {
+                console.error('결제 완료 처리 실패:', error);
+                alert('결제 완료 처리 중 오류가 발생했습니다.');
+            }
+            
+        } else {
+            // 결제 실패 또는 취소
+            alert('결제가 취소되었습니다: ' + result.PCD_PAY_MSG);
+        }
+    }
+    
+    // 4. 결제 취소 함수
+    async function cancelPayment(orderId) {
+        if (!confirm('정말로 결제를 취소하시겠습니까?')) {
+            return;
+        }
+        
+        try {
+            const response = await fetch('/api/v1/payments/payple/cancel', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + getAuthToken()
+                },
+                body: JSON.stringify({
+                    orderId: orderId,
+                    reason: '구매자 요청에 의한 취소'
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.status === 'CANCELLED') {
+                alert('결제가 취소되었습니다.');
+                window.location.reload();
+            } else {
+                alert('결제 취소 실패: ' + data.message);
+            }
+            
+        } catch (error) {
+            console.error('결제 취소 실패:', error);
+            alert('결제 취소 중 오류가 발생했습니다.');
+        }
+    }
+    
+    // 5. 정기결제(빌링) 등록 예제
+    function registerBilling() {
+        const billingParam = {
+            PCD_AUTH_KEY: getAuthKey(),
+            PCD_PAY_WORK: 'AUTH',
+            PCD_PAY_TYPE: 'card',
+            PCD_PAYER_NO: getUserId(),
+            PCD_PAYER_NAME: getUserName(),
+            PCD_PAYER_HP: getUserPhone(),
+            PCD_PAYER_EMAIL: getUserEmail(),
+            
+            callbackFunction: function(result) {
+                if (result.PCD_PAY_RST === 'success') {
+                    // 빌링키 저장
+                    saveBillingKey(result.PCD_PAYER_ID);
+                    alert('정기결제가 등록되었습니다.');
+                }
+            }
+        };
+        
+        PaypleCpayAuthCheck(billingParam);
+    }
+    
+    // 유틸리티 함수들
+    function getAuthToken() {
+        return localStorage.getItem('authToken');
+    }
+    
+    function getUserId() {
+        return localStorage.getItem('userId');
+    }
+    
+    function getUserName() {
+        return localStorage.getItem('userName');
+    }
+    
+    function getUserPhone() {
+        return localStorage.getItem('userPhone');
+    }
+    
+    function getUserEmail() {
+        return localStorage.getItem('userEmail');
+    }
+    </script>
+    
+    <!-- 예제 버튼들 -->
+    <div style="margin: 20px;">
+        <h2>결제 테스트</h2>
+        <button onclick="purchaseContent(1, 1, null)">콘텐츠 구매 (쿠폰 없음)</button>
+        <button onclick="purchaseContent(1, 1, 100)">콘텐츠 구매 (쿠폰 적용)</button>
+        <button onclick="registerBilling()">정기결제 등록</button>
+        <button onclick="cancelPayment('ORD_20240101_abc123')">결제 취소</button>
+    </div>
+    
+    <div style="margin: 20px; padding: 20px; background-color: #f0f0f0;">
+        <h3>페이플 결제 팁</h3>
+        <ul>
+            <li>테스트 환경에서는 테스트 카드번호를 사용하세요</li>
+            <li>결제창이 팝업으로 열리므로 팝업 차단을 해제해주세요</li>
+            <li>모바일에서는 리다이렉트 방식으로 동작합니다</li>
+            <li>결제 완료 후 반드시 서버에서 결제 검증을 수행하세요</li>
+        </ul>
+    </div>
+</body>
+</html>

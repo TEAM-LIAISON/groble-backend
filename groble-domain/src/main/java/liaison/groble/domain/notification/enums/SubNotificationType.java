@@ -1,11 +1,14 @@
 package liaison.groble.domain.notification.enums;
 
 public enum SubNotificationType {
-  // SELLER [판매자 관련]
-  SELLER_VERIFIED,
+  // REVIEW [심사 관련]
+  CONTENT_REVIEW_APPROVED, // 심사 승인
+  CONTENT_REVIEW_REJECTED, // 심사 거절
 
-  // INQUIRY [문의하기 관련]
-  INQUIRY_START, // 문의 시작
+  // CERTIFY [인증 관련]
+  MAKER_CERTIFIED, // 메이커 인증 완료
+  MAKER_CERTIFY_REJECTED, // 메이커 인증 거절
 
+  // SYSTEM [시스템 관련]
   WELCOME_GROBLE
 }

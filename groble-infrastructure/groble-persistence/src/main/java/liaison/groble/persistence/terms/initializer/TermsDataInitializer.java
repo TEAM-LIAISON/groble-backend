@@ -17,7 +17,7 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import liaison.groble.domain.terms.Terms;
+import liaison.groble.domain.terms.entity.Terms;
 import liaison.groble.domain.terms.enums.TermsType;
 import liaison.groble.domain.terms.repository.TermsRepository;
 

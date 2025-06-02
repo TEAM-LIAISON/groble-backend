@@ -2,6 +2,8 @@ package liaison.groble.application.content.dto;
 
 import java.math.BigDecimal;
 
+import liaison.groble.domain.content.enums.ContentType;
+
 import lombok.Builder;
 import lombok.Getter;
 
@@ -13,12 +15,17 @@ public class ContentOptionDto {
   private String description;
   private BigDecimal price;
 
-  // 코칭 옵션 관련 필드
+  // enum OptionType { COACHING, DOCUMENT }
+  private ContentType contentType;
+
+  // coaching 전용
   private String coachingPeriod;
   private String documentProvision;
   private String coachingType;
   private String coachingTypeDescription;
 
-  // 문서 옵션 관련 필드
+  // document 전용
   private String contentDeliveryMethod;
+  private String documentFileUrl;
+  private String documentLinkUrl;
 }

@@ -1,7 +1,5 @@
 package liaison.groble.persistence.user;
 
-import java.util.Optional;
-
 import org.springframework.stereotype.Repository;
 
 import liaison.groble.domain.user.entity.IdentityVerificationHistory;
@@ -18,15 +16,5 @@ public class IdentityVerificationHistoryRepositoryImpl
   @Override
   public IdentityVerificationHistory save(IdentityVerificationHistory identityVerificationHistory) {
     return jpaIdentityVerificationHistoryRepository.save(identityVerificationHistory);
-  }
-
-  @Override
-  public Optional<IdentityVerificationHistory> findByTransactionId(String merchantUid) {
-    return jpaIdentityVerificationHistoryRepository.findByTransactionId(merchantUid);
-  }
-
-  @Override
-  public Optional<IdentityVerificationHistory> findByPortOneRequestId(String requestId) {
-    return jpaIdentityVerificationHistoryRepository.findByPortOneRequestId(requestId);
   }
 }

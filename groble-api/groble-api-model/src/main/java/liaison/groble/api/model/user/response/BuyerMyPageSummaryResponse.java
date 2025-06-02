@@ -24,4 +24,7 @@ public class BuyerMyPageSummaryResponse implements MyPageSummaryResponseBase {
 
   @Schema(description = "판매자 계정 전환 가능 여부 (userType : BUYER 경우에만)", example = "true")
   private boolean canSwitchToSeller;
+
+  @Schema(description = "판매자 등록 여부 [사용자의 SELLER 소유 여부 판단]", example = "false")
+  private boolean alreadyRegisteredAsSeller;
 }

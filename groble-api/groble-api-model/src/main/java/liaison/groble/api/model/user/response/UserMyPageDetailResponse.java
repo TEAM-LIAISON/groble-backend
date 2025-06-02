@@ -14,6 +14,9 @@ public class UserMyPageDetailResponse {
   @Schema(description = "사용자 닉네임", example = "권동민")
   private String nickname;
 
+  @Schema(description = "사용자 마지막 선택 유형", example = "BUYER / SELLER")
+  private String userType;
+
   @Schema(description = "사용자 계정 유형 (INTEGRATED: 통합 계정, SOCIAL: 소셜 계정)")
   private String accountType;
 
@@ -28,6 +31,12 @@ public class UserMyPageDetailResponse {
 
   @Schema(description = "전화번호", example = "010-1234-5678")
   private String phoneNumber;
+
+  @Schema(
+      description =
+          "판매자 계정 전환 가능 여부 (현재 userType : BUYER 경우에 TRUE / 현재 userType : SELLER 경우에 FALSE)",
+      example = "true")
+  private boolean canSwitchToSeller;
 
   @Schema(description = "판매자 계정 미생성 여부", example = "true")
   private boolean sellerAccountNotCreated;

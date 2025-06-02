@@ -11,27 +11,30 @@ import lombok.NoArgsConstructor;
 @Schema(description = "알림 상세 응답")
 public class NotificationDetails {
 
-  // 회원 닉네임
+  @Schema(description = "닉네임", example = "user123")
   private String nickname;
 
-  // 시스템 알림
-  private String systemTitle;
+  // 콘텐츠 알림 관련 필드
+  @Schema(description = "콘텐츠 ID (CONTENT 타입에서 사용)", example = "12345")
+  private Long contentId;
 
-  // 1:1 문의 요청자 이름
-  private String inquiryRequesterName;
-  // 1:1 문의가 들어간 콘텐츠의 썸네일 URL
-  private String contentThumbnailUrl;
+  @Schema(description = "썸네일 URL (CONTENT 타입에서 사용)", example = "https://example.com/thumbnail.jpg")
+  private String thumbnailUrl;
+
+  // 시스템 알림 관련 필드
+  @Schema(description = "시스템 알림 제목 (SYSTEM 타입에서 사용)", example = "Groble에 오신 것을 환영합니다!")
+  private String systemTitle;
 
   @Builder
   private NotificationDetails(
       final String nickname,
-      final String systemTitle,
-      final String inquiryRequesterName,
-      final String contentThumbnailUrl) {
+      final Long contentId,
+      final String thumbnailUrl,
+      final String systemTitle) {
     this.nickname = nickname;
+    this.contentId = contentId;
+    this.thumbnailUrl = thumbnailUrl;
     this.systemTitle = systemTitle;
-    this.inquiryRequesterName = inquiryRequesterName;
-    this.contentThumbnailUrl = contentThumbnailUrl;
   }
 
   // 그로블 환영 알림

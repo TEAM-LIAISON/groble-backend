@@ -12,10 +12,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import liaison.groble.api.model.terms.request.MakerTermsAgreementRequest;
 import liaison.groble.api.model.terms.request.TermsAgreementRequest;
+import liaison.groble.api.model.terms.response.MakerTermsAgreementResponse;
 import liaison.groble.api.model.terms.response.TermsAgreementResponse;
 import liaison.groble.api.model.user.request.AdvertisingAgreementRequest;
 import liaison.groble.api.server.terms.mapper.TermsDtoMapper;
+import liaison.groble.application.terms.dto.MakerTermsAgreementDto;
 import liaison.groble.application.terms.dto.TermsAgreementDto;
 import liaison.groble.application.terms.service.TermsService;
 import liaison.groble.common.annotation.Auth;
@@ -24,6 +27,7 @@ import liaison.groble.common.model.Accessor;
 import liaison.groble.common.response.GrobleResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -105,6 +109,48 @@ public class TermsController {
     return ResponseEntity.ok(GrobleResponse.success(response, "약관 동의 철회가 처리되었습니다."));
   }
 
+  /** 메이커 이용약관 동의 API */
+  @Operation(summary = "메이커 이용약관 동의", description = "메이커(판매자)로 활동하기 위한 이용약관에 동의합니다.")
+  @ApiResponses({
+    @ApiResponse(responseCode = "200", description = "약관 동의 성공"),
+    @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터"),
+    @ApiResponse(responseCode = "401", description = "인증 실패")
+  })
+  @PostMapping("/maker/agree")
+  public ResponseEntity<GrobleResponse<MakerTermsAgreementResponse>> agreeMakerTerms(
+      @Auth Accessor accessor,
+      @Parameter(description = "메이커 약관 동의 정보", required = true) @Valid @RequestBody
+          MakerTermsAgreementRequest request,
+      HttpServletRequest httpRequest) {
+
+    log.info(
+        "메이커 이용약관 동의 요청: userId={}, agreed={}", accessor.getId(), request.getMakerTermsAgreement());
+
+    // 동의하지 않은 경우 에러
+    if (!request.getMakerTermsAgreement()) {
+      throw new IllegalArgumentException("메이커 이용약관에 동의해야 합니다.");
+    }
+
+    // 클라이언트 정보 추출
+    String clientIp = getClientIpAddress(httpRequest);
+    String userAgent = httpRequest.getHeader("User-Agent");
+
+    // 서비스 호출
+    MakerTermsAgreementDto agreementDto =
+        MakerTermsAgreementDto.builder()
+            .userId(accessor.getId())
+            .makerTermsAgreement(request.getMakerTermsAgreement())
+            .build();
+
+    MakerTermsAgreementDto result = termsService.agreeMakerTerms(agreementDto, clientIp, userAgent);
+
+    // 응답 생성
+    MakerTermsAgreementResponse response =
+        MakerTermsAgreementResponse.of(result.getUserId(), result.getMakerTermsAgreement());
+
+    return ResponseEntity.ok(GrobleResponse.success(response, "메이커 이용약관 동의가 완료되었습니다.", 200));
+  }
+
   @Operation(summary = "사용자 약관 동의 상태 조회", description = "사용자의 약관 동의 상태를 조회합니다.")
   @ApiResponses({
     @ApiResponse(
@@ -170,5 +216,30 @@ public class TermsController {
         httpRequest.getRemoteAddr(),
         httpRequest.getHeader("User-Agent"));
     return ResponseEntity.ok(GrobleResponse.success(null, "광고성 정보 수신 동의 상태 변경 성공"));
+  }
+
+  /** 클라이언트 IP 주소 추출 */
+  private String getClientIpAddress(HttpServletRequest request) {
+    String[] headerNames = {
+      "X-Forwarded-For",
+      "X-Real-IP",
+      "Proxy-Client-IP",
+      "WL-Proxy-Client-IP",
+      "HTTP_CLIENT_IP",
+      "HTTP_X_FORWARDED_FOR"
+    };
+
+    for (String headerName : headerNames) {
+      String ip = request.getHeader(headerName);
+      if (ip != null && !ip.isEmpty() && !"unknown".equalsIgnoreCase(ip)) {
+        // X-Forwarded-For는 여러 IP가 콤마로 구분될 수 있음
+        if (ip.contains(",")) {
+          ip = ip.split(",")[0].trim();
+        }
+        return ip;
+      }
+    }
+
+    return request.getRemoteAddr();
   }
 }

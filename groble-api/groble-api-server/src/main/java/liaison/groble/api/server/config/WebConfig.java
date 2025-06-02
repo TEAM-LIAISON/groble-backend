@@ -36,12 +36,10 @@ public class WebConfig implements WebMvcConfigurer {
   @Override
   public void addCorsMappings(CorsRegistry registry) {
     registry
-        .addMapping("/**") // 모든 경로에 대해 CORS 설정 적용
-        .allowedOrigins(
-            "http://localhost:3000",
-            "https://dev.groble.im",
-            "https://api.dev.groble.im",
-            "https://groble.im")
+        .addMapping("/**")
+        .allowedOriginPatterns(
+            "http://localhost:3000", "https://*.groble.im" // ← www, api, dev 모두 허용
+            )
         .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS") // 허용할 HTTP 메서드
         .allowedHeaders("*") // 모든 헤더 허용
         .allowCredentials(true) // 쿠키 포함 요청 허용

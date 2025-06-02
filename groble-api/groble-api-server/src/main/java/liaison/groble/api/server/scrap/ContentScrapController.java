@@ -32,19 +32,15 @@ import liaison.groble.common.response.GrobleResponse;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/v1/scrap")
+@RequiredArgsConstructor
 @Tag(name = "스크랩 관련 API", description = "스크랩 관련 API")
 public class ContentScrapController {
   private final ContentScrapService contentScrapService;
   private final ContentScrapDtoMapper contentScrapDtoMapper;
-
-  public ContentScrapController(
-      ContentScrapService contentScrapService, ContentScrapDtoMapper contentScrapDtoMapper) {
-    this.contentScrapService = contentScrapService;
-    this.contentScrapDtoMapper = contentScrapDtoMapper;
-  }
 
   @UpdateContentScrapState
   @PostMapping("/content/{contentId}")

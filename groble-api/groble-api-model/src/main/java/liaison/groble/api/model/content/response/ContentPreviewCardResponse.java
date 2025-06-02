@@ -36,6 +36,9 @@ public class ContentPreviewCardResponse {
   @Schema(description = "콘텐츠 최저가 가격 (null인 경우 -> 가격미정)", example = "100000")
   private BigDecimal lowestPrice;
 
+  @Schema(description = "가격 옵션 개수", example = "3")
+  private int priceOptionLength;
+
   @Schema(
       description =
           "콘텐츠 상태 [ACTIVE - 판매중], [DRAFT - 작성중], [PENDING - 심사중], [VALIDATED - 심사완료(승인)], [REJECTED - 심사완료(거절)]",

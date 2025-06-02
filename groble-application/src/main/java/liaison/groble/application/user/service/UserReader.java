@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import liaison.groble.common.exception.EntityNotFoundException;
 import liaison.groble.domain.user.entity.IntegratedAccount;
 import liaison.groble.domain.user.entity.User;
+import liaison.groble.domain.user.enums.UserStatus;
 import liaison.groble.domain.user.repository.IntegratedAccountRepository;
 import liaison.groble.domain.user.repository.SocialAccountRepository;
 import liaison.groble.domain.user.repository.UserRepository;
@@ -58,13 +59,21 @@ public class UserReader {
    * @param nickname 확인할 닉네임
    * @return 닉네임 사용 여부 (true: 사용 중, false: 사용 가능)
    */
-  public boolean isNicknameTaken(String nickname) {
-    return userRepository.existsByNickname(nickname);
+  public boolean isNicknameTaken(String nickname, UserStatus userStatus) {
+    return userRepository.existsByNicknameAndStatus(nickname, userStatus);
   }
 
   // ===== 이메일로 User 조회 =====
-  public Optional<IntegratedAccount> findUserByEmail(String email) {
+
+  public Optional<IntegratedAccount> findUserByIntegratedAccountEmail(String email) {
     return integratedAccountRepository.findByIntegratedAccountEmail(email);
+  }
+
+  public IntegratedAccount getUserByIntegratedAccountEmail(String email) {
+    return integratedAccountRepository
+        .findByIntegratedAccountEmail(email)
+        .orElseThrow(
+            () -> new EntityNotFoundException("해당 통합 계정용 이메일로 가입한 사용자를 찾을 수 없습니다. 이메일: " + email));
   }
 
   // ===== 사용자 존재 여부 확인 =====
@@ -75,7 +84,11 @@ public class UserReader {
    * @param email 이메일
    * @return 존재 여부
    */
-  public boolean existsByEmail(String email) {
+  public boolean existsByIntegratedAccountEmail(String email) {
     return integratedAccountRepository.existsByIntegratedAccountEmail(email);
+  }
+
+  public boolean existsByPhoneNumber(String phoneNumber) {
+    return userRepository.existsByPhoneNumber(phoneNumber);
   }
 }

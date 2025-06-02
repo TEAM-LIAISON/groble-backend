@@ -2,33 +2,38 @@ package liaison.groble.domain.role;
 
 import static com.querydsl.core.types.PathMetadataFactory.*;
 
-import javax.annotation.processing.Generated;
-
-import com.querydsl.core.types.Path;
-import com.querydsl.core.types.PathMetadata;
 import com.querydsl.core.types.dsl.*;
 
-/** QRole is a Querydsl query type for Role */
+import com.querydsl.core.types.PathMetadata;
+import javax.annotation.processing.Generated;
+import com.querydsl.core.types.Path;
+
+
+/**
+ * QRole is a Querydsl query type for Role
+ */
 @Generated("com.querydsl.codegen.DefaultEntitySerializer")
 public class QRole extends EntityPathBase<Role> {
 
-  private static final long serialVersionUID = -1841301606L;
+    private static final long serialVersionUID = -1841301606L;
 
-  public static final QRole role = new QRole("role");
+    public static final QRole role = new QRole("role");
 
-  public final NumberPath<Long> id = createNumber("id", Long.class);
+    public final NumberPath<Long> id = createNumber("id", Long.class);
 
-  public final StringPath name = createString("name");
+    public final StringPath name = createString("name");
 
-  public QRole(String variable) {
-    super(Role.class, forVariable(variable));
-  }
+    public QRole(String variable) {
+        super(Role.class, forVariable(variable));
+    }
 
-  public QRole(Path<? extends Role> path) {
-    super(path.getType(), path.getMetadata());
-  }
+    public QRole(Path<? extends Role> path) {
+        super(path.getType(), path.getMetadata());
+    }
 
-  public QRole(PathMetadata metadata) {
-    super(Role.class, metadata);
-  }
+    public QRole(PathMetadata metadata) {
+        super(Role.class, metadata);
+    }
+
 }
+

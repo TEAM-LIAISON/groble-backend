@@ -67,21 +67,6 @@ public class JwtTokenProvider {
     return generateToken(userPrincipal, TokenType.ACCESS, accessTokenKey, accessTokenExpirationMs);
   }
 
-  /**
-   * 사용하지 않는 메소드 제거 또는 Deprecated 처리
-   *
-   * @deprecated 이메일 중복 시 보안 문제 발생 가능
-   */
-  @Deprecated
-  public String generateAccessToken(String email) {
-    throw new UnsupportedOperationException("이메일만으로 토큰을 생성하는 것은 안전하지 않습니다. User 객체를 사용하세요.");
-  }
-
-  @Deprecated
-  public String generateRefreshToken(String email) {
-    throw new UnsupportedOperationException("이메일만으로 토큰을 생성하는 것은 안전하지 않습니다. User 객체를 사용하세요.");
-  }
-
   /** 리프레시 토큰 생성 */
   public String generateRefreshToken(UserPrincipal userPrincipal) {
     return generateToken(
@@ -282,7 +267,6 @@ public class JwtTokenProvider {
    * @return 생성된 액세스 토큰
    */
   public String createAccessToken(Long userId, String email) {
-    // userId를 반드시 포함하고 고유 식별자로 사용
     return generateToken(userId, email, TokenType.ACCESS, accessTokenKey, accessTokenExpirationMs);
   }
 
@@ -374,6 +358,59 @@ public class JwtTokenProvider {
       return e.getClaims().get("userId", Long.class);
     } catch (Exception e) {
       throw new TokenException("리프레쉬 토큰에서 사용자 ID를 추출할 수 없습니다", e);
+    }
+  }
+
+  public Long getUserId(String token, TokenType type) {
+    try {
+      return parseClaimsJws(token, type).get("userId", Long.class);
+    } catch (ExpiredJwtException e) {
+      return e.getClaims().get("userId", Long.class);
+    }
+  }
+
+  public String getEmail(String token, TokenType type) {
+    try {
+      return parseClaimsJws(token, type).get("email", String.class);
+    } catch (ExpiredJwtException e) {
+      return e.getClaims().get("email", String.class);
+    }
+  }
+
+  public Claims parseClaimsJws(String token, TokenType type) {
+    Key key = getKeyForTokenType(type); // ACCESS/REFRESH 키 반환
+    return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();
+  }
+
+  /** 리프레시 토큰의 만료 시간을 고려하여 액세스 토큰을 생성 액세스 토큰은 리프레시 토큰보다 길게 유효하지 않음 */
+  public String createAccessTokenWithRefreshConstraint(
+      Long userId, String email, String refreshToken) {
+    try {
+      // 리프레시 토큰의 만료 시간 가져오기
+      Instant refreshExpiration = getRefreshTokenExpirationInstant(refreshToken);
+      Instant now = Instant.now();
+
+      // 기본 액세스 토큰 만료 시간
+      Instant defaultAccessExpiration = now.plusMillis(accessTokenExpirationMs);
+
+      // 액세스 토큰 만료 시간은 리프레시 토큰 만료 시간과 기본 액세스 토큰 만료 시간 중 더 이른 시간으로 설정
+      Instant effectiveExpiration =
+          refreshExpiration.isBefore(defaultAccessExpiration)
+              ? refreshExpiration
+              : defaultAccessExpiration;
+
+      // 만료 시간이 현재보다 이전이면 토큰 발급 불가
+      if (effectiveExpiration.isBefore(now) || effectiveExpiration.equals(now)) {
+        throw new TokenException("유효한 토큰을 생성할 수 없습니다: 만료 시간이 현재 시간보다 이전입니다");
+      }
+
+      // 밀리초 단위로 변환
+      long expirationMs = effectiveExpiration.toEpochMilli() - now.toEpochMilli();
+
+      // 액세스 토큰 생성 (제한된, 더 짧은 만료 시간 사용)
+      return generateToken(userId, email, TokenType.ACCESS, accessTokenKey, expirationMs);
+    } catch (Exception e) {
+      throw new TokenException("제한된 액세스 토큰 생성 실패", e);
     }
   }
 }

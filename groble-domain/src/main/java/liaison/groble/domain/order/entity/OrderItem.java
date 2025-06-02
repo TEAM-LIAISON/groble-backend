@@ -14,7 +14,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
-import liaison.groble.domain.common.entity.BaseEntity;
+import liaison.groble.domain.common.entity.BaseTimeEntity;
 import liaison.groble.domain.content.entity.Content;
 
 import lombok.AccessLevel;
@@ -26,7 +26,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "order_items")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class OrderItem extends BaseEntity {
+public class OrderItem extends BaseTimeEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -46,10 +46,7 @@ public class OrderItem extends BaseEntity {
   @Column(nullable = false)
   private int quantity;
 
-  @Column(name = "content_name", nullable = false)
-  private String contentName;
-
-  @Column(name = "option_id")
+  @Column(name = "option_id", nullable = false)
   private Long optionId;
 
   // 옵션 관련 필드 추가
@@ -65,13 +62,11 @@ public class OrderItem extends BaseEntity {
       BigDecimal price,
       int quantity,
       OptionType optionType,
-      Long optionId,
-      String optionName) {
+      Long optionId) {
     this.order = order;
     this.content = content;
     this.price = price;
     this.quantity = quantity;
-    this.contentName = content.getTitle();
     this.optionType = optionType;
     this.optionId = optionId;
   }

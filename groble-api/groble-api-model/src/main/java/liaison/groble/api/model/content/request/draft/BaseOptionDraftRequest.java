@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
+import jakarta.validation.constraints.Size;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -20,9 +21,11 @@ import lombok.experimental.SuperBuilder;
 @AllArgsConstructor
 public class BaseOptionDraftRequest {
 
+  @Size(max = 20, message = "옵션 이름은 최대 20자까지 입력할 수 있습니다.")
   @Schema(description = "옵션 이름", example = "사업계획서 컨설팅 1회")
   private String name;
 
+  @Size(max = 60, message = "옵션 설명은 최대 60자까지 입력할 수 있습니다.")
   @Schema(description = "옵션 설명", example = "회당 30분씩 진행됩니다.")
   private String description;
 

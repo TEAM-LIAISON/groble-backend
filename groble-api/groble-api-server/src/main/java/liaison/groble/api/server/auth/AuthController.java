@@ -16,27 +16,36 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import liaison.groble.api.model.auth.request.DeprecatedSignUpRequest;
 import liaison.groble.api.model.auth.request.EmailVerificationRequest;
+import liaison.groble.api.model.auth.request.PhoneNumberVerifyCodeRequest;
+import liaison.groble.api.model.auth.request.PhoneNumberVerifyRequest;
 import liaison.groble.api.model.auth.request.ResetPasswordRequest;
 import liaison.groble.api.model.auth.request.SignInRequest;
 import liaison.groble.api.model.auth.request.SignUpRequest;
+import liaison.groble.api.model.auth.request.SocialSignUpRequest;
+import liaison.groble.api.model.auth.request.UserWithdrawalRequest;
 import liaison.groble.api.model.auth.request.VerifyEmailCodeRequest;
+import liaison.groble.api.model.auth.response.PhoneNumberResponse;
 import liaison.groble.api.model.auth.response.SignInResponse;
+import liaison.groble.api.model.auth.response.SignInTestResponse;
 import liaison.groble.api.model.auth.response.SignUpResponse;
+import liaison.groble.api.model.auth.response.SocialSignUpResponse;
 import liaison.groble.api.model.auth.response.swagger.SignUp;
+import liaison.groble.api.model.auth.response.swagger.SocialSignUp;
 import liaison.groble.api.model.user.request.NicknameRequest;
 import liaison.groble.api.model.user.request.UserTypeRequest;
 import liaison.groble.api.model.user.response.NicknameDuplicateCheckResponse;
 import liaison.groble.api.model.user.response.UpdateNicknameResponse;
 import liaison.groble.api.server.auth.mapper.AuthDtoMapper;
-import liaison.groble.application.auth.dto.DeprecatedSignUpDto;
 import liaison.groble.application.auth.dto.EmailVerificationDto;
 import liaison.groble.application.auth.dto.SignInDto;
 import liaison.groble.application.auth.dto.SignUpDto;
+import liaison.groble.application.auth.dto.SocialSignUpDto;
 import liaison.groble.application.auth.dto.TokenDto;
+import liaison.groble.application.auth.dto.UserWithdrawalDto;
 import liaison.groble.application.auth.dto.VerifyEmailCodeDto;
 import liaison.groble.application.auth.service.AuthService;
+import liaison.groble.application.auth.service.PhoneAuthService;
 import liaison.groble.application.user.service.UserService;
 import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.model.Accessor;
@@ -50,28 +59,24 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /** 인증 관련 API 컨트롤러 회원가입, 로그인, 이메일 인증, 토큰 갱신 등의 엔드포인트 제공 */
 @Slf4j
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/v1/auth")
 @Tag(name = "인증 API", description = "통합 회원가입, 통합 로그인, 이메일 인증, 토큰 갱신 등의 인증 관련 API")
 public class AuthController {
   private final AuthService authService;
   private final UserService userService;
   private final AuthDtoMapper authDtoMapper;
-
-  public AuthController(
-      AuthService authService, UserService userService, AuthDtoMapper authDtoMapper) {
-    this.authService = authService;
-    this.userService = userService;
-    this.authDtoMapper = authDtoMapper;
-  }
+  private final PhoneAuthService phoneAuthService;
 
   // 쿠키 설정값
-  private static final int ACCESS_TOKEN_MAX_AGE = 60 * 30; // 30분
-  private static final int REFRESH_TOKEN_MAX_AGE = 60 * 60 * 24 * 7; // 7일
+  private static final int ACCESS_TOKEN_MAX_AGE = 60 * 60; // 1시간
+  private static final int REFRESH_TOKEN_MAX_AGE = 60 * 60 * 24 * 7; // 1주일
   private static final String ACCESS_TOKEN_COOKIE_NAME = "accessToken";
   private static final String REFRESH_TOKEN_COOKIE_NAME = "refreshToken";
 
@@ -102,37 +107,28 @@ public class AuthController {
         .body(GrobleResponse.success(signUpResponse, "회원가입이 성공적으로 완료되었습니다.", 201));
   }
 
-  /**
-   * 회원가입 API
-   *
-   * <p>이메일과 비밀번호로 회원가입 처리
-   *
-   * @param request 회원가입 요청 정보
-   * @return 회원가입 결과 (액세스 토큰, 리프레시 토큰 : 쿠키에 세팅 | 해당 이메일에 대한 인증 완료 여부)
-   */
-  @Deprecated
-  @Operation(summary = "통합 회원가입 [deprecated]", description = "새로운 사용자를 등록하고 인증 토큰을 발급합니다.")
-  @PostMapping("/sign-up/deprecated")
-  public ResponseEntity<GrobleResponse<SignUpResponse>> signUp(
+  @SocialSignUp
+  @PostMapping("/sign-up/social")
+  public ResponseEntity<GrobleResponse<SocialSignUpResponse>> signUpSocial(
+      @Auth(required = false) Accessor accessor,
       @Parameter(description = "회원가입 정보", required = true) @Valid @RequestBody
-          DeprecatedSignUpRequest request,
+          SocialSignUpRequest request,
       HttpServletResponse response) {
-
     // 1. API DTO → 서비스 DTO 변환
-    DeprecatedSignUpDto deprecatedSignUpDto = authDtoMapper.toServiceDeprecatedSignUpDto(request);
+    SocialSignUpDto socialSignUpDto = authDtoMapper.toServiceSocialSignUpDto(request);
 
     // 2. 서비스 호출
-    TokenDto tokenDto = authService.signUp(deprecatedSignUpDto);
+    TokenDto tokenDto = authService.socialSignUp(accessor.getUserId(), socialSignUpDto);
 
     // 3. 토큰을 쿠키로 설정
     addTokenCookies(response, tokenDto.getAccessToken(), tokenDto.getRefreshToken());
 
     // 4. 사용자 정보만 응답 본문에 포함
-    SignUpResponse signUpResponse = SignUpResponse.of(request.getEmail());
+    SocialSignUpResponse socialSignUpResponse = SocialSignUpResponse.of(request.getNickname());
 
     // 5. API 응답 생성
     return ResponseEntity.status(HttpStatus.CREATED)
-        .body(GrobleResponse.success(signUpResponse, "회원가입이 성공적으로 완료되었습니다.", 201));
+        .body(GrobleResponse.success(socialSignUpResponse, "소셜 계정의 회원가입이 성공적으로 완료되었습니다.", 201));
   }
 
   /**
@@ -181,6 +177,50 @@ public class AuthController {
         .body(GrobleResponse.success(signInResponse, "로그인이 성공적으로 완료되었습니다.", 200));
   }
 
+  @Operation(summary = "로그인", description = "이메일과 비밀번호로 로그인하고 인증 토큰을 발급합니다.")
+  @ApiResponses({
+    @ApiResponse(
+        responseCode = "200",
+        description = "로그인 성공",
+        content = @Content(schema = @Schema(implementation = GrobleResponse.class))),
+    @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터"),
+    @ApiResponse(responseCode = "401", description = "인증 실패")
+  })
+  @PostMapping("/sign-in/local/test")
+  public ResponseEntity<GrobleResponse<SignInTestResponse>> signInTest(
+      @Parameter(description = "로그인 정보", required = true) @Valid @RequestBody SignInRequest request,
+      HttpServletResponse response) {
+    log.info("로그인 요청: {}", request.getEmail());
+
+    // 1. API DTO → 서비스 DTO 변환
+    SignInDto signInDto = authDtoMapper.toServiceSignInDto(request);
+
+    // 2. 서비스 호출
+    TokenDto tokenDto = authService.signIn(signInDto);
+
+    // 3. 사용자 역할 및 정보 상태 확인
+    String userType = userService.getUserType(signInDto.getEmail());
+
+    // 4. 사용자 라우팅 경로 설정
+    String nextRoutePath = userService.getNextRoutePath(signInDto.getEmail());
+
+    // 5. 토큰을 쿠키로 설정
+    addTokenCookies(response, tokenDto.getAccessToken(), tokenDto.getRefreshToken());
+
+    // 6. 사용자 정보와 역할 정보를 응답 본문에 포함
+    SignInTestResponse signInTestResponse =
+        SignInTestResponse.of(
+            request.getEmail(),
+            userType,
+            nextRoutePath,
+            tokenDto.getAccessToken(),
+            tokenDto.getRefreshToken());
+
+    // 7. API 응답 생성
+    return ResponseEntity.status(HttpStatus.OK)
+        .body(GrobleResponse.success(signInTestResponse, "로그인이 성공적으로 완료되었습니다.", 200));
+  }
+
   /** 로그아웃 API - 토큰 무효화 및 쿠키 삭제 */
   @PostMapping("/logout")
   @Operation(summary = "로그아웃", description = "로그아웃을 통해 쿠키와 토큰을 무효화합니다.")
@@ -199,9 +239,10 @@ public class AuthController {
       // 1. 리프레시 토큰 무효화
       authService.logout(accessor.getUserId());
 
-      // 2. 쿠키 삭제
-      CookieUtils.deleteCookie(request, response, ACCESS_TOKEN_COOKIE_NAME);
-      CookieUtils.deleteCookie(request, response, REFRESH_TOKEN_COOKIE_NAME);
+      // 2. 쿠키 삭제 - now with domain specification
+      CookieUtils.deleteCookieWithDomain(request, response, ACCESS_TOKEN_COOKIE_NAME, cookieDomain);
+      CookieUtils.deleteCookieWithDomain(
+          request, response, REFRESH_TOKEN_COOKIE_NAME, cookieDomain);
 
       // 3. 응답 반환
       return ResponseEntity.ok().body(GrobleResponse.success(null, "로그아웃이 성공적으로 처리되었습니다.", 200));
@@ -213,40 +254,74 @@ public class AuthController {
     }
   }
 
-  /**
-   * 비밀번호 재설정 이메일 발송 API
-   *
-   * @param request 비밀번호 재설정 이메일 요청
-   * @return 이메일 발송 결과
-   */
   @Operation(summary = "비밀번호 재설정 이메일 발송", description = "비밀번호 재설정 링크가 포함된 이메일을 발송합니다.")
   @PostMapping("/password/reset-request")
   public ResponseEntity<GrobleResponse<Void>> requestPasswordReset(
       @Valid @RequestBody EmailVerificationRequest request) {
-    log.info("비밀번호 재설정 이메일 요청: {}", request.getEmail());
 
     authService.sendPasswordResetEmail(request.getEmail());
 
     return ResponseEntity.ok().body(GrobleResponse.success(null, "비밀번호 재설정 이메일이 발송되었습니다.", 200));
   }
 
-  /**
-   * 비밀번호 재설정 API
-   *
-   * <p>비밀번호 재설정 링크를 통해 새로운 비밀번호로 변경
-   *
-   * @param accessor 인증된 사용자 정보
-   * @param request 비밀번호 재설정 요청
-   * @return 비밀번호 재설정 결과
-   */
   @Operation(summary = "비밀번호 재설정", description = "새로운 비밀번호로 재설정합니다.")
   @PostMapping("/password/reset")
   public ResponseEntity<GrobleResponse<Void>> resetPassword(
-      @Auth Accessor accessor, @Valid @RequestBody ResetPasswordRequest request) {
+      @Valid @RequestBody ResetPasswordRequest request) {
 
-    authService.resetPassword(accessor.getUserId(), request.getToken(), request.getNewPassword());
+    authService.resetPassword(request.getToken(), request.getNewPassword());
 
     return ResponseEntity.ok().body(GrobleResponse.success(null, "비밀번호가 성공적으로 재설정되었습니다.", 200));
+  }
+
+  /** 전화번호 인증 요청 - Optional 인증 로그인 사용자: 기존 사용자의 전화번호 변경/추가 인증 비로그인 사용자: 회원가입 전 전화번호 인증 */
+  @Operation(summary = "전화번호 인증 요청", description = "전화번호 인증 코드를 발송합니다.")
+  @PostMapping("/phone-number/verify-request")
+  public ResponseEntity<GrobleResponse<PhoneNumberResponse>> authPhoneNumber(
+      @Auth(required = false) Accessor accessor, // Optional 인증
+      @Parameter(description = "전화번호 인증 정보", required = true) @Valid @RequestBody
+          PhoneNumberVerifyRequest request) {
+
+    if (accessor.isAuthenticated()) {
+      // 로그인한 사용자의 경우
+      log.info("로그인 사용자 전화번호 인증 요청: {} (userId: {})", request.getPhoneNumber(), accessor.getId());
+
+      phoneAuthService.sendVerificationCodeForUser(accessor.getId(), request.getPhoneNumber());
+    } else {
+      // 비로그인 사용자의 경우 (회원가입)
+      log.info("비로그인 사용자 전화번호 인증 요청: {}", request.getPhoneNumber());
+
+      phoneAuthService.sendVerificationCodeForSignup(request.getPhoneNumber());
+    }
+
+    return ResponseEntity.status(HttpStatus.OK)
+        .body(GrobleResponse.success(null, "전화번호 인증 요청이 성공적으로 완료되었습니다.", 200));
+  }
+
+  /** 전화번호 인증 코드 검증 - Optional 인증 로그인 사용자: 사용자별 인증 코드 검증 비로그인 사용자: 비회원 인증 코드 검증 */
+  @Operation(summary = "전화번호 인증 코드 검증", description = "전화번호로 발송된 인증 코드를 검증합니다.")
+  @PostMapping("/phone-number/verify-code")
+  public ResponseEntity<GrobleResponse<PhoneNumberResponse>> verifyPhoneNumber(
+      @Auth(required = false) Accessor accessor, // Optional 인증 추가
+      @Parameter(description = "전화번호 인증 정보", required = true) @Valid @RequestBody
+          PhoneNumberVerifyCodeRequest request) {
+
+    if (accessor.isAuthenticated()) {
+      // 로그인한 사용자의 경우
+      log.info(
+          "로그인 사용자 전화번호 인증 코드 검증: {} (userId: {})", request.getPhoneNumber(), accessor.getId());
+
+      phoneAuthService.verifyCodeForUser(
+          accessor.getId(), request.getPhoneNumber(), request.getVerificationCode());
+    } else {
+      // 비로그인 사용자의 경우
+      log.info("비로그인 사용자 전화번호 인증 코드 검증: {}", request.getPhoneNumber());
+
+      phoneAuthService.verifyCodeForSignup(request.getPhoneNumber(), request.getVerificationCode());
+    }
+
+    return ResponseEntity.status(HttpStatus.OK)
+        .body(GrobleResponse.success(null, "전화번호 인증이 성공적으로 완료되었습니다.", 200));
   }
 
   @Operation(summary = "통합 회원가입 이메일 인증 요청", description = "사용자가 기입한 이메일에 인증 코드를 발급합니다.")
@@ -321,6 +396,7 @@ public class AuthController {
   }
 
   /** 토큰 검증 및 로그인 상태 확인 API OAuth2 로그인 처리 후 프론트엔드에서 호출하여 토큰 상태 확인 */
+  @Deprecated
   @Operation(summary = "토큰 검증", description = "현재 사용자의 인증 토큰을 검증하고 로그인 상태를 확인합니다.")
   @PostMapping("/validate-token")
   public ResponseEntity<GrobleResponse<SignInResponse>> validateToken(@Auth Accessor accessor) {
@@ -336,6 +412,7 @@ public class AuthController {
     return ResponseEntity.ok().body(GrobleResponse.success(response, "유효한 토큰입니다.", 200));
   }
 
+  @Deprecated
   @Operation(summary = "accessToken 재발급", description = "리프레시 토큰을 사용하여 새로운 액세스 토큰을 발급합니다.")
   @PostMapping("/refresh-token")
   public ResponseEntity<GrobleResponse<Void>> refreshToken(
@@ -405,44 +482,34 @@ public class AuthController {
     return ResponseEntity.ok(GrobleResponse.success(new UpdateNicknameResponse(updatedNickname)));
   }
 
-  /** 액세스 토큰과 리프레시 토큰을 쿠키에 저장 */
-  private void addTokenCookies(
-      HttpServletResponse response, String accessToken, String refreshToken) {
-    // Access Token - HttpOnly 설정 (JS에서 접근 불가)
-    CookieUtils.addCookie(
-        response,
-        ACCESS_TOKEN_COOKIE_NAME,
-        accessToken,
-        ACCESS_TOKEN_MAX_AGE,
-        "/",
-        true,
-        isSecureEnvironment(),
-        "None", // SameSite 설정을 None으로 변경 (크로스 사이트 요청 허용)
-        cookieDomain); // 도메인 설정 추가
+  @Operation(summary = "회원 탈퇴", description = "사용자 계정을 탈퇴 처리합니다.")
+  @ApiResponses({
+    @ApiResponse(
+        responseCode = "200",
+        description = "회원 탈퇴 성공",
+        content = @Content(schema = @Schema(implementation = GrobleResponse.class))),
+    @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터"),
+    @ApiResponse(responseCode = "401", description = "인증 실패 또는 비밀번호 불일치"),
+    @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음")
+  })
+  @PostMapping("/withdrawal")
+  public ResponseEntity<GrobleResponse<Void>> withdrawUser(
+      @Auth Accessor accessor,
+      @Valid @RequestBody UserWithdrawalRequest request,
+      HttpServletRequest servletRequest,
+      HttpServletResponse servletResponse) {
 
-    // Refresh Token - HttpOnly 설정 (JS에서 접근 불가, 보안 강화)
-    CookieUtils.addCookie(
-        response,
-        REFRESH_TOKEN_COOKIE_NAME,
-        refreshToken,
-        REFRESH_TOKEN_MAX_AGE,
-        "/",
-        true,
-        isSecureEnvironment(),
-        "None", // SameSite 설정을 None으로 변경
-        cookieDomain); // 도메인 설정 추가
+    // 1. 회원 탈퇴 처리
+    UserWithdrawalDto userWithdrawalDto = authDtoMapper.toServiceUserWithdrawalDto(request);
 
-    log.debug(
-        "토큰 쿠키 추가 완료: domain={}, accessToken({}초), refreshToken({}초)",
-        cookieDomain,
-        ACCESS_TOKEN_MAX_AGE,
-        REFRESH_TOKEN_MAX_AGE);
-  }
+    authService.withdrawUser(accessor.getUserId(), userWithdrawalDto);
 
-  /** 보안 환경(운영)인지 확인 */
-  private boolean isSecureEnvironment() {
-    String env = System.getProperty("spring.profiles.active", "dev");
-    return env.equalsIgnoreCase("prod") || env.equalsIgnoreCase("production");
+    // 2. 쿠키 삭제
+    CookieUtils.deleteCookie(servletRequest, servletResponse, ACCESS_TOKEN_COOKIE_NAME);
+    CookieUtils.deleteCookie(servletRequest, servletResponse, REFRESH_TOKEN_COOKIE_NAME);
+
+    // 3. 응답 반환
+    return ResponseEntity.ok().body(GrobleResponse.success(null, "회원 탈퇴가 성공적으로 처리되었습니다.", 200));
   }
 
   private String extractRefreshTokenFromCookie(HttpServletRequest request) {
@@ -457,5 +524,65 @@ public class AuthController {
     }
 
     throw new IllegalArgumentException("refreshToken 쿠키가 없습니다.");
+  }
+
+  private void addTokenCookies(
+      HttpServletResponse response, String accessToken, String refreshToken) {
+
+    // 1. 환경에 따른 설정 결정
+    String activeProfile = System.getProperty("spring.profiles.active", "local");
+    boolean isLocal = activeProfile.contains("local") || activeProfile.isEmpty();
+
+    // 2. 로컬 환경이 아닌 경우에만 Secure 설정
+    // 개발(dev) 및 운영(prod) 환경에서는 HTTPS 사용
+    boolean isSecure = !isLocal;
+
+    // 3. SameSite 설정: 크로스 사이트 요청을 허용하기 위해 'None' 사용
+    // SameSite=None이면 항상 Secure=true여야 함 (브라우저 요구사항)
+    String sameSite = "None";
+    isSecure = true; // SameSite=None인 경우 항상 Secure 설정
+
+    // 4. 도메인 설정 (app.cookie.domain 프로퍼티 사용)
+    String domain = null;
+    if (!isLocal && cookieDomain != null && !cookieDomain.isEmpty()) {
+      // 점으로 시작하지 않는 도메인 사용 (RFC 6265 준수)
+      domain = cookieDomain.startsWith(".") ? cookieDomain.substring(1) : cookieDomain;
+      // 또는 더 간단하게: domain = cookieDomain;
+    }
+    // 로컬 환경에서는 domain 명시적으로 설정하지 않음 (기본값 사용)
+
+    // 5. 토큰 쿠키 설정
+    // Access Token
+    CookieUtils.addCookie(
+        response,
+        ACCESS_TOKEN_COOKIE_NAME,
+        accessToken,
+        ACCESS_TOKEN_MAX_AGE,
+        "/", // path
+        true, // httpOnly
+        isSecure, // secure
+        sameSite, // sameSite
+        domain); // domain
+
+    // Refresh Token
+    CookieUtils.addCookie(
+        response,
+        REFRESH_TOKEN_COOKIE_NAME,
+        refreshToken,
+        REFRESH_TOKEN_MAX_AGE,
+        "/", // path
+        true, // httpOnly
+        isSecure, // secure
+        sameSite, // sameSite
+        domain); // domain
+
+    log.debug(
+        "토큰 쿠키 추가 완료: env={}, domain={}, accessToken({}초), refreshToken({}초), secure={}, sameSite={}",
+        activeProfile,
+        domain != null ? domain : "기본값(localhost)",
+        ACCESS_TOKEN_MAX_AGE,
+        REFRESH_TOKEN_MAX_AGE,
+        isSecure,
+        sameSite);
   }
 }

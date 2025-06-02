@@ -51,7 +51,7 @@ public class BankAccountVerification extends BaseTimeEntity {
   @Column(nullable = false)
   private BankAccountVerificationStatus status;
 
-  @Column private BigDecimal depositAmount; // 1원 인증 시 입금액
+  @Column private BigDecimal depositPrice; // 1원 인증 시 입금액
 
   @Column private String depositBank; // 1원 인증 시 출금 은행
 
@@ -109,11 +109,11 @@ public class BankAccountVerification extends BaseTimeEntity {
   }
 
   public void setOneCentDepositInfo(
-      BigDecimal depositAmount,
+      BigDecimal depositPrice,
       String depositBank,
       String depositAccountNumber,
       LocalDateTime expiredAt) {
-    this.depositAmount = depositAmount;
+    this.depositPrice = depositPrice;
     this.depositBank = depositBank;
     this.depositAccountNumber = depositAccountNumber;
     this.expiredAt = expiredAt;

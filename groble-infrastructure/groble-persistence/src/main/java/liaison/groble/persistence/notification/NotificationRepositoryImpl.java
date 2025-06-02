@@ -16,6 +16,11 @@ public class NotificationRepositoryImpl implements NotificationRepository {
   private final JpaNotificationRepository jpaNotificationRepository;
   private final NotificationCustomRepository notificationCustomRepository;
 
+  @Override
+  public Notification save(final Notification notification) {
+    return jpaNotificationRepository.save(notification);
+  }
+
   public List<Notification> getNotificationsByReceiverUser(final Long userId) {
     return notificationCustomRepository.getNotificationsByReceiverUser(userId);
   }

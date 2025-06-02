@@ -50,7 +50,7 @@ public class ContentScrapCustomRepositoryImpl implements ContentScrapCustomRepos
                     qContent.contentType.stringValue().as("contentType"),
                     qContent.title.as("title"),
                     qContent.thumbnailUrl.as("thumbnailUrl"),
-                    qUser.nickname.as("sellerName"),
+                    qUser.userProfile.nickname.as("sellerName"),
                     qContentScrap.isNotNull().as("isContentScrap")))
             .from(qContentScrap)
             .join(qContentScrap.content, qContent)

@@ -1,5 +1,8 @@
 package liaison.groble.domain.file.enums;
 
+import lombok.Getter;
+
+@Getter
 public enum FileTypeGroup {
   IMAGE("images"),
   CONTENT("contents"),
@@ -10,10 +13,6 @@ public enum FileTypeGroup {
 
   FileTypeGroup(String dir) {
     this.dir = dir;
-  }
-
-  public String getDir() {
-    return dir;
   }
 
   public static FileTypeGroup from(String type) {

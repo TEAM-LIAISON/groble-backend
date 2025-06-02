@@ -13,10 +13,12 @@ import lombok.Setter;
 @AllArgsConstructor
 public class UserMyPageDetailDto {
   private String nickname;
+  private String userTypeName;
   private String accountTypeName;
   private String providerTypeName;
   private String email;
   private String profileImageUrl;
   private String phoneNumber;
+  private boolean canSwitchToSeller;
   private boolean sellerAccountNotCreated;
 }

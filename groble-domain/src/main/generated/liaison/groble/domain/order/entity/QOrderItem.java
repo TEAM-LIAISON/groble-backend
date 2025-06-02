@@ -2,83 +2,69 @@ package liaison.groble.domain.order.entity;
 
 import static com.querydsl.core.types.PathMetadataFactory.*;
 
-import javax.annotation.processing.Generated;
-
-import com.querydsl.core.types.Path;
-import com.querydsl.core.types.PathMetadata;
 import com.querydsl.core.types.dsl.*;
+
+import com.querydsl.core.types.PathMetadata;
+import javax.annotation.processing.Generated;
+import com.querydsl.core.types.Path;
 import com.querydsl.core.types.dsl.PathInits;
 
-/** QOrderItem is a Querydsl query type for OrderItem */
+
+/**
+ * QOrderItem is a Querydsl query type for OrderItem
+ */
 @Generated("com.querydsl.codegen.DefaultEntitySerializer")
 public class QOrderItem extends EntityPathBase<OrderItem> {
 
-  private static final long serialVersionUID = 1925000362L;
+    private static final long serialVersionUID = 1925000362L;
 
-  private static final PathInits INITS = PathInits.DIRECT2;
+    private static final PathInits INITS = PathInits.DIRECT2;
 
-  public static final QOrderItem orderItem = new QOrderItem("orderItem");
+    public static final QOrderItem orderItem = new QOrderItem("orderItem");
 
-  public final liaison.groble.domain.common.entity.QBaseEntity _super =
-      new liaison.groble.domain.common.entity.QBaseEntity(this);
+    public final liaison.groble.domain.common.entity.QBaseTimeEntity _super = new liaison.groble.domain.common.entity.QBaseTimeEntity(this);
 
-  public final liaison.groble.domain.content.entity.QContent content;
+    public final liaison.groble.domain.content.entity.QContent content;
 
-  public final StringPath contentName = createString("contentName");
+    //inherited
+    public final DateTimePath<java.time.LocalDateTime> createdAt = _super.createdAt;
 
-  // inherited
-  public final DateTimePath<java.time.LocalDateTime> createdAt = _super.createdAt;
+    public final NumberPath<Long> id = createNumber("id", Long.class);
 
-  // inherited
-  public final StringPath createdBy = _super.createdBy;
+    public final NumberPath<Long> optionId = createNumber("optionId", Long.class);
 
-  // inherited
-  public final BooleanPath deleted = _super.deleted;
+    public final EnumPath<OrderItem.OptionType> optionType = createEnum("optionType", OrderItem.OptionType.class);
 
-  public final NumberPath<Long> id = createNumber("id", Long.class);
+    public final QOrder order;
 
-  public final NumberPath<Long> optionId = createNumber("optionId", Long.class);
+    public final NumberPath<java.math.BigDecimal> price = createNumber("price", java.math.BigDecimal.class);
 
-  public final EnumPath<OrderItem.OptionType> optionType =
-      createEnum("optionType", OrderItem.OptionType.class);
+    public final NumberPath<Integer> quantity = createNumber("quantity", Integer.class);
 
-  public final QOrder order;
+    //inherited
+    public final DateTimePath<java.time.LocalDateTime> updatedAt = _super.updatedAt;
 
-  public final NumberPath<java.math.BigDecimal> price =
-      createNumber("price", java.math.BigDecimal.class);
+    public QOrderItem(String variable) {
+        this(OrderItem.class, forVariable(variable), INITS);
+    }
 
-  public final NumberPath<Integer> quantity = createNumber("quantity", Integer.class);
+    public QOrderItem(Path<? extends OrderItem> path) {
+        this(path.getType(), path.getMetadata(), PathInits.getFor(path.getMetadata(), INITS));
+    }
 
-  // inherited
-  public final DateTimePath<java.time.LocalDateTime> updatedAt = _super.updatedAt;
+    public QOrderItem(PathMetadata metadata) {
+        this(metadata, PathInits.getFor(metadata, INITS));
+    }
 
-  // inherited
-  public final StringPath updatedBy = _super.updatedBy;
+    public QOrderItem(PathMetadata metadata, PathInits inits) {
+        this(OrderItem.class, metadata, inits);
+    }
 
-  public QOrderItem(String variable) {
-    this(OrderItem.class, forVariable(variable), INITS);
-  }
+    public QOrderItem(Class<? extends OrderItem> type, PathMetadata metadata, PathInits inits) {
+        super(type, metadata, inits);
+        this.content = inits.isInitialized("content") ? new liaison.groble.domain.content.entity.QContent(forProperty("content"), inits.get("content")) : null;
+        this.order = inits.isInitialized("order") ? new QOrder(forProperty("order"), inits.get("order")) : null;
+    }
 
-  public QOrderItem(Path<? extends OrderItem> path) {
-    this(path.getType(), path.getMetadata(), PathInits.getFor(path.getMetadata(), INITS));
-  }
-
-  public QOrderItem(PathMetadata metadata) {
-    this(metadata, PathInits.getFor(metadata, INITS));
-  }
-
-  public QOrderItem(PathMetadata metadata, PathInits inits) {
-    this(OrderItem.class, metadata, inits);
-  }
-
-  public QOrderItem(Class<? extends OrderItem> type, PathMetadata metadata, PathInits inits) {
-    super(type, metadata, inits);
-    this.content =
-        inits.isInitialized("content")
-            ? new liaison.groble.domain.content.entity.QContent(
-                forProperty("content"), inits.get("content"))
-            : null;
-    this.order =
-        inits.isInitialized("order") ? new QOrder(forProperty("order"), inits.get("order")) : null;
-  }
 }
+

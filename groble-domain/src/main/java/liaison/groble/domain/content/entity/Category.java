@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -11,6 +13,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+
+import liaison.groble.domain.content.enums.ContentType;
 
 import lombok.Getter;
 
@@ -37,4 +41,7 @@ public class Category {
   private int displayOrder; // 같은 레벨 내에서의 정렬 순서
 
   private boolean isActive; // 활성화 여부
+
+  @Enumerated(EnumType.STRING)
+  private ContentType categoryType; // 카테고리 타입 (COACHING, DOCUMENT)
 }

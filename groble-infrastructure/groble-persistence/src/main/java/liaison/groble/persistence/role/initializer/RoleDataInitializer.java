@@ -41,7 +41,7 @@ public class RoleDataInitializer implements ApplicationRunner {
       List<Role> newRoles = new ArrayList<>();
 
       // 필수 역할 정의
-      String[] requiredRoles = {"ROLE_USER", "ROLE_ADMIN"};
+      String[] requiredRoles = {"ROLE_USER", "ROLE_ADMIN", "ROLE_SELLER"};
 
       for (String roleName : requiredRoles) {
         if (!existingRoleMap.containsKey(roleName)) {

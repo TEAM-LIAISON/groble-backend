@@ -61,10 +61,17 @@ spring:
         order_inserts: true
         order_updates: true
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
   mvc:
     path match:
       matching-strategy: ant_path_matcher
+
+  servlet:
+    multipart:
+      enabled: true # 멀티파트 업로드 지원 여부
+      file-size-threshold: 0B # 파일을 디스크에 저장하지 않고 메모리에 저장하는 최소 크기 (default: 0B)
+      max-file-size: 60MB # 한 개 파일의 최대 사이즈
+      max-request-size: 60MB # 한 개 요청의 최대 사이즈
 
 storage:
   provider: s3
@@ -78,12 +85,16 @@ app:
       expiration-ms: 3600000 # 1 hour
     refresh-token:
       secret: bZvf0E0wsJXugzxv2m25c5zHvJrNfvsQIjzU6eBScbk=
-      expiration-ms: 604800000 # 7 days
+      expiration-ms: 604800000 # 1 hour
     issuer: groble-auth-service
   frontend-url: https://groble.im
   backend-url: https://api.groble.im
   cookie:
     domain: groble.im
+  reset:
+    base-url: https://groble.im
+    path: /reset-password
+    expiration-ms: 200000 # 2 minutes
 
 # Springdoc OpenAPI Configuration
 springdoc:
@@ -111,22 +122,26 @@ springdoc:
 #      exposure:
 #        include: health,info,metrics,prometheus
 
-# Logging
+
 logging:
   level:
     root: INFO
-    liaison: DEBUG
-    org.springdoc: DEBUG
-    io.swagger.v3: DEBUG
+    com.yourcompany.groble: INFO  # Set your application package
+    org.springdoc: INFO
+    io.swagger.v3: INFO
+    # These are the critical ones causing problems
+    org.apache.http: WARN         # Set HTTP client to WARN level
+    org.apache.http.wire: WARN    # Specifically disable wire logging
+    com.amazonaws: INFO           # Control AWS SDK logging
 
 # 포트원 결제 관련 설정
-portone:
-  api-url-v2: https://api.portone.io
-  merchant-id: "your_merchant_id"
-  client-key: "your_client_key"
-  api-secret: "8q1r4uoQvToCPixwJH8IZBBtribsZta2F96K1Wwlob1SQ4JuhAMrRS7PzQgsPTxcqYos8hZvQjs8H09g"
-  default-pg: "tosspayments"
-  payment-redirect-url: "https://groble.im/payment"
-  identity-redirect-url: "https://groble.im/identity/verify"
-  bank-callback-url: "https://groble.im/bank/callback"
-  webhook-secret: "your_webhook_secret"
+#portone:
+#  api-url-v2: https://api.portone.io
+#  merchant-id: "your_merchant_id"
+#  client-key: "your_client_key"
+#  api-secret: "8q1r4uoQvToCPixwJH8IZBBtribsZta2F96K1Wwlob1SQ4JuhAMrRS7PzQgsPTxcqYos8hZvQjs8H09g"
+#  default-pg: "tosspayments"
+#  payment-redirect-url: "https://groble.im/payment"
+#  identity-redirect-url: "https://groble.im/identity/verify"
+#  bank-callback-url: "https://groble.im/bank/callback"
+#  webhook-secret: "your_webhook_secret"

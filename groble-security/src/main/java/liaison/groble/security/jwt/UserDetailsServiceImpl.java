@@ -6,11 +6,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import liaison.groble.domain.user.entity.IntegratedAccount;
-import liaison.groble.domain.user.entity.SocialAccount;
 import liaison.groble.domain.user.entity.User;
-import liaison.groble.domain.user.repository.IntegratedAccountRepository;
-import liaison.groble.domain.user.repository.SocialAccountRepository;
 import liaison.groble.domain.user.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -22,42 +18,22 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class UserDetailsServiceImpl implements UserDetailsService {
   private final UserRepository userRepository;
-  private final IntegratedAccountRepository integratedAccountRepository;
-  private final SocialAccountRepository socialAccountRepository;
 
-  /**
-   * 사용자 이름(이메일)으로 사용자를 조회하여 UserDetails 객체로 반환 통합 계정 이메일과 소셜 계정 이메일 모두에서 검색합니다.
-   *
-   * @param username 사용자 이름(이메일)
-   * @return UserDetails 객체
-   * @throws UsernameNotFoundException 사용자를 찾을 수 없는 경우 발생
-   */
   @Override
-  @Transactional
+  @Transactional(readOnly = true) // 읽기 전용 트랜잭션으로 변경
   public UserDetails loadUserByUsername(final String username) throws UsernameNotFoundException {
-    // 먼저 통합 계정에서 이메일로 검색
+    Long userId = Long.valueOf(username);
     User user =
-        integratedAccountRepository
-            .findByIntegratedAccountEmail(username)
-            .map(IntegratedAccount::getUser)
-            .orElse(null);
+        userRepository
+            .findById(userId)
+            .orElseThrow(
+                () -> new UsernameNotFoundException("ID '" + userId + "'의 사용자를 찾을 수 없습니다."));
 
-    // 통합 계정에서 찾지 못한 경우 소셜 계정에서 검색
-    if (user == null) {
-      user =
-          socialAccountRepository
-              .findBySocialAccountEmail(username)
-              .map(SocialAccount::getUser)
-              .orElseThrow(
-                  () ->
-                      new UsernameNotFoundException("이메일 '" + username + "'로 등록된 사용자를 찾을 수 없습니다."));
-    }
+    log.debug("사용자 로드 완료 - userId: {}", userId);
 
-    log.debug("사용자 로드 완료: {}", username);
-
-    // 로그인 시간 업데이트
-    user.updateLoginTime();
-    userRepository.save(user);
+    // ✅ 로그인 시간 업데이트는 별도의 비동기 작업으로 처리하거나
+    // 별도의 서비스 메서드에서 처리하는 것을 권장
+    // 현재는 읽기 전용 트랜잭션으로 변경하여 동시성 문제 방지
 
     return UserDetailsImpl.build(user);
   }

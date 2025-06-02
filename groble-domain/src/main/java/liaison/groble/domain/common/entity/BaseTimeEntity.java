@@ -1,6 +1,6 @@
 package liaison.groble.domain.common.entity;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.EntityListeners;
@@ -18,9 +18,9 @@ import lombok.Getter;
 public class BaseTimeEntity {
   @CreatedDate
   @Column(name = "created_at", nullable = false, updatable = false)
-  private Instant createdAt;
+  private LocalDateTime createdAt;
 
   @LastModifiedDate
-  @Column(name = "modified_at", nullable = false)
-  private Instant modifiedAt;
+  @Column(name = "updated_at", nullable = false)
+  private LocalDateTime updatedAt;
 }

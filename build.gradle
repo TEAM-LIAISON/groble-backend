@@ -86,6 +86,11 @@ subprojects {
             endWithNewline()
         }
     }
+    
+    // spotless가 compileJava 후에 실행되도록 설정
+    tasks.named('spotlessJava') {
+        dependsOn 'compileJava'
+    }
 }
 
 project(':groble-common') {
@@ -101,6 +106,13 @@ project(':groble-common') {
         // Spring Web
         implementation 'org.springframework.boot:spring-boot-starter-web'
         implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${springdocVersion}"
+
+        // Spring Data Commons - 페이지네이션 관련 클래스 사용을 위해 명시적 추가
+        implementation 'org.springframework.data:spring-data-commons'
+
+        // Jackson 명시적 추가 (JsonInclude 등의 어노테이션 사용)
+        implementation 'com.fasterxml.jackson.core:jackson-annotations'
+        implementation 'com.fasterxml.jackson.core:jackson-databind'
     }
 }
 
@@ -136,6 +148,12 @@ project(':groble-api:groble-api-server') {
 
         // Spring Data JPA
         implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+        
+        // MapStruct 의존성 추가
+        implementation 'org.mapstruct:mapstruct:1.5.5.Final'
+        annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
+
+        implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
     }
 
     tasks.named('bootJar') {
@@ -167,6 +185,13 @@ project(':groble-application') {
         // 트랜잭션 관리
         implementation 'org.springframework:spring-tx'
         implementation 'org.springframework.boot:spring-boot-starter-aop'
+
+        // Spring Data Commons
+        implementation 'org.springframework.data:spring-data-commons'
+
+        // Payple 결제 연동을 위한 의존성
+        implementation 'org.apache.httpcomponents:httpclient:4.5.13'
+        implementation 'com.googlecode.json-simple:json-simple:1.1'
     }
 }
 
@@ -210,6 +235,14 @@ project(':groble-domain') {
     // gradle clean 시에 QClass 디렉토리 삭제
     clean {
         delete file(generated)
+    }
+    
+    // 생성된 QueryDSL 파일은 Spotless 검사에서 제외
+    spotless {
+        java {
+            target '**/*.java'
+            targetExclude 'src/main/generated/**'
+        }
     }
 }
 project(':groble-infrastructure:groble-persistence') {
@@ -255,6 +288,13 @@ project(':groble-infrastructure:groble-external') {
 
         // 포트원 API
         implementation 'com.github.iamport:iamport-rest-client-java:0.2.21'
+        
+        // Payple 결제 연동을 위한 의존성
+        implementation 'org.apache.httpcomponents:httpclient:4.5.13'
+        implementation 'com.googlecode.json-simple:json-simple:1.1'
+
+        // Web Flux
+        implementation 'org.springframework.boot:spring-boot-starter-webflux'
     }
 }
 

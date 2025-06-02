@@ -8,6 +8,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
 
 import liaison.groble.domain.common.utils.MapToJsonConverter;
@@ -35,7 +36,8 @@ public class FileInfo {
   @Column(nullable = false)
   private String originalFilename;
 
-  @Column(nullable = false)
+  @Lob
+  @Column(columnDefinition = "TEXT")
   private String fileUrl;
 
   @Column(nullable = false)

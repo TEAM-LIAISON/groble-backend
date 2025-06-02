@@ -23,7 +23,7 @@ public class ContentResponse {
   private String contentType;
 
   @Schema(description = "카테고리 ID", example = "1")
-  private Long categoryId;
+  private String categoryId;
 
   @Schema(description = "썸네일 이미지 URL", example = "https://example.com/thumbnail.jpg")
   private String thumbnailUrl;
@@ -83,5 +83,11 @@ public class ContentResponse {
     // 문서 옵션 관련 필드
     @Schema(description = "콘텐츠 제공 방식", example = "IMMEDIATE_DOWNLOAD")
     private String contentDeliveryMethod;
+
+    @Schema(description = "문서 파일 URL", example = "https://example.com/document.pdf")
+    private String documentFileUrl;
+
+    @Schema(description = "자료 링크 URL", example = "https://example.com/document-link")
+    private String documentLinkUrl;
   }
 }

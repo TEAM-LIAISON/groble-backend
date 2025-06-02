@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payple 결제</title>
+    
+    <!-- jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    
+    <!-- Payple 결제 스크립트 -->
+    <script th:src="${paypleJsUrl}"></script>
+    
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Payple 결제 테스트</h1>
+    
+    <form id="paymentForm">
+        <div class="form-group">
+            <label for="pay_type">결제수단</label>
+            <select id="pay_type" name="pay_type">
+                <option value="transfer">계좌이체</option>
+                <option value="card">신용카드</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="pay_goods">상품명</label>
+            <input type="text" id="pay_goods" name="pay_goods" value="테스트 상품" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="pay_total">결제금액</label>
+            <input type="number" id="pay_total" name="pay_total" value="1000" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="payer_name">결제자 이름</label>
+            <input type="text" id="payer_name" name="payer_name" value="홍길동" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="payer_hp">결제자 휴대폰번호</label>
+            <input type="text" id="payer_hp" name="payer_hp" value="01012345678" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="payer_email">결제자 이메일</label>
+            <input type="email" id="payer_email" name="payer_email" value="test@example.com" required>
+        </div>
+        
+        <button type="button" id="payAction">결제하기</button>
+    </form>
+    
+    <div id="result" class="result" style="display:none;">
+        <h3>결제 결과</h3>
+        <div id="resultContent"></div>
+    </div>
+    
+    <script th:inline="javascript">
+        $(document).ready(function() {
+            // 결제 완료 콜백 함수
+            var getResult = function(res) {
+                console.log(res);
+                
+                // 결제 완료 처리
+                $.ajax({
+                    type: 'POST',
+                    url: '/api/v1/payments/payple/complete',
+                    data: res,
+                    success: function(data) {
+                        $('#result').show();
+                        $('#resultContent').html(
+                            '<p>결제 상태: ' + data.data.status + '</p>' +
+                            '<p>주문번호: ' + data.data.orderId + '</p>' +
+                            '<p>결제금액: ' + data.data.amount + '원</p>'
+                        );
+                    },
+                    error: function(xhr, status, error) {
+                        alert('결제 처리 중 오류가 발생했습니다.');
+                        console.error(error);
+                    }
+                });
+            };
+            
+            // 결제 요청
+            $("#payAction").on("click", function(event) {
+                event.preventDefault();
+                
+                // 인증 정보 가져오기
+                $.ajax({
+                    type: 'GET',
+                    url: '/api/v1/payments/payple/auth-result',
+                    success: function(response) {
+                        var authData = response.data;
+                        
+                        var obj = {
+                            PCD_PAY_TYPE: $('#pay_type').val(),
+                            PCD_PAY_WORK: 'PAY',
+                            PCD_PAY_GOODS: $('#pay_goods').val(),
+                            PCD_PAY_TOTAL: $('#pay_total').val(),
+                            PCD_PAYER_NAME: $('#payer_name').val(),
+                            PCD_PAYER_HP: $('#payer_hp').val(),
+                            PCD_PAYER_EMAIL: $('#payer_email').val(),
+                            PCD_RST_URL: '/api/v1/payments/payple/complete',
+                            callbackFunction: getResult,
+                            clientKey: authData.clientKey
+                        };
+                        
+                        // 결제창 호출
+                        PaypleCpayAuthCheck(obj);
+                    },
+                    error: function(xhr, status, error) {
+                        alert('인증 정보를 가져오는데 실패했습니다.');
+                        console.error(error);
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
