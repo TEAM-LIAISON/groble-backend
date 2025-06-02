@@ -124,11 +124,24 @@ springdoc:
 
 logging:
   level:
-    root: INFO
-    com.yourcompany.groble: INFO  # Set your application package
-    org.springdoc: INFO
-    io.swagger.v3: INFO
-    # These are the critical ones causing problems
-    org.apache.http: WARN         # Set HTTP client to WARN level
-    org.apache.http.wire: WARN    # Specifically disable wire logging
-    com.amazonaws: INFO           # Control AWS SDK logging
+    root: ERROR  # 전역 로그를 ERROR 수준으로 줄임
+
+    # Spring & 애플리케이션 주요 패키지
+    liaison.groble: ERROR
+    org.springframework: WARN
+    org.springframework.web: ERROR
+
+    # Swagger/OpenAPI 관련 로그 줄이기
+    org.springdoc: WARN
+    io.swagger.v3: WARN
+
+    # 외부 라이브러리 / 통신 로그 최소화
+    org.apache.http: ERROR         # HTTP client 최소화
+    org.apache.http.wire: OFF      # Wire-level log 완전 차단
+    com.amazonaws: ERROR           # AWS SDK
+
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} %-5level %logger{36} - %msg%n"
+
+  file:
+    name: /dev/null  # 로그 파일 쓰기를 막음 (또는 경로를 로그 수집 서버로 지정)
