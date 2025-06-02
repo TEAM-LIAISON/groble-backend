@@ -69,6 +69,13 @@ public class AccountVerificationService {
         roleRepository
             .findByName("ROLE_SELLER")
             .orElseThrow(() -> new RuntimeException("메이커 역할(ROLE_SELLER)을 찾을 수 없습니다."));
-    user.addRole(roleSeller);
+
+    // ✅ 이미 역할이 부여되어 있는지 확인
+    boolean hasRole =
+        user.getUserRoles().stream().anyMatch(userRole -> userRole.getRole().equals(roleSeller));
+
+    if (!hasRole) {
+      user.addRole(roleSeller);
+    }
   }
 }
