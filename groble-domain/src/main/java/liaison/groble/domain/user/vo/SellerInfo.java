@@ -84,6 +84,10 @@ public class SellerInfo {
   @Column(name = "last_verification_attempt")
   private LocalDateTime lastVerificationAttempt;
 
+  /** 통장 사본 첨부 URL */
+  @Column(name = "copy_of_bankbook_url", columnDefinition = "TEXT")
+  private String copyOfBankbookUrl;
+
   /**
    * 판매자 인증 상태 업데이트
    *

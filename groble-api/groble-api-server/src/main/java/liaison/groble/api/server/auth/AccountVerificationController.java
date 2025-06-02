@@ -13,9 +13,12 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import liaison.groble.api.model.auth.request.VerificationBusinessMakerAccountRequest;
+import liaison.groble.api.model.auth.request.VerifyPersonalMakerAccountRequest;
 import liaison.groble.api.model.file.response.FileUploadResponse;
-import liaison.groble.api.model.order.request.CreateInitialOrderRequest;
 import liaison.groble.api.server.file.mapper.FileDtoMapper;
+import liaison.groble.application.auth.dto.VerifyBusinessMakerAccountDto;
+import liaison.groble.application.auth.dto.VerifyPersonalMakerAccountDto;
 import liaison.groble.application.auth.service.AccountVerificationService;
 import liaison.groble.application.file.FileService;
 import liaison.groble.application.file.dto.FileDto;
@@ -39,20 +42,43 @@ public class AccountVerificationController {
   private final FileService fileService;
   private final FileDtoMapper fileDtoMapper;
 
-  // 개인 메이커 인증 로직 처리
+  /** 개인 메이커 계좌 인증 요청 처리 */
   @PostMapping("/personal-maker")
   public ResponseEntity<GrobleResponse<Void>> verifyPersonalMakerAccount(
-      @Auth Accessor accessor, @Valid @RequestBody CreateInitialOrderRequest request) {
-    // 개인 메이커 인증 로직 처리
-    // 예시: accountVerificationService.verifyPersonalMakerAccount();
+      @Auth Accessor accessor, @Valid @RequestBody VerifyPersonalMakerAccountRequest request) {
+
+    VerifyPersonalMakerAccountDto verifyPersonalMakerAccountDto =
+        VerifyPersonalMakerAccountDto.builder()
+            .bankAccountOwner(request.getBankAccountOwner())
+            .bankName(request.getBankName())
+            .bankAccountNumber(request.getBankAccountNumber())
+            .copyOfBankbookUrl(request.getCopyOfBankbookUrl())
+            .build();
+
+    accountVerificationService.verifyPersonalMakerAccount(
+        accessor.getUserId(), verifyPersonalMakerAccountDto);
     return ResponseEntity.ok(GrobleResponse.success(null));
   }
 
-  // 개인 및 법인 사업자 인증 로직 처리
+  /** 개인 • 법인 사업자 계좌 인증 요청 처리 */
   @PostMapping("/business")
-  public ResponseEntity<GrobleResponse<Void>> verifyBusinessAccount() {
-    // 개인 및 법인 사업자 인증 로직 처리
-    // 예시: accountVerificationService.verifyBusinessAccount();
+  public ResponseEntity<GrobleResponse<Void>> verifyBusinessAccount(
+      @Auth Accessor accessor,
+      @Valid @RequestBody VerificationBusinessMakerAccountRequest request) {
+
+    VerifyBusinessMakerAccountDto verifyBusinessMakerAccountDto =
+        VerifyBusinessMakerAccountDto.builder()
+            .bankAccountOwner(request.getBankAccountOwner())
+            .bankName(request.getBankName())
+            .bankAccountNumber(request.getBankAccountNumber())
+            .copyOfBankbookUrl(request.getCopyOfBankbookUrl())
+            .businessType(convertToBusinessTypeDto(request.getBusinessType()))
+            .bankAccountNumber(request.getBankAccountNumber())
+            .copyOfBankbookUrl(request.getCopyOfBankbookUrl())
+            .build();
+
+    accountVerificationService.verifyBusinessAccount(
+        accessor.getUserId(), verifyBusinessMakerAccountDto);
     return ResponseEntity.ok(GrobleResponse.success(null));
   }
 
@@ -103,5 +129,12 @@ public class AccountVerificationController {
   private boolean isImageFile(MultipartFile file) {
     String contentType = file.getContentType();
     return contentType != null && contentType.startsWith("image/");
+  }
+
+  private VerifyBusinessMakerAccountDto.BusinessType convertToBusinessTypeDto(
+      VerificationBusinessMakerAccountRequest.BusinessType businessType) {
+
+    // 예: request.getBusinessType()이 String 또는 Enum이라고 가정
+    return VerifyBusinessMakerAccountDto.BusinessType.valueOf(businessType.name());
   }
 }
