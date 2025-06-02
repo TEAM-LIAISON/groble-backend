@@ -23,7 +23,7 @@ public class VerificationBusinessMakerAccountRequest {
   private String bankName;
 
   /** 정산받을 계좌번호 */
-  @Schema(description = "정산받을 은행명", example = "신한은행")
+  @Schema(description = "정산받을 계좌번호", example = "110123456789")
   private String bankAccountNumber;
 
   /** 통장 사본 첨부 URL */

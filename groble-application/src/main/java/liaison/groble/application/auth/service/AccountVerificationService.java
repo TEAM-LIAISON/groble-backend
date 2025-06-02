@@ -28,10 +28,24 @@ public class AccountVerificationService {
 
     SellerInfo sellerInfo =
         SellerInfo.builder()
-            .isBusinessSeller(false)
             .bankAccountOwner(dto.getBankAccountOwner())
             .bankName(dto.getBankName())
             .bankAccountNumber(dto.getBankAccountNumber())
+            .build();
+
+    updateSellerVerification(user, sellerInfo);
+  }
+
+  @Transactional
+  public void verifyBusinessBankbook(Long userId, VerifyBusinessMakerAccountDto dto) {
+    User user = userReader.getUserById(userId);
+
+    SellerInfo sellerInfo =
+        SellerInfo.builder()
+            .bankAccountOwner(dto.getBankAccountOwner())
+            .bankName(dto.getBankName())
+            .bankAccountNumber(dto.getBankAccountNumber())
+            .copyOfBankbookUrl(dto.getCopyOfBankbookUrl())
             .build();
 
     updateSellerVerification(user, sellerInfo);
@@ -43,11 +57,6 @@ public class AccountVerificationService {
 
     SellerInfo sellerInfo =
         SellerInfo.builder()
-            .isBusinessSeller(true)
-            .bankAccountOwner(dto.getBankAccountOwner())
-            .bankName(dto.getBankName())
-            .bankAccountNumber(dto.getBankAccountNumber())
-            .copyOfBankbookUrl(dto.getCopyOfBankbookUrl())
             .businessType(BusinessType.valueOf(dto.getBusinessType().name()))
             .businessCategory(dto.getBusinessCategory())
             .businessSector(dto.getBusinessSector())

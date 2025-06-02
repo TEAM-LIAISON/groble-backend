@@ -60,9 +60,8 @@ public class AccountVerificationController {
     return ResponseEntity.ok(GrobleResponse.success(null));
   }
 
-  /** 개인 • 법인 사업자 계좌 인증 요청 처리 */
-  @PostMapping("/business")
-  public ResponseEntity<GrobleResponse<Void>> verifyBusinessAccount(
+  @PostMapping("/business-maker")
+  public ResponseEntity<GrobleResponse<Void>> verifyBusinessBankbook(
       @Auth Accessor accessor,
       @Valid @RequestBody VerificationBusinessMakerAccountRequest request) {
 
@@ -72,6 +71,21 @@ public class AccountVerificationController {
             .bankName(request.getBankName())
             .bankAccountNumber(request.getBankAccountNumber())
             .copyOfBankbookUrl(request.getCopyOfBankbookUrl())
+            .build();
+
+    accountVerificationService.verifyBusinessBankbook(
+        accessor.getUserId(), verifyBusinessMakerAccountDto);
+    return ResponseEntity.ok(GrobleResponse.success(null));
+  }
+
+  /** 개인 • 법인 사업자 계좌 인증 요청 처리 */
+  @PostMapping("/business")
+  public ResponseEntity<GrobleResponse<Void>> verifyBusinessAccount(
+      @Auth Accessor accessor,
+      @Valid @RequestBody VerificationBusinessMakerAccountRequest request) {
+
+    VerifyBusinessMakerAccountDto verifyBusinessMakerAccountDto =
+        VerifyBusinessMakerAccountDto.builder()
             .businessType(convertToBusinessTypeDto(request.getBusinessType()))
             .businessCategory(request.getBusinessCategory())
             .businessSector(request.getBusinessSector())
