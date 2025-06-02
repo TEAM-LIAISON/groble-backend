@@ -15,6 +15,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import liaison.groble.api.model.auth.request.VerificationBusinessMakerAccountRequest;
 import liaison.groble.api.model.auth.request.VerifyPersonalMakerAccountRequest;
+import liaison.groble.api.model.auth.response.swagger.BusinessMaker;
+import liaison.groble.api.model.auth.response.swagger.BusinessVerification;
+import liaison.groble.api.model.auth.response.swagger.PersonalMaker;
 import liaison.groble.api.model.file.response.FileUploadResponse;
 import liaison.groble.api.server.file.mapper.FileDtoMapper;
 import liaison.groble.application.auth.dto.VerifyBusinessMakerAccountDto;
@@ -43,6 +46,7 @@ public class AccountVerificationController {
   private final FileDtoMapper fileDtoMapper;
 
   /** 개인 메이커 계좌 인증 요청 처리 */
+  @PersonalMaker
   @PostMapping("/personal-maker")
   public ResponseEntity<GrobleResponse<Void>> verifyPersonalMakerAccount(
       @Auth Accessor accessor, @Valid @RequestBody VerifyPersonalMakerAccountRequest request) {
@@ -60,6 +64,7 @@ public class AccountVerificationController {
     return ResponseEntity.ok(GrobleResponse.success(null));
   }
 
+  @BusinessMaker
   @PostMapping("/business-maker")
   public ResponseEntity<GrobleResponse<Void>> verifyBusinessBankbook(
       @Auth Accessor accessor,
@@ -79,6 +84,7 @@ public class AccountVerificationController {
   }
 
   /** 개인 • 법인 사업자 계좌 인증 요청 처리 */
+  @BusinessVerification
   @PostMapping("/business")
   public ResponseEntity<GrobleResponse<Void>> verifyBusinessAccount(
       @Auth Accessor accessor,
