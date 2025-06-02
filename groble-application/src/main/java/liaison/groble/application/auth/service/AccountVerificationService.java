@@ -48,7 +48,7 @@ public class AccountVerificationService {
             .copyOfBankbookUrl(dto.getCopyOfBankbookUrl())
             .build();
 
-    updateSellerVerification(user, sellerInfo);
+    user.getSellerInfo().update(sellerInfo);
   }
 
   @Transactional
