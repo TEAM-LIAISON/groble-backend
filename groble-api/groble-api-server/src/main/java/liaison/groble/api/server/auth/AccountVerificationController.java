@@ -113,14 +113,14 @@ public class AccountVerificationController {
 
     try {
       FileUploadDto fileUploadDto =
-          fileDtoMapper.toServiceFileUploadDto(bankbookCopyImage, "bankbook/");
+          fileDtoMapper.toServiceFileUploadDto(bankbookCopyImage, "bankbook");
       FileDto fileDto = fileService.uploadFile(accessor.getUserId(), fileUploadDto);
       FileUploadResponse response =
           FileUploadResponse.of(
               fileDto.getOriginalFilename(),
               fileDto.getFileUrl(),
               fileDto.getContentType(),
-              "bankbook/");
+              "bankbook");
       return ResponseEntity.status(HttpStatus.CREATED)
           .body(
               GrobleResponse.success(
@@ -159,14 +159,14 @@ public class AccountVerificationController {
 
     try {
       FileUploadDto fileUploadDto =
-          fileDtoMapper.toServiceFileUploadDto(businessLicenseImage, "business/license/");
+          fileDtoMapper.toServiceFileUploadDto(businessLicenseImage, "business/license");
       FileDto fileDto = fileService.uploadFile(accessor.getUserId(), fileUploadDto);
       FileUploadResponse response =
           FileUploadResponse.of(
               fileDto.getOriginalFilename(),
               fileDto.getFileUrl(),
               fileDto.getContentType(),
-              "business/license/");
+              "business/license");
       return ResponseEntity.status(HttpStatus.CREATED)
           .body(
               GrobleResponse.success(
