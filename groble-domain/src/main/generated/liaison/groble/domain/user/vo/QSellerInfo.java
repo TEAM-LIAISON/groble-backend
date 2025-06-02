@@ -41,6 +41,8 @@ public class QSellerInfo extends BeanPath<SellerInfo> {
 
     public final StringPath copyOfBankbookUrl = createString("copyOfBankbookUrl");
 
+    public final BooleanPath isBusinessSeller = createBoolean("isBusinessSeller");
+
     public final DateTimePath<java.time.LocalDateTime> lastVerificationAttempt = createDateTime("lastVerificationAttempt", java.time.LocalDateTime.class);
 
     public final StringPath representativeName = createString("representativeName");

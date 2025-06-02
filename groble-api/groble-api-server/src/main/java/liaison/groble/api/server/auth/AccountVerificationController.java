@@ -96,12 +96,14 @@ public class AccountVerificationController {
 
     if (bankbookCopyImage == null || bankbookCopyImage.isEmpty()) {
       return ResponseEntity.badRequest()
-          .body(GrobleResponse.error("이미지 파일을 선택해주세요.", HttpStatus.BAD_REQUEST.value()));
+          .body(GrobleResponse.error("pdf, png, jpeg 파일을 선택해주세요.", HttpStatus.BAD_REQUEST.value()));
     }
 
-    if (!isImageFile(bankbookCopyImage)) {
+    if (!isAllowedFileType(bankbookCopyImage)) {
       return ResponseEntity.badRequest()
-          .body(GrobleResponse.error("이미지 파일만 업로드 가능합니다.", HttpStatus.BAD_REQUEST.value()));
+          .body(
+              GrobleResponse.error(
+                  "pdf, png, jpeg 파일만 업로드 가능합니다.", HttpStatus.BAD_REQUEST.value()));
     }
 
     try {
@@ -126,9 +128,59 @@ public class AccountVerificationController {
     }
   }
 
-  private boolean isImageFile(MultipartFile file) {
+  /** 통장 사본 첨부 파일 업로드 */
+  @PostMapping("/upload-business-license")
+  public ResponseEntity<GrobleResponse<?>> uploadBusinessLicenseImage(
+      @Auth final Accessor accessor,
+      @RequestPart("businessLicenseImage")
+          @Parameter(
+              description = "사업자 등록증 사본 이미지 파일",
+              required = true,
+              schema = @Schema(type = "string", format = "binary"))
+          @Valid
+          final MultipartFile businessLicenseImage) {
+
+    if (businessLicenseImage == null || businessLicenseImage.isEmpty()) {
+      return ResponseEntity.badRequest()
+          .body(GrobleResponse.error("pdf, png, jpeg 파일을 선택해주세요.", HttpStatus.BAD_REQUEST.value()));
+    }
+
+    if (!isAllowedFileType(businessLicenseImage)) {
+      return ResponseEntity.badRequest()
+          .body(
+              GrobleResponse.error(
+                  "pdf, png, jpeg 파일만 업로드 가능합니다.", HttpStatus.BAD_REQUEST.value()));
+    }
+
+    try {
+      FileUploadDto fileUploadDto =
+          fileDtoMapper.toServiceFileUploadDto(businessLicenseImage, "business/license/");
+      FileDto fileDto = fileService.uploadFile(accessor.getUserId(), fileUploadDto);
+      FileUploadResponse response =
+          FileUploadResponse.of(
+              fileDto.getOriginalFilename(),
+              fileDto.getFileUrl(),
+              fileDto.getContentType(),
+              "business/license/");
+      return ResponseEntity.status(HttpStatus.CREATED)
+          .body(
+              GrobleResponse.success(
+                  response, "사업자 등록증 사본 이미지 업로드가 성공적으로 완료되었습니다.", HttpStatus.CREATED.value()));
+    } catch (IOException ioe) {
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .body(
+              GrobleResponse.error(
+                  "사업자 등록증 사본 저장 중 오류가 발생했습니다. 다시 시도해주세요.",
+                  HttpStatus.INTERNAL_SERVER_ERROR.value()));
+    }
+  }
+
+  private boolean isAllowedFileType(MultipartFile file) {
     String contentType = file.getContentType();
-    return contentType != null && contentType.startsWith("image/");
+    return contentType != null
+        && (contentType.equalsIgnoreCase("application/pdf")
+            || contentType.equalsIgnoreCase("image/jpeg")
+            || contentType.equalsIgnoreCase("image/png"));
   }
 
   private VerifyBusinessMakerAccountDto.BusinessType convertToBusinessTypeDto(

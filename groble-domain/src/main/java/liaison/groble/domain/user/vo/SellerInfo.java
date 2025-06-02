@@ -27,6 +27,10 @@ public class SellerInfo {
   @Enumerated(EnumType.STRING)
   private BusinessType businessType;
 
+  /** 판매자가 사업자 등록을 한 경우 true, 개인 판매자 등 사업자 등록이 없는 경우 false */
+  @Column(name = "is_business_seller")
+  private Boolean isBusinessSeller;
+
   /** 상호명 (사업체 이름) */
   @Column(name = "business_name")
   private String businessName;
