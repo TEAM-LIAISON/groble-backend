@@ -92,7 +92,7 @@ app:
   cookie:
     domain: groble.im
   reset:
-    base-url: http://localhost:3000
+    base-url: https://groble.im
     path: /reset-password
     expiration-ms: 200000 # 2 minutes
 
