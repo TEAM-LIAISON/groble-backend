@@ -73,8 +73,13 @@ public class AccountVerificationController {
             .bankAccountNumber(request.getBankAccountNumber())
             .copyOfBankbookUrl(request.getCopyOfBankbookUrl())
             .businessType(convertToBusinessTypeDto(request.getBusinessType()))
-            .bankAccountNumber(request.getBankAccountNumber())
-            .copyOfBankbookUrl(request.getCopyOfBankbookUrl())
+            .businessCategory(request.getBusinessCategory())
+            .businessSector(request.getBusinessSector())
+            .businessName(request.getBusinessName())
+            .representativeName(request.getRepresentativeName())
+            .businessAddress(request.getBusinessAddress())
+            .businessLicenseFileUrl(request.getBusinessLicenseFileUrl())
+            .taxInvoiceEmail(request.getTaxInvoiceEmail())
             .build();
 
     accountVerificationService.verifyBusinessAccount(

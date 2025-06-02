@@ -105,8 +105,17 @@ public class SellerInfo {
   }
 
   public void update(SellerInfo updatedInfo) {
+    if (updatedInfo.getBusinessType() != null) {
+      this.businessType = updatedInfo.getBusinessType();
+    }
+    if (updatedInfo.getIsBusinessSeller() != null) {
+      this.isBusinessSeller = updatedInfo.getIsBusinessSeller();
+    }
     if (updatedInfo.getBusinessName() != null) {
       this.businessName = updatedInfo.getBusinessName();
+    }
+    if (updatedInfo.getBusinessNumber() != null) {
+      this.businessNumber = updatedInfo.getBusinessNumber();
     }
     if (updatedInfo.getBusinessSector() != null) {
       this.businessSector = updatedInfo.getBusinessSector();
@@ -116,6 +125,12 @@ public class SellerInfo {
     }
     if (updatedInfo.getBusinessAddress() != null) {
       this.businessAddress = updatedInfo.getBusinessAddress();
+    }
+    if (updatedInfo.getRepresentativeName() != null) {
+      this.representativeName = updatedInfo.getRepresentativeName();
+    }
+    if (updatedInfo.getBusinessLicenseFileUrl() != null) {
+      this.businessLicenseFileUrl = updatedInfo.getBusinessLicenseFileUrl();
     }
     if (updatedInfo.getTaxInvoiceEmail() != null) {
       this.taxInvoiceEmail = updatedInfo.getTaxInvoiceEmail();
@@ -128,6 +143,9 @@ public class SellerInfo {
     }
     if (updatedInfo.getBankAccountOwner() != null) {
       this.bankAccountOwner = updatedInfo.getBankAccountOwner();
+    }
+    if (updatedInfo.getCopyOfBankbookUrl() != null) {
+      this.copyOfBankbookUrl = updatedInfo.getCopyOfBankbookUrl();
     }
   }
 
