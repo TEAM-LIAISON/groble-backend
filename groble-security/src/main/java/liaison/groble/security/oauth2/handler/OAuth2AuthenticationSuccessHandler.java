@@ -136,27 +136,35 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
   private void addTokenCookies(
       HttpServletResponse response, String accessToken, String refreshToken) {
 
-    // 현재 활성화된 프로필에 따른 환경 설정
+    // 현재 환경 확인
+    String currentEnv = getCurrentEnvironment();
     boolean isLocal = isLocalEnvironment();
+    boolean isDev = isDevEnvironment();
+    boolean isProd = isProdEnvironment();
 
-    // 개발 및 운영 환경에서는 HTTPS 사용하므로 Secure=true
-    boolean isSecure = !isLocal;
+    // 환경별 보안 설정
+    boolean isSecure;
+    String sameSite;
+    String domain;
 
-    // SameSite 설정: OAuth2 리다이렉트 처리를 위해 'None' 설정 필수
-    // 브라우저 요구사항: SameSite=None인 경우 항상 Secure=true여야 함
-    String sameSite = "None";
-    if (sameSite.equals("None")) {
+    if (isLocal) {
+      // 로컬 환경: HTTP 허용, 도메인 설정 없음
+      isSecure = false;
+      sameSite = "Lax"; // 로컬에서는 Lax 사용 가능
+      domain = null;
+    } else if (isDev) {
+      // 개발 환경: HTTPS 사용, 개발 도메인
       isSecure = true;
-    }
-
-    // 도메인 설정: 로컬 환경에서는 설정하지 않음
-    // 개발/운영 환경에서는 app.cookie.domain 설정 사용 (groble.im)
-    String domain = null;
-    if (!isLocal) {
+      sameSite = "None"; // 크로스 도메인을 위해 None 필요
+      domain = cookieDomain;
+    } else { // prod
+      // 운영 환경: 최고 보안 설정
+      isSecure = true;
+      sameSite = "None"; // 크로스 도메인을 위해 None 필요
       domain = cookieDomain;
     }
 
-    // Access Token
+    // Access Token 쿠키 추가
     CookieUtils.addCookie(
         response,
         ACCESS_TOKEN_COOKIE_NAME,
@@ -168,7 +176,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         sameSite, // sameSite
         domain); // domain
 
-    // Refresh Token
+    // Refresh Token 쿠키 추가
     CookieUtils.addCookie(
         response,
         REFRESH_TOKEN_COOKIE_NAME,
@@ -180,25 +188,48 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         sameSite, // sameSite
         domain); // domain
 
-    String activeProfile = getActiveProfile();
     log.debug(
         "OAuth2 토큰 쿠키 추가 완료: env={}, domain={}, secure={}, sameSite={}",
-        activeProfile,
+        currentEnv,
         domain != null ? domain : "기본값(localhost)",
         isSecure,
         sameSite);
   }
 
+  /** 로컬 환경 여부 확인 프로필에 "local"이 포함된 경우 */
   private boolean isLocalEnvironment() {
     return Arrays.asList(environment.getActiveProfiles()).contains("local");
   }
 
+  /** 개발 환경 여부 확인 프로필에 "secret-dev"가 포함된 경우 */
+  private boolean isDevEnvironment() {
+    return Arrays.asList(environment.getActiveProfiles()).contains("secret-dev");
+  }
+
+  /** 운영 환경 여부 확인 프로필에 "secret-prod"가 포함된 경우 */
+  private boolean isProdEnvironment() {
+    return Arrays.asList(environment.getActiveProfiles()).contains("secret-prod");
+  }
+
+  /** 현재 환경명 반환 로깅 및 디버깅 용도 */
+  private String getCurrentEnvironment() {
+    if (isLocalEnvironment()) {
+      return "local";
+    } else if (isDevEnvironment()) {
+      return "dev";
+    } else if (isProdEnvironment()) {
+      return "prod";
+    } else {
+      return "unknown";
+    }
+  }
+
   /**
-   * 현재 활성화된 프로필 가져오기
+   * 현재 활성화된 프로필 가져오기 (디버깅용)
    *
-   * @return 활성화된 프로필 (기본값: "")
+   * @return 활성화된 프로필 문자열
    */
-  private String getActiveProfile() {
-    return System.getProperty("spring.profiles.active", "");
+  private String getActiveProfiles() {
+    return String.join(", ", environment.getActiveProfiles());
   }
 }
