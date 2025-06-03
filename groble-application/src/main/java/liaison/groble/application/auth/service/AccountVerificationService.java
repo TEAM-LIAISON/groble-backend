@@ -12,6 +12,10 @@ import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.enums.BusinessType;
 import liaison.groble.domain.user.enums.SellerVerificationStatus;
 import liaison.groble.domain.user.vo.SellerInfo;
+import liaison.groble.external.discord.dto.BusinessMakerVerificationCreateReportDto;
+import liaison.groble.external.discord.dto.PersonalMakerVerificationCreateReportDto;
+import liaison.groble.external.discord.service.DiscordBusinessMakerVerificationReportService;
+import liaison.groble.external.discord.service.DiscordPersonalMakerVerificationReportService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -21,6 +25,10 @@ public class AccountVerificationService {
 
   private final UserReader userReader;
   private final RoleRepository roleRepository;
+  private final DiscordPersonalMakerVerificationReportService
+      discordPersonalMakerVerificationReportService;
+  private final DiscordBusinessMakerVerificationReportService
+      discordBusinessMakerVerificationReportService;
 
   @Transactional
   public void verifyPersonalMakerAccount(Long userId, VerifyPersonalMakerAccountDto dto) {
@@ -31,7 +39,21 @@ public class AccountVerificationService {
             .bankAccountOwner(dto.getBankAccountOwner())
             .bankName(dto.getBankName())
             .bankAccountNumber(dto.getBankAccountNumber())
+            .copyOfBankbookUrl(dto.getCopyOfBankbookUrl())
             .build();
+
+    final PersonalMakerVerificationCreateReportDto personalMakerVerificationCreateReportDto =
+        PersonalMakerVerificationCreateReportDto.builder()
+            .userId(user.getId())
+            .nickname(user.getNickname())
+            .bankAccountOwner(dto.getBankAccountOwner())
+            .bankName(dto.getBankName())
+            .bankAccountNumber(dto.getBankAccountNumber())
+            .copyOfBankbookUrl(dto.getCopyOfBankbookUrl())
+            .build();
+
+    discordPersonalMakerVerificationReportService.sendCreatePersonalMakerVerificationReport(
+        personalMakerVerificationCreateReportDto);
 
     updateSellerVerification(user, sellerInfo);
   }
@@ -66,6 +88,27 @@ public class AccountVerificationService {
             .businessLicenseFileUrl(dto.getBusinessLicenseFileUrl())
             .taxInvoiceEmail(dto.getTaxInvoiceEmail())
             .build();
+
+    final BusinessMakerVerificationCreateReportDto businessMakerVerificationCreateReportDto =
+        BusinessMakerVerificationCreateReportDto.builder()
+            .userId(user.getId())
+            .nickname(user.getNickname())
+            .bankAccountOwner(sellerInfo.getBankAccountOwner())
+            .bankName(sellerInfo.getBankName())
+            .bankAccountNumber(sellerInfo.getBankAccountNumber())
+            .copyOfBankbookUrl(sellerInfo.getCopyOfBankbookUrl())
+            .businessType(dto.getBusinessType().name())
+            .businessCategory(dto.getBusinessCategory())
+            .businessSector(dto.getBusinessSector())
+            .businessName(dto.getBusinessName())
+            .representativeName(dto.getRepresentativeName())
+            .businessAddress(dto.getBusinessAddress())
+            .businessLicenseFileUrl(dto.getBusinessLicenseFileUrl())
+            .taxInvoiceEmail(dto.getTaxInvoiceEmail())
+            .build();
+
+    discordBusinessMakerVerificationReportService.sendCreateBusinessMakerVerificationReport(
+        businessMakerVerificationCreateReportDto);
 
     updateSellerVerification(user, sellerInfo);
   }
