@@ -180,6 +180,8 @@ public class SecurityConfig {
                     .permitAll()
                     .requestMatchers("/api/v1/content/*/pay/*")
                     .permitAll()
+                    .requestMatchers("/api/v1/orders/create")
+                    .permitAll()
                     .requestMatchers("/payple-payment")
                     .permitAll()
                     .requestMatchers("/payment/**")

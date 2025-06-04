@@ -18,6 +18,7 @@ import liaison.groble.domain.content.entity.ContentOption;
 import liaison.groble.domain.coupon.entity.UserCoupon;
 import liaison.groble.domain.coupon.repository.UserCouponRepository;
 import liaison.groble.domain.order.entity.Order;
+import liaison.groble.domain.order.entity.OrderItem;
 import liaison.groble.domain.order.repository.OrderRepository;
 import liaison.groble.domain.order.vo.OrderOptionInfo;
 import liaison.groble.domain.purchase.entity.Purchaser;
@@ -62,6 +63,7 @@ public class OrderService {
                 option ->
                     OrderOptionInfo.builder()
                         .optionId(option.getOptionId())
+                        .optionType(option.getOptionType())
                         .price(option.getPrice())
                         .quantity(option.getQuantity())
                         .build())
@@ -141,6 +143,7 @@ public class OrderService {
       validatedOptions.add(
           ValidatedOrderOptionDto.builder()
               .optionId(contentOption.getId())
+              .optionType(OrderItem.OptionType.valueOf(requestedOption.getOptionType().name()))
               .price(contentOption.getPrice())
               .quantity(requestedOption.getQuantity())
               .build());

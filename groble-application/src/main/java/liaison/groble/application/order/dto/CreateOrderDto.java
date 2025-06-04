@@ -19,6 +19,12 @@ public class CreateOrderDto {
   @Builder
   public static class OrderOptionDto {
     private final Long optionId;
+    private final CreateOrderDto.OptionType optionType;
     private final Integer quantity;
+  }
+
+  public enum OptionType {
+    COACHING_OPTION,
+    DOCUMENT_OPTION
   }
 }

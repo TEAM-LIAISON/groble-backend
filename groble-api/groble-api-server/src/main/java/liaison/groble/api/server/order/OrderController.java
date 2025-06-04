@@ -167,6 +167,7 @@ public class OrderController {
             req ->
                 CreateOrderDto.OrderOptionDto.builder()
                     .optionId(req.getOptionId())
+                    .optionType(CreateOrderDto.OptionType.valueOf(req.getOptionType().name()))
                     .quantity(req.getQuantity())
                     .build())
         .collect(Collectors.toList());
