@@ -21,7 +21,7 @@ public class DiscordPersonalMakerVerificationReportService
   public void sendCreatePersonalMakerVerificationReport(
       final PersonalMakerVerificationCreateReportDto personalMakerVerificationCreateReportDto) {
     var msg =
-        "## 회원 생성 알림"
+        "## 개인 메이커 인증 요청 알림"
             + "\n\n**회원 생성 ID:** "
             + personalMakerVerificationCreateReportDto.userId()
             + "\n**회원 닉네임:** "
