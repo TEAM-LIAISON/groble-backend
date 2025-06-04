@@ -20,12 +20,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Schema(description = "주문 생성 요청")
 public class CreateOrderRequest {
-  @Schema(description = "구매자 이메일 (결제완료, 취소 메일이 발송됩니다.)", example = "kwondm7@naver.com")
-  private String email;
-
-  @Schema(description = "구매자 휴대폰번호", example = "010-1234-5678")
-  private String phoneNumber;
-
   @NotNull(message = "콘텐츠 ID는 필수입니다")
   @Schema(description = "구매할 콘텐츠 ID", example = "1")
   private Long contentId;

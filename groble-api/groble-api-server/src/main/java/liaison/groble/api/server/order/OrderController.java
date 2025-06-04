@@ -45,7 +45,7 @@ public class OrderController {
       description = "콘텐츠 구매를 위한 결제 주문을 발행합니다. 회원은 쿠폰 적용 가능, 비회원은 이메일/전화번호 필수")
   @PostMapping("/create")
   public ResponseEntity<GrobleResponse<CreateOrderResponse>> createOrder(
-      @Auth(required = false) Accessor accessor,
+      @Auth Accessor accessor,
       @Valid @RequestBody CreateOrderRequest request,
       HttpServletRequest httpRequest) {
 
@@ -56,21 +56,19 @@ public class OrderController {
 
     CreateOrderResponse response;
 
-    // 2단계: 로그인 상태에 따른 주문 처리 분기
-    if (accessor.isAuthenticated()) {
-      // 회원 주문 처리
-      response = processAuthenticatedOrder(request, accessor);
+    // 회원 주문 처리
+    response = processAuthenticatedOrder(request, accessor);
 
-      // 회원 주문 약관 동의 처리
-      processOrderTermsAgreement(accessor.getUserId(), httpRequest);
+    // 회원 주문 약관 동의 처리
+    processOrderTermsAgreement(accessor.getUserId(), httpRequest);
 
-    } else {
-      // 비회원 주문 처리
-      response = processGuestOrder(request);
-
-      // 비회원은 주문 약관 동의를 별도 저장하지 않음 (요청 시점에만 확인)
-      log.info("비회원 주문 약관 동의 확인 완료 - email: {}", request.getEmail());
-    }
+    //    } else {
+    //      // 비회원 주문 처리
+    //      response = processGuestOrder(request);
+    //
+    //      // 비회원은 주문 약관 동의를 별도 저장하지 않음 (요청 시점에만 확인)
+    //      log.info("비회원 주문 약관 동의 확인 완료 - email: {}", request.getEmail());
+    //    }
 
     log.info(
         "주문 생성 완료 - merchantUid: {}, isAuthenticated: {}",
@@ -107,12 +105,12 @@ public class OrderController {
    */
   private CreateOrderResponse processGuestOrder(CreateOrderRequest request) {
     // 비회원 주문 필수 정보 검증
-    if (request.getEmail() == null || request.getEmail().isBlank()) {
-      throw new InvalidRequestException("비회원 주문 시 이메일은 필수입니다.");
-    }
-    if (request.getPhoneNumber() == null || request.getPhoneNumber().isBlank()) {
-      throw new InvalidRequestException("비회원 주문 시 전화번호는 필수입니다.");
-    }
+    //    if (request.getEmail() == null || request.getEmail().isBlank()) {
+    //      throw new InvalidRequestException("비회원 주문 시 이메일은 필수입니다.");
+    //    }
+    //    if (request.getPhoneNumber() == null || request.getPhoneNumber().isBlank()) {
+    //      throw new InvalidRequestException("비회원 주문 시 전화번호는 필수입니다.");
+    //    }
 
     // 비회원은 쿠폰 사용 불가
     if (request.getCouponCodes() != null && !request.getCouponCodes().isEmpty()) {
@@ -121,8 +119,6 @@ public class OrderController {
 
     CreateOrderDto createOrderDto =
         CreateOrderDto.builder()
-            .email(request.getEmail())
-            .phoneNumber(request.getPhoneNumber())
             .contentId(request.getContentId())
             .options(convertToOrderOptionDtos(request.getOptions()))
             .couponCodes(null) // 비회원은 쿠폰 사용 불가
