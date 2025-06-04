@@ -1,4 +1,4 @@
-package liaison.groble.application.content;
+package liaison.groble.application.content.service;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -11,6 +11,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import liaison.groble.application.content.ContentReader;
 import liaison.groble.application.content.dto.ContentCardDto;
 import liaison.groble.application.content.dto.ContentDetailDto;
 import liaison.groble.application.content.dto.ContentDto;
