@@ -1,13 +1,10 @@
 package liaison.groble.application.content.service;
 
-import java.util.List;
-
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import liaison.groble.application.content.ContentReader;
 import liaison.groble.application.content.dto.ContentPayPageResponse;
-import liaison.groble.application.coupon.service.CouponService;
 import liaison.groble.common.exception.EntityNotFoundException;
 import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.content.entity.ContentOption;
@@ -20,21 +17,14 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class ContentPaymentService {
   private final ContentReader contentReader;
-  private final CouponService couponService;
 
   @Transactional(readOnly = true)
-  public ContentPayPageResponse getContentPayPage(Long contentId, Long optionId, Long userId) {
+  public ContentPayPageResponse getContentPayPage(Long contentId, Long optionId) {
     // 1. 콘텐츠 조회
     Content content = contentReader.getContentById(contentId);
 
     // 2. 콘텐츠 옵션 조회
     ContentOption contentOption = findContentOptionById(content, optionId);
-
-    // 3. 사용자 쿠폰 조회 (인증된 사용자인 경우에만)
-    List<ContentPayPageResponse.UserCouponResponse> userCoupons = null;
-    if (userId != null) {
-      userCoupons = couponService.getUserCoupons(userId);
-    }
 
     // 4. 응답 DTO 생성
     return ContentPayPageResponse.builder()
@@ -44,14 +34,7 @@ public class ContentPaymentService {
         .contentType(content.getContentType().name())
         .optionName(contentOption.getName())
         .price(contentOption.getPrice())
-        .userCoupons(userCoupons)
         .build();
-  }
-
-  /** 기존 메서드 호환성을 위한 오버로드 (userId 없이 호출) */
-  @Transactional(readOnly = true)
-  public ContentPayPageResponse getContentPayPage(Long contentId, Long optionId) {
-    return getContentPayPage(contentId, optionId, null);
   }
 
   /**

@@ -17,6 +17,8 @@ import lombok.Getter;
 @Getter
 @Builder
 public class ContentPayPageResponse {
+  // 사용자가 로그인했는지 여부
+  private final boolean isLoggedIn;
   // 콘텐츠 썸네일 URL
   private final String thumbnailUrl;
   // 판매자 이름

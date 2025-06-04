@@ -50,6 +50,7 @@ public class ContentPaymentController {
                     {
                       "success": true,
                       "data": {
+                        "isLoggedIn": true,
                         "thumbnailUrl": "https://example.com/thumbnail.jpg",
                         "sellerName": "홍길동",
                         "title": "프로그래밍 입문 과정",
@@ -86,6 +87,7 @@ public class ContentPaymentController {
     // 쿠폰 정보를 포함한 최종 응답 객체 생성
     ContentPayPageResponse contentPayPageResponse =
         ContentPayPageResponse.builder()
+            .isLoggedIn(accessor.isAuthenticated())
             .thumbnailUrl(baseResponse.getThumbnailUrl())
             .sellerName(baseResponse.getSellerName())
             .title(baseResponse.getTitle())
