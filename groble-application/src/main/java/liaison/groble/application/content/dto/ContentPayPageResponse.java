@@ -4,6 +4,8 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import lombok.Builder;
 import lombok.Getter;
 
@@ -42,7 +44,10 @@ public class ContentPayPageResponse {
     private final String name;
     private final String couponType;
     private final BigDecimal discountValue;
+
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private final LocalDateTime validUntil;
+
     private final BigDecimal minOrderPrice;
   }
 }
