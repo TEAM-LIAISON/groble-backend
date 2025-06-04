@@ -41,6 +41,7 @@ public class ContentPaymentService {
         .thumbnailUrl(content.getThumbnailUrl())
         .sellerName(content.getUser().getNickname())
         .title(content.getTitle())
+        .contentType(content.getContentType().name())
         .optionName(contentOption.getName())
         .price(contentOption.getPrice())
         .userCoupons(userCoupons)

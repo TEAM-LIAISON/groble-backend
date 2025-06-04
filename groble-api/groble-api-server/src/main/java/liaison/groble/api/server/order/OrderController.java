@@ -12,14 +12,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import liaison.groble.api.model.order.request.CreateFinalizeOrderRequest;
-import liaison.groble.api.model.order.request.CreateInitialOrderRequest;
+import liaison.groble.api.model.order.request.CreateOrderRequest;
 import liaison.groble.api.server.terms.mapper.TermsDtoMapper;
 import liaison.groble.application.order.OrderService;
-import liaison.groble.application.order.dto.CreateFinalizeOrderDto;
-import liaison.groble.application.order.dto.CreateInitialOrderDto;
-import liaison.groble.application.order.dto.FinalizeOrderResponse;
-import liaison.groble.application.order.dto.InitialOrderResponse;
+import liaison.groble.application.order.dto.CreateOrderDto;
+import liaison.groble.application.order.dto.CreateOrderResponse;
 import liaison.groble.application.terms.dto.TermsAgreementDto;
 import liaison.groble.application.terms.service.OrderTermsService;
 import liaison.groble.common.annotation.Auth;
@@ -36,90 +33,140 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/orders")
-@Tag(name = "주문 관련 API", description = "초기 주문 생성 / 주문 업데이트 API")
+@Tag(name = "주문 관련 API", description = "회원/비회원 주문 생성 API")
 public class OrderController {
 
   private final OrderService orderService;
   private final OrderTermsService orderTermsService;
   private final TermsDtoMapper termsDtoMapper;
 
-  @Operation(summary = "초기 주문 생성", description = "콘텐츠 구매를 위한 초기 주문을 생성합니다. 쿠폰 적용 불가능")
-  @PostMapping("/initial")
-  public ResponseEntity<GrobleResponse<InitialOrderResponse>> createInitialOrder(
-      @Auth Accessor accessor, @Valid @RequestBody CreateInitialOrderRequest request) {
-
-    // API 모델을 Application DTO로 변환
-    CreateInitialOrderDto createInitialOrderDto =
-        CreateInitialOrderDto.builder()
-            .userId(accessor.getUserId())
-            .contentId(request.getContentId())
-            .options(convertToOptionDtos(request.getOptions()))
-            .build();
-
-    // 서비스 호출
-    InitialOrderResponse response = orderService.createInitialOrder(createInitialOrderDto);
-
-    return ResponseEntity.ok().body(GrobleResponse.success(response));
-  }
-
-  @Operation(summary = "최종 주문 발행", description = "콘텐츠 구매를 위한 최종 주문을 발행합니다. 쿠폰 적용 가능")
-  @PostMapping("/finalize")
-  public ResponseEntity<GrobleResponse<FinalizeOrderResponse>> createFinalizeOrder(
-      @Auth Accessor accessor,
-      @RequestBody CreateFinalizeOrderRequest request,
+  @Operation(
+      summary = "결제 주문 발행",
+      description = "콘텐츠 구매를 위한 결제 주문을 발행합니다. 회원은 쿠폰 적용 가능, 비회원은 이메일/전화번호 필수")
+  @PostMapping("/create")
+  public ResponseEntity<GrobleResponse<CreateOrderResponse>> createOrder(
+      @Auth(required = false) Accessor accessor,
+      @Valid @RequestBody CreateOrderRequest request,
       HttpServletRequest httpRequest) {
 
+    // 1단계: 주문 약관 동의 검증
     if (!request.isOrderTermsAgreed()) {
       throw new InvalidRequestException("주문 약관에 동의해야 합니다.");
     }
 
-    // API 모델을 Application DTO로 변환
-    CreateFinalizeOrderDto createFinalizeOrderDto =
-        CreateFinalizeOrderDto.builder()
-            .userId(accessor.getUserId())
+    CreateOrderResponse response;
+
+    // 2단계: 로그인 상태에 따른 주문 처리 분기
+    if (accessor.isAuthenticated()) {
+      // 회원 주문 처리
+      response = processAuthenticatedOrder(request, accessor);
+
+      // 회원 주문 약관 동의 처리
+      processOrderTermsAgreement(accessor.getUserId(), httpRequest);
+
+    } else {
+      // 비회원 주문 처리
+      response = processGuestOrder(request);
+
+      // 비회원은 주문 약관 동의를 별도 저장하지 않음 (요청 시점에만 확인)
+      log.info("비회원 주문 약관 동의 확인 완료 - email: {}", request.getEmail());
+    }
+
+    log.info(
+        "주문 생성 완료 - merchantUid: {}, isAuthenticated: {}",
+        response.getMerchantUid(),
+        accessor.isAuthenticated());
+
+    return ResponseEntity.ok(GrobleResponse.success(response));
+  }
+
+  /**
+   * 회원 주문 처리
+   *
+   * @param request 주문 요청 정보
+   * @param accessor 인증된 사용자 정보
+   * @return 주문 생성 응답
+   */
+  private CreateOrderResponse processAuthenticatedOrder(
+      CreateOrderRequest request, Accessor accessor) {
+    CreateOrderDto createOrderDto =
+        CreateOrderDto.builder()
             .contentId(request.getContentId())
-            .merchantUid(request.getMerchantUid())
-            .options(convertToFinalizeOptionDtos(request.getOptions()))
+            .options(convertToOrderOptionDtos(request.getOptions()))
             .couponCodes(request.getCouponCodes())
             .build();
 
-    FinalizeOrderResponse finalizeOrderResponse =
-        orderService.createFinalizeOrder(createFinalizeOrderDto);
-
-    TermsAgreementDto termsAgreementDto = termsDtoMapper.toServiceOrderTermsAgreementDto();
-    termsAgreementDto.setUserId(accessor.getUserId());
-    // IP 및 User-Agent 설정
-    termsAgreementDto.setIpAddress(httpRequest.getRemoteAddr());
-    termsAgreementDto.setUserAgent(httpRequest.getHeader("User-Agent"));
-    orderTermsService.agreeToOrderTerms(termsAgreementDto);
-
-    return ResponseEntity.ok().body(GrobleResponse.success(finalizeOrderResponse));
+    return orderService.createOrderForUser(createOrderDto, accessor.getUserId());
   }
 
-  // 변환 헬퍼 메서드
-  private List<CreateInitialOrderDto.OrderOptionDto> convertToOptionDtos(
-      List<CreateInitialOrderRequest.OrderOptionRequest> requests) {
+  /**
+   * 비회원 주문 처리
+   *
+   * @param request 주문 요청 정보 (이메일, 전화번호 포함)
+   * @return 주문 생성 응답
+   */
+  private CreateOrderResponse processGuestOrder(CreateOrderRequest request) {
+    // 비회원 주문 필수 정보 검증
+    if (request.getEmail() == null || request.getEmail().isBlank()) {
+      throw new InvalidRequestException("비회원 주문 시 이메일은 필수입니다.");
+    }
+    if (request.getPhoneNumber() == null || request.getPhoneNumber().isBlank()) {
+      throw new InvalidRequestException("비회원 주문 시 전화번호는 필수입니다.");
+    }
+
+    // 비회원은 쿠폰 사용 불가
+    if (request.getCouponCodes() != null && !request.getCouponCodes().isEmpty()) {
+      throw new InvalidRequestException("비회원은 쿠폰을 사용할 수 없습니다.");
+    }
+
+    CreateOrderDto createOrderDto =
+        CreateOrderDto.builder()
+            .email(request.getEmail())
+            .phoneNumber(request.getPhoneNumber())
+            .contentId(request.getContentId())
+            .options(convertToOrderOptionDtos(request.getOptions()))
+            .couponCodes(null) // 비회원은 쿠폰 사용 불가
+            .build();
+
+    return orderService.createPublicOrder(createOrderDto);
+  }
+
+  /**
+   * 주문 약관 동의 처리 (회원 전용)
+   *
+   * @param userId 사용자 ID
+   * @param httpRequest HTTP 요청 (IP, User-Agent 추출용)
+   */
+  private void processOrderTermsAgreement(Long userId, HttpServletRequest httpRequest) {
+    try {
+      TermsAgreementDto termsAgreementDto = termsDtoMapper.toServiceOrderTermsAgreementDto();
+      termsAgreementDto.setUserId(userId);
+      // IP 및 User-Agent 설정
+      termsAgreementDto.setIpAddress(httpRequest.getRemoteAddr());
+      termsAgreementDto.setUserAgent(httpRequest.getHeader("User-Agent"));
+
+      orderTermsService.agreeToOrderTerms(termsAgreementDto);
+
+      log.info("주문 약관 동의 처리 완료 - userId: {}", userId);
+    } catch (Exception e) {
+      log.error("주문 약관 동의 처리 실패 - userId: {}", userId, e);
+      // 약관 동의 실패는 주문을 중단시키지 않음 (별도 처리 필요할 수 있음)
+    }
+  }
+
+  /**
+   * 요청 DTO를 서비스 DTO로 변환
+   *
+   * @param requests 주문 옵션 요청 리스트
+   * @return 변환된 주문 옵션 DTO 리스트
+   */
+  private List<CreateOrderDto.OrderOptionDto> convertToOrderOptionDtos(
+      List<CreateOrderRequest.OrderOptionRequest> requests) {
     return requests.stream()
         .map(
             req ->
-                CreateInitialOrderDto.OrderOptionDto.builder()
+                CreateOrderDto.OrderOptionDto.builder()
                     .optionId(req.getOptionId())
-                    .optionType(
-                        CreateInitialOrderDto.OptionType.valueOf(req.getOptionType().name()))
-                    .quantity(req.getQuantity())
-                    .build())
-        .collect(Collectors.toList());
-  }
-
-  private List<CreateFinalizeOrderDto.OrderOptionDto> convertToFinalizeOptionDtos(
-      List<CreateFinalizeOrderRequest.OrderOptionRequest> requests) {
-    return requests.stream()
-        .map(
-            req ->
-                CreateFinalizeOrderDto.OrderOptionDto.builder()
-                    .optionId(req.getOptionId())
-                    .optionType(
-                        CreateFinalizeOrderDto.OptionType.valueOf(req.getOptionType().name()))
                     .quantity(req.getQuantity())
                     .build())
         .collect(Collectors.toList());
