@@ -89,6 +89,7 @@ public class ContentPaymentController {
             .thumbnailUrl(baseResponse.getThumbnailUrl())
             .sellerName(baseResponse.getSellerName())
             .title(baseResponse.getTitle())
+            .contentType(baseResponse.getContentType())
             .optionName(baseResponse.getOptionName())
             .price(baseResponse.getPrice())
             .userCoupons(userCoupons)
