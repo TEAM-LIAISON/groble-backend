@@ -1,39 +1,9 @@
 package liaison.groble.application.payment.service;
 
-//
-// import java.math.BigDecimal;
-// import java.time.LocalDateTime;
-// import java.time.format.DateTimeFormatter;
-// import java.util.HashMap;
-// import java.util.Map;
-// import java.util.UUID;
-//
-// import org.json.simple.JSONObject;
-// import org.springframework.stereotype.Service;
-// import org.springframework.transaction.annotation.Transactional;
-//
-// import liaison.groble.application.payment.dto.PaymentCancelResponseDto;
-// import liaison.groble.application.payment.dto.PaymentCompleteResponseDto;
-// import liaison.groble.application.payment.dto.PaymentInfoDto;
-// import liaison.groble.application.payment.dto.PaymentRequestDto;
-// import liaison.groble.application.payment.dto.PaymentRequestResponseDto;
-// import liaison.groble.application.payment.dto.PaypleAuthResponseDto;
-// import liaison.groble.application.payment.dto.PaypleAuthResultDto;
-// import liaison.groble.application.payment.dto.PaypleLinkResponseDto;
-// import liaison.groble.application.payment.dto.PayplePaymentLinkRequestDto;
-// import liaison.groble.application.payment.dto.PayplePaymentResultDto;
-// import liaison.groble.domain.order.entity.Order;
-// import liaison.groble.domain.order.repository.OrderRepository;
-// import liaison.groble.domain.payment.entity.PayplePayment;
-// import liaison.groble.domain.payment.enums.PayplePaymentStatus;
-// import liaison.groble.domain.payment.repository.PayplePaymentRepository;
-// import liaison.groble.external.adapter.payment.PayplePayInfoRequest;
-// import liaison.groble.external.adapter.payment.PaypleRefundRequest;
-// import liaison.groble.external.adapter.payment.PaypleService;
-// import liaison.groble.external.adapter.payment.PaypleSimplePayRequest;
-// import liaison.groble.external.config.PaypleConfig;
-//
+import java.util.HashMap;
+import java.util.Map;
 
+import org.json.simple.JSONObject;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,6 +11,8 @@ import liaison.groble.application.payment.dto.PaypleAuthResultDto;
 import liaison.groble.domain.payment.entity.PayplePayment;
 import liaison.groble.domain.payment.enums.PayplePaymentStatus;
 import liaison.groble.domain.payment.repository.PayplePaymentRepository;
+import liaison.groble.external.adapter.payment.PaypleService;
+import liaison.groble.external.config.PaypleConfig;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -50,6 +22,8 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class PayplePaymentService {
   private final PayplePaymentRepository payplePaymentRepository;
+  private final PaypleService paypleService;
+  private final PaypleConfig paypleConfig;
 
   // 앱카드 결제 과정에서 페이플로부터 받은 인증 값을 DB에 저장한다.
   @Transactional
@@ -93,6 +67,132 @@ public class PayplePaymentService {
             .build();
 
     payplePaymentRepository.save(payplePayment);
+  }
+
+  /** 앱카드 승인 요청 처리 */
+  @Transactional
+  public JSONObject processAppCardApproval(PaypleAuthResultDto authResult) {
+    Map<String, String> params = new HashMap<>();
+    params.put("PCD_CST_ID", paypleConfig.getCstId());
+    params.put("PCD_CUST_KEY", paypleConfig.getCustKey());
+    params.put("PCD_AUTH_KEY", authResult.getAuthKey());
+    params.put("PCD_PAY_REQKEY", authResult.getPayReqKey());
+
+    log.info("앱카드 승인 요청 - 주문번호: {}", authResult.getPayOid());
+    JSONObject approvalResult = paypleService.payAppCard(params);
+
+    // 승인 결과에 따라 DB 상태 업데이트
+    String payRst = (String) approvalResult.get("PCD_PAY_RST");
+
+    // 기존 결제 정보 조회
+    PayplePayment payment =
+        payplePaymentRepository
+            .findByPcdPayOid(authResult.getPayOid())
+            .orElseThrow(() -> new IllegalArgumentException("결제 정보를 찾을 수 없습니다."));
+
+    if ("success".equalsIgnoreCase(payRst)) {
+      // 결제 정보 검증
+      validatePaymentConsistency(payment, approvalResult);
+
+      // 승인 성공 시 상태 업데이트
+      payment.updateStatus(PayplePaymentStatus.COMPLETED);
+
+      // 승인 정보 업데이트
+      payment.updateApprovalInfo(
+          (String) approvalResult.get("PCD_PAY_TIME"),
+          (String) approvalResult.get("PCD_PAY_CARDTRADENUM"),
+          (String) approvalResult.get("PCD_PAY_CARDAUTHNO"),
+          (String) approvalResult.get("PCD_CARD_RECEIPT"));
+
+      payplePaymentRepository.save(payment);
+      log.info("앱카드 결제 승인 성공 - 주문번호: {}", authResult.getPayOid());
+    } else {
+      // 승인 실패 시 상태 업데이트
+      payment.updateStatus(PayplePaymentStatus.FAILED);
+      payplePaymentRepository.save(payment);
+      log.error(
+          "앱카드 결제 승인 실패 - 주문번호: {}, 메시지: {}",
+          authResult.getPayOid(),
+          approvalResult.get("PCD_PAY_MSG"));
+    }
+
+    return approvalResult;
+  }
+
+  /** 결제 정보 일치 검증 */
+  private void validatePaymentConsistency(PayplePayment payment, JSONObject approvalResult) {
+    // 주문번호 검증
+    String approvedOid = (String) approvalResult.get("PCD_PAY_OID");
+    if (!payment.getPcdPayOid().equals(approvedOid)) {
+      throw new IllegalStateException(
+          String.format("주문번호 불일치 - DB: %s, 승인결과: %s", payment.getPcdPayOid(), approvedOid));
+    }
+
+    // 결제 금액 검증
+    String approvedTotal = (String) approvalResult.get("PCD_PAY_TOTAL");
+    if (!payment.getPcdPayTotal().equals(approvedTotal)) {
+      throw new IllegalStateException(
+          String.format("결제금액 불일치 - DB: %s, 승인결과: %s", payment.getPcdPayTotal(), approvedTotal));
+    }
+
+    // 상품명 검증
+    String approvedGoods = (String) approvalResult.get("PCD_PAY_GOODS");
+    if (!payment.getPcdPayGoods().equals(approvedGoods)) {
+      throw new IllegalStateException(
+          String.format("상품명 불일치 - DB: %s, 승인결과: %s", payment.getPcdPayGoods(), approvedGoods));
+    }
+
+    // 구매자 정보 검증
+    String approvedPayerNo = (String) approvalResult.get("PCD_PAYER_NO");
+    if (payment.getPcdPayerNo() != null && !payment.getPcdPayerNo().equals(approvedPayerNo)) {
+      throw new IllegalStateException(
+          String.format("구매자번호 불일치 - DB: %s, 승인결과: %s", payment.getPcdPayerNo(), approvedPayerNo));
+    }
+
+    // 구매자명 검증
+    String approvedPayerName = (String) approvalResult.get("PCD_PAYER_NAME");
+    if (payment.getPcdPayerName() != null && !payment.getPcdPayerName().equals(approvedPayerName)) {
+      throw new IllegalStateException(
+          String.format(
+              "구매자명 불일치 - DB: %s, 승인결과: %s", payment.getPcdPayerName(), approvedPayerName));
+    }
+
+    // 구매자 연락처 검증
+    String approvedPayerHp = (String) approvalResult.get("PCD_PAYER_HP");
+    if (payment.getPcdPayerHp() != null && !payment.getPcdPayerHp().equals(approvedPayerHp)) {
+      throw new IllegalStateException(
+          String.format(
+              "구매자 연락처 불일치 - DB: %s, 승인결과: %s", payment.getPcdPayerHp(), approvedPayerHp));
+    }
+
+    // 과세 여부 검증
+    String approvedIsTax = (String) approvalResult.get("PCD_PAY_ISTAX");
+    if (payment.getPcdPayIsTax() != null && !payment.getPcdPayIsTax().equals(approvedIsTax)) {
+      throw new IllegalStateException(
+          String.format("과세여부 불일치 - DB: %s, 승인결과: %s", payment.getPcdPayIsTax(), approvedIsTax));
+    }
+
+    // 복합과세 부가세 검증 (복합과세인 경우만)
+    if (payment.getPcdPayTaxTotal() != null) {
+      String approvedTaxTotal = (String) approvalResult.get("PCD_PAY_TAXTOTAL");
+      if (!payment.getPcdPayTaxTotal().equals(approvedTaxTotal)) {
+        throw new IllegalStateException(
+            String.format(
+                "복합과세 부가세 불일치 - DB: %s, 승인결과: %s", payment.getPcdPayTaxTotal(), approvedTaxTotal));
+      }
+    }
+
+    // 할부개월수 검증 (카드결제인 경우)
+    String approvedCardQuota = (String) approvalResult.get("PCD_PAY_CARDQUOTA");
+    if (payment.getPcdPayCardQuota() != null
+        && approvedCardQuota != null
+        && !payment.getPcdPayCardQuota().equals(approvedCardQuota)) {
+      throw new IllegalStateException(
+          String.format(
+              "할부개월수 불일치 - DB: %s, 승인결과: %s", payment.getPcdPayCardQuota(), approvedCardQuota));
+    }
+
+    log.info("결제 정보 검증 완료 - 주문번호: {}", payment.getPcdPayOid());
   }
 }
 //
@@ -302,18 +402,7 @@ public class PayplePaymentService {
 //    }
 //  }
 //
-//  /** 앱카드 승인 요청 처리 */
-//  private JSONObject processAppCardApproval(PaypleAuthResultDto authResult) {
-//    Map<String, String> params = new HashMap<>();
-//    params.put("PCD_CST_ID", paypleConfig.getCstId());
-//    params.put("PCD_CUST_KEY", paypleConfig.getCustKey());
-//    params.put("PCD_AUTH_KEY", authResult.getAuthKey());
-//    params.put("PCD_PAY_REQKEY", authResult.getPayReqKey());
-//    params.put("PCD_PAYER_ID", authResult.getPayerId());
-//
-//    log.info("앱카드 승인 요청 - 주문번호: {}", authResult.getPayOid());
-//    return paypleService.payAppCard(params);
-//  }
+
 //
 //  /** 일반 카드 승인 요청 처리 */
 //  private JSONObject processCardApproval(PaypleAuthResultDto authResult) {

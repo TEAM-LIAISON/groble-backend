@@ -40,7 +40,6 @@ public class PaypleServiceImpl implements PaypleService {
       obj.put("PCD_CUST_KEY", params.get("PCD_CUST_KEY"));
       obj.put("PCD_AUTH_KEY", params.get("PCD_AUTH_KEY"));
       obj.put("PCD_PAY_REQKEY", params.get("PCD_PAY_REQKEY"));
-      obj.put("PCD_PAYER_ID", params.get("PCD_PAYER_ID"));
 
       log.info("페이플 앱카드 승인 요청: {}", obj.toString());
 
