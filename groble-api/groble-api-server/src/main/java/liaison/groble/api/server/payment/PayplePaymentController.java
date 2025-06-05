@@ -149,23 +149,7 @@ public class PayplePaymentController {
 //// import lombok.extern.slf4j.Slf4j;
 ////
 //
-//// * 페이플 결제 플로우 설명:
-//// *
-//// * 1. 사용자가 콘텐츠 구매 요청
-//// *    - 쿠폰 적용 여부 확인
-//// *    - 최종 결제 금액 계산
-//// *
-//// * 2. 주문(Order) 생성
-//// *    - Order 엔티티에 사용자, 콘텐츠, 쿠폰 정보 저장
-//// *    - 상태: PENDING
-//// *
-//// * 3. 결제 요청 (/api/v1/payments/payple/request)
-//// *    - PayplePayment 엔티티 생성 (PENDING 상태)
-//// *    - 페이플 인증 정보 반환
-//// *
-//// * 4. 프론트엔드에서 페이플 결제창 호출
-//// *    - 페이플 JS SDK를 사용하여 결제 진행
-//// *
+
 //// * 5. 결제 완료 콜백 (/api/v1/payments/payple/complete)
 //// *    - 페이플로부터 결제 결과 수신
 //// *    - PayplePayment 상태 업데이트 (COMPLETED/FAILED)

@@ -154,6 +154,20 @@ public class ContentService {
     // 7. 저장 및 변환
     log.info("콘텐츠 심사 요청 완료. 유저 ID: {}", userId);
 
+    final LocalDateTime nowInSeoul = LocalDateTime.now(ZoneId.of("Asia/Seoul"));
+
+    final ContentRegisterCreateReportDto contentRegisterCreateReportDto =
+        ContentRegisterCreateReportDto.builder()
+            .nickname(content.getUser().getNickname())
+            .contentId(content.getId())
+            .contentTitle(content.getTitle())
+            .contentType(content.getContentType().name())
+            .createdAt(nowInSeoul)
+            .build();
+
+    discordContentRegisterReportService.sendCreateContentRegisterReport(
+        contentRegisterCreateReportDto);
+
     return saveAndConvertToDto(content);
   }
 
@@ -486,20 +500,6 @@ public class ContentService {
     if (!content.getUser().getId().equals(userId)) {
       throw new ForbiddenException("해당 콘텐츠를 수정할 권한이 없습니다.");
     }
-
-    final LocalDateTime nowInSeoul = LocalDateTime.now(ZoneId.of("Asia/Seoul"));
-
-    final ContentRegisterCreateReportDto contentRegisterCreateReportDto =
-        ContentRegisterCreateReportDto.builder()
-            .nickname(content.getUser().getNickname())
-            .contentId(contentId)
-            .contentTitle(content.getTitle())
-            .contentType(content.getContentType().name())
-            .createdAt(nowInSeoul)
-            .build();
-
-    discordContentRegisterReportService.sendCreateContentRegisterReport(
-        contentRegisterCreateReportDto);
 
     return content;
   }
