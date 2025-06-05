@@ -37,7 +37,7 @@ public class OrderService {
   private final UserCouponRepository userCouponRepository;
 
   /**
-   * 사용자 주문 생성
+   * 회원 주문 생성
    *
    * <p>이 메서드는 사용자가 선택한 콘텐츠와 옵션들로 주문을 생성하고, 쿠폰이 있는 경우 최적의 쿠폰을 자동으로 적용합니다.
    *

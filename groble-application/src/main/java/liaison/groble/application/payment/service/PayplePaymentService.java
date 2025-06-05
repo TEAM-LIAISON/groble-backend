@@ -7,7 +7,9 @@ import org.json.simple.JSONObject;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import liaison.groble.application.order.service.OrderReader;
 import liaison.groble.application.payment.dto.PaypleAuthResultDto;
+import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.payment.entity.PayplePayment;
 import liaison.groble.domain.payment.enums.PayplePaymentStatus;
 import liaison.groble.domain.payment.repository.PayplePaymentRepository;
@@ -24,10 +26,31 @@ public class PayplePaymentService {
   private final PayplePaymentRepository payplePaymentRepository;
   private final PaypleService paypleService;
   private final PaypleConfig paypleConfig;
+  private final OrderReader orderReader;
 
-  // 앱카드 결제 과정에서 페이플로부터 받은 인증 값을 DB에 저장한다.
+  /**
+   * 앱카드 결제 인증 결과 저장
+   *
+   * <p>- 페이플로부터 받은 인증 값을 DB에 저장
+   *
+   * <p>- Order와 연결하여 저장
+   */
   @Transactional
   public void saveAppCardAuthResponse(PaypleAuthResultDto dto) {
+    // 1. 주문 조회 및 검증
+    Order order = orderReader.getOrderByMerchantUid(dto.getPayOid());
+
+    // 주문 상태 검증
+    if (order.getStatus() != Order.OrderStatus.PENDING) {
+      throw new IllegalStateException("결제 대기 상태의 주문만 처리할 수 있습니다.");
+    }
+
+    // 금액 검증
+    if (!order.getFinalPrice().toString().equals(dto.getPayTotal())) {
+      throw new IllegalStateException(
+          String.format("결제 금액 불일치 - 주문: %s, 결제: %s", order.getFinalPrice(), dto.getPayTotal()));
+    }
+
     PayplePayment payplePayment =
         PayplePayment.builder()
             .pcdPayRst(dto.getPayRst())

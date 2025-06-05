@@ -100,4 +100,8 @@ public class ContentPaymentController {
     // 성공 응답 반환
     return ResponseEntity.ok(GrobleResponse.success(contentPayPageResponse));
   }
+
+  // 결제 이후에 성사된 결제 정보를 조회
+  //  @GetMapping
+
 }
