@@ -1,4 +1,4 @@
-package liaison.groble.domain.purchase.entity;
+package liaison.groble.domain.order.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;

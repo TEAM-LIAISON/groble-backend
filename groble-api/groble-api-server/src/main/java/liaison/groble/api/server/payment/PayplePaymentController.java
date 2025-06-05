@@ -70,7 +70,7 @@ public class PayplePaymentController {
         @ApiResponse(responseCode = "400", description = "잘못된 요청 (파라미터 검증 실패 등)"),
         @ApiResponse(responseCode = "500", description = "서버 내부 오류")
       })
-  @PostMapping("/app-card/auth")
+  @PostMapping("/app-card/request")
   public ResponseEntity<GrobleResponse<AppCardPayplePaymentResponse>> requestAppCardPayment(
       @Auth Accessor accessor, @Valid @RequestBody PaypleAuthResultDto authResultDto) {
 

@@ -48,7 +48,7 @@ public class OrderController {
       description = "결제 완료된 주문의 상세 정보를 조회합니다. 상품 정보, 결제 금액, 구매 일시 등을 포함합니다.")
   @GetMapping("/success/{merchantUid}")
   public ResponseEntity<GrobleResponse<OrderSuccessResponse>> getSuccessOrderPage(
-      @Auth Accessor accessor, @Valid @PathVariable String merchantUid) {
+      @Auth Accessor accessor, @Valid @PathVariable("merchantUid") String merchantUid) {
 
     // 인증된 사용자만 접근 가능
     if (!accessor.isAuthenticated()) {

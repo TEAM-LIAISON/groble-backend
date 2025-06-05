@@ -606,9 +606,6 @@ public class Payment extends BaseTimeEntity {
   //
   //    // 나머지 메서드들...
   //    public void setReceiptUrl(String receiptUrl) {
-  //        this.receiptUrl = receiptUrl;
-  //    }
-  //
   //    public void setEscrow(boolean escrow) {
   //        this.escrow = escrow;
   //    }

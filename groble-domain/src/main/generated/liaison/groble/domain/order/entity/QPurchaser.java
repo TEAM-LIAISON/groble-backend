@@ -1,4 +1,4 @@
-package liaison.groble.domain.purchase.entity;
+package liaison.groble.domain.order.entity;
 
 import static com.querydsl.core.types.PathMetadataFactory.*;
 
@@ -15,7 +15,7 @@ import com.querydsl.core.types.Path;
 @Generated("com.querydsl.codegen.DefaultEmbeddableSerializer")
 public class QPurchaser extends BeanPath<Purchaser> {
 
-    private static final long serialVersionUID = -1271010049L;
+    private static final long serialVersionUID = 525379770L;
 
     public static final QPurchaser purchaser = new QPurchaser("purchaser");
 
