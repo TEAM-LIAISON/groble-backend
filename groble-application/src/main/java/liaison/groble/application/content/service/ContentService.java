@@ -127,10 +127,20 @@ public class ContentService {
     // 3. Content 준비 (기존 업데이트 또는 새로 생성)
     Content content;
     if (contentDto.getContentId() != null) {
-      // 기존 Content 업데이트
+      // 1) 기존 콘텐츠 로드 (영속 상태 보장)
       content = findAndValidateUserContent(userId, contentDto.getContentId());
+
+      // 2) 옵션 컬렉션을 처음부터 로딩
+      //    (lazy 로딩일 경우, 강제로 컬렉션을 초기화해서
+      //     이미 DB에 남아 있는 실제 엔티티만 제거되도록 함)
+      content.getOptions().size();
+      // → 이 시점에 Hibernate가 DB에 남아 있는 옵션 리스트를 가져옵니다.
+
+      // 3) 컬렉션에서 실제로 제거할 대상만 남겨두고 지울 수 있도록
+      //    (예: 무조건 다 지우려면 clear 그대로 사용해도 되지만,
+      //     clear 직전에 fetch를 했으니 DB에 없는 id로 삭제쿼리가 나가지 않음)
+      content.getOptions().clear();
     } else {
-      // 새 Content 생성
       content = new Content(user);
     }
 
@@ -142,11 +152,7 @@ public class ContentService {
     content.setCategory(category); // 카테고리 설정
     content.setStatus(ContentStatus.PENDING); // 심사중으로 설정
 
-    // 6. 기존 옵션 제거 및 새 옵션 추가
-    if (content.getOptions() != null) {
-      content.getOptions().clear();
-    }
-
+    // 4) 새 옵션 추가
     if (contentDto.getOptions() != null && !contentDto.getOptions().isEmpty()) {
       addOptionsToContent(content, contentDto);
     }
