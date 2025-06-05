@@ -13,8 +13,14 @@ import liaison.groble.application.payment.dto.AppCardPayplePaymentResponse;
 import liaison.groble.application.payment.dto.PaypleAuthResultDto;
 import liaison.groble.application.payment.exception.PayplePaymentAuthException;
 import liaison.groble.application.payment.service.PayplePaymentService;
+import liaison.groble.common.annotation.Auth;
+import liaison.groble.common.model.Accessor;
 import liaison.groble.common.response.GrobleResponse;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,11 +33,46 @@ import lombok.extern.slf4j.Slf4j;
 public class PayplePaymentController {
   private final PayplePaymentService payplePaymentService;
 
-  // 아래 API 호출 순서 [1. 결제하기 버튼, 2. 결제창 호출 요청, 3. 결제창 띄우기, 4. 결제정보 입력, 인증 요청]
   // 앱카드 결제 인증 결과를 수신하고 결제 승인 요청을 페이플 서버에 보낸다.
-  @PostMapping("/app-card/request")
+  @Operation(
+      summary = "앱카드 결제 승인 요청",
+      description = "앱카드 결제 인증 결과를 수신하고, Payple 서버에 승인 요청을 보냅니다.",
+      responses = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "결제 승인 성공",
+            content =
+                @Content(
+                    mediaType = "application/json",
+                    examples =
+                        @ExampleObject(
+                            value =
+                                """
+                  {
+                    "success": true,
+                    "data": {
+                      "payRst": "success",
+                      "payCode": "0000",
+                      "payMsg": "결제가 정상적으로 완료되었습니다.",
+                      "payOid": "ORDER_1234",
+                      "payType": "card",
+                      "payTime": "20250605123045",
+                      "payTotal": "10000",
+                      "payCardName": "Samsung Card",
+                      "payCardNum": "1234-****-****-5678",
+                      "payCardQuota": "00",
+                      "payCardTradeNum": "20250605123456001",
+                      "payCardAuthNo": "12345678",
+                      "payCardReceipt": "https://receipt.payple.kr/receipt/abcd1234"
+                    }
+                  }
+                  """))),
+        @ApiResponse(responseCode = "400", description = "잘못된 요청 (파라미터 검증 실패 등)"),
+        @ApiResponse(responseCode = "500", description = "서버 내부 오류")
+      })
+  @PostMapping("/app-card/auth")
   public ResponseEntity<GrobleResponse<AppCardPayplePaymentResponse>> requestAppCardPayment(
-      @Valid @RequestBody PaypleAuthResultDto authResultDto) {
+      @Auth Accessor accessor, @Valid @RequestBody PaypleAuthResultDto authResultDto) {
 
     log.info(
         "페이플 인증 결과 수신 - 결과: {}, 코드: {}, 메시지: {}, 주문번호: {}",
@@ -53,7 +94,7 @@ public class PayplePaymentController {
     }
 
     // 인증 결과 저장
-    payplePaymentService.saveAppCardAuthResponse(authResultDto);
+    payplePaymentService.saveAppCardAuthResponse(accessor.getUserId(), authResultDto);
 
     try {
       // 인증 성공에 대한 결제 승인 요청 처리

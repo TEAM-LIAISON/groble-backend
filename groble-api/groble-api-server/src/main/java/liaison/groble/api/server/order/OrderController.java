@@ -7,6 +7,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -17,6 +19,7 @@ import liaison.groble.api.server.terms.mapper.TermsDtoMapper;
 import liaison.groble.application.order.OrderService;
 import liaison.groble.application.order.dto.CreateOrderDto;
 import liaison.groble.application.order.dto.CreateOrderResponse;
+import liaison.groble.application.order.dto.OrderSuccessResponse;
 import liaison.groble.application.terms.dto.TermsAgreementDto;
 import liaison.groble.application.terms.service.OrderTermsService;
 import liaison.groble.common.annotation.Auth;
@@ -40,12 +43,48 @@ public class OrderController {
   private final OrderTermsService orderTermsService;
   private final TermsDtoMapper termsDtoMapper;
 
-  //  @GetMapping("/success/{merchantUid}")
-  //  public ResponseEntity<GrobleResponse<Void>> getSuccessOrderPage(
-  //        @Auth Accessor accessor,
-  //        @Valid @PathVariable String merchantUid) {
-  //
-  //  }
+  @Operation(
+      summary = "결제 성공 페이지 정보 조회",
+      description = "결제 완료된 주문의 상세 정보를 조회합니다. 상품 정보, 결제 금액, 구매 일시 등을 포함합니다.")
+  @GetMapping("/success/{merchantUid}")
+  public ResponseEntity<GrobleResponse<OrderSuccessResponse>> getSuccessOrderPage(
+      @Auth Accessor accessor, @Valid @PathVariable String merchantUid) {
+
+    // 인증된 사용자만 접근 가능
+    if (!accessor.isAuthenticated()) {
+      throw new InvalidRequestException("로그인이 필요합니다.");
+    }
+
+    try {
+      OrderSuccessResponse response =
+          orderService.getOrderSuccess(merchantUid, accessor.getUserId());
+
+      log.info(
+          "주문 성공 정보 조회 완료 - merchantUid: {}, userId: {}, contentTitle: {}",
+          merchantUid,
+          accessor.getUserId(),
+          response.getContentTitle());
+
+      return ResponseEntity.ok(GrobleResponse.success(response));
+
+    } catch (IllegalArgumentException e) {
+      log.warn("주문을 찾을 수 없음 - merchantUid: {}, userId: {}", merchantUid, accessor.getUserId());
+      throw new InvalidRequestException("주문 정보를 찾을 수 없습니다.");
+
+    } catch (IllegalStateException e) {
+      log.warn(
+          "주문 접근 권한 없음 - merchantUid: {}, userId: {}, error: {}",
+          merchantUid,
+          accessor.getUserId(),
+          e.getMessage());
+      throw new InvalidRequestException("해당 주문에 접근할 수 없습니다.");
+
+    } catch (Exception e) {
+      log.error(
+          "주문 성공 정보 조회 실패 - merchantUid: {}, userId: {}", merchantUid, accessor.getUserId(), e);
+      throw new InvalidRequestException("주문 정보 조회 중 오류가 발생했습니다.");
+    }
+  }
 
   @Operation(
       summary = "결제 주문 발행",

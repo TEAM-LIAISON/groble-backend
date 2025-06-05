@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import liaison.groble.application.content.ContentReader;
 import liaison.groble.application.order.dto.CreateOrderDto;
 import liaison.groble.application.order.dto.CreateOrderResponse;
+import liaison.groble.application.order.dto.OrderSuccessResponse;
 import liaison.groble.application.order.dto.ValidatedOrderOptionDto;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.domain.content.entity.Content;
@@ -21,7 +22,9 @@ import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.order.entity.OrderItem;
 import liaison.groble.domain.order.repository.OrderRepository;
 import liaison.groble.domain.order.vo.OrderOptionInfo;
+import liaison.groble.domain.purchase.entity.Purchase;
 import liaison.groble.domain.purchase.entity.Purchaser;
+import liaison.groble.domain.purchase.repository.PurchaseRepository;
 import liaison.groble.domain.user.entity.User;
 
 import lombok.RequiredArgsConstructor;
@@ -35,6 +38,7 @@ public class OrderService {
   private final ContentReader contentReader;
   private final OrderRepository orderRepository;
   private final UserCouponRepository userCouponRepository;
+  private final PurchaseRepository purchaseRepository;
 
   /**
    * 회원 주문 생성
@@ -87,32 +91,46 @@ public class OrderService {
     // 7단계: 쿠폰 적용 처리
     UserCoupon appliedCoupon = null;
     if (createOrderDto.getCouponCodes() != null && !createOrderDto.getCouponCodes().isEmpty()) {
-      appliedCoupon =
-          findAndValidateBestCoupon(
-              user, createOrderDto.getCouponCodes(), order.getOriginalPrice());
+      // 상품 원가가 0원이면 쿠폰 적용 불가
+      if (order.getOriginalPrice().compareTo(BigDecimal.ZERO) > 0) {
+        appliedCoupon =
+            findAndValidateBestCoupon(
+                user, createOrderDto.getCouponCodes(), order.getOriginalPrice());
 
-      if (appliedCoupon != null) {
-        order.applyCoupon(appliedCoupon);
-        log.info(
-            "쿠폰 적용 완료 - orderId: {}, couponCode: {}, 할인금액: {}",
-            order.getId(),
-            appliedCoupon.getCouponCode(),
-            order.getCouponDiscountPrice());
+        if (appliedCoupon != null) {
+          order.applyCoupon(appliedCoupon);
+          log.info(
+              "쿠폰 적용 완료 - orderId: {}, couponCode: {}, 할인금액: {}",
+              order.getId(),
+              appliedCoupon.getCouponCode(),
+              order.getCouponDiscountPrice());
+        }
+      } else {
+        log.info("상품 원가가 0원이므로 쿠폰 적용이 불가능합니다 - orderId: {}", order.getId());
       }
     }
 
-    // 8단계: 최종 주문 저장
+    // 8단계: 최종 주문 저장 및 무료 상품 처리
     order = orderRepository.save(order);
 
+    boolean isPurchasedContent = false;
+
+    // 최종 금액이 0원이면 즉시 구매 처리
+    if (order.getFinalPrice().compareTo(BigDecimal.ZERO) == 0) {
+      isPurchasedContent = processFreeOrderPurchase(order);
+      log.info("무료 주문으로 즉시 구매 처리 완료 - orderId: {}", order.getId());
+    }
+
     log.info(
-        "주문 생성 완료 - orderId: {}, userId: {}, contentId: {}, 옵션수: {}, 최종금액: {}",
+        "주문 생성 완료 - orderId: {}, userId: {}, contentId: {}, 옵션수: {}, 최종금액: {}, 즉시구매: {}",
         order.getId(),
         userId,
         createOrderDto.getContentId(),
         validatedOptions.size(),
-        order.getFinalPrice());
+        order.getFinalPrice(),
+        isPurchasedContent);
 
-    return buildCreateOrderResponse(order);
+    return buildCreateOrderResponse(order, isPurchasedContent);
   }
 
   /**
@@ -261,18 +279,27 @@ public class OrderService {
       log.warn("비회원 주문에서 쿠폰 코드가 전달되었으나 무시됩니다: {}", createOrderDto.getCouponCodes());
     }
 
-    // 9단계: 최종 주문 저장
+    // 9단계: 최종 주문 저장 및 무료 상품 처리
     order = orderRepository.save(order);
 
+    boolean isPurchasedContent = false;
+
+    // 최종 금액이 0원이면 즉시 구매 처리
+    if (order.getFinalPrice().compareTo(BigDecimal.ZERO) == 0) {
+      isPurchasedContent = processFreeOrderPurchase(order);
+      log.info("무료 비회원 주문으로 즉시 구매 처리 완료 - orderId: {}", order.getId());
+    }
+
     log.info(
-        "비회원 주문 생성 완료 - orderId: {}, email: {}, contentId: {}, 옵션수: {}, 최종금액: {}",
+        "비회원 주문 생성 완료 - orderId: {}, email: {}, contentId: {}, 옵션수: {}, 최종금액: {}, 즉시구매: {}",
         order.getId(),
         createOrderDto.getEmail(),
         createOrderDto.getContentId(),
         validatedOptions.size(),
-        order.getFinalPrice());
+        order.getFinalPrice(),
+        isPurchasedContent);
 
-    return buildPublicOrderResponse(order);
+    return buildPublicOrderResponse(order, isPurchasedContent);
   }
 
   /**
@@ -280,13 +307,14 @@ public class OrderService {
    *
    * <p>생성된 주문 정보를 바탕으로 클라이언트에 반환할 응답을 구성합니다.
    */
-  private CreateOrderResponse buildCreateOrderResponse(Order order) {
+  private CreateOrderResponse buildCreateOrderResponse(Order order, boolean isPurchasedContent) {
     return CreateOrderResponse.builder()
         .merchantUid(order.getMerchantUid())
         .email(order.getUser().getEmail())
         .phoneNumber(order.getUser().getPhoneNumber())
         .contentTitle(order.getOrderItems().get(0).getContent().getTitle())
         .totalPrice(order.getTotalPrice())
+        .isPurchasedContent(isPurchasedContent)
         .build();
   }
 
@@ -295,13 +323,127 @@ public class OrderService {
    *
    * <p>비회원 주문의 경우 Purchaser 정보를 사용하여 응답을 구성합니다.
    */
-  private CreateOrderResponse buildPublicOrderResponse(Order order) {
+  private CreateOrderResponse buildPublicOrderResponse(Order order, boolean isPurchasedContent) {
     return CreateOrderResponse.builder()
         .merchantUid(order.getMerchantUid())
         .email(order.getPurchaser().getEmail())
         .phoneNumber(order.getPurchaser().getPhone())
         .contentTitle(order.getOrderItems().get(0).getContent().getTitle())
         .totalPrice(order.getTotalPrice())
+        .isPurchasedContent(isPurchasedContent)
+        .build();
+  }
+
+  /**
+   * 무료 주문에 대한 구매 처리
+   *
+   * <p>PayplePaymentService의 결제 승인 로직을 참고하여 무료 주문에 대해 즉시 구매 처리를 수행합니다.
+   *
+   * @param order 무료 주문 (최종 금액이 0원)
+   * @return 구매 처리 성공 여부
+   */
+  private boolean processFreeOrderPurchase(Order order) {
+    try {
+      // 1. Order 상태 업데이트 (결제 완료 + 쿠폰 사용 처리)
+      // 무료 주문이므로 Payment 엔티티는 생성하지 않음
+      order.completePayment();
+      orderRepository.save(order);
+
+      // 2. Purchase 생성 및 즉시 완료 처리
+      Purchase purchase = Purchase.createFromOrder(order);
+      purchase.complete(); // PENDING → COMPLETED 상태 변경 및 purchasedAt 설정
+      purchaseRepository.save(purchase);
+
+      log.info(
+          "무료 주문 구매 처리 성공 - orderId: {}, purchaseId: {}, userId: {}, contentId: {}",
+          order.getId(),
+          purchase.getId(),
+          order.getUser() != null ? order.getUser().getId() : "guest",
+          purchase.getContent().getId());
+
+      return true;
+
+    } catch (Exception e) {
+      log.error("무료 주문 구매 처리 실패 - orderId: {}", order.getId(), e);
+
+      // 실패 시 주문 상태를 실패로 변경
+      try {
+        order.failOrder("무료 구매 처리 실패: " + e.getMessage());
+        orderRepository.save(order);
+      } catch (Exception failException) {
+        log.error("주문 실패 처리 중 추가 오류 발생 - orderId: {}", order.getId(), failException);
+      }
+
+      return false;
+    }
+  }
+
+  /**
+   * 결제 성공 후 주문 정보 조회
+   *
+   * <p>merchantUid를 기반으로 주문 정보를 조회하고, 해당 주문의 상품 정보와 결제 정보를 반환합니다.
+   *
+   * @param merchantUid 주문 고유 식별자
+   * @param userId 요청한 사용자 ID (권한 검증용)
+   * @return 주문 성공 정보
+   */
+  @Transactional(readOnly = true)
+  public OrderSuccessResponse getOrderSuccess(String merchantUid, Long userId) {
+    // 1. 주문 조회
+    Order order =
+        orderRepository
+            .findByMerchantUid(merchantUid)
+            .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다: " + merchantUid));
+
+    // 2. 권한 검증 (본인의 주문인지 확인)
+    if (order.getUser() == null || !order.getUser().getId().equals(userId)) {
+      throw new IllegalStateException("해당 주문에 대한 접근 권한이 없습니다.");
+    }
+
+    // 3. 주문 상태 검증 (결제 완료 상태인지 확인)
+    if (order.getStatus() != Order.OrderStatus.PAID) {
+      throw new IllegalStateException("완료되지 않은 주문입니다. 현재 상태: " + order.getStatus());
+    }
+
+    // 4. Purchase 정보 조회
+    Purchase purchase =
+        purchaseRepository
+            .findByOrder(order)
+            .orElseThrow(() -> new IllegalStateException("구매 정보를 찾을 수 없습니다."));
+
+    // 5. 응답 생성
+    return buildOrderSuccessResponse(order, purchase);
+  }
+
+  /**
+   * OrderSuccessResponse 생성
+   *
+   * <p>주문과 구매 정보를 바탕으로 결제 성공 응답을 구성합니다.
+   */
+  private OrderSuccessResponse buildOrderSuccessResponse(Order order, Purchase purchase) {
+    // 첫 번째 주문 아이템 정보 (단일 콘텐츠 구매 가정)
+    OrderItem orderItem = order.getOrderItems().get(0);
+    Content content = orderItem.getContent();
+
+    return OrderSuccessResponse.builder()
+        .merchantUid(order.getMerchantUid())
+        .orderNumber(order.getId().toString())
+        .orderStatus(order.getStatus().name())
+        .purchaseStatus(purchase.getStatus().name())
+        .contentId(content.getId())
+        .contentTitle(content.getTitle())
+        .contentThumbnailUrl(content.getThumbnailUrl())
+        .selectedOptionId(orderItem.getOptionId())
+        .selectedOptionType(
+            orderItem.getOptionType() != null ? orderItem.getOptionType().name() : null)
+        .originalPrice(order.getOriginalPrice())
+        .discountPrice(order.getDiscountPrice())
+        .couponDiscountPrice(order.getCouponDiscountPrice())
+        .finalPrice(order.getFinalPrice())
+        .appliedCouponCode(
+            order.getAppliedCoupon() != null ? order.getAppliedCoupon().getCouponCode() : null)
+        .purchasedAt(purchase.getPurchasedAt())
+        .isFreePurchase(order.getFinalPrice().compareTo(BigDecimal.ZERO) == 0)
         .build();
   }
 }

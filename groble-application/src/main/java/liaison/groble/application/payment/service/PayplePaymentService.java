@@ -42,9 +42,13 @@ public class PayplePaymentService {
    * <p>- Order와 연결하여 저장
    */
   @Transactional
-  public void saveAppCardAuthResponse(PaypleAuthResultDto dto) {
+  public void saveAppCardAuthResponse(Long userId, PaypleAuthResultDto dto) {
     // 1. 주문 조회 및 검증
     Order order = orderReader.getOrderByMerchantUid(dto.getPayOid());
+
+    if (!order.getUser().getId().equals(userId)) {
+      throw new IllegalStateException("주문의 사용자 ID와 요청한 사용자 ID가 일치하지 않습니다.");
+    }
 
     // 주문 상태 검증
     if (order.getStatus() != Order.OrderStatus.PENDING) {

@@ -14,5 +14,6 @@ public class CreateOrderResponse {
   private final String phoneNumber;
   private final String contentTitle;
   private final BigDecimal totalPrice;
-  private final Boolean isPurchasedContent;
+
+  @Builder.Default private final Boolean isPurchasedContent = false;
 }
