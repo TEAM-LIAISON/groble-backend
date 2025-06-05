@@ -2,6 +2,7 @@ package liaison.groble.application.auth.service.impl;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -57,6 +58,8 @@ import liaison.groble.domain.user.repository.UserWithdrawalHistoryRepository;
 import liaison.groble.domain.user.service.UserStatusService;
 import liaison.groble.domain.user.service.UserTermsService;
 import liaison.groble.domain.user.vo.SellerInfo;
+import liaison.groble.external.discord.dto.MemberCreateReportDto;
+import liaison.groble.external.discord.service.DiscordMemberReportService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -79,6 +82,7 @@ public class AuthServiceImpl implements AuthService {
   private final TermsRepository termsRepository;
   private final UserTermsService userTermsService;
   private final NotificationService notificationService;
+  private final DiscordMemberReportService discordMemberReportService;
 
   @Override
   @Transactional
@@ -158,6 +162,18 @@ public class AuthServiceImpl implements AuthService {
             }
           }
         });
+
+    final LocalDateTime nowInSeoul = LocalDateTime.now(ZoneId.of("Asia/Seoul"));
+
+    final MemberCreateReportDto memberCreateReportDto =
+        MemberCreateReportDto.builder()
+            .userId(user.getId())
+            .nickname(user.getNickname())
+            .createdAt(nowInSeoul)
+            .build();
+
+    discordMemberReportService.sendCreateMemberReport(memberCreateReportDto);
+
     return tokenDto;
   }
 
@@ -232,6 +248,18 @@ public class AuthServiceImpl implements AuthService {
             }
           });
     }
+
+    final LocalDateTime nowInSeoul = LocalDateTime.now(ZoneId.of("Asia/Seoul"));
+
+    final MemberCreateReportDto memberCreateReportDto =
+        MemberCreateReportDto.builder()
+            .userId(user.getId())
+            .nickname(user.getNickname())
+            .createdAt(nowInSeoul)
+            .build();
+
+    discordMemberReportService.sendCreateMemberReport(memberCreateReportDto);
+
     return tokenDto;
   }
 
@@ -239,17 +267,15 @@ public class AuthServiceImpl implements AuthService {
   @Transactional
   public TokenDto signIn(SignInDto signInDto) {
     // 이메일로 IntegratedAccount 찾기
-    IntegratedAccount account =
-        integratedAccountRepository
-            .findByIntegratedAccountEmail(signInDto.getEmail())
-            .orElseThrow(() -> new IllegalArgumentException("등록되지 않은 이메일입니다."));
+    IntegratedAccount integratedAccount =
+        userReader.getUserByIntegratedAccountEmail(signInDto.getEmail());
 
     // 비밀번호 일치 여부 확인
-    if (!securityPort.matches(signInDto.getPassword(), account.getPassword())) {
+    if (!securityPort.matches(signInDto.getPassword(), integratedAccount.getPassword())) {
       throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
     }
 
-    User user = account.getUser();
+    User user = integratedAccount.getUser();
 
     // 사용자 상태 확인 (로그인 가능 상태인지)
     if (!user.getUserStatusInfo().isLoginable()) {
@@ -263,8 +289,7 @@ public class AuthServiceImpl implements AuthService {
 
     log.info("로그인 성공: {}", user.getEmail());
 
-    log.info("로그인 성공: {}", user.getEmail());
-
+    log.info("토큰 생성 시작: userId={}, email={}", user.getId(), user.getEmail());
     // 토큰 생성
     String accessToken = securityPort.createAccessToken(user.getId(), user.getEmail());
     String refreshToken = securityPort.createRefreshToken(user.getId(), user.getEmail());

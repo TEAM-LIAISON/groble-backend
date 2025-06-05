@@ -61,7 +61,7 @@ spring:
         order_inserts: true
         order_updates: true
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update
   mvc:
     path match:
       matching-strategy: ant_path_matcher
@@ -85,16 +85,16 @@ app:
       expiration-ms: 3600000 # 1 hour
     refresh-token:
       secret: bZvf0E0wsJXugzxv2m25c5zHvJrNfvsQIjzU6eBScbk=
-      expiration-ms: 604800000 # 7 days
+      expiration-ms: 604800000 # 1 hour
     issuer: groble-auth-service
   frontend-url: https://dev.groble.im
   backend-url: https://api.dev.groble.im
   cookie:
-    domain: groble.im
+    domain: dev.groble.im
   reset:
     base-url: https://dev.groble.im
     path: /reset-password
-    expiration-ms: 900000 # 15 minutes
+    expiration-ms: 200000 # 2 minutes
 
 # Springdoc OpenAPI Configuration
 springdoc:
@@ -122,22 +122,26 @@ springdoc:
 #      exposure:
 #        include: health,info,metrics,prometheus
 
-# Logging
 logging:
   level:
-    root: INFO
-    liaison: DEBUG
-    org.springdoc: DEBUG
-    io.swagger.v3: DEBUG
+    root: ERROR  # 전역 로그를 ERROR 수준으로 줄임
 
-# 포트원 결제 관련 설정
-portone:
-  api-url-v2: https://api.portone.io
-  merchant-id: "your_merchant_id"
-  client-key: "your_client_key"
-  api-secret: "8q1r4uoQvToCPixwJH8IZBBtribsZta2F96K1Wwlob1SQ4JuhAMrRS7PzQgsPTxcqYos8hZvQjs8H09g"
-  default-pg: "tosspayments"
-  payment-redirect-url: "https://groble.im/payment"
-  identity-redirect-url: "https://groble.im/identity/verify"
-  bank-callback-url: "https://groble.im/bank/callback"
-  webhook-secret: "your_webhook_secret"
+    # Spring & 애플리케이션 주요 패키지
+    liaison.groble: ERROR
+    org.springframework: WARN
+    org.springframework.web: ERROR
+
+    # Swagger/OpenAPI 관련 로그 줄이기
+    org.springdoc: WARN
+    io.swagger.v3: WARN
+
+    # 외부 라이브러리 / 통신 로그 최소화
+    org.apache.http: ERROR         # HTTP client 최소화
+    org.apache.http.wire: OFF      # Wire-level log 완전 차단
+    com.amazonaws: ERROR           # AWS SDK
+
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} %-5level %logger{36} - %msg%n"
+
+  file:
+    name: /dev/null  # 로그 파일 쓰기를 막음 (또는 경로를 로그 수집 서버로 지정)

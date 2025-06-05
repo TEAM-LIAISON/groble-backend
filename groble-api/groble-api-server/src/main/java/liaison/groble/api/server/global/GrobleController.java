@@ -9,8 +9,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import liaison.groble.api.model.content.response.DynamicContentListResponse;
 import liaison.groble.api.model.content.response.DynamicContentResponse;
-import liaison.groble.application.content.ContentService;
 import liaison.groble.application.content.dto.DynamicContentDto;
+import liaison.groble.application.content.service.ContentService;
 import liaison.groble.common.response.GrobleResponse;
 
 import io.swagger.v3.oas.annotations.tags.Tag;

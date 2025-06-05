@@ -2,6 +2,7 @@ package liaison.groble.api.server.payment;
 
 import jakarta.validation.Valid;
 
+import org.json.simple.JSONObject;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -54,8 +55,47 @@ public class PayplePaymentController {
     // 인증 결과 저장
     payplePaymentService.saveAppCardAuthResponse(authResultDto);
 
-    // 인증 성공에 대한 결제 요청 처리
-    return ResponseEntity.ok(GrobleResponse.success(null));
+    try {
+      // 인증 성공에 대한 결제 승인 요청 처리
+      JSONObject approvalResult = payplePaymentService.processAppCardApproval(authResultDto);
+
+      // 승인 결과 확인
+      String payRst = (String) approvalResult.get("PCD_PAY_RST");
+      if (!"success".equalsIgnoreCase(payRst)) {
+        String errorMsg = (String) approvalResult.get("PCD_PAY_MSG");
+        log.error("페이플 결제 승인 실패 - 메시지: {}", errorMsg);
+        throw new PayplePaymentAuthException("페이플 결제 승인 실패: " + errorMsg);
+      }
+
+      // 승인 성공 응답 생성
+      AppCardPayplePaymentResponse response =
+          AppCardPayplePaymentResponse.builder()
+              .payRst(payRst)
+              .payCode((String) approvalResult.get("PCD_PAY_CODE"))
+              .payMsg((String) approvalResult.get("PCD_PAY_MSG"))
+              .payOid((String) approvalResult.get("PCD_PAY_OID"))
+              .payType((String) approvalResult.get("PCD_PAY_TYPE"))
+              .payTime((String) approvalResult.get("PCD_PAY_TIME"))
+              .payTotal((String) approvalResult.get("PCD_PAY_TOTAL"))
+              .payCardName((String) approvalResult.get("PCD_PAY_CARDNAME"))
+              .payCardNum((String) approvalResult.get("PCD_PAY_CARDNUM"))
+              .payCardQuota((String) approvalResult.get("PCD_PAY_CARDQUOTA"))
+              .payCardTradeNum((String) approvalResult.get("PCD_PAY_CARDTRADENUM"))
+              .payCardAuthNo((String) approvalResult.get("PCD_PAY_CARDAUTHNO"))
+              .payCardReceipt((String) approvalResult.get("PCD_CARD_RECEIPT"))
+              .build();
+
+      return ResponseEntity.ok(GrobleResponse.success(response));
+
+    } catch (IllegalStateException e) {
+      // 결제 정보 불일치 에러
+      log.error("페이플 결제 검증 실패 - {}", e.getMessage());
+      throw new PayplePaymentAuthException("결제 정보 검증 실패: " + e.getMessage());
+    } catch (Exception e) {
+      // 기타 에러
+      log.error("페이플 결제 처리 중 오류 발생", e);
+      throw new PayplePaymentAuthException("결제 처리 중 오류가 발생했습니다.");
+    }
   }
 }
 

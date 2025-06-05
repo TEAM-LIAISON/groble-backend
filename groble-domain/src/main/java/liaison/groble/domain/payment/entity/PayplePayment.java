@@ -127,4 +127,19 @@ public class PayplePayment extends BaseTimeEntity {
     this.cancelReason = cancelReason;
     this.canceledAt = cancelTime != null ? cancelTime : LocalDateTime.now();
   }
+
+  // 상태 업데이트
+  public void updateStatus(PayplePaymentStatus status) {
+    this.status = status;
+  }
+
+  // 승인 정보 업데이트
+  public void updateApprovalInfo(
+      String payTime, String cardTradeNum, String cardAuthNo, String receiptUrl) {
+    this.pcdPayTime = payTime;
+    this.pcdPayCardTradeNum = cardTradeNum;
+    this.pcdPayCardAuthNo = cardAuthNo;
+    this.pcdPayCardReceipt = receiptUrl;
+    this.paymentDate = LocalDateTime.now();
+  }
 }

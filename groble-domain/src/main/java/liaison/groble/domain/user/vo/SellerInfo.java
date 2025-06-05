@@ -27,6 +27,10 @@ public class SellerInfo {
   @Enumerated(EnumType.STRING)
   private BusinessType businessType;
 
+  /** 판매자가 사업자 등록을 한 경우 true, 개인 판매자 등 사업자 등록이 없는 경우 false */
+  @Column(name = "is_business_seller")
+  private Boolean isBusinessSeller;
+
   /** 상호명 (사업체 이름) */
   @Column(name = "business_name")
   private String businessName;
@@ -84,6 +88,10 @@ public class SellerInfo {
   @Column(name = "last_verification_attempt")
   private LocalDateTime lastVerificationAttempt;
 
+  /** 통장 사본 첨부 URL */
+  @Column(name = "copy_of_bankbook_url", columnDefinition = "TEXT")
+  private String copyOfBankbookUrl;
+
   /**
    * 판매자 인증 상태 업데이트
    *
@@ -97,8 +105,17 @@ public class SellerInfo {
   }
 
   public void update(SellerInfo updatedInfo) {
+    if (updatedInfo.getBusinessType() != null) {
+      this.businessType = updatedInfo.getBusinessType();
+    }
+    if (updatedInfo.getIsBusinessSeller() != null) {
+      this.isBusinessSeller = updatedInfo.getIsBusinessSeller();
+    }
     if (updatedInfo.getBusinessName() != null) {
       this.businessName = updatedInfo.getBusinessName();
+    }
+    if (updatedInfo.getBusinessNumber() != null) {
+      this.businessNumber = updatedInfo.getBusinessNumber();
     }
     if (updatedInfo.getBusinessSector() != null) {
       this.businessSector = updatedInfo.getBusinessSector();
@@ -108,6 +125,12 @@ public class SellerInfo {
     }
     if (updatedInfo.getBusinessAddress() != null) {
       this.businessAddress = updatedInfo.getBusinessAddress();
+    }
+    if (updatedInfo.getRepresentativeName() != null) {
+      this.representativeName = updatedInfo.getRepresentativeName();
+    }
+    if (updatedInfo.getBusinessLicenseFileUrl() != null) {
+      this.businessLicenseFileUrl = updatedInfo.getBusinessLicenseFileUrl();
     }
     if (updatedInfo.getTaxInvoiceEmail() != null) {
       this.taxInvoiceEmail = updatedInfo.getTaxInvoiceEmail();
@@ -120,6 +143,9 @@ public class SellerInfo {
     }
     if (updatedInfo.getBankAccountOwner() != null) {
       this.bankAccountOwner = updatedInfo.getBankAccountOwner();
+    }
+    if (updatedInfo.getCopyOfBankbookUrl() != null) {
+      this.copyOfBankbookUrl = updatedInfo.getCopyOfBankbookUrl();
     }
   }
 

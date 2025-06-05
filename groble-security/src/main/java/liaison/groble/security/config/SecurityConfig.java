@@ -178,6 +178,8 @@ public class SecurityConfig {
                     .permitAll()
                     .requestMatchers("/api/v1/home/contents")
                     .permitAll()
+                    .requestMatchers("/api/v1/content/*/pay/*")
+                    .permitAll()
                     .requestMatchers("/payple-payment")
                     .permitAll()
                     .requestMatchers("/payment/**")
