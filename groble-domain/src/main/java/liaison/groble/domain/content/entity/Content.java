@@ -106,6 +106,11 @@ public class Content extends BaseTimeEntity {
   @Column(name = "lowest_price")
   private BigDecimal lowestPrice; // 최저가
 
+  @Column(name = "sort_order", nullable = false)
+  private Integer sortOrder = 0;
+
+  // 값이 클수록(예: 100) 우선순위가 높다고 가정. 기본은 0.
+
   @Lob
   @Column(name = "reject_reason", columnDefinition = "TEXT")
   private String rejectReason;
@@ -209,6 +214,12 @@ public class Content extends BaseTimeEntity {
     this.user = user;
     this.saleCount = 0;
     this.options = new ArrayList<>();
+    this.sortOrder = 0; // 기본값
+  }
+
+  // sortOrder setter 추가
+  public void setSortOrder(Integer sortOrder) {
+    this.sortOrder = sortOrder;
   }
 
   // 팩토리 메서드

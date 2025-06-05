@@ -40,6 +40,13 @@ public class OrderController {
   private final OrderTermsService orderTermsService;
   private final TermsDtoMapper termsDtoMapper;
 
+  //  @GetMapping("/success/{merchantUid}")
+  //  public ResponseEntity<GrobleResponse<Void>> getSuccessOrderPage(
+  //        @Auth Accessor accessor,
+  //        @Valid @PathVariable String merchantUid) {
+  //
+  //  }
+
   @Operation(
       summary = "결제 주문 발행",
       description = "콘텐츠 구매를 위한 결제 주문을 발행합니다. 회원은 쿠폰 적용 가능, 비회원은 이메일/전화번호 필수")
