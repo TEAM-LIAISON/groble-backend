@@ -14,8 +14,8 @@ import liaison.groble.domain.user.enums.SellerVerificationStatus;
 import liaison.groble.domain.user.vo.SellerInfo;
 import liaison.groble.external.discord.dto.BusinessMakerVerificationCreateReportDto;
 import liaison.groble.external.discord.dto.PersonalMakerVerificationCreateReportDto;
-import liaison.groble.external.discord.service.DiscordBusinessMakerVerificationReportService;
-import liaison.groble.external.discord.service.DiscordPersonalMakerVerificationReportService;
+import liaison.groble.external.discord.service.maker.DiscordBusinessMakerVerificationReportService;
+import liaison.groble.external.discord.service.maker.DiscordPersonalMakerVerificationReportService;
 
 import lombok.RequiredArgsConstructor;
 

@@ -1,6 +1,8 @@
-package liaison.groble.application.content;
+package liaison.groble.application.content.service;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -11,6 +13,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import liaison.groble.application.content.ContentReader;
 import liaison.groble.application.content.dto.ContentCardDto;
 import liaison.groble.application.content.dto.ContentDetailDto;
 import liaison.groble.application.content.dto.ContentDto;
@@ -45,6 +48,8 @@ import liaison.groble.domain.notification.enums.SubNotificationType;
 import liaison.groble.domain.notification.repository.NotificationRepository;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.vo.UserProfile;
+import liaison.groble.external.discord.dto.ContentRegisterCreateReportDto;
+import liaison.groble.external.discord.service.content.DiscordContentRegisterReportService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -60,6 +65,7 @@ public class ContentService {
   private final ContentReader contentReader;
   private final NotificationRepository notificationRepository;
   private final NotificationMapper notificationMapper;
+  private final DiscordContentRegisterReportService discordContentRegisterReportService;
 
   /**
    * 콘텐츠를 임시 저장하고 저장된 정보를 반환합니다.
@@ -144,6 +150,7 @@ public class ContentService {
 
     // 7. 저장 및 변환
     log.info("콘텐츠 심사 요청 완료. 유저 ID: {}", userId);
+
     return saveAndConvertToDto(content);
   }
 
@@ -480,6 +487,20 @@ public class ContentService {
     if (!content.getUser().getId().equals(userId)) {
       throw new ForbiddenException("해당 콘텐츠를 수정할 권한이 없습니다.");
     }
+
+    final LocalDateTime nowInSeoul = LocalDateTime.now(ZoneId.of("Asia/Seoul"));
+
+    final ContentRegisterCreateReportDto contentRegisterCreateReportDto =
+        ContentRegisterCreateReportDto.builder()
+            .nickname(content.getUser().getNickname())
+            .contentId(contentId)
+            .contentTitle(content.getTitle())
+            .contentType(content.getContentType().name())
+            .createdAt(nowInSeoul)
+            .build();
+
+    discordContentRegisterReportService.sendCreateContentRegisterReport(
+        contentRegisterCreateReportDto);
 
     return content;
   }

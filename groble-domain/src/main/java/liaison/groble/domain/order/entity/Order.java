@@ -56,7 +56,7 @@ public class Order extends BaseTimeEntity {
   private Long id;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "user_id", nullable = false)
+  @JoinColumn(name = "user_id", nullable = true)
   private User user;
 
   @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -330,6 +330,55 @@ public class Order extends BaseTimeEntity {
 
     // 각 옵션에 대해 OrderItem 추가
     // addOrderItem 메서드는 Order와 OrderItem 간의 양방향 관계를 설정합니다
+    for (OrderOptionInfo optionInfo : options) {
+      order.addOrderItem(
+          content,
+          optionInfo.getPrice(),
+          optionInfo.getOptionType(),
+          optionInfo.getOptionId(),
+          optionInfo.getQuantity());
+    }
+
+    return order;
+  }
+
+  /**
+   * 비회원 주문 생성을 위한 팩토리 메서드
+   *
+   * @param content 구매할 콘텐츠
+   * @param options 검증된 옵션 정보 리스트
+   * @param purchaser 구매자 상세 정보
+   * @return 생성된 비회원 주문
+   */
+  public static Order createPublicOrderWithMultipleOptions(
+      Content content, List<OrderOptionInfo> options, Purchaser purchaser) {
+
+    // 콘텐츠 판매 상태 검증
+    if (content.getStatus() != ContentStatus.ACTIVE) {
+      throw new IllegalArgumentException("판매중인 콘텐츠만 구매할 수 있습니다: " + content.getTitle());
+    }
+
+    // 옵션이 비어있는지 검증
+    if (options == null || options.isEmpty()) {
+      throw new IllegalArgumentException("최소 하나 이상의 옵션을 선택해야 합니다");
+    }
+
+    // 총 금액 계산 - 각 옵션의 (가격 × 수량)의 합계
+    BigDecimal totalPrice =
+        options.stream()
+            .map(OrderOptionInfo::getTotalPrice)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+    // 비회원 주문 엔티티 생성 - user는 null
+    Order order =
+        Order.builder()
+            .user(null) // 비회원은 null
+            .originalPrice(totalPrice)
+            .appliedCoupon(null) // 비회원은 쿠폰 사용 불가
+            .purchaser(purchaser)
+            .build();
+
+    // 각 옵션에 대해 OrderItem 추가
     for (OrderOptionInfo optionInfo : options) {
       order.addOrderItem(
           content,

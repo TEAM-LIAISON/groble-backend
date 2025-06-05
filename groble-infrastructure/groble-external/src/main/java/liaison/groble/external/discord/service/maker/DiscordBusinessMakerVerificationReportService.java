@@ -1,9 +1,10 @@
-package liaison.groble.external.discord.service;
+package liaison.groble.external.discord.service.maker;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import liaison.groble.external.discord.dto.BusinessMakerVerificationCreateReportDto;
+import liaison.groble.external.discord.service.DiscordService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -21,7 +22,7 @@ public class DiscordBusinessMakerVerificationReportService
   public void sendCreateBusinessMakerVerificationReport(
       BusinessMakerVerificationCreateReportDto businessMakerVerificationCreateReportDto) {
     var msg =
-        "## 회원 생성 알림"
+        "## 개인 및 법인 사업자 메이커 인증 요청 알림"
             + "\n\n**회원 생성 ID:** "
             + businessMakerVerificationCreateReportDto.userId()
             + "\n**회원 닉네임:** "
