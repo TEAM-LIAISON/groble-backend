@@ -127,8 +127,9 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
         .from(qContent)
         .leftJoin(qContent.user, qUser)
         .where(conditions)
-        .orderBy(qContent.createdAt.desc()) // 최신순 정렬
-        .limit(12) // 최대 12개로 제한
+        // --- sortOrder DESC를 가장 먼저 두고, 동일한 sortOrder끼리는 createdAt 기준으로 최신순 정렬 ---
+        .orderBy(qContent.sortOrder.desc(), qContent.createdAt.desc())
+        .limit(12)
         .fetch();
   }
 

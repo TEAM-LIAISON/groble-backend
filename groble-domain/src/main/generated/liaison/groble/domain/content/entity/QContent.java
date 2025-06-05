@@ -51,6 +51,8 @@ public class QContent extends EntityPathBase<Content> {
 
     public final StringPath serviceTarget = createString("serviceTarget");
 
+    public final NumberPath<Integer> sortOrder = createNumber("sortOrder", Integer.class);
+
     public final EnumPath<liaison.groble.domain.content.enums.ContentStatus> status = createEnum("status", liaison.groble.domain.content.enums.ContentStatus.class);
 
     public final StringPath thumbnailUrl = createString("thumbnailUrl");
