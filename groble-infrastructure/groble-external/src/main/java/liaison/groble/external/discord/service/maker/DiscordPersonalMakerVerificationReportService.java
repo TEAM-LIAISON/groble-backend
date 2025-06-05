@@ -1,9 +1,10 @@
-package liaison.groble.external.discord.service;
+package liaison.groble.external.discord.service.maker;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import liaison.groble.external.discord.dto.PersonalMakerVerificationCreateReportDto;
+import liaison.groble.external.discord.service.DiscordService;
 
 import lombok.RequiredArgsConstructor;
 
