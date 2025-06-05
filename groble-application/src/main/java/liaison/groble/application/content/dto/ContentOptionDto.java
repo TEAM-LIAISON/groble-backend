@@ -26,6 +26,7 @@ public class ContentOptionDto {
 
   // document 전용
   private String contentDeliveryMethod;
+  private String documentOriginalFileName;
   private String documentFileUrl;
   private String documentLinkUrl;
 }

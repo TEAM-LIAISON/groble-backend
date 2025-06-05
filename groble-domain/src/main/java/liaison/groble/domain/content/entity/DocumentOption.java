@@ -24,6 +24,10 @@ public class DocumentOption extends ContentOption {
 
   @Lob
   @Column(columnDefinition = "TEXT")
+  private String documentOriginalFileName;
+
+  @Lob
+  @Column(columnDefinition = "TEXT")
   private String documentFileUrl;
 
   @Lob
@@ -33,6 +37,10 @@ public class DocumentOption extends ContentOption {
   // Setter 메서드 추가
   public void setContentDeliveryMethod(ContentDeliveryMethod contentDeliveryMethod) {
     this.contentDeliveryMethod = contentDeliveryMethod;
+  }
+
+  public void setDocumentOriginalFileName(String documentOriginalFileName) {
+    this.documentOriginalFileName = documentOriginalFileName;
   }
 
   public void setDocumentFileUrl(String documentFileUrl) {

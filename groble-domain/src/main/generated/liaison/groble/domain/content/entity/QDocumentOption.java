@@ -39,6 +39,8 @@ public class QDocumentOption extends EntityPathBase<DocumentOption> {
 
     public final StringPath documentLinkUrl = createString("documentLinkUrl");
 
+    public final StringPath documentOriginalFileName = createString("documentOriginalFileName");
+
     //inherited
     public final NumberPath<Long> id;
 

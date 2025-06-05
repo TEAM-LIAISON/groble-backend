@@ -42,6 +42,8 @@ import liaison.groble.domain.content.enums.DocumentProvision;
 import liaison.groble.domain.content.repository.CategoryRepository;
 import liaison.groble.domain.content.repository.ContentCustomRepository;
 import liaison.groble.domain.content.repository.ContentRepository;
+import liaison.groble.domain.file.entity.FileInfo;
+import liaison.groble.domain.file.repository.FileRepository;
 import liaison.groble.domain.notification.entity.ReviewDetails;
 import liaison.groble.domain.notification.enums.NotificationType;
 import liaison.groble.domain.notification.enums.SubNotificationType;
@@ -66,6 +68,7 @@ public class ContentService {
   private final NotificationRepository notificationRepository;
   private final NotificationMapper notificationMapper;
   private final DiscordContentRegisterReportService discordContentRegisterReportService;
+  private final FileRepository fileRepository;
 
   /**
    * 콘텐츠를 임시 저장하고 저장된 정보를 반환합니다.
@@ -159,7 +162,6 @@ public class ContentService {
     log.info("로그인 사용자 콘텐츠 조회: userId={}, contentId={}", userId, contentId);
 
     // 1. 사용자 및 콘텐츠 조회
-    User user = userReader.getUserById(userId);
     Content content = contentReader.getContentById(contentId);
 
     // 2. 콘텐츠 소유권 확인
@@ -479,10 +481,7 @@ public class ContentService {
 
   /** 사용자의 Content를 찾고 접근 권한을 검증합니다. */
   private Content findAndValidateUserContent(Long userId, Long contentId) {
-    Content content =
-        contentRepository
-            .findById(contentId)
-            .orElseThrow(() -> new EntityNotFoundException("콘텐츠를 찾을 수 없습니다. ID: " + contentId));
+    Content content = contentReader.getContentById(contentId);
 
     if (!content.getUser().getId().equals(userId)) {
       throw new ForbiddenException("해당 콘텐츠를 수정할 권한이 없습니다.");
@@ -695,11 +694,23 @@ public class ContentService {
   private DocumentOption createDocumentOption(ContentOptionDto optionDto) {
     DocumentOption option = new DocumentOption();
 
+    // 문서 파일 URL이 null이 아닌지 확인
+    String fileUrl = optionDto.getDocumentFileUrl();
+    String documentOriginalFileName = null;
+    if (fileUrl != null) {
+      // 3) 실제로 FileInfo가 있는지 조회
+      FileInfo oldDocumentInfo = fileRepository.findByFileUrl(fileUrl);
+      if (oldDocumentInfo != null) {
+        documentOriginalFileName = oldDocumentInfo.getOriginalFilename();
+      }
+    }
+
     // 문서 옵션 특화 필드 설정 - null 안전하게 처리
     if (optionDto.getContentDeliveryMethod() != null) {
       try {
         option.setContentDeliveryMethod(
             ContentDeliveryMethod.valueOf(optionDto.getContentDeliveryMethod()));
+        option.setDocumentOriginalFileName(documentOriginalFileName);
         option.setDocumentFileUrl(optionDto.getDocumentFileUrl());
         option.setDocumentLinkUrl(optionDto.getDocumentLinkUrl());
       } catch (IllegalArgumentException e) {
