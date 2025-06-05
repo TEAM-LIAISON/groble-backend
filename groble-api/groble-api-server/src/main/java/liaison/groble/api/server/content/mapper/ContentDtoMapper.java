@@ -420,6 +420,7 @@ public class ContentDtoMapper {
                         .description(optionDto.getDescription())
                         .price(optionDto.getPrice())
                         .contentDeliveryMethod(optionDto.getContentDeliveryMethod())
+                        .documentOriginalFileName(optionDto.getDocumentOriginalFileName())
                         .documentFileUrl(optionDto.getDocumentFileUrl())
                         .documentLinkUrl(optionDto.getDocumentLinkUrl())
                         .build();
