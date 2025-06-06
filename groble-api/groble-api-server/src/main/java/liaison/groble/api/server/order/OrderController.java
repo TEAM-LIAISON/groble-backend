@@ -1,7 +1,6 @@
 package liaison.groble.api.server.order;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -14,7 +13,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import liaison.groble.api.model.order.request.CreateOrderOptionRequest;
 import liaison.groble.api.model.order.request.CreateOrderRequest;
 import liaison.groble.api.server.terms.mapper.TermsDtoMapper;
 import liaison.groble.application.order.OrderService;
@@ -43,6 +41,29 @@ public class OrderController {
   private final OrderService orderService;
   private final OrderTermsService orderTermsService;
   private final TermsDtoMapper termsDtoMapper;
+
+  @Operation(
+      summary = "결제 주문 발행",
+      description = "콘텐츠 구매를 위한 결제 주문을 발행합니다. 회원은 쿠폰 적용 가능, 비회원은 이메일/전화번호 필수")
+  @PostMapping("/create")
+  public ResponseEntity<GrobleResponse<CreateOrderResponse>> createOrder(
+      @Auth Accessor accessor,
+      @Valid @RequestBody CreateOrderRequest request,
+      HttpServletRequest httpRequest) {
+    CreateOrderResponse response;
+
+    response = processAuthenticatedOrder(request, accessor);
+
+    // 회원 주문 약관 동의 처리
+    processOrderTermsAgreement(accessor.getUserId(), httpRequest);
+
+    log.info(
+        "주문 생성 완료 - merchantUid: {}, isAuthenticated: {}",
+        response.getMerchantUid(),
+        accessor.isAuthenticated());
+
+    return ResponseEntity.ok(GrobleResponse.success(response));
+  }
 
   @Operation(
       summary = "결제 성공 페이지 정보 조회",
@@ -87,35 +108,6 @@ public class OrderController {
     }
   }
 
-  @Operation(
-      summary = "결제 주문 발행",
-      description = "콘텐츠 구매를 위한 결제 주문을 발행합니다. 회원은 쿠폰 적용 가능, 비회원은 이메일/전화번호 필수")
-  @PostMapping("/create")
-  public ResponseEntity<GrobleResponse<CreateOrderResponse>> createOrder(
-      @Auth Accessor accessor,
-      @Valid @RequestBody CreateOrderRequest request,
-      HttpServletRequest httpRequest) {
-
-    // 1단계: 주문 약관 동의 검증
-    if (!request.isOrderTermsAgreed()) {
-      throw new InvalidRequestException("주문 약관에 동의해야 합니다.");
-    }
-
-    CreateOrderResponse response;
-
-    response = processAuthenticatedOrder(request, accessor);
-
-    // 회원 주문 약관 동의 처리
-    processOrderTermsAgreement(accessor.getUserId(), httpRequest);
-
-    log.info(
-        "주문 생성 완료 - merchantUid: {}, isAuthenticated: {}",
-        response.getMerchantUid(),
-        accessor.isAuthenticated());
-
-    return ResponseEntity.ok(GrobleResponse.success(response));
-  }
-
   /**
    * 회원 주문 처리
    *
@@ -125,44 +117,25 @@ public class OrderController {
    */
   private CreateOrderResponse processAuthenticatedOrder(
       CreateOrderRequest request, Accessor accessor) {
-    CreateOrderDto createOrderDto =
-        CreateOrderDto.builder()
-            .contentId(request.getContentId())
-            .options(convertToOrderOptionDtos(request.getOptions()))
-            .couponCodes(request.getCouponCodes())
-            .build();
-
-    return orderService.createOrderForUser(createOrderDto, accessor.getUserId());
+    CreateOrderDto dto = convertToCreateOrderDto(request);
+    return orderService.createOrderForUser(dto, accessor.getUserId());
   }
 
-  /**
-   * 비회원 주문 처리
-   *
-   * @param request 주문 요청 정보 (이메일, 전화번호 포함)
-   * @return 주문 생성 응답
-   */
-  private CreateOrderResponse processGuestOrder(CreateOrderRequest request) {
-    // 비회원 주문 필수 정보 검증
-    //    if (request.getEmail() == null || request.getEmail().isBlank()) {
-    //      throw new InvalidRequestException("비회원 주문 시 이메일은 필수입니다.");
-    //    }
-    //    if (request.getPhoneNumber() == null || request.getPhoneNumber().isBlank()) {
-    //      throw new InvalidRequestException("비회원 주문 시 전화번호는 필수입니다.");
-    //    }
+  private CreateOrderDto convertToCreateOrderDto(CreateOrderRequest request) {
+    List<CreateOrderDto.OrderOptionDto> optionDtos =
+        request.getOptions().stream()
+            .map(
+                opt ->
+                    CreateOrderDto.OrderOptionDto.builder()
+                        .optionId(opt.getOptionId())
+                        .optionType(
+                            CreateOrderDto.OrderOptionDto.OptionType.valueOf(
+                                opt.getOptionType().name()))
+                        .quantity(opt.getQuantity())
+                        .build())
+            .toList();
 
-    // 비회원은 쿠폰 사용 불가
-    if (request.getCouponCodes() != null && !request.getCouponCodes().isEmpty()) {
-      throw new InvalidRequestException("비회원은 쿠폰을 사용할 수 없습니다.");
-    }
-
-    CreateOrderDto createOrderDto =
-        CreateOrderDto.builder()
-            .contentId(request.getContentId())
-            .options(convertToOrderOptionDtos(request.getOptions()))
-            .couponCodes(null) // 비회원은 쿠폰 사용 불가
-            .build();
-
-    return orderService.createPublicOrder(createOrderDto);
+    return CreateOrderDto.of(request.getContentId(), optionDtos, request.getCouponCodes());
   }
 
   /**
@@ -186,25 +159,5 @@ public class OrderController {
       log.error("주문 약관 동의 처리 실패 - userId: {}", userId, e);
       // 약관 동의 실패는 주문을 중단시키지 않음 (별도 처리 필요할 수 있음)
     }
-  }
-
-  /**
-   * 요청 DTO를 서비스 DTO로 변환합니다.
-   *
-   * @param requests 주문 옵션 요청 리스트
-   * @return 서비스 계층에서 사용할 주문 옵션 DTO 리스트
-   */
-  private List<CreateOrderDto.OrderOptionDto> convertToOrderOptionDtos(
-      List<CreateOrderOptionRequest> requests) {
-
-    return requests.stream()
-        .map(
-            req ->
-                CreateOrderDto.OrderOptionDto.builder()
-                    .optionId(req.getOptionId())
-                    .optionType(CreateOrderDto.OptionType.valueOf(req.getOptionType().name()))
-                    .quantity(req.getQuantity())
-                    .build())
-        .collect(Collectors.toList());
   }
 }

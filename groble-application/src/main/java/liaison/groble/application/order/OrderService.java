@@ -44,96 +44,37 @@ public class OrderService {
   private final PaymentRepository paymentRepository;
 
   /**
-   * 회원 주문 생성
+   * 주문 생성
    *
-   * <p>이 메서드는 사용자가 선택한 콘텐츠와 옵션들로 주문을 생성하고, 쿠폰이 있는 경우 최적의 쿠폰을 자동으로 적용합니다.
+   * <p>이 메서드는 사용자가 선택한 콘텐츠와 옵션들로 주문을 생성하고, 쿠폰 코드를 통해 쿠폰을 적용합니다.
    *
-   * @param createOrderDto 주문 생성 요청 정보
+   * @param dto 주문 생성 요청 정보
    * @param userId 주문하는 사용자 ID
    * @return 생성된 주문 정보
    */
   @Transactional
-  public CreateOrderResponse createOrderForUser(CreateOrderDto createOrderDto, Long userId) {
-    // 1단계: 사용자와 콘텐츠 조회
-    User user = userReader.getUserById(userId);
-    Content content = contentReader.getContentById(createOrderDto.getContentId());
+  public CreateOrderResponse createOrderForUser(CreateOrderDto dto, Long userId) {
+    // 1단계: 구매자 조회
+    final User user = userReader.getUserById(userId);
+    // 2단계: 구매하려는 콘텐츠 조회
+    final Content content = contentReader.getContentById(dto.getContentId());
 
-    // 2단계: 각 옵션의 유효성 검증 및 가격 정보 조회
-    // 클라이언트에서 전달받은 옵션 정보를 검증하고, 실제 가격을 데이터베이스에서 조회합니다
-    List<ValidatedOrderOptionDto> validatedOptions =
-        validateAndEnrichOptions(content, createOrderDto.getOptions());
+    // 3단계: 콘텐츠 옵션 검증
+    final List<ValidatedOrderOptionDto> validatedOptions =
+        validateAndEnrichOptions(content, dto.getOptions());
+    final List<OrderOptionInfo> orderOptions = convertToDomainOptions(validatedOptions);
+    final Purchaser purchaser = buildPurchaserFromUser(user);
 
-    // 3단계: Application DTO를 Domain 값 객체로 변환
-    List<OrderOptionInfo> domainOptions =
-        validatedOptions.stream()
-            .map(
-                option ->
-                    OrderOptionInfo.builder()
-                        .optionId(option.getOptionId())
-                        .optionType(option.getOptionType())
-                        .price(option.getPrice())
-                        .quantity(option.getQuantity())
-                        .build())
-            .collect(Collectors.toList());
+    Order order = Order.createOrderWithMultipleOptions(user, content, orderOptions, purchaser);
+    order = saveAndAssignMerchantUid(order);
 
-    // 4단계: 구매자 정보 생성
-    Purchaser purchaser =
-        Purchaser.builder()
-            .name(user.getNickname())
-            .email(user.getEmail())
-            .phone(user.getPhoneNumber())
-            .build();
+    applyCouponIfAvailable(order, user, dto.getCouponCodes());
 
-    // 5단계: 주문 생성 - 팩토리 메서드 사용
-    Order order = Order.createOrderWithMultipleOptions(user, content, domainOptions, purchaser);
+    final boolean isFreePurchase = handleFreeOrderIfNecessary(order);
 
-    // 6단계: 주문 저장 및 merchantUid 생성
-    order = orderRepository.save(order);
-    order.setMerchantUid(Order.generateMerchantUid(order.getId()));
+    logOrderCreation(order, userId, dto.getContentId(), validatedOptions.size(), isFreePurchase);
 
-    // 7단계: 쿠폰 적용 처리
-    UserCoupon appliedCoupon = null;
-    if (createOrderDto.getCouponCodes() != null && !createOrderDto.getCouponCodes().isEmpty()) {
-      // 상품 원가가 0원이면 쿠폰 적용 불가
-      if (order.getOriginalPrice().compareTo(BigDecimal.ZERO) > 0) {
-        appliedCoupon =
-            findAndValidateBestCoupon(
-                user, createOrderDto.getCouponCodes(), order.getOriginalPrice());
-
-        if (appliedCoupon != null) {
-          order.applyCoupon(appliedCoupon);
-          log.info(
-              "쿠폰 적용 완료 - orderId: {}, couponCode: {}, 할인금액: {}",
-              order.getId(),
-              appliedCoupon.getCouponCode(),
-              order.getCouponDiscountPrice());
-        }
-      } else {
-        log.info("상품 원가가 0원이므로 쿠폰 적용이 불가능합니다 - orderId: {}", order.getId());
-      }
-    }
-
-    // 8단계: 최종 주문 저장 및 무료 상품 처리
-    order = orderRepository.save(order);
-
-    boolean isPurchasedContent = false;
-
-    // 최종 금액이 0원이면 즉시 구매 처리
-    if (order.getFinalPrice().compareTo(BigDecimal.ZERO) == 0) {
-      isPurchasedContent = processFreeOrderPurchase(order);
-      log.info("무료 주문으로 즉시 구매 처리 완료 - orderId: {}", order.getId());
-    }
-
-    log.info(
-        "주문 생성 완료 - orderId: {}, userId: {}, contentId: {}, 옵션수: {}, 최종금액: {}, 즉시구매: {}",
-        order.getId(),
-        userId,
-        createOrderDto.getContentId(),
-        validatedOptions.size(),
-        order.getFinalPrice(),
-        isPurchasedContent);
-
-    return buildCreateOrderResponse(order, isPurchasedContent);
+    return buildCreateOrderResponse(order, isFreePurchase);
   }
 
   /**
@@ -223,86 +164,6 @@ public class OrderService {
     }
 
     return bestCoupon;
-  }
-
-  /**
-   * 비회원 주문 생성
-   *
-   * <p>로그인하지 않은 사용자도 이메일과 전화번호로 주문을 생성할 수 있습니다. 쿠폰은 회원만 사용할 수 있으므로 적용되지 않습니다.
-   *
-   * @param createOrderDto 주문 생성 요청 정보 (email, phoneNumber 포함)
-   * @return 생성된 주문 정보
-   */
-  @Transactional
-  public CreateOrderResponse createPublicOrder(CreateOrderDto createOrderDto) {
-    // 1단계: 비회원 주문 필수 정보 검증
-    if (createOrderDto.getEmail() == null || createOrderDto.getEmail().isBlank()) {
-      throw new IllegalArgumentException("비회원 주문 시 이메일은 필수입니다.");
-    }
-    if (createOrderDto.getPhoneNumber() == null || createOrderDto.getPhoneNumber().isBlank()) {
-      throw new IllegalArgumentException("비회원 주문 시 전화번호는 필수입니다.");
-    }
-
-    // 2단계: 콘텐츠 조회
-    Content content = contentReader.getContentById(createOrderDto.getContentId());
-
-    // 3단계: 각 옵션의 유효성 검증 및 가격 정보 조회
-    List<ValidatedOrderOptionDto> validatedOptions =
-        validateAndEnrichOptions(content, createOrderDto.getOptions());
-
-    // 4단계: Application DTO를 Domain 값 객체로 변환
-    List<OrderOptionInfo> domainOptions =
-        validatedOptions.stream()
-            .map(
-                option ->
-                    OrderOptionInfo.builder()
-                        .optionId(option.getOptionId())
-                        .price(option.getPrice())
-                        .quantity(option.getQuantity())
-                        .build())
-            .collect(Collectors.toList());
-
-    // 5단계: 구매자 정보 생성 (DTO에서 직접 사용)
-    Purchaser purchaser =
-        Purchaser.builder()
-            .name("Guest") // 비회원은 기본 이름 사용
-            .email(createOrderDto.getEmail())
-            .phone(createOrderDto.getPhoneNumber())
-            .build();
-
-    // 6단계: 비회원 주문 생성 - 새로 추가한 팩토리 메서드 사용
-    Order order = Order.createPublicOrderWithMultipleOptions(content, domainOptions, purchaser);
-
-    // 7단계: 주문 저장 및 merchantUid 생성
-    order = orderRepository.save(order);
-    order.setMerchantUid(Order.generateMerchantUid(order.getId()));
-
-    // 8단계: 쿠폰은 회원 전용이므로 로그만 출력
-    if (createOrderDto.getCouponCodes() != null && !createOrderDto.getCouponCodes().isEmpty()) {
-      log.warn("비회원 주문에서 쿠폰 코드가 전달되었으나 무시됩니다: {}", createOrderDto.getCouponCodes());
-    }
-
-    // 9단계: 최종 주문 저장 및 무료 상품 처리
-    order = orderRepository.save(order);
-
-    boolean isPurchasedContent = false;
-
-    // 최종 금액이 0원이면 즉시 구매 처리
-    if (order.getFinalPrice().compareTo(BigDecimal.ZERO) == 0) {
-      isPurchasedContent = processFreeOrderPurchase(order);
-      log.info("무료 비회원 주문으로 즉시 구매 처리 완료 - orderId: {}", order.getId());
-    }
-
-    log.info(
-        "비회원 주문 생성 완료 - orderId: {}, email: {}, contentId: {}, 옵션수: {}, 최종금액: {}, 즉시구매: {}",
-        order.getId(),
-        createOrderDto.getEmail(),
-        createOrderDto.getContentId(),
-        validatedOptions.size(),
-        order.getFinalPrice(),
-        isPurchasedContent);
-
-    return buildPublicOrderResponse(order, isPurchasedContent);
   }
 
   /**
@@ -450,5 +311,67 @@ public class OrderService {
         .purchasedAt(purchase.getPurchasedAt())
         .isFreePurchase(order.getFinalPrice().compareTo(BigDecimal.ZERO) == 0)
         .build();
+  }
+
+  private List<OrderOptionInfo> convertToDomainOptions(List<ValidatedOrderOptionDto> options) {
+    return options.stream()
+        .map(
+            option ->
+                OrderOptionInfo.builder()
+                    .optionId(option.getOptionId())
+                    .optionType(option.getOptionType())
+                    .price(option.getPrice())
+                    .quantity(option.getQuantity())
+                    .build())
+        .collect(Collectors.toList());
+  }
+
+  private Purchaser buildPurchaserFromUser(User user) {
+    return Purchaser.builder()
+        .name(user.getNickname())
+        .email(user.getEmail())
+        .phone(user.getPhoneNumber())
+        .build();
+  }
+
+  private Order saveAndAssignMerchantUid(Order order) {
+    order = orderRepository.save(order);
+    order.setMerchantUid(Order.generateMerchantUid(order.getId()));
+    return orderRepository.save(order);
+  }
+
+  private void applyCouponIfAvailable(Order order, User user, List<String> couponCodes) {
+    if (couponCodes == null || couponCodes.isEmpty()) return;
+    if (order.getOriginalPrice().compareTo(BigDecimal.ZERO) <= 0) {
+      log.info("상품 원가가 0원이므로 쿠폰 적용이 불가능합니다 - orderId: {}", order.getId());
+      return;
+    }
+
+    UserCoupon bestCoupon = findAndValidateBestCoupon(user, couponCodes, order.getOriginalPrice());
+    if (bestCoupon != null) {
+      order.applyCoupon(bestCoupon);
+      log.info("쿠폰 적용 완료 - orderId: {}, couponCode: {}", order.getId(), bestCoupon.getCouponCode());
+    }
+  }
+
+  private boolean handleFreeOrderIfNecessary(Order order) {
+    if (order.getFinalPrice().compareTo(BigDecimal.ZERO) == 0) {
+      boolean result = processFreeOrderPurchase(order);
+      log.info("무료 주문으로 즉시 구매 처리 완료 - orderId: {}", order.getId());
+      return result;
+    }
+    return false;
+  }
+
+  private void logOrderCreation(
+      Order order, Long userId, Long contentId, int optionCount, boolean isFree) {
+    log.info(
+        "주문 생성 완료 - orderId: {}, userId: {}, contentId: {}, 옵션수: {}, 최종금액: {}, 즉시구매: {}",
+        order.getId(),
+        userId,
+        contentId,
+        optionCount,
+        order.getFinalPrice(),
+        isFree);
   }
 }
