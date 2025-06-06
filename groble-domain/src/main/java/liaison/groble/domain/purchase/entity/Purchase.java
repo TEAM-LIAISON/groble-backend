@@ -53,18 +53,22 @@ public class Purchase extends BaseTimeEntity {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
+  // 구매자 정보 (누가 상품을 구매했는지)
   @ManyToOne(fetch = LAZY)
   @JoinColumn(name = "user_id", nullable = false)
   private User user;
 
+  // 구매한 콘텐츠 정보 (어떤 콘텐츠를 구매했는지)
   @ManyToOne(fetch = LAZY)
   @JoinColumn(name = "content_id", nullable = false)
   private Content content;
 
+  // 어떤 주문을 통해 구매했는지 (1:1 관계)
   @OneToOne(fetch = LAZY)
   @JoinColumn(name = "order_id", nullable = false, unique = true)
   private Order order;
 
+  // 결제 정보 (1:1 관계)
   @OneToOne(fetch = LAZY)
   @JoinColumn(name = "payment_id")
   private Payment payment;

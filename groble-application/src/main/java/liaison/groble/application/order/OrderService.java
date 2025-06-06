@@ -23,6 +23,8 @@ import liaison.groble.domain.order.entity.OrderItem;
 import liaison.groble.domain.order.entity.Purchaser;
 import liaison.groble.domain.order.repository.OrderRepository;
 import liaison.groble.domain.order.vo.OrderOptionInfo;
+import liaison.groble.domain.payment.entity.Payment;
+import liaison.groble.domain.payment.repository.PaymentRepository;
 import liaison.groble.domain.purchase.entity.Purchase;
 import liaison.groble.domain.purchase.repository.PurchaseRepository;
 import liaison.groble.domain.user.entity.User;
@@ -39,6 +41,7 @@ public class OrderService {
   private final OrderRepository orderRepository;
   private final UserCouponRepository userCouponRepository;
   private final PurchaseRepository purchaseRepository;
+  private final PaymentRepository paymentRepository;
 
   /**
    * 회원 주문 생성
@@ -337,17 +340,18 @@ public class OrderService {
   /**
    * 무료 주문에 대한 구매 처리
    *
-   * <p>PayplePaymentService의 결제 승인 로직을 참고하여 무료 주문에 대해 즉시 구매 처리를 수행합니다.
+   * <p>PayplePaymentService의 결제 승인 로직을 참고하여 무료 주문에 대해 즉시 구매 처리를 수행합니다. 무료 구매의 경우에도 일관된 데이터 구조를 위해
+   * Payment 엔티티를 생성합니다.
    *
    * @param order 무료 주문 (최종 금액이 0원)
    * @return 구매 처리 성공 여부
    */
   private boolean processFreeOrderPurchase(Order order) {
     try {
-      // 1. Order 상태 업데이트 (결제 완료 + 쿠폰 사용 처리)
-      // 무료 주문이므로 Payment 엔티티는 생성하지 않음
-      order.completePayment();
-      orderRepository.save(order);
+      // 1. 무료 Payment 엔티티 생성
+      Payment freePayment = Payment.createFreePayment(order);
+      freePayment.completeFreePayment(); // 즉시 완료 처리
+      paymentRepository.save(freePayment);
 
       // 2. Purchase 생성 및 즉시 완료 처리
       Purchase purchase = Purchase.createFromOrder(order);
@@ -355,8 +359,9 @@ public class OrderService {
       purchaseRepository.save(purchase);
 
       log.info(
-          "무료 주문 구매 처리 성공 - orderId: {}, purchaseId: {}, userId: {}, contentId: {}",
+          "무료 주문 구매 처리 성공 - orderId: {}, paymentId: {}, purchaseId: {}, userId: {}, contentId: {}",
           order.getId(),
+          freePayment.getId(),
           purchase.getId(),
           order.getUser() != null ? order.getUser().getId() : "guest",
           purchase.getContent().getId());

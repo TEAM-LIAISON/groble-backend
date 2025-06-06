@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import liaison.groble.api.model.order.request.CreateOrderOptionRequest;
 import liaison.groble.api.model.order.request.CreateOrderRequest;
 import liaison.groble.api.server.terms.mapper.TermsDtoMapper;
 import liaison.groble.application.order.OrderService;
@@ -102,19 +103,10 @@ public class OrderController {
 
     CreateOrderResponse response;
 
-    // 회원 주문 처리
     response = processAuthenticatedOrder(request, accessor);
 
     // 회원 주문 약관 동의 처리
     processOrderTermsAgreement(accessor.getUserId(), httpRequest);
-
-    //    } else {
-    //      // 비회원 주문 처리
-    //      response = processGuestOrder(request);
-    //
-    //      // 비회원은 주문 약관 동의를 별도 저장하지 않음 (요청 시점에만 확인)
-    //      log.info("비회원 주문 약관 동의 확인 완료 - email: {}", request.getEmail());
-    //    }
 
     log.info(
         "주문 생성 완료 - merchantUid: {}, isAuthenticated: {}",
@@ -197,13 +189,14 @@ public class OrderController {
   }
 
   /**
-   * 요청 DTO를 서비스 DTO로 변환
+   * 요청 DTO를 서비스 DTO로 변환합니다.
    *
    * @param requests 주문 옵션 요청 리스트
-   * @return 변환된 주문 옵션 DTO 리스트
+   * @return 서비스 계층에서 사용할 주문 옵션 DTO 리스트
    */
   private List<CreateOrderDto.OrderOptionDto> convertToOrderOptionDtos(
-      List<CreateOrderRequest.OrderOptionRequest> requests) {
+      List<CreateOrderOptionRequest> requests) {
+
     return requests.stream()
         .map(
             req ->
