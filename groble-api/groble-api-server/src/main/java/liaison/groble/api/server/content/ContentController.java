@@ -45,6 +45,7 @@ import liaison.groble.application.file.FileService;
 import liaison.groble.application.file.dto.FileDto;
 import liaison.groble.application.file.dto.FileUploadDto;
 import liaison.groble.common.annotation.Auth;
+import liaison.groble.common.annotation.RequireRole;
 import liaison.groble.common.model.Accessor;
 import liaison.groble.common.response.GrobleResponse;
 import liaison.groble.common.response.PageResponse;
@@ -216,8 +217,8 @@ public class ContentController {
   }
 
   // 콘텐츠 심사
-  @Deprecated
   @ContentExamine
+  @RequireRole("ROLE_ADMIN")
   @PostMapping("/content/{contentId}/examine")
   public ResponseEntity<GrobleResponse<Void>> examineContent(
       @Parameter(hidden = true) @Auth Accessor accessor,

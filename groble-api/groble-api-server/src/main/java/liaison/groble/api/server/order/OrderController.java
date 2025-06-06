@@ -72,11 +72,6 @@ public class OrderController {
   public ResponseEntity<GrobleResponse<OrderSuccessResponse>> getSuccessOrderPage(
       @Auth Accessor accessor, @Valid @PathVariable("merchantUid") String merchantUid) {
 
-    // 인증된 사용자만 접근 가능
-    if (!accessor.isAuthenticated()) {
-      throw new InvalidRequestException("로그인이 필요합니다.");
-    }
-
     try {
       OrderSuccessResponse response =
           orderService.getOrderSuccess(merchantUid, accessor.getUserId());

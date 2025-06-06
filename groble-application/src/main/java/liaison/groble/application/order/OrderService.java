@@ -605,12 +605,7 @@ public class OrderService {
         // 가격 정보
         .originalPrice(order.getOriginalPrice())
         .discountPrice(order.getDiscountPrice())
-        .couponDiscountPrice(order.getCouponDiscountPrice())
         .finalPrice(order.getFinalPrice())
-
-        // 쿠폰 정보
-        .appliedCouponCode(
-            order.getAppliedCoupon() != null ? order.getAppliedCoupon().getCouponCode() : null)
 
         // 구매 정보
         .purchasedAt(purchase.getPurchasedAt())

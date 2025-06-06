@@ -3,6 +3,8 @@ package liaison.groble.application.order.dto;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import lombok.Builder;
 import lombok.Getter;
 
@@ -28,11 +30,11 @@ public class OrderSuccessResponse {
   // 가격 정보
   private final BigDecimal originalPrice;
   private final BigDecimal discountPrice;
-  private final BigDecimal couponDiscountPrice;
   private final BigDecimal finalPrice;
-  private final String appliedCouponCode;
 
   // 구매 정보
+  @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
   private final LocalDateTime purchasedAt;
+
   private final Boolean isFreePurchase;
 }
