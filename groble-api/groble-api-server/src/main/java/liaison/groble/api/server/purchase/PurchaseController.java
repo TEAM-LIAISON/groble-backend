@@ -11,11 +11,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import liaison.groble.api.model.content.response.ContentPreviewCardResponse;
-import liaison.groble.api.model.purchase.swagger.MyPurchaseContents;
-import liaison.groble.api.server.content.mapper.ContentDtoMapper;
-import liaison.groble.application.content.dto.ContentCardDto;
+import liaison.groble.api.model.purchase.PurchaserContentPreviewCardResponse;
+import liaison.groble.api.model.purchase.swagger.MyPurchasingContents;
+import liaison.groble.api.server.purchase.mapper.PurchaseDtoMapper;
 import liaison.groble.application.purchase.PurchaseService;
+import liaison.groble.application.purchase.dto.PurchaseContentCardDto;
 import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.model.Accessor;
 import liaison.groble.common.request.CursorRequest;
@@ -35,12 +35,11 @@ import lombok.extern.slf4j.Slf4j;
 @Tag(name = "구매 관련 API", description = "내가 구매한 콘텐츠 조회, 내가 구매한 콘텐츠(자료) 다운로드 등")
 public class PurchaseController {
   private final PurchaseService purchaseService;
-  private final ContentDtoMapper contentDtoMapper;
+  private final PurchaseDtoMapper purchaseDtoMapper;
 
-  @Deprecated
-  @MyPurchaseContents
-  @GetMapping("/contents/my")
-  public ResponseEntity<GrobleResponse<CursorResponse<ContentPreviewCardResponse>>>
+  @MyPurchasingContents
+  @GetMapping("/content/my/purchasing-contents")
+  public ResponseEntity<GrobleResponse<CursorResponse<PurchaserContentPreviewCardResponse>>>
       getMyPurchasingContents(
           @Parameter(hidden = true) @Auth Accessor accessor,
           @Parameter(
@@ -51,15 +50,15 @@ public class PurchaseController {
               @ModelAttribute
               CursorRequest cursorRequest,
           @Parameter(
-                  description = "구매한 콘텐츠 상태 필터 (PENDING, PAID, EXPIRED, CANCELLED)",
+                  description = "구매한 콘텐츠 상태 필터 [PAID - 결제완료], [EXPIRED - 기간만료], [CANCELLED - 결제취소]",
                   schema =
                       @Schema(
                           implementation = String.class,
-                          allowableValues = {"PENDING", "PAID", "EXPIRED", "CANCELLED"}))
-              @RequestParam(value = "state", required = false)
+                          allowableValues = {"PAID", "EXPIRED", "CANCELLED"}))
+              @RequestParam(value = "state")
               String state,
           @Parameter(
-                  description = "콘텐츠 타입 (COACHING 또는 DOCUMENT)",
+                  description = "콘텐츠 유형 [COACHING - 코칭], [DOCUMENT - 자료]",
                   required = true,
                   schema =
                       @Schema(
@@ -67,24 +66,25 @@ public class PurchaseController {
                           allowableValues = {"COACHING", "DOCUMENT"}))
               @RequestParam(value = "type")
               String type) {
-    CursorResponse<ContentCardDto> cardDtos =
+
+    CursorResponse<PurchaseContentCardDto> purchaseCardDtos =
         purchaseService.getMyPurchasingContents(
             accessor.getUserId(), cursorRequest.getCursor(), cursorRequest.getSize(), state, type);
 
     // DTO 변환
-    List<ContentPreviewCardResponse> responseItems =
-        cardDtos.getItems().stream()
-            .map(contentDtoMapper::toContentPreviewCardFromCardDto)
+    List<PurchaserContentPreviewCardResponse> responseItems =
+        purchaseCardDtos.getItems().stream()
+            .map(purchaseDtoMapper::toPurchaseContentPreviewCardFromCardDto)
             .toList();
 
     // CursorResponse 생성
-    CursorResponse<ContentPreviewCardResponse> response =
-        CursorResponse.<ContentPreviewCardResponse>builder()
+    CursorResponse<PurchaserContentPreviewCardResponse> response =
+        CursorResponse.<PurchaserContentPreviewCardResponse>builder()
             .items(responseItems)
-            .nextCursor(cardDtos.getNextCursor())
-            .hasNext(cardDtos.isHasNext())
-            .totalCount(cardDtos.getTotalCount())
-            .meta(cardDtos.getMeta())
+            .nextCursor(purchaseCardDtos.getNextCursor())
+            .hasNext(purchaseCardDtos.isHasNext())
+            .totalCount(purchaseCardDtos.getTotalCount())
+            .meta(purchaseCardDtos.getMeta())
             .build();
 
     String successMessage = "COACHING".equals(type) ? "내가 구매한 코칭 콘텐츠 조회 성공" : "내가 구매한 자료 콘텐츠 조회 성공";

@@ -5,12 +5,12 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import liaison.groble.application.content.dto.ContentCardDto;
+import liaison.groble.application.purchase.dto.PurchaseContentCardDto;
 import liaison.groble.common.response.CursorResponse;
-import liaison.groble.domain.content.dto.FlatContentPreviewDTO;
-import liaison.groble.domain.content.enums.ContentStatus;
 import liaison.groble.domain.content.enums.ContentType;
-import liaison.groble.domain.content.repository.ContentCustomRepository;
+import liaison.groble.domain.purchase.dto.FlatPurchaseContentPreviewDTO;
+import liaison.groble.domain.purchase.enums.PurchaseStatus;
+import liaison.groble.domain.purchase.repository.PurchaseCustomRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,27 +20,27 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class PurchaseService {
 
-  private final ContentCustomRepository contentCustomRepository;
+  private final PurchaseCustomRepository purchaseCustomRepository;
 
   @Transactional(readOnly = true)
-  public CursorResponse<ContentCardDto> getMyPurchasingContents(
+  public CursorResponse<PurchaseContentCardDto> getMyPurchasingContents(
       Long userId, String cursor, int size, String state, String type) {
     Long lastContentId = parseContentIdFromCursor(cursor);
-    ContentStatus contentStatus = parseContentStatus(state);
+    List<PurchaseStatus> contentStatusList = parsePurchaseStatusList(state);
     ContentType contentType = parseContentType(type);
 
-    CursorResponse<FlatContentPreviewDTO> flatDtos =
-        contentCustomRepository.findMyPurchasingContentsWithCursor(
-            userId, lastContentId, size, contentStatus, contentType);
+    CursorResponse<FlatPurchaseContentPreviewDTO> flatDtos =
+        purchaseCustomRepository.findMyPurchasingContentsWithCursor(
+            userId, lastContentId, size, contentStatusList, contentType);
 
-    List<ContentCardDto> cardDtos =
+    List<PurchaseContentCardDto> cardDtos =
         flatDtos.getItems().stream().map(this::convertFlatDtoToCardDto).toList();
 
     int totalCount =
-        contentCustomRepository.countMyPurchasingContents(userId, contentStatus, contentType);
+        purchaseCustomRepository.countMyPurchasingContents(userId, contentStatusList, contentType);
 
     // 7. 응답 구성
-    return CursorResponse.<ContentCardDto>builder()
+    return CursorResponse.<PurchaseContentCardDto>builder()
         .items(cardDtos)
         .nextCursor(flatDtos.getNextCursor())
         .hasNext(flatDtos.isHasNext())
@@ -50,14 +50,14 @@ public class PurchaseService {
   }
 
   /** FlatPreviewContentDTO를 ContentCardDto로 변환합니다. */
-  private ContentCardDto convertFlatDtoToCardDto(FlatContentPreviewDTO flat) {
-    return ContentCardDto.builder()
+  private PurchaseContentCardDto convertFlatDtoToCardDto(FlatPurchaseContentPreviewDTO flat) {
+    return PurchaseContentCardDto.builder()
         .contentId(flat.getContentId())
-        .createdAt(flat.getCreatedAt())
+        .purchasedAt(flat.getCreatedAt())
         .title(flat.getTitle())
         .thumbnailUrl(flat.getThumbnailUrl())
         .sellerName(flat.getSellerName())
-        .lowestPrice(flat.getLowestPrice())
+        .originalPrice(flat.getOriginalPrice())
         .priceOptionLength(flat.getPriceOptionLength())
         .status(flat.getStatus())
         .build();
@@ -78,15 +78,15 @@ public class PurchaseService {
   }
 
   /** 문자열에서 ContentStatus를 파싱합니다. */
-  private ContentStatus parseContentStatus(String state) {
+  private List<PurchaseStatus> parsePurchaseStatusList(String state) {
     if (state == null || state.isBlank()) {
       return null;
     }
 
     try {
-      return ContentStatus.valueOf(state.toUpperCase());
+      return List.of(PurchaseStatus.valueOf(state.toUpperCase()));
     } catch (IllegalArgumentException e) {
-      log.warn("유효하지 않은 콘텐츠 상태: {}", state);
+      log.warn("유효하지 않은 구매 상태: {}", state);
       return null;
     }
   }

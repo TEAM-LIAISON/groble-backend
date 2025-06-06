@@ -50,8 +50,8 @@ import lombok.extern.slf4j.Slf4j;
  *   <li>승인 성공 시 Order, Payment, Purchase 상태 업데이트
  * </ol>
  *
- * @author [작성자]
- * @since [버전]
+ * @author [oznchex]
+ * @since [1.0]
  */
 @Slf4j
 @Service

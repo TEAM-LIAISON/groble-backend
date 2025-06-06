@@ -144,7 +144,7 @@ public class SellController {
               @RequestParam(value = "state")
               String state,
           @Parameter(
-                  description = "콘텐츠 유형 [COACHING - 코창], [DOCUMENT - 자료]",
+                  description = "콘텐츠 유형 [COACHING - 코칭], [DOCUMENT - 자료]",
                   required = true,
                   schema =
                       @Schema(
