@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import liaison.groble.api.model.admin.request.AdminBusinessMakerVerifyRequest;
+import liaison.groble.api.model.admin.request.AdminMakerVerifyRequest;
 import liaison.groble.application.admin.service.AdminService;
 import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.annotation.RequireRole;
@@ -29,13 +29,13 @@ public class AdminController {
 
   private final AdminService adminService;
 
-  @Operation(summary = "사업자 메이커 인증 요청 처리", description = "사업자 메이커 인증 요청을 처리합니다. [수락/거절]")
+  @Operation(summary = "메이커 인증 요청 처리", description = "메이커 인증 요청을 처리합니다. [수락/거절]")
   @RequireRole("ROLE_ADMIN")
-  @PostMapping("/business-maker/verify")
-  public ResponseEntity<GrobleResponse<Void>> verifyBusinessMakerAccount(
-      @Auth Accessor accessor, @Valid @RequestBody AdminBusinessMakerVerifyRequest request) {
+  @PostMapping("/maker/verify")
+  public ResponseEntity<GrobleResponse<Void>> verifyMakerAccount(
+      @Auth Accessor accessor, @Valid @RequestBody AdminMakerVerifyRequest request) {
 
-    adminService.verifyBusinessMaker(
+    adminService.verifyMaker(
         accessor.getUserId(), request.getNickname(), request.getStatus().name());
     return ResponseEntity.ok(GrobleResponse.success(null));
   }

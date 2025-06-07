@@ -13,13 +13,13 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-@Schema(description = "관리자 사업자 메이커 인증 요청")
-public class AdminBusinessMakerVerifyRequest {
-  @Schema(description = "인증 대상 메이커의 사용자 닉네임", example = "동민 통합", required = true)
+@Schema(description = "관리자 메이커 인증 요청")
+public class AdminMakerVerifyRequest {
+  @Schema(description = "인증 대상 메이커의 사용자 닉네임", example = "동민 통합")
   @NotNull
   private String nickname;
 
-  @Schema(description = "인증 처리 결과", example = "APPROVED", required = true)
+  @Schema(description = "인증 처리 결과", example = "APPROVED")
   @NotNull
   private VerificationStatus status;
 

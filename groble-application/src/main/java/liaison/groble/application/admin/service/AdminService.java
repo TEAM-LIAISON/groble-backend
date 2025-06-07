@@ -22,7 +22,7 @@ public class AdminService {
   private final NotificationService notificationService;
 
   @Transactional
-  public void verifyBusinessMaker(Long userId, String nickname, String status) {
+  public void verifyMaker(Long userId, String nickname, String status) {
     final User user = userReader.getUserByNickname(nickname);
 
     if (Objects.equals(status, "APPROVED")) {
