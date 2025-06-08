@@ -17,7 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class AdminService {
+public class AdminMakerService {
   private final UserReader userReader;
   private final NotificationService notificationService;
 
@@ -37,7 +37,6 @@ public class AdminService {
       throw new IllegalArgumentException("유효하지 않은 상태: " + status);
     }
 
-    // 예시 로그
     log.info("사업자 메이커 인증 요청 처리: userId={}, nickname={}, status={}", userId, nickname, status);
   }
 }
