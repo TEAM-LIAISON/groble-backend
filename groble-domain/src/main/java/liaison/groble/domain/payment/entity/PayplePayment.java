@@ -50,10 +50,18 @@ public class PayplePayment extends BaseTimeEntity {
   private String pcdPayType; // 페이플 결제수단(카드/계좌) card/transfer
   private String pcdPayCardVer; // 카드 인증 버전 (02 등)
   private String pcdPayWork; // 승인 요청 방식 결과 (CERT 등)
-  private String pcdPayAuthKey; // 파트너 인증 키
-  private String pcdPayReqKey; // 승인 요청 결제키
-  private String pcdPayHost; // 페이플 접속 주소
-  private String pcdPayCofUrl; // 승인 요청 Request URL
+
+  @Column(name = "pcd_pay_auth_key", length = 512)
+  private String pcdPayAuthKey;
+
+  @Column(name = "pcd_pay_req_key", length = 1024)
+  private String pcdPayReqKey;
+
+  @Column(name = "pcd_pay_host", length = 1024)
+  private String pcdPayHost;
+
+  @Column(name = "pcd_pay_cofurl", length = 1024)
+  private String pcdPayCofUrl;
 
   @Column(name = "pcd_pay_oid", unique = true)
   private String pcdPayOid; // 주문번호 (orderId - PK)
