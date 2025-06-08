@@ -186,8 +186,6 @@ public class SecurityConfig {
                     .permitAll()
                     .requestMatchers("/api/v1/groble/contents")
                     .permitAll()
-                    .requestMatchers("/api/v1/payments/**")
-                    .permitAll()
                     .requestMatchers(
                         new RegexRequestMatcher("^/api/v1/content/\\d+$", HttpMethod.GET.name()))
                     .permitAll()
