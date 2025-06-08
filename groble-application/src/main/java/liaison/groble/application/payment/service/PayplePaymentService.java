@@ -573,8 +573,8 @@ public class PayplePaymentService {
    * @param approvalResult 승인 결과
    */
   private void validateBuyerInfo(PayplePayment payment, JSONObject approvalResult) {
-    validateIfNotNull(
-        payment.getPcdPayerNo(), (String) approvalResult.get("PCD_PAYER_NO"), "구매자번호");
+    //    validateIfNotNull(
+    //        payment.getPcdPayerNo(), (String) approvalResult.get("PCD_PAYER_NO"), "구매자번호");
     validateIfNotNull(
         payment.getPcdPayerName(), (String) approvalResult.get("PCD_PAYER_NAME"), "구매자명");
     validateIfNotNull(
