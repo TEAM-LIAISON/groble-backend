@@ -15,6 +15,9 @@ public class PaypleAuthResultDto {
   @JsonProperty("PCD_PAY_RST")
   private String payRst; // success, error, close
 
+  @JsonProperty("PCD_PAY_METHOD")
+  private String pcdPayMethod;
+
   @JsonProperty("PCD_PAY_CODE")
   private String payCode; // 0000
 
@@ -42,14 +45,26 @@ public class PaypleAuthResultDto {
   @JsonProperty("PCD_PAY_COFURL")
   private String payCofUrl; // 승인 요청 URL
 
+  @JsonProperty("PCD_PAY_DISCOUNT")
+  private String payDiscount;
+
   @JsonProperty("PCD_PAYER_NO")
   private String payerNo; // 회원번호
+
+  @JsonProperty("PCD_PAY_AMOUNT")
+  private String payAmount; // 결제금액
+
+  @JsonProperty("PCD_PAY_AMOUNT_REAL")
+  private String payAmountReal; // 실제 결제금액
 
   @JsonProperty("PCD_PAYER_NAME")
   private String payerName; // 구매자 이름
 
   @JsonProperty("PCD_PAYER_HP")
   private String payerHp; // 구매자 휴대폰번호
+
+  @JsonProperty("PCD_PAYER_ID")
+  private String payerId; // 구매자 아이디
 
   @JsonProperty("PCD_PAYER_EMAIL")
   private String payerEmail; // 구매자 이메일
@@ -110,6 +125,9 @@ public class PaypleAuthResultDto {
 
   @JsonProperty("PCD_USER_DEFINE2")
   private String userDefine2;
+
+  @JsonProperty("PCD_PAY_URL")
+  private String pcdPayUrl;
 
   public boolean isSuccess() {
     return "success".equals(payRst);
