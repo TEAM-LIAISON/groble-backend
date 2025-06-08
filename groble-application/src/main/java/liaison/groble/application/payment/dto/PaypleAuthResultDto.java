@@ -91,7 +91,8 @@ public class PaypleAuthResultDto {
   private String payCardNum; // 카드번호
 
   @JsonProperty("PCD_PAY_CARDQUOTA")
-  private String payCardQuota; // 할부 개월수
+  @Builder.Default
+  private String payCardQuota = "00";
 
   @JsonProperty("PCD_PAY_CARDTRADENUM")
   private String payCardTradeNum; // 거래 고유 키
