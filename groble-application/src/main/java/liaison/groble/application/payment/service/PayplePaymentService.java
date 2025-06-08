@@ -8,6 +8,9 @@ import org.json.simple.JSONObject;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import liaison.groble.application.order.service.OrderReader;
 import liaison.groble.application.payment.dto.PaypleAuthResultDto;
 import liaison.groble.domain.order.entity.Order;
@@ -65,6 +68,7 @@ public class PayplePaymentService {
   private final OrderRepository orderRepository;
   private final PaymentRepository paymentRepository;
   private final PurchaseRepository purchaseRepository;
+  private final ObjectMapper objectMapper; // Jackson
 
   /**
    * 앱카드 결제 인증 결과 저장
@@ -279,14 +283,27 @@ public class PayplePaymentService {
     }
   }
 
-  /**
-   * PayplePayment 엔티티 생성
-   *
-   * @param order 주문
-   * @param dto 인증 결과 데이터
-   * @return 생성된 PayplePayment
-   */
   private PayplePayment createPayplePayment(Order order, PaypleAuthResultDto dto) {
+    // 1) 들어온 DTO 전체를 JSON 문자열로 변환해서 로그로 출력
+    try {
+      String dtoJson = objectMapper.writeValueAsString(dto);
+      log.debug("▶▶▶ PaypleAuthResultDto = {}", dtoJson);
+    } catch (JsonProcessingException e) {
+      log.warn("DTO to JSON 변환 중 오류 발생, dto={}", dto, e);
+    }
+
+    // 2) Order 정보도 같이 로깅
+    log.debug(
+        "▶▶▶ Order 정보 = id:{}, userId:{}, finalPrice:{}",
+        order.getId(),
+        order.getUser().getId(),
+        order.getFinalPrice());
+
+    // 3) 할부 개월수 normalization
+    String quota = normalizeQuota(dto.getPayCardQuota());
+    log.debug("▶▶▶ normalized payCardQuota = {}", quota);
+
+    // 4) 실제 엔티티 빌드
     return PayplePayment.builder()
         .pcdPayRst(dto.getPayRst())
         .pcdPayCode(dto.getPayCode())
@@ -309,7 +326,7 @@ public class PayplePaymentService {
         .pcdPayIsTax(dto.getPayIsTax())
         .pcdPayCardName(dto.getPayCardName())
         .pcdPayCardNum(dto.getPayCardNum())
-        .pcdPayCardQuota(dto.getPayCardQuota())
+        .pcdPayCardQuota(quota)
         .pcdPayCardTradeNum(dto.getPayCardTradeNum())
         .pcdPayCardAuthNo(dto.getPayCardAuthNo())
         .pcdPayCardReceipt(dto.getPayCardReceipt())
@@ -731,5 +748,9 @@ public class PayplePaymentService {
     log.error("결제 취소 실패 - orderId: {}, errorCode: {}, message: {}", orderId, errorCode, errorMsg);
 
     throw new RuntimeException(String.format("결제 취소 실패 [%s]: %s", errorCode, errorMsg));
+  }
+
+  private String normalizeQuota(String quota) {
+    return (quota == null || quota.trim().isEmpty()) ? "00" : quota;
   }
 }
