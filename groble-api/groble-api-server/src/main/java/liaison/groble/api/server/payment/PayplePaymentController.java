@@ -1,14 +1,19 @@
 package liaison.groble.api.server.payment;
 
+import java.time.LocalDateTime;
+
 import jakarta.validation.Valid;
 
 import org.json.simple.JSONObject;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import liaison.groble.api.model.payment.request.PaymentCancelRequest;
+import liaison.groble.api.model.payment.response.PaymentCancelResponse;
 import liaison.groble.application.payment.dto.AppCardPayplePaymentResponse;
 import liaison.groble.application.payment.dto.PaypleAuthResultDto;
 import liaison.groble.application.payment.exception.PayplePaymentAuthException;
@@ -138,15 +143,79 @@ public class PayplePaymentController {
       throw new PayplePaymentAuthException("결제 처리 중 오류가 발생했습니다.");
     }
   }
+
+  @Operation(
+      summary = "결제 취소",
+      description = "결제를 취소하고 환불 처리합니다.",
+      responses = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "결제 취소 성공",
+            content =
+                @Content(
+                    mediaType = "application/json",
+                    examples =
+                        @ExampleObject(
+                            value =
+                                """
+                  {
+                    "success": true,
+                    "data": {
+                      "orderId": "ORDER_1234",
+                      "status": "CANCELLED",
+                      "canceledAt": "2025-06-08T12:30:45",
+                      "cancelReason": "고객 요청"
+                    }
+                  }
+                  """))),
+        @ApiResponse(responseCode = "400", description = "잘못된 요청 (주문을 찾을 수 없음, 취소할 수 없는 상태 등)"),
+        @ApiResponse(responseCode = "401", description = "인증 실패"),
+        @ApiResponse(responseCode = "500", description = "서버 내부 오류")
+      })
+  @PostMapping("/{orderId}/cancel")
+  public ResponseEntity<GrobleResponse<PaymentCancelResponse>> cancelPayment(
+      @Auth Accessor accessor,
+      @PathVariable String orderId,
+      @Valid @RequestBody PaymentCancelRequest request) {
+
+    log.info(
+        "결제 취소 요청 - 주문번호: {}, 사유: {}, userId: {}",
+        orderId,
+        request.getReason(),
+        accessor.getUserId());
+
+    try {
+      // 결제 취소 처리
+      payplePaymentService.cancelPayment(orderId, request.getReason());
+
+      // 취소 성공 응답 생성
+      PaymentCancelResponse response =
+          PaymentCancelResponse.builder()
+              .orderId(orderId)
+              .status("CANCELLED")
+              .canceledAt(LocalDateTime.now())
+              .cancelReason(request.getReason())
+              .build();
+
+      log.info("결제 취소 완료 - 주문번호: {}", orderId);
+      return ResponseEntity.ok(GrobleResponse.success(response));
+
+    } catch (IllegalArgumentException e) {
+      log.error("결제 취소 실패 - 주문을 찾을 수 없음: {}", orderId, e);
+      throw new PayplePaymentAuthException("주문을 찾을 수 없습니다: " + orderId);
+    } catch (IllegalStateException e) {
+      log.error("결제 취소 실패 - 취소할 수 없는 상태: {}", orderId, e);
+      throw new PayplePaymentAuthException("취소할 수 없는 상태입니다: " + e.getMessage());
+    } catch (RuntimeException e) {
+      log.error("결제 취소 실패 - 환불 처리 오류: {}", orderId, e);
+      throw new PayplePaymentAuthException("환불 처리 중 오류가 발생했습니다: " + e.getMessage());
+    } catch (Exception e) {
+      log.error("결제 취소 중 예상치 못한 오류 발생: {}", orderId, e);
+      throw new PayplePaymentAuthException("결제 취소 처리 중 오류가 발생했습니다.");
+    }
+  }
 }
 
-//
-//    // 인증 성공 시 승인 요청 처리
-//    PaymentCompleteResponseDto response = payplePaymentService.processAuthResult(authResult);
-//
-//    return ResponseEntity.ok(GrobleResponse.success(response));
-//  }
-//
 //  // 링크 결제 요청이 들어온다
 //  // 1. 파트너 인증 요청을 페이플 서버에 보낸다
 //  // 2. 인증 결과를 받아온다.
@@ -174,21 +243,6 @@ public class PayplePaymentController {
 //    return ResponseEntity.ok(GrobleResponse.success(paypleLinkResponse));
 //  }
 // }
-//
-//// import org.springframework.http.ResponseEntity;
-//// import org.springframework.web.bind.annotation.*;
-////
-//// import io.swagger.v3.oas.annotations.Operation;
-//// import io.swagger.v3.oas.annotations.tags.Tag;
-//// import liaison.groble.api.model.payment.request.PaymentRequest;
-//// import liaison.groble.api.model.payment.response.PaymentCompleteResponse;
-//// import liaison.groble.api.model.payment.response.PaymentRequestResponse;
-//// import liaison.groble.application.payment.dto.PayplePaymentResultDto;
-//// import liaison.groble.application.payment.service.PayplePaymentService;
-//// import liaison.groble.security.annotations.CurrentUser;
-//// import lombok.RequiredArgsConstructor;
-//// import lombok.extern.slf4j.Slf4j;
-////
 //
 
 //// * 5. 결제 완료 콜백 (/api/v1/payments/payple/complete)
