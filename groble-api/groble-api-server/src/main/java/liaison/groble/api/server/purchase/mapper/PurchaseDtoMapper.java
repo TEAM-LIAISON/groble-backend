@@ -2,7 +2,7 @@ package liaison.groble.api.server.purchase.mapper;
 
 import org.springframework.stereotype.Component;
 
-import liaison.groble.api.model.purchase.PurchaserContentPreviewCardResponse;
+import liaison.groble.api.model.purchase.response.PurchaserContentPreviewCardResponse;
 import liaison.groble.application.purchase.dto.PurchaseContentCardDto;
 
 import lombok.extern.slf4j.Slf4j;

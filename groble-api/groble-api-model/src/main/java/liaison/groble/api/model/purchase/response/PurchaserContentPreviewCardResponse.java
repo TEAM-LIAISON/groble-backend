@@ -1,4 +1,4 @@
-package liaison.groble.api.model.purchase;
+package liaison.groble.api.model.purchase.response;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -11,11 +11,11 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-@Schema(description = "구매자 전용 콘텐츠 미리보기 카드 응답 DTO")
 @Getter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Schema(description = "구매자 전용 콘텐츠 미리보기 카드 응답 DTO")
 public class PurchaserContentPreviewCardResponse {
   @Schema(description = "콘텐츠 ID", example = "123")
   private Long contentId;

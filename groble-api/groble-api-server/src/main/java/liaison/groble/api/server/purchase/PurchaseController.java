@@ -7,15 +7,17 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import liaison.groble.api.model.purchase.PurchaserContentPreviewCardResponse;
+import liaison.groble.api.model.purchase.response.PurchaserContentPreviewCardResponse;
 import liaison.groble.api.model.purchase.swagger.MyPurchasingContents;
 import liaison.groble.api.server.purchase.mapper.PurchaseDtoMapper;
 import liaison.groble.application.purchase.PurchaseService;
 import liaison.groble.application.purchase.dto.PurchaseContentCardDto;
+import liaison.groble.application.purchase.dto.PurchasedContentDetailResponse;
 import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.model.Accessor;
 import liaison.groble.common.request.CursorRequest;
@@ -36,6 +38,15 @@ import lombok.extern.slf4j.Slf4j;
 public class PurchaseController {
   private final PurchaseService purchaseService;
   private final PurchaseDtoMapper purchaseDtoMapper;
+
+  @GetMapping("/content/my/{merchantUid}")
+  public ResponseEntity<GrobleResponse<PurchasedContentDetailResponse>> getMyPurchasedContent(
+      @Auth Accessor accessor, @Valid @PathVariable("merchantUid") String merchantUid) {
+    PurchasedContentDetailResponse response =
+        purchaseService.getMyPurchasedContent(accessor.getUserId(), merchantUid);
+
+    return ResponseEntity.ok(GrobleResponse.success(response));
+  }
 
   @MyPurchasingContents
   @GetMapping("/content/my/purchasing-contents")

@@ -1,6 +1,6 @@
 package liaison.groble.api.model.purchase.swagger;
 
-import liaison.groble.api.model.purchase.PurchaserContentPreviewCardResponse;
+import liaison.groble.api.model.purchase.response.PurchaserContentPreviewCardResponse;
 import liaison.groble.common.response.CursorResponse;
 import liaison.groble.common.response.GrobleResponse;
 
