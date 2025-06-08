@@ -24,6 +24,7 @@ import liaison.groble.common.request.CursorRequest;
 import liaison.groble.common.response.CursorResponse;
 import liaison.groble.common.response.GrobleResponse;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -39,6 +40,9 @@ public class PurchaseController {
   private final PurchaseService purchaseService;
   private final PurchaseDtoMapper purchaseDtoMapper;
 
+  @Operation(
+      summary = "내가 구매한 콘텐츠 상세 조회",
+      description = "내가 구매한 콘텐츠의 상세 정보를 조회합니다. 구매 상태에 따라 콘텐츠 접근 권한이 다를 수 있습니다.")
   @GetMapping("/content/my/{merchantUid}")
   public ResponseEntity<GrobleResponse<PurchasedContentDetailResponse>> getMyPurchasedContent(
       @Auth Accessor accessor, @Valid @PathVariable("merchantUid") String merchantUid) {
