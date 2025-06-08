@@ -1,4 +1,4 @@
-package liaison.groble.application.order;
+package liaison.groble.application.order.service;
 
 import java.math.BigDecimal;
 import java.util.List;

@@ -15,10 +15,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import liaison.groble.api.model.order.request.CreateOrderRequest;
 import liaison.groble.api.server.terms.mapper.TermsDtoMapper;
-import liaison.groble.application.order.OrderService;
 import liaison.groble.application.order.dto.CreateOrderDto;
 import liaison.groble.application.order.dto.CreateOrderResponse;
 import liaison.groble.application.order.dto.OrderSuccessResponse;
+import liaison.groble.application.order.service.OrderService;
 import liaison.groble.application.terms.dto.TermsAgreementDto;
 import liaison.groble.application.terms.service.OrderTermsService;
 import liaison.groble.common.annotation.Auth;
