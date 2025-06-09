@@ -75,7 +75,7 @@ public class Purchase extends BaseTimeEntity {
 
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
-  private PurchaseStatus status = PurchaseStatus.COMPLETED;
+  private PurchaseStatus status = PurchaseStatus.PAID;
 
   // 구매 시점의 금액 정보 (기록용)
   @Column(name = "original_price", nullable = false, precision = 10, scale = 2)
@@ -134,12 +134,12 @@ public class Purchase extends BaseTimeEntity {
       throw new IllegalStateException("대기 상태에서만 구매 완료 처리가 가능합니다.");
     }
 
-    this.status = PurchaseStatus.COMPLETED;
+    this.status = PurchaseStatus.PAID;
     this.purchasedAt = LocalDateTime.now();
   }
 
   public void cancel(String reason) {
-    if (this.status != PurchaseStatus.COMPLETED) {
+    if (this.status != PurchaseStatus.PAID) {
       throw new IllegalStateException("완료 상태에서만 구매 취소가 가능합니다.");
     }
 
@@ -200,9 +200,8 @@ public class Purchase extends BaseTimeEntity {
         .build();
   }
 
-  // 편의 메서드들
-  public boolean isCompleted() {
-    return status == PurchaseStatus.COMPLETED;
+  public boolean isPaid() {
+    return status == PurchaseStatus.PAID;
   }
 
   public boolean isCancelled() {

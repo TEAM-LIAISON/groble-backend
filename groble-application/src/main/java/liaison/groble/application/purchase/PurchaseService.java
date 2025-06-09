@@ -46,7 +46,6 @@ public class PurchaseService {
     int totalCount =
         purchaseCustomRepository.countMyPurchasingContents(userId, contentStatusList, contentType);
 
-    // 7. 응답 구성
     return CursorResponse.<PurchaseContentCardDto>builder()
         .items(cardDtos)
         .nextCursor(flatDtos.getNextCursor())

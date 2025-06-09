@@ -134,11 +134,9 @@ public class PayplePaymentController {
       return ResponseEntity.ok(GrobleResponse.success(response));
 
     } catch (IllegalStateException e) {
-      // 결제 정보 불일치 에러
       log.error("페이플 결제 검증 실패 - {}", e.getMessage());
       throw new PayplePaymentAuthException("결제 정보 검증 실패: " + e.getMessage());
     } catch (Exception e) {
-      // 기타 에러
       log.error("페이플 결제 처리 중 오류 발생", e);
       throw new PayplePaymentAuthException("결제 처리 중 오류가 발생했습니다.");
     }
