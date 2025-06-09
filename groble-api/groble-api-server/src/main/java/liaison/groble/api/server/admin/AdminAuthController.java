@@ -18,6 +18,7 @@ import liaison.groble.common.response.GrobleResponse;
 import liaison.groble.common.utils.CookieUtils;
 
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -25,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/admin/auth")
+@Tag(name = "관리자의 로그인 기능 관련 API", description = "관리자 로그인 기능 API")
 public class AdminAuthController {
 
   private final AdminAuthService adminAuthService;
