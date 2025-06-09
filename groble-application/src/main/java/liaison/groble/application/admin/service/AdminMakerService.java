@@ -27,11 +27,26 @@ public class AdminMakerService {
 
     if (Objects.equals(status, "APPROVED")) {
       // 수락 처리
-      user.setSellerInfo(SellerInfo.ofVerificationStatus(SellerVerificationStatus.VERIFIED));
+      if (user.isBusinessMakerVerificationRequested()) {
+        user.setSellerInfo(
+            SellerInfo.builder()
+                .isBusinessSeller(true)
+                .verificationStatus(SellerVerificationStatus.VERIFIED)
+                .build());
+      } else {
+        user.setSellerInfo(
+            SellerInfo.builder()
+                .isBusinessSeller(false)
+                .verificationStatus(SellerVerificationStatus.VERIFIED)
+                .build());
+      }
+
       notificationService.sendMakerCertifiedVerificationNotification(user);
     } else if (Objects.equals(status, "REJECTED")) {
       // 거절 처리
-      user.setSellerInfo(SellerInfo.ofVerificationStatus(SellerVerificationStatus.FAILED));
+      user.setSellerInfo(
+          SellerInfo.builder().verificationStatus(SellerVerificationStatus.FAILED).build());
+
       notificationService.sendMakerRejectedVerificationNotification(user);
     } else {
       throw new IllegalArgumentException("유효하지 않은 상태: " + status);

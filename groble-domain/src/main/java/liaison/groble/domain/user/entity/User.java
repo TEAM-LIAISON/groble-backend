@@ -320,6 +320,13 @@ public class User extends BaseTimeEntity {
     }
   }
 
+  // 사업자 메이커 인증 요청 여부 확인
+  public boolean isBusinessMakerVerificationRequested() {
+    return sellerInfo != null
+        && sellerInfo.getBusinessLicenseFileUrl() != null
+        && !sellerInfo.getBusinessLicenseFileUrl().isBlank();
+  }
+
   // 닉네임 조회
   public String getNickname() {
     return userProfile != null ? userProfile.getNickname() : null;
