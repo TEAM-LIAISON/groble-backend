@@ -21,6 +21,7 @@ import jakarta.persistence.Table;
 
 import liaison.groble.domain.common.entity.BaseTimeEntity;
 import liaison.groble.domain.content.entity.Content;
+import liaison.groble.domain.content.entity.ContentOption;
 import liaison.groble.domain.coupon.entity.UserCoupon;
 import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.payment.entity.Payment;
@@ -167,8 +168,15 @@ public class Purchase extends BaseTimeEntity {
       throw new IllegalArgumentException("주문 아이템이 없습니다.");
     }
 
-    // 첫 번째 주문 아이템을 기준으로 구매 생성 (단일 콘텐츠 구매 가정)
     var orderItem = order.getOrderItems().get(0);
+
+    // 선택된 옵션의 이름 찾기
+    String selectedOptionName =
+        orderItem.getContent().getOptions().stream()
+            .filter(option -> option.getId().equals(orderItem.getOptionId()))
+            .findFirst()
+            .map(ContentOption::getName)
+            .orElse(null);
 
     return Purchase.builder()
         .user(order.getUser())
@@ -187,8 +195,8 @@ public class Purchase extends BaseTimeEntity {
             orderItem.getOptionType() != null
                 ? OptionType.valueOf(orderItem.getOptionType().name())
                 : null)
+        .selectedOptionName(selectedOptionName)
         .selectedOptionId(orderItem.getOptionId())
-        //                .selectedOptionName(orderItem.getOptionName())
         .build();
   }
 
