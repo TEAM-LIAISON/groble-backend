@@ -143,8 +143,15 @@ public class PayplePayment extends BaseTimeEntity {
 
   // 승인 정보 업데이트
   public void updateApprovalInfo(
-      String payTime, String cardTradeNum, String cardAuthNo, String receiptUrl) {
+      String payTime,
+      String cardName,
+      String cardNum,
+      String cardTradeNum,
+      String cardAuthNo,
+      String receiptUrl) {
     this.pcdPayTime = payTime;
+    this.pcdPayCardName = cardName;
+    this.pcdPayCardNum = cardNum;
     this.pcdPayCardTradeNum = cardTradeNum;
     this.pcdPayCardAuthNo = cardAuthNo;
     this.pcdPayCardReceipt = receiptUrl;
