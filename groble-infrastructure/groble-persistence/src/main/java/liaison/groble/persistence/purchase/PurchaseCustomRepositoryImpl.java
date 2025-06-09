@@ -16,10 +16,10 @@ import liaison.groble.common.response.CursorResponse;
 import liaison.groble.domain.content.entity.QContent;
 import liaison.groble.domain.content.entity.QContentOption;
 import liaison.groble.domain.content.enums.ContentType;
+import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.order.entity.QOrder;
 import liaison.groble.domain.purchase.dto.FlatPurchaseContentPreviewDTO;
 import liaison.groble.domain.purchase.entity.QPurchase;
-import liaison.groble.domain.purchase.enums.PurchaseStatus;
 import liaison.groble.domain.purchase.repository.PurchaseCustomRepository;
 import liaison.groble.domain.user.entity.QUser;
 
@@ -36,7 +36,7 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
       Long userId,
       Long lastContentId,
       int size,
-      List<PurchaseStatus> statusList,
+      List<Order.OrderStatus> statusList,
       ContentType contentType) {
 
     QPurchase qPurchase = QPurchase.purchase;
@@ -56,7 +56,7 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
 
     // 상태 필터 추가 (여러 상태 지원)
     if (statusList != null && !statusList.isEmpty()) {
-      conditions = conditions.and(qPurchase.status.in(statusList));
+      conditions = conditions.and(qOrder.status.in(statusList));
     }
 
     // 조회할 개수 + 1 (다음 페이지 존재 여부 확인용)
@@ -108,7 +108,8 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
     // 메타데이터 (여러 상태를 표시)
     String filterValue = null;
     if (statusList != null && !statusList.isEmpty()) {
-      filterValue = statusList.stream().map(PurchaseStatus::name).collect(Collectors.joining(","));
+      filterValue =
+          statusList.stream().map(Order.OrderStatus::name).collect(Collectors.joining(","));
     }
 
     CursorResponse.MetaData meta =
@@ -119,9 +120,10 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
 
   @Override
   public int countMyPurchasingContents(
-      Long userId, List<PurchaseStatus> statusList, ContentType contentType) {
+      Long userId, List<Order.OrderStatus> statusList, ContentType contentType) {
     QPurchase qPurchase = QPurchase.purchase;
     QContent qContent = QContent.content;
+    QOrder qOrder = QOrder.order;
 
     // 기본 조건 설정: 사용자 ID, 콘텐츠 타입
     BooleanExpression conditions =
@@ -129,7 +131,7 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
 
     // 상태 필터 추가 (여러 상태 지원)
     if (statusList != null && !statusList.isEmpty()) {
-      conditions = conditions.and(qPurchase.status.in(statusList));
+      conditions = conditions.and(qOrder.status.in(statusList));
     }
 
     // 쿼리 실행: Purchase 엔티티 기준으로 카운트
@@ -137,7 +139,8 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
         queryFactory
             .select(qPurchase.count())
             .from(qPurchase)
-            .join(qPurchase.content, qContent)
+            .leftJoin(qPurchase.content, qContent)
+            .leftJoin(qPurchase.order, qOrder)
             .where(conditions)
             .fetchOne();
 

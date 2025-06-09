@@ -14,7 +14,6 @@ import liaison.groble.domain.content.enums.ContentType;
 import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.purchase.dto.FlatPurchaseContentPreviewDTO;
 import liaison.groble.domain.purchase.entity.Purchase;
-import liaison.groble.domain.purchase.enums.PurchaseStatus;
 import liaison.groble.domain.purchase.repository.PurchaseCustomRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -33,18 +32,18 @@ public class PurchaseService {
   public CursorResponse<PurchaseContentCardDto> getMyPurchasingContents(
       Long userId, String cursor, int size, String state, String type) {
     Long lastContentId = parseContentIdFromCursor(cursor);
-    List<PurchaseStatus> contentStatusList = parsePurchaseStatusList(state);
+    List<Order.OrderStatus> orderStatusList = parseOrderStatusList(state);
     ContentType contentType = parseContentType(type);
 
     CursorResponse<FlatPurchaseContentPreviewDTO> flatDtos =
         purchaseCustomRepository.findMyPurchasingContentsWithCursor(
-            userId, lastContentId, size, contentStatusList, contentType);
+            userId, lastContentId, size, orderStatusList, contentType);
 
     List<PurchaseContentCardDto> cardDtos =
         flatDtos.getItems().stream().map(this::convertFlatDtoToCardDto).toList();
 
     int totalCount =
-        purchaseCustomRepository.countMyPurchasingContents(userId, contentStatusList, contentType);
+        purchaseCustomRepository.countMyPurchasingContents(userId, orderStatusList, contentType);
 
     return CursorResponse.<PurchaseContentCardDto>builder()
         .items(cardDtos)
@@ -100,13 +99,13 @@ public class PurchaseService {
   }
 
   /** 문자열에서 ContentStatus를 파싱합니다. */
-  private List<PurchaseStatus> parsePurchaseStatusList(String state) {
+  private List<Order.OrderStatus> parseOrderStatusList(String state) {
     if (state == null || state.isBlank()) {
       return null;
     }
 
     try {
-      return List.of(PurchaseStatus.valueOf(state.toUpperCase()));
+      return List.of(Order.OrderStatus.valueOf(state.toUpperCase()));
     } catch (IllegalArgumentException e) {
       log.warn("유효하지 않은 구매 상태: {}", state);
       return null;

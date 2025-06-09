@@ -4,8 +4,8 @@ import java.util.List;
 
 import liaison.groble.common.response.CursorResponse;
 import liaison.groble.domain.content.enums.ContentType;
+import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.purchase.dto.FlatPurchaseContentPreviewDTO;
-import liaison.groble.domain.purchase.enums.PurchaseStatus;
 
 public interface PurchaseCustomRepository {
 
@@ -13,9 +13,9 @@ public interface PurchaseCustomRepository {
       Long userId,
       Long lastContentId,
       int size,
-      List<PurchaseStatus> statusList,
+      List<Order.OrderStatus> statusList,
       ContentType contentType);
 
   int countMyPurchasingContents(
-      Long userId, List<PurchaseStatus> purchaseStatusList, ContentType contentType);
+      Long userId, List<Order.OrderStatus> orderStatusList, ContentType contentType);
 }
