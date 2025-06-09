@@ -24,20 +24,12 @@ public class QPayment extends EntityPathBase<Payment> {
 
     public final liaison.groble.domain.common.entity.QBaseTimeEntity _super = new liaison.groble.domain.common.entity.QBaseTimeEntity(this);
 
-    public final NumberPath<java.math.BigDecimal> amount = createNumber("amount", java.math.BigDecimal.class);
-
     public final DateTimePath<java.time.LocalDateTime> cancelledAt = createDateTime("cancelledAt", java.time.LocalDateTime.class);
 
     public final StringPath cancelReason = createString("cancelReason");
 
     //inherited
     public final DateTimePath<java.time.LocalDateTime> createdAt = _super.createdAt;
-
-    public final StringPath customerEmail = createString("customerEmail");
-
-    public final StringPath customerMobilePhone = createString("customerMobilePhone");
-
-    public final StringPath customerName = createString("customerName");
 
     public final StringPath failReason = createString("failReason");
 
@@ -54,6 +46,14 @@ public class QPayment extends EntityPathBase<Payment> {
     public final EnumPath<Payment.PaymentMethod> paymentMethod = createEnum("paymentMethod", Payment.PaymentMethod.class);
 
     public final StringPath pgTid = createString("pgTid");
+
+    public final NumberPath<java.math.BigDecimal> price = createNumber("price", java.math.BigDecimal.class);
+
+    public final StringPath purchaserEmail = createString("purchaserEmail");
+
+    public final StringPath purchaserName = createString("purchaserName");
+
+    public final StringPath purchaserPhoneNumber = createString("purchaserPhoneNumber");
 
     public final EnumPath<Payment.PaymentStatus> status = createEnum("status", Payment.PaymentStatus.class);
 

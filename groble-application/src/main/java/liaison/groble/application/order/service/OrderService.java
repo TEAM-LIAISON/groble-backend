@@ -284,11 +284,11 @@ public class OrderService {
         }
 
         // 할인 금액 계산
-        BigDecimal discountAmount = calculateCouponDiscount(validatedCoupon, orderPrice);
+        BigDecimal discountPrice = calculateCouponDiscount(validatedCoupon, orderPrice);
 
         // 최대 할인 쿠폰 갱신
-        if (discountAmount.compareTo(maxDiscount) > 0) {
-          maxDiscount = discountAmount;
+        if (discountPrice.compareTo(maxDiscount) > 0) {
+          maxDiscount = discountPrice;
           bestCoupon = validatedCoupon;
         }
 
@@ -588,13 +588,13 @@ public class OrderService {
     return OrderSuccessResponse.builder()
         // 주문 기본 정보
         .merchantUid(order.getMerchantUid())
-        .orderNumber(order.getId().toString())
-        .orderStatus(order.getStatus().name())
-        .purchaseStatus(purchase.getStatus().name())
-
-        // 콘텐츠 정보
+        .purchasedAt(purchase.getPurchasedAt())
         .contentId(content.getId())
         .contentTitle(content.getTitle())
+        .orderStatus(order.getStatus().name())
+
+        // 콘텐츠 정보
+
         .contentThumbnailUrl(content.getThumbnailUrl())
 
         // 선택한 옵션 정보
@@ -608,7 +608,7 @@ public class OrderService {
         .finalPrice(order.getFinalPrice())
 
         // 구매 정보
-        .purchasedAt(purchase.getPurchasedAt())
+
         .isFreePurchase(order.getFinalPrice().compareTo(BigDecimal.ZERO) == 0)
         .build();
   }

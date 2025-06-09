@@ -13,13 +13,21 @@ import lombok.Getter;
 public class OrderSuccessResponse {
   // 주문 기본 정보
   private final String merchantUid;
-  private final String orderNumber;
+
+  // 구매 시간
+  @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+  private final LocalDateTime purchasedAt;
+
+  // 콘텐츠 ID
+  private final Long contentId;
+
+  // 콘텐츠 제목
+  private final String contentTitle;
+
+  // 구매 상태 [결제완료(PAID)/기간만료(EXPIRED)/결제취소(FAILED)]
   private final String orderStatus;
-  private final String purchaseStatus;
 
   // 상품 정보
-  private final Long contentId;
-  private final String contentTitle;
   private final String contentDescription;
   private final String contentThumbnailUrl;
 
@@ -31,10 +39,6 @@ public class OrderSuccessResponse {
   private final BigDecimal originalPrice;
   private final BigDecimal discountPrice;
   private final BigDecimal finalPrice;
-
-  // 구매 정보
-  @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-  private final LocalDateTime purchasedAt;
 
   private final Boolean isFreePurchase;
 }

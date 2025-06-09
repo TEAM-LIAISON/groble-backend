@@ -95,7 +95,7 @@ public class PayplePaymentService {
     validateOrderPendingStatus(order);
 
     // 4. 금액 검증
-    validatePaymentAmount(order, dto.getPayTotal());
+    validatePaymentPrice(order, dto.getPayTotal());
 
     // 5. PayplePayment 엔티티 생성 및 저장
     PayplePayment payplePayment = createPayplePayment(order, dto);
@@ -265,21 +265,20 @@ public class PayplePaymentService {
    * 결제 금액 검증
    *
    * @param order 주문
-   * @param paymentAmount 결제 금액 (문자열)
+   * @param paymentPrice 결제 금액 (문자열)
    * @throws IllegalStateException 금액이 일치하지 않는 경우
    */
-  private void validatePaymentAmount(Order order, String paymentAmount) {
+  private void validatePaymentPrice(Order order, String paymentPrice) {
     try {
       // 문자열을 BigDecimal로 변환하여 비교
-      BigDecimal paymentAmountDecimal = new BigDecimal(paymentAmount);
+      BigDecimal paymentPriceDecimal = new BigDecimal(paymentPrice);
 
-      if (order.getFinalPrice().compareTo(paymentAmountDecimal) != 0) {
+      if (order.getFinalPrice().compareTo(paymentPriceDecimal) != 0) {
         throw new IllegalStateException(
-            String.format(
-                "결제 금액 불일치 - 주문금액: %s원, 결제금액: %s원", order.getFinalPrice(), paymentAmount));
+            String.format("결제 금액 불일치 - 주문금액: %s원, 결제금액: %s원", order.getFinalPrice(), paymentPrice));
       }
     } catch (NumberFormatException e) {
-      throw new IllegalStateException(String.format("결제 금액 형식 오류 - 결제금액: %s", paymentAmount), e);
+      throw new IllegalStateException(String.format("결제 금액 형식 오류 - 결제금액: %s", paymentPrice), e);
     }
   }
 

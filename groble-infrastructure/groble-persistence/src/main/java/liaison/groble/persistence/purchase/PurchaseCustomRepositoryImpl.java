@@ -16,6 +16,7 @@ import liaison.groble.common.response.CursorResponse;
 import liaison.groble.domain.content.entity.QContent;
 import liaison.groble.domain.content.entity.QContentOption;
 import liaison.groble.domain.content.enums.ContentType;
+import liaison.groble.domain.order.entity.QOrder;
 import liaison.groble.domain.purchase.dto.FlatPurchaseContentPreviewDTO;
 import liaison.groble.domain.purchase.entity.QPurchase;
 import liaison.groble.domain.purchase.enums.PurchaseStatus;
@@ -42,6 +43,7 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
     QContent qContent = QContent.content;
     QUser qUser = QUser.user;
     QContentOption qContentOption = QContentOption.contentOption;
+    QOrder qOrder = QOrder.order;
 
     // 기본 조건 설정
     BooleanExpression conditions =
@@ -79,8 +81,10 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
                             .where(qContentOption.content.eq(qContent)),
                         "priceOptionLength"),
                     qContent.status.stringValue().as("status")))
-            .from(qContent)
-            .leftJoin(qContent.user, qUser)
+            .from(qPurchase)
+            .leftJoin(qPurchase.content, qContent)
+            .leftJoin(qPurchase.user, qUser)
+            .leftJoin(qPurchase.order, qOrder)
             .where(conditions)
             .orderBy(qContent.id.desc())
             .limit(fetchSize)

@@ -44,7 +44,7 @@ public class PayplePayment extends BaseTimeEntity {
   @Column(nullable = false)
   private PayplePaymentStatus status = PayplePaymentStatus.PENDING;
 
-  private String pcdPayRst; // 페이플 인증 결과 (SUCESS/ERROR/CLOSE)
+  private String pcdPayRst; // 페이플 인증 결과 (SUCCESS/ERROR/CLOSE)
   private String pcdPayCode; // 페이플 결제 응답 코드 (0000)
   private String pcdPayMsg; // 페이플 응답 메시지
   private String pcdPayType; // 페이플 결제수단(카드/계좌) card/transfer

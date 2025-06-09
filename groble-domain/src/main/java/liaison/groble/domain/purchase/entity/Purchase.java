@@ -118,10 +118,6 @@ public class Purchase extends BaseTimeEntity {
   @Column(name = "cancel_reason")
   private String cancelReason;
 
-  // 구매 확정 관련
-  @Column(name = "confirmed_at")
-  private LocalDateTime confirmedAt;
-
   @Column(name = "refund_requested_at")
   private LocalDateTime refundRequestedAt;
 
@@ -149,25 +145,6 @@ public class Purchase extends BaseTimeEntity {
     this.status = PurchaseStatus.CANCELLED;
     this.cancelledAt = LocalDateTime.now();
     this.cancelReason = reason;
-  }
-
-  public void confirm() {
-    if (this.status != PurchaseStatus.COMPLETED) {
-      throw new IllegalStateException("완료 상태에서만 구매 확정이 가능합니다.");
-    }
-
-    this.status = PurchaseStatus.CONFIRMED;
-    this.confirmedAt = LocalDateTime.now();
-  }
-
-  public void requestRefund(String reason) {
-    if (this.status != PurchaseStatus.COMPLETED && this.status != PurchaseStatus.CONFIRMED) {
-      throw new IllegalStateException("완료 또는 확정 상태에서만 환불 요청이 가능합니다.");
-    }
-
-    this.status = PurchaseStatus.REFUND_REQUESTED;
-    this.refundRequestedAt = LocalDateTime.now();
-    this.refundReason = reason;
   }
 
   public void processRefund() {

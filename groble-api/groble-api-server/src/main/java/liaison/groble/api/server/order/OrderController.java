@@ -43,8 +43,9 @@ public class OrderController {
   private final TermsDtoMapper termsDtoMapper;
 
   @Operation(
-      summary = "결제 주문 발행",
-      description = "콘텐츠 구매를 위한 결제 주문을 발행합니다. 회원은 쿠폰 적용 가능, 비회원은 이메일/전화번호 필수")
+      summary = "결제 창에서 주문 발행",
+      description =
+          "결제 창에서 회원이 merchantUid를 받기 위해 실행." + "콘텐츠 구매를 위한 결제 주문을 발행합니다. 회원은 쿠폰 사용이 가능합니다.")
   @PostMapping("/create")
   public ResponseEntity<GrobleResponse<CreateOrderResponse>> createOrder(
       @Auth Accessor accessor,
