@@ -11,11 +11,14 @@ import lombok.Getter;
 public class PurchaseContentCardDto {
   private String merchantUid;
   private Long contentId;
+  private String contentType;
   private LocalDateTime purchasedAt;
   private String title;
   private String thumbnailUrl;
   private String sellerName;
   private BigDecimal originalPrice;
+  private BigDecimal finalPrice;
   private int priceOptionLength;
+  private String orderStatus;
   private String status;
 }

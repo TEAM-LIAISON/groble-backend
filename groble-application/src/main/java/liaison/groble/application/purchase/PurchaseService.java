@@ -71,13 +71,17 @@ public class PurchaseService {
   /** FlatPreviewContentDTO를 ContentCardDto로 변환합니다. */
   private PurchaseContentCardDto convertFlatDtoToCardDto(FlatPurchaseContentPreviewDTO flat) {
     return PurchaseContentCardDto.builder()
+        .merchantUid(flat.getMerchantUid())
         .contentId(flat.getContentId())
-        .purchasedAt(flat.getCreatedAt())
+        .contentType(flat.getContentType())
+        .purchasedAt(flat.getPurchasedAt())
         .title(flat.getTitle())
         .thumbnailUrl(flat.getThumbnailUrl())
         .sellerName(flat.getSellerName())
         .originalPrice(flat.getOriginalPrice())
+        .finalPrice(flat.getFinalPrice())
         .priceOptionLength(flat.getPriceOptionLength())
+        .orderStatus(flat.getOrderStatus())
         .status(flat.getStatus())
         .build();
   }

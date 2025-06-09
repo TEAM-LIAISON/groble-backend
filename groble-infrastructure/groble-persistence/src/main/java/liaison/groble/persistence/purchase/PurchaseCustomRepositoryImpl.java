@@ -70,16 +70,19 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
                     FlatPurchaseContentPreviewDTO.class,
                     qPurchase.order.merchantUid.as("merchantUid"),
                     qContent.id.as("contentId"),
-                    qPurchase.createdAt.as("createdAt"),
+                    qContent.contentType.stringValue().as("contentType"),
+                    qPurchase.purchasedAt.as("purchasedAt"),
                     qContent.title.as("title"),
                     qContent.thumbnailUrl.as("thumbnailUrl"),
                     qUser.userProfile.nickname.as("sellerName"),
-                    qContent.lowestPrice.as("lowestPrice"),
+                    qPurchase.originalPrice.as("originalPrice"),
+                    qPurchase.finalPrice.as("finalPrice"),
                     ExpressionUtils.as(
                         select(qContentOption.count().intValue())
                             .from(qContentOption)
                             .where(qContentOption.content.eq(qContent)),
                         "priceOptionLength"),
+                    qOrder.status.stringValue().as("orderStatus"),
                     qContent.status.stringValue().as("status")))
             .from(qPurchase)
             .leftJoin(qPurchase.content, qContent)
