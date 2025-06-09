@@ -483,11 +483,11 @@ public class PayplePaymentService {
     payplePayment.updateStatus(PayplePaymentStatus.COMPLETED);
     payplePayment.updateApprovalInfo(
         (String) approvalResult.get("PCD_PAY_TIME"),
-        (String) approvalResult.get("PCD_PAY_CARDNNAME"),
+        (String) approvalResult.get("PCD_PAY_CARDNAME"),
         (String) approvalResult.get("PCD_PAY_CARDNUM"),
         (String) approvalResult.get("PCD_PAY_CARDTRADENUM"),
         (String) approvalResult.get("PCD_PAY_CARDAUTHNO"),
-        (String) approvalResult.get("PCD_CARD_RECEIPT"));
+        (String) approvalResult.get("PCD_PAY_CARDRECEIPT"));
     payplePaymentRepository.save(payplePayment);
   }
 
