@@ -35,8 +35,15 @@ public class AdminMakerController {
   public ResponseEntity<GrobleResponse<Void>> verifyMakerAccount(
       @Auth Accessor accessor, @Valid @RequestBody AdminMakerVerifyRequest request) {
 
-    adminMakerService.verifyMaker(
-        accessor.getUserId(), request.getNickname(), request.getStatus().name());
-    return ResponseEntity.ok(GrobleResponse.success(null));
+    return switch (request.getStatus()) {
+      case APPROVED -> {
+        adminMakerService.approveMaker(accessor.getUserId(), request.getNickname());
+        yield ResponseEntity.ok(GrobleResponse.success(null, "메이커 인증 승인 성공"));
+      }
+      case REJECTED -> {
+        adminMakerService.rejectMaker(accessor.getUserId(), request.getNickname());
+        yield ResponseEntity.ok(GrobleResponse.success(null, "메이커 인증 거절 성공"));
+      }
+    };
   }
 }

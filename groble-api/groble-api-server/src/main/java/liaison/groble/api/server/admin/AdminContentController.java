@@ -1,5 +1,7 @@
 package liaison.groble.api.server.admin;
 
+import jakarta.validation.Valid;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -35,22 +37,17 @@ public class AdminContentController {
   public ResponseEntity<GrobleResponse<Void>> examineContent(
       @Parameter(hidden = true) @Auth Accessor accessor,
       @PathVariable("contentId") Long contentId,
-      @RequestBody ContentExamineRequest examineRequest) {
-    final String APPROVE = "APPROVE";
-    final String REJECT = "REJECT";
+      @Valid @RequestBody ContentExamineRequest examineRequest) {
 
-    String action = examineRequest.getAction();
-
-    if (APPROVE.equals(action)) {
-      adminContentService.approveContent(contentId);
-      return ResponseEntity.ok(GrobleResponse.success(null, "콘텐츠 심사 승인 성공"));
-    } else if (REJECT.equals(action)) {
-      // 반려 사유가 있다면 함께 전달
-      String rejectReason = examineRequest.getRejectReason();
-      adminContentService.rejectContent(contentId, rejectReason);
-      return ResponseEntity.ok(GrobleResponse.success(null, "콘텐츠 심사 반려 성공"));
-    } else {
-      throw new IllegalArgumentException("지원하지 않는 심사 액션입니다: " + action);
-    }
+    return switch (examineRequest.getAction()) {
+      case APPROVE -> {
+        adminContentService.approveContent(contentId);
+        yield ResponseEntity.ok(GrobleResponse.success(null, "콘텐츠 심사 승인 성공"));
+      }
+      case REJECT -> {
+        adminContentService.rejectContent(contentId, examineRequest.getRejectReason());
+        yield ResponseEntity.ok(GrobleResponse.success(null, "콘텐츠 심사 반려 성공"));
+      }
+    };
   }
 }
