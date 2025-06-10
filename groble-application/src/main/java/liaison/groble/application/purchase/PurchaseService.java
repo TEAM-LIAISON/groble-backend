@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import liaison.groble.application.order.service.OrderReader;
 import liaison.groble.application.purchase.dto.PurchaseContentCardDto;
 import liaison.groble.application.purchase.dto.PurchasedContentDetailResponse;
+import liaison.groble.application.purchase.dto.PurchasedContentSellerContactResponse;
 import liaison.groble.application.purchase.service.PurchaseReader;
 import liaison.groble.common.response.CursorResponse;
 import liaison.groble.domain.content.enums.ContentType;
@@ -64,6 +65,19 @@ public class PurchaseService {
 
     Purchase purchase = purchaseReader.getPurchaseByOrderId(order.getId());
     return toPurchasedContentDetailResponse(purchase);
+  }
+
+  @Transactional(readOnly = true)
+  public PurchasedContentSellerContactResponse getSellerContact(Long userId, String merchantUid) {
+    Order order = orderReader.getOrderByMerchantUid(merchantUid);
+    if (!order.getUser().getId().equals(userId)) {
+      throw new IllegalArgumentException("해당 주문은 사용자의 것이 아닙니다.");
+    }
+    Purchase purchase = purchaseReader.getPurchaseByOrderId(order.getId());
+    return PurchasedContentSellerContactResponse.builder()
+        .sellerContactType(purchase.getContent().getUser().getSellerInfo().getSellerContactType())
+        .sellerContactUrl(purchase.getContent().getUser().getSellerInfo().getSellerContactUrl())
+        .build();
   }
 
   /** FlatPreviewContentDTO를 ContentCardDto로 변환합니다. */
