@@ -15,13 +15,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import liaison.groble.api.model.payment.request.PaymentCancelRequest;
 import liaison.groble.api.model.payment.request.PaypleLinkResendRequest;
-import liaison.groble.api.model.payment.request.PayplePaymentLinkRequest;
 import liaison.groble.api.model.payment.response.PaymentCancelResponse;
 import liaison.groble.api.server.payment.mapper.PayplePaymentMapper;
 import liaison.groble.application.payment.dto.AppCardPayplePaymentResponse;
 import liaison.groble.application.payment.dto.PaypleAuthResponseDto;
 import liaison.groble.application.payment.dto.PaypleAuthResultDto;
-import liaison.groble.application.payment.dto.PayplePaymentLinkRequestDto;
 import liaison.groble.application.payment.dto.link.PaypleLinkResendResponse;
 import liaison.groble.application.payment.dto.link.PaypleLinkResponse;
 import liaison.groble.application.payment.dto.link.PaypleLinkResponseDto;
@@ -185,27 +183,16 @@ public class PayplePaymentController {
         @ApiResponse(responseCode = "400", description = "잘못된 요청"),
         @ApiResponse(responseCode = "500", description = "서버 내부 오류")
       })
-  @PostMapping("/link-payment")
+  @PostMapping("/link-payment/{merchantUid}")
   public ResponseEntity<GrobleResponse<PaypleLinkResponse>> requestPaypleLinkPayment(
-      @Auth Accessor accessor,
-      @Valid @RequestBody PayplePaymentLinkRequest payplePaymentLinkRequest) {
-
-    log.info(
-        "링크 결제 요청 - userId: {}, orderId: {}",
-        accessor.getUserId(),
-        payplePaymentLinkRequest.getOrderId());
+      @Auth Accessor accessor, @Valid @PathVariable("merchantUid") String merchantUid) {
 
     try {
       // 1. 파트너 인증 요청
       PaypleAuthResponseDto paypleAuthResponseDto = payplePaymentService.getPaymentAuth("LINKREG");
 
-      // 2. 링크 결제 처리
-      PayplePaymentLinkRequestDto payplePaymentLinkRequestDto =
-          payplePaymentMapper.toPayplePaymentLinkRequestDto(payplePaymentLinkRequest);
-
       PaypleLinkResponseDto paypleLinkResponseDto =
-          payplePaymentService.processLinkPayment(
-              payplePaymentLinkRequestDto, paypleAuthResponseDto);
+          payplePaymentService.processLinkPayment(merchantUid, paypleAuthResponseDto);
 
       // 3. 응답 매핑
       PaypleLinkResponse paypleLinkResponse =

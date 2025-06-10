@@ -14,7 +14,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import liaison.groble.application.order.service.OrderReader;
 import liaison.groble.application.payment.dto.PaypleAuthResponseDto;
 import liaison.groble.application.payment.dto.PaypleAuthResultDto;
-import liaison.groble.application.payment.dto.PayplePaymentLinkRequestDto;
 import liaison.groble.application.payment.dto.link.PaypleLinkResendResponse;
 import liaison.groble.application.payment.dto.link.PaypleLinkResponseDto;
 import liaison.groble.application.payment.dto.link.PaypleLinkStatusResponse;
@@ -206,28 +205,18 @@ public class PayplePaymentService {
    *
    * <p>페이플 링크 결제를 위한 링크를 생성합니다. 생성된 링크를 통해 고객이 결제를 진행할 수 있습니다.
    *
-   * @param linkRequest 링크 결제 요청 정보
+   * @param merchantUid 주문 번호 (merchantUid)
    * @param authResponse 파트너 인증 응답 정보
    * @return 링크 결제 응답 정보 (결제 링크 URL 포함)
    * @throws RuntimeException 링크 생성 실패 시
    */
   @Transactional
   public PaypleLinkResponseDto processLinkPayment(
-      PayplePaymentLinkRequestDto linkRequest, PaypleAuthResponseDto authResponse) {
-    log.info(
-        "페이플 링크 결제 처리 시작 - orderId: {}, contentId: {}, totalPrice: {}",
-        linkRequest.getOrderId(),
-        linkRequest.getContentId(),
-        linkRequest.getTotalPrice());
+      String merchantUid, PaypleAuthResponseDto authResponse) {
+    log.info("페이플 링크 결제 처리 시작 - merchantUid: {}", merchantUid);
 
     try {
-      // 1. 주문 조회 및 검증
-      Order order =
-          orderRepository
-              .findById(linkRequest.getOrderId())
-              .orElseThrow(
-                  () -> new IllegalArgumentException("주문을 찾을 수 없습니다: " + linkRequest.getOrderId()));
-
+      Order order = orderReader.getOrderByMerchantUid(merchantUid);
       // 2. 주문 상태 검증
       if (order.getStatus() != Order.OrderStatus.PENDING) {
         throw new IllegalStateException("결제 대기 상태의 주문만 처리할 수 있습니다.");
