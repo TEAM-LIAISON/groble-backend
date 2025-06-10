@@ -171,8 +171,6 @@ public class ContentController {
     return ResponseEntity.ok(GrobleResponse.success(responsePage));
   }
 
-  // ------------------------
-  // PageRequest 생성 헬퍼
   /** PageRequest 생성 헬퍼 */
   private Pageable createPageable(int page, int size, String sort) {
     String[] parts = sort.split(",");

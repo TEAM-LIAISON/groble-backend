@@ -81,7 +81,7 @@ public class PayplePaymentMapper {
   public PaymentCancelResponse toPaymentCancelResponse(
       PaymentCancelResponseDto paymentCancelResponseDto) {
     return PaymentCancelResponse.builder()
-        .orderId(paymentCancelResponseDto.getOrderId())
+        .merchantUid(paymentCancelResponseDto.getMerchantUid())
         .status(paymentCancelResponseDto.getStatus())
         .canceledAt(paymentCancelResponseDto.getCanceledAt())
         .cancelReason(paymentCancelResponseDto.getCancelReason())

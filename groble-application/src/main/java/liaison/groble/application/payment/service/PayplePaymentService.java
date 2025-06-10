@@ -169,27 +169,27 @@ public class PayplePaymentService {
    *
    * <p>승인된 결제를 취소하고 환불 처리합니다. 페이플 API를 통해 환불을 요청하고, 성공 시 관련 엔티티들의 상태를 업데이트합니다.
    *
-   * @param orderId 주문 번호 (merchantUid)
+   * @param merchantUid 주문 번호 (merchantUid)
    * @param reason 취소 사유
    * @throws IllegalArgumentException 주문이나 결제 정보를 찾을 수 없는 경우
    * @throws IllegalStateException 취소할 수 없는 상태인 경우
    * @throws RuntimeException 결제 취소가 실패한 경우
    */
   @Transactional
-  public void cancelPayment(String orderId, String reason) {
-    log.info("결제 취소 처리 시작 - 주문번호: {}, 사유: {}", orderId, reason);
+  public void cancelPayment(String merchantUid, String reason) {
+    log.info("결제 취소 처리 시작 - 주문번호: {}, 사유: {}", merchantUid, reason);
 
     try {
       // 1. 주문 및 결제 정보 조회
-      Order order = findOrderByMerchantUid(orderId);
-      PayplePayment payplePayment = findPayplePayment(orderId);
+      Order order = findOrderByMerchantUid(merchantUid);
+      PayplePayment payplePayment = findPayplePayment(merchantUid);
       Purchase purchase = findPurchaseByOrder(order);
 
       // 2. 취소 가능 상태 검증
       validateCancellableStatus(order, payplePayment);
 
       // 3. 환불 요청
-      PaypleRefundRequest refundRequest = createRefundRequest(orderId, payplePayment);
+      PaypleRefundRequest refundRequest = createRefundRequest(merchantUid, payplePayment);
       JSONObject refundResult = paypleService.payRefund(refundRequest);
 
       // 4. 환불 결과 처리
@@ -198,11 +198,11 @@ public class PayplePaymentService {
       if ("success".equalsIgnoreCase(refundRst)) {
         handleRefundSuccess(order, payplePayment, purchase, reason);
       } else {
-        handleRefundFailure(orderId, refundResult);
+        handleRefundFailure(merchantUid, refundResult);
       }
 
     } catch (Exception e) {
-      log.error("결제 취소 처리 중 오류 발생 - 주문번호: {}", orderId, e);
+      log.error("결제 취소 처리 중 오류 발생 - 주문번호: {}", merchantUid, e);
       throw e;
     }
   }
@@ -675,11 +675,11 @@ public class PayplePaymentService {
   /**
    * 환불 요청 객체 생성
    *
-   * @param orderId 주문 번호
+   * @param merchantUid 주문 번호
    * @param payplePayment 페이플 결제 정보
    * @return 환불 요청 객체
    */
-  private PaypleRefundRequest createRefundRequest(String orderId, PayplePayment payplePayment) {
+  private PaypleRefundRequest createRefundRequest(String merchantUid, PayplePayment payplePayment) {
     // 결제일자를 YYYYMMDD 형식으로 변환
     String payDate =
         payplePayment
@@ -688,7 +688,7 @@ public class PayplePaymentService {
             .format(java.time.format.DateTimeFormatter.BASIC_ISO_DATE);
 
     return PaypleRefundRequest.builder()
-        .payOid(orderId)
+        .payOid(merchantUid)
         .payDate(payDate)
         .refundTotal(payplePayment.getPcdPayTotal())
         .refundTaxtotal(payplePayment.getPcdPayTaxTotal()) // 복합과세인 경우
@@ -738,15 +738,16 @@ public class PayplePaymentService {
   /**
    * 환불 실패 처리
    *
-   * @param orderId 주문 번호
+   * @param merchantUid 주문 번호
    * @param refundResult 환불 결과
    * @throws RuntimeException 환불 실패
    */
-  private void handleRefundFailure(String orderId, JSONObject refundResult) {
+  private void handleRefundFailure(String merchantUid, JSONObject refundResult) {
     String errorMsg = (String) refundResult.get("PCD_PAY_MSG");
     String errorCode = (String) refundResult.get("PCD_PAY_CODE");
 
-    log.error("결제 취소 실패 - orderId: {}, errorCode: {}, message: {}", orderId, errorCode, errorMsg);
+    log.error(
+        "결제 취소 실패 - merchantUid: {}, errorCode: {}, message: {}", merchantUid, errorCode, errorMsg);
 
     throw new RuntimeException(String.format("결제 취소 실패 [%s]: %s", errorCode, errorMsg));
   }

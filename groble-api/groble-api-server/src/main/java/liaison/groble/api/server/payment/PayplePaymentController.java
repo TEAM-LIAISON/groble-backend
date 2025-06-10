@@ -170,45 +170,45 @@ public class PayplePaymentController {
         @ApiResponse(responseCode = "401", description = "인증 실패"),
         @ApiResponse(responseCode = "500", description = "서버 내부 오류")
       })
-  @PostMapping("/{orderId}/cancel")
+  @PostMapping("/{merchantUid}/cancel")
   public ResponseEntity<GrobleResponse<PaymentCancelResponse>> cancelPayment(
       @Auth Accessor accessor,
-      @PathVariable String orderId,
+      @PathVariable String merchantUid,
       @Valid @RequestBody PaymentCancelRequest request) {
 
     log.info(
         "결제 취소 요청 - 주문번호: {}, 사유: {}, userId: {}",
-        orderId,
+        merchantUid,
         request.getReason(),
         accessor.getUserId());
 
     try {
       // 결제 취소 처리
-      payplePaymentService.cancelPayment(orderId, request.getReason());
+      payplePaymentService.cancelPayment(merchantUid, request.getReason());
 
       // 취소 성공 응답 생성
       PaymentCancelResponse response =
           PaymentCancelResponse.builder()
-              .orderId(orderId)
+              .merchantUid(merchantUid)
               .status("CANCELLED")
               .canceledAt(LocalDateTime.now())
               .cancelReason(request.getReason())
               .build();
 
-      log.info("결제 취소 완료 - 주문번호: {}", orderId);
+      log.info("결제 취소 완료 - 주문번호: {}", merchantUid);
       return ResponseEntity.ok(GrobleResponse.success(response));
 
     } catch (IllegalArgumentException e) {
-      log.error("결제 취소 실패 - 주문을 찾을 수 없음: {}", orderId, e);
-      throw new PayplePaymentAuthException("주문을 찾을 수 없습니다: " + orderId);
+      log.error("결제 취소 실패 - 주문을 찾을 수 없음: {}", merchantUid, e);
+      throw new PayplePaymentAuthException("주문을 찾을 수 없습니다: " + merchantUid);
     } catch (IllegalStateException e) {
-      log.error("결제 취소 실패 - 취소할 수 없는 상태: {}", orderId, e);
+      log.error("결제 취소 실패 - 취소할 수 없는 상태: {}", merchantUid, e);
       throw new PayplePaymentAuthException("취소할 수 없는 상태입니다: " + e.getMessage());
     } catch (RuntimeException e) {
-      log.error("결제 취소 실패 - 환불 처리 오류: {}", orderId, e);
+      log.error("결제 취소 실패 - 환불 처리 오류: {}", merchantUid, e);
       throw new PayplePaymentAuthException("환불 처리 중 오류가 발생했습니다: " + e.getMessage());
     } catch (Exception e) {
-      log.error("결제 취소 중 예상치 못한 오류 발생: {}", orderId, e);
+      log.error("결제 취소 중 예상치 못한 오류 발생: {}", merchantUid, e);
       throw new PayplePaymentAuthException("결제 취소 처리 중 오류가 발생했습니다.");
     }
   }

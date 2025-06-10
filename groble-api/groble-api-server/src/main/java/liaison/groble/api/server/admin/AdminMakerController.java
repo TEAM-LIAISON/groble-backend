@@ -24,7 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/admin")
-@Tag(name = "관리자 기능 관련 API", description = "관리자 기능 API")
+@Tag(name = "관리자 메이커 기능 관련 API", description = "관리자 메이커 인증 API")
 public class AdminMakerController {
 
   private final AdminMakerService adminMakerService;
