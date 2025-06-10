@@ -9,17 +9,17 @@ import liaison.groble.api.model.payment.response.PaymentCompleteResponse;
 import liaison.groble.api.model.payment.response.PaymentInfo;
 import liaison.groble.api.model.payment.response.PaymentRequestResponse;
 import liaison.groble.api.model.payment.response.PaypleAuthResponse;
-import liaison.groble.api.model.payment.response.PaypleLinkResponse;
 import liaison.groble.application.payment.dto.PaymentCancelResponseDto;
 import liaison.groble.application.payment.dto.PaymentCompleteResponseDto;
 import liaison.groble.application.payment.dto.PaymentInfoDto;
 import liaison.groble.application.payment.dto.PaymentRequestDto;
 import liaison.groble.application.payment.dto.PaymentRequestResponseDto;
 import liaison.groble.application.payment.dto.PaypleAuthResponseDto;
-import liaison.groble.application.payment.dto.PaypleLinkResponseDto;
 import liaison.groble.application.payment.dto.PayplePaymentLinkRequestDto;
 import liaison.groble.application.payment.dto.PayplePaymentResult;
 import liaison.groble.application.payment.dto.PayplePaymentResultDto;
+import liaison.groble.application.payment.dto.link.PaypleLinkResponse;
+import liaison.groble.application.payment.dto.link.PaypleLinkResponseDto;
 
 @Component
 public class PayplePaymentMapper {

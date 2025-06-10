@@ -6,6 +6,7 @@ import jakarta.validation.Valid;
 
 import org.json.simple.JSONObject;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -13,9 +14,18 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import liaison.groble.api.model.payment.request.PaymentCancelRequest;
+import liaison.groble.api.model.payment.request.PaypleLinkResendRequest;
+import liaison.groble.api.model.payment.request.PayplePaymentLinkRequest;
 import liaison.groble.api.model.payment.response.PaymentCancelResponse;
+import liaison.groble.api.server.payment.mapper.PayplePaymentMapper;
 import liaison.groble.application.payment.dto.AppCardPayplePaymentResponse;
+import liaison.groble.application.payment.dto.PaypleAuthResponseDto;
 import liaison.groble.application.payment.dto.PaypleAuthResultDto;
+import liaison.groble.application.payment.dto.PayplePaymentLinkRequestDto;
+import liaison.groble.application.payment.dto.link.PaypleLinkResendResponse;
+import liaison.groble.application.payment.dto.link.PaypleLinkResponse;
+import liaison.groble.application.payment.dto.link.PaypleLinkResponseDto;
+import liaison.groble.application.payment.dto.link.PaypleLinkStatusResponse;
 import liaison.groble.application.payment.exception.PayplePaymentAuthException;
 import liaison.groble.application.payment.service.PayplePaymentService;
 import liaison.groble.common.annotation.Auth;
@@ -37,6 +47,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class PayplePaymentController {
   private final PayplePaymentService payplePaymentService;
+  private final PayplePaymentMapper payplePaymentMapper;
 
   // 앱카드 결제 인증 결과를 수신하고 결제 승인 요청을 페이플 서버에 보낸다.
   @Operation(
@@ -143,6 +154,215 @@ public class PayplePaymentController {
   }
 
   @Operation(
+      summary = "페이플 링크 결제 요청",
+      description = "링크 결제를 요청하고 결제 링크를 받아옵니다.",
+      responses = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "링크 생성 성공",
+            content =
+                @Content(
+                    mediaType = "application/json",
+                    examples =
+                        @ExampleObject(
+                            value =
+                                """
+                  {
+                    "success": true,
+                    "data": {
+                      "linkRst": "success",
+                      "linkMsg": "링크가 생성되었습니다.",
+                      "linkKey": "LINK_1234567890",
+                      "linkUrl": "https://link.payple.kr/pay/LINK_1234567890",
+                      "linkOid": "ORDER_1234",
+                      "linkGoods": "상품명",
+                      "linkTotal": "10000",
+                      "linkTime": "20250605123045",
+                      "linkExpire": "20250612123045"
+                    }
+                  }
+                  """))),
+        @ApiResponse(responseCode = "400", description = "잘못된 요청"),
+        @ApiResponse(responseCode = "500", description = "서버 내부 오류")
+      })
+  @PostMapping("/link-payment")
+  public ResponseEntity<GrobleResponse<PaypleLinkResponse>> requestPaypleLinkPayment(
+      @Auth Accessor accessor,
+      @Valid @RequestBody PayplePaymentLinkRequest payplePaymentLinkRequest) {
+
+    log.info(
+        "링크 결제 요청 - userId: {}, orderId: {}",
+        accessor.getUserId(),
+        payplePaymentLinkRequest.getOrderId());
+
+    try {
+      // 1. 파트너 인증 요청
+      PaypleAuthResponseDto paypleAuthResponseDto = payplePaymentService.getPaymentAuth("LINKREG");
+
+      // 2. 링크 결제 처리
+      PayplePaymentLinkRequestDto payplePaymentLinkRequestDto =
+          payplePaymentMapper.toPayplePaymentLinkRequestDto(payplePaymentLinkRequest);
+
+      PaypleLinkResponseDto paypleLinkResponseDto =
+          payplePaymentService.processLinkPayment(
+              payplePaymentLinkRequestDto, paypleAuthResponseDto);
+
+      // 3. 응답 매핑
+      PaypleLinkResponse paypleLinkResponse =
+          payplePaymentMapper.toPaypleLinkResponse(paypleLinkResponseDto);
+
+      return ResponseEntity.ok(GrobleResponse.success(paypleLinkResponse));
+
+    } catch (IllegalArgumentException e) {
+      log.error("링크 결제 요청 실패 - 잘못된 요청: {}", e.getMessage());
+      throw new PayplePaymentAuthException("잘못된 요청: " + e.getMessage());
+    } catch (IllegalStateException e) {
+      log.error("링크 결제 요청 실패 - 상태 오류: {}", e.getMessage());
+      throw new PayplePaymentAuthException("요청 처리 불가: " + e.getMessage());
+    } catch (Exception e) {
+      log.error("링크 결제 요청 중 오류 발생", e);
+      throw new PayplePaymentAuthException("링크 결제 요청 처리 중 오류가 발생했습니다.");
+    }
+  }
+
+  @Operation(
+      summary = "링크 결제 완료 콜백",
+      description = "페이플에서 링크 결제 완료 후 호출하는 콜백 엔드포인트입니다.",
+      responses = {
+        @ApiResponse(responseCode = "200", description = "콜백 처리 성공"),
+        @ApiResponse(responseCode = "400", description = "잘못된 요청"),
+        @ApiResponse(responseCode = "500", description = "서버 내부 오류")
+      })
+  @PostMapping("/link-payment/complete")
+  public ResponseEntity<GrobleResponse<String>> completeLinkPayment(
+      @RequestBody PaypleAuthResultDto resultDto) {
+
+    log.info("링크 결제 완료 콜백 수신 - 주문번호: {}, 결과: {}", resultDto.getPayOid(), resultDto.getPayRst());
+
+    try {
+      // 결제 실패 처리
+      if (resultDto.isError() || resultDto.isClosed()) {
+        payplePaymentService.handleLinkPaymentFailure(resultDto);
+        return ResponseEntity.ok(GrobleResponse.success("FAILED"));
+      }
+
+      // 결제 성공 처리
+      payplePaymentService.handleLinkPaymentSuccess(resultDto);
+      return ResponseEntity.ok(GrobleResponse.success("SUCCESS"));
+
+    } catch (Exception e) {
+      log.error("링크 결제 콜백 처리 중 오류 발생", e);
+      return ResponseEntity.ok(GrobleResponse.success("ERROR"));
+    }
+  }
+
+  @Operation(
+      summary = "링크 결제 상태 조회",
+      description = "생성된 링크 결제의 현재 상태를 조회합니다.",
+      responses = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "상태 조회 성공",
+            content =
+                @Content(
+                    mediaType = "application/json",
+                    examples =
+                        @ExampleObject(
+                            value =
+                                """
+                  {
+                    "success": true,
+                    "data": {
+                      "merchantUid": "ORDER_1234",
+                      "status": "LINK_CREATED",
+                      "linkUrl": "https://link.payple.kr/pay/LINK_1234567890",
+                      "createdAt": "2025-06-05T12:30:45",
+                      "expireAt": "2025-06-12T12:30:45",
+                      "paymentStatus": null
+                    }
+                  }
+                  """))),
+        @ApiResponse(responseCode = "404", description = "링크 결제 정보를 찾을 수 없음"),
+        @ApiResponse(responseCode = "401", description = "인증 실패")
+      })
+  @GetMapping("/link-payment/{merchantUid}/status")
+  public ResponseEntity<GrobleResponse<PaypleLinkStatusResponse>> getLinkPaymentStatus(
+      @Auth Accessor accessor, @PathVariable String merchantUid) {
+
+    log.info("링크 결제 상태 조회 - merchantUid: {}, userId: {}", merchantUid, accessor.getUserId());
+
+    try {
+      PaypleLinkStatusResponse status =
+          payplePaymentService.getLinkPaymentStatus(merchantUid, accessor.getUserId());
+      return ResponseEntity.ok(GrobleResponse.success(status));
+    } catch (IllegalArgumentException e) {
+      log.error("링크 결제 상태 조회 실패 - 결제 정보 없음: {}", merchantUid);
+      throw new PayplePaymentAuthException("링크 결제 정보를 찾을 수 없습니다: " + merchantUid);
+    } catch (Exception e) {
+      log.error("링크 결제 상태 조회 중 오류 발생", e);
+      throw new PayplePaymentAuthException("상태 조회 중 오류가 발생했습니다.");
+    }
+  }
+
+  @Operation(
+      summary = "링크 결제 재전송",
+      description = "기존에 생성된 링크 결제를 재전송합니다. (SMS, 이메일 등)",
+      responses = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "재전송 성공",
+            content =
+                @Content(
+                    mediaType = "application/json",
+                    examples =
+                        @ExampleObject(
+                            value =
+                                """
+                  {
+                    "success": true,
+                    "data": {
+                      "merchantUid": "ORDER_1234",
+                      "linkUrl": "https://link.payple.kr/pay/LINK_1234567890",
+                      "sentAt": "2025-06-08T15:30:45",
+                      "method": "SMS"
+                    }
+                  }
+                  """))),
+        @ApiResponse(responseCode = "404", description = "링크 결제 정보를 찾을 수 없음"),
+        @ApiResponse(responseCode = "400", description = "재전송 불가능한 상태"),
+        @ApiResponse(responseCode = "401", description = "인증 실패")
+      })
+  @PostMapping("/link-payment/{merchantUid}/resend")
+  public ResponseEntity<GrobleResponse<PaypleLinkResendResponse>> resendLinkPayment(
+      @Auth Accessor accessor,
+      @PathVariable String merchantUid,
+      @RequestBody PaypleLinkResendRequest request) {
+
+    log.info(
+        "링크 결제 재전송 요청 - merchantUid: {}, method: {}, userId: {}",
+        merchantUid,
+        request.getMethod(),
+        accessor.getUserId());
+
+    try {
+      PaypleLinkResendResponse response =
+          payplePaymentService.resendLinkPayment(
+              merchantUid, accessor.getUserId(), request.getMethod());
+
+      return ResponseEntity.ok(GrobleResponse.success(response));
+    } catch (IllegalArgumentException e) {
+      log.error("링크 결제 재전송 실패 - 결제 정보 없음: {}", merchantUid);
+      throw new PayplePaymentAuthException("링크 결제 정보를 찾을 수 없습니다: " + merchantUid);
+    } catch (IllegalStateException e) {
+      log.error("링크 결제 재전송 실패 - 재전송 불가 상태: {}", e.getMessage());
+      throw new PayplePaymentAuthException("재전송 불가능한 상태입니다: " + e.getMessage());
+    } catch (Exception e) {
+      log.error("링크 결제 재전송 중 오류 발생", e);
+      throw new PayplePaymentAuthException("재전송 처리 중 오류가 발생했습니다.");
+    }
+  }
+
+  @Operation(
       summary = "결제 취소",
       description = "결제를 취소하고 환불 처리합니다.",
       responses = {
@@ -213,202 +433,3 @@ public class PayplePaymentController {
     }
   }
 }
-
-//  // 링크 결제 요청이 들어온다
-//  // 1. 파트너 인증 요청을 페이플 서버에 보낸다
-//  // 2. 인증 결과를 받아온다.
-//  // 3. 해당 인증 결과를 바탕으로 링크 생성 요청을 페이플 서버에 보낸다.
-//  // 4. 링크 생성 결과를 받아온다.
-//  // 5. 링크 생성 결과를 클라이언트에 반환한다.
-//
-//  @Operation(summary = "페이플 링크 결제 요청", description = "링크 결제를 요청하고 결제 링크를 받아옵니다.")
-//  @PostMapping("/link-payment")
-//  public ResponseEntity<GrobleResponse<PaypleLinkResponse>> requestPaypleLinkPayment(
-//      @Valid @RequestBody PayplePaymentLinkRequest payplePaymentLinkRequest) {
-//    PayplePaymentLinkRequestDto payplePaymentLinkRequestDto =
-//        payplePaymentMapper.toPayplePaymentLinkRequestDto(payplePaymentLinkRequest);
-//    PaypleAuthResponseDto paypleAuthResponseDto = payplePaymentService.getPaymentAuth("LINKREG");
-//    log.info(
-//        "페이플 링크 결제 요청 - authKey: {}, clientKey: {}, returnUrl: {}",
-//        paypleAuthResponseDto.getAuthKey(),
-//        paypleAuthResponseDto.getClientKey(),
-//        paypleAuthResponseDto.getReturnUrl());
-//    PaypleLinkResponseDto paypleLinkResponseDto =
-//        payplePaymentService.processLinkPayment(payplePaymentLinkRequestDto,
-// paypleAuthResponseDto);
-//    PaypleLinkResponse paypleLinkResponse =
-//        payplePaymentMapper.toPaypleLinkResponse(paypleLinkResponseDto);
-//    return ResponseEntity.ok(GrobleResponse.success(paypleLinkResponse));
-//  }
-// }
-//
-
-//// * 5. 결제 완료 콜백 (/api/v1/payments/payple/complete)
-//// *    - 페이플로부터 결제 결과 수신
-//// *    - PayplePayment 상태 업데이트 (COMPLETED/FAILED)
-//// *    - Order 상태 업데이트 (PAID/FAILED)
-//// *    - Payment 엔티티 생성 및 상태 업데이트
-//// *    - Purchase 엔티티 생성 (구매 완료)
-//// *    - 쿠폰 사용 처리
-//// *
-//// * 6. 결제 실패 시
-//// *    - 모든 엔티티 상태를 FAILED로 업데이트
-//// *    - 쿠폰 사용 취소
-//// *
-//// * 7. 결제 취소 요청 시
-//// *    - 페이플 환불 API 호출
-//// *    - 모든 엔티티 상태를 CANCELLED로 업데이트
-//// *    - 쿠폰 사용 취소
-//// */
-//
-////
-////    private final PayplePaymentService payplePaymentService;
-////    private final OrderTermsService orderService;
-////    private final PaymentService paymentService;
-////    private final PurchaseService purchaseService;
-////
-////    @Operation(summary = "결제 요청", description = "페이플 결제를 위한 초기 요청")
-////    @PostMapping("/request")
-////    public ResponseEntity<PaymentRequestResponse> requestPayment(
-////            @CurrentUser Long userId,
-////            @RequestBody PaymentRequest request) {
-////
-////        // 2. PayplePayment 생성 (PENDING 상태)
-////        PaymentRequestDto paymentRequestDto = PaymentRequestDto.builder()
-////            .orderId(order.getMerchantUid())
-////            .amount(order.getFinalAmount())
-////            .payMethod(request.getPayMethod())
-////            .productName(request.getProductName())
-////            .build();
-////
-////        PaymentRequestResponseDto response = payplePaymentService.processPayment(userId,
-//// paymentRequestDto);
-////
-////        // 3. 페이플 인증 정보 조회
-////        PaypleAuthResponseDto authInfo =
-//// payplePaymentService.getPaymentAuth(request.getPayWork());
-////
-////        return ResponseEntity.ok(
-////            PaymentRequestResponse.builder()
-////                .orderId(order.getMerchantUid())
-////                .amount(order.getFinalAmount())
-////                .authKey(authInfo.getAuthKey())
-////                .clientKey(authInfo.getClientKey())
-////                .returnUrl(authInfo.getReturnUrl())
-////                .build()
-////        );
-////    }
-////
-////    @Operation(summary = "결제 완료 처리", description = "페이플 결제 완료 후 콜백 처리")
-////    @PostMapping("/complete")
-////    public ResponseEntity<PaymentCompleteResponse> completePayment(
-////            @CurrentUser Long userId,
-////            @RequestBody PayplePaymentResultDto resultDto) {
-////
-////        // 1. PayplePayment 상태 업데이트
-////        PaymentCompleteResponseDto paypleResponse =
-//// payplePaymentService.completePayment(resultDto);
-////
-////        // 2. Order 조회
-////        Order order = orderService.findByMerchantUid(resultDto.getPayOid());
-////
-////        if ("SUCCESS".equals(paypleResponse.getStatus())) {
-////            // 3. Payment 엔티티 생성 및 저장
-////            Payment payment = Payment.builder()
-////                .order(order)
-////                .paymentKey(resultDto.getPayKey())
-////                .paymentMethod(PaymentMethod.valueOf(resultDto.getPayMethod()))
-////                .amount(order.getFinalAmount())
-////                .selectedOptionType(order.getOrderItems().get(0).getOptionType())
-////                .selectedOptionId(order.getOrderItems().get(0).getOptionId())
-////                .customerName(resultDto.getPayerName())
-////                .customerEmail(resultDto.getPayerEmail())
-////                .customerMobilePhone(resultDto.getPayerHp())
-////                .build();
-////
-////            payment.markAsPaid(
-////                resultDto.getPayKey(),
-////                resultDto.getPayTid(),
-////                resultDto.toMap()
-////            );
-////
-////            Payment savedPayment = paymentService.save(payment);
-////
-////            // 4. Order 상태 업데이트
-////            order.completePayment();
-////            orderService.save(order);
-////
-////            // 5. Purchase 생성
-////            Purchase purchase = Purchase.createFromOrder(order);
-////            purchase.complete();
-////            purchaseService.save(purchase);
-////
-////            // 6. 쿠폰 사용 처리 (Order.completePayment()에서 처리됨)
-////
-////            return ResponseEntity.ok(
-////                PaymentCompleteResponse.builder()
-////                    .orderId(order.getMerchantUid())
-////                    .status("SUCCESS")
-////                    .message("결제가 완료되었습니다.")
-////                    .purchaseId(purchase.getId())
-////                    .build()
-////            );
-////        } else {
-////            // 결제 실패 처리
-////            order.failOrder("결제 실패: " + paypleResponse.getMessage());
-////            orderService.save(order);
-////
-////            return ResponseEntity.ok(
-////                PaymentCompleteResponse.builder()
-////                    .orderId(order.getMerchantUid())
-////                    .status("FAILED")
-////                    .message(paypleResponse.getMessage())
-////                    .build()
-////            );
-////        }
-////    }
-////
-////    @Operation(summary = "결제 취소", description = "결제 취소 요청")
-////    @PostMapping("/cancel")
-////    public ResponseEntity<PaymentCancelResponse> cancelPayment(
-////            @CurrentUser Long userId,
-////            @RequestBody PaymentCancelRequest request) {
-////
-////        // 1. Order 조회
-////        Order order = orderService.findByMerchantUid(request.getOrderId());
-////
-////        // 권한 확인
-////        if (!order.getUser().getId().equals(userId)) {
-////            throw new UnauthorizedException("결제 취소 권한이 없습니다.");
-////        }
-////
-////        // 2. PayplePayment 취소
-////        PaymentCancelResponseDto cancelResponse = payplePaymentService.cancelPayment(
-////            request.getOrderId(),
-////            request.getReason()
-////        );
-////
-////        // 3. Payment 취소 처리
-////        Payment payment = order.getPayment();
-////        payment.cancel(request.getReason(), payment.getAmount());
-////        paymentService.save(payment);
-////
-////        // 4. Order 취소 처리 (쿠폰 사용 취소 포함)
-////        order.cancelOrder(request.getReason());
-////        orderService.save(order);
-////
-////        // 5. Purchase 취소 처리
-////        Purchase purchase = purchaseService.findByOrder(order);
-////        purchase.cancel(request.getReason());
-////        purchaseService.save(purchase);
-////
-////        return ResponseEntity.ok(
-////            PaymentCancelResponse.builder()
-////                .orderId(order.getMerchantUid())
-////                .status("CANCELLED")
-////                .message("결제가 취소되었습니다.")
-////                .cancelledAt(LocalDateTime.now())
-////                .build()
-////        );
-////    }
-//// }
