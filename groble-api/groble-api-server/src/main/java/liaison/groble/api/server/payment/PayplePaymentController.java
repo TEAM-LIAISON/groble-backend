@@ -386,7 +386,7 @@ public class PayplePaymentController {
   @PostMapping("/{merchantUid}/cancel")
   public ResponseEntity<GrobleResponse<PaymentCancelResponse>> cancelPayment(
       @Auth Accessor accessor,
-      @PathVariable String merchantUid,
+      @Valid @PathVariable("merchantUid") String merchantUid,
       @Valid @RequestBody PaymentCancelRequest request) {
 
     log.info(
