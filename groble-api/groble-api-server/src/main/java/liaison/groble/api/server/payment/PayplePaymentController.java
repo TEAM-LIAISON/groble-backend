@@ -396,8 +396,12 @@ public class PayplePaymentController {
         accessor.getUserId());
 
     try {
+      PaypleAuthResponseDto paypleAuthResponseDto = payplePaymentService.getPaymentAuthForCancel();
+
       // 결제 취소 처리
-      payplePaymentService.cancelPayment(merchantUid, request.getReason());
+      JSONObject approvalResult =
+          payplePaymentService.cancelPayment(
+              paypleAuthResponseDto, merchantUid, request.getReason());
 
       // 취소 성공 응답 생성
       PaymentCancelResponse response =

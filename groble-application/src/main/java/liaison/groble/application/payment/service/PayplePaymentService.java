@@ -200,6 +200,14 @@ public class PayplePaymentService {
     }
   }
 
+  @Transactional(readOnly = true)
+  public PaypleAuthResponseDto getPaymentAuthForCancel() {
+    log.info("결제 취소를 위한 페이플 파트너 인증 요청 시작");
+
+    // 취소 요청을 위한 일반 인증 사용
+    return getPaymentAuth("AUTH");
+  }
+
   /**
    * 페이플 링크 결제 처리
    *
@@ -360,14 +368,17 @@ public class PayplePaymentService {
    *
    * <p>승인된 결제를 취소하고 환불 처리합니다. 페이플 API를 통해 환불을 요청하고, 성공 시 관련 엔티티들의 상태를 업데이트합니다.
    *
+   * @param paypleAuthResponseDto 페이플 인증 정보
    * @param merchantUid 주문 번호 (merchantUid)
    * @param reason 취소 사유
+   * @return 취소 결과 JSON
    * @throws IllegalArgumentException 주문이나 결제 정보를 찾을 수 없는 경우
    * @throws IllegalStateException 취소할 수 없는 상태인 경우
    * @throws RuntimeException 결제 취소가 실패한 경우
    */
   @Transactional
-  public void cancelPayment(String merchantUid, String reason) {
+  public JSONObject cancelPayment(
+      PaypleAuthResponseDto paypleAuthResponseDto, String merchantUid, String reason) {
     log.info("결제 취소 처리 시작 - 주문번호: {}, 사유: {}", merchantUid, reason);
 
     try {
@@ -390,7 +401,8 @@ public class PayplePaymentService {
 
       // 3. 환불 요청
       log.info("페이플 환불 요청 시작 - 주문번호: {}, 결제금액: {}", merchantUid, purchase.getFinalPrice());
-      PaypleRefundRequest refundRequest = createRefundRequest(merchantUid, payplePayment);
+      PaypleRefundRequest refundRequest =
+          createRefundRequest(merchantUid, payplePayment, paypleAuthResponseDto);
       log.debug("환불 요청 데이터 생성 완료 - 요청금액: {}", refundRequest.getRefundTotal());
 
       JSONObject refundResult = paypleService.payRefund(refundRequest);
@@ -408,6 +420,8 @@ public class PayplePaymentService {
         log.warn("환불 실패 처리 시작 - 주문번호: {}, 실패사유: {}", merchantUid, refundResult.get("PCD_PAY_MSG"));
         handleRefundFailure(merchantUid, refundResult);
       }
+
+      return refundResult;
 
     } catch (IllegalArgumentException | IllegalStateException e) {
       log.warn("결제 취소 처리 실패 - 주문번호: {}, 사유: {}", merchantUid, e.getMessage());
@@ -888,9 +902,11 @@ public class PayplePaymentService {
    *
    * @param merchantUid 주문 번호
    * @param payplePayment 페이플 결제 정보
+   * @param authResponse 인증 응답 정보
    * @return 환불 요청 객체
    */
-  private PaypleRefundRequest createRefundRequest(String merchantUid, PayplePayment payplePayment) {
+  private PaypleRefundRequest createRefundRequest(
+      String merchantUid, PayplePayment payplePayment, PaypleAuthResponseDto authResponse) {
     // 결제일자를 YYYYMMDD 형식으로 변환
     String payDate =
         payplePayment
@@ -899,6 +915,7 @@ public class PayplePaymentService {
             .format(java.time.format.DateTimeFormatter.BASIC_ISO_DATE);
 
     return PaypleRefundRequest.builder()
+        .authKey(authResponse.getAuthKey())
         .payOid(merchantUid)
         .payDate(payDate)
         .refundTotal(payplePayment.getPcdPayTotal())

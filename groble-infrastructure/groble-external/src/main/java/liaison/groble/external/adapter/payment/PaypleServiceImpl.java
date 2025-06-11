@@ -6,7 +6,6 @@ import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.HashMap;
 import java.util.Map;
 
 import org.json.simple.JSONObject;
@@ -257,46 +256,48 @@ public class PaypleServiceImpl implements PaypleService {
     JSONParser jsonParser = new JSONParser();
 
     try {
-      // 결제취소 전 파트너 인증
-      Map<String, String> refundParams = new HashMap<>();
-      refundParams.put("PCD_PAYCANCEL_FLAG", "Y");
+      // 페이플 취소 API URL (고정)
+      String cancelUrl = paypleConfig.getCancelApiUrl();
 
-      JSONObject authObj = payAuth(refundParams);
+      log.info("페이플 결제 취소 요청 시작 - 주문번호: {}, 금액: {}", request.getPayOid(), request.getRefundTotal());
 
-      // 파트너 인증 응답값
-      String cstId = (String) authObj.get("cst_id");
-      String custKey = (String) authObj.get("custKey");
-      String authKey = (String) authObj.get("AuthKey");
-      String payRefURL = (String) authObj.get("return_url");
-
-      // 결제취소 요청 전송
+      // 결제취소 요청 파라미터 구성
       JSONObject refundObj = new JSONObject();
-      refundObj.put("PCD_CST_ID", cstId);
-      refundObj.put("PCD_CUST_KEY", custKey);
-      refundObj.put("PCD_AUTH_KEY", authKey);
+      refundObj.put("PCD_CST_ID", paypleConfig.getCstId());
+      refundObj.put("PCD_CUST_KEY", paypleConfig.getCustKey());
+      refundObj.put("PCD_AUTH_KEY", request.getAuthKey());
       refundObj.put("PCD_REFUND_KEY", paypleConfig.getRefundKey());
       refundObj.put("PCD_PAYCANCEL_FLAG", "Y");
       refundObj.put("PCD_PAY_OID", request.getPayOid());
       refundObj.put("PCD_PAY_DATE", request.getPayDate());
       refundObj.put("PCD_REFUND_TOTAL", request.getRefundTotal());
+
       if (request.getRefundTaxtotal() != null) {
         refundObj.put("PCD_REFUND_TAXTOTAL", request.getRefundTaxtotal());
       }
 
-      URL url = new URL(payRefURL);
+      log.debug("페이플 결제 취소 요청 파라미터: {}", refundObj.toString());
+
+      // HTTP 연결 설정
+      URL url = new URL(cancelUrl);
       HttpURLConnection con = (HttpURLConnection) url.openConnection();
 
       con.setRequestMethod("POST");
-      con.setRequestProperty("content-type", "application/json");
-      con.setRequestProperty("referer", "https://groble.liaison.com");
+      con.setRequestProperty("Content-Type", "application/json");
+      con.setRequestProperty("Cache-Control", "no-cache");
+      con.setRequestProperty("Referer", paypleConfig.getRefererUrl());
       con.setDoOutput(true);
 
+      // 요청 전송
       DataOutputStream wr = new DataOutputStream(con.getOutputStream());
-      wr.writeBytes(refundObj.toString());
+      wr.write(refundObj.toString().getBytes("UTF-8"));
       wr.flush();
       wr.close();
 
+      // 응답 처리
       int responseCode = con.getResponseCode();
+      log.debug("페이플 취소 응답 코드: {}", responseCode);
+
       BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
       String inputLine;
       StringBuffer response = new StringBuffer();
@@ -304,13 +305,16 @@ public class PaypleServiceImpl implements PaypleService {
       while ((inputLine = in.readLine()) != null) {
         response.append(inputLine);
       }
-
       in.close();
 
       jsonObject = (JSONObject) jsonParser.parse(response.toString());
 
+      log.info("페이플 결제 취소 응답: {}", jsonObject.toString());
+
     } catch (Exception e) {
-      log.error("Payple 결제 취소 오류: ", e);
+      log.error("페이플 결제 취소 중 오류 발생 - 주문번호: {}", request.getPayOid(), e);
+      jsonObject.put("PCD_PAY_RST", "error");
+      jsonObject.put("PCD_PAY_MSG", "결제 취소 처리 중 오류가 발생했습니다: " + e.getMessage());
     }
 
     return jsonObject;
