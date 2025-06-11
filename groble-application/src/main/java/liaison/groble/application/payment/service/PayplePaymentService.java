@@ -372,28 +372,48 @@ public class PayplePaymentService {
 
     try {
       // 1. 주문 및 결제 정보 조회
+      log.debug("주문 및 결제 정보 조회 시작 - 주문번호: {}", merchantUid);
       Order order = findOrderByMerchantUid(merchantUid);
       PayplePayment payplePayment = findPayplePayment(merchantUid);
       Purchase purchase = findPurchaseByOrder(order);
+      log.info(
+          "주문 및 결제 정보 조회 완료 - 주문ID: {}, 결제ID: {}, 구매ID: {}",
+          order.getId(),
+          payplePayment.getId(),
+          purchase.getId());
 
       // 2. 취소 가능 상태 검증
+      log.debug(
+          "취소 가능 상태 검증 시작 - 주문상태: {}, 결제상태: {}", order.getStatus(), payplePayment.getStatus());
       validateCancellableStatus(order, payplePayment);
+      log.info("취소 가능 상태 검증 완료 - 주문번호: {}", merchantUid);
 
       // 3. 환불 요청
+      log.info("페이플 환불 요청 시작 - 주문번호: {}, 결제금액: {}", merchantUid, purchase.getFinalPrice());
       PaypleRefundRequest refundRequest = createRefundRequest(merchantUid, payplePayment);
+      log.debug("환불 요청 데이터 생성 완료 - 요청금액: {}", refundRequest.getRefundTotal());
+
       JSONObject refundResult = paypleService.payRefund(refundRequest);
+      log.info("페이플 환불 요청 완료 - 주문번호: {}, 응답결과: {}", merchantUid, refundResult.get("PCD_PAY_RST"));
 
       // 4. 환불 결과 처리
       String refundRst = (String) refundResult.get("PCD_PAY_RST");
+      log.debug("환불 결과 처리 시작 - 결과코드: {}, 주문번호: {}", refundRst, merchantUid);
 
       if ("success".equalsIgnoreCase(refundRst)) {
+        log.info("환불 성공 처리 시작 - 주문번호: {}", merchantUid);
         handleRefundSuccess(order, payplePayment, purchase, reason);
+        log.info("결제 취소 처리 완료 - 주문번호: {}, 환불금액: {}", merchantUid, purchase.getFinalPrice());
       } else {
+        log.warn("환불 실패 처리 시작 - 주문번호: {}, 실패사유: {}", merchantUid, refundResult.get("PCD_PAY_MSG"));
         handleRefundFailure(merchantUid, refundResult);
       }
 
+    } catch (IllegalArgumentException | IllegalStateException e) {
+      log.warn("결제 취소 처리 실패 - 주문번호: {}, 사유: {}", merchantUid, e.getMessage());
+      throw e;
     } catch (Exception e) {
-      log.error("결제 취소 처리 중 오류 발생 - 주문번호: {}", merchantUid, e);
+      log.error("결제 취소 처리 중 예상치 못한 오류 발생 - 주문번호: {}", merchantUid, e);
       throw e;
     }
   }
