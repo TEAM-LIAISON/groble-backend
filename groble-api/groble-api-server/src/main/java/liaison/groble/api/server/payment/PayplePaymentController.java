@@ -1,6 +1,8 @@
 package liaison.groble.api.server.payment;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 
 import jakarta.validation.Valid;
 
@@ -417,6 +419,163 @@ public class PayplePaymentController {
     } catch (Exception e) {
       log.error("결제 취소 중 예상치 못한 오류 발생: {}", merchantUid, e);
       throw new PayplePaymentAuthException("결제 취소 처리 중 오류가 발생했습니다.");
+    }
+  }
+
+  @Operation(
+      summary = "빌링 카드 등록",
+      description = "정기결제를 위한 빌링 카드를 등록합니다. 등록 성공 시 빌링키가 발급됩니다.",
+      responses = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "카드 등록 성공",
+            content =
+                @Content(
+                    mediaType = "application/json",
+                    examples =
+                        @ExampleObject(
+                            value =
+                                """
+                  {
+                    "success": true,
+                    "data": {
+                      "payRst": "success",
+                      "payCode": "0000",
+                      "payMsg": "빌링키 등록이 완료되었습니다.",
+                      "payerId": "PAYER_1234567890",
+                      "cardName": "Samsung Card",
+                      "cardNum": "1234-****-****-5678",
+                      "registeredAt": "2025-06-05T12:30:45"
+                    }
+                  }
+                  """))),
+        @ApiResponse(responseCode = "400", description = "잘못된 요청"),
+        @ApiResponse(responseCode = "500", description = "서버 내부 오류")
+      })
+  @PostMapping("/billing/register")
+  public ResponseEntity<GrobleResponse<Map<String, Object>>> registerBillingCard(
+      @Auth Accessor accessor, @Valid @RequestBody PaypleAuthResultDto authResultDto) {
+
+    log.info(
+        "빌링 카드 등록 요청 - userId: {}, 결과: {}, 코드: {}, 메시지: {}",
+        accessor.getUserId(),
+        authResultDto.getPayRst(),
+        authResultDto.getPayCode(),
+        authResultDto.getPayMsg());
+
+    if (authResultDto.isError()) {
+      log.error(
+          "빌링 카드 등록 실패 - 코드: {}, 메시지: {}", authResultDto.getPayCode(), authResultDto.getPayMsg());
+      throw new PayplePaymentAuthException("빌링 카드 등록 실패: " + authResultDto.getPayMsg());
+    }
+
+    if (authResultDto.isClosed()) {
+      log.warn("빌링 카드 등록 취소 - 사용자가 결제창을 닫음");
+      Map<String, Object> response = new HashMap<>();
+      response.put("status", "cancelled");
+      response.put("message", "카드 등록이 취소되었습니다.");
+      return ResponseEntity.ok(GrobleResponse.success(response));
+    }
+
+    try {
+      // 빌링 카드 등록 처리
+      Map<String, Object> result =
+          payplePaymentService.registerBillingCard(accessor.getUserId(), authResultDto);
+
+      log.info(
+          "빌링 카드 등록 성공 - userId: {}, payerId: {}", accessor.getUserId(), result.get("payerId"));
+      return ResponseEntity.ok(GrobleResponse.success(result));
+
+    } catch (Exception e) {
+      log.error("빌링 카드 등록 중 오류 발생", e);
+      throw new PayplePaymentAuthException("빌링 카드 등록 처리 중 오류가 발생했습니다.");
+    }
+  }
+
+  @Operation(
+      summary = "빌링 결제 실행",
+      description = "등록된 빌링키로 정기결제를 실행합니다.",
+      responses = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "결제 성공",
+            content =
+                @Content(
+                    mediaType = "application/json",
+                    examples =
+                        @ExampleObject(
+                            value =
+                                """
+                  {
+                    "success": true,
+                    "data": {
+                      "payRst": "success",
+                      "payCode": "0000",
+                      "payMsg": "결제가 정상적으로 완료되었습니다.",
+                      "payOid": "ORDER_1234",
+                      "payType": "card",
+                      "payTime": "20250605123045",
+                      "payTotal": "10000",
+                      "payCardName": "Samsung Card",
+                      "payCardNum": "1234-****-****-5678",
+                      "payCardAuthNo": "12345678",
+                      "payCardReceipt": "https://receipt.payple.kr/receipt/abcd1234"
+                    }
+                  }
+                  """))),
+        @ApiResponse(responseCode = "400", description = "잘못된 요청"),
+        @ApiResponse(responseCode = "404", description = "빌링키를 찾을 수 없음"),
+        @ApiResponse(responseCode = "500", description = "서버 내부 오류")
+      })
+  @PostMapping("/billing/payment/{merchantUid}")
+  public ResponseEntity<GrobleResponse<AppCardPayplePaymentResponse>> executeBillingPayment(
+      @Auth Accessor accessor, @PathVariable String merchantUid) {
+
+    log.info("빌링 결제 실행 요청 - merchantUid: {}, userId: {}", merchantUid, accessor.getUserId());
+
+    try {
+      // 빌링 결제 실행
+      JSONObject paymentResult =
+          payplePaymentService.executeBillingPayment(merchantUid, accessor.getUserId());
+
+      // 결제 결과 확인
+      String payRst = (String) paymentResult.get("PCD_PAY_RST");
+      if (!"success".equalsIgnoreCase(payRst)) {
+        String errorMsg = (String) paymentResult.get("PCD_PAY_MSG");
+        log.error("빌링 결제 실패 - 메시지: {}", errorMsg);
+        throw new PayplePaymentAuthException("빌링 결제 실패: " + errorMsg);
+      }
+
+      // 결제 성공 응답 생성
+      AppCardPayplePaymentResponse response =
+          AppCardPayplePaymentResponse.builder()
+              .payRst(payRst)
+              .payCode((String) paymentResult.get("PCD_PAY_CODE"))
+              .payMsg((String) paymentResult.get("PCD_PAY_MSG"))
+              .payOid((String) paymentResult.get("PCD_PAY_OID"))
+              .payType((String) paymentResult.get("PCD_PAY_TYPE"))
+              .payTime((String) paymentResult.get("PCD_PAY_TIME"))
+              .payTotal((String) paymentResult.get("PCD_PAY_TOTAL"))
+              .payCardName((String) paymentResult.get("PCD_PAY_CARDNAME"))
+              .payCardNum((String) paymentResult.get("PCD_PAY_CARDNUM"))
+              .payCardQuota((String) paymentResult.get("PCD_PAY_CARDQUOTA"))
+              .payCardTradeNum((String) paymentResult.get("PCD_PAY_CARDTRADENUM"))
+              .payCardAuthNo((String) paymentResult.get("PCD_PAY_CARDAUTHNO"))
+              .payCardReceipt((String) paymentResult.get("PCD_CARD_RECEIPT"))
+              .build();
+
+      log.info("빌링 결제 성공 - orderId: {}", response.getPayOid());
+      return ResponseEntity.ok(GrobleResponse.success(response));
+
+    } catch (IllegalArgumentException e) {
+      log.error("빌링 결제 실패 - 주문 또는 빌링키를 찾을 수 없음: {}", merchantUid);
+      throw new PayplePaymentAuthException("주문 또는 빌링키를 찾을 수 없습니다: " + merchantUid);
+    } catch (IllegalStateException e) {
+      log.error("빌링 결제 실패 - 결제할 수 없는 상태: {}", e.getMessage());
+      throw new PayplePaymentAuthException("결제할 수 없는 상태입니다: " + e.getMessage());
+    } catch (Exception e) {
+      log.error("빌링 결제 처리 중 오류 발생", e);
+      throw new PayplePaymentAuthException("빌링 결제 처리 중 오류가 발생했습니다.");
     }
   }
 }

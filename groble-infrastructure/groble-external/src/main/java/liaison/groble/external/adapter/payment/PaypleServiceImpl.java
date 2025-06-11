@@ -315,4 +315,68 @@ public class PaypleServiceImpl implements PaypleService {
 
     return jsonObject;
   }
+
+  @Override
+  public JSONObject paySimplePayment(Map<String, String> params) {
+    JSONObject jsonObject = new JSONObject();
+    JSONParser jsonParser = new JSONParser();
+
+    try {
+      // 빌링(간편) 결제 URL
+      String simplePaymentUrl = paypleConfig.getSimplePaymentUrl();
+
+      // 요청 파라미터 구성
+      JSONObject obj = new JSONObject();
+      obj.put("PCD_CST_ID", params.get("PCD_CST_ID"));
+      obj.put("PCD_CUST_KEY", params.get("PCD_CUST_KEY"));
+      obj.put("PCD_AUTH_KEY", params.get("PCD_AUTH_KEY"));
+      obj.put("PCD_PAY_TYPE", params.get("PCD_PAY_TYPE"));
+      obj.put("PCD_PAYER_ID", params.get("PCD_PAYER_ID"));
+      obj.put("PCD_PAY_GOODS", params.get("PCD_PAY_GOODS"));
+      obj.put("PCD_PAY_TOTAL", params.get("PCD_PAY_TOTAL"));
+      obj.put("PCD_SIMPLE_FLAG", params.get("PCD_SIMPLE_FLAG"));
+      obj.put("PCD_PAY_OID", params.get("PCD_PAY_OID"));
+      obj.put("PCD_PAYER_NO", params.get("PCD_PAYER_NO"));
+      obj.put("PCD_PAYER_NAME", params.get("PCD_PAYER_NAME"));
+      obj.put("PCD_PAYER_HP", params.get("PCD_PAYER_HP"));
+      obj.put("PCD_PAYER_EMAIL", params.get("PCD_PAYER_EMAIL"));
+
+      log.info("페이플 빌링 결제 요청: {}", obj.toString());
+
+      URL url = new URL(simplePaymentUrl);
+      HttpURLConnection con = (HttpURLConnection) url.openConnection();
+
+      con.setRequestMethod("POST");
+      con.setRequestProperty("content-type", "application/json");
+      con.setRequestProperty("charset", "UTF-8");
+      con.setRequestProperty("referer", paypleConfig.getRefererUrl());
+      con.setDoOutput(true);
+
+      DataOutputStream wr = new DataOutputStream(con.getOutputStream());
+      wr.write(obj.toString().getBytes());
+      wr.flush();
+      wr.close();
+
+      int responseCode = con.getResponseCode();
+      BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+      String inputLine;
+      StringBuffer response = new StringBuffer();
+
+      while ((inputLine = in.readLine()) != null) {
+        response.append(inputLine);
+      }
+      in.close();
+
+      jsonObject = (JSONObject) jsonParser.parse(response.toString());
+
+      log.info("페이플 빌링 결제 응답: {}", jsonObject.toString());
+
+    } catch (Exception e) {
+      log.error("Payple 빌링 결제 오류: ", e);
+      jsonObject.put("PCD_PAY_RST", "error");
+      jsonObject.put("PCD_PAY_MSG", "빌링 결제 처리 중 오류가 발생했습니다: " + e.getMessage());
+    }
+
+    return jsonObject;
+  }
 }

@@ -53,4 +53,10 @@ public class PaypleConfig {
   public String getRefererUrl() {
     return testMode ? "https://test.groble.im" : "https://groble.im";
   }
+
+  public String getSimplePaymentUrl() {
+    return testMode
+        ? "https://democpay.payple.kr/php/SimplePayCardAct.php?ACT_=PAYM"
+        : "https://cpay.payple.kr/php/SimplePayCardAct.php?ACT_=PAYM";
+  }
 }
