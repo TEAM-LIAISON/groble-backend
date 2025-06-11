@@ -15,8 +15,4 @@ public class PaypleLinkResponse {
   private String linkTotal; // 결제금액
   private String linkTime; // 링크 생성 시간
   private String linkExpire; // 링크 만료 시간
-
-  // 기존 호환성을 위한 필드 (deprecated)
-  @Deprecated private String paymentResult;
-  @Deprecated private String paymentLinkUrl;
 }

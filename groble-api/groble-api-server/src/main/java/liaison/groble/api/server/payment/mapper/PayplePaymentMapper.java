@@ -103,8 +103,15 @@ public class PayplePaymentMapper {
 
   public PaypleLinkResponse toPaypleLinkResponse(PaypleLinkResponseDto paypleLinkResponseDto) {
     return PaypleLinkResponse.builder()
-        .paymentResult(paypleLinkResponseDto.getPaymentResult())
-        .paymentLinkUrl(paypleLinkResponseDto.getPaymentLinkUrl())
+        .linkRst(paypleLinkResponseDto.getLinkRst())
+        .linkMsg(paypleLinkResponseDto.getLinkMsg())
+        .linkKey(paypleLinkResponseDto.getLinkKey())
+        .linkUrl(paypleLinkResponseDto.getLinkUrl())
+        .linkOid(paypleLinkResponseDto.getLinkOid())
+        .linkGoods(paypleLinkResponseDto.getLinkGoods())
+        .linkTotal(paypleLinkResponseDto.getLinkTotal())
+        .linkTime(paypleLinkResponseDto.getLinkTime())
+        .linkExpire(paypleLinkResponseDto.getLinkExpire())
         .build();
   }
 }
