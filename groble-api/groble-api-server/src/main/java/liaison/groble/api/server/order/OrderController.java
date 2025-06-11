@@ -53,7 +53,7 @@ public class OrderController {
       HttpServletRequest httpRequest) {
     CreateOrderResponse response;
 
-    response = processAuthenticatedOrder(request, accessor);
+    response = processAuthenticatedOrder(request, accessor.getUserId());
 
     // 회원 주문 약관 동의 처리
     processOrderTermsAgreement(accessor.getUserId(), httpRequest);
@@ -108,13 +108,12 @@ public class OrderController {
    * 회원 주문 처리
    *
    * @param request 주문 요청 정보
-   * @param accessor 인증된 사용자 정보
+   * @param userId 인증된 사용자의 ID 정보
    * @return 주문 생성 응답
    */
-  private CreateOrderResponse processAuthenticatedOrder(
-      CreateOrderRequest request, Accessor accessor) {
+  private CreateOrderResponse processAuthenticatedOrder(CreateOrderRequest request, Long userId) {
     CreateOrderDto dto = convertToCreateOrderDto(request);
-    return orderService.createOrderForUser(dto, accessor.getUserId());
+    return orderService.createOrderForUser(dto, userId);
   }
 
   private CreateOrderDto convertToCreateOrderDto(CreateOrderRequest request) {

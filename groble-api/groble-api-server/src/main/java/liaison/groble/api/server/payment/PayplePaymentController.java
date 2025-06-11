@@ -153,6 +153,7 @@ public class PayplePaymentController {
     }
   }
 
+  @Deprecated
   @Operation(
       summary = "페이플 링크 결제 요청",
       description = "링크 결제를 요청하고 결제 링크를 받아옵니다.",
@@ -214,6 +215,7 @@ public class PayplePaymentController {
     }
   }
 
+  @Deprecated
   @Operation(
       summary = "링크 결제 완료 콜백",
       description = "페이플에서 링크 결제 완료 후 호출하는 콜백 엔드포인트입니다.",
@@ -245,6 +247,7 @@ public class PayplePaymentController {
     }
   }
 
+  @Deprecated
   @Operation(
       summary = "링크 결제 상태 조회",
       description = "생성된 링크 결제의 현재 상태를 조회합니다.",
@@ -293,6 +296,7 @@ public class PayplePaymentController {
     }
   }
 
+  @Deprecated
   @Operation(
       summary = "링크 결제 재전송",
       description = "기존에 생성된 링크 결제를 재전송합니다. (SMS, 이메일 등)",
@@ -422,6 +426,7 @@ public class PayplePaymentController {
     }
   }
 
+  @Deprecated
   @Operation(
       summary = "빌링 카드 등록",
       description = "정기결제를 위한 빌링 카드를 등록합니다. 등록 성공 시 빌링키가 발급됩니다.",
@@ -492,6 +497,7 @@ public class PayplePaymentController {
     }
   }
 
+  @Deprecated
   @Operation(
       summary = "빌링 결제 실행",
       description = "등록된 빌링키로 정기결제를 실행합니다.",
