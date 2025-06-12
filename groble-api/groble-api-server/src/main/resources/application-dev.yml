@@ -46,6 +46,14 @@ spring:
 
   application:
     name: groble
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 0
+    validate-on-migrate: true
+    clean-disabled: true
+
   jpa:
     database-platform: org.hibernate.dialect.MySQL8Dialect
     properties:
