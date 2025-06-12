@@ -44,7 +44,7 @@ public class AdminContentController {
   private final AdminContentService adminContentService;
 
   @AdminContentSummaryInfo
-  @RequireRole
+  @RequireRole("ROLE_ADMIN")
   @GetMapping("/contents")
   public ResponseEntity<GrobleResponse<PageResponse<AdminContentSummaryInfoResponse>>>
       getAllContents(
