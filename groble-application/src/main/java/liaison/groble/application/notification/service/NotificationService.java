@@ -9,6 +9,7 @@ import liaison.groble.application.notification.dto.NotificationDetailsDto;
 import liaison.groble.application.notification.dto.NotificationItemDto;
 import liaison.groble.application.notification.dto.NotificationItemsDto;
 import liaison.groble.application.notification.mapper.NotificationMapper;
+import liaison.groble.domain.notification.entity.CertifyDetails;
 import liaison.groble.domain.notification.entity.Notification;
 import liaison.groble.domain.notification.entity.SystemDetails;
 import liaison.groble.domain.notification.enums.NotificationType;
@@ -135,5 +136,35 @@ public class NotificationService {
 
     notificationRepository.save(notification);
     log.info("환영 알림 발송: userId={}", user.getId());
+  }
+
+  @Transactional
+  public void sendMakerCertifiedVerificationNotification(User user) {
+    CertifyDetails certifyDetails = CertifyDetails.builder().nickname(user.getNickname()).build();
+
+    Notification notification =
+        notificationMapper.toNotification(
+            user.getId(),
+            NotificationType.CERTIFY,
+            SubNotificationType.MAKER_CERTIFIED,
+            certifyDetails);
+
+    notificationRepository.save(notification);
+    log.info("메이커 인증 승인 알림 발송: userId={}", user.getId());
+  }
+
+  @Transactional
+  public void sendMakerRejectedVerificationNotification(User user) {
+    CertifyDetails certifyDetails = CertifyDetails.builder().nickname(user.getNickname()).build();
+
+    Notification notification =
+        notificationMapper.toNotification(
+            user.getId(),
+            NotificationType.CERTIFY,
+            SubNotificationType.MAKER_CERTIFY_REJECTED,
+            certifyDetails);
+
+    notificationRepository.save(notification);
+    log.info("메이커 인증 거절 알림 발송: userId={}", user.getId());
   }
 }

@@ -53,4 +53,16 @@ public class PaypleConfig {
   public String getRefererUrl() {
     return testMode ? "https://test.groble.im" : "https://groble.im";
   }
+
+  public String getSimplePaymentUrl() {
+    return testMode
+        ? "https://democpay.payple.kr/php/SimplePayCardAct.php?ACT_=PAYM"
+        : "https://cpay.payple.kr/php/SimplePayCardAct.php?ACT_=PAYM";
+  }
+
+  public String getCancelApiUrl() {
+    return testMode
+        ? "https://democpay.payple.kr/php/account/api/cPayCAct.php"
+        : "https://cpay.payple.kr/php/account/api/cPayCAct.php";
+  }
 }

@@ -71,11 +71,6 @@ public class OrderItem extends BaseTimeEntity {
     this.optionId = optionId;
   }
 
-  // 비즈니스 메서드
-  public BigDecimal getTotalPrice() {
-    return price.multiply(BigDecimal.valueOf(quantity));
-  }
-
   // 옵션 타입 enum 추가
   public enum OptionType {
     COACHING_OPTION,

@@ -5,12 +5,17 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import liaison.groble.application.content.dto.ContentCardDto;
+import liaison.groble.application.order.service.OrderReader;
+import liaison.groble.application.purchase.dto.PurchaseContentCardDto;
+import liaison.groble.application.purchase.dto.PurchasedContentDetailResponse;
+import liaison.groble.application.purchase.dto.PurchasedContentSellerContactResponse;
+import liaison.groble.application.purchase.service.PurchaseReader;
 import liaison.groble.common.response.CursorResponse;
-import liaison.groble.domain.content.dto.FlatContentPreviewDTO;
-import liaison.groble.domain.content.enums.ContentStatus;
 import liaison.groble.domain.content.enums.ContentType;
-import liaison.groble.domain.content.repository.ContentCustomRepository;
+import liaison.groble.domain.order.entity.Order;
+import liaison.groble.domain.purchase.dto.FlatPurchaseContentPreviewDTO;
+import liaison.groble.domain.purchase.entity.Purchase;
+import liaison.groble.domain.purchase.repository.PurchaseCustomRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,27 +25,28 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class PurchaseService {
 
-  private final ContentCustomRepository contentCustomRepository;
+  private final PurchaseCustomRepository purchaseCustomRepository;
+  private final OrderReader orderReader;
+  private final PurchaseReader purchaseReader;
 
   @Transactional(readOnly = true)
-  public CursorResponse<ContentCardDto> getMyPurchasingContents(
+  public CursorResponse<PurchaseContentCardDto> getMyPurchasingContents(
       Long userId, String cursor, int size, String state, String type) {
     Long lastContentId = parseContentIdFromCursor(cursor);
-    ContentStatus contentStatus = parseContentStatus(state);
+    List<Order.OrderStatus> orderStatusList = parseOrderStatusList(state);
     ContentType contentType = parseContentType(type);
 
-    CursorResponse<FlatContentPreviewDTO> flatDtos =
-        contentCustomRepository.findMyPurchasingContentsWithCursor(
-            userId, lastContentId, size, contentStatus, contentType);
+    CursorResponse<FlatPurchaseContentPreviewDTO> flatDtos =
+        purchaseCustomRepository.findMyPurchasingContentsWithCursor(
+            userId, lastContentId, size, orderStatusList, contentType);
 
-    List<ContentCardDto> cardDtos =
+    List<PurchaseContentCardDto> cardDtos =
         flatDtos.getItems().stream().map(this::convertFlatDtoToCardDto).toList();
 
     int totalCount =
-        contentCustomRepository.countMyPurchasingContents(userId, contentStatus, contentType);
+        purchaseCustomRepository.countMyPurchasingContents(userId, orderStatusList, contentType);
 
-    // 7. 응답 구성
-    return CursorResponse.<ContentCardDto>builder()
+    return CursorResponse.<PurchaseContentCardDto>builder()
         .items(cardDtos)
         .nextCursor(flatDtos.getNextCursor())
         .hasNext(flatDtos.isHasNext())
@@ -49,16 +55,45 @@ public class PurchaseService {
         .build();
   }
 
+  @Transactional(readOnly = true)
+  public PurchasedContentDetailResponse getMyPurchasedContent(Long userId, String merchantUid) {
+    Order order = orderReader.getOrderByMerchantUid(merchantUid);
+
+    if (!order.getUser().getId().equals(userId)) {
+      throw new IllegalArgumentException("해당 주문은 사용자의 것이 아닙니다.");
+    }
+
+    Purchase purchase = purchaseReader.getPurchaseByOrderId(order.getId());
+    return toPurchasedContentDetailResponse(purchase);
+  }
+
+  @Transactional(readOnly = true)
+  public PurchasedContentSellerContactResponse getSellerContact(Long userId, String merchantUid) {
+    Order order = orderReader.getOrderByMerchantUid(merchantUid);
+    if (!order.getUser().getId().equals(userId)) {
+      throw new IllegalArgumentException("해당 주문은 사용자의 것이 아닙니다.");
+    }
+    Purchase purchase = purchaseReader.getPurchaseByOrderId(order.getId());
+    return PurchasedContentSellerContactResponse.builder()
+        .sellerContactType(purchase.getContent().getUser().getSellerInfo().getSellerContactType())
+        .sellerContactUrl(purchase.getContent().getUser().getSellerInfo().getSellerContactUrl())
+        .build();
+  }
+
   /** FlatPreviewContentDTO를 ContentCardDto로 변환합니다. */
-  private ContentCardDto convertFlatDtoToCardDto(FlatContentPreviewDTO flat) {
-    return ContentCardDto.builder()
+  private PurchaseContentCardDto convertFlatDtoToCardDto(FlatPurchaseContentPreviewDTO flat) {
+    return PurchaseContentCardDto.builder()
+        .merchantUid(flat.getMerchantUid())
         .contentId(flat.getContentId())
-        .createdAt(flat.getCreatedAt())
+        .contentType(flat.getContentType())
+        .purchasedAt(flat.getPurchasedAt())
         .title(flat.getTitle())
         .thumbnailUrl(flat.getThumbnailUrl())
         .sellerName(flat.getSellerName())
-        .lowestPrice(flat.getLowestPrice())
+        .originalPrice(flat.getOriginalPrice())
+        .finalPrice(flat.getFinalPrice())
         .priceOptionLength(flat.getPriceOptionLength())
+        .orderStatus(flat.getOrderStatus())
         .status(flat.getStatus())
         .build();
   }
@@ -78,15 +113,15 @@ public class PurchaseService {
   }
 
   /** 문자열에서 ContentStatus를 파싱합니다. */
-  private ContentStatus parseContentStatus(String state) {
+  private List<Order.OrderStatus> parseOrderStatusList(String state) {
     if (state == null || state.isBlank()) {
       return null;
     }
 
     try {
-      return ContentStatus.valueOf(state.toUpperCase());
+      return List.of(Order.OrderStatus.valueOf(state.toUpperCase()));
     } catch (IllegalArgumentException e) {
-      log.warn("유효하지 않은 콘텐츠 상태: {}", state);
+      log.warn("유효하지 않은 구매 상태: {}", state);
       return null;
     }
   }
@@ -102,5 +137,33 @@ public class PurchaseService {
       log.warn("유효하지 않은 콘텐츠 유형: {}", type);
       return null;
     }
+  }
+
+  /**
+   * 구매한 상품 상세 응답 DTO 생성
+   *
+   * @param purchase 구매 정보
+   */
+  private PurchasedContentDetailResponse toPurchasedContentDetailResponse(Purchase purchase) {
+    Order order = purchase.getOrder();
+    var content = purchase.getContent();
+    var seller = content.getUser();
+
+    return PurchasedContentDetailResponse.builder()
+        // 주문 정보
+        .merchantUid(order.getMerchantUid())
+        .purchasedAt(purchase.getPurchasedAt())
+
+        // 콘텐츠 정보
+        .contentId(content.getId())
+        .contentTitle(content.getTitle())
+        .sellerName(seller.getNickname())
+
+        // 가격 정보
+        .originalPrice(purchase.getOriginalPrice())
+        .discountPrice(purchase.getDiscountPrice())
+        .finalPrice(purchase.getFinalPrice())
+        .isFreePurchase(purchase.getFinalPrice().signum() == 0)
+        .build();
   }
 }

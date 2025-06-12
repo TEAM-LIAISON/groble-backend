@@ -47,7 +47,7 @@ public class QOrder extends EntityPathBase<Order> {
 
     public final liaison.groble.domain.payment.entity.QPayment payment;
 
-    public final liaison.groble.domain.purchase.entity.QPurchaser purchaser;
+    public final QPurchaser purchaser;
 
     public final EnumPath<Order.OrderStatus> status = createEnum("status", Order.OrderStatus.class);
 
@@ -78,7 +78,7 @@ public class QOrder extends EntityPathBase<Order> {
         super(type, metadata, inits);
         this.appliedCoupon = inits.isInitialized("appliedCoupon") ? new liaison.groble.domain.coupon.entity.QUserCoupon(forProperty("appliedCoupon"), inits.get("appliedCoupon")) : null;
         this.payment = inits.isInitialized("payment") ? new liaison.groble.domain.payment.entity.QPayment(forProperty("payment"), inits.get("payment")) : null;
-        this.purchaser = inits.isInitialized("purchaser") ? new liaison.groble.domain.purchase.entity.QPurchaser(forProperty("purchaser")) : null;
+        this.purchaser = inits.isInitialized("purchaser") ? new QPurchaser(forProperty("purchaser")) : null;
         this.user = inits.isInitialized("user") ? new liaison.groble.domain.user.entity.QUser(forProperty("user"), inits.get("user")) : null;
     }
 

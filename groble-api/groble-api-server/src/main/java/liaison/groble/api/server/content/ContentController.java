@@ -16,19 +16,16 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import liaison.groble.api.model.content.request.examine.ContentExamineRequest;
 import liaison.groble.api.model.content.response.ContentDetailResponse;
 import liaison.groble.api.model.content.response.ContentPreviewCardResponse;
 import liaison.groble.api.model.content.response.HomeContentsResponse;
 import liaison.groble.api.model.content.response.swagger.ContentDetail;
-import liaison.groble.api.model.content.response.swagger.ContentExamine;
 import liaison.groble.api.model.content.response.swagger.ContentsCoachingCategory;
 import liaison.groble.api.model.content.response.swagger.ContentsDocumentCategory;
 import liaison.groble.api.model.content.response.swagger.HomeContents;
@@ -174,8 +171,6 @@ public class ContentController {
     return ResponseEntity.ok(GrobleResponse.success(responsePage));
   }
 
-  // ------------------------
-  // PageRequest 생성 헬퍼
   /** PageRequest 생성 헬퍼 */
   private Pageable createPageable(int page, int size, String sort) {
     String[] parts = sort.split(",");
@@ -213,32 +208,6 @@ public class ContentController {
         .pageInfo(dtoPage.getPageInfo())
         .meta(dtoPage.getMeta())
         .build();
-  }
-
-  // 콘텐츠 심사
-  @Deprecated
-  @ContentExamine
-  @PostMapping("/content/{contentId}/examine")
-  public ResponseEntity<GrobleResponse<Void>> examineContent(
-      @Parameter(hidden = true) @Auth Accessor accessor,
-      @PathVariable("contentId") Long contentId,
-      @RequestBody ContentExamineRequest examineRequest) {
-    final String APPROVE = "APPROVE";
-    final String REJECT = "REJECT";
-
-    String action = examineRequest.getAction();
-
-    if (APPROVE.equals(action)) {
-      contentService.approveContent(accessor.getUserId(), contentId);
-      return ResponseEntity.ok(GrobleResponse.success(null, "콘텐츠 심사 승인 성공"));
-    } else if (REJECT.equals(action)) {
-      // 반려 사유가 있다면 함께 전달
-      String rejectReason = examineRequest.getRejectReason();
-      contentService.rejectContent(accessor.getUserId(), contentId, rejectReason);
-      return ResponseEntity.ok(GrobleResponse.success(null, "콘텐츠 심사 반려 성공"));
-    } else {
-      throw new IllegalArgumentException("지원하지 않는 심사 액션입니다: " + action);
-    }
   }
 
   // 콘텐츠의 썸네일 이미지 저장 요청

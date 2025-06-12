@@ -31,6 +31,13 @@ spring:
 
   application:
     name: groble
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 0
+    validate-on-migrate: true
+    clean-disabled: true
   jpa:
     database-platform: org.hibernate.dialect.MySQL8Dialect
     properties:
@@ -46,7 +53,7 @@ spring:
         order_inserts: true
         order_updates: true
     hibernate:
-        ddl-auto: update
+        ddl-auto: validate
   sql:
     init:
       mode: always

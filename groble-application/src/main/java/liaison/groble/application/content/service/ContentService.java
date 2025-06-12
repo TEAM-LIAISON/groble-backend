@@ -44,9 +44,6 @@ import liaison.groble.domain.content.repository.ContentCustomRepository;
 import liaison.groble.domain.content.repository.ContentRepository;
 import liaison.groble.domain.file.entity.FileInfo;
 import liaison.groble.domain.file.repository.FileRepository;
-import liaison.groble.domain.notification.entity.ReviewDetails;
-import liaison.groble.domain.notification.enums.NotificationType;
-import liaison.groble.domain.notification.enums.SubNotificationType;
 import liaison.groble.domain.notification.repository.NotificationRepository;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.vo.UserProfile;
@@ -127,10 +124,20 @@ public class ContentService {
     // 3. Content 준비 (기존 업데이트 또는 새로 생성)
     Content content;
     if (contentDto.getContentId() != null) {
-      // 기존 Content 업데이트
+      // 1) 기존 콘텐츠 로드 (영속 상태 보장)
       content = findAndValidateUserContent(userId, contentDto.getContentId());
+
+      // 2) 옵션 컬렉션을 처음부터 로딩
+      //    (lazy 로딩일 경우, 강제로 컬렉션을 초기화해서
+      //     이미 DB에 남아 있는 실제 엔티티만 제거되도록 함)
+      content.getOptions().size();
+      // → 이 시점에 Hibernate가 DB에 남아 있는 옵션 리스트를 가져옵니다.
+
+      // 3) 컬렉션에서 실제로 제거할 대상만 남겨두고 지울 수 있도록
+      //    (예: 무조건 다 지우려면 clear 그대로 사용해도 되지만,
+      //     clear 직전에 fetch를 했으니 DB에 없는 id로 삭제쿼리가 나가지 않음)
+      content.getOptions().clear();
     } else {
-      // 새 Content 생성
       content = new Content(user);
     }
 
@@ -142,17 +149,27 @@ public class ContentService {
     content.setCategory(category); // 카테고리 설정
     content.setStatus(ContentStatus.PENDING); // 심사중으로 설정
 
-    // 6. 기존 옵션 제거 및 새 옵션 추가
-    if (content.getOptions() != null) {
-      content.getOptions().clear();
-    }
-
+    // 4) 새 옵션 추가
     if (contentDto.getOptions() != null && !contentDto.getOptions().isEmpty()) {
       addOptionsToContent(content, contentDto);
     }
 
     // 7. 저장 및 변환
     log.info("콘텐츠 심사 요청 완료. 유저 ID: {}", userId);
+
+    final LocalDateTime nowInSeoul = LocalDateTime.now(ZoneId.of("Asia/Seoul"));
+
+    final ContentRegisterCreateReportDto contentRegisterCreateReportDto =
+        ContentRegisterCreateReportDto.builder()
+            .nickname(content.getUser().getNickname())
+            .contentId(content.getId())
+            .contentTitle(content.getTitle())
+            .contentType(content.getContentType().name())
+            .createdAt(nowInSeoul)
+            .build();
+
+    discordContentRegisterReportService.sendCreateContentRegisterReport(
+        contentRegisterCreateReportDto);
 
     return saveAndConvertToDto(content);
   }
@@ -423,53 +440,6 @@ public class ContentService {
     return content.getRejectReason();
   }
 
-  @Transactional
-  public void approveContent(Long userId, Long contentId) {
-    // TODO : userId가 관리자인지 판단
-
-    Content content = contentReader.getContentById(contentId);
-    content.setStatus(ContentStatus.VALIDATED);
-    saveAndConvertToDto(content);
-
-    ReviewDetails reviewDetails =
-        ReviewDetails.builder()
-            .contentId(content.getId())
-            .thumbnailUrl(content.getThumbnailUrl())
-            .build();
-
-    notificationRepository.save(
-        notificationMapper.toNotification(
-            content.getUser().getId(),
-            NotificationType.REVIEW,
-            SubNotificationType.CONTENT_REVIEW_APPROVED,
-            reviewDetails));
-  }
-
-  @Transactional
-  public void rejectContent(Long userId, Long contentId, String rejectReason) {
-
-    Content content = contentReader.getContentById(contentId);
-
-    content.setStatus(ContentStatus.REJECTED);
-    content.setRejectReason(rejectReason);
-    log.info("콘텐츠 심사 거절 완료. 유저 ID: {}, 콘텐츠 ID: {}", userId, contentId);
-
-    saveAndConvertToDto(content);
-
-    ReviewDetails reviewDetails =
-        ReviewDetails.builder()
-            .contentId(content.getId())
-            .thumbnailUrl(content.getThumbnailUrl())
-            .build();
-
-    notificationRepository.save(
-        notificationMapper.toNotification(
-            content.getUser().getId(),
-            NotificationType.REVIEW,
-            SubNotificationType.CONTENT_REVIEW_REJECTED,
-            reviewDetails));
-  }
-
   // --- 유틸리티 메서드 ---
 
   /** Content를 저장하고 DTO로 변환합니다. */
@@ -486,20 +456,6 @@ public class ContentService {
     if (!content.getUser().getId().equals(userId)) {
       throw new ForbiddenException("해당 콘텐츠를 수정할 권한이 없습니다.");
     }
-
-    final LocalDateTime nowInSeoul = LocalDateTime.now(ZoneId.of("Asia/Seoul"));
-
-    final ContentRegisterCreateReportDto contentRegisterCreateReportDto =
-        ContentRegisterCreateReportDto.builder()
-            .nickname(content.getUser().getNickname())
-            .contentId(contentId)
-            .contentTitle(content.getTitle())
-            .contentType(content.getContentType().name())
-            .createdAt(nowInSeoul)
-            .build();
-
-    discordContentRegisterReportService.sendCreateContentRegisterReport(
-        contentRegisterCreateReportDto);
 
     return content;
   }

@@ -46,6 +46,14 @@ spring:
 
   application:
     name: groble
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 0
+    validate-on-migrate: true
+    clean-disabled: true
+
   jpa:
     database-platform: org.hibernate.dialect.MySQL8Dialect
     properties:
@@ -124,16 +132,9 @@ springdoc:
 
 logging:
   level:
-    root: ERROR  # 전역 로그를 ERROR 수준으로 줄임
-
-    # Spring & 애플리케이션 주요 패키지
-    liaison.groble: ERROR
-    org.springframework: WARN
-    org.springframework.web: ERROR
-
-    # Swagger/OpenAPI 관련 로그 줄이기
-    org.springdoc: WARN
-    io.swagger.v3: WARN
+    root: INFO
+    org.springdoc: INFO
+    io.swagger.v3: INFO
 
     # 외부 라이브러리 / 통신 로그 최소화
     org.apache.http: ERROR         # HTTP client 최소화

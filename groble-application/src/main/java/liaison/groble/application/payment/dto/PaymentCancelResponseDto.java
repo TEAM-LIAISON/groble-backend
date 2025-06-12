@@ -10,14 +10,14 @@ import lombok.Getter;
 @Getter
 @Builder
 public class PaymentCancelResponseDto {
-  private String orderId;
+  private String merchantUid;
   private String status;
   private LocalDateTime canceledAt;
   private String cancelReason;
 
   public static PaymentCancelResponseDto from(PayplePayment payment) {
     return PaymentCancelResponseDto.builder()
-        //        .orderId(payment.getOrderId())
+        .merchantUid(payment.getPcdPayOid())
         .status(payment.getStatus().name())
         .canceledAt(payment.getCanceledAt())
         .cancelReason(payment.getCancelReason())

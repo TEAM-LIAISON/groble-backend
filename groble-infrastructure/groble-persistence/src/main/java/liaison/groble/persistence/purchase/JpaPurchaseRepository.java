@@ -9,5 +9,7 @@ import liaison.groble.domain.purchase.entity.Purchase;
 
 public interface JpaPurchaseRepository extends JpaRepository<Purchase, Long> {
 
+  Optional<Purchase> findByOrderId(Long orderId);
+
   Optional<Purchase> findByOrder(Order order);
 }

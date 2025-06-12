@@ -24,17 +24,43 @@ public class QPayment extends EntityPathBase<Payment> {
 
     public final liaison.groble.domain.common.entity.QBaseTimeEntity _super = new liaison.groble.domain.common.entity.QBaseTimeEntity(this);
 
+    public final DateTimePath<java.time.LocalDateTime> cancelledAt = createDateTime("cancelledAt", java.time.LocalDateTime.class);
+
     public final StringPath cancelReason = createString("cancelReason");
 
     //inherited
     public final DateTimePath<java.time.LocalDateTime> createdAt = _super.createdAt;
 
+    public final StringPath failReason = createString("failReason");
+
     public final NumberPath<Long> id = createNumber("id", Long.class);
+
+    public final StringPath methodDetail = createString("methodDetail");
 
     public final liaison.groble.domain.order.entity.QOrder order;
 
+    public final DateTimePath<java.time.LocalDateTime> paidAt = createDateTime("paidAt", java.time.LocalDateTime.class);
+
+    public final StringPath paymentKey = createString("paymentKey");
+
+    public final EnumPath<Payment.PaymentMethod> paymentMethod = createEnum("paymentMethod", Payment.PaymentMethod.class);
+
+    public final StringPath pgTid = createString("pgTid");
+
+    public final NumberPath<java.math.BigDecimal> price = createNumber("price", java.math.BigDecimal.class);
+
+    public final StringPath purchaserEmail = createString("purchaserEmail");
+
+    public final StringPath purchaserName = createString("purchaserName");
+
+    public final StringPath purchaserPhoneNumber = createString("purchaserPhoneNumber");
+
+    public final EnumPath<Payment.PaymentStatus> status = createEnum("status", Payment.PaymentStatus.class);
+
     //inherited
     public final DateTimePath<java.time.LocalDateTime> updatedAt = _super.updatedAt;
+
+    public final NumberPath<Long> version = createNumber("version", Long.class);
 
     public QPayment(String variable) {
         this(Payment.class, forVariable(variable), INITS);

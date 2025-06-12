@@ -28,8 +28,6 @@ public class QPurchase extends EntityPathBase<Purchase> {
 
     public final StringPath cancelReason = createString("cancelReason");
 
-    public final DateTimePath<java.time.LocalDateTime> confirmedAt = createDateTime("confirmedAt", java.time.LocalDateTime.class);
-
     public final liaison.groble.domain.content.entity.QContent content;
 
     public final StringPath couponCode = createString("couponCode");

@@ -58,6 +58,8 @@ public class QPayplePayment extends EntityPathBase<PayplePayment> {
 
     public final StringPath pcdPayerHp = createString("pcdPayerHp");
 
+    public final StringPath pcdPayerId = createString("pcdPayerId");
+
     public final StringPath pcdPayerName = createString("pcdPayerName");
 
     public final StringPath pcdPayerNo = createString("pcdPayerNo");
