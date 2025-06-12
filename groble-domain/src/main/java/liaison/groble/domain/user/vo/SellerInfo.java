@@ -92,9 +92,11 @@ public class SellerInfo {
   @Column(name = "copy_of_bankbook_url", columnDefinition = "TEXT")
   private String copyOfBankbookUrl;
 
+  /** 판매자 연락 수단 (관리자가 직접 기입) */
   @Column(name = "seller_contact_type")
   private String sellerContactType;
 
+  /** 판매자 연락 경로 (URL) */
   @Column(name = "seller_contact_url", columnDefinition = "TEXT")
   private String sellerContactUrl;
 

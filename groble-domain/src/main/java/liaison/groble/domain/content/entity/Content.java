@@ -27,6 +27,7 @@ import jakarta.persistence.Table;
 import org.hibernate.annotations.DynamicUpdate;
 
 import liaison.groble.domain.common.entity.BaseTimeEntity;
+import liaison.groble.domain.content.enums.AdminContentCheckingStatus;
 import liaison.groble.domain.content.enums.ContentStatus;
 import liaison.groble.domain.content.enums.ContentType;
 import liaison.groble.domain.user.entity.User;
@@ -103,6 +104,11 @@ public class Content extends BaseTimeEntity {
   @Column(nullable = false)
   private ContentStatus status = ContentStatus.DRAFT;
 
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
+  private AdminContentCheckingStatus adminContentCheckingStatus =
+      AdminContentCheckingStatus.PENDING;
+
   @Column(name = "lowest_price")
   private BigDecimal lowestPrice; // 최저가
 
@@ -166,6 +172,10 @@ public class Content extends BaseTimeEntity {
 
   public void setStatus(ContentStatus status) {
     this.status = status;
+  }
+
+  public void setAdminContentCheckingStatus(AdminContentCheckingStatus adminContentCheckingStatus) {
+    this.adminContentCheckingStatus = adminContentCheckingStatus;
   }
 
   public void setLowestPrice(BigDecimal lowestPrice) {

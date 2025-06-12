@@ -3,6 +3,7 @@ package liaison.groble.application.admin.service;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import liaison.groble.application.admin.dto.AdminMakerDetailInfoDto;
 import liaison.groble.application.notification.service.NotificationService;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.domain.user.entity.User;
@@ -18,6 +19,33 @@ import lombok.extern.slf4j.Slf4j;
 public class AdminMakerService {
   private final UserReader userReader;
   private final NotificationService notificationService;
+
+  @Transactional(readOnly = true)
+  public AdminMakerDetailInfoDto getMakerDetailInfo(Long userId, String nickname) {
+    User user = userReader.getUserByNickname(nickname);
+
+    SellerInfo si = user.getSellerInfo();
+    if (si == null) {
+      return AdminMakerDetailInfoDto.builder().build(); // 또는 throw new IllegalStateException(...)
+    }
+
+    /* 4) DTO 매핑 */
+    return AdminMakerDetailInfoDto.builder()
+        .isBusinessMaker(si.getIsBusinessSeller())
+        .bankAccountOwner(si.getBankAccountOwner())
+        .bankName(si.getBankName())
+        .bankAccountNumber(si.getBankAccountNumber())
+        .copyOfBankbookUrl(si.getCopyOfBankbookUrl())
+        .businessType(si.getBusinessType() != null ? si.getBusinessType().name() : null)
+        .businessCategory(si.getBusinessCategory())
+        .businessSector(si.getBusinessSector())
+        .businessName(si.getBusinessName())
+        .representativeName(si.getRepresentativeName())
+        .businessAddress(si.getBusinessAddress())
+        .businessLicenseFileUrl(si.getBusinessLicenseFileUrl())
+        .taxInvoiceEmail(si.getTaxInvoiceEmail())
+        .build();
+  }
 
   @Transactional
   public void approveMaker(Long userId, String nickname) {

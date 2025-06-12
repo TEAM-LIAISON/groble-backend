@@ -129,7 +129,6 @@ public class CookieUtils {
     // 도메인 설정 (null이 아닌 경우에만)
     if (domain != null && !domain.isEmpty() && !isLocalEnv) {
       cookie.setDomain(domain);
-      log.debug("쿠키 도메인 설정: {}", domain);
     }
 
     // jakarta.servlet.http.Cookie에는 SameSite 설정이 없으므로 헤더로 추가
@@ -157,14 +156,6 @@ public class CookieUtils {
     // 기본 쿠키 추가 및 헤더 설정
     response.addCookie(cookie);
     response.addHeader("Set-Cookie", cookieHeader.toString());
-
-    log.debug(
-        "쿠키 추가: {}, domain={}, maxAge={}, secure={}, sameSite={}",
-        name,
-        domain,
-        maxAge,
-        secure,
-        sameSite);
   }
 
   /**
@@ -287,7 +278,7 @@ public class CookieUtils {
       String serialized = Base64.getUrlEncoder().encodeToString(SerializationUtils.serialize(obj));
       addCookie(response, name, serialized, maxAge);
     } catch (Exception e) {
-      log.error("객체 직렬화 중 오류 발생", e);
+      log.error("객체 직렬화 실패 - 쿠키명: {}", name, e);
       throw new CookieSerializationException("객체 직렬화 중 오류 발생", e);
     }
   }
@@ -310,7 +301,7 @@ public class CookieUtils {
                 byte[] bytes = Base64.getUrlDecoder().decode(cookie.getValue());
                 return SerializationUtils.deserialize(bytes, cls);
               } catch (Exception e) {
-                log.error("객체 역직렬화 중 오류 발생: {}", name, e);
+                log.error("객체 역직렬화 실패 - 쿠키명: {}", name, e);
                 throw new CookieSerializationException("객체 역직렬화 중 오류 발생", e);
               }
             });
