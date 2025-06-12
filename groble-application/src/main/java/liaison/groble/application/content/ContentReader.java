@@ -1,11 +1,15 @@
 package liaison.groble.application.content;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import liaison.groble.common.exception.EntityNotFoundException;
+import liaison.groble.domain.content.dto.FlatAdminContentSummaryInfoDTO;
 import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.content.enums.ContentStatus;
+import liaison.groble.domain.content.repository.ContentCustomRepository;
 import liaison.groble.domain.content.repository.ContentRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -17,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 @Transactional(readOnly = true)
 public class ContentReader {
   private final ContentRepository contentRepository;
+  private final ContentCustomRepository contentCustomRepository;
 
   // ===== ID로 Content 조회 =====
   public Content getContentById(Long contentId) {
@@ -30,5 +35,9 @@ public class ContentReader {
     return contentRepository
         .findByIdAndStatus(contentId, status)
         .orElseThrow(() -> new EntityNotFoundException("콘텐츠를 찾을 수 없습니다. ID: " + contentId));
+  }
+
+  public Page<FlatAdminContentSummaryInfoDTO> findContentsByPageable(Pageable pageable) {
+    return contentCustomRepository.findContentsByPageable(pageable);
   }
 }

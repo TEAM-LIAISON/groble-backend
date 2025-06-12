@@ -24,6 +24,7 @@ import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
 import liaison.groble.common.response.CursorResponse;
+import liaison.groble.domain.content.dto.FlatAdminContentSummaryInfoDTO;
 import liaison.groble.domain.content.dto.FlatContentPreviewDTO;
 import liaison.groble.domain.content.dto.FlatDynamicContentDTO;
 import liaison.groble.domain.content.entity.Content;
@@ -538,5 +539,42 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
         .where(cond)
         .orderBy(qContent.id.desc())
         .fetch();
+  }
+
+  @Override
+  public Page<FlatAdminContentSummaryInfoDTO> findContentsByPageable(Pageable pageable) {
+    QContent qContent = QContent.content;
+    QContentOption qContentOption = QContentOption.contentOption;
+    // Order를 기준으로 조회하도록 변경
+    JPAQuery<FlatAdminContentSummaryInfoDTO> query =
+        queryFactory
+            .select(
+                Projections.constructor(
+                    FlatAdminContentSummaryInfoDTO.class,
+                    qContent.createdAt.as("createdAt"),
+                    qContent.contentType.stringValue().as("contentType"),
+                    qContent.user.userProfile.nickname.as("sellerName"),
+                    qContent.title.as("contentTitle"),
+                    ExpressionUtils.as(
+                        select(qContentOption.count().intValue())
+                            .from(qContentOption)
+                            .where(qContentOption.content.eq(qContent)),
+                        "priceOptionLength"),
+                    qContent.status.stringValue().as("contentStatus"),
+                    qContent
+                        .adminContentCheckingStatus
+                        .stringValue()
+                        .as("adminContentCheckingStatus")))
+            .from(qContent)
+            .orderBy(qContent.createdAt.desc())
+            .offset(pageable.getOffset())
+            .limit(pageable.getPageSize());
+
+    List<FlatAdminContentSummaryInfoDTO> content = query.fetch();
+
+    // 동일한 조건으로 전체 카운트 조회
+    Long total = queryFactory.select(qContent.count()).fetchOne();
+
+    return new PageImpl<>(content, pageable, total != null ? total : 0);
   }
 }

@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import liaison.groble.common.response.CursorResponse;
+import liaison.groble.domain.content.dto.FlatAdminContentSummaryInfoDTO;
 import liaison.groble.domain.content.dto.FlatContentPreviewDTO;
 import liaison.groble.domain.content.dto.FlatDynamicContentDTO;
 import liaison.groble.domain.content.enums.ContentStatus;
@@ -45,4 +46,6 @@ public interface ContentCustomRepository {
   int countMyPurchasingContents(Long userId, ContentStatus status, ContentType contentType);
 
   List<FlatDynamicContentDTO> findAllDynamicContents();
+
+  Page<FlatAdminContentSummaryInfoDTO> findContentsByPageable(Pageable pageable);
 }
