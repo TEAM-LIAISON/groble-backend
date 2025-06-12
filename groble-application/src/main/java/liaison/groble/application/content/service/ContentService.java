@@ -44,9 +44,6 @@ import liaison.groble.domain.content.repository.ContentCustomRepository;
 import liaison.groble.domain.content.repository.ContentRepository;
 import liaison.groble.domain.file.entity.FileInfo;
 import liaison.groble.domain.file.repository.FileRepository;
-import liaison.groble.domain.notification.entity.ReviewDetails;
-import liaison.groble.domain.notification.enums.NotificationType;
-import liaison.groble.domain.notification.enums.SubNotificationType;
 import liaison.groble.domain.notification.repository.NotificationRepository;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.vo.UserProfile;
@@ -441,53 +438,6 @@ public class ContentService {
   public String getExamineRejectReason(Long userId, Long contentId) {
     Content content = contentReader.getContentById(contentId);
     return content.getRejectReason();
-  }
-
-  @Transactional
-  public void approveContent(Long userId, Long contentId) {
-    // TODO : userId가 관리자인지 판단
-
-    Content content = contentReader.getContentById(contentId);
-    content.setStatus(ContentStatus.VALIDATED);
-    saveAndConvertToDto(content);
-
-    ReviewDetails reviewDetails =
-        ReviewDetails.builder()
-            .contentId(content.getId())
-            .thumbnailUrl(content.getThumbnailUrl())
-            .build();
-
-    notificationRepository.save(
-        notificationMapper.toNotification(
-            content.getUser().getId(),
-            NotificationType.REVIEW,
-            SubNotificationType.CONTENT_REVIEW_APPROVED,
-            reviewDetails));
-  }
-
-  @Transactional
-  public void rejectContent(Long userId, Long contentId, String rejectReason) {
-
-    Content content = contentReader.getContentById(contentId);
-
-    content.setStatus(ContentStatus.REJECTED);
-    content.setRejectReason(rejectReason);
-    log.info("콘텐츠 심사 거절 완료. 유저 ID: {}, 콘텐츠 ID: {}", userId, contentId);
-
-    saveAndConvertToDto(content);
-
-    ReviewDetails reviewDetails =
-        ReviewDetails.builder()
-            .contentId(content.getId())
-            .thumbnailUrl(content.getThumbnailUrl())
-            .build();
-
-    notificationRepository.save(
-        notificationMapper.toNotification(
-            content.getUser().getId(),
-            NotificationType.REVIEW,
-            SubNotificationType.CONTENT_REVIEW_REJECTED,
-            reviewDetails));
   }
 
   // --- 유틸리티 메서드 ---

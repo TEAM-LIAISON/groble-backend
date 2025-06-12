@@ -14,8 +14,4 @@ public class ValidatedOrderOptionDto {
   private final OrderItem.OptionType optionType;
   private final BigDecimal price;
   private final Integer quantity;
-
-  public BigDecimal getTotalPrice() {
-    return price.multiply(BigDecimal.valueOf(quantity));
-  }
 }

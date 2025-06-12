@@ -21,6 +21,11 @@ public class PurchaseRepositoryImpl implements PurchaseRepository {
   }
 
   @Override
+  public Optional<Purchase> findByOrderId(Long orderId) {
+    return jpaPurchaseRepository.findByOrderId(orderId);
+  }
+
+  @Override
   public Optional<Purchase> findByOrder(Order order) {
     return jpaPurchaseRepository.findByOrder(order);
   }

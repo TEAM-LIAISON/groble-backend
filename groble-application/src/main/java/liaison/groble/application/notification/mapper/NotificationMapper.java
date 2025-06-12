@@ -65,6 +65,7 @@ public class NotificationMapper {
                   .nickname(((CertifyDetails) detailObject).getNickname())
                   .build());
         }
+        break;
       default:
         throw new IllegalArgumentException("지원하지 않는 알림 타입입니다: " + notificationType);
     }

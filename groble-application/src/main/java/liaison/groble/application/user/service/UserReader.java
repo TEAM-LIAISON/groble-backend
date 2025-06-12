@@ -53,6 +53,13 @@ public class UserReader {
 
   // ===== 닉네임으로 User 조회 =====
 
+  public User getUserByNickname(String nickname) {
+    return userRepository
+        .findByNickname(nickname)
+        .orElseThrow(
+            () -> new EntityNotFoundException("해당 닉네임을 가진 사용자를 찾을 수 없습니다. 닉네임: " + nickname));
+  }
+
   /**
    * 닉네임 중복 확인
    *

@@ -21,6 +21,7 @@ import jakarta.persistence.Table;
 
 import liaison.groble.domain.common.entity.BaseTimeEntity;
 import liaison.groble.domain.content.entity.Content;
+import liaison.groble.domain.content.entity.ContentOption;
 import liaison.groble.domain.coupon.entity.UserCoupon;
 import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.payment.entity.Payment;
@@ -40,7 +41,6 @@ import lombok.NoArgsConstructor;
       @Index(name = "idx_purchase_content", columnList = "content_id"),
       @Index(name = "idx_purchase_order", columnList = "order_id", unique = true),
       @Index(name = "idx_purchase_status", columnList = "status"),
-      @Index(name = "idx_purchase_user_content", columnList = "user_id, content_id", unique = true),
       @Index(name = "idx_purchase_created_at", columnList = "created_at")
     })
 @Getter
@@ -53,18 +53,22 @@ public class Purchase extends BaseTimeEntity {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
+  // 구매자 정보 (누가 상품을 구매했는지)
   @ManyToOne(fetch = LAZY)
   @JoinColumn(name = "user_id", nullable = false)
   private User user;
 
+  // 구매한 콘텐츠 정보 (어떤 콘텐츠를 구매했는지)
   @ManyToOne(fetch = LAZY)
   @JoinColumn(name = "content_id", nullable = false)
   private Content content;
 
+  // 어떤 주문을 통해 구매했는지 (1:1 관계)
   @OneToOne(fetch = LAZY)
   @JoinColumn(name = "order_id", nullable = false, unique = true)
   private Order order;
 
+  // 결제 정보 (1:1 관계)
   @OneToOne(fetch = LAZY)
   @JoinColumn(name = "payment_id")
   private Payment payment;
@@ -115,10 +119,6 @@ public class Purchase extends BaseTimeEntity {
   @Column(name = "cancel_reason")
   private String cancelReason;
 
-  // 구매 확정 관련
-  @Column(name = "confirmed_at")
-  private LocalDateTime confirmedAt;
-
   @Column(name = "refund_requested_at")
   private LocalDateTime refundRequestedAt;
 
@@ -148,25 +148,6 @@ public class Purchase extends BaseTimeEntity {
     this.cancelReason = reason;
   }
 
-  public void confirm() {
-    if (this.status != PurchaseStatus.COMPLETED) {
-      throw new IllegalStateException("완료 상태에서만 구매 확정이 가능합니다.");
-    }
-
-    this.status = PurchaseStatus.CONFIRMED;
-    this.confirmedAt = LocalDateTime.now();
-  }
-
-  public void requestRefund(String reason) {
-    if (this.status != PurchaseStatus.COMPLETED && this.status != PurchaseStatus.CONFIRMED) {
-      throw new IllegalStateException("완료 또는 확정 상태에서만 환불 요청이 가능합니다.");
-    }
-
-    this.status = PurchaseStatus.REFUND_REQUESTED;
-    this.refundRequestedAt = LocalDateTime.now();
-    this.refundReason = reason;
-  }
-
   public void processRefund() {
     if (this.status != PurchaseStatus.REFUND_REQUESTED) {
       throw new IllegalStateException("환불 요청 상태에서만 환불 처리가 가능합니다.");
@@ -187,8 +168,15 @@ public class Purchase extends BaseTimeEntity {
       throw new IllegalArgumentException("주문 아이템이 없습니다.");
     }
 
-    // 첫 번째 주문 아이템을 기준으로 구매 생성 (단일 콘텐츠 구매 가정)
     var orderItem = order.getOrderItems().get(0);
+
+    // 선택된 옵션의 이름 찾기
+    String selectedOptionName =
+        orderItem.getContent().getOptions().stream()
+            .filter(option -> option.getId().equals(orderItem.getOptionId()))
+            .findFirst()
+            .map(ContentOption::getName)
+            .orElse(null);
 
     return Purchase.builder()
         .user(order.getUser())
@@ -207,12 +195,11 @@ public class Purchase extends BaseTimeEntity {
             orderItem.getOptionType() != null
                 ? OptionType.valueOf(orderItem.getOptionType().name())
                 : null)
+        .selectedOptionName(selectedOptionName)
         .selectedOptionId(orderItem.getOptionId())
-        //                .selectedOptionName(orderItem.getOptionName())
         .build();
   }
 
-  // 편의 메서드들
   public boolean isCompleted() {
     return status == PurchaseStatus.COMPLETED;
   }

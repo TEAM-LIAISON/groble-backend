@@ -92,6 +92,12 @@ public class SellerInfo {
   @Column(name = "copy_of_bankbook_url", columnDefinition = "TEXT")
   private String copyOfBankbookUrl;
 
+  @Column(name = "seller_contact_type")
+  private String sellerContactType;
+
+  @Column(name = "seller_contact_url", columnDefinition = "TEXT")
+  private String sellerContactUrl;
+
   /**
    * 판매자 인증 상태 업데이트
    *

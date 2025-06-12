@@ -44,20 +44,29 @@ public class PayplePayment extends BaseTimeEntity {
   @Column(nullable = false)
   private PayplePaymentStatus status = PayplePaymentStatus.PENDING;
 
-  private String pcdPayRst; // 페이플 인증 결과 (SUCESS/ERROR/CLOSE)
+  private String pcdPayRst; // 페이플 인증 결과 (SUCCESS/ERROR/CLOSE)
   private String pcdPayCode; // 페이플 결제 응답 코드 (0000)
   private String pcdPayMsg; // 페이플 응답 메시지
   private String pcdPayType; // 페이플 결제수단(카드/계좌) card/transfer
   private String pcdPayCardVer; // 카드 인증 버전 (02 등)
   private String pcdPayWork; // 승인 요청 방식 결과 (CERT 등)
-  private String pcdPayAuthKey; // 파트너 인증 키
-  private String pcdPayReqKey; // 승인 요청 결제키
-  private String pcdPayHost; // 페이플 접속 주소
-  private String pcdPayCofUrl; // 승인 요청 Request URL
+
+  @Column(name = "pcd_pay_auth_key", length = 512)
+  private String pcdPayAuthKey;
+
+  @Column(name = "pcd_pay_req_key", length = 1024)
+  private String pcdPayReqKey;
+
+  @Column(name = "pcd_pay_host", length = 1024)
+  private String pcdPayHost;
+
+  @Column(name = "pcd_pay_cofurl", length = 1024)
+  private String pcdPayCofUrl;
 
   @Column(name = "pcd_pay_oid", unique = true)
   private String pcdPayOid; // 주문번호 (orderId - PK)
 
+  private String pcdPayerId; // 빌링키 (정기결제용)
   private String pcdPayerNo; // 그로블에서 이용하는 회원번호 (userId - PK)
   private String pcdPayerName; // 구매자 이름
   private String pcdPayerHp; // 구매자 핸드폰번호
@@ -135,8 +144,15 @@ public class PayplePayment extends BaseTimeEntity {
 
   // 승인 정보 업데이트
   public void updateApprovalInfo(
-      String payTime, String cardTradeNum, String cardAuthNo, String receiptUrl) {
+      String payTime,
+      String cardName,
+      String cardNum,
+      String cardTradeNum,
+      String cardAuthNo,
+      String receiptUrl) {
     this.pcdPayTime = payTime;
+    this.pcdPayCardName = cardName;
+    this.pcdPayCardNum = cardNum;
     this.pcdPayCardTradeNum = cardTradeNum;
     this.pcdPayCardAuthNo = cardAuthNo;
     this.pcdPayCardReceipt = receiptUrl;
