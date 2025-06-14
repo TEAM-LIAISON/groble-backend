@@ -97,7 +97,8 @@ public class SecurityConfig {
   @Bean
   public CorsConfigurationSource corsConfigurationSource() {
     CorsConfiguration configuration = new CorsConfiguration();
-    configuration.setAllowedOriginPatterns(List.of("https://*.groble.im", "http://localhost:3000"));
+    configuration.setAllowedOriginPatterns(
+        List.of("https://*.groble.im", "http://localhost:3000", "http://localhost:3001"));
     configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
 
     // 이 부분 수정: 더 많은 헤더 허용

@@ -16,7 +16,8 @@ import io.swagger.v3.oas.annotations.OpenAPIDefinition;
       "liaison.groble.security", // 보안 모듈
       "liaison.groble.persistence", // 인프라스트럭처 - 영속성 모듈
       "liaison.groble.external", // 인프라스트럭처 - 외부 연동 모듈
-      "liaison.groble.common" // 공통 모듈
+      "liaison.groble.common", // 공통 모듈
+      "liaison.groble.mapping" // 매핑 모듈
     })
 @EntityScan(basePackages = {"liaison.groble.domain"})
 @EnableJpaRepositories(

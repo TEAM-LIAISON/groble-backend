@@ -170,7 +170,7 @@ public class AuthController {
     addTokenCookies(response, tokenDto.getAccessToken(), tokenDto.getRefreshToken());
 
     // 6. 사용자 정보와 역할 정보를 응답 본문에 포함
-    SignInResponse signInResponse = SignInResponse.of(request.getEmail(), userType, nextRoutePath);
+    SignInResponse signInResponse = SignInResponse.of(request.getEmail());
 
     // 7. API 응답 생성
     return ResponseEntity.status(HttpStatus.OK)
@@ -407,7 +407,7 @@ public class AuthController {
     String nextRoutePath = userService.getNextRoutePath(accessor.getEmail());
 
     // 사용자 정보 응답
-    SignInResponse response = SignInResponse.of(accessor.getEmail(), userType, nextRoutePath);
+    SignInResponse response = SignInResponse.of(accessor.getEmail());
 
     return ResponseEntity.ok().body(GrobleResponse.success(response, "유효한 토큰입니다.", 200));
   }
