@@ -7,6 +7,7 @@ import lombok.Getter;
 @Builder
 public class AdminMakerDetailInfoDto {
   private boolean isBusinessMaker;
+  private String verificationStatus;
   private String bankAccountOwner;
   private String bankName;
   private String bankAccountNumber;

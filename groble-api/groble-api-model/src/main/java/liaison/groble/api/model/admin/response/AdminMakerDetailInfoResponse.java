@@ -19,6 +19,14 @@ public class AdminMakerDetailInfoResponse {
       requiredMode = Schema.RequiredMode.REQUIRED)
   private boolean isBusinessMaker;
 
+  @Schema(
+      description = "메이커 인증 상태 (isSellerInfo가 true라는 전제 하에 사용됩니다.)",
+      example = "VERIFIED",
+      type = "string",
+      allowableValues = {"PENDING", "IN_PROGRESS", "FAILED", "VERIFIED"},
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private String verificationStatus;
+
   /** 1. 정산 예금주 */
   @Schema(
       description = "정산 계좌 예금주 이름",

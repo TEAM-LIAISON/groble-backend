@@ -32,6 +32,7 @@ public class AdminMakerService {
     /* 4) DTO 매핑 */
     return AdminMakerDetailInfoDto.builder()
         .isBusinessMaker(si.getIsBusinessSeller())
+        .verificationStatus(si.getVerificationStatus().name())
         .bankAccountOwner(si.getBankAccountOwner())
         .bankName(si.getBankName())
         .bankAccountNumber(si.getBankAccountNumber())

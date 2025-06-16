@@ -68,6 +68,7 @@ public class AdminMakerController {
       AdminMakerDetailInfoDto infoDto) {
     return AdminMakerDetailInfoResponse.builder()
         .isBusinessMaker(infoDto.isBusinessMaker())
+        .verificationStatus(infoDto.getVerificationStatus())
         .bankAccountOwner(infoDto.getBankAccountOwner())
         .bankName(infoDto.getBankName())
         .bankAccountNumber(infoDto.getBankAccountNumber())

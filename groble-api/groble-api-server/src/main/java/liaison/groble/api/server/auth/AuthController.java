@@ -156,21 +156,16 @@ public class AuthController {
       HttpServletResponse response) {
     log.info("로그인 요청: {}", request.getEmail());
 
-    // 1. API DTO → 서비스 DTO 변환
     SignInDto signInDto = authDtoMapper.toServiceSignInDto(request);
 
-    // 2. 서비스 호출
     SignInAuthResultDTO signInAuthResultDTO = authService.signIn(signInDto);
 
-    // 5. 토큰을 쿠키로 설정
     addTokenCookies(
         response, signInAuthResultDTO.getAccessToken(), signInAuthResultDTO.getRefreshToken());
 
-    // 6. 사용자 정보와 역할 정보를 응답 본문에 포함
     SignInResponse signInResponse =
         authMapper.toSignInResponse(request.getEmail(), signInAuthResultDTO);
 
-    // 7. API 응답 생성
     return ResponseEntity.status(HttpStatus.OK)
         .body(GrobleResponse.success(signInResponse, "로그인이 성공적으로 완료되었습니다.", 200));
   }
