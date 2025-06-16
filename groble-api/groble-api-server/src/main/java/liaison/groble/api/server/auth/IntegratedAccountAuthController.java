@@ -11,9 +11,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import liaison.groble.api.model.auth.request.SignInRequest;
+import liaison.groble.api.model.auth.request.SignUpRequest;
 import liaison.groble.api.model.auth.response.SignInResponse;
+import liaison.groble.api.model.auth.response.SignUpResponse;
 import liaison.groble.application.auth.dto.SignInAuthResultDTO;
 import liaison.groble.application.auth.dto.SignInDto;
+import liaison.groble.application.auth.dto.SignUpAuthResultDTO;
+import liaison.groble.application.auth.dto.SignUpDto;
 import liaison.groble.application.auth.service.IntegratedAccountAuthService;
 import liaison.groble.common.response.GrobleResponse;
 import liaison.groble.common.utils.TokenCookieService;
@@ -46,13 +50,33 @@ public class IntegratedAccountAuthController {
     SignInAuthResultDTO signInAuthResultDTO =
         integratedAccountAuthService.integratedAccountSignIn(signInDto);
 
-    tokenCookieService.addTokenCookies(
-        response, signInAuthResultDTO.getAccessToken(), signInAuthResultDTO.getRefreshToken());
-
     SignInResponse signInResponse =
         authMapper.toSignInResponse(signInDto.getEmail(), signInAuthResultDTO);
 
+    tokenCookieService.addTokenCookies(
+        response, signInAuthResultDTO.getAccessToken(), signInAuthResultDTO.getRefreshToken());
+
     return ResponseEntity.status(HttpStatus.OK)
-        .body(GrobleResponse.success(signInResponse, "로그인이 성공적으로 완료되었습니다."));
+        .body(GrobleResponse.success(signInResponse, "통합 계정으로 로그인이 성공적으로 완료되었습니다."));
+  }
+
+  @Operation(summary = "통합 계정으로 회원가입", description = "통합 계정으로 회원 가입을 진행하고 인증 토큰을 발급합니다.")
+  @PostMapping("/integrated/sign-up")
+  public ResponseEntity<GrobleResponse<SignUpResponse>> integratedAccountSignUp(
+      @Parameter(description = "회원가입 정보", required = true) @Valid @RequestBody
+          SignUpRequest request,
+      HttpServletResponse response) {
+    log.info("통합 계정 회원가입 요청: {}", request.getEmail());
+    SignUpDto signUpDto = authMapper.toSignUpDto(request);
+    SignUpAuthResultDTO signUpAuthResultDTO =
+        integratedAccountAuthService.integratedAccountSignUp(signUpDto);
+
+    tokenCookieService.addTokenCookies(
+        response, signUpAuthResultDTO.getAccessToken(), signUpAuthResultDTO.getRefreshToken());
+
+    SignUpResponse signUpResponse = SignUpResponse.of(request.getEmail());
+
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(GrobleResponse.success(signUpResponse, "회원가입이 성공적으로 완료되었습니다."));
   }
 }

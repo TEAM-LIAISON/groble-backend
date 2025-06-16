@@ -551,6 +551,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
             .select(
                 Projections.constructor(
                     FlatAdminContentSummaryInfoDTO.class,
+                    qContent.id.as("contentId"),
                     qContent.createdAt.as("createdAt"),
                     qContent.contentType.stringValue().as("contentType"),
                     qContent.user.userProfile.nickname.as("sellerName"),
@@ -560,6 +561,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                             .from(qContentOption)
                             .where(qContentOption.content.eq(qContent)),
                         "priceOptionLength"),
+                    qContent.lowestPrice.as("minPrice"),
                     qContent.status.stringValue().as("contentStatus"),
                     qContent
                         .adminContentCheckingStatus

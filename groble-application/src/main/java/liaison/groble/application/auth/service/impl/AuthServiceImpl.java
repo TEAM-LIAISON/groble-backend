@@ -3,13 +3,9 @@ package liaison.groble.application.auth.service.impl;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -21,28 +17,23 @@ import liaison.groble.application.auth.dto.EmailVerificationDto;
 import liaison.groble.application.auth.dto.PhoneNumberVerifyRequestDto;
 import liaison.groble.application.auth.dto.SignInAuthResultDTO;
 import liaison.groble.application.auth.dto.SignInDto;
-import liaison.groble.application.auth.dto.SignUpDto;
 import liaison.groble.application.auth.dto.SocialSignUpDto;
 import liaison.groble.application.auth.dto.TokenDto;
 import liaison.groble.application.auth.dto.UserWithdrawalDto;
 import liaison.groble.application.auth.dto.VerifyEmailCodeDto;
 import liaison.groble.application.auth.exception.AuthenticationFailedException;
-import liaison.groble.application.auth.exception.EmailAlreadyExistsException;
+import liaison.groble.application.auth.helper.AuthValidationHelper;
+import liaison.groble.application.auth.helper.TermsHelper;
 import liaison.groble.application.auth.service.AuthService;
 import liaison.groble.application.notification.service.NotificationService;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.common.exception.DuplicateNicknameException;
 import liaison.groble.common.exception.EntityNotFoundException;
 import liaison.groble.common.port.security.SecurityPort;
-import liaison.groble.common.request.RequestUtil;
 import liaison.groble.common.utils.CodeGenerator;
 import liaison.groble.domain.port.EmailSenderPort;
 import liaison.groble.domain.port.VerificationCodePort;
-import liaison.groble.domain.role.Role;
-import liaison.groble.domain.role.repository.RoleRepository;
-import liaison.groble.domain.terms.entity.Terms;
 import liaison.groble.domain.terms.enums.TermsType;
-import liaison.groble.domain.terms.repository.TermsRepository;
 import liaison.groble.domain.user.entity.IntegratedAccount;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.entity.UserWithdrawalHistory;
@@ -51,13 +42,11 @@ import liaison.groble.domain.user.enums.SellerVerificationStatus;
 import liaison.groble.domain.user.enums.UserStatus;
 import liaison.groble.domain.user.enums.UserType;
 import liaison.groble.domain.user.enums.WithdrawalReason;
-import liaison.groble.domain.user.factory.UserFactory;
 import liaison.groble.domain.user.repository.IntegratedAccountRepository;
 import liaison.groble.domain.user.repository.SocialAccountRepository;
 import liaison.groble.domain.user.repository.UserRepository;
 import liaison.groble.domain.user.repository.UserWithdrawalHistoryRepository;
 import liaison.groble.domain.user.service.UserStatusService;
-import liaison.groble.domain.user.service.UserTermsService;
 import liaison.groble.domain.user.vo.SellerInfo;
 import liaison.groble.external.discord.dto.MemberCreateReportDto;
 import liaison.groble.external.discord.service.DiscordMemberReportService;
@@ -74,119 +63,121 @@ public class AuthServiceImpl implements AuthService {
   private final SecurityPort securityPort;
   private final EmailSenderPort emailSenderPort;
   private final VerificationCodePort verificationCodePort;
-  private final RoleRepository roleRepository;
   private final IntegratedAccountRepository integratedAccountRepository;
   private final SocialAccountRepository socialAccountRepository;
   private final UserWithdrawalHistoryRepository userWithdrawalHistoryRepository;
 
-  private final RequestUtil requestUtil;
-  private final TermsRepository termsRepository;
-  private final UserTermsService userTermsService;
   private final NotificationService notificationService;
   private final DiscordMemberReportService discordMemberReportService;
 
-  @Override
-  @Transactional
-  public TokenDto signUp(SignUpDto signUpDto) {
-    UserType userType = validateAndParseUserType(signUpDto.getUserType());
-    // 약관 유형 변환 및 필수 약관 검증
-    List<TermsType> agreedTermsTypes = convertToTermsTypes(signUpDto.getTermsTypeStrings());
-    validateRequiredTermsAgreement(agreedTermsTypes, userType);
+  // Helper
+  private final AuthValidationHelper authValidationHelper;
+  private final TermsHelper termsHelper;
 
-    // 기입한 이메일 인증 여부 판단
-    validateEmailVerification(signUpDto.getEmail());
-
-    // 2. 비밀번호 암호화
-    String encodedPassword = securityPort.encodePassword(signUpDto.getPassword());
-
-    // 3. 닉네임 중복 확인
-    if (userReader.isNicknameTaken(signUpDto.getNickname(), UserStatus.ACTIVE)) {
-      throw new IllegalArgumentException("이미 사용 중인 닉네임입니다.");
-    }
-
-    // 3. 사용자 생성 (팩토리 패턴 활용)
-    User user;
-    if (userType == UserType.SELLER) {
-      validateVerifiedGuestPhoneFlag(signUpDto.getPhoneNumber());
-      user =
-          UserFactory.createIntegratedSellerUser(
-              signUpDto.getEmail(),
-              encodedPassword,
-              signUpDto.getNickname(),
-              userType,
-              signUpDto.getPhoneNumber());
-    } else {
-      user =
-          UserFactory.createIntegratedBuyerUser(
-              signUpDto.getEmail(), encodedPassword, signUpDto.getNickname(), userType);
-    }
-
-    // 4. 기본 역할 추가
-    addDefaultRole(user);
-
-    // 5. 사용자 상태 활성화 (도메인 서비스 활용)
-    UserStatusService userStatusService = new UserStatusService();
-    userStatusService.activate(user);
-
-    // 5.1. 약관 동의 처리
-    processTermsAgreements(user, agreedTermsTypes);
-
-    // 6. 사용자 저장
-    User savedUser = userRepository.save(user);
-
-    // 7) 알림은 오직 이 한 줄만!
-    notificationService.sendWelcomeNotification(savedUser);
-
-    // 8. 토큰 발급
-    TokenDto tokenDto = issueTokens(savedUser);
-
-    // 9. 리프레시 토큰 저장
-    savedUser.updateRefreshToken(
-        tokenDto.getRefreshToken(),
-        securityPort.getRefreshTokenExpirationTime(tokenDto.getRefreshToken()));
-    userRepository.save(savedUser);
-
-    // 10. 인증 플래그 제거 (트랜잭션 커밋 이후 실행)
-    String email = signUpDto.getEmail();
-    String sanitizedPhoneNumber =
-        signUpDto.getPhoneNumber() != null
-            ? signUpDto.getPhoneNumber().replaceAll("\\D", "")
-            : null;
-
-    TransactionSynchronizationManager.registerSynchronization(
-        new TransactionSynchronization() {
-          @Override
-          public void afterCommit() {
-            verificationCodePort.removeVerifiedEmailFlag(email);
-            if (sanitizedPhoneNumber != null) {
-              verificationCodePort.removeVerifiedGuestPhoneFlag(sanitizedPhoneNumber);
-            }
-          }
-        });
-
-    final LocalDateTime nowInSeoul = LocalDateTime.now(ZoneId.of("Asia/Seoul"));
-
-    final MemberCreateReportDto memberCreateReportDto =
-        MemberCreateReportDto.builder()
-            .userId(user.getId())
-            .nickname(user.getNickname())
-            .createdAt(nowInSeoul)
-            .build();
-
-    discordMemberReportService.sendCreateMemberReport(memberCreateReportDto);
-
-    return tokenDto;
-  }
+  //  @Override
+  //  @Transactional
+  //  public TokenDto signUp(SignUpDto signUpDto) {
+  //    UserType userType = authValidationHelper.validateAndParseUserType(signUpDto.getUserType());
+  //
+  //    // 약관 유형 변환 및 필수 약관 검증
+  //    List<TermsType> agreedTermsTypes =
+  // termsHelper.convertToTermsTypes(signUpDto.getTermsTypeStrings());
+  //      termsHelper.validateRequiredTermsAgreement(agreedTermsTypes);
+  //
+  //    // 기입한 이메일 인증 여부 판단
+  //    authValidationHelper.validateEmailVerification(signUpDto.getEmail());
+  //
+  //    // 2. 비밀번호 암호화
+  //    String encodedPassword = securityPort.encodePassword(signUpDto.getPassword());
+  //
+  //    // 3. 닉네임 중복 확인
+  //    if (userReader.isNicknameTaken(signUpDto.getNickname(), UserStatus.ACTIVE)) {
+  //      throw new IllegalArgumentException("이미 사용 중인 닉네임입니다.");
+  //    }
+  //
+  //    // 3. 사용자 생성 (팩토리 패턴 활용)
+  //    User user;
+  //    if (userType == UserType.SELLER) {
+  //      authValidationHelper.validateVerifiedGuestPhoneFlag(signUpDto.getPhoneNumber());
+  //      user =
+  //          UserFactory.createIntegratedSellerUser(
+  //              signUpDto.getEmail(),
+  //              encodedPassword,
+  //              signUpDto.getNickname(),
+  //              userType,
+  //              signUpDto.getPhoneNumber());
+  //    } else {
+  //      user =
+  //          UserFactory.createIntegratedBuyerUser(
+  //              signUpDto.getEmail(), encodedPassword, signUpDto.getNickname(), userType);
+  //    }
+  //
+  //    // 4. 기본 역할 추가
+  //    userHelper.addDefaultRole(user);
+  //
+  //    // 5. 사용자 상태 활성화 (도메인 서비스 활용)
+  //    UserStatusService userStatusService = new UserStatusService();
+  //    userStatusService.activate(user);
+  //
+  //    // 5.1. 약관 동의 처리
+  //    termsHelper.processTermsAgreements(user, agreedTermsTypes);
+  //
+  //    // 6. 사용자 저장
+  //    User savedUser = userRepository.save(user);
+  //
+  //    // 7) 알림은 오직 이 한 줄만!
+  //    notificationService.sendWelcomeNotification(savedUser);
+  //
+  //    // 8. 토큰 발급
+  //    TokenDto tokenDto = issueTokens(savedUser);
+  //
+  //    // 9. 리프레시 토큰 저장
+  //    savedUser.updateRefreshToken(
+  //        tokenDto.getRefreshToken(),
+  //        securityPort.getRefreshTokenExpirationTime(tokenDto.getRefreshToken()));
+  //    userRepository.save(savedUser);
+  //
+  //    // 10. 인증 플래그 제거 (트랜잭션 커밋 이후 실행)
+  //    String email = signUpDto.getEmail();
+  //    String sanitizedPhoneNumber =
+  //        signUpDto.getPhoneNumber() != null
+  //            ? signUpDto.getPhoneNumber().replaceAll("\\D", "")
+  //            : null;
+  //
+  //    TransactionSynchronizationManager.registerSynchronization(
+  //        new TransactionSynchronization() {
+  //          @Override
+  //          public void afterCommit() {
+  //            verificationCodePort.removeVerifiedEmailFlag(email);
+  //            if (sanitizedPhoneNumber != null) {
+  //              verificationCodePort.removeVerifiedGuestPhoneFlag(sanitizedPhoneNumber);
+  //            }
+  //          }
+  //        });
+  //
+  //    final LocalDateTime nowInSeoul = LocalDateTime.now(ZoneId.of("Asia/Seoul"));
+  //
+  //    final MemberCreateReportDto memberCreateReportDto =
+  //        MemberCreateReportDto.builder()
+  //            .userId(user.getId())
+  //            .nickname(user.getNickname())
+  //            .createdAt(nowInSeoul)
+  //            .build();
+  //
+  //    discordMemberReportService.sendCreateMemberReport(memberCreateReportDto);
+  //
+  //    return tokenDto;
+  //  }
 
   @Override
   @Transactional
   public TokenDto socialSignUp(Long userId, SocialSignUpDto dto) {
     // 1. userType 파싱
-    UserType userType = validateAndParseUserType(dto.getUserType());
+    UserType userType = authValidationHelper.validateAndParseUserType(dto.getUserType());
 
     // 약관 유형 변환 및 필수 약관 검증
-    List<TermsType> agreedTermsTypes = convertToTermsTypes(dto.getTermsTypeStrings());
-    validateRequiredTermsAgreement(agreedTermsTypes, userType);
+    List<TermsType> agreedTermsTypes = termsHelper.convertToTermsTypes(dto.getTermsTypeStrings());
+    termsHelper.validateRequiredTermsAgreement(agreedTermsTypes);
 
     // 2. SELLER라면 phoneNumber 필수
     if (userType == UserType.SELLER
@@ -214,7 +205,7 @@ public class AuthServiceImpl implements AuthService {
     // SELLER 타입이면 isSeller 플래그도 설정
     if (userType == UserType.SELLER) {
       log.info("판매자 전화번호 인증: {}", dto.getPhoneNumber());
-      validateVerifiedUserPhoneFlag(userId, dto.getPhoneNumber());
+      authValidationHelper.validateVerifiedUserPhoneFlag(userId, dto.getPhoneNumber());
       user.setSeller(true);
       user.setSellerInfo(SellerInfo.ofVerificationStatus(SellerVerificationStatus.PENDING));
     } else {
@@ -223,7 +214,7 @@ public class AuthServiceImpl implements AuthService {
 
     userStatusService.activate(user);
     // 5.1. 약관 동의 처리
-    processTermsAgreements(user, agreedTermsTypes);
+    termsHelper.processTermsAgreements(user, agreedTermsTypes);
     user.updatePhoneNumber(dto.getPhoneNumber());
 
     // 7. 사용자 저장
@@ -357,7 +348,7 @@ public class AuthServiceImpl implements AuthService {
     final String email = dto.getEmail();
 
     // 기존에 가입된 통합 계정 여부를 판단함
-    validateEmailNotRegistered(email);
+    authValidationHelper.validateEmailNotRegistered(email);
 
     final String code = generateRandomCode();
     saveAndSendVerificationCode(email, code);
@@ -603,161 +594,5 @@ public class AuthServiceImpl implements AuthService {
 
     // 4. 저장
     userRepository.save(user);
-  }
-
-  private void validateEmailNotRegistered(String email) {
-    if (integratedAccountRepository.existsByIntegratedAccountEmail(email)) {
-      throw new EmailAlreadyExistsException();
-    }
-  }
-
-  // 보조 메서드들: 관심사 분리로 가독성 향상
-  private UserType validateAndParseUserType(String userTypeStr) {
-    try {
-      return UserType.valueOf(userTypeStr.toUpperCase());
-    } catch (IllegalArgumentException | NullPointerException e) {
-      throw new IllegalArgumentException("유효하지 않은 사용자 유형입니다: " + userTypeStr);
-    }
-  }
-
-  /**
-   * 문자열 약관 유형 리스트를 TermsType enum 리스트로 변환합니다.
-   *
-   * @param termsTypeStrings 문자열 약관 유형 리스트
-   * @return 변환된 TermsType enum 리스트
-   * @throws IllegalArgumentException 유효하지 않은 약관 유형이 포함된 경우
-   */
-  private List<TermsType> convertToTermsTypes(List<String> termsTypeStrings) {
-    if (termsTypeStrings == null || termsTypeStrings.isEmpty()) {
-      return Collections.emptyList();
-    }
-
-    return termsTypeStrings.stream().map(this::parseTermsType).collect(Collectors.toList());
-  }
-
-  /**
-   * 문자열 약관 유형을 TermsType enum으로 변환합니다.
-   *
-   * @param termsTypeString 문자열 약관 유형
-   * @return 변환된 TermsType enum
-   * @throws IllegalArgumentException 유효하지 않은 약관 유형인 경우
-   */
-  private TermsType parseTermsType(String termsTypeString) {
-    try {
-      return TermsType.valueOf(termsTypeString.toUpperCase());
-    } catch (IllegalArgumentException | NullPointerException e) {
-      throw new IllegalArgumentException("유효하지 않은 약관 유형입니다: " + termsTypeString);
-    }
-  }
-
-  private void validateRequiredTermsAgreement(List<TermsType> agreedTermsTypes, UserType userType) {
-
-    // 모든 TermsType 중에서
-    // required == true 이고, (SELLER_TERMS_POLICY == false 이고, userType == SELLER)
-    List<TermsType> requiredTermsTypes =
-        Arrays.stream(TermsType.values())
-            .filter(
-                t ->
-                    t.isRequired()
-                        && (t != TermsType.SELLER_TERMS_POLICY || userType == UserType.SELLER))
-            .toList();
-
-    // 同様に未同意のものを探す
-    List<TermsType> missingRequiredTerms =
-        requiredTermsTypes.stream().filter(req -> !agreedTermsTypes.contains(req)).toList();
-
-    if (!missingRequiredTerms.isEmpty()) {
-      String missingTerms =
-          missingRequiredTerms.stream()
-              .map(TermsType::getDescription)
-              .collect(Collectors.joining(", "));
-      throw new IllegalArgumentException("다음 필수 약관에 동의해주세요: " + missingTerms);
-    }
-  }
-
-  private void validateEmailVerification(String email) {
-    if (!verificationCodePort.validateVerifiedFlag(email)) {
-      throw new IllegalArgumentException("이메일 인증이 완료되지 않았습니다.");
-    }
-  }
-
-  private void validateVerifiedGuestPhoneFlag(String phoneNumber) {
-    // 전화번호 정규화 (하이픈, 공백 등 제거)
-    String sanitizedPhoneNumber = phoneNumber.replaceAll("\\D", "");
-
-    if (!verificationCodePort.validateVerifiedGuestPhoneFlag(sanitizedPhoneNumber)) {
-      throw new IllegalArgumentException("전화번호 인증이 완료되지 않았습니다.");
-    }
-  }
-
-  private void validateVerifiedUserPhoneFlag(Long userId, String phoneNumber) {
-    // 전화번호 정규화 (하이픈, 공백 등 제거)
-    String sanitizedPhoneNumber = phoneNumber.replaceAll("\\D", "");
-
-    if (!verificationCodePort.validateVerifiedUserPhoneFlag(userId, sanitizedPhoneNumber)) {
-      throw new IllegalArgumentException("전화번호 인증이 완료되지 않았습니다.");
-    }
-  }
-
-  private void addDefaultRole(User user) {
-    Role userRole =
-        roleRepository
-            .findByName("ROLE_USER")
-            .orElseThrow(() -> new RuntimeException("기본 역할(ROLE_USER)을 찾을 수 없습니다."));
-    user.addRole(userRole);
-  }
-
-  /**
-   * 사용자의 약관 동의 정보를 처리합니다.
-   *
-   * @param user 사용자 엔티티
-   * @param agreedTermsTypes 동의한 약관 유형 리스트
-   */
-  private void processTermsAgreements(User user, List<TermsType> agreedTermsTypes) {
-    log.info("약관 동의 처리 시작 - 사용자 ID: {}, 동의한 약관 수: {}", user.getId(), agreedTermsTypes.size());
-
-    // 현재 IP 주소와 User-Agent 정보 가져오기
-    String clientIp = requestUtil.getClientIp();
-    String userAgent = requestUtil.getUserAgent();
-    log.debug("클라이언트 정보 - IP: {}, UserAgent: {}", clientIp, userAgent);
-
-    try {
-      // 현재 유효한 최신 약관 조회
-      List<Terms> latestTerms = termsRepository.findAllLatestTerms(LocalDateTime.now());
-      log.info("최신 약관 조회 완료 - 약관 수: {}", latestTerms.size());
-
-      Map<TermsType, Terms> latestTermsMap =
-          latestTerms.stream().collect(Collectors.toMap(Terms::getType, terms -> terms));
-
-      log.debug(
-          "약관 유형별 매핑 완료: {}",
-          latestTermsMap.keySet().stream().map(Enum::name).collect(Collectors.joining(", ")));
-
-      // 약관 동의 처리
-      for (TermsType termsType : TermsType.values()) {
-        Terms terms = latestTermsMap.get(termsType);
-        if (terms != null) {
-          boolean agreed = agreedTermsTypes.contains(termsType);
-          log.debug("약관 처리 - 유형: {}, 동의 여부: {}, 약관ID: {}", termsType, agreed, terms.getId());
-
-          // 동의한 약관에만 동의 정보 추가
-          if (agreed) {
-            userTermsService.agreeToTerms(user, terms, clientIp, userAgent);
-            log.debug("약관 {} 동의 정보 추가 완료", termsType);
-          }
-        } else {
-          log.warn("약관 유형 {}에 해당하는 최신 약관을 찾을 수 없습니다", termsType);
-        }
-      }
-
-      // 약관 동의 정보가 사용자 객체에 제대로 추가되었는지 확인
-      log.info("사용자의 약관 동의 정보 수: {}", user.getTermsAgreements().size());
-
-    } catch (Exception e) {
-      log.error("약관 동의 처리 중 오류 발생", e);
-      throw e;
-    }
-
-    log.info("약관 동의 처리 완료");
   }
 }

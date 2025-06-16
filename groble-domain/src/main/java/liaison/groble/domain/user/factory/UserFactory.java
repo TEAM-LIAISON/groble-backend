@@ -82,6 +82,70 @@ public class UserFactory {
     return user;
   }
 
+  public static User createSellerIntegratedUser(String email, String password, UserType userType) {
+    // 프로필 정보 생성
+    UserProfile userProfile = UserProfile.builder().build();
+
+    // 상태 정보 생성
+    UserStatusInfo userStatusInfo =
+        UserStatusInfo.builder().status(UserStatus.ACTIVE).statusChangedAt(Instant.now()).build();
+
+    // User 엔티티 생성
+    User user =
+        User.builder()
+            .userProfile(userProfile)
+            .userStatusInfo(userStatusInfo)
+            .accountType(AccountType.INTEGRATED)
+            .lastUserType(userType)
+            .isSeller(true)
+            .build();
+
+    // IntegratedAccount 생성 및 연결
+    IntegratedAccount account =
+        IntegratedAccount.builder()
+            .user(user)
+            .integratedAccountEmail(email)
+            .encodedPassword(password)
+            .build();
+
+    user.setIntegratedAccount(account);
+
+    // 여기서 SellerInfo는 “인증 대기” 상태만 셋팅
+    user.setSellerInfo(SellerInfo.ofVerificationStatus(SellerVerificationStatus.PENDING));
+
+    return user;
+  }
+
+  public static User createBuyerIntegratedUser(String email, String password, UserType userType) {
+    // 프로필 정보 생성
+    UserProfile userProfile = UserProfile.builder().build();
+
+    // 상태 정보 생성
+    UserStatusInfo statusInfo =
+        UserStatusInfo.builder().status(UserStatus.ACTIVE).statusChangedAt(Instant.now()).build();
+
+    // User 엔티티 생성
+    User user =
+        User.builder()
+            .userProfile(userProfile)
+            .userStatusInfo(statusInfo)
+            .accountType(AccountType.INTEGRATED)
+            .lastUserType(userType)
+            .build();
+
+    // IntegratedAccount 생성 및 연결
+    IntegratedAccount account =
+        IntegratedAccount.builder()
+            .user(user)
+            .integratedAccountEmail(email)
+            .encodedPassword(password)
+            .build();
+
+    user.setIntegratedAccount(account);
+
+    return user;
+  }
+
   public static User createSocialUser(
       String provider, String providerId, String email, String nickname) {
     // 프로필 정보 생성

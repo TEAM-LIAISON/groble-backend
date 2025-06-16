@@ -30,17 +30,17 @@ public interface AuthMapper {
   /** SignInRequest → SignInDto */
   SignInDto toSignInDto(SignInRequest request);
 
-  // ====== 📤 DTO → Response 변환 ======
-
-  /** (email + 인증 결과 DTO) → SignInResponse */
-  @Mapping(target = "authenticated", constant = "true")
-  SignInResponse toSignInResponse(String email, SignInAuthResultDTO dto);
-
   /** SignUpRequest → SignUpDto */
   @Mapping(
       target = "termsTypeStrings",
       expression = "java(request.getTermsTypes().stream().map(Enum::name).toList())")
   SignUpDto toSignUpDto(SignUpRequest request);
+
+  // ====== 📤 DTO → Response 변환 ======
+
+  /** (email + 인증 결과 DTO) → SignInResponse */
+  @Mapping(target = "authenticated", constant = "true")
+  SignInResponse toSignInResponse(String email, SignInAuthResultDTO dto);
 
   /** SocialSignUpRequest → SocialSignUpDto */
   @Mapping(

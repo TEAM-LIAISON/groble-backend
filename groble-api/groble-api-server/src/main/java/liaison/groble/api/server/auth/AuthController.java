@@ -21,16 +21,13 @@ import liaison.groble.api.model.auth.request.PhoneNumberVerifyCodeRequest;
 import liaison.groble.api.model.auth.request.PhoneNumberVerifyRequest;
 import liaison.groble.api.model.auth.request.ResetPasswordRequest;
 import liaison.groble.api.model.auth.request.SignInRequest;
-import liaison.groble.api.model.auth.request.SignUpRequest;
 import liaison.groble.api.model.auth.request.SocialSignUpRequest;
 import liaison.groble.api.model.auth.request.UserWithdrawalRequest;
 import liaison.groble.api.model.auth.request.VerifyEmailCodeRequest;
 import liaison.groble.api.model.auth.response.PhoneNumberResponse;
 import liaison.groble.api.model.auth.response.SignInResponse;
 import liaison.groble.api.model.auth.response.SignInTestResponse;
-import liaison.groble.api.model.auth.response.SignUpResponse;
 import liaison.groble.api.model.auth.response.SocialSignUpResponse;
-import liaison.groble.api.model.auth.response.swagger.SignUp;
 import liaison.groble.api.model.auth.response.swagger.SocialSignUp;
 import liaison.groble.api.model.user.request.NicknameRequest;
 import liaison.groble.api.model.user.response.NicknameDuplicateCheckResponse;
@@ -39,7 +36,6 @@ import liaison.groble.api.server.auth.mapper.AuthDtoMapper;
 import liaison.groble.application.auth.dto.EmailVerificationDto;
 import liaison.groble.application.auth.dto.SignInAuthResultDTO;
 import liaison.groble.application.auth.dto.SignInDto;
-import liaison.groble.application.auth.dto.SignUpDto;
 import liaison.groble.application.auth.dto.SocialSignUpDto;
 import liaison.groble.application.auth.dto.TokenDto;
 import liaison.groble.application.auth.dto.UserWithdrawalDto;
@@ -85,29 +81,29 @@ public class AuthController {
   @Value("${app.cookie.domain}")
   private String cookieDomain; // 쿠키 도메인 설정
 
-  @SignUp
-  @PostMapping("/sign-up")
-  public ResponseEntity<GrobleResponse<SignUpResponse>> signUp(
-      @Parameter(description = "회원가입 정보", required = true) @Valid @RequestBody
-          SignUpRequest request,
-      HttpServletResponse response) {
-
-    // 1. API DTO → 서비스 DTO 변환
-    SignUpDto signUpDto = authDtoMapper.toServiceSignUpDto(request);
-
-    // 2. 서비스 호출
-    TokenDto tokenDto = authService.signUp(signUpDto);
-
-    // 3. 토큰을 쿠키로 설정
-    addTokenCookies(response, tokenDto.getAccessToken(), tokenDto.getRefreshToken());
-
-    // 4. 사용자 정보만 응답 본문에 포함
-    SignUpResponse signUpResponse = SignUpResponse.of(request.getEmail());
-
-    // 5. API 응답 생성
-    return ResponseEntity.status(HttpStatus.CREATED)
-        .body(GrobleResponse.success(signUpResponse, "회원가입이 성공적으로 완료되었습니다.", 201));
-  }
+  //  @SignUp
+  //  @PostMapping("/sign-up")
+  //  public ResponseEntity<GrobleResponse<SignUpResponse>> signUp(
+  //      @Parameter(description = "회원가입 정보", required = true) @Valid @RequestBody
+  //          SignUpRequest request,
+  //      HttpServletResponse response) {
+  //
+  //    // 1. API DTO → 서비스 DTO 변환
+  //    SignUpDto signUpDto = authDtoMapper.toServiceSignUpDto(request);
+  //
+  //    // 2. 서비스 호출
+  //    TokenDto tokenDto = authService.signUp(signUpDto);
+  //
+  //    // 3. 토큰을 쿠키로 설정
+  //    addTokenCookies(response, tokenDto.getAccessToken(), tokenDto.getRefreshToken());
+  //
+  //    // 4. 사용자 정보만 응답 본문에 포함
+  //    SignUpResponse signUpResponse = SignUpResponse.of(request.getEmail());
+  //
+  //    // 5. API 응답 생성
+  //    return ResponseEntity.status(HttpStatus.CREATED)
+  //        .body(GrobleResponse.success(signUpResponse, "회원가입이 성공적으로 완료되었습니다.", 201));
+  //  }
 
   @SocialSignUp
   @PostMapping("/sign-up/social")

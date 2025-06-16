@@ -4,7 +4,6 @@ import liaison.groble.application.auth.dto.EmailVerificationDto;
 import liaison.groble.application.auth.dto.PhoneNumberVerifyRequestDto;
 import liaison.groble.application.auth.dto.SignInAuthResultDTO;
 import liaison.groble.application.auth.dto.SignInDto;
-import liaison.groble.application.auth.dto.SignUpDto;
 import liaison.groble.application.auth.dto.SocialSignUpDto;
 import liaison.groble.application.auth.dto.TokenDto;
 import liaison.groble.application.auth.dto.UserWithdrawalDto;
@@ -12,7 +11,7 @@ import liaison.groble.application.auth.dto.VerifyEmailCodeDto;
 
 public interface AuthService {
 
-  TokenDto signUp(SignUpDto signUpDto);
+  //  TokenDto signUp(SignUpDto signUpDto);
 
   TokenDto socialSignUp(Long userId, SocialSignUpDto socialSignUpDto);
 

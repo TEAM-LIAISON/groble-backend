@@ -12,6 +12,4 @@ public class SignUpDto {
   private List<String> termsTypeStrings;
   private String email;
   private String password;
-  private String nickname;
-  private String phoneNumber;
 }

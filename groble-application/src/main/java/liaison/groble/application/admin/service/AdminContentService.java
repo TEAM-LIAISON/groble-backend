@@ -94,11 +94,13 @@ public class AdminContentService {
   private AdminContentSummaryInfoDto convertFlatDtoToInfoResponse(
       FlatAdminContentSummaryInfoDTO flat) {
     return AdminContentSummaryInfoDto.builder()
+        .contentId(flat.getContentId())
         .createdAt(flat.getCreatedAt())
         .contentType(flat.getContentType())
         .sellerName(flat.getSellerName())
         .contentTitle(flat.getContentTitle())
         .priceOptionLength(flat.getPriceOptionLength())
+        .minPrice(flat.getMinPrice())
         .contentStatus(flat.getContentStatus())
         .adminContentCheckingStatus(flat.getAdminContentCheckingStatus())
         .build();

@@ -1,5 +1,6 @@
 package liaison.groble.api.model.admin.response;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -16,6 +17,14 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Schema(description = "관리자 페이지에서 콘텐츠 요약 정보에 대한 응답 DTO")
 public class AdminContentSummaryInfoResponse {
+
+  @Schema(
+      description = "콘텐츠 ID",
+      example = "1",
+      type = "integer",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private Long contentId;
+
   @Schema(description = "콘텐츠 생성 시간", requiredMode = Schema.RequiredMode.REQUIRED)
   @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
   private LocalDateTime createdAt;
@@ -40,6 +49,9 @@ public class AdminContentSummaryInfoResponse {
       type = "string",
       requiredMode = Schema.RequiredMode.REQUIRED)
   private String contentTitle;
+
+  @Schema(description = "콘텐츠 최저가 가격 (null인 경우 -> 가격미정)", example = "100000")
+  private BigDecimal minPrice;
 
   @Schema(
       description = "가격 옵션 개수",

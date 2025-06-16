@@ -37,20 +37,24 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
                   "data": {
                     "items": [
                       {
+                        "contentId": 1,
                         "createdAt": "2025-06-06 15:09:47",
                         "contentType": "DOCUMENT",
                         "sellerName": "홍길동",
                         "contentTitle": "자바 프로그래밍 입문",
                         "priceOptionLength": 3,
+                        "minPrice": 100000,
                         "contentStatus": "ACTIVE",
                         "adminContentCheckingStatus": "PENDING"
                       },
                       {
+                        "contentId": 2,
                         "createdAt": "2025-06-04 11:22:30",
                         "contentType": "COACHING",
                         "sellerName": "김철수",
                         "contentTitle": "실전 알고리즘 튜터링",
                         "priceOptionLength": 2,
+                        "minPrice": 200000,
                         "contentStatus": "DRAFT",
                         "adminContentCheckingStatus": "DISCONTINUED"
                       }

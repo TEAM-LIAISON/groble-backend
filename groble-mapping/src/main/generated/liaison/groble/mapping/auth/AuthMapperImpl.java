@@ -25,7 +25,7 @@ import liaison.groble.application.auth.dto.VerifyEmailCodeDto;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-06-16T15:21:38+0900",
+    date = "2025-06-16T18:10:24+0900",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.10 (Amazon.com Inc.)")
 @Component
 public class AuthMapperImpl implements AuthMapper {
@@ -49,26 +49,6 @@ public class AuthMapperImpl implements AuthMapper {
   }
 
   @Override
-  public SignInResponse toSignInResponse(String email, SignInAuthResultDTO dto) {
-    if (email == null && dto == null) {
-      return null;
-    }
-
-    SignInResponse.SignInResponseBuilder signInResponse = SignInResponse.builder();
-
-    if (dto != null) {
-      signInResponse.hasAgreedToTerms(dto.isHasAgreedToTerms());
-      signInResponse.hasNickname(dto.isHasNickname());
-    }
-    if (email != null) {
-      signInResponse.email(email);
-    }
-    signInResponse.authenticated(true);
-
-    return signInResponse.build();
-  }
-
-  @Override
   public SignUpDto toSignUpDto(SignUpRequest request) {
     if (request == null) {
       return null;
@@ -85,16 +65,31 @@ public class AuthMapperImpl implements AuthMapper {
     if (request.getPassword() != null) {
       signUpDto.password(request.getPassword());
     }
-    if (request.getNickname() != null) {
-      signUpDto.nickname(request.getNickname());
-    }
-    if (request.getPhoneNumber() != null) {
-      signUpDto.phoneNumber(request.getPhoneNumber());
-    }
 
     signUpDto.termsTypeStrings(request.getTermsTypes().stream().map(Enum::name).toList());
 
     return signUpDto.build();
+  }
+
+  @Override
+  public SignInResponse toSignInResponse(String email, SignInAuthResultDTO dto) {
+    if (email == null && dto == null) {
+      return null;
+    }
+
+    SignInResponse.SignInResponseBuilder signInResponse = SignInResponse.builder();
+
+    if (dto != null) {
+      signInResponse.hasAgreedToTerms(dto.isHasAgreedToTerms());
+      signInResponse.hasNickname(dto.isHasNickname());
+      signInResponse.hasVerifiedPhoneNumber(dto.isHasVerifiedPhoneNumber());
+    }
+    if (email != null) {
+      signInResponse.email(email);
+    }
+    signInResponse.authenticated(true);
+
+    return signInResponse.build();
   }
 
   @Override
