@@ -5,7 +5,7 @@ import java.time.Instant;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import liaison.groble.application.auth.dto.TokenDto;
+import liaison.groble.application.auth.dto.SignInAuthResultDTO;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.common.port.security.SecurityPort;
 import liaison.groble.domain.user.entity.IntegratedAccount;
@@ -25,7 +25,7 @@ public class AdminAuthService {
   private final SecurityPort securityPort;
 
   @Transactional
-  public TokenDto adminSignIn(String email, String password) {
+  public SignInAuthResultDTO adminSignIn(String email, String password) {
     // 이메일로 IntegratedAccount 찾기
     IntegratedAccount integratedAccount = userReader.getUserByIntegratedAccountEmail(email);
 
@@ -58,10 +58,11 @@ public class AdminAuthService {
     userRepository.save(user);
 
     log.info("리프레시 토큰 저장 완료: {}", user.getEmail());
-    return TokenDto.builder()
+    return SignInAuthResultDTO.builder()
         .accessToken(accessToken)
         .refreshToken(refreshToken)
-        .accessTokenExpiresIn(securityPort.getAccessTokenExpirationTime())
+        .hasAgreedToTerms(user.checkTermsAgreement())
+        .hasNickname(user.hasNickname())
         .build();
   }
 }

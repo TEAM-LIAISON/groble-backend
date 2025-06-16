@@ -19,6 +19,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import liaison.groble.application.auth.dto.EmailVerificationDto;
 import liaison.groble.application.auth.dto.PhoneNumberVerifyRequestDto;
+import liaison.groble.application.auth.dto.SignInAuthResultDTO;
 import liaison.groble.application.auth.dto.SignInDto;
 import liaison.groble.application.auth.dto.SignUpDto;
 import liaison.groble.application.auth.dto.SocialSignUpDto;
@@ -265,7 +266,7 @@ public class AuthServiceImpl implements AuthService {
 
   @Override
   @Transactional
-  public TokenDto signIn(SignInDto signInDto) {
+  public SignInAuthResultDTO signIn(SignInDto signInDto) {
     // 이메일로 IntegratedAccount 찾기
     IntegratedAccount integratedAccount =
         userReader.getUserByIntegratedAccountEmail(signInDto.getEmail());
@@ -299,22 +300,18 @@ public class AuthServiceImpl implements AuthService {
     userRepository.save(user);
 
     log.info("리프레시 토큰 저장 완료: {}", user.getEmail());
-    return TokenDto.builder()
+    return SignInAuthResultDTO.builder()
         .accessToken(accessToken)
         .refreshToken(refreshToken)
-        .accessTokenExpiresIn(securityPort.getAccessTokenExpirationTime())
+        .hasAgreedToTerms(user.checkTermsAgreement())
+        .hasNickname(user.hasNickname())
         .build();
   }
 
   @Override
   @Transactional
   public void logout(Long userId) {
-    // 사용자 조회
-    User user =
-        userRepository
-            .findById(userId)
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
-
+    User user = userReader.getUserById(userId);
     log.info("로그아웃 완료: {}", user.getEmail());
   }
 

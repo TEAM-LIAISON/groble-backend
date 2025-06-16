@@ -33,11 +33,11 @@ import liaison.groble.api.model.auth.response.SocialSignUpResponse;
 import liaison.groble.api.model.auth.response.swagger.SignUp;
 import liaison.groble.api.model.auth.response.swagger.SocialSignUp;
 import liaison.groble.api.model.user.request.NicknameRequest;
-import liaison.groble.api.model.user.request.UserTypeRequest;
 import liaison.groble.api.model.user.response.NicknameDuplicateCheckResponse;
 import liaison.groble.api.model.user.response.UpdateNicknameResponse;
 import liaison.groble.api.server.auth.mapper.AuthDtoMapper;
 import liaison.groble.application.auth.dto.EmailVerificationDto;
+import liaison.groble.application.auth.dto.SignInAuthResultDTO;
 import liaison.groble.application.auth.dto.SignInDto;
 import liaison.groble.application.auth.dto.SignUpDto;
 import liaison.groble.application.auth.dto.SocialSignUpDto;
@@ -158,19 +158,18 @@ public class AuthController {
     SignInDto signInDto = authDtoMapper.toServiceSignInDto(request);
 
     // 2. 서비스 호출
-    TokenDto tokenDto = authService.signIn(signInDto);
-
-    // 3. 사용자 역할 및 정보 상태 확인
-    String userType = userService.getUserType(signInDto.getEmail());
-
-    // 4. 사용자 라우팅 경로 설정
-    String nextRoutePath = userService.getNextRoutePath(signInDto.getEmail());
+    SignInAuthResultDTO signInAuthResultDTO = authService.signIn(signInDto);
 
     // 5. 토큰을 쿠키로 설정
-    addTokenCookies(response, tokenDto.getAccessToken(), tokenDto.getRefreshToken());
+    addTokenCookies(
+        response, signInAuthResultDTO.getAccessToken(), signInAuthResultDTO.getRefreshToken());
 
     // 6. 사용자 정보와 역할 정보를 응답 본문에 포함
-    SignInResponse signInResponse = SignInResponse.of(request.getEmail());
+    SignInResponse signInResponse =
+        SignInResponse.of(
+            request.getEmail(),
+            signInAuthResultDTO.isHasAgreedToTerms(),
+            signInAuthResultDTO.isHasNickname());
 
     // 7. API 응답 생성
     return ResponseEntity.status(HttpStatus.OK)
@@ -190,31 +189,22 @@ public class AuthController {
   public ResponseEntity<GrobleResponse<SignInTestResponse>> signInTest(
       @Parameter(description = "로그인 정보", required = true) @Valid @RequestBody SignInRequest request,
       HttpServletResponse response) {
-    log.info("로그인 요청: {}", request.getEmail());
+    log.info("(localhost:3000) 포트에서 사용하는 테스트 로그인 요청: {}", request.getEmail());
 
-    // 1. API DTO → 서비스 DTO 변환
     SignInDto signInDto = authDtoMapper.toServiceSignInDto(request);
+    SignInAuthResultDTO signInAuthResultDTO = authService.signIn(signInDto);
 
-    // 2. 서비스 호출
-    TokenDto tokenDto = authService.signIn(signInDto);
-
-    // 3. 사용자 역할 및 정보 상태 확인
-    String userType = userService.getUserType(signInDto.getEmail());
-
-    // 4. 사용자 라우팅 경로 설정
-    String nextRoutePath = userService.getNextRoutePath(signInDto.getEmail());
-
-    // 5. 토큰을 쿠키로 설정
-    addTokenCookies(response, tokenDto.getAccessToken(), tokenDto.getRefreshToken());
+    addTokenCookies(
+        response, signInAuthResultDTO.getAccessToken(), signInAuthResultDTO.getRefreshToken());
 
     // 6. 사용자 정보와 역할 정보를 응답 본문에 포함
     SignInTestResponse signInTestResponse =
         SignInTestResponse.of(
             request.getEmail(),
-            userType,
-            nextRoutePath,
-            tokenDto.getAccessToken(),
-            tokenDto.getRefreshToken());
+            signInAuthResultDTO.isHasAgreedToTerms(),
+            signInAuthResultDTO.isHasNickname(),
+            signInAuthResultDTO.getAccessToken(),
+            signInAuthResultDTO.getRefreshToken());
 
     // 7. API 응답 생성
     return ResponseEntity.status(HttpStatus.OK)
@@ -393,54 +383,6 @@ public class AuthController {
 
     // API 응답 생성
     return ResponseEntity.ok().body(GrobleResponse.success(null, "이메일 변경 인증이 성공적으로 완료되었습니다.", 200));
-  }
-
-  /** 토큰 검증 및 로그인 상태 확인 API OAuth2 로그인 처리 후 프론트엔드에서 호출하여 토큰 상태 확인 */
-  @Deprecated
-  @Operation(summary = "토큰 검증", description = "현재 사용자의 인증 토큰을 검증하고 로그인 상태를 확인합니다.")
-  @PostMapping("/validate-token")
-  public ResponseEntity<GrobleResponse<SignInResponse>> validateToken(@Auth Accessor accessor) {
-    // 사용자 역할 및 정보 상태 확인
-    String userType = userService.getUserType(accessor.getEmail());
-
-    // 사용자 라우팅 경로 설정
-    String nextRoutePath = userService.getNextRoutePath(accessor.getEmail());
-
-    // 사용자 정보 응답
-    SignInResponse response = SignInResponse.of(accessor.getEmail());
-
-    return ResponseEntity.ok().body(GrobleResponse.success(response, "유효한 토큰입니다.", 200));
-  }
-
-  @Deprecated
-  @Operation(summary = "accessToken 재발급", description = "리프레시 토큰을 사용하여 새로운 액세스 토큰을 발급합니다.")
-  @PostMapping("/refresh-token")
-  public ResponseEntity<GrobleResponse<Void>> refreshToken(
-      HttpServletRequest request, HttpServletResponse response) {
-
-    TokenDto newTokens = authService.refreshTokens(extractRefreshTokenFromCookie(request));
-
-    addTokenCookies(response, newTokens.getAccessToken(), newTokens.getRefreshToken());
-
-    return ResponseEntity.ok(GrobleResponse.success(null, "토큰이 재발급되었습니다.", 200));
-  }
-
-  // 처음 회원가입 유형을 선택하는 API
-  @Deprecated
-  @Operation(summary = "회원가입 유형 선택", description = "회원가입 시 판매자 또는 구매자 중 선택합니다.")
-  @ApiResponses({
-    @ApiResponse(
-        responseCode = "200",
-        description = "회원가입 유형 선택 성공",
-        content = @Content(schema = @Schema(implementation = GrobleResponse.class))),
-    @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터")
-  })
-  @PostMapping("/initial-user-type")
-  public ResponseEntity<GrobleResponse<Void>> setInitialUserType(
-      @Auth Accessor accessor, @Valid @RequestBody UserTypeRequest request) {
-
-    userService.setInitialUserType(accessor.getUserId(), request.getUserType());
-    return ResponseEntity.ok(GrobleResponse.success(null, "회원가입 유형이 설정되었습니다."));
   }
 
   @Operation(summary = "닉네임 중복 확인", description = "닉네임이 이미 사용 중인지 확인합니다. 회원가입 및 닉네임 수정 시 사용됩니다.")

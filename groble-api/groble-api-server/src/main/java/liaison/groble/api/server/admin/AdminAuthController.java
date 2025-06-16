@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import liaison.groble.api.model.admin.request.AdminSignInRequest;
 import liaison.groble.api.model.admin.response.AdminSignInResponse;
 import liaison.groble.application.admin.service.AdminAuthService;
-import liaison.groble.application.auth.dto.TokenDto;
+import liaison.groble.application.auth.dto.SignInAuthResultDTO;
 import liaison.groble.common.response.GrobleResponse;
 import liaison.groble.common.utils.CookieUtils;
 
@@ -45,8 +45,10 @@ public class AdminAuthController {
           AdminSignInRequest request,
       HttpServletResponse response) {
     log.info("관리자 로그인 요청: {}", request.getEmail());
-    TokenDto tokenDto = adminAuthService.adminSignIn(request.getEmail(), request.getPassword());
-    addTokenCookies(response, tokenDto.getAccessToken(), tokenDto.getRefreshToken());
+    SignInAuthResultDTO signInAuthResultDTO =
+        adminAuthService.adminSignIn(request.getEmail(), request.getPassword());
+    addTokenCookies(
+        response, signInAuthResultDTO.getAccessToken(), signInAuthResultDTO.getRefreshToken());
 
     AdminSignInResponse adminSignInResponse = AdminSignInResponse.of(request.getEmail(), "ADMIN");
     return ResponseEntity.ok(GrobleResponse.success(adminSignInResponse));

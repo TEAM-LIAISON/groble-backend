@@ -29,7 +29,7 @@ public class TokenCookieService {
   public void addTokenCookies(
       HttpServletResponse response, String accessToken, String refreshToken) {
 
-    boolean isLocal = env.acceptsProfiles("local");
+    boolean isLocal = env.matchesProfiles("local");
     String sameSite = isLocal ? "Lax" : "None";
     boolean isSecure = !isLocal; // 로컬은 http
 

@@ -28,10 +28,6 @@ public class RedisVerificationCodeAdapter implements VerificationCodePort {
   private static final String PHONE_AUTH_GUEST_PREFIX = "phone:auth:guest:";
   private static final String PHONE_VERIFIED_GUEST_PREFIX = "phone:verified:guest:";
 
-  // Deprecated - 하위 호환성
-  private static final String PHONE_VERIFICATION_PREFIX = "phone:auth:";
-  private static final String PHONE_VERIFIED_PREFIX = "phone:verified:";
-
   public RedisVerificationCodeAdapter(RedisTemplate<String, String> redisTemplate) {
     this.redisTemplate = redisTemplate;
   }
@@ -340,16 +336,5 @@ public class RedisVerificationCodeAdapter implements VerificationCodePort {
 
   private String guestPhoneVerifiedKey(String phoneNumber) {
     return PHONE_VERIFIED_GUEST_PREFIX + phoneNumber;
-  }
-
-  // Deprecated key methods
-  @Deprecated
-  private String verificationPhoneKey(String phoneNumber) {
-    return PHONE_VERIFICATION_PREFIX + phoneNumber;
-  }
-
-  @Deprecated
-  private String verifiedPhoneKey(String phoneNumber) {
-    return PHONE_VERIFIED_PREFIX + phoneNumber;
   }
 }

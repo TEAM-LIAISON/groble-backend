@@ -4,7 +4,8 @@ import java.time.Instant;
 
 import org.springframework.stereotype.Service;
 
-import liaison.groble.application.auth.dto.TokenDto;
+import liaison.groble.application.auth.dto.SignInAuthResultDTO;
+import liaison.groble.application.auth.dto.SignInDto;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.common.port.security.SecurityPort;
 import liaison.groble.domain.user.entity.IntegratedAccount;
@@ -22,12 +23,12 @@ public class IntegratedAccountAuthService {
   private final UserRepository userRepository;
   private final SecurityPort securityPort;
 
-  public TokenDto integratedAccountSignIn(String email, String password) {
-    // 이메일로 IntegratedAccount 찾기
-    IntegratedAccount integratedAccount = userReader.getUserByIntegratedAccountEmail(email);
+  public SignInAuthResultDTO integratedAccountSignIn(SignInDto signInDto) {
+    IntegratedAccount integratedAccount =
+        userReader.getUserByIntegratedAccountEmail(signInDto.getEmail());
 
     // 비밀번호 일치 여부 확인
-    if (!securityPort.matches(password, integratedAccount.getPassword())) {
+    if (!securityPort.matches(signInDto.getPassword(), integratedAccount.getPassword())) {
       throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
     }
 
@@ -46,7 +47,6 @@ public class IntegratedAccountAuthService {
     log.info("로그인 성공: {}", user.getEmail());
 
     log.info("토큰 생성 시작: userId={}, email={}", user.getId(), user.getEmail());
-    // 토큰 생성
     String accessToken = securityPort.createAccessToken(user.getId(), user.getEmail());
     String refreshToken = securityPort.createRefreshToken(user.getId(), user.getEmail());
     Instant refreshTokenExpiresAt = securityPort.getRefreshTokenExpirationTime(refreshToken);
@@ -54,11 +54,11 @@ public class IntegratedAccountAuthService {
     user.updateRefreshToken(refreshToken, refreshTokenExpiresAt);
     userRepository.save(user);
 
-    log.info("리프레시 토큰 저장 완료: {}", user.getEmail());
-    return TokenDto.builder()
+    return SignInAuthResultDTO.builder()
         .accessToken(accessToken)
         .refreshToken(refreshToken)
-        .accessTokenExpiresIn(securityPort.getAccessTokenExpirationTime())
+        .hasAgreedToTerms(user.checkTermsAgreement())
+        .hasNickname(user.hasNickname())
         .build();
   }
 }

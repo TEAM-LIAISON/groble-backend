@@ -365,4 +365,15 @@ public class User extends BaseTimeEntity {
     }
     userProfile.updatePhoneNumber(phoneNumber);
   }
+
+  /** 약관 동의 여부 확인 */
+  public boolean checkTermsAgreement() {
+    return !this.getTermsAgreements().isEmpty();
+  }
+
+  /** 닉네임 존재 여부 확인 */
+  public boolean hasNickname() {
+    String nickname = getNickname();
+    return nickname != null && !nickname.trim().isEmpty();
+  }
 }

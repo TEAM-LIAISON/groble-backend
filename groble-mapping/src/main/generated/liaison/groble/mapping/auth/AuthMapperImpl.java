@@ -12,9 +12,11 @@ import liaison.groble.api.model.auth.request.SignUpRequest;
 import liaison.groble.api.model.auth.request.SocialSignUpRequest;
 import liaison.groble.api.model.auth.request.UserWithdrawalRequest;
 import liaison.groble.api.model.auth.request.VerifyEmailCodeRequest;
+import liaison.groble.api.model.auth.response.SignInResponse;
 import liaison.groble.application.auth.dto.EmailVerificationDto;
 import liaison.groble.application.auth.dto.PhoneNumberVerifyCodeRequestDto;
 import liaison.groble.application.auth.dto.PhoneNumberVerifyRequestDto;
+import liaison.groble.application.auth.dto.SignInAuthResultDTO;
 import liaison.groble.application.auth.dto.SignInDto;
 import liaison.groble.application.auth.dto.SignUpDto;
 import liaison.groble.application.auth.dto.SocialSignUpDto;
@@ -23,10 +25,48 @@ import liaison.groble.application.auth.dto.VerifyEmailCodeDto;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-06-14T18:30:16+0900",
+    date = "2025-06-16T15:21:38+0900",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.10 (Amazon.com Inc.)")
 @Component
 public class AuthMapperImpl implements AuthMapper {
+
+  @Override
+  public SignInDto toSignInDto(SignInRequest request) {
+    if (request == null) {
+      return null;
+    }
+
+    SignInDto.SignInDtoBuilder signInDto = SignInDto.builder();
+
+    if (request.getEmail() != null) {
+      signInDto.email(request.getEmail());
+    }
+    if (request.getPassword() != null) {
+      signInDto.password(request.getPassword());
+    }
+
+    return signInDto.build();
+  }
+
+  @Override
+  public SignInResponse toSignInResponse(String email, SignInAuthResultDTO dto) {
+    if (email == null && dto == null) {
+      return null;
+    }
+
+    SignInResponse.SignInResponseBuilder signInResponse = SignInResponse.builder();
+
+    if (dto != null) {
+      signInResponse.hasAgreedToTerms(dto.isHasAgreedToTerms());
+      signInResponse.hasNickname(dto.isHasNickname());
+    }
+    if (email != null) {
+      signInResponse.email(email);
+    }
+    signInResponse.authenticated(true);
+
+    return signInResponse.build();
+  }
 
   @Override
   public SignUpDto toSignUpDto(SignUpRequest request) {
@@ -78,24 +118,6 @@ public class AuthMapperImpl implements AuthMapper {
     socialSignUpDto.termsTypeStrings(request.getTermsTypes().stream().map(Enum::name).toList());
 
     return socialSignUpDto.build();
-  }
-
-  @Override
-  public SignInDto toSignInDto(SignInRequest request) {
-    if (request == null) {
-      return null;
-    }
-
-    SignInDto.SignInDtoBuilder signInDto = SignInDto.builder();
-
-    if (request.getEmail() != null) {
-      signInDto.email(request.getEmail());
-    }
-    if (request.getPassword() != null) {
-      signInDto.password(request.getPassword());
-    }
-
-    return signInDto.build();
   }
 
   @Override

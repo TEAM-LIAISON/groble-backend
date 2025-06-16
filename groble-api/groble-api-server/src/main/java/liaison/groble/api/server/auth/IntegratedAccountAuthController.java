@@ -12,7 +12,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import liaison.groble.api.model.auth.request.SignInRequest;
 import liaison.groble.api.model.auth.response.SignInResponse;
-import liaison.groble.application.auth.dto.TokenDto;
+import liaison.groble.application.auth.dto.SignInAuthResultDTO;
+import liaison.groble.application.auth.dto.SignInDto;
 import liaison.groble.application.auth.service.IntegratedAccountAuthService;
 import liaison.groble.common.response.GrobleResponse;
 import liaison.groble.common.utils.TokenCookieService;
@@ -40,16 +41,18 @@ public class IntegratedAccountAuthController {
       @Parameter(description = "로그인 정보", required = true) @Valid @RequestBody SignInRequest request,
       HttpServletResponse response) {
     log.info("통합 로그인 요청: {}", request.getEmail());
-    TokenDto tokenDto =
-        integratedAccountAuthService.integratedAccountSignIn(
-            request.getEmail(), request.getPassword());
+
+    SignInDto signInDto = authMapper.toSignInDto(request);
+    SignInAuthResultDTO signInAuthResultDTO =
+        integratedAccountAuthService.integratedAccountSignIn(signInDto);
 
     tokenCookieService.addTokenCookies(
-        response, tokenDto.getAccessToken(), tokenDto.getRefreshToken());
+        response, signInAuthResultDTO.getAccessToken(), signInAuthResultDTO.getRefreshToken());
 
-    SignInResponse signInResponse = SignInResponse.of(request.getEmail());
+    SignInResponse signInResponse =
+        authMapper.toSignInResponse(signInDto.getEmail(), signInAuthResultDTO);
 
     return ResponseEntity.status(HttpStatus.OK)
-        .body(GrobleResponse.success(signInResponse, "로그인이 성공적으로 완료되었습니다.", 200));
+        .body(GrobleResponse.success(signInResponse, "로그인이 성공적으로 완료되었습니다."));
   }
 }
