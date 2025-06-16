@@ -6,9 +6,9 @@ import org.mapstruct.Mapping;
 import liaison.groble.api.model.auth.request.EmailVerificationRequest;
 import liaison.groble.api.model.auth.request.PhoneNumberVerifyCodeRequest;
 import liaison.groble.api.model.auth.request.PhoneNumberVerifyRequest;
+import liaison.groble.api.model.auth.request.SetSocialBasicInfoRequest;
 import liaison.groble.api.model.auth.request.SignInRequest;
 import liaison.groble.api.model.auth.request.SignUpRequest;
-import liaison.groble.api.model.auth.request.SocialSignUpRequest;
 import liaison.groble.api.model.auth.request.UserWithdrawalRequest;
 import liaison.groble.api.model.auth.request.VerifyEmailCodeRequest;
 import liaison.groble.api.model.auth.response.SignInResponse;
@@ -18,7 +18,7 @@ import liaison.groble.application.auth.dto.PhoneNumberVerifyRequestDto;
 import liaison.groble.application.auth.dto.SignInAuthResultDTO;
 import liaison.groble.application.auth.dto.SignInDto;
 import liaison.groble.application.auth.dto.SignUpDto;
-import liaison.groble.application.auth.dto.SocialSignUpDto;
+import liaison.groble.application.auth.dto.SocialBasicInfoDto;
 import liaison.groble.application.auth.dto.UserWithdrawalDto;
 import liaison.groble.application.auth.dto.VerifyEmailCodeDto;
 import liaison.groble.mapping.config.GrobleMapperConfig;
@@ -30,23 +30,23 @@ public interface AuthMapper {
   /** SignInRequest → SignInDto */
   SignInDto toSignInDto(SignInRequest request);
 
-  /** SignUpRequest → SignUpDto */
+  /** [통합 회원가입] SignUpRequest → SignUpDto */
   @Mapping(
       target = "termsTypeStrings",
       expression = "java(request.getTermsTypes().stream().map(Enum::name).toList())")
   SignUpDto toSignUpDto(SignUpRequest request);
+
+  /** [소셜 회원가입] SetSocialBasicInfoRequest → SocialBasicInfoDto */
+  @Mapping(
+      target = "termsTypeStrings",
+      expression = "java(request.getTermsTypes().stream().map(Enum::name).toList())")
+  SocialBasicInfoDto toSocialBasicInfoDto(SetSocialBasicInfoRequest request);
 
   // ====== 📤 DTO → Response 변환 ======
 
   /** (email + 인증 결과 DTO) → SignInResponse */
   @Mapping(target = "authenticated", constant = "true")
   SignInResponse toSignInResponse(String email, SignInAuthResultDTO dto);
-
-  /** SocialSignUpRequest → SocialSignUpDto */
-  @Mapping(
-      target = "termsTypeStrings",
-      expression = "java(request.getTermsTypes().stream().map(Enum::name).toList())")
-  SocialSignUpDto toSocialSignUpDto(SocialSignUpRequest request);
 
   /** EmailVerificationRequest → EmailVerificationDto */
   EmailVerificationDto toEmailVerificationDto(EmailVerificationRequest request);

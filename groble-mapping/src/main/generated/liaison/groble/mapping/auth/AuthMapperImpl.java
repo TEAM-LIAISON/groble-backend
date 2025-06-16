@@ -7,9 +7,9 @@ import org.springframework.stereotype.Component;
 import liaison.groble.api.model.auth.request.EmailVerificationRequest;
 import liaison.groble.api.model.auth.request.PhoneNumberVerifyCodeRequest;
 import liaison.groble.api.model.auth.request.PhoneNumberVerifyRequest;
+import liaison.groble.api.model.auth.request.SetSocialBasicInfoRequest;
 import liaison.groble.api.model.auth.request.SignInRequest;
 import liaison.groble.api.model.auth.request.SignUpRequest;
-import liaison.groble.api.model.auth.request.SocialSignUpRequest;
 import liaison.groble.api.model.auth.request.UserWithdrawalRequest;
 import liaison.groble.api.model.auth.request.VerifyEmailCodeRequest;
 import liaison.groble.api.model.auth.response.SignInResponse;
@@ -19,13 +19,13 @@ import liaison.groble.application.auth.dto.PhoneNumberVerifyRequestDto;
 import liaison.groble.application.auth.dto.SignInAuthResultDTO;
 import liaison.groble.application.auth.dto.SignInDto;
 import liaison.groble.application.auth.dto.SignUpDto;
-import liaison.groble.application.auth.dto.SocialSignUpDto;
+import liaison.groble.application.auth.dto.SocialBasicInfoDto;
 import liaison.groble.application.auth.dto.UserWithdrawalDto;
 import liaison.groble.application.auth.dto.VerifyEmailCodeDto;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-06-16T18:10:24+0900",
+    date = "2025-06-16T19:36:32+0900",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.10 (Amazon.com Inc.)")
 @Component
 public class AuthMapperImpl implements AuthMapper {
@@ -72,6 +72,23 @@ public class AuthMapperImpl implements AuthMapper {
   }
 
   @Override
+  public SocialBasicInfoDto toSocialBasicInfoDto(SetSocialBasicInfoRequest request) {
+    if (request == null) {
+      return null;
+    }
+
+    SocialBasicInfoDto.SocialBasicInfoDtoBuilder socialBasicInfoDto = SocialBasicInfoDto.builder();
+
+    if (request.getUserType() != null) {
+      socialBasicInfoDto.userType(request.getUserType());
+    }
+
+    socialBasicInfoDto.termsTypeStrings(request.getTermsTypes().stream().map(Enum::name).toList());
+
+    return socialBasicInfoDto.build();
+  }
+
+  @Override
   public SignInResponse toSignInResponse(String email, SignInAuthResultDTO dto) {
     if (email == null && dto == null) {
       return null;
@@ -90,29 +107,6 @@ public class AuthMapperImpl implements AuthMapper {
     signInResponse.authenticated(true);
 
     return signInResponse.build();
-  }
-
-  @Override
-  public SocialSignUpDto toSocialSignUpDto(SocialSignUpRequest request) {
-    if (request == null) {
-      return null;
-    }
-
-    SocialSignUpDto.SocialSignUpDtoBuilder socialSignUpDto = SocialSignUpDto.builder();
-
-    if (request.getUserType() != null) {
-      socialSignUpDto.userType(request.getUserType());
-    }
-    if (request.getNickname() != null) {
-      socialSignUpDto.nickname(request.getNickname());
-    }
-    if (request.getPhoneNumber() != null) {
-      socialSignUpDto.phoneNumber(request.getPhoneNumber());
-    }
-
-    socialSignUpDto.termsTypeStrings(request.getTermsTypes().stream().map(Enum::name).toList());
-
-    return socialSignUpDto.build();
   }
 
   @Override

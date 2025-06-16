@@ -70,17 +70,14 @@ public class AdminAuthController {
     String sameSite = "None";
     isSecure = true; // SameSite=None인 경우 항상 Secure 설정
 
-    // 4. 도메인 설정 (app.cookie.domain 프로퍼티 사용)
-    String domain = null;
-    if (!isLocal && adminCookieDomain != null && !adminCookieDomain.isEmpty()) {
-      // 점으로 시작하지 않는 도메인 사용 (RFC 6265 준수)
-      domain =
-          adminCookieDomain.startsWith(".") ? adminCookieDomain.substring(1) : adminCookieDomain;
-      // 또는 더 간단하게: domain = cookieDomain;
-    }
-    // 로컬 환경에서는 domain 명시적으로 설정하지 않음 (기본값 사용)
+    // 무조건 adminCookieDomain 사용
+    String domain =
+        adminCookieDomain != null && !adminCookieDomain.isEmpty()
+            ? (adminCookieDomain.startsWith(".")
+                ? adminCookieDomain.substring(1)
+                : adminCookieDomain)
+            : null;
 
-    // 5. 토큰 쿠키 설정
     // Access Token
     CookieUtils.addCookie(
         response,

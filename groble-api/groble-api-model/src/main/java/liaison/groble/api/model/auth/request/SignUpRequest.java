@@ -9,7 +9,6 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
-import liaison.groble.api.model.auth.validation.ValidSellerPhoneNumber;
 import liaison.groble.api.model.terms.enums.TermsTypeDto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -22,7 +21,6 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@ValidSellerPhoneNumber
 public class SignUpRequest {
   @NotNull(message = "사용자 유형은 필수 입력값입니다.")
   @Pattern(regexp = "^(SELLER|BUYER)$", message = "사용자 유형은 SELLER 또는 BUYER만 가능합니다.")
@@ -55,15 +53,4 @@ public class SignUpRequest {
       message = "비밀번호는 영문, 숫자, 특수문자를 포함해야 합니다.")
   @Schema(description = "비밀번호", example = "Password123!")
   private String password;
-
-  @NotBlank(message = "닉네임은 필수 입력값입니다.")
-  @Pattern(
-      regexp = "^[가-힣a-zA-Z0-9]{2,15}$",
-      message = "닉네임은 한글, 영문, 숫자만 사용할 수 있으며 2~15자 이내여야 합니다.")
-  @Schema(description = "닉네임", example = "nickname")
-  private String nickname;
-
-  @Pattern(regexp = "^\\d{3}-\\d{3,4}-\\d{4}$", message = "전화번호는 000-0000-0000 형식으로 입력해주세요.")
-  @Schema(description = "전화번호", example = "010-1234-5678")
-  private String phoneNumber;
 }

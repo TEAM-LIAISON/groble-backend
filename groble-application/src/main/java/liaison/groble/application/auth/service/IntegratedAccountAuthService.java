@@ -65,7 +65,7 @@ public class IntegratedAccountAuthService {
     // 약관 유형 변환 및 필수 약관 검증
     List<TermsType> agreedTermsTypes =
         termsHelper.convertToTermsTypes(signUpDto.getTermsTypeStrings());
-    termsHelper.validateRequiredTermsAgreement(agreedTermsTypes);
+    termsHelper.validateRequiredTermsAgreement(agreedTermsTypes, userType);
 
     // 기입한 이메일 인증 여부 판단
     authValidationHelper.validateEmailVerification(signUpDto.getEmail());

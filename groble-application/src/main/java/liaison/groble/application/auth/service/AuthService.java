@@ -4,7 +4,6 @@ import liaison.groble.application.auth.dto.EmailVerificationDto;
 import liaison.groble.application.auth.dto.PhoneNumberVerifyRequestDto;
 import liaison.groble.application.auth.dto.SignInAuthResultDTO;
 import liaison.groble.application.auth.dto.SignInDto;
-import liaison.groble.application.auth.dto.SocialSignUpDto;
 import liaison.groble.application.auth.dto.TokenDto;
 import liaison.groble.application.auth.dto.UserWithdrawalDto;
 import liaison.groble.application.auth.dto.VerifyEmailCodeDto;
@@ -13,7 +12,7 @@ public interface AuthService {
 
   //  TokenDto signUp(SignUpDto signUpDto);
 
-  TokenDto socialSignUp(Long userId, SocialSignUpDto socialSignUpDto);
+  //  TokenDto socialSignUp(Long userId, SocialBasicInfoDto socialSignUpDto);
 
   /**
    * 로그인 처리 및 토큰 발급

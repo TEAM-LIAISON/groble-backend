@@ -2,22 +2,17 @@ package liaison.groble.application.auth.service.impl;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import liaison.groble.application.auth.dto.EmailVerificationDto;
 import liaison.groble.application.auth.dto.PhoneNumberVerifyRequestDto;
 import liaison.groble.application.auth.dto.SignInAuthResultDTO;
 import liaison.groble.application.auth.dto.SignInDto;
-import liaison.groble.application.auth.dto.SocialSignUpDto;
 import liaison.groble.application.auth.dto.TokenDto;
 import liaison.groble.application.auth.dto.UserWithdrawalDto;
 import liaison.groble.application.auth.dto.VerifyEmailCodeDto;
@@ -33,22 +28,16 @@ import liaison.groble.common.port.security.SecurityPort;
 import liaison.groble.common.utils.CodeGenerator;
 import liaison.groble.domain.port.EmailSenderPort;
 import liaison.groble.domain.port.VerificationCodePort;
-import liaison.groble.domain.terms.enums.TermsType;
 import liaison.groble.domain.user.entity.IntegratedAccount;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.entity.UserWithdrawalHistory;
 import liaison.groble.domain.user.enums.AccountType;
-import liaison.groble.domain.user.enums.SellerVerificationStatus;
 import liaison.groble.domain.user.enums.UserStatus;
-import liaison.groble.domain.user.enums.UserType;
 import liaison.groble.domain.user.enums.WithdrawalReason;
 import liaison.groble.domain.user.repository.IntegratedAccountRepository;
 import liaison.groble.domain.user.repository.SocialAccountRepository;
 import liaison.groble.domain.user.repository.UserRepository;
 import liaison.groble.domain.user.repository.UserWithdrawalHistoryRepository;
-import liaison.groble.domain.user.service.UserStatusService;
-import liaison.groble.domain.user.vo.SellerInfo;
-import liaison.groble.external.discord.dto.MemberCreateReportDto;
 import liaison.groble.external.discord.service.DiscordMemberReportService;
 
 import lombok.RequiredArgsConstructor;
@@ -169,91 +158,89 @@ public class AuthServiceImpl implements AuthService {
   //    return tokenDto;
   //  }
 
-  @Override
-  @Transactional
-  public TokenDto socialSignUp(Long userId, SocialSignUpDto dto) {
-    // 1. userType 파싱
-    UserType userType = authValidationHelper.validateAndParseUserType(dto.getUserType());
+  //  public TokenDto socialSignUp(Long userId, SocialBasicInfoDto dto) {
 
-    // 약관 유형 변환 및 필수 약관 검증
-    List<TermsType> agreedTermsTypes = termsHelper.convertToTermsTypes(dto.getTermsTypeStrings());
-    termsHelper.validateRequiredTermsAgreement(agreedTermsTypes);
-
-    // 2. SELLER라면 phoneNumber 필수
-    if (userType == UserType.SELLER
-        && (dto.getPhoneNumber() == null || dto.getPhoneNumber().isBlank())) {
-      throw new IllegalArgumentException("판매자는 전화번호를 필수로 입력해야 합니다.");
-    }
-
-    // 3. 닉네임 중복 확인
-    if (userReader.isNicknameTaken(dto.getNickname(), UserStatus.ACTIVE)) {
-      throw new IllegalArgumentException("이미 사용 중인 닉네임입니다.");
-    }
-
-    // 4. 사용자 조회 및 검증
-    User user = userReader.getUserById(userId);
-
-    if (user.getAccountType() != AccountType.SOCIAL) {
-      throw new IllegalStateException("소셜 계정이 아닌 사용자입니다.");
-    }
-
-    UserStatusService userStatusService = new UserStatusService();
-
-    // 5. 사용자 정보 업데이트
-    user.updateNickname(dto.getNickname());
-    user.updateLastUserType(userType);
-    // SELLER 타입이면 isSeller 플래그도 설정
-    if (userType == UserType.SELLER) {
-      log.info("판매자 전화번호 인증: {}", dto.getPhoneNumber());
-      authValidationHelper.validateVerifiedUserPhoneFlag(userId, dto.getPhoneNumber());
-      user.setSeller(true);
-      user.setSellerInfo(SellerInfo.ofVerificationStatus(SellerVerificationStatus.PENDING));
-    } else {
-      user.setSeller(false); // BUYER인 경우 명시적으로 false 설정
-    }
-
-    userStatusService.activate(user);
-    // 5.1. 약관 동의 처리
-    termsHelper.processTermsAgreements(user, agreedTermsTypes);
-    user.updatePhoneNumber(dto.getPhoneNumber());
-
-    // 7. 사용자 저장
-    notificationService.sendWelcomeNotification(user);
-
-    // 8. 토큰 발급 및 저장
-    TokenDto tokenDto = issueTokens(user);
-    user.updateRefreshToken(
-        tokenDto.getRefreshToken(),
-        securityPort.getRefreshTokenExpirationTime(tokenDto.getRefreshToken()));
-
-    userRepository.save(user);
-    // 전화번호 정규화 후 플래그 제거
-    String sanitizedPhoneNumber =
-        dto.getPhoneNumber() != null ? dto.getPhoneNumber().replaceAll("\\D", "") : null;
-
-    if (sanitizedPhoneNumber != null) {
-      TransactionSynchronizationManager.registerSynchronization(
-          new TransactionSynchronization() {
-            @Override
-            public void afterCommit() {
-              verificationCodePort.removeVerifiedGuestPhoneFlag(sanitizedPhoneNumber);
-            }
-          });
-    }
-
-    final LocalDateTime nowInSeoul = LocalDateTime.now(ZoneId.of("Asia/Seoul"));
-
-    final MemberCreateReportDto memberCreateReportDto =
-        MemberCreateReportDto.builder()
-            .userId(user.getId())
-            .nickname(user.getNickname())
-            .createdAt(nowInSeoul)
-            .build();
-
-    discordMemberReportService.sendCreateMemberReport(memberCreateReportDto);
-
-    return tokenDto;
-  }
+  //
+  //    // 약관 유형 변환 및 필수 약관 검증
+  //    List<TermsType> agreedTermsTypes =
+  // termsHelper.convertToTermsTypes(dto.getTermsTypeStrings());
+  //    termsHelper.validateRequiredTermsAgreement(agreedTermsTypes, userType);
+  //
+  //    // 2. SELLER라면 phoneNumber 필수
+  //    if (userType == UserType.SELLER
+  //        && (dto.getPhoneNumber() == null || dto.getPhoneNumber().isBlank())) {
+  //      throw new IllegalArgumentException("판매자는 전화번호를 필수로 입력해야 합니다.");
+  //    }
+  //
+  //    // 3. 닉네임 중복 확인
+  //    if (userReader.isNicknameTaken(dto.getNickname(), UserStatus.ACTIVE)) {
+  //      throw new IllegalArgumentException("이미 사용 중인 닉네임입니다.");
+  //    }
+  //
+  //    // 4. 사용자 조회 및 검증
+  //    User user = userReader.getUserById(userId);
+  //
+  //    if (user.getAccountType() != AccountType.SOCIAL) {
+  //      throw new IllegalStateException("소셜 계정이 아닌 사용자입니다.");
+  //    }
+  //
+  //    UserStatusService userStatusService = new UserStatusService();
+  //
+  //    // 5. 사용자 정보 업데이트
+  //    user.updateNickname(dto.getNickname());
+  //    user.updateLastUserType(userType);
+  //    // SELLER 타입이면 isSeller 플래그도 설정
+  //    if (userType == UserType.SELLER) {
+  //      log.info("판매자 전화번호 인증: {}", dto.getPhoneNumber());
+  //      authValidationHelper.validateVerifiedUserPhoneFlag(userId, dto.getPhoneNumber());
+  //      user.setSeller(true);
+  //      user.setSellerInfo(SellerInfo.ofVerificationStatus(SellerVerificationStatus.PENDING));
+  //    } else {
+  //      user.setSeller(false); // BUYER인 경우 명시적으로 false 설정
+  //    }
+  //
+  //    userStatusService.activate(user);
+  //    // 5.1. 약관 동의 처리
+  //    termsHelper.processTermsAgreements(user, agreedTermsTypes);
+  //    user.updatePhoneNumber(dto.getPhoneNumber());
+  //
+  //    // 7. 사용자 저장
+  //    notificationService.sendWelcomeNotification(user);
+  //
+  //    // 8. 토큰 발급 및 저장
+  //    TokenDto tokenDto = issueTokens(user);
+  //    user.updateRefreshToken(
+  //        tokenDto.getRefreshToken(),
+  //        securityPort.getRefreshTokenExpirationTime(tokenDto.getRefreshToken()));
+  //
+  //    userRepository.save(user);
+  //    // 전화번호 정규화 후 플래그 제거
+  //    String sanitizedPhoneNumber =
+  //        dto.getPhoneNumber() != null ? dto.getPhoneNumber().replaceAll("\\D", "") : null;
+  //
+  //    if (sanitizedPhoneNumber != null) {
+  //      TransactionSynchronizationManager.registerSynchronization(
+  //          new TransactionSynchronization() {
+  //            @Override
+  //            public void afterCommit() {
+  //              verificationCodePort.removeVerifiedGuestPhoneFlag(sanitizedPhoneNumber);
+  //            }
+  //          });
+  //    }
+  //
+  //    final LocalDateTime nowInSeoul = LocalDateTime.now(ZoneId.of("Asia/Seoul"));
+  //
+  //    final MemberCreateReportDto memberCreateReportDto =
+  //        MemberCreateReportDto.builder()
+  //            .userId(user.getId())
+  //            .nickname(user.getNickname())
+  //            .createdAt(nowInSeoul)
+  //            .build();
+  //
+  //    discordMemberReportService.sendCreateMemberReport(memberCreateReportDto);
+  //
+  //    return tokenDto;
+  //  }
 
   @Override
   @Transactional

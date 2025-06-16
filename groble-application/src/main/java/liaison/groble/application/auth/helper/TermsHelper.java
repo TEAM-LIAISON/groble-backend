@@ -14,6 +14,7 @@ import liaison.groble.domain.terms.entity.Terms;
 import liaison.groble.domain.terms.enums.TermsType;
 import liaison.groble.domain.terms.repository.TermsRepository;
 import liaison.groble.domain.user.entity.User;
+import liaison.groble.domain.user.enums.UserType;
 import liaison.groble.domain.user.service.UserTermsService;
 
 import lombok.RequiredArgsConstructor;
@@ -45,9 +46,15 @@ public class TermsHelper {
   }
 
   /** 필수 약관 동의 여부 검증 */
-  public void validateRequiredTermsAgreement(List<TermsType> agreedTermsTypes) {
+  public void validateRequiredTermsAgreement(List<TermsType> agreedTermsTypes, UserType userType) {
     List<TermsType> requiredTermsTypes =
-        Arrays.stream(TermsType.values()).filter(TermsType::isRequired).toList();
+        Arrays.stream(TermsType.values())
+            .filter(
+                requiredTermsType ->
+                    requiredTermsType.isRequired()
+                        && (requiredTermsType != TermsType.SELLER_TERMS_POLICY
+                            || userType == UserType.SELLER))
+            .toList();
 
     List<TermsType> missingRequiredTerms =
         requiredTermsTypes.stream().filter(req -> !agreedTermsTypes.contains(req)).toList();
