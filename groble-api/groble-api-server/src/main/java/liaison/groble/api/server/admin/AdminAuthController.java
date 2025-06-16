@@ -36,8 +36,8 @@ public class AdminAuthController {
   private static final String ACCESS_TOKEN_COOKIE_NAME = "accessToken";
   private static final String REFRESH_TOKEN_COOKIE_NAME = "refreshToken";
 
-  @Value("${app.cookie.domain}")
-  private String cookieDomain; // 쿠키 도메인 설정
+  @Value("${app.cookie.admin-domain}")
+  private String adminCookieDomain; // 쿠키 도메인 설정
 
   @PostMapping("/sign-in")
   public ResponseEntity<GrobleResponse<AdminSignInResponse>> adminSignIn(
@@ -70,9 +70,10 @@ public class AdminAuthController {
 
     // 4. 도메인 설정 (app.cookie.domain 프로퍼티 사용)
     String domain = null;
-    if (!isLocal && cookieDomain != null && !cookieDomain.isEmpty()) {
+    if (!isLocal && adminCookieDomain != null && !adminCookieDomain.isEmpty()) {
       // 점으로 시작하지 않는 도메인 사용 (RFC 6265 준수)
-      domain = cookieDomain.startsWith(".") ? cookieDomain.substring(1) : cookieDomain;
+      domain =
+          adminCookieDomain.startsWith(".") ? adminCookieDomain.substring(1) : adminCookieDomain;
       // 또는 더 간단하게: domain = cookieDomain;
     }
     // 로컬 환경에서는 domain 명시적으로 설정하지 않음 (기본값 사용)

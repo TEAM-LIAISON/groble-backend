@@ -20,6 +20,7 @@ import liaison.groble.mapping.auth.AuthMapper;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -27,9 +28,10 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/auth")
+@Tag(name = "통합 로그인 기능 관련 API", description = "통합 로그인 기능 API")
 public class IntegratedAccountAuthController {
   private final AuthMapper authMapper;
-  private final IntegratedAccountAuthService integratedAccountauthService;
+  private final IntegratedAccountAuthService integratedAccountAuthService;
   private final TokenCookieService tokenCookieService;
 
   @Operation(summary = "통합 계정으로 로그인", description = "이메일과 비밀번호로 로그인하고(통합 계정 로그인) 인증 토큰을 발급합니다.")
@@ -39,7 +41,7 @@ public class IntegratedAccountAuthController {
       HttpServletResponse response) {
     log.info("통합 로그인 요청: {}", request.getEmail());
     TokenDto tokenDto =
-        integratedAccountauthService.integratedAccountSignIn(
+        integratedAccountAuthService.integratedAccountSignIn(
             request.getEmail(), request.getPassword());
 
     tokenCookieService.addTokenCookies(
