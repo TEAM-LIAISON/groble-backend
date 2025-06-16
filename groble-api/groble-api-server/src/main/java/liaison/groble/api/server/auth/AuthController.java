@@ -51,6 +51,7 @@ import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.model.Accessor;
 import liaison.groble.common.response.GrobleResponse;
 import liaison.groble.common.utils.CookieUtils;
+import liaison.groble.mapping.auth.AuthMapper;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -72,6 +73,7 @@ public class AuthController {
   private final AuthService authService;
   private final UserService userService;
   private final AuthDtoMapper authDtoMapper;
+  private final AuthMapper authMapper;
   private final PhoneAuthService phoneAuthService;
 
   // 쿠키 설정값
@@ -166,10 +168,7 @@ public class AuthController {
 
     // 6. 사용자 정보와 역할 정보를 응답 본문에 포함
     SignInResponse signInResponse =
-        SignInResponse.of(
-            request.getEmail(),
-            signInAuthResultDTO.isHasAgreedToTerms(),
-            signInAuthResultDTO.isHasNickname());
+        authMapper.toSignInResponse(request.getEmail(), signInAuthResultDTO);
 
     // 7. API 응답 생성
     return ResponseEntity.status(HttpStatus.OK)

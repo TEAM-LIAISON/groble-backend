@@ -14,16 +14,8 @@ import lombok.NoArgsConstructor;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class SignInResponse {
   private String email;
-  private boolean authenticated;
   private boolean hasAgreedToTerms;
   private boolean hasNickname;
-
-  public static SignInResponse of(String email, boolean hasAgreedToTerms, boolean hasNickname) {
-    return SignInResponse.builder()
-        .email(email)
-        .hasAgreedToTerms(hasAgreedToTerms)
-        .hasNickname(hasNickname)
-        .authenticated(true)
-        .build();
-  }
+  private boolean hasVerifiedPhoneNumber;
+  private boolean authenticated;
 }
