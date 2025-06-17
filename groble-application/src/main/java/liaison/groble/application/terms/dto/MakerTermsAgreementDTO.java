@@ -9,8 +9,6 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class MakerTermsAgreementDto {
-
-  private Long userId;
+public class MakerTermsAgreementDTO {
   private Boolean makerTermsAgreement;
 }

@@ -33,7 +33,7 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/auth/integrated")
-@Tag(name = "[회원가입 및 로그인] 통합 계정 회원가입 및 로그인 API", description = "통합 계정 회원가입, 로그인 기능")
+@Tag(name = "[통합 계정] 통합 계정의 회원가입 및 로그인 API", description = "통합 계정 회원가입, 로그인을 통해 토큰을 발급받습니다.")
 public class IntegratedAccountAuthController {
 
   // API 경로 상수화

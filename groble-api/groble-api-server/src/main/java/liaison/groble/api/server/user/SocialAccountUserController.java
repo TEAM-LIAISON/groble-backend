@@ -27,7 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/social")
-@Tag(name = "소셜 계정 기능 관련 API", description = "소셜 계정 기본 정보 설정 기능 API")
+@Tag(name = "[소셜 계정] 소셜 계정의 기본 정보 설정 기능 API", description = "소셜 계정 기본 정보 설정 기능 API")
 public class SocialAccountUserController {
   private final UserMapper userMapper;
   private final SocialAccountUserService socialAccountUserService;
