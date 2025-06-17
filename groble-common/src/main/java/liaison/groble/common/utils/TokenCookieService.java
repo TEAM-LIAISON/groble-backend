@@ -41,11 +41,11 @@ public class TokenCookieService {
 
     String domain = null;
     if (!isLocal) {
-      // adminCookieDomain 설정값 사용 (없으면 기본값)
+      // 공통 상위 도메인 사용으로 크로스 도메인 문제 해결
       domain =
           adminCookieDomain != null && !adminCookieDomain.isBlank()
               ? adminCookieDomain
-              : "admin.groble.im";
+              : ".groble.im"; // 기본값을 .groble.im으로 변경
     }
 
     // 액세스 토큰 쿠키 설정
