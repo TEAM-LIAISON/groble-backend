@@ -171,6 +171,8 @@ public class SecurityConfig {
                         "/api/v1/auth/password/reset-request",
                         "/api/v1/auth/password/reset")
                     .permitAll()
+                    .requestMatchers("/api/v1/auth/admin/sign-in")
+                    .permitAll()
                     .requestMatchers("/api/v1/oauth2/**")
                     .permitAll()
                     .requestMatchers("/oauth2/**")

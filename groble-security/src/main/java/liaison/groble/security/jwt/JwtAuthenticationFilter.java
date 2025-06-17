@@ -53,6 +53,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
       List.of(
           "api/v1/oauth2/**",
           "/api/v1/home",
+          "/api/v1/admin/auth/sign-in",
           "/api/v1/auth/sign-up",
           "/api/v1/auth/sign-in",
           "/api/v1/auth/sign-in/local/test",
