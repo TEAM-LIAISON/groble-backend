@@ -31,11 +31,6 @@ public class AdminAuthController {
   private final AdminAuthService adminAuthService;
   private final TokenCookieService tokenCookieService;
 
-  private static final int ACCESS_TOKEN_MAX_AGE = 60 * 60; // 1시간
-  private static final int REFRESH_TOKEN_MAX_AGE = 60 * 60 * 24 * 7; // 1주일
-  private static final String ACCESS_TOKEN_COOKIE_NAME = "accessToken";
-  private static final String REFRESH_TOKEN_COOKIE_NAME = "refreshToken";
-
   @PostMapping("/sign-in")
   public ResponseEntity<GrobleResponse<AdminSignInResponse>> adminSignIn(
       @Parameter(description = "관리자 로그인 ", required = true) @Valid @RequestBody
