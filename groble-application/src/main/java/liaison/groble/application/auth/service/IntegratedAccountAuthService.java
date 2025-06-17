@@ -6,6 +6,7 @@ import java.time.ZoneId;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
@@ -39,6 +40,18 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 public class IntegratedAccountAuthService {
+
+  // 상수 정의
+  private static final String ASIA_SEOUL_TIMEZONE = "Asia/Seoul";
+
+  // 에러 메시지 상수화
+  private static final String PASSWORD_MISMATCH = "비밀번호가 일치하지 않습니다.";
+  private static final String ACCOUNT_NOT_LOGINABLE = "로그인할 수 없는 계정 상태입니다: ";
+
+  // 로그 메시지 상수화
+  private static final String SIGN_IN_SUCCESS_LOG = "로그인 성공: {}";
+  private static final String TOKEN_CREATION_START_LOG = "토큰 생성 시작: userId={}, email={}";
+
   // Repository
   private final UserReader userReader;
   private final UserRepository userRepository;
@@ -53,63 +66,122 @@ public class IntegratedAccountAuthService {
   private final TokenHelper tokenHelper;
   private final UserHelper userHelper;
 
-  // Notification
+  // Service
   private final NotificationService notificationService;
-
-  // Discord
   private final DiscordMemberReportService discordMemberReportService;
 
+  @Transactional
   public SignUpAuthResultDTO integratedAccountSignUp(SignUpDto signUpDto) {
-    UserType userType = authValidationHelper.validateAndParseUserType(signUpDto.getUserType());
+    // 1. 사전 검증
+    UserType userType = validateSignUpRequest(signUpDto);
+    List<TermsType> agreedTermsTypes = validateAndProcessTerms(signUpDto, userType);
 
-    // 약관 유형 변환 및 필수 약관 검증
+    // 2. 사용자 생성 및 설정
+    User user = createAndSetupUser(signUpDto, userType, agreedTermsTypes);
+
+    // 3. 사용자 저장 및 후처리
+    User savedUser = userRepository.save(user);
+
+    // 4. 토큰 발급 및 저장
+    TokenDto tokenDto = issueAndSaveTokens(savedUser);
+
+    // 5. 비동기 후처리 작업
+    processPostSignUpTasks(signUpDto.getEmail(), savedUser);
+
+    return buildSignUpResult(signUpDto.getEmail(), tokenDto);
+  }
+
+  @Transactional
+  public SignInAuthResultDTO integratedAccountSignIn(SignInDTO signInDto) {
+    // 1. 사용자 인증
+    IntegratedAccount integratedAccount = authenticateUser(signInDto);
+    User user = integratedAccount.getUser();
+
+    // 2. 로그인 상태 검증
+    validateLoginableStatus(user);
+
+    // 3. 로그인 시간 업데이트
+    updateLoginTime(user);
+
+    // 4. 토큰 발급 및 저장
+    TokenInfo tokenInfo = createAndSaveTokens(user);
+
+    return buildSignInResult(tokenInfo, user);
+  }
+
+  // Private helper methods - 회원가입 관련
+
+  /** 회원가입 요청 사전 검증 */
+  private UserType validateSignUpRequest(SignUpDto signUpDto) {
+    UserType userType = authValidationHelper.validateAndParseUserType(signUpDto.getUserType());
+    authValidationHelper.validateEmailVerification(signUpDto.getEmail());
+    return userType;
+  }
+
+  /** 약관 검증 및 처리 */
+  private List<TermsType> validateAndProcessTerms(SignUpDto signUpDto, UserType userType) {
     List<TermsType> agreedTermsTypes =
         termsHelper.convertToTermsTypes(signUpDto.getTermsTypeStrings());
     termsHelper.validateRequiredTermsAgreement(agreedTermsTypes, userType);
+    return agreedTermsTypes;
+  }
 
-    // 기입한 이메일 인증 여부 판단
-    authValidationHelper.validateEmailVerification(signUpDto.getEmail());
-
-    // 2. 비밀번호 암호화
+  /** 사용자 생성 및 기본 설정 */
+  private User createAndSetupUser(
+      SignUpDto signUpDto, UserType userType, List<TermsType> agreedTermsTypes) {
     String encodedPassword = securityPort.encodePassword(signUpDto.getPassword());
 
-    // 3. 사용자 생성 (팩토리 패턴 활용)
-    User user;
-    if (userType == UserType.SELLER) {
-      user =
-          UserFactory.createSellerIntegratedUser(signUpDto.getEmail(), encodedPassword, userType);
-    } else {
-      user = UserFactory.createBuyerIntegratedUser(signUpDto.getEmail(), encodedPassword, userType);
-    }
+    User user = createUserByType(signUpDto.getEmail(), encodedPassword, userType);
 
-    // 4. 기본 역할 추가
+    // 기본 설정 적용
     userHelper.addDefaultRole(user);
-
-    // 5. 사용자 상태 활성화 (도메인 서비스 활용)
-    UserStatusService userStatusService = new UserStatusService();
-    userStatusService.activate(user);
-
-    // 5.1. 약관 동의 처리
+    activateUser(user);
     termsHelper.processTermsAgreements(user, agreedTermsTypes);
 
-    // 6. 사용자 저장
-    User savedUser = userRepository.save(user);
+    return user;
+  }
 
-    // 7) 알림은 오직 이 한 줄만!
-    notificationService.sendWelcomeNotification(savedUser);
+  /** 사용자 타입에 따른 사용자 생성 */
+  private User createUserByType(String email, String encodedPassword, UserType userType) {
+    if (userType == UserType.SELLER) {
+      return UserFactory.createSellerIntegratedUser(email, encodedPassword, userType);
+    } else {
+      return UserFactory.createBuyerIntegratedUser(email, encodedPassword, userType);
+    }
+  }
 
-    // 8. 토큰 발급
-    TokenDto tokenDto = tokenHelper.issueTokens(savedUser);
+  /** 사용자 상태 활성화 */
+  private void activateUser(User user) {
+    UserStatusService userStatusService = new UserStatusService();
+    userStatusService.activate(user);
+  }
 
-    // 9. 리프레시 토큰 저장
-    savedUser.updateRefreshToken(
+  /** 토큰 발급 및 저장 */
+  private TokenDto issueAndSaveTokens(User user) {
+    TokenDto tokenDto = tokenHelper.issueTokens(user);
+
+    user.updateRefreshToken(
         tokenDto.getRefreshToken(),
         securityPort.getRefreshTokenExpirationTime(tokenDto.getRefreshToken()));
-    userRepository.save(savedUser);
+    userRepository.save(user);
 
-    // 10. 인증 플래그 제거 (트랜잭션 커밋 이후 실행)
-    String email = signUpDto.getEmail();
+    return tokenDto;
+  }
 
+  /** 회원가입 후 비동기 작업 처리 */
+  private void processPostSignUpTasks(String email, User user) {
+    // 웰컴 알림 발송
+    notificationService.sendWelcomeNotification(user);
+
+    // 인증 플래그 제거 (트랜잭션 커밋 후)
+    registerVerificationFlagRemoval(email);
+
+    // Discord 신규 멤버 리포트
+    sendDiscordMemberReport(user);
+  }
+
+  /** 인증 플래그 제거 등록 */
+  private void registerVerificationFlagRemoval(String email) {
     TransactionSynchronizationManager.registerSynchronization(
         new TransactionSynchronization() {
           @Override
@@ -117,18 +189,24 @@ public class IntegratedAccountAuthService {
             verificationCodePort.removeVerifiedEmailFlag(email);
           }
         });
+  }
 
-    final LocalDateTime nowInSeoul = LocalDateTime.now(ZoneId.of("Asia/Seoul"));
+  /** Discord 신규 멤버 리포트 발송 */
+  private void sendDiscordMemberReport(User user) {
+    LocalDateTime nowInSeoul = LocalDateTime.now(ZoneId.of(ASIA_SEOUL_TIMEZONE));
 
-    final MemberCreateReportDto memberCreateReportDto =
+    MemberCreateReportDto reportDto =
         MemberCreateReportDto.builder()
             .userId(user.getId())
             .nickname(user.getNickname())
             .createdAt(nowInSeoul)
             .build();
 
-    discordMemberReportService.sendCreateMemberReport(memberCreateReportDto);
+    discordMemberReportService.sendCreateMemberReport(reportDto);
+  }
 
+  /** 회원가입 결과 DTO 생성 */
+  private SignUpAuthResultDTO buildSignUpResult(String email, TokenDto tokenDto) {
     return SignUpAuthResultDTO.builder()
         .email(email)
         .accessToken(tokenDto.getAccessToken())
@@ -136,30 +214,39 @@ public class IntegratedAccountAuthService {
         .build();
   }
 
-  public SignInAuthResultDTO integratedAccountSignIn(SignInDTO signInDto) {
+  // Private helper methods - 로그인 관련
+
+  /** 사용자 인증 (이메일/비밀번호 검증) */
+  private IntegratedAccount authenticateUser(SignInDTO signInDto) {
     IntegratedAccount integratedAccount =
         userReader.getUserByIntegratedAccountEmail(signInDto.getEmail());
 
-    // 비밀번호 일치 여부 확인
     if (!securityPort.matches(signInDto.getPassword(), integratedAccount.getPassword())) {
-      throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
+      throw new IllegalArgumentException(PASSWORD_MISMATCH);
     }
 
-    User user = integratedAccount.getUser();
+    return integratedAccount;
+  }
 
-    // 사용자 상태 확인 (로그인 가능 상태인지)
+  /** 로그인 가능 상태 검증 */
+  private void validateLoginableStatus(User user) {
     if (!user.getUserStatusInfo().isLoginable()) {
       throw new IllegalArgumentException(
-          "로그인할 수 없는 계정 상태입니다: " + user.getUserStatusInfo().getStatus());
+          ACCOUNT_NOT_LOGINABLE + user.getUserStatusInfo().getStatus());
     }
+  }
 
-    // 로그인 시간 업데이트
+  /** 로그인 시간 업데이트 */
+  private void updateLoginTime(User user) {
     user.updateLoginTime();
     userRepository.save(user);
+    log.info(SIGN_IN_SUCCESS_LOG, user.getEmail());
+  }
 
-    log.info("로그인 성공: {}", user.getEmail());
+  /** 토큰 생성 및 저장 */
+  private TokenInfo createAndSaveTokens(User user) {
+    log.info(TOKEN_CREATION_START_LOG, user.getId(), user.getEmail());
 
-    log.info("토큰 생성 시작: userId={}, email={}", user.getId(), user.getEmail());
     String accessToken = securityPort.createAccessToken(user.getId(), user.getEmail());
     String refreshToken = securityPort.createRefreshToken(user.getId(), user.getEmail());
     Instant refreshTokenExpiresAt = securityPort.getRefreshTokenExpirationTime(refreshToken);
@@ -167,11 +254,19 @@ public class IntegratedAccountAuthService {
     user.updateRefreshToken(refreshToken, refreshTokenExpiresAt);
     userRepository.save(user);
 
+    return new TokenInfo(accessToken, refreshToken);
+  }
+
+  /** 로그인 결과 DTO 생성 */
+  private SignInAuthResultDTO buildSignInResult(TokenInfo tokenInfo, User user) {
     return SignInAuthResultDTO.builder()
-        .accessToken(accessToken)
-        .refreshToken(refreshToken)
+        .accessToken(tokenInfo.accessToken())
+        .refreshToken(tokenInfo.refreshToken())
         .hasAgreedToTerms(user.checkTermsAgreement())
         .hasNickname(user.hasNickname())
         .build();
   }
+
+  /** 토큰 정보를 담는 내부 record 클래스 */
+  private record TokenInfo(String accessToken, String refreshToken) {}
 }

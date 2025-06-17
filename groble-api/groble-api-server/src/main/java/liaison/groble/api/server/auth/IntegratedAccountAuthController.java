@@ -33,50 +33,82 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/auth/integrated")
-@Tag(name = "통합 로그인 기능 관련 API", description = "통합 로그인 기능 API")
+@Tag(name = "[회원가입 및 로그인] 통합 계정 회원가입 및 로그인 API", description = "통합 계정 회원가입, 로그인 기능")
 public class IntegratedAccountAuthController {
+
+  // API 경로 상수화
+  private static final String SIGN_IN_PATH = "/sign-in";
+  private static final String SIGN_UP_PATH = "/sign-up";
+
+  // 응답 메시지 상수화
+  private static final String SIGN_IN_SUCCESS_MESSAGE = "통합 계정으로 로그인이 성공적으로 완료되었습니다.";
+  private static final String SIGN_UP_SUCCESS_MESSAGE = "회원가입이 성공적으로 완료되었습니다.";
+
+  // 로그 메시지 상수화
+  private static final String SIGN_IN_REQUEST_LOG = "통합 로그인 요청: {}";
+  private static final String SIGN_UP_REQUEST_LOG = "통합 계정 회원가입 요청: {}";
+
   private final AuthMapper authMapper;
   private final IntegratedAccountAuthService integratedAccountAuthService;
   private final TokenCookieService tokenCookieService;
 
-  @Operation(summary = "통합 계정으로 로그인", description = "이메일과 비밀번호로 로그인하고(통합 계정 로그인) 인증 토큰을 발급합니다.")
-  @PostMapping("/sign-in")
-  public ResponseEntity<GrobleResponse<SignInResponse>> integratedAccountSignIn(
-      @Parameter(description = "로그인 정보", required = true) @Valid @RequestBody SignInRequest request,
+  @Operation(summary = "통합 계정 로그인", description = "이메일과 비밀번호로 통합 계정 로그인을 수행하고 인증 토큰을 발급합니다.")
+  @PostMapping(SIGN_IN_PATH)
+  public ResponseEntity<GrobleResponse<SignInResponse>> signIn(
+      @Parameter(description = "로그인 정보 (이메일, 비밀번호)", required = true) @Valid @RequestBody
+          SignInRequest request,
       HttpServletResponse response) {
-    log.info("통합 로그인 요청: {}", request.getEmail());
 
+    log.info(SIGN_IN_REQUEST_LOG, request.getEmail());
+
+    // 로그인 처리
     SignInDTO signInDto = authMapper.toSignInDto(request);
-    SignInAuthResultDTO signInAuthResultDTO =
+    SignInAuthResultDTO authResult =
         integratedAccountAuthService.integratedAccountSignIn(signInDto);
 
-    SignInResponse signInResponse =
-        authMapper.toSignInResponse(signInDto.getEmail(), signInAuthResultDTO);
+    // 응답 생성
+    SignInResponse signInResponse = authMapper.toSignInResponse(signInDto.getEmail(), authResult);
 
-    tokenCookieService.addTokenCookies(
-        response, signInAuthResultDTO.getAccessToken(), signInAuthResultDTO.getRefreshToken());
+    // 토큰 쿠키 설정
+    addTokenCookies(response, authResult.getAccessToken(), authResult.getRefreshToken());
 
-    return ResponseEntity.status(HttpStatus.OK)
-        .body(GrobleResponse.success(signInResponse, "통합 계정으로 로그인이 성공적으로 완료되었습니다."));
+    return createSuccessResponse(signInResponse, SIGN_IN_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 
-  @Operation(summary = "통합 계정으로 회원가입", description = "통합 계정으로 회원 가입을 진행하고 인증 토큰을 발급합니다.")
-  @PostMapping("/sign-up")
-  public ResponseEntity<GrobleResponse<SignUpResponse>> integratedAccountSignUp(
-      @Parameter(description = "회원가입 정보", required = true) @Valid @RequestBody
+  @Operation(summary = "통합 계정 회원가입", description = "통합 계정으로 회원가입을 수행하고 인증 토큰을 발급합니다.")
+  @PostMapping(SIGN_UP_PATH)
+  public ResponseEntity<GrobleResponse<SignUpResponse>> signUp(
+      @Parameter(description = "회원가입 정보 (이메일, 비밀번호, 사용자 타입, 약관 동의 등)", required = true)
+          @Valid
+          @RequestBody
           SignUpRequest request,
       HttpServletResponse response) {
-    log.info("통합 계정 회원가입 요청: {}", request.getEmail());
+
+    log.info(SIGN_UP_REQUEST_LOG, request.getEmail());
+
+    // 회원가입 처리
     SignUpDto signUpDto = authMapper.toSignUpDto(request);
-    SignUpAuthResultDTO signUpAuthResultDTO =
+    SignUpAuthResultDTO authResult =
         integratedAccountAuthService.integratedAccountSignUp(signUpDto);
 
-    tokenCookieService.addTokenCookies(
-        response, signUpAuthResultDTO.getAccessToken(), signUpAuthResultDTO.getRefreshToken());
-
+    // 응답 생성
     SignUpResponse signUpResponse = SignUpResponse.of(request.getEmail());
 
-    return ResponseEntity.status(HttpStatus.CREATED)
-        .body(GrobleResponse.success(signUpResponse, "회원가입이 성공적으로 완료되었습니다."));
+    // 토큰 쿠키 설정
+    addTokenCookies(response, authResult.getAccessToken(), authResult.getRefreshToken());
+
+    return createSuccessResponse(signUpResponse, SIGN_UP_SUCCESS_MESSAGE, HttpStatus.CREATED);
+  }
+
+  /** 토큰 쿠키 추가 헬퍼 메서드 */
+  private void addTokenCookies(
+      HttpServletResponse response, String accessToken, String refreshToken) {
+    tokenCookieService.addTokenCookies(response, accessToken, refreshToken);
+  }
+
+  /** 성공 응답 생성 헬퍼 메서드 */
+  private <T> ResponseEntity<GrobleResponse<T>> createSuccessResponse(
+      T data, String message, HttpStatus status) {
+    return ResponseEntity.status(status).body(GrobleResponse.success(data, message));
   }
 }

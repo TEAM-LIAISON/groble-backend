@@ -28,18 +28,18 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/verification/email")
+@RequestMapping("/api/v1/verification")
 @Tag(
-    name = "[이메일 인증] 이메일을 활용한 인증 관련 (코드 전송, 코드 검증, 비밀번호 재설정 등) API",
+    name = "[이메일 인증] 이메일을 활용한 코드 전송, 코드 검증, 비밀번호 재설정 등 API",
     description = "이메일을 활용하여 회원가입 과정에서 이메일을 검증, 이메일 변경, 비밀번호 재설정 등의 기능을 제공합니다.")
 public class EmailVerificationController {
 
   // API 경로 상수화
-  private static final String SEND_CODE_FOR_SIGNUP = "/code/sign-up";
-  private static final String VERIFY_CODE_FOR_SIGNUP = "/code/verify/sign-up";
-  private static final String SEND_CODE_FOR_CHANGE_EMAIL = "/code/change-email";
-  private static final String VERIFY_CODE_FOR_CHANGE_EMAIL = "/code/verify/change-email";
-  private static final String SEND_PASSWORD_RESET = "/code/password-reset";
+  private static final String SEND_CODE_FOR_SIGNUP = "/email/code/sign-up";
+  private static final String VERIFY_CODE_FOR_SIGNUP = "/email/code/verify/sign-up";
+  private static final String SEND_CODE_FOR_CHANGE_EMAIL = "/email/code/change-email";
+  private static final String VERIFY_CODE_FOR_CHANGE_EMAIL = "/email/code/verify/change-email";
+  private static final String SEND_PASSWORD_RESET = "/email/code/password-reset";
   private static final String RESET_PASSWORD = "/password/reset";
 
   private final VerificationMapper verificationMapper;
@@ -90,7 +90,7 @@ public class EmailVerificationController {
           VerifyEmailCodeRequest request) {
 
     VerifyEmailCodeDTO dto = verificationMapper.toVerifyEmailCodeDTO(request);
-    // 🔥 리팩토링된 서비스 메서드명으로 변경
+
     verificationService.verifyAndUpdateEmail(accessor.getUserId(), dto);
 
     return createSuccessResponse();
