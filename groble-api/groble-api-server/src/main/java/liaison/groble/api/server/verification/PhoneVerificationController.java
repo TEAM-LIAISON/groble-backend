@@ -27,7 +27,9 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/verification")
-@Tag(name = "전화번호를 활용한 인증 관련 API", description = "전화번호 인증 코드 발송, 전화번호 인증 코드 검증")
+@Tag(
+    name = "[번호 인증] 전화번호를 활용한 코드 전송, 코드 검증 등 API",
+    description = "전화번호를 활용하여 회원가입 과정에서 전화번호 인증 기능을 제공합니다.")
 public class PhoneVerificationController {
 
   private final PhoneAuthService phoneAuthService;
