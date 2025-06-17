@@ -4,7 +4,6 @@ import javax.annotation.processing.Generated;
 
 import org.springframework.stereotype.Component;
 
-import liaison.groble.api.model.auth.request.EmailVerificationRequest;
 import liaison.groble.api.model.auth.request.PhoneNumberVerifyCodeRequest;
 import liaison.groble.api.model.auth.request.PhoneNumberVerifyRequest;
 import liaison.groble.api.model.auth.request.SignInRequest;
@@ -12,38 +11,37 @@ import liaison.groble.api.model.auth.request.SignUpRequest;
 import liaison.groble.api.model.auth.request.UserWithdrawalRequest;
 import liaison.groble.api.model.auth.request.VerifyEmailCodeRequest;
 import liaison.groble.api.model.auth.response.SignInResponse;
-import liaison.groble.application.auth.dto.EmailVerificationDto;
 import liaison.groble.application.auth.dto.PhoneNumberVerifyCodeRequestDto;
 import liaison.groble.application.auth.dto.PhoneNumberVerifyRequestDto;
 import liaison.groble.application.auth.dto.SignInAuthResultDTO;
-import liaison.groble.application.auth.dto.SignInDto;
+import liaison.groble.application.auth.dto.SignInDTO;
 import liaison.groble.application.auth.dto.SignUpDto;
 import liaison.groble.application.auth.dto.UserWithdrawalDto;
-import liaison.groble.application.auth.dto.VerifyEmailCodeDto;
+import liaison.groble.application.auth.dto.VerifyEmailCodeDTO;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-06-17T16:35:47+0900",
+    date = "2025-06-17T19:58:41+0900",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.10 (Amazon.com Inc.)")
 @Component
 public class AuthMapperImpl implements AuthMapper {
 
   @Override
-  public SignInDto toSignInDto(SignInRequest request) {
+  public SignInDTO toSignInDto(SignInRequest request) {
     if (request == null) {
       return null;
     }
 
-    SignInDto.SignInDtoBuilder signInDto = SignInDto.builder();
+    SignInDTO.SignInDTOBuilder signInDTO = SignInDTO.builder();
 
     if (request.getEmail() != null) {
-      signInDto.email(request.getEmail());
+      signInDTO.email(request.getEmail());
     }
     if (request.getPassword() != null) {
-      signInDto.password(request.getPassword());
+      signInDTO.password(request.getPassword());
     }
 
-    return signInDto.build();
+    return signInDTO.build();
   }
 
   @Override
@@ -91,37 +89,21 @@ public class AuthMapperImpl implements AuthMapper {
   }
 
   @Override
-  public EmailVerificationDto toEmailVerificationDto(EmailVerificationRequest request) {
+  public VerifyEmailCodeDTO toVerifyEmailCodeDto(VerifyEmailCodeRequest request) {
     if (request == null) {
       return null;
     }
 
-    EmailVerificationDto.EmailVerificationDtoBuilder emailVerificationDto =
-        EmailVerificationDto.builder();
+    VerifyEmailCodeDTO.VerifyEmailCodeDTOBuilder verifyEmailCodeDTO = VerifyEmailCodeDTO.builder();
 
     if (request.getEmail() != null) {
-      emailVerificationDto.email(request.getEmail());
-    }
-
-    return emailVerificationDto.build();
-  }
-
-  @Override
-  public VerifyEmailCodeDto toVerifyEmailCodeDto(VerifyEmailCodeRequest request) {
-    if (request == null) {
-      return null;
-    }
-
-    VerifyEmailCodeDto.VerifyEmailCodeDtoBuilder verifyEmailCodeDto = VerifyEmailCodeDto.builder();
-
-    if (request.getEmail() != null) {
-      verifyEmailCodeDto.email(request.getEmail());
+      verifyEmailCodeDTO.email(request.getEmail());
     }
     if (request.getVerificationCode() != null) {
-      verifyEmailCodeDto.verificationCode(request.getVerificationCode());
+      verifyEmailCodeDTO.verificationCode(request.getVerificationCode());
     }
 
-    return verifyEmailCodeDto.build();
+    return verifyEmailCodeDTO.build();
   }
 
   @Override

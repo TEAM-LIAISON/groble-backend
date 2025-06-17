@@ -2,39 +2,25 @@ package liaison.groble.application.auth.service.impl;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import liaison.groble.application.auth.dto.EmailVerificationDto;
 import liaison.groble.application.auth.dto.PhoneNumberVerifyRequestDto;
 import liaison.groble.application.auth.dto.SignInAuthResultDTO;
-import liaison.groble.application.auth.dto.SignInDto;
+import liaison.groble.application.auth.dto.SignInDTO;
 import liaison.groble.application.auth.dto.TokenDto;
 import liaison.groble.application.auth.dto.UserWithdrawalDto;
-import liaison.groble.application.auth.dto.VerifyEmailCodeDto;
-import liaison.groble.application.auth.exception.AuthenticationFailedException;
-import liaison.groble.application.auth.helper.AuthValidationHelper;
-import liaison.groble.application.auth.helper.TermsHelper;
 import liaison.groble.application.auth.service.AuthService;
-import liaison.groble.application.notification.service.NotificationService;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.common.exception.EntityNotFoundException;
 import liaison.groble.common.port.security.SecurityPort;
-import liaison.groble.common.utils.CodeGenerator;
-import liaison.groble.domain.port.EmailSenderPort;
-import liaison.groble.domain.port.VerificationCodePort;
 import liaison.groble.domain.user.entity.IntegratedAccount;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.entity.UserWithdrawalHistory;
-import liaison.groble.domain.user.enums.AccountType;
 import liaison.groble.domain.user.enums.WithdrawalReason;
-import liaison.groble.domain.user.repository.IntegratedAccountRepository;
-import liaison.groble.domain.user.repository.SocialAccountRepository;
 import liaison.groble.domain.user.repository.UserRepository;
 import liaison.groble.domain.user.repository.UserWithdrawalHistoryRepository;
-import liaison.groble.external.discord.service.DiscordMemberReportService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -46,18 +32,7 @@ public class AuthServiceImpl implements AuthService {
   private final UserReader userReader;
   private final UserRepository userRepository;
   private final SecurityPort securityPort;
-  private final EmailSenderPort emailSenderPort;
-  private final VerificationCodePort verificationCodePort;
-  private final IntegratedAccountRepository integratedAccountRepository;
-  private final SocialAccountRepository socialAccountRepository;
   private final UserWithdrawalHistoryRepository userWithdrawalHistoryRepository;
-
-  private final NotificationService notificationService;
-  private final DiscordMemberReportService discordMemberReportService;
-
-  // Helper
-  private final AuthValidationHelper authValidationHelper;
-  private final TermsHelper termsHelper;
 
   //  @Override
   //  @Transactional
@@ -240,7 +215,7 @@ public class AuthServiceImpl implements AuthService {
 
   @Override
   @Transactional
-  public SignInAuthResultDTO signIn(SignInDto signInDto) {
+  public SignInAuthResultDTO signIn(SignInDTO signInDto) {
     // 이메일로 IntegratedAccount 찾기
     IntegratedAccount integratedAccount =
         userReader.getUserByIntegratedAccountEmail(signInDto.getEmail());
@@ -291,143 +266,6 @@ public class AuthServiceImpl implements AuthService {
 
   @Override
   @Transactional
-  public void sendPasswordResetEmail(String email) {
-    // 1. 가입 여부 확인
-    if (!userReader.existsByIntegratedAccountEmail(email)) {
-      throw new EntityNotFoundException("해당 이메일로 가입한 사용자를 찾을 수 없습니다.");
-    }
-
-    // 2. UUID 생성
-    String token = UUID.randomUUID().toString();
-
-    // 4. Redis에 저장: token → email (TTL: 24시간)
-    verificationCodePort.savePasswordResetCode(email, token, 1440);
-
-    // 5. 이메일 발송
-    emailSenderPort.sendPasswordResetEmail(email, token);
-  }
-
-  @Override
-  @Transactional
-  public void resetPassword(String token, String newPassword) {
-    // 1. Redis에서 token → email 조회
-    String email = verificationCodePort.getPasswordResetEmail(token);
-
-    // 2. 사용자 조회
-    IntegratedAccount account = userReader.getUserByIntegratedAccountEmail(email);
-
-    // 3. 새 비밀번호 암호화 및 저장
-    String encodedPassword = securityPort.encodePassword(newPassword);
-    account.updatePassword(encodedPassword);
-    integratedAccountRepository.save(account);
-
-    // 4. Redis에서 token 제거
-    verificationCodePort.removePasswordResetCode(token);
-  }
-
-  @Override
-  @Transactional
-  public void sendEmailVerificationForSignUp(EmailVerificationDto dto) {
-    final String email = dto.getEmail();
-
-    // 기존에 가입된 통합 계정 여부를 판단함
-    authValidationHelper.validateEmailNotRegistered(email);
-
-    final String code = generateRandomCode();
-    saveAndSendVerificationCode(email, code);
-
-    log.info("이메일 인증 코드 발송 완료: {}", email);
-  }
-
-  private void saveAndSendVerificationCode(String email, String code) {
-    verificationCodePort.saveVerificationCode(email, code, 5);
-    emailSenderPort.sendVerificationEmail(email, code);
-  }
-
-  @Override
-  @Transactional
-  public void sendEmailVerificationForChangeEmail(Long userId, EmailVerificationDto dto) {
-    final String email = dto.getEmail();
-
-    User user = userReader.getUserById(userId);
-
-    // INTEGRATED/SOCIAL 타입 판단 진행
-    validateEmailNotDuplicatedForAccountType(user.getAccountType(), email);
-
-    final String code = generateRandomCode();
-    saveAndSendVerificationCode(email, code);
-
-    log.info("이메일 변경 인증 코드 발송 완료: {} (userId={})", email, userId);
-  }
-
-  private void validateEmailNotDuplicatedForAccountType(AccountType accountType, String email) {
-    boolean isDuplicated =
-        (accountType == AccountType.INTEGRATED)
-            ? integratedAccountRepository.existsByIntegratedAccountEmail(email)
-            : socialAccountRepository.existsBySocialAccountEmail(email);
-
-    if (isDuplicated) {
-      throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
-    }
-  }
-
-  // 인증 코드 검증 메서드
-  @Override
-  @Transactional
-  public void verifyEmailCode(VerifyEmailCodeDto dto) {
-    final String email = dto.getEmail();
-    final String code = dto.getVerificationCode();
-
-    String storedCode = verificationCodePort.getVerificationCode(email);
-
-    if (storedCode == null) {
-      throw new IllegalStateException("이메일 인증 유효 시간이 만료되었습니다. 다시 인증을 요청해주세요.");
-    }
-
-    // 코드 불일치
-    if (!storedCode.equals(code)) {
-      throw new AuthenticationFailedException("인증 코드가 일치하지 않습니다.");
-    }
-
-    // 인증 성공 → 인증 플래그 저장 및 코드 제거
-    verificationCodePort.saveVerifiedFlag(email, 15);
-    verificationCodePort.removeVerificationCode(email);
-  }
-
-  @Override
-  @Transactional
-  public void verifyEmailCodeForChangeEmail(Long userId, VerifyEmailCodeDto dto) {
-    final String email = dto.getEmail();
-    final String code = dto.getVerificationCode();
-
-    if (!verificationCodePort.validateVerificationCode(email, code)) {
-      throw new AuthenticationFailedException("인증 코드가 일치하지 않거나 만료되었습니다.");
-    }
-
-    verificationCodePort.removeVerificationCode(email);
-
-    User user =
-        userRepository
-            .findById(userId)
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
-
-    if (user.getAccountType() == AccountType.INTEGRATED) {
-      if (integratedAccountRepository.existsByIntegratedAccountEmail(email)) {
-        throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
-      }
-      user.getIntegratedAccount().updateEmail(email);
-      integratedAccountRepository.save(user.getIntegratedAccount());
-    } else {
-      if (socialAccountRepository.existsBySocialAccountEmail(email)) {
-        throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
-      }
-      user.getSocialAccount().updateEmail(email);
-      socialAccountRepository.save(user.getSocialAccount());
-    }
-  }
-
-  @Override
-  @Transactional
   public TokenDto refreshTokens(String requestRefreshToken) {
     // 1. 요청 온 refreshToken이 JWT로서 유효한지 검증 (서명, 토큰 타입, 포맷)
     if (!securityPort.validateToken(requestRefreshToken, "refresh")) {
@@ -468,10 +306,6 @@ public class AuthServiceImpl implements AuthService {
         .refreshToken(newRefreshToken)
         .accessTokenExpiresIn(securityPort.getAccessTokenExpirationTime())
         .build();
-  }
-
-  private String generateRandomCode() {
-    return CodeGenerator.generateVerificationCode(4);
   }
 
   private TokenDto issueTokens(User user) {

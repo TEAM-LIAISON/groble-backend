@@ -5,7 +5,6 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public class SignInDto {
+public class EmailVerificationDTO {
   private String email;
-  private String password;
 }

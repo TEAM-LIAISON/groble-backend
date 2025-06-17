@@ -15,7 +15,7 @@ import liaison.groble.api.model.auth.request.SignUpRequest;
 import liaison.groble.api.model.auth.response.SignInResponse;
 import liaison.groble.api.model.auth.response.SignUpResponse;
 import liaison.groble.application.auth.dto.SignInAuthResultDTO;
-import liaison.groble.application.auth.dto.SignInDto;
+import liaison.groble.application.auth.dto.SignInDTO;
 import liaison.groble.application.auth.dto.SignUpAuthResultDTO;
 import liaison.groble.application.auth.dto.SignUpDto;
 import liaison.groble.application.auth.service.IntegratedAccountAuthService;
@@ -32,7 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/auth")
+@RequestMapping("/api/v1/auth/integrated")
 @Tag(name = "통합 로그인 기능 관련 API", description = "통합 로그인 기능 API")
 public class IntegratedAccountAuthController {
   private final AuthMapper authMapper;
@@ -40,13 +40,13 @@ public class IntegratedAccountAuthController {
   private final TokenCookieService tokenCookieService;
 
   @Operation(summary = "통합 계정으로 로그인", description = "이메일과 비밀번호로 로그인하고(통합 계정 로그인) 인증 토큰을 발급합니다.")
-  @PostMapping("/integrated/sign-in")
+  @PostMapping("/sign-in")
   public ResponseEntity<GrobleResponse<SignInResponse>> integratedAccountSignIn(
       @Parameter(description = "로그인 정보", required = true) @Valid @RequestBody SignInRequest request,
       HttpServletResponse response) {
     log.info("통합 로그인 요청: {}", request.getEmail());
 
-    SignInDto signInDto = authMapper.toSignInDto(request);
+    SignInDTO signInDto = authMapper.toSignInDto(request);
     SignInAuthResultDTO signInAuthResultDTO =
         integratedAccountAuthService.integratedAccountSignIn(signInDto);
 
@@ -61,7 +61,7 @@ public class IntegratedAccountAuthController {
   }
 
   @Operation(summary = "통합 계정으로 회원가입", description = "통합 계정으로 회원 가입을 진행하고 인증 토큰을 발급합니다.")
-  @PostMapping("/integrated/sign-up")
+  @PostMapping("/sign-up")
   public ResponseEntity<GrobleResponse<SignUpResponse>> integratedAccountSignUp(
       @Parameter(description = "회원가입 정보", required = true) @Valid @RequestBody
           SignUpRequest request,

@@ -36,7 +36,7 @@ public class PhoneAuthService {
     validatePhoneNumberForUser(userId, sanitized);
 
     // 2. 인증 코드 생성 및 발송
-    String code = generateRandomCode();
+    String code = CodeGenerator.generateVerificationCode(4);
     verificationCodePort.saveVerificationCodeForUser(userId, sanitized, code, CODE_TTL.toMinutes());
 
     sendSms(sanitized, code);
@@ -50,7 +50,7 @@ public class PhoneAuthService {
     String sanitized = sanitizePhoneNumber(phoneNumber);
 
     // 2. 인증 코드 생성 및 발송
-    String code = generateRandomCode();
+    String code = CodeGenerator.generateVerificationCode(4);
     verificationCodePort.saveVerificationCodeForGuest(sanitized, code, CODE_TTL.toMinutes());
 
     sendSms(sanitized, code);
@@ -130,9 +130,5 @@ public class PhoneAuthService {
       log.error("SMS 전송 실패: phoneNumber={}, error={}", phoneNumber, e.getMessage(), e);
       throw new SmsSendException();
     }
-  }
-
-  private String generateRandomCode() {
-    return CodeGenerator.generateVerificationCode(4);
   }
 }

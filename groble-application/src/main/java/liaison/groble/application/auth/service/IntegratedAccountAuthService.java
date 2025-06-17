@@ -10,7 +10,7 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import liaison.groble.application.auth.dto.SignInAuthResultDTO;
-import liaison.groble.application.auth.dto.SignInDto;
+import liaison.groble.application.auth.dto.SignInDTO;
 import liaison.groble.application.auth.dto.SignUpAuthResultDTO;
 import liaison.groble.application.auth.dto.SignUpDto;
 import liaison.groble.application.auth.dto.TokenDto;
@@ -136,7 +136,7 @@ public class IntegratedAccountAuthService {
         .build();
   }
 
-  public SignInAuthResultDTO integratedAccountSignIn(SignInDto signInDto) {
+  public SignInAuthResultDTO integratedAccountSignIn(SignInDTO signInDto) {
     IntegratedAccount integratedAccount =
         userReader.getUserByIntegratedAccountEmail(signInDto.getEmail());
 
