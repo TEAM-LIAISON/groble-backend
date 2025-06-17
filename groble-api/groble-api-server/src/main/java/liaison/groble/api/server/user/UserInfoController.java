@@ -26,7 +26,9 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/user/info")
-@Tag(name = "사용자 정보 기능 관련 API", description = "사용자 정보 기능 관련 API")
+@Tag(
+    name = "[사용자 정보] 사용자 정보(닉네임, 가입 유형 등) 기능 관련 API",
+    description = "닉네임 중복 체크, 닉네임 설정 및 수정, 가입 유형 변경 등의 기능을 제공합니다.")
 public class UserInfoController {
   private final UserInfoMapper userInfoMapper;
   private final UserInfoService userInfoService;
