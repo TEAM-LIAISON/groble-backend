@@ -7,7 +7,7 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public class SocialBasicInfoDto {
+public class SocialBasicInfoDTO {
   private String userType;
   private List<String> termsTypeStrings;
 }

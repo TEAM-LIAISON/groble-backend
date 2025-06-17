@@ -108,7 +108,7 @@ public class AuthController {
   //          SetSocialBasicInfoRequest request,
   //      HttpServletResponse response) {
   //    // 1. API DTO → 서비스 DTO 변환
-  //    SocialBasicInfoDto socialSignUpDto = authDtoMapper.toServiceSocialSignUpDto(request);
+  //    SocialBasicInfoDTO socialSignUpDto = authDtoMapper.toServiceSocialSignUpDto(request);
   //
   //    // 2. 서비스 호출
   //    TokenDto tokenDto = authService.socialSignUp(accessor.getUserId(), socialSignUpDto);

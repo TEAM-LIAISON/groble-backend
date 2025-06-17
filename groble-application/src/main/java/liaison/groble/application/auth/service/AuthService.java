@@ -12,7 +12,7 @@ public interface AuthService {
 
   //  TokenDto signUp(SignUpDto signUpDto);
 
-  //  TokenDto socialSignUp(Long userId, SocialBasicInfoDto socialSignUpDto);
+  //  TokenDto socialSignUp(Long userId, SocialBasicInfoDTO socialSignUpDto);
 
   /**
    * 로그인 처리 및 토큰 발급

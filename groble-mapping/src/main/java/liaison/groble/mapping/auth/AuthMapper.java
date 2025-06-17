@@ -18,7 +18,7 @@ import liaison.groble.application.auth.dto.PhoneNumberVerifyRequestDto;
 import liaison.groble.application.auth.dto.SignInAuthResultDTO;
 import liaison.groble.application.auth.dto.SignInDto;
 import liaison.groble.application.auth.dto.SignUpDto;
-import liaison.groble.application.auth.dto.SocialBasicInfoDto;
+import liaison.groble.application.auth.dto.SocialBasicInfoDTO;
 import liaison.groble.application.auth.dto.UserWithdrawalDto;
 import liaison.groble.application.auth.dto.VerifyEmailCodeDto;
 import liaison.groble.mapping.config.GrobleMapperConfig;
@@ -36,11 +36,11 @@ public interface AuthMapper {
       expression = "java(request.getTermsTypes().stream().map(Enum::name).toList())")
   SignUpDto toSignUpDto(SignUpRequest request);
 
-  /** [소셜 회원가입] SetSocialBasicInfoRequest → SocialBasicInfoDto */
+  /** [소셜 회원가입] SetSocialBasicInfoRequest → SocialBasicInfoDTO */
   @Mapping(
       target = "termsTypeStrings",
       expression = "java(request.getTermsTypes().stream().map(Enum::name).toList())")
-  SocialBasicInfoDto toSocialBasicInfoDto(SetSocialBasicInfoRequest request);
+  SocialBasicInfoDTO toSocialBasicInfoDto(SetSocialBasicInfoRequest request);
 
   // ====== 📤 DTO → Response 변환 ======
 

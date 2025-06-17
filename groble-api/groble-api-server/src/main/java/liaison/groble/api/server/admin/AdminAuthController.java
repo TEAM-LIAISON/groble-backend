@@ -16,6 +16,7 @@ import liaison.groble.application.admin.service.AdminAuthService;
 import liaison.groble.application.auth.dto.SignInAuthResultDTO;
 import liaison.groble.common.response.GrobleResponse;
 import liaison.groble.common.utils.CookieUtils;
+import liaison.groble.common.utils.TokenCookieService;
 
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -30,6 +31,7 @@ import lombok.extern.slf4j.Slf4j;
 public class AdminAuthController {
 
   private final AdminAuthService adminAuthService;
+  private final TokenCookieService tokenCookieService;
 
   private static final int ACCESS_TOKEN_MAX_AGE = 60 * 60; // 1시간
   private static final int REFRESH_TOKEN_MAX_AGE = 60 * 60 * 24 * 7; // 1주일

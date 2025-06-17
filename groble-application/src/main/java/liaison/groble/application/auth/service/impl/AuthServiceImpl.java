@@ -158,7 +158,7 @@ public class AuthServiceImpl implements AuthService {
   //    return tokenDto;
   //  }
 
-  //  public TokenDto socialSignUp(Long userId, SocialBasicInfoDto dto) {
+  //  public TokenDto socialSignUp(Long userId, SocialBasicInfoDTO dto) {
 
   //
   //    // 약관 유형 변환 및 필수 약관 검증

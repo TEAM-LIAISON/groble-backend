@@ -19,13 +19,13 @@ import liaison.groble.application.auth.dto.PhoneNumberVerifyRequestDto;
 import liaison.groble.application.auth.dto.SignInAuthResultDTO;
 import liaison.groble.application.auth.dto.SignInDto;
 import liaison.groble.application.auth.dto.SignUpDto;
-import liaison.groble.application.auth.dto.SocialBasicInfoDto;
+import liaison.groble.application.auth.dto.SocialBasicInfoDTO;
 import liaison.groble.application.auth.dto.UserWithdrawalDto;
 import liaison.groble.application.auth.dto.VerifyEmailCodeDto;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-06-16T19:36:32+0900",
+    date = "2025-06-17T15:54:35+0900",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.10 (Amazon.com Inc.)")
 @Component
 public class AuthMapperImpl implements AuthMapper {
@@ -72,20 +72,20 @@ public class AuthMapperImpl implements AuthMapper {
   }
 
   @Override
-  public SocialBasicInfoDto toSocialBasicInfoDto(SetSocialBasicInfoRequest request) {
+  public SocialBasicInfoDTO toSocialBasicInfoDto(SetSocialBasicInfoRequest request) {
     if (request == null) {
       return null;
     }
 
-    SocialBasicInfoDto.SocialBasicInfoDtoBuilder socialBasicInfoDto = SocialBasicInfoDto.builder();
+    SocialBasicInfoDTO.SocialBasicInfoDTOBuilder socialBasicInfoDTO = SocialBasicInfoDTO.builder();
 
     if (request.getUserType() != null) {
-      socialBasicInfoDto.userType(request.getUserType());
+      socialBasicInfoDTO.userType(request.getUserType());
     }
 
-    socialBasicInfoDto.termsTypeStrings(request.getTermsTypes().stream().map(Enum::name).toList());
+    socialBasicInfoDTO.termsTypeStrings(request.getTermsTypes().stream().map(Enum::name).toList());
 
-    return socialBasicInfoDto.build();
+    return socialBasicInfoDTO.build();
   }
 
   @Override
