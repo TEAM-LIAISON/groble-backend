@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import liaison.groble.api.model.auth.request.SetSocialBasicInfoRequest;
-import liaison.groble.api.model.auth.response.swagger.SocialSignUp;
+import liaison.groble.api.model.auth.response.swagger.SetSocialBasicInfo;
 import liaison.groble.application.auth.dto.SocialBasicInfoDTO;
 import liaison.groble.application.auth.service.SocialAccountAuthService;
 import liaison.groble.common.annotation.Auth;
@@ -32,7 +32,7 @@ public class SocialAccountAuthController {
   private final AuthMapper authMapper;
   private final SocialAccountAuthService socialAccountAuthService;
 
-  @SocialSignUp
+  @SetSocialBasicInfo
   @PostMapping("/social/basic-info")
   public ResponseEntity<GrobleResponse<String>> setSocialAccountBasicInfo(
       @Auth(required = false) Accessor accessor,

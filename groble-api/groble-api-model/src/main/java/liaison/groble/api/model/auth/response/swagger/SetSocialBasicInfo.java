@@ -14,28 +14,27 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
-@Operation(summary = "소셜 회원가입", description = "소셜 회원가입의 기본 정보를 등록하고 토큰을 발급합니다.")
+@Operation(summary = "소셜 가입 기본 정보 설정", description = "소셜 로그인 과정에서 사용자의 기본 정보를 설정합니다.")
 @ApiResponses({
   @ApiResponse(
-      responseCode = "201",
-      description = "회원가입 성공",
+      responseCode = "200",
+      description = "소셜 가입 기본 정보 설정 성공",
       content =
           @Content(
               mediaType = "application/json",
               schema = @Schema(implementation = SignUpApiResponse.class),
               examples = {
                 @ExampleObject(
-                    name = "소셜 회원가입 성공 응답",
-                    summary = "소셜 회원가입 성공",
+                    name = "소셜 가입 기본 정보 설정 성공 예시",
+                    summary = "소셜 가입 기본 정보 설정 성공 예시",
                     value =
                         """
                                                     {
                                                         "status": "SUCCESS",
-                                                        "code": 201,
-                                                        "message": "소셜 회원가입이 성공적으로 완료되었습니다.",
+                                                        "code": 200,
+                                                        "message": "요청이 성공적으로 처리되었습니다.",
                                                         "data": {
-                                                            "nickname": "동민동민",
-                                                            "authenticated": true
+                                                            "소셜 계정 기본 정보가 성공적으로 설정되었습니다."
                                                         },
                                                         "timestamp": "2025-05-07 23:00:44"
                                                     }
@@ -43,4 +42,4 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
               })),
   @ApiResponse(responseCode = "400", description = "잘못된 요청 - 파일이 없거나 손상된 경우")
 })
-public @interface SocialSignUp {}
+public @interface SetSocialBasicInfo {}
