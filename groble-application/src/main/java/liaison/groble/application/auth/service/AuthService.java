@@ -76,22 +76,6 @@ public interface AuthService {
   TokenDto refreshTokens(String refreshToken);
 
   /**
-   * 닉네임 중복 확인
-   *
-   * @param nickname 확인할 닉네임
-   * @return 중복 여부
-   */
-  boolean isNicknameTaken(String nickname);
-
-  /**
-   * 닉네임 설정 또는 업데이트
-   *
-   * @param nickname 설정할 닉네임
-   * @return 설정된 닉네임
-   */
-  String updateNickname(Long userId, String nickname);
-
-  /**
    * 사용자 탈퇴 처리
    *
    * @param userId 사용자 식별 PK

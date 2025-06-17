@@ -121,6 +121,7 @@ public class AdminOrderController {
   private AdminOrderSummaryInfoResponse toAdminOrderSummaryInfoResponseFromDto(
       AdminOrderSummaryInfoDto infoDto) {
     return AdminOrderSummaryInfoResponse.builder()
+        .contentId(infoDto.getContentId())
         .createdAt(infoDto.getCreatedAt())
         .contentType(infoDto.getContentType())
         .purchaserName(infoDto.getPurchaserName())

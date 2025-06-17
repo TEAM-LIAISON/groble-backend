@@ -51,6 +51,7 @@ public class AdminOrderService {
 
   private AdminOrderSummaryInfoDto convertFlatDtoToInfoResponse(FlatAdminOrderSummaryInfoDTO flat) {
     return AdminOrderSummaryInfoDto.builder()
+        .contentId(flat.getContentId())
         .createdAt(flat.getCreatedAt())
         .contentType(flat.getContentType())
         .purchaserName(flat.getPurchaserName())

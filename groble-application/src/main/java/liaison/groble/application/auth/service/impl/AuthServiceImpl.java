@@ -2,10 +2,8 @@ package liaison.groble.application.auth.service.impl;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.util.Objects;
 import java.util.UUID;
 
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,7 +20,6 @@ import liaison.groble.application.auth.helper.TermsHelper;
 import liaison.groble.application.auth.service.AuthService;
 import liaison.groble.application.notification.service.NotificationService;
 import liaison.groble.application.user.service.UserReader;
-import liaison.groble.common.exception.DuplicateNicknameException;
 import liaison.groble.common.exception.EntityNotFoundException;
 import liaison.groble.common.port.security.SecurityPort;
 import liaison.groble.common.utils.CodeGenerator;
@@ -32,7 +29,6 @@ import liaison.groble.domain.user.entity.IntegratedAccount;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.entity.UserWithdrawalHistory;
 import liaison.groble.domain.user.enums.AccountType;
-import liaison.groble.domain.user.enums.UserStatus;
 import liaison.groble.domain.user.enums.WithdrawalReason;
 import liaison.groble.domain.user.repository.IntegratedAccountRepository;
 import liaison.groble.domain.user.repository.SocialAccountRepository;
@@ -487,46 +483,6 @@ public class AuthServiceImpl implements AuthService {
         .refreshToken(refreshToken)
         .accessTokenExpiresIn(securityPort.getAccessTokenExpirationTime())
         .build();
-  }
-
-  /** 닉네임 업데이트 */
-  @Override
-  @Transactional
-  public String updateNickname(Long userId, String nickname) {
-    // 1) User 조회
-    User user = userReader.getUserById(userId);
-
-    // 2) 입력 정규화 (null-safe)
-    String newNick = (nickname == null) ? null : nickname.strip();
-
-    // 3) 기존 닉네임과 같으면 바로 반환
-    if (Objects.equals(user.getNickname(), newNick)) {
-      return user.getNickname();
-    }
-
-    // 4) 중복 검사 (새 닉네임이 null 이면 중복 검사 생략)
-    if (newNick != null && userReader.isNicknameTaken(newNick, UserStatus.ACTIVE)) {
-      throw new DuplicateNicknameException("이미 사용 중인 닉네임입니다.");
-    }
-
-    // 5) 엔티티에 반영
-    user.updateNickname(newNick);
-
-    // 6) DB 최종 유니크 제약 검사
-    try {
-      userRepository.saveAndFlush(user);
-    } catch (DataIntegrityViolationException ex) {
-      throw new DuplicateNicknameException("이미 사용 중인 닉네임입니다.");
-    }
-
-    return user.getNickname();
-  }
-
-  /** 닉네임 중복 확인 */
-  @Override
-  @Transactional(readOnly = true)
-  public boolean isNicknameTaken(String nickname) {
-    return userReader.isNicknameTaken(nickname, UserStatus.ACTIVE);
   }
 
   @Override

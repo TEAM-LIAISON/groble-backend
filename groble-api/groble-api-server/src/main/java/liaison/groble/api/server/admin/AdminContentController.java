@@ -62,7 +62,7 @@ public class AdminContentController {
     PageResponse<AdminContentSummaryInfoDto> infoDtoPage =
         adminContentService.getAllContents(pageable);
     PageResponse<AdminContentSummaryInfoResponse> responsePage =
-        toAdminOrderSummaryInfoResponsePage(infoDtoPage);
+        toAdminContentSummaryInfoResponsePage(infoDtoPage);
 
     return ResponseEntity.ok(GrobleResponse.success(responsePage));
   }
@@ -110,7 +110,7 @@ public class AdminContentController {
     return PageRequest.of(page, size, Sort.by(direction, property));
   }
 
-  private PageResponse<AdminContentSummaryInfoResponse> toAdminOrderSummaryInfoResponsePage(
+  private PageResponse<AdminContentSummaryInfoResponse> toAdminContentSummaryInfoResponsePage(
       PageResponse<AdminContentSummaryInfoDto> dtoPage) {
     List<AdminContentSummaryInfoResponse> items =
         dtoPage.getItems().stream()
@@ -127,6 +127,7 @@ public class AdminContentController {
   private AdminContentSummaryInfoResponse toAdminContentSummaryInfoResponseFromDto(
       AdminContentSummaryInfoDto infoDto) {
     return AdminContentSummaryInfoResponse.builder()
+        .contentId(infoDto.getContentId())
         .createdAt(infoDto.getCreatedAt())
         .contentType(infoDto.getContentType())
         .sellerName(infoDto.getSellerName())
