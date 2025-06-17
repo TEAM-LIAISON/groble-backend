@@ -308,17 +308,6 @@ public class AuthServiceImpl implements AuthService {
         .build();
   }
 
-  private TokenDto issueTokens(User user) {
-    String accessToken = securityPort.createAccessToken(user.getId(), user.getEmail());
-    String refreshToken = securityPort.createRefreshToken(user.getId(), user.getEmail());
-
-    return TokenDto.builder()
-        .accessToken(accessToken)
-        .refreshToken(refreshToken)
-        .accessTokenExpiresIn(securityPort.getAccessTokenExpirationTime())
-        .build();
-  }
-
   @Override
   @Transactional
   public void withdrawUser(Long userId, UserWithdrawalDto userWithdrawalDto) {
