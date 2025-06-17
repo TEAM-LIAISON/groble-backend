@@ -1,4 +1,4 @@
-package liaison.groble.application.auth.dto;
+package liaison.groble.application.user.dto;
 
 import java.util.List;
 

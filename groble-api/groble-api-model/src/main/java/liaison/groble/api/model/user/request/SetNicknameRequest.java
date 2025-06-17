@@ -15,7 +15,7 @@ import lombok.Setter;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class NicknameRequest {
+public class SetNicknameRequest {
 
   @NotBlank(message = "닉네임은 필수 입력값입니다.")
   @Pattern(

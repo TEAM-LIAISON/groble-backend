@@ -23,8 +23,11 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AccountVerificationService {
 
+  // Repository
   private final UserReader userReader;
   private final RoleRepository roleRepository;
+
+  // Discord
   private final DiscordPersonalMakerVerificationReportService
       discordPersonalMakerVerificationReportService;
   private final DiscordBusinessMakerVerificationReportService

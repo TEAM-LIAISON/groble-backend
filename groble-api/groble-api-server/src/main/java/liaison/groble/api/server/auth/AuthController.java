@@ -1,6 +1,5 @@
 package liaison.groble.api.server.auth;
 
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -26,9 +25,9 @@ import liaison.groble.api.model.auth.request.VerifyEmailCodeRequest;
 import liaison.groble.api.model.auth.response.PhoneNumberResponse;
 import liaison.groble.api.model.auth.response.SignInResponse;
 import liaison.groble.api.model.auth.response.SignInTestResponse;
-import liaison.groble.api.model.user.request.NicknameRequest;
+import liaison.groble.api.model.user.request.SetNicknameRequest;
 import liaison.groble.api.model.user.response.NicknameDuplicateCheckResponse;
-import liaison.groble.api.model.user.response.UpdateNicknameResponse;
+import liaison.groble.api.model.user.response.SetNicknameResponse;
 import liaison.groble.api.server.auth.mapper.AuthDtoMapper;
 import liaison.groble.application.auth.dto.EmailVerificationDto;
 import liaison.groble.application.auth.dto.SignInAuthResultDTO;
@@ -401,13 +400,13 @@ public class AuthController {
     @ApiResponse(responseCode = "409", description = "이미 존재하는 닉네임")
   })
   @PostMapping("/users/nickname")
-  public ResponseEntity<GrobleResponse<UpdateNicknameResponse>> updateNickname(
-      @Auth Accessor accessor, @Valid @RequestBody NicknameRequest request) {
+  public ResponseEntity<GrobleResponse<SetNicknameResponse>> updateNickname(
+      @Auth Accessor accessor, @Valid @RequestBody SetNicknameRequest request) {
 
     String updatedNickname =
         authService.updateNickname(accessor.getUserId(), request.getNickname());
 
-    return ResponseEntity.ok(GrobleResponse.success(new UpdateNicknameResponse(updatedNickname)));
+    return ResponseEntity.ok(GrobleResponse.success(new SetNicknameResponse(updatedNickname)));
   }
 
   @Operation(summary = "회원 탈퇴", description = "사용자 계정을 탈퇴 처리합니다.")
@@ -438,20 +437,6 @@ public class AuthController {
 
     // 3. 응답 반환
     return ResponseEntity.ok().body(GrobleResponse.success(null, "회원 탈퇴가 성공적으로 처리되었습니다.", 200));
-  }
-
-  private String extractRefreshTokenFromCookie(HttpServletRequest request) {
-    if (request.getCookies() == null) {
-      throw new IllegalArgumentException("쿠키가 없습니다.");
-    }
-
-    for (Cookie cookie : request.getCookies()) {
-      if ("refreshToken".equals(cookie.getName())) {
-        return cookie.getValue();
-      }
-    }
-
-    throw new IllegalArgumentException("refreshToken 쿠키가 없습니다.");
   }
 
   private void addTokenCookies(

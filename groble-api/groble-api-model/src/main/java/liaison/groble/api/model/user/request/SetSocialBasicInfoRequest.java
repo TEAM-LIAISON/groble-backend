@@ -1,4 +1,4 @@
-package liaison.groble.api.model.auth.request;
+package liaison.groble.api.model.user.request;
 
 import java.util.List;
 
@@ -29,21 +29,14 @@ public class SetSocialBasicInfoRequest {
   @Schema(
       description =
           """
-            가입 약관 동의 유형 리스트입니다. 다음 항목 중 하나 이상을 포함해야 합니다.
+        가입 약관 동의 유형 리스트입니다. 다음 항목 중 필수 값을 포함해야 합니다.
 
-            - AGE_POLICY: 만 14세 이상입니다.
-            - PRIVACY_POLICY: 개인정보 수집 및 이용 동의
-            - SERVICE_TERMS_POLICY: 서비스 이용약관 동의
-            - SELLER_TERMS_POLICY: 메이커 이용약관 동의
-            - MARKETING_POLICY: 마케팅 활용 및 수신 동의
-            """,
-      example = "[\"AGE_POLICY\", \"PRIVACY_POLICY\", \"SERVICE_TERMS_POLICY\"]",
-      allowableValues = {
-        "AGE_POLICY",
-        "PRIVACY_POLICY",
-        "SERVICE_TERMS_POLICY",
-        "SELLER_TERMS_POLICY",
-        "MARKETING_POLICY"
-      })
+        - AGE_POLICY: 만 14세 이상입니다. (필수)
+        - PRIVACY_POLICY: 개인정보 수집 및 이용 동의 (필수)
+        - SERVICE_TERMS_POLICY: 서비스 이용약관 동의 (필수)
+        - SELLER_TERMS_POLICY: 메이커 이용약관 동의 (판매자인 경우 필수)
+        - MARKETING_POLICY: 마케팅 활용 및 수신 동의 (선택)
+        """,
+      example = "[\"AGE_POLICY\", \"PRIVACY_POLICY\", \"SERVICE_TERMS_POLICY\"]")
   private List<TermsTypeDto> termsTypes;
 }

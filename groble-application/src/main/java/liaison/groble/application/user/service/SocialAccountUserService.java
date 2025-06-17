@@ -1,16 +1,15 @@
-package liaison.groble.application.auth.service;
+package liaison.groble.application.user.service;
 
 import java.util.List;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import liaison.groble.application.auth.dto.SocialBasicInfoDTO;
 import liaison.groble.application.auth.helper.AuthValidationHelper;
 import liaison.groble.application.auth.helper.TermsHelper;
 import liaison.groble.application.auth.helper.TokenHelper;
 import liaison.groble.application.auth.helper.UserHelper;
-import liaison.groble.application.user.service.UserReader;
+import liaison.groble.application.user.dto.SocialBasicInfoDTO;
 import liaison.groble.domain.terms.enums.TermsType;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.enums.SellerVerificationStatus;
@@ -25,7 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class SocialAccountAuthService {
+public class SocialAccountUserService {
   // Repository
   private final UserReader userReader;
   private final UserRepository userRepository;

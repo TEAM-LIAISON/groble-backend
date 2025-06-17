@@ -7,7 +7,6 @@ import org.springframework.stereotype.Component;
 import liaison.groble.api.model.auth.request.EmailVerificationRequest;
 import liaison.groble.api.model.auth.request.PhoneNumberVerifyCodeRequest;
 import liaison.groble.api.model.auth.request.PhoneNumberVerifyRequest;
-import liaison.groble.api.model.auth.request.SetSocialBasicInfoRequest;
 import liaison.groble.api.model.auth.request.SignInRequest;
 import liaison.groble.api.model.auth.request.SignUpRequest;
 import liaison.groble.api.model.auth.request.UserWithdrawalRequest;
@@ -19,13 +18,12 @@ import liaison.groble.application.auth.dto.PhoneNumberVerifyRequestDto;
 import liaison.groble.application.auth.dto.SignInAuthResultDTO;
 import liaison.groble.application.auth.dto.SignInDto;
 import liaison.groble.application.auth.dto.SignUpDto;
-import liaison.groble.application.auth.dto.SocialBasicInfoDTO;
 import liaison.groble.application.auth.dto.UserWithdrawalDto;
 import liaison.groble.application.auth.dto.VerifyEmailCodeDto;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-06-17T15:54:35+0900",
+    date = "2025-06-17T16:35:47+0900",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.10 (Amazon.com Inc.)")
 @Component
 public class AuthMapperImpl implements AuthMapper {
@@ -69,23 +67,6 @@ public class AuthMapperImpl implements AuthMapper {
     signUpDto.termsTypeStrings(request.getTermsTypes().stream().map(Enum::name).toList());
 
     return signUpDto.build();
-  }
-
-  @Override
-  public SocialBasicInfoDTO toSocialBasicInfoDto(SetSocialBasicInfoRequest request) {
-    if (request == null) {
-      return null;
-    }
-
-    SocialBasicInfoDTO.SocialBasicInfoDTOBuilder socialBasicInfoDTO = SocialBasicInfoDTO.builder();
-
-    if (request.getUserType() != null) {
-      socialBasicInfoDTO.userType(request.getUserType());
-    }
-
-    socialBasicInfoDTO.termsTypeStrings(request.getTermsTypes().stream().map(Enum::name).toList());
-
-    return socialBasicInfoDTO.build();
   }
 
   @Override
