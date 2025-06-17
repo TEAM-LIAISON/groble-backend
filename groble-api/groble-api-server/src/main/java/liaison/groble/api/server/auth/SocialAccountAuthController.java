@@ -32,6 +32,7 @@ public class SocialAccountAuthController {
   private final AuthMapper authMapper;
   private final SocialAccountAuthService socialAccountAuthService;
 
+  // 소셜 계정 기본 정보 설정 API (userType, termsTypeStrings)
   @SetSocialBasicInfo
   @PostMapping("/social/basic-info")
   public ResponseEntity<GrobleResponse<String>> setSocialAccountBasicInfo(

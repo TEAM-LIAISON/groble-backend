@@ -27,11 +27,18 @@ public class SignUpRequest {
   @Schema(description = "사용자 유형", example = "SELLER")
   private String userType;
 
-  @NotEmpty(message = "약관 동의 유형은 필수입니다.")
   @Schema(
-      description = "약관 동의 유형",
-      example =
-          "[\"AGE_POLICY\", \"PRIVACY_POLICY\", \"SERVICE_TERMS_POLICY\", \"SELLER_TERMS_POLICY\", \"MARKETING_POLICY\"]",
+      description =
+          """
+    가입 약관 동의 유형 리스트입니다. 다음 항목 중 하나 이상을 포함해야 합니다.
+
+    - AGE_POLICY: 만 14세 이상입니다.
+    - PRIVACY_POLICY: 개인정보 수집 및 이용 동의
+    - SERVICE_TERMS_POLICY: 서비스 이용약관 동의
+    - SELLER_TERMS_POLICY: 메이커 이용약관 동의
+    - MARKETING_POLICY: 마케팅 활용 및 수신 동의
+    """,
+      example = "[\"AGE_POLICY\", \"PRIVACY_POLICY\", \"SERVICE_TERMS_POLICY\"]",
       allowableValues = {
         "AGE_POLICY",
         "PRIVACY_POLICY",
@@ -39,6 +46,7 @@ public class SignUpRequest {
         "SELLER_TERMS_POLICY",
         "MARKETING_POLICY"
       })
+  @NotEmpty(message = "가입 약관 유형 선택은 필수입니다.")
   private List<TermsTypeDto> termsTypes;
 
   @NotBlank(message = "이메일은 필수 입력값입니다.")

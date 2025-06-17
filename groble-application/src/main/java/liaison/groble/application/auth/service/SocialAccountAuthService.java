@@ -58,7 +58,7 @@ public class SocialAccountAuthService {
 
     UserStatusService userStatusService = new UserStatusService();
     userStatusService.activate(user);
-    // 약관 동의 처리
+
     termsHelper.processTermsAgreements(user, agreedTermsTypes);
   }
 }
