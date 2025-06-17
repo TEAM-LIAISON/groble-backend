@@ -132,6 +132,7 @@ public class AdminContentController {
         .contentType(infoDto.getContentType())
         .sellerName(infoDto.getSellerName())
         .contentTitle(infoDto.getContentTitle())
+        .minPrice(infoDto.getMinPrice())
         .priceOptionLength(infoDto.getPriceOptionLength())
         .contentStatus(infoDto.getContentStatus())
         .adminContentCheckingStatus(infoDto.getAdminContentCheckingStatus())
