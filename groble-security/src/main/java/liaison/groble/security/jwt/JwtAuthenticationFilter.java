@@ -38,6 +38,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
   @Value("${app.cookie.domain}")
   private String cookieDomain;
 
+  // ✅ 관리자 쿠키 도메인 가져오기
+  @Value("${app.cookie.admin-domain}")
+  private String adminCookieDomain;
+
   @Value("${server.env:local}")
   private String serverEnv;
 
@@ -91,11 +95,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     return isSwagger || isPublicPath;
   }
 
-  /** 인증 필터 처리 */
   @Override
   protected void doFilterInternal(
       HttpServletRequest request, HttpServletResponse response, FilterChain chain)
       throws ServletException, IOException {
+
+    // ✅ 관리자 로그인 요청은 필터에서 제외
+    String requestURI = request.getRequestURI();
+    if (requestURI.startsWith("/api/v1/admin/auth")) {
+      chain.doFilter(request, response);
+      return;
+    }
 
     // ✅ 중요: 매 요청마다 SecurityContext 초기화
     SecurityContextHolder.clearContext();
@@ -130,18 +140,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
           authenticate(accessJwt, request);
         } catch (ExpiredJwtException exp) {
           log.debug("액세스 토큰 만료 - URI: {}", request.getRequestURI());
+          // ✅ 관리자 요청인지 확인 후 적절한 도메인으로 토큰 재발급
           handleTokenRefresh(refreshToken, validRefreshToken, response, request);
         } catch (JwtException | IllegalArgumentException bad) {
           log.debug("유효하지 않은 액세스 토큰 - URI: {}", request.getRequestURI());
           response.addHeader("X-Token-Refresh-Status", "invalid-access");
 
-          // 액세스 토큰이 유효하지 않지만 리프레시 토큰이 유효한 경우 새 액세스 토큰 발급
           if (validRefreshToken) {
             handleTokenRefresh(refreshToken, true, response, request);
           }
         }
       } else {
-        // 액세스 토큰이 없지만 유효한 리프레시 토큰이 있는 경우 새 액세스 토큰 발급
         if (validRefreshToken) {
           handleTokenRefresh(refreshToken, true, response, request);
         }
@@ -149,13 +158,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     } catch (Exception e) {
       log.error("JWT 필터 처리 중 예외 발생 - URI: {}", request.getRequestURI(), e);
-      // ✅ 예외 발생 시에도 SecurityContext 클리어
       SecurityContextHolder.clearContext();
     } finally {
       try {
         chain.doFilter(request, response);
       } finally {
-        // ✅ 중요: 요청 처리 완료 후 SecurityContext 클리어
         SecurityContextHolder.clearContext();
       }
     }
@@ -175,11 +182,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
       Long userId = jwtTokenProvider.getUserId(refreshToken, TokenType.REFRESH);
       String email = jwtTokenProvider.getEmail(refreshToken, TokenType.REFRESH);
 
-      // 리프레시 토큰의 만료 시간을 고려하여 새 액세스 토큰 생성
       String newAccess =
           jwtTokenProvider.createAccessTokenWithRefreshConstraint(userId, email, refreshToken);
 
-      // 리프레시 토큰의 만료 시간 정보
       Instant refreshExpiration = jwtTokenProvider.getRefreshTokenExpirationInstant(refreshToken);
       Instant now = Instant.now();
       int maxAge =
@@ -189,17 +194,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                   jwtTokenProvider.getAccessTokenExpirationMs() / 1000);
 
       log.info("액세스 토큰 재발급 성공 - userId: {}", userId);
-
-      // 디버깅 헤더 추가
       response.addHeader("X-Token-Refresh-Status", "success");
 
-      // 쿠키에 새 액세스 토큰 추가 (수정된 최대 수명으로)
-      // ✅ 보안 강화: HttpOnly, Secure, SameSite 설정
-      String sameSite = isProductionEnvironment() ? "Strict" : "None";
-      CookieUtils.addCookie(
-          response, "accessToken", newAccess, maxAge, "/", true, true, sameSite, cookieDomain);
+      // ✅ 관리자 요청인지 확인해서 적절한 도메인 사용
+      String requestURI = request.getRequestURI();
+      boolean isAdminRequest = requestURI.startsWith("/api/v1/admin");
 
-      // 인증 설정
+      String domain = isAdminRequest ? getAdminCookieDomain() : cookieDomain;
+      String sameSite = isProductionEnvironment() ? "Strict" : "None";
+
+      CookieUtils.addCookie(
+          response, "accessToken", newAccess, maxAge, "/", true, true, sameSite, domain);
+
       setAuthentication(newAccess, request);
     } catch (Exception e) {
       log.error("토큰 재발급 처리 중 오류 발생", e);
@@ -354,5 +360,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
       token = CookieUtils.getCookie(request, "accessToken").map(c -> c.getValue()).orElse(null);
     }
     return token;
+  }
+
+  private String getAdminCookieDomain() {
+    return adminCookieDomain != null && !adminCookieDomain.isBlank()
+        ? adminCookieDomain
+        : ".groble.im";
   }
 }
