@@ -49,6 +49,7 @@ public class OrderCustomRepositoryImpl implements OrderCustomRepository {
                 Projections.constructor(
                     FlatAdminOrderSummaryInfoDTO.class,
                     qContent.id.as("contentId"),
+                    qOrder.merchantUid.as("merchantUid"),
                     qOrder.createdAt.as("createdAt"),
                     qContent.contentType.stringValue().as("contentType"),
                     qOrder.purchaser.name.as("purchaserName"),

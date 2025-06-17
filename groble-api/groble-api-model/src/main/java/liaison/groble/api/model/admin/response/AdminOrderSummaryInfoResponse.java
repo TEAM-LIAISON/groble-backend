@@ -25,6 +25,13 @@ public class AdminOrderSummaryInfoResponse {
       requiredMode = Schema.RequiredMode.REQUIRED)
   private Long contentId;
 
+  @Schema(
+      description = "주문 식별 ID",
+      example = "20251020349820",
+      type = "string",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private String merchantUid;
+
   @Schema(description = "주문 생성 시간", requiredMode = Schema.RequiredMode.REQUIRED)
   @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
   private LocalDateTime createdAt;

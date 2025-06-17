@@ -10,6 +10,7 @@ import lombok.Getter;
 @Builder
 public class AdminOrderSummaryInfoDto {
   private Long contentId;
+  private String merchantUid;
   private LocalDateTime createdAt;
   private String contentType;
   private String purchaserName;

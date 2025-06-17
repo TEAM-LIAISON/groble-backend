@@ -14,6 +14,7 @@ import lombok.NoArgsConstructor;
 @Builder
 public class FlatAdminOrderSummaryInfoDTO {
   private Long contentId;
+  private String merchantUid;
   private LocalDateTime createdAt;
   private String contentType;
   private String purchaserName;

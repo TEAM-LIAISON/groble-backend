@@ -122,6 +122,7 @@ public class AdminOrderController {
       AdminOrderSummaryInfoDto infoDto) {
     return AdminOrderSummaryInfoResponse.builder()
         .contentId(infoDto.getContentId())
+        .merchantUid(infoDto.getMerchantUid())
         .createdAt(infoDto.getCreatedAt())
         .contentType(infoDto.getContentType())
         .purchaserName(infoDto.getPurchaserName())
