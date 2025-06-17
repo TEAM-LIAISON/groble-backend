@@ -29,89 +29,95 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/verification/email")
-@Tag(name = "이메일을 활용한 인증 관련 API", description = "비밀번호 재설정 이메일 발송 기능, ")
+@Tag(name = "이메일 인증 API", description = "이메일 인증 코드 발송, 검증 및 비밀번호 재설정 기능")
 public class EmailVerificationController {
+
+  // API 경로 상수화
+  private static final String SEND_CODE_FOR_SIGNUP = "/code/sign-up";
+  private static final String VERIFY_CODE_FOR_SIGNUP = "/code/verify/sign-up";
+  private static final String SEND_CODE_FOR_CHANGE_EMAIL = "/code/change-email";
+  private static final String VERIFY_CODE_FOR_CHANGE_EMAIL = "/code/verify/change-email";
+  private static final String SEND_PASSWORD_RESET = "/code/password-reset";
+  private static final String RESET_PASSWORD = "/password/reset";
 
   private final VerificationMapper verificationMapper;
   private final VerificationService verificationService;
 
-  @Operation(
-      summary = "이메일을 활용하여 통합 회원가입 과정에서 인증 코드를 발급합니다.",
-      description = "사용자가 기입한 이메일에 인증 코드를 발급합니다.")
-  @PostMapping("/code/sign-up")
-  public ResponseEntity<GrobleResponse<Void>>
-      sendIntegratedAccountEmailVerificationCodeForOnBoarding(
-          @Parameter(description = "인증 코드를 발급받고자하는 이메일 정보", required = true) @Valid @RequestBody
-              EmailVerificationRequest request) {
-    EmailVerificationDTO emailVerificationDTO = verificationMapper.toEmailVerificationDTO(request);
-
-    verificationService.sendEmailVerificationForSignUp(emailVerificationDTO);
-
-    return ResponseEntity.ok().body(GrobleResponse.success());
-  }
-
-  @Operation(
-      summary = "회원가입 과정에서 발급한 인증 코드를 검증합니다.",
-      description = "이메일로 발송된 4자리 인증 코드의 유효성을 검증합니다.")
-  @PostMapping("/code/verify/sign-up")
-  public ResponseEntity<GrobleResponse<Void>> verifyEmailCode(
-      @Parameter(description = "인증 코드(verificationCode)와 인증 코드를 수신한 이메일 정보", required = true)
-          @Valid
-          @RequestBody
-          VerifyEmailCodeRequest request) {
-    VerifyEmailCodeDTO verifyEmailCodeDTO = verificationMapper.toVerifyEmailCodeDTO(request);
-
-    verificationService.verifyEmailCode(verifyEmailCodeDTO);
-
-    return ResponseEntity.ok().body(GrobleResponse.success());
-  }
-
-  @Operation(summary = "이메일 변경 이메일 인증 요청", description = "사용자가 기입한 이메일에 인증 코드를 발급합니다.")
-  @PostMapping("/code/change-email")
-  public ResponseEntity<GrobleResponse<Void>> sendEmailVerificationForChangeEmail(
-      @Auth Accessor accessor,
-      @Parameter(description = "변경하고자 하는 이메일 정보(인증 코드를 수신할 이메일)", required = true)
-          @Valid
-          @RequestBody
+  @Operation(summary = "회원가입 이메일 인증 코드 발송", description = "통합 회원가입 과정에서 이메일로 4자리 인증 코드를 발송합니다.")
+  @PostMapping(SEND_CODE_FOR_SIGNUP)
+  public ResponseEntity<GrobleResponse<Void>> sendCodeForSignUp(
+      @Parameter(description = "인증 코드를 받을 이메일 주소", required = true) @Valid @RequestBody
           EmailVerificationRequest request) {
-    EmailVerificationDTO emailVerificationDto = verificationMapper.toEmailVerificationDTO(request);
 
-    verificationService.sendEmailVerificationForChangeEmail(
-        accessor.getUserId(), emailVerificationDto);
+    EmailVerificationDTO dto = verificationMapper.toEmailVerificationDTO(request);
+    verificationService.sendEmailVerificationForSignUp(dto);
 
-    return ResponseEntity.ok().body(GrobleResponse.success());
+    return createSuccessResponse();
   }
 
-  @Operation(
-      summary = "이메일 변경 시 이메일 인증 코드 확인",
-      description = "이메일 변경 시 인증 코드의 유효성을 검증하고 이메일을 변경합니다.")
-  @PostMapping("/code/verify/change-email")
-  public ResponseEntity<GrobleResponse<Void>> verifyEmailCodeForChangeEmail(
-      @Auth Accessor accessor, @Valid @RequestBody VerifyEmailCodeRequest request) {
-    VerifyEmailCodeDTO verifyEmailCodeDto = verificationMapper.toVerifyEmailCodeDTO(request);
+  @Operation(summary = "회원가입 이메일 인증 코드 검증", description = "회원가입 시 발송된 4자리 인증 코드의 유효성을 검증합니다.")
+  @PostMapping(VERIFY_CODE_FOR_SIGNUP)
+  public ResponseEntity<GrobleResponse<Void>> verifyCodeForSignUp(
+      @Parameter(description = "이메일과 인증 코드 정보", required = true) @Valid @RequestBody
+          VerifyEmailCodeRequest request) {
 
-    verificationService.verifyEmailCodeForChangeEmail(accessor.getUserId(), verifyEmailCodeDto);
+    VerifyEmailCodeDTO dto = verificationMapper.toVerifyEmailCodeDTO(request);
+    verificationService.verifyEmailCode(dto);
 
-    return ResponseEntity.ok().body(GrobleResponse.success());
+    return createSuccessResponse();
+  }
+
+  @Operation(summary = "이메일 변경 인증 코드 발송", description = "이메일 변경을 위한 인증 코드를 새 이메일 주소로 발송합니다.")
+  @PostMapping(SEND_CODE_FOR_CHANGE_EMAIL)
+  public ResponseEntity<GrobleResponse<Void>> sendCodeForChangeEmail(
+      @Auth Accessor accessor,
+      @Parameter(description = "변경할 새 이메일 주소", required = true) @Valid @RequestBody
+          EmailVerificationRequest request) {
+
+    EmailVerificationDTO dto = verificationMapper.toEmailVerificationDTO(request);
+    verificationService.sendEmailVerificationForChangeEmail(accessor.getUserId(), dto);
+
+    return createSuccessResponse();
+  }
+
+  @Operation(summary = "이메일 변경 인증 코드 검증", description = "이메일 변경을 위한 인증 코드를 검증하고 이메일을 업데이트합니다.")
+  @PostMapping(VERIFY_CODE_FOR_CHANGE_EMAIL)
+  public ResponseEntity<GrobleResponse<Void>> verifyCodeForChangeEmail(
+      @Auth Accessor accessor,
+      @Parameter(description = "새 이메일과 인증 코드 정보", required = true) @Valid @RequestBody
+          VerifyEmailCodeRequest request) {
+
+    VerifyEmailCodeDTO dto = verificationMapper.toVerifyEmailCodeDTO(request);
+    // 🔥 리팩토링된 서비스 메서드명으로 변경
+    verificationService.verifyAndUpdateEmail(accessor.getUserId(), dto);
+
+    return createSuccessResponse();
   }
 
   @Operation(summary = "비밀번호 재설정 이메일 발송", description = "비밀번호 재설정 링크가 포함된 이메일을 발송합니다.")
-  @PostMapping("/code/password-reset")
-  public ResponseEntity<GrobleResponse<Void>> requestPasswordReset(
-      @Valid @RequestBody EmailVerificationRequest request) {
+  @PostMapping(SEND_PASSWORD_RESET)
+  public ResponseEntity<GrobleResponse<Void>> sendPasswordResetEmail(
+      @Parameter(description = "비밀번호 재설정 링크를 받을 이메일 주소", required = true) @Valid @RequestBody
+          EmailVerificationRequest request) {
 
     verificationService.sendPasswordResetEmail(request.getEmail());
 
-    return ResponseEntity.ok().body(GrobleResponse.success());
+    return createSuccessResponse();
   }
 
-  @Operation(summary = "비밀번호 재설정", description = "새로운 비밀번호로 재설정합니다.")
-  @PostMapping("/password/reset")
+  @Operation(summary = "비밀번호 재설정 실행", description = "토큰을 사용하여 새로운 비밀번호로 재설정합니다.")
+  @PostMapping(RESET_PASSWORD)
   public ResponseEntity<GrobleResponse<Void>> resetPassword(
-      @Valid @RequestBody ResetPasswordRequest request) {
+      @Parameter(description = "재설정 토큰과 새 비밀번호", required = true) @Valid @RequestBody
+          ResetPasswordRequest request) {
 
     verificationService.resetPassword(request.getToken(), request.getNewPassword());
 
-    return ResponseEntity.ok().body(GrobleResponse.success());
+    return createSuccessResponse();
+  }
+
+  /** 성공 응답 생성 유틸리티 메서드 */
+  private ResponseEntity<GrobleResponse<Void>> createSuccessResponse() {
+    return ResponseEntity.ok(GrobleResponse.success());
   }
 }
