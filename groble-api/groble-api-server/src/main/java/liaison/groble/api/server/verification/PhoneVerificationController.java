@@ -26,7 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/verification/phone")
+@RequestMapping("/api/v1/verification")
 @Tag(name = "전화번호를 활용한 인증 관련 API", description = "전화번호 인증 코드 발송, 전화번호 인증 코드 검증")
 public class PhoneVerificationController {
 
