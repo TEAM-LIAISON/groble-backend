@@ -37,14 +37,7 @@ public class CookieUtils {
     return Optional.empty();
   }
 
-  /**
-   * 응답에 쿠키 추가 (기본 설정 사용)
-   *
-   * @param response HTTP 응답
-   * @param name 쿠키 이름
-   * @param value 쿠키 값
-   * @param maxAge 쿠키 유효 시간(초)
-   */
+  /** 응답에 쿠키 추가 (기본 설정) */
   public static void addCookie(
       HttpServletResponse response, String name, String value, int maxAge) {
     addCookie(
@@ -84,19 +77,7 @@ public class CookieUtils {
     addCookie(response, name, value, maxAge, path, httpOnly, secure, sameSite, null);
   }
 
-  /**
-   * 응답에 쿠키 추가 (상세 설정 사용)
-   *
-   * @param response HTTP 응답
-   * @param name 쿠키 이름
-   * @param value 쿠키 값
-   * @param maxAge 쿠키 유효 시간(초)
-   * @param path 쿠키 경로
-   * @param httpOnly HttpOnly 플래그 설정
-   * @param secure Secure 플래그 설정
-   * @param sameSite SameSite 속성 (Lax, Strict, None)
-   * @param domain 쿠키 도메인 (null인 경우 현재 도메인)
-   */
+  /** 응답에 쿠키 추가 (상세 설정) */
   public static void addCookie(
       HttpServletResponse response,
       String name,
@@ -107,55 +88,30 @@ public class CookieUtils {
       boolean secure,
       String sameSite,
       String domain) {
-
-    // SameSite=None인 경우 Secure 플래그 강제 설정 (브라우저 요구사항)
+    // SameSite=None인 경우 Secure 강제
     if ("None".equalsIgnoreCase(sameSite)) {
       secure = true;
     }
-
-    // Local 환경에서는 domain을 설정하지 않음 (localhost에서 동작하도록)
-    boolean isLocalEnv = isLocalEnvironment();
-    if (isLocalEnv) {
+    // Local 환경에서는 domain 무시
+    if (isLocalEnvironment()) {
       domain = null;
     }
-
-    // 기본 쿠키 생성
-    Cookie cookie = new Cookie(name, value);
-    cookie.setPath(path);
-    cookie.setHttpOnly(httpOnly);
-    cookie.setMaxAge(maxAge);
-    cookie.setSecure(secure);
-
-    // 도메인 설정 (null이 아닌 경우에만)
-    if (domain != null && !domain.isEmpty() && !isLocalEnv) {
-      cookie.setDomain(domain);
-    }
-
-    // jakarta.servlet.http.Cookie에는 SameSite 설정이 없으므로 헤더로 추가
-    StringBuilder cookieHeader = new StringBuilder();
-    cookieHeader.append(String.format("%s=%s", name, value));
-    cookieHeader.append(String.format("; Path=%s", path));
-    cookieHeader.append(String.format("; Max-Age=%d", maxAge));
-
-    if (httpOnly) {
-      cookieHeader.append("; HttpOnly");
-    }
-
-    if (secure) {
-      cookieHeader.append("; Secure");
-    }
-
-    if (domain != null && !domain.isEmpty() && !isLocalEnv) {
-      cookieHeader.append(String.format("; Domain=%s", domain));
-    }
-
-    if (sameSite != null && !sameSite.isEmpty()) {
-      cookieHeader.append(String.format("; SameSite=%s", sameSite));
-    }
-
-    // 기본 쿠키 추가 및 헤더 설정
-    response.addCookie(cookie);
-    response.addHeader("Set-Cookie", cookieHeader.toString());
+    // 쿠키 헤더 조립
+    StringBuilder header = new StringBuilder();
+    header
+        .append(name)
+        .append("=")
+        .append(value)
+        .append("; Path=")
+        .append(path)
+        .append("; Max-Age=")
+        .append(maxAge);
+    if (httpOnly) header.append("; HttpOnly");
+    if (secure) header.append("; Secure");
+    if (domain != null && !domain.isEmpty()) header.append("; Domain=").append(domain);
+    if (sameSite != null && !sameSite.isEmpty()) header.append("; SameSite=").append(sameSite);
+    // 헤더에 한 번만 추가
+    response.addHeader("Set-Cookie", header.toString());
   }
 
   /**
