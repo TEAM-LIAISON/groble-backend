@@ -108,7 +108,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     // ✅ 관리자 로그인 요청은 필터에서 제외
     String requestURI = request.getRequestURI();
-    if (requestURI.startsWith("/api/v1/admin/auth")) {
+    if (requestURI.startsWith("/api/v1/admin/auth/sign-in")) {
       chain.doFilter(request, response);
       return;
     }

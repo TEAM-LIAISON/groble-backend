@@ -57,18 +57,11 @@ public class AdminAuthController {
   @RequireRole("ROLE_ADMIN")
   @PostMapping("/logout")
   public ResponseEntity<GrobleResponse<Void>> adminLogout(
-      @Auth Accessor accessor, HttpServletRequest request, HttpServletResponse response) {
-    try {
-      // 관리자 토큰 쿠키 제거 - TokenCookieService 활용
-      tokenCookieService.removeAdminTokenCookies(response);
+      @Auth Accessor accessor, HttpServletResponse response) {
+    // 관리자 토큰 쿠키 제거 - TokenCookieService 활용
+    tokenCookieService.removeAdminTokenCookies(response);
 
-      // 응답 반환
-      return ResponseEntity.ok().body(GrobleResponse.success(null, "로그아웃이 성공적으로 처리되었습니다.", 200));
-
-    } catch (Exception e) {
-      log.error("로그아웃 처리 중 오류 발생", e);
-      return ResponseEntity.internalServerError()
-          .body(GrobleResponse.error("로그아웃 처리 중 오류가 발생했습니다.", 500));
-    }
+    // 응답 반환
+    return ResponseEntity.ok().body(GrobleResponse.success(null, "로그아웃이 성공적으로 처리되었습니다.", 200));
   }
 }
