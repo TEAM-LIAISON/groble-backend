@@ -16,6 +16,7 @@ import liaison.groble.api.model.admin.response.AdminSignInResponse;
 import liaison.groble.application.admin.service.AdminAuthService;
 import liaison.groble.application.auth.dto.SignInAuthResultDTO;
 import liaison.groble.common.annotation.Auth;
+import liaison.groble.common.annotation.RequireRole;
 import liaison.groble.common.model.Accessor;
 import liaison.groble.common.response.GrobleResponse;
 import liaison.groble.common.utils.CookieUtils;
@@ -57,6 +58,7 @@ public class AdminAuthController {
     return ResponseEntity.ok(GrobleResponse.success(adminSignInResponse));
   }
 
+  @RequireRole("ROLE_ADMIN")
   @PostMapping("/logout")
   public ResponseEntity<GrobleResponse<Void>> adminLogout(
       @Auth Accessor accessor, HttpServletRequest request, HttpServletResponse response) {

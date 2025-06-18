@@ -171,10 +171,6 @@ public class SecurityConfig {
                         "/api/v1/auth/password/reset-request",
                         "/api/v1/auth/password/reset")
                     .permitAll()
-                    .requestMatchers("/api/v1/admin/auth/sign-in")
-                    .permitAll()
-                    .requestMatchers("/api/v1/admin/auth/logout")
-                    .permitAll()
                     .requestMatchers("/api/v1/oauth2/**")
                     .permitAll()
                     .requestMatchers("/oauth2/**")
@@ -210,7 +206,9 @@ public class SecurityConfig {
                     .permitAll()
                     .requestMatchers("/env")
                     .permitAll()
-
+                    // [관리자 API 접근 허용 설정]
+                    .requestMatchers("/api/v1/admin/auth/sign-in")
+                    .permitAll()
                     // [변경된 회원가입 및 로그인 플로우 적용]
                     .requestMatchers(
                         "/api/v1/auth/integrated/sign-up",

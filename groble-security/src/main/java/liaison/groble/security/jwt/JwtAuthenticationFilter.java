@@ -53,8 +53,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
       List.of(
           "api/v1/oauth2/**",
           "/api/v1/home",
-          "/api/v1/admin/auth/sign-in",
-          "/api/v1/admin/auth/logout",
           "/api/v1/auth/sign-up",
           "/api/v1/auth/sign-in",
           "/api/v1/auth/sign-in/local/test",
@@ -64,6 +62,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
           "/api/v1/auth/password/reset",
           "/api/v1/auth/nickname/check",
           "/api/v1/auth/integrated/sign-up",
+          "/api/v1/admin/auth/sign-in",
           "/api/v1/verification/email/code/sign-up",
           "/api/v1/verification/email/code/verify/sign-up",
           "/api/v1/verification/email/code/password-reset",
