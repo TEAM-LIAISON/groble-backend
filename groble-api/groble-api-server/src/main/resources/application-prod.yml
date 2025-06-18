@@ -96,8 +96,8 @@ app:
   frontend-url: https://groble.im
   backend-url: https://api.groble.im
   cookie:
-    domain: groble.im
-    admin-domain: groble.im
+    domain: .groble.im
+    admin-domain: .groble.im
   reset:
     base-url: https://groble.im
     path: /reset-password
