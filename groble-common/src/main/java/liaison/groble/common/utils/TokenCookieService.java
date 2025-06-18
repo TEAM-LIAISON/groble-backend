@@ -187,34 +187,46 @@ public class TokenCookieService {
 
     // 요청 출처 확인
     boolean isFromLocalhost = false;
+    String requestOrigin = "unknown";
     if (request != null) {
       String origin = request.getHeader("Origin");
       String referer = request.getHeader("Referer");
-      String requestOrigin = origin != null ? origin : (referer != null ? referer : "");
-      isFromLocalhost = requestOrigin.contains("localhost") || requestOrigin.contains("127.0.0.1");
+      requestOrigin = origin != null ? origin : (referer != null ? referer : "unknown");
+
+      // Origin 또는 Referer에 localhost가 포함되어 있는지 확인
+      isFromLocalhost =
+          requestOrigin.contains("localhost")
+              || requestOrigin.contains("127.0.0.1")
+              || requestOrigin.contains("0.0.0.0");
+
+      log.debug(
+          "요청 정보 - Origin: {}, Referer: {}, localhost 요청: {}", origin, referer, isFromLocalhost);
     }
 
     String sameSite;
     String domain = null;
     boolean isSecure;
-
     if (isFromLocalhost) {
-      // localhost 요청: 도메인 설정 없이 제거
-      sameSite = "None";
-      isSecure = true;
-      domain = null;
+      // localhost에서의 요청: cross-origin 쿠키 설정
+      sameSite = "None"; // Cross-origin 허용
+      isSecure = true; // SameSite=None은 Secure 필수
+      domain = null; // 도메인 설정하지 않음 (중요!)
+      log.info("localhost에서의 요청 감지: 도메인 설정 없이 쿠키 생성");
     } else if (isLocal) {
+      // 서버가 로컬에서 실행 중
       sameSite = "Lax";
       isSecure = false;
       domain = null;
     } else if (isDev) {
+      // 개발 서버에서 실행 중 (같은 도메인 간 요청)
       sameSite = "Lax";
       isSecure = true;
-      domain = adminCookieDomain;
+      domain = adminCookieDomain; // dev.groble.im
     } else {
+      // 프로덕션 환경
       sameSite = "Strict";
       isSecure = true;
-      domain = adminCookieDomain;
+      domain = adminCookieDomain; // groble.im
     }
 
     // 액세스 토큰 쿠키 제거
