@@ -47,15 +47,17 @@ public class TermsHelper {
 
   /** 필수 약관 동의 여부 검증 */
   public void validateRequiredTermsAgreement(List<TermsType> agreedTermsTypes, UserType userType) {
+    // 1. 유저 타입에 맞는 필수 약관 목록 정의
     List<TermsType> requiredTermsTypes =
         Arrays.stream(TermsType.values())
             .filter(
-                requiredTermsType ->
-                    requiredTermsType.isRequired()
-                        && (requiredTermsType != TermsType.SELLER_TERMS_POLICY
+                termsType ->
+                    termsType.isRequired()
+                        && (termsType != TermsType.SELLER_TERMS_POLICY
                             || userType == UserType.SELLER))
             .toList();
 
+    // 2. 필수 약관 중 누락된 항목 검증
     List<TermsType> missingRequiredTerms =
         requiredTermsTypes.stream().filter(req -> !agreedTermsTypes.contains(req)).toList();
 
@@ -65,6 +67,11 @@ public class TermsHelper {
               .map(TermsType::getDescription)
               .collect(Collectors.joining(", "));
       throw new IllegalArgumentException("다음 필수 약관에 동의해주세요: " + missingTerms);
+    }
+
+    // 3. Buyer인데 SELLER_TERMS_POLICY에 동의한 경우 에러
+    if (userType == UserType.BUYER && agreedTermsTypes.contains(TermsType.SELLER_TERMS_POLICY)) {
+      throw new IllegalArgumentException("구매자는 판매자 이용약관에 동의할 수 없습니다.");
     }
   }
 
