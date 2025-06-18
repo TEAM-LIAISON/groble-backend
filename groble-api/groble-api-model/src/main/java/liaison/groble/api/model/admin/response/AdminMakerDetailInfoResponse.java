@@ -17,7 +17,7 @@ public class AdminMakerDetailInfoResponse {
       example = "true",
       type = "boolean",
       requiredMode = Schema.RequiredMode.REQUIRED)
-  private boolean isBusinessMaker;
+  private Boolean isBusinessMaker;
 
   @Schema(
       description = "메이커 인증 상태 (isSellerInfo가 true라는 전제 하에 사용됩니다.)",
