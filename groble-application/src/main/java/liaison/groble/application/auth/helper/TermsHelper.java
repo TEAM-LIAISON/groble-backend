@@ -71,7 +71,7 @@ public class TermsHelper {
 
     // 3. Buyer인데 SELLER_TERMS_POLICY에 동의한 경우 에러
     if (userType == UserType.BUYER && agreedTermsTypes.contains(TermsType.SELLER_TERMS_POLICY)) {
-      throw new IllegalArgumentException("구매자는 판매자 이용약관에 동의할 수 없습니다.");
+      throw new IllegalArgumentException("구매자로 회원가입할 때, 판매자 이용약관에 동의할 수 없습니다.");
     }
   }
 
