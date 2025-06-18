@@ -173,6 +173,8 @@ public class SecurityConfig {
                     .permitAll()
                     .requestMatchers("/api/v1/admin/auth/sign-in")
                     .permitAll()
+                    .requestMatchers("/api/v1/admin/auth/logout")
+                    .permitAll()
                     .requestMatchers("/api/v1/oauth2/**")
                     .permitAll()
                     .requestMatchers("/oauth2/**")
@@ -209,6 +211,14 @@ public class SecurityConfig {
                     .requestMatchers("/env")
                     .permitAll()
 
+                    // [변경된 회원가입 및 로그인 플로우 적용]
+                    .requestMatchers(
+                        "/api/v1/auth/integrated/sign-up",
+                        "/api/v1/verification/email/code/sign-up",
+                        "/api/v1/verification/email/code/verify/sign-up",
+                        "/api/v1/verification/email/code/password-reset",
+                        "/api/v1/verification/password/reset")
+                    .permitAll()
                     // Swagger UI 관련 경로 모두 허용
                     .requestMatchers("/swagger-ui.html")
                     .permitAll()
