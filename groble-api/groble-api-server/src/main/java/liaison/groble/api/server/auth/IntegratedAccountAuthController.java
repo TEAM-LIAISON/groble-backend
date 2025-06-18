@@ -1,5 +1,6 @@
 package liaison.groble.api.server.auth;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 
@@ -57,6 +58,7 @@ public class IntegratedAccountAuthController {
   public ResponseEntity<GrobleResponse<SignInResponse>> signIn(
       @Parameter(description = "로그인 정보 (이메일, 비밀번호)", required = true) @Valid @RequestBody
           SignInRequest request,
+      HttpServletRequest httpServletRequest,
       HttpServletResponse response) {
 
     log.info(SIGN_IN_REQUEST_LOG, request.getEmail());
@@ -70,7 +72,8 @@ public class IntegratedAccountAuthController {
     SignInResponse signInResponse = authMapper.toSignInResponse(signInDto.getEmail(), authResult);
 
     // 토큰 쿠키 설정
-    addTokenCookies(response, authResult.getAccessToken(), authResult.getRefreshToken());
+    addTokenCookies(
+        httpServletRequest, response, authResult.getAccessToken(), authResult.getRefreshToken());
 
     return createSuccessResponse(signInResponse, SIGN_IN_SUCCESS_MESSAGE, HttpStatus.OK);
   }
@@ -82,6 +85,7 @@ public class IntegratedAccountAuthController {
           @Valid
           @RequestBody
           SignUpRequest request,
+      HttpServletRequest httpServletRequest,
       HttpServletResponse response) {
 
     log.info(SIGN_UP_REQUEST_LOG, request.getEmail());
@@ -95,15 +99,19 @@ public class IntegratedAccountAuthController {
     SignUpResponse signUpResponse = SignUpResponse.of(request.getEmail());
 
     // 토큰 쿠키 설정
-    addTokenCookies(response, authResult.getAccessToken(), authResult.getRefreshToken());
+    addTokenCookies(
+        httpServletRequest, response, authResult.getAccessToken(), authResult.getRefreshToken());
 
     return createSuccessResponse(signUpResponse, SIGN_UP_SUCCESS_MESSAGE, HttpStatus.CREATED);
   }
 
   /** 토큰 쿠키 추가 헬퍼 메서드 */
   private void addTokenCookies(
-      HttpServletResponse response, String accessToken, String refreshToken) {
-    tokenCookieService.addTokenCookies(response, accessToken, refreshToken);
+      HttpServletRequest request,
+      HttpServletResponse response,
+      String accessToken,
+      String refreshToken) {
+    tokenCookieService.addTokenCookies(request, response, accessToken, refreshToken);
   }
 
   /** 성공 응답 생성 헬퍼 메서드 */

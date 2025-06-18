@@ -2,6 +2,7 @@ package liaison.groble.common.utils;
 
 import java.time.Duration;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -31,39 +32,68 @@ public class TokenCookieService {
 
   public void addAdminTokenCookies(
       HttpServletResponse response, String accessToken, String refreshToken) {
+    // HttpServletRequest를 받도록 메서드 시그니처 변경이 필요합니다
+    addAdminTokenCookies(null, response, accessToken, refreshToken);
+  }
 
-    // 기존 관리자 쿠키 제거 (중복 방지)
-    clearAdminTokenCookies(response);
+  public void addAdminTokenCookies(
+      HttpServletRequest request,
+      HttpServletResponse response,
+      String accessToken,
+      String refreshToken) {
 
+    // 기존 관리자 쿠키 제거 (중복 방지) - request 파라미터 전달
+    clearAdminTokenCookies(request, response);
+
+    // 현재 실행 환경 확인
     boolean isLocal = env.matchesProfiles("local");
     boolean isDev = env.matchesProfiles("blue", "green", "dev");
     boolean isProd = env.matchesProfiles("prod");
 
-    // 환경별로 sameSite 설정을 달리 함
-    // 로컬: Lax (localhost에서만 사용)
-    // 개발: Lax (같은 dev.groble.im 도메인 내에서 사용)
-    // 프로덕션: Strict (보안 강화)
-    String sameSite;
-    if (isLocal) {
-      sameSite = "Lax";
-    } else if (isDev) {
-      sameSite = "Lax";
-    } else {
-      sameSite = "Strict";
+    // Origin과 Referer 헤더 모두 확인하여 localhost 요청 판단
+    boolean isFromLocalhost = false;
+    String requestOrigin = "unknown";
+    if (request != null) {
+      String origin = request.getHeader("Origin");
+      String referer = request.getHeader("Referer");
+      requestOrigin = origin != null ? origin : (referer != null ? referer : "unknown");
+
+      // Origin 또는 Referer에 localhost가 포함되어 있는지 확인
+      isFromLocalhost =
+          requestOrigin.contains("localhost")
+              || requestOrigin.contains("127.0.0.1")
+              || requestOrigin.contains("0.0.0.0");
+
+      log.debug(
+          "요청 정보 - Origin: {}, Referer: {}, localhost 요청: {}", origin, referer, isFromLocalhost);
     }
 
-    // HTTPS는 로컬을 제외한 모든 환경에서 필수
-    boolean isSecure = !isLocal;
-
-    // 도메인 설정
-    // 로컬: 도메인 설정 없음 (localhost에서만 동작)
-    // 개발/프로덕션: 설정 파일의 admin-domain 사용
+    // 쿠키 설정 결정 로직
+    String sameSite;
+    boolean isSecure;
     String domain = null;
-    if (!isLocal) {
-      domain =
-          adminCookieDomain != null && !adminCookieDomain.isBlank()
-              ? adminCookieDomain
-              : ".groble.im"; // 기본값은 프로덕션 도메인
+
+    if (isFromLocalhost) {
+      // localhost에서의 요청: cross-origin 쿠키 설정
+      sameSite = "None"; // Cross-origin 허용
+      isSecure = true; // SameSite=None은 Secure 필수
+      domain = null; // 도메인 설정하지 않음 (중요!)
+      log.info("localhost에서의 요청 감지: 도메인 설정 없이 쿠키 생성");
+    } else if (isLocal) {
+      // 서버가 로컬에서 실행 중
+      sameSite = "Lax";
+      isSecure = false;
+      domain = null;
+    } else if (isDev) {
+      // 개발 서버에서 실행 중 (같은 도메인 간 요청)
+      sameSite = "Lax";
+      isSecure = true;
+      domain = adminCookieDomain; // dev.groble.im
+    } else {
+      // 프로덕션 환경
+      sameSite = "Strict";
+      isSecure = true;
+      domain = adminCookieDomain; // groble.im
     }
 
     // 액세스 토큰 쿠키 설정
@@ -91,18 +121,23 @@ public class TokenCookieService {
         domain);
 
     log.info(
-        "관리자 쿠키 설정 완료: profile={}, domain={}, secure={}, sameSite={}",
+        "관리자 쿠키 설정 완료: profile={}, origin={}, domain={}, secure={}, sameSite={}, fromLocalhost={}",
         String.join(",", env.getActiveProfiles()),
-        domain != null ? domain : "localhost",
+        request != null ? request.getHeader("Origin") : "unknown",
+        domain != null ? domain : "서버 도메인만",
         isSecure,
-        sameSite);
+        sameSite,
+        isFromLocalhost);
   }
 
   public void addTokenCookies(
-      HttpServletResponse response, String accessToken, String refreshToken) {
+      HttpServletRequest request,
+      HttpServletResponse response,
+      String accessToken,
+      String refreshToken) {
 
-    // 기존 관리자 쿠키 제거 (중복 방지)
-    clearAdminTokenCookies(response);
+    // 기존 관리자 쿠키 제거 (중복 방지) - request 파라미터 전달
+    clearAdminTokenCookies(request, response);
 
     boolean isLocal = env.matchesProfiles("local");
     String sameSite = isLocal ? "Lax" : "None";
@@ -146,37 +181,59 @@ public class TokenCookieService {
   }
 
   /** 관리자 토큰 쿠키들을 제거하여 중복 설정 방지 */
-  public void clearAdminTokenCookies(HttpServletResponse response) {
+  public void clearAdminTokenCookies(HttpServletRequest request, HttpServletResponse response) {
     boolean isLocal = env.matchesProfiles("local");
     boolean isDev = env.matchesProfiles("blue", "green", "dev");
 
-    String sameSite;
-    if (isLocal) {
-      sameSite = "Lax";
-    } else if (isDev) {
-      sameSite = "Lax";
-    } else {
-      sameSite = "Strict";
+    // 요청 출처 확인
+    boolean isFromLocalhost = false;
+    if (request != null) {
+      String origin = request.getHeader("Origin");
+      String referer = request.getHeader("Referer");
+      String requestOrigin = origin != null ? origin : (referer != null ? referer : "");
+      isFromLocalhost = requestOrigin.contains("localhost") || requestOrigin.contains("127.0.0.1");
     }
 
+    String sameSite;
     String domain = null;
-    if (!isLocal) {
-      // 관리자 도메인 사용
-      domain =
-          adminCookieDomain != null && !adminCookieDomain.isBlank()
-              ? adminCookieDomain
-              : ".groble.im";
+    boolean isSecure;
+
+    if (isFromLocalhost) {
+      // localhost 요청: 도메인 설정 없이 제거
+      sameSite = "None";
+      isSecure = true;
+      domain = null;
+    } else if (isLocal) {
+      sameSite = "Lax";
+      isSecure = false;
+      domain = null;
+    } else if (isDev) {
+      sameSite = "Lax";
+      isSecure = true;
+      domain = adminCookieDomain;
+    } else {
+      sameSite = "Strict";
+      isSecure = true;
+      domain = adminCookieDomain;
     }
 
     // 액세스 토큰 쿠키 제거
     CookieUtils.addCookie(
-        response, ACCESS_TOKEN_COOKIE_NAME, null, 0, "/", true, !isLocal, sameSite, domain);
+        response, ACCESS_TOKEN_COOKIE_NAME, null, 0, "/", true, isSecure, sameSite, domain);
 
     // 리프레시 토큰 쿠키 제거
     CookieUtils.addCookie(
-        response, REFRESH_TOKEN_COOKIE_NAME, null, 0, "/", true, !isLocal, sameSite, domain);
+        response, REFRESH_TOKEN_COOKIE_NAME, null, 0, "/", true, isSecure, sameSite, domain);
 
-    log.debug("관리자 토큰 쿠키 제거 완료: domain={}", domain != null ? domain : "localhost");
+    log.debug(
+        "관리자 토큰 쿠키 제거 완료: domain={}, fromLocalhost={}",
+        domain != null ? domain : "서버 도메인만",
+        isFromLocalhost);
+  }
+
+  // 기존 메서드 오버로드 (하위 호환성 유지)
+  public void clearAdminTokenCookies(HttpServletResponse response) {
+    clearAdminTokenCookies(null, response);
   }
 
   /** 일반 사용자 토큰 쿠키들을 제거하여 중복 설정 방지 */
@@ -187,7 +244,7 @@ public class TokenCookieService {
 
     if (!isLocal) {
       // 일반 사용자 도메인 사용
-      domain = cookieDomain != null && !cookieDomain.isBlank() ? cookieDomain : ".groble.im";
+      domain = cookieDomain != null && !cookieDomain.isBlank() ? cookieDomain : "groble.im";
     }
 
     // 액세스 토큰 쿠키 제거

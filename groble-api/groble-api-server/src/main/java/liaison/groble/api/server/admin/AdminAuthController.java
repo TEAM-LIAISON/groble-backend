@@ -39,12 +39,16 @@ public class AdminAuthController {
   public ResponseEntity<GrobleResponse<AdminSignInResponse>> adminSignIn(
       @Parameter(description = "관리자 로그인 ", required = true) @Valid @RequestBody
           AdminSignInRequest request,
+      HttpServletRequest httpRequest,
       HttpServletResponse response) {
     log.info("관리자 로그인 요청: {}", request.getEmail());
     SignInAuthResultDTO signInAuthResultDTO =
         adminAuthService.adminSignIn(request.getEmail(), request.getPassword());
     tokenCookieService.addAdminTokenCookies(
-        response, signInAuthResultDTO.getAccessToken(), signInAuthResultDTO.getRefreshToken());
+        httpRequest,
+        response,
+        signInAuthResultDTO.getAccessToken(),
+        signInAuthResultDTO.getRefreshToken());
 
     AdminSignInResponse adminSignInResponse = AdminSignInResponse.of(request.getEmail(), "ADMIN");
     return ResponseEntity.ok(GrobleResponse.success(adminSignInResponse));
