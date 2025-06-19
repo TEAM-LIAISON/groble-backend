@@ -42,8 +42,9 @@ public class AdminOrderService {
   public AdminOrderCancellationReasonDto getOrderCancellationReason(String merchantUid) {
 
     Order order = orderReader.getOrderByMerchantUid(merchantUid);
-    if (!order.getStatus().equals(Order.OrderStatus.CANCELLED)) {
-      throw new IllegalArgumentException("취소된 주문이 아닙니다.");
+    Order.OrderStatus status = order.getStatus();
+    if (status != Order.OrderStatus.CANCELLED && status != Order.OrderStatus.CANCEL_REQUEST) {
+      throw new IllegalArgumentException("취소 또는 취소 요청 상태가 아닙니다.");
     }
 
     return AdminOrderCancellationReasonDto.builder().cancelReason(order.getOrderNote()).build();
