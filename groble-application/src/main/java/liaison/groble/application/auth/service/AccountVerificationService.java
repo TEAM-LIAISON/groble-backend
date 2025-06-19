@@ -39,6 +39,7 @@ public class AccountVerificationService {
 
     SellerInfo sellerInfo =
         SellerInfo.builder()
+            .businessSellerRequest(false)
             .bankAccountOwner(dto.getBankAccountOwner())
             .bankName(dto.getBankName())
             .bankAccountNumber(dto.getBankAccountNumber())
@@ -67,6 +68,7 @@ public class AccountVerificationService {
 
     SellerInfo sellerInfo =
         SellerInfo.builder()
+            .businessSellerRequest(true)
             .bankAccountOwner(dto.getBankAccountOwner())
             .bankName(dto.getBankName())
             .bankAccountNumber(dto.getBankAccountNumber())

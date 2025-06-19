@@ -98,6 +98,7 @@ public class AdminUserController {
       AdminUserSummaryInfoDto infoDto) {
     return AdminUserSummaryInfoResponse.builder()
         .createdAt(infoDto.getCreatedAt())
+        .isSellerTermsAgreed(infoDto.isSellerTermsAgreed())
         .isSellerInfo(infoDto.isSellerInfo())
         .nickname(infoDto.getNickname())
         .email(infoDto.getEmail())

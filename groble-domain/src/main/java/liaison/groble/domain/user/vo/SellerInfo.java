@@ -31,6 +31,10 @@ public class SellerInfo {
   @Column(name = "is_business_seller")
   private Boolean isBusinessSeller;
 
+  /** 사업자 판매자 요청 여부 */
+  @Column(name = "is_business_seller_request")
+  private Boolean businessSellerRequest;
+
   /** 상호명 (사업체 이름) */
   @Column(name = "business_name")
   private String businessName;

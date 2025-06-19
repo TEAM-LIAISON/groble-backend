@@ -37,6 +37,8 @@ public class QSellerInfo extends BeanPath<SellerInfo> {
 
     public final StringPath businessSector = createString("businessSector");
 
+    public final BooleanPath businessSellerRequest = createBoolean("businessSellerRequest");
+
     public final EnumPath<liaison.groble.domain.user.enums.BusinessType> businessType = createEnum("businessType", liaison.groble.domain.user.enums.BusinessType.class);
 
     public final StringPath copyOfBankbookUrl = createString("copyOfBankbookUrl");
