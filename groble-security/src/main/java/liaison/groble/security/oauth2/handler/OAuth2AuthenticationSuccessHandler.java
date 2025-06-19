@@ -4,9 +4,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.time.Instant;
 import java.util.Arrays;
-import java.util.Optional;
 
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -22,7 +20,6 @@ import liaison.groble.common.utils.CookieUtils;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.repository.UserRepository;
 import liaison.groble.security.jwt.JwtTokenProvider;
-import liaison.groble.security.oauth2.repository.HttpCookieOAuth2AuthorizationRequestRepository;
 import liaison.groble.security.service.OAuth2AuthService.CustomOAuth2User;
 
 import lombok.extern.slf4j.Slf4j;
@@ -62,13 +59,10 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
     log.info("OAuth2 인증 성공 - 처리 시작");
 
-    // 쿠키에서 redirect_uri 확인 로깅
-    Optional<String> redirectUri =
-        CookieUtils.getCookie(
-                request,
-                HttpCookieOAuth2AuthorizationRequestRepository.REDIRECT_URI_PARAM_COOKIE_NAME)
-            .map(Cookie::getValue);
-    log.info("리다이렉트 URI 존재: {}, 값: {}", redirectUri.isPresent(), redirectUri.orElse("없음"));
+    // 세션에서 redirect_uri 확인 로깅
+    String redirectUri = (String) request.getSession().getAttribute("redirect_uri");
+    log.info(
+        "리다이렉트 URI 존재: {}, 값: {}", redirectUri != null, redirectUri != null ? redirectUri : "없음");
 
     // OAuth2 사용자 정보 가져오기
     CustomOAuth2User oAuth2User = (CustomOAuth2User) authentication.getPrincipal();
@@ -98,6 +92,9 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     // 토큰을 쿠키에 저장
     addTokenCookies(response, accessToken, refreshToken);
 
+    // 세션에서 redirect_uri 제거
+    request.getSession().removeAttribute("redirect_uri");
+
     // 인증 속성 정리
     clearAuthenticationAttributes(request);
 
@@ -108,15 +105,11 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
   /** 리다이렉트 URL 결정 */
   protected String determineTargetUrl(
       HttpServletRequest request, HttpServletResponse response, Authentication authentication) {
-    // 쿠키에서 redirect_uri 값 확인
-    Optional<String> redirectUri =
-        CookieUtils.getCookie(
-                request,
-                HttpCookieOAuth2AuthorizationRequestRepository.REDIRECT_URI_PARAM_COOKIE_NAME)
-            .map(Cookie::getValue);
+    // 세션에서 redirect_uri 값 확인
+    String redirectUri = (String) request.getSession().getAttribute("redirect_uri");
 
     // 토큰은 쿠키에만 저장하고 URL 파라미터에는 추가하지 않음
-    return redirectUri.filter(uri -> !uri.isEmpty()).orElse(frontendUrl);
+    return redirectUri != null && !redirectUri.isEmpty() ? redirectUri : frontendUrl;
   }
 
   /** 리다이렉트 URI 유효성 검증 */
