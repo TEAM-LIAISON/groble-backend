@@ -42,6 +42,14 @@ public class AdminAuthService {
           "로그인할 수 없는 계정 상태입니다: " + user.getUserStatusInfo().getStatus());
     }
 
+    boolean hasRole =
+        user.getUserRoles().stream()
+            .anyMatch(userRole -> userRole.getRole().getName().equals("ROLE_ADMIN"));
+
+    if (!hasRole) {
+      throw new IllegalArgumentException("관리자 권한이 없는 계정입니다.");
+    }
+
     // 로그인 시간 업데이트
     user.updateLoginTime();
     userRepository.save(user);
