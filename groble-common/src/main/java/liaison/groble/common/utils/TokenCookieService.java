@@ -22,10 +22,10 @@ public class TokenCookieService {
 
   private final Environment env;
 
-  @Value("${app.cookie.domain}")
+  @Value("${app.cookie.domain:}") // 기본값을 빈 문자열로 설정
   private String cookieDomain;
 
-  @Value("${app.cookie.admin-domain}")
+  @Value("${app.cookie.admin-domain:}") // 기본값을 빈 문자열로 설정
   private String adminCookieDomain;
 
   private static final int ACCESS_TOKEN_MAX_AGE = (int) Duration.ofHours(1).toSeconds();
@@ -87,42 +87,7 @@ public class TokenCookieService {
       String refreshToken) {
     clearTokenCookies(request, response);
 
-    // 요청 출처 확인
-    boolean fromLocalhost = false;
-    if (request != null) {
-      String origin = request.getHeader("Origin");
-      String referer = request.getHeader("Referer");
-      String target = origin != null ? origin : referer;
-      fromLocalhost =
-          target != null && (target.contains("localhost") || target.contains("127.0.0.1"));
-    }
-
-    boolean isLocal = env.matchesProfiles("local");
-
-    // 쿠키 설정 결정
-    String sameSite;
-    boolean secure;
-    String domain;
-
-    if (fromLocalhost) {
-      // localhost에서 온 요청: 크로스 도메인 쿠키 설정
-      sameSite = "None";
-      secure = true; // SameSite=None은 Secure 필수
-      domain = null; // localhost는 도메인 쿠키 지원 안함
-    } else if (isLocal) {
-      // 로컬 환경 실행
-      sameSite = "Lax";
-      secure = false;
-      domain = null;
-    } else {
-      // 개발/운영 환경
-      sameSite = "None"; // 크로스 도메인 지원
-      secure = true;
-      domain =
-          cookieDomain != null && !cookieDomain.isBlank()
-              ? (cookieDomain.startsWith(".") ? cookieDomain.substring(1) : cookieDomain)
-              : null;
-    }
+    CookieSettings settings = resolveUserSettings(request);
 
     CookieUtils.addCookie(
         response,
@@ -131,9 +96,9 @@ public class TokenCookieService {
         ACCESS_TOKEN_MAX_AGE,
         "/",
         true,
-        secure,
-        sameSite,
-        domain);
+        settings.secure(),
+        settings.sameSite(),
+        settings.domain());
 
     CookieUtils.addCookie(
         response,
@@ -142,17 +107,17 @@ public class TokenCookieService {
         REFRESH_TOKEN_MAX_AGE,
         "/",
         true,
-        secure,
-        sameSite,
-        domain);
+        settings.secure(),
+        settings.sameSite(),
+        settings.domain());
 
     log.info(
         "[User] 쿠키 설정: env={}, domain={}, secure={}, sameSite={}, fromLocalhost={}",
         String.join(",", env.getActiveProfiles()),
-        domain != null ? domain : "(host-only)",
-        secure,
-        sameSite,
-        fromLocalhost);
+        settings.domain() != null ? settings.domain() : "(host-only)",
+        settings.secure(),
+        settings.sameSite(),
+        settings.fromLocalhost());
   }
 
   public void addTokenCookies(
@@ -165,7 +130,6 @@ public class TokenCookieService {
     HttpServletRequest req = resolveRequest(request);
     CookieSettings settings = resolveAdminSettings(req);
 
-    // 쿠키 만료 설정: 같은 도메인/SameSite로 제거
     CookieUtils.addCookie(
         response,
         ACCESS_TOKEN_COOKIE_NAME,
@@ -199,49 +163,33 @@ public class TokenCookieService {
 
   // --- User 쿠키 제거 ---
   public void clearTokenCookies(HttpServletRequest request, HttpServletResponse response) {
-    // 요청 출처 확인
-    boolean fromLocalhost = false;
-    if (request != null) {
-      String origin = request.getHeader("Origin");
-      String referer = request.getHeader("Referer");
-      String target = origin != null ? origin : referer;
-      fromLocalhost =
-          target != null && (target.contains("localhost") || target.contains("127.0.0.1"));
-    }
-
-    boolean isLocal = env.matchesProfiles("local");
-
-    // 쿠키 설정 결정 (추가할 때와 동일해야 함)
-    String sameSite;
-    boolean secure;
-    String domain;
-
-    if (fromLocalhost) {
-      sameSite = "None";
-      secure = true;
-      domain = null;
-    } else if (isLocal) {
-      sameSite = "Lax";
-      secure = false;
-      domain = null;
-    } else {
-      sameSite = "None";
-      secure = true;
-      domain =
-          cookieDomain != null && !cookieDomain.isBlank()
-              ? (cookieDomain.startsWith(".") ? cookieDomain.substring(1) : cookieDomain)
-              : null;
-    }
+    CookieSettings settings = resolveUserSettings(request);
 
     CookieUtils.addCookie(
-        response, ACCESS_TOKEN_COOKIE_NAME, null, 0, "/", true, secure, sameSite, domain);
+        response,
+        ACCESS_TOKEN_COOKIE_NAME,
+        null,
+        0,
+        "/",
+        true,
+        settings.secure(),
+        settings.sameSite(),
+        settings.domain());
     CookieUtils.addCookie(
-        response, REFRESH_TOKEN_COOKIE_NAME, null, 0, "/", true, secure, sameSite, domain);
+        response,
+        REFRESH_TOKEN_COOKIE_NAME,
+        null,
+        0,
+        "/",
+        true,
+        settings.secure(),
+        settings.sameSite(),
+        settings.domain());
 
     log.debug(
         "[User] 쿠키 제거: domain={}, fromLocalhost={}",
-        domain != null ? domain : "(host-only)",
-        fromLocalhost);
+        settings.domain() != null ? settings.domain() : "(host-only)",
+        settings.fromLocalhost());
   }
 
   public void clearTokenCookies(HttpServletResponse response) {
@@ -268,39 +216,74 @@ public class TokenCookieService {
     return attrs != null ? attrs.getRequest() : null;
   }
 
-  // --- 공통: Admin 쿠키 설정 계산 ---
-  private CookieSettings resolveAdminSettings(HttpServletRequest request) {
-    boolean isLocal = env.matchesProfiles("local");
-    boolean isDev = env.matchesProfiles("blue", "green", "dev");
-    boolean fromLocalhost = false;
-    if (request != null) {
-      String origin = request.getHeader("Origin");
-      String referer = request.getHeader("Referer");
-      String target = origin != null ? origin : referer;
-      fromLocalhost =
-          target != null && (target.contains("localhost") || target.contains("127.0.0.1"));
-    }
+  /** 요청이 localhost에서 왔는지 확인 */
+  private boolean isRequestFromLocalhost(HttpServletRequest request) {
+    if (request == null) return false;
+    String origin = request.getHeader("Origin");
+    String referer = request.getHeader("Referer");
+    String target = origin != null ? origin : referer;
+    return target != null && (target.contains("localhost") || target.contains("127.0.0.1"));
+  }
+
+  // --- 공통: User 쿠키 설정 계산 ---
+  private CookieSettings resolveUserSettings(HttpServletRequest request) {
+    HttpServletRequest req = resolveRequest(request);
+    boolean fromLocalhost = isRequestFromLocalhost(req);
+    boolean isLocalProfile = env.matchesProfiles("local");
 
     String sameSite;
     boolean secure;
-    if (fromLocalhost) {
-      sameSite = "None";
-      secure = true;
-    } else if (isLocal) {
+    String domain;
+
+    if (isLocalProfile) {
+      // [시나리오] 백엔드 로컬 개발 (localhost:8080)
+      // 프론트엔드도 localhost:3000 이므로, host-only 쿠키로 설정.
+      // http 환경이므로 secure=false, SameSite=Lax
       sameSite = "Lax";
       secure = false;
-    } else if (isDev) {
-      sameSite = "Lax";
-      secure = true;
+      domain = null; // host-only cookie for localhost
     } else {
-      sameSite = "Strict";
+      // [시나리오] 개발/운영 서버 (api.dev.groble.im, api.groble.im)
+      // 프론트엔드(dev.groble.im, groble.im) 및 로컬(localhost:3000)에서의 요청을 모두 처리해야 함.
+      // 크로스-도메인/서브도메인 통신을 위해 SameSite=None, secure=true 로 설정.
+      sameSite = "None";
       secure = true;
+      domain = (cookieDomain != null && !cookieDomain.isBlank()) ? cookieDomain : null;
     }
 
+    return new CookieSettings(sameSite, secure, domain, fromLocalhost);
+  }
+
+  // --- 공통: Admin 쿠키 설정 계산 ---
+  private CookieSettings resolveAdminSettings(HttpServletRequest request) {
+    HttpServletRequest req = resolveRequest(request);
+    boolean fromLocalhost = isRequestFromLocalhost(req);
+    boolean isLocalProfile = env.matchesProfiles("local");
+    boolean isDevProfile = env.matchesProfiles("blue", "green", "dev");
+
+    String sameSite;
+    boolean secure;
     String domain = null;
-    if (!isLocal && adminCookieDomain != null && !adminCookieDomain.isBlank()) {
+
+    if (isLocalProfile) {
+      // 백엔드가 로컬 환경에서 실행될 때
+      sameSite = "Lax";
+      secure = false;
+    } else {
+      // 백엔드가 개발 또는 운영 환경에서 실행될 때
+      secure = true;
       domain =
-          adminCookieDomain.startsWith(".") ? adminCookieDomain.substring(1) : adminCookieDomain;
+          (adminCookieDomain != null && !adminCookieDomain.isBlank()) ? adminCookieDomain : null;
+      if (fromLocalhost) {
+        // 프론트엔드만 로컬일 경우 (localhost -> api.dev.groble.im)
+        sameSite = "None";
+      } else if (isDevProfile) {
+        // 개발 환경 (dev.admin.groble.im -> api.dev.groble.im)
+        sameSite = "Lax";
+      } else {
+        // 운영 환경 (admin.groble.im -> api.groble.im)
+        sameSite = "Strict";
+      }
     }
 
     return new CookieSettings(sameSite, secure, domain, fromLocalhost);
