@@ -76,6 +76,7 @@ public class UserDtoMapper {
   public UserHeaderResponse toApiUserHeaderResponse(UserHeaderDto userHeaderDto) {
     return UserHeaderResponse.builder()
         .isLogin(userHeaderDto.getIsLogin())
+        .isLoginCompleted(userHeaderDto.getIsLoginCompleted())
         .nickname(userHeaderDto.getNickname())
         .profileImageUrl(userHeaderDto.getProfileImageUrl())
         .canSwitchToSeller(userHeaderDto.isCanSwitchToSeller())

@@ -13,6 +13,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class UserHeaderDto {
   private Boolean isLogin;
+  private Boolean isLoginCompleted;
   private String nickname;
   private String profileImageUrl;
   private boolean canSwitchToSeller;
