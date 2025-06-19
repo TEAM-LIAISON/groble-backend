@@ -1,22 +1,19 @@
 package liaison.groble.security.oauth2.handler;
 
 import java.io.IOException;
-import java.net.URI;
 import java.time.Instant;
-import java.util.Arrays;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.env.Environment;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 
 import liaison.groble.common.exception.EntityNotFoundException;
-import liaison.groble.common.utils.CookieUtils;
+import liaison.groble.common.utils.TokenCookieService;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.repository.UserRepository;
 import liaison.groble.security.jwt.JwtTokenProvider;
@@ -28,28 +25,21 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
-  private final Environment environment;
   private final JwtTokenProvider jwtTokenProvider;
   private final UserRepository userRepository;
+  private final TokenCookieService tokenCookieService;
 
   @Value("${app.frontend-url}")
   private String frontendUrl;
 
-  @Value("${app.cookie.domain}")
-  private String cookieDomain;
-
-  // 쿠키 설정값
-  private static final int ACCESS_TOKEN_MAX_AGE = 60 * 60; // 1시간
-  private static final int REFRESH_TOKEN_MAX_AGE = 60 * 60 * 24 * 7; // 1주일
-  private static final String ACCESS_TOKEN_COOKIE_NAME = "accessToken";
-  private static final String REFRESH_TOKEN_COOKIE_NAME = "refreshToken";
-
   @Autowired
   public OAuth2AuthenticationSuccessHandler(
-      JwtTokenProvider jwtTokenProvider, UserRepository userRepository, Environment environment) {
+      JwtTokenProvider jwtTokenProvider,
+      UserRepository userRepository,
+      TokenCookieService tokenCookieService) {
     this.jwtTokenProvider = jwtTokenProvider;
     this.userRepository = userRepository;
-    this.environment = environment;
+    this.tokenCookieService = tokenCookieService;
   }
 
   @Override
@@ -89,8 +79,9 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     // determineTargetUrl 메서드를 수정하여 인증 객체도 전달
     String targetUrl = determineTargetUrl(request, response, authentication);
 
-    // 토큰을 쿠키에 저장 - 요청 출처에 따라 동적으로 설정
-    addTokenCookies(request, response, accessToken, refreshToken, targetUrl);
+    // TokenCookieService를 사용하여 토큰을 쿠키에 저장
+    // TokenCookieService가 요청 출처를 자동으로 판단하여 적절한 쿠키 설정을 적용
+    tokenCookieService.addTokenCookies(request, response, accessToken, refreshToken);
 
     // 세션에서 redirect_uri 제거
     request.getSession().removeAttribute("redirect_uri");
@@ -110,147 +101,5 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
     // 토큰은 쿠키에만 저장하고 URL 파라미터에는 추가하지 않음
     return redirectUri != null && !redirectUri.isEmpty() ? redirectUri : frontendUrl;
-  }
-
-  /** 리다이렉트 URI 유효성 검증 */
-  private boolean isValidRedirectUri(String uri) {
-    try {
-      URI redirectUri = new URI(uri);
-
-      // 프론트엔드 도메인에 속하는지 검증
-      String host = redirectUri.getHost();
-      return host != null && (host.equals("localhost") || host.endsWith("groble.im"));
-
-    } catch (Exception e) {
-      return false;
-    }
-  }
-
-  private void addTokenCookies(
-      HttpServletRequest request,
-      HttpServletResponse response,
-      String accessToken,
-      String refreshToken,
-      String targetUrl) {
-
-    // targetUrl에서 요청 출처 판단
-    boolean isFromLocalhost = targetUrl != null && targetUrl.contains("localhost");
-    boolean isFromDev = targetUrl != null && targetUrl.contains("dev.groble.im");
-    boolean isFromProd = targetUrl != null && targetUrl.contains("://groble.im");
-
-    // 요청 헤더에서도 확인 (fallback)
-    if (!isFromLocalhost && !isFromDev && !isFromProd) {
-      String origin = request.getHeader("Origin");
-      String referer = request.getHeader("Referer");
-
-      if ((origin != null && origin.contains("localhost"))
-          || (referer != null && referer.contains("localhost"))) {
-        isFromLocalhost = true;
-      } else if ((origin != null && origin.contains("dev.groble.im"))
-          || (referer != null && referer.contains("dev.groble.im"))) {
-        isFromDev = true;
-      } else if ((origin != null && origin.contains("://groble.im"))
-          || (referer != null && referer.contains("://groble.im"))) {
-        isFromProd = true;
-      }
-    }
-
-    log.info(
-        "요청 출처 판단 - localhost: {}, dev: {}, prod: {}, targetUrl: {}",
-        isFromLocalhost,
-        isFromDev,
-        isFromProd,
-        targetUrl);
-
-    // 환경별 보안 설정
-    boolean isSecure;
-    String sameSite;
-    String domain;
-
-    if (isFromLocalhost) {
-      // localhost에서 온 요청: HTTP 허용, 도메인 설정 없음
-      isSecure = false;
-      sameSite = "Lax"; // localhost에서는 Lax 사용
-      domain = null;
-    } else if (isFromDev || isFromProd) {
-      // dev.groble.im 또는 groble.im에서 온 요청: HTTPS 사용, 도메인 설정
-      isSecure = true;
-      sameSite = "None"; // 크로스 도메인을 위해 None 필요
-      domain = cookieDomain; // .groble.im
-    } else {
-      // 기본값 (환경 기반 설정)
-      boolean isLocal = isLocalEnvironment();
-      isSecure = !isLocal;
-      sameSite = isLocal ? "Lax" : "None";
-      domain = isLocal ? null : cookieDomain;
-    }
-
-    // Access Token 쿠키 추가
-    CookieUtils.addCookie(
-        response,
-        ACCESS_TOKEN_COOKIE_NAME,
-        accessToken,
-        ACCESS_TOKEN_MAX_AGE,
-        "/",
-        true, // httpOnly
-        isSecure, // secure
-        sameSite, // sameSite
-        domain); // domain
-
-    // Refresh Token 쿠키 추가
-    CookieUtils.addCookie(
-        response,
-        REFRESH_TOKEN_COOKIE_NAME,
-        refreshToken,
-        REFRESH_TOKEN_MAX_AGE,
-        "/",
-        true, // httpOnly
-        isSecure, // secure
-        sameSite, // sameSite
-        domain); // domain
-
-    log.info(
-        "OAuth2 토큰 쿠키 추가 완료: 요청출처={}, domain={}, secure={}, sameSite={}",
-        isFromLocalhost ? "localhost" : (isFromDev ? "dev" : (isFromProd ? "prod" : "unknown")),
-        domain != null ? domain : "null(localhost)",
-        isSecure,
-        sameSite);
-  }
-
-  /** 로컬 환경 여부 확인 프로필에 "local"이 포함된 경우 */
-  private boolean isLocalEnvironment() {
-    return Arrays.asList(environment.getActiveProfiles()).contains("local");
-  }
-
-  /** 개발 환경 여부 확인 프로필에 "secret-dev"가 포함된 경우 */
-  private boolean isDevEnvironment() {
-    return Arrays.asList(environment.getActiveProfiles()).contains("secret-dev");
-  }
-
-  /** 운영 환경 여부 확인 프로필에 "secret-prod"가 포함된 경우 */
-  private boolean isProdEnvironment() {
-    return Arrays.asList(environment.getActiveProfiles()).contains("secret-prod");
-  }
-
-  /** 현재 환경명 반환 로깅 및 디버깅 용도 */
-  private String getCurrentEnvironment() {
-    if (isLocalEnvironment()) {
-      return "local";
-    } else if (isDevEnvironment()) {
-      return "dev";
-    } else if (isProdEnvironment()) {
-      return "prod";
-    } else {
-      return "unknown";
-    }
-  }
-
-  /**
-   * 현재 활성화된 프로필 가져오기 (디버깅용)
-   *
-   * @return 활성화된 프로필 문자열
-   */
-  private String getActiveProfiles() {
-    return String.join(", ", environment.getActiveProfiles());
   }
 }
