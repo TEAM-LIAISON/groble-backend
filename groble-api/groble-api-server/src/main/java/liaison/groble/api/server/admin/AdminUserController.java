@@ -31,7 +31,7 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/admin")
-@Tag(name = "관리자 사용자 기능 관련 API", description = "관리자 사용자 조회 API")
+@Tag(name = "[✅ 관리자] 관리자 전체 사용자 목록 조회 API", description = "DB에 저장된 모든 사용자 정보를 조회합니다.")
 public class AdminUserController {
   private final AdminUserService adminUserService;
 
