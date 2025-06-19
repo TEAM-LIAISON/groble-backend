@@ -15,6 +15,7 @@ import liaison.groble.application.notification.mapper.NotificationMapper;
 import liaison.groble.common.response.PageResponse;
 import liaison.groble.domain.content.dto.FlatAdminContentSummaryInfoDTO;
 import liaison.groble.domain.content.entity.Content;
+import liaison.groble.domain.content.enums.AdminContentCheckingStatus;
 import liaison.groble.domain.content.enums.ContentStatus;
 import liaison.groble.domain.content.repository.ContentRepository;
 import liaison.groble.domain.notification.entity.ReviewDetails;
@@ -55,7 +56,7 @@ public class AdminContentService {
   @Transactional
   public void approveContent(Long contentId) {
     Content content = contentReader.getContentById(contentId);
-    content.setStatus(ContentStatus.VALIDATED);
+    content.setAdminContentCheckingStatus(AdminContentCheckingStatus.VALIDATED);
     saveAndConvertToDto(content);
 
     sendContentReviewNotification(content, SubNotificationType.CONTENT_REVIEW_APPROVED);
@@ -64,7 +65,8 @@ public class AdminContentService {
   @Transactional
   public void rejectContent(Long contentId, String rejectReason) {
     Content content = contentReader.getContentById(contentId);
-    content.setStatus(ContentStatus.REJECTED);
+    content.setAdminContentCheckingStatus(AdminContentCheckingStatus.REJECTED);
+    content.setStatus(ContentStatus.DISCONTINUED);
     content.setRejectReason(rejectReason);
 
     log.info("콘텐츠 심사 거절 완료. 콘텐츠 ID: {}", contentId);

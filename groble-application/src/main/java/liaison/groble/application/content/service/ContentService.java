@@ -33,6 +33,7 @@ import liaison.groble.domain.content.entity.CoachingOption;
 import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.content.entity.ContentOption;
 import liaison.groble.domain.content.entity.DocumentOption;
+import liaison.groble.domain.content.enums.AdminContentCheckingStatus;
 import liaison.groble.domain.content.enums.CoachingPeriod;
 import liaison.groble.domain.content.enums.CoachingType;
 import liaison.groble.domain.content.enums.ContentDeliveryMethod;
@@ -147,7 +148,7 @@ public class ContentService {
     // 5. Content 필드 업데이트
     updateContentFromDto(content, contentDto);
     content.setCategory(category); // 카테고리 설정
-    content.setStatus(ContentStatus.PENDING); // 심사중으로 설정
+    content.setStatus(ContentStatus.ACTIVE); // 심사중으로 설정
 
     // 4) 새 옵션 추가
     if (contentDto.getOptions() != null && !contentDto.getOptions().isEmpty()) {
@@ -461,17 +462,6 @@ public class ContentService {
   }
 
   /** 사용자의 심사 완료된 Content를 찾고 접근 권한을 검증합니다. */
-  private Content findAndValidateUserValidatedContent(Long userId, Long contentId) {
-    Content content = contentReader.getContentByStatusAndId(contentId, ContentStatus.VALIDATED);
-
-    if (!content.getUser().getId().equals(userId)) {
-      throw new ForbiddenException("해당 콘텐츠를 수정할 권한이 없습니다.");
-    }
-
-    return content;
-  }
-
-  /** 사용자의 심사 완료된 Content를 찾고 접근 권한을 검증합니다. */
   private Content findAndValidateUserActiveContent(Long userId, Long contentId) {
     Content content = contentReader.getContentByStatusAndId(contentId, ContentStatus.ACTIVE);
 
@@ -711,11 +701,6 @@ public class ContentService {
       return null;
     }
 
-    // "APPROVED"는 특별한 경우로, VALIDATED와 REJECTED 두 상태를 모두 포함
-    if ("APPROVED".equalsIgnoreCase(state)) {
-      return List.of(ContentStatus.VALIDATED, ContentStatus.REJECTED);
-    }
-
     try {
       return List.of(ContentStatus.valueOf(state.toUpperCase()));
     } catch (IllegalArgumentException e) {
@@ -913,24 +898,13 @@ public class ContentService {
   }
 
   @Transactional
-  public ContentDto activateContent(Long userId, Long contentId) {
-    // 1. Content 조회 및 권한 검증
-    Content content = findAndValidateUserValidatedContent(userId, contentId);
-
-    // 2. 상태 업데이트
-    content.setStatus(ContentStatus.ACTIVE);
-
-    // 3. 저장 및 변환
-    return saveAndConvertToDto(content);
-  }
-
-  @Transactional
   public ContentDto stopContent(Long userId, Long contentId) {
     // 1. Content 조회 및 권한 검증
     Content content = findAndValidateUserActiveContent(userId, contentId);
 
     // 2. 상태 업데이트
-    content.setStatus(ContentStatus.VALIDATED);
+    content.setStatus(ContentStatus.DRAFT);
+    content.setAdminContentCheckingStatus(AdminContentCheckingStatus.PENDING);
 
     // 3. 저장 및 변환
     return saveAndConvertToDto(content);

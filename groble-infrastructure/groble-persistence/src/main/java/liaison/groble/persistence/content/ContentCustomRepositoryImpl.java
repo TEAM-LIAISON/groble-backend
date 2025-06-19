@@ -3,6 +3,7 @@ package liaison.groble.persistence.content;
 import static com.querydsl.jpa.JPAExpressions.select;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -272,16 +273,10 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
     }
 
     // 메타데이터 (여러 상태를 표시)
-    String filterValue = null;
-    if (statusList != null && !statusList.isEmpty()) {
-      if (statusList.size() == 2
-          && statusList.contains(ContentStatus.VALIDATED)
-          && statusList.contains(ContentStatus.REJECTED)) {
-        filterValue = "APPROVED"; // VALIDATED와 REJECTED를 함께 조회할 경우 "APPROVED"로 표시
-      } else {
-        filterValue = statusList.stream().map(ContentStatus::name).collect(Collectors.joining(","));
-      }
-    }
+    String filterValue =
+        Objects.requireNonNull(statusList).stream()
+            .map(ContentStatus::name)
+            .collect(Collectors.joining(","));
 
     CursorResponse.MetaData meta =
         CursorResponse.MetaData.builder().filter(filterValue).cursorType("id").build();
