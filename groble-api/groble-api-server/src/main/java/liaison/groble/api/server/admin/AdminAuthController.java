@@ -29,7 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/admin/auth")
-@Tag(name = "관리자의 로그인 기능 관련 API", description = "관리자 로그인 기능 API")
+@Tag(name = "[✅ 관리자] 관리자의 로그인 기능 API", description = "관리자 권한을 부여 받은 계정이 로그인 이후 토큰을 발급받습니다.")
 public class AdminAuthController {
 
   private final AdminAuthService adminAuthService;

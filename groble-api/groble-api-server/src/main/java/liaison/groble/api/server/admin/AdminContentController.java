@@ -38,7 +38,9 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/admin")
-@Tag(name = "관리자의 콘텐츠 기능 관련 API", description = "관리자 콘텐츠 기능 API")
+@Tag(
+    name = "[✅ 관리자] 관리자의 콘텐츠 목록 조회 및 모니터링 API",
+    description = "관리자 페이지에서 콘텐츠 목록을 조회하고 모니터링(승인/거절)하는 기능을 제공합니다.")
 public class AdminContentController {
 
   private final AdminContentService adminContentService;

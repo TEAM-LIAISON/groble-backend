@@ -29,7 +29,9 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/admin")
-@Tag(name = "관리자 메이커 기능 관련 API", description = "관리자 메이커 인증 API")
+@Tag(
+    name = "[✅ 관리자] 관리자 메이커 상세 조회 및 메이커 인증 API",
+    description = "개인 메이커 및 사업자 메이커의 상세 정보를 조회하고, 메이커 인증 요청을 처리하는 API입니다.")
 public class AdminMakerController {
 
   private final AdminMakerService adminMakerService;
