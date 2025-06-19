@@ -105,14 +105,12 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         targetUrl = redirectUri != null ? redirectUri : frontendDomain + "/";
 
       } else if (user.getUserProfile() != null && user.getUserProfile().getNickname() != null) {
-        // 닉네임 설정 필요
-        log.info("닉네임 미설정 사용자 - 닉네임 설정 페이지로 리다이렉트");
-        targetUrl = frontendDomain + "/auth/sign-up/nickname";
+        log.info("전화번호 미설정 사용자 - 전화번호 설정 페이지로 리다이렉트");
+        targetUrl = frontendDomain + "/auth/sign-up/phone";
 
       } else {
-        // 전화번호 입력 필요 - 온보딩 페이지로
-        log.info("전화번호 미입력 사용자 - 온보딩 페이지로 리다이렉트");
-        targetUrl = frontendDomain + "/auth/sign-up/phone";
+        log.info("닉네임 미입력 사용자 - 온보딩 페이지로 리다이렉트");
+        targetUrl = frontendDomain + "/auth/sign-up/nickname";
       }
     }
     // 세션에서 redirect_uri 제거
