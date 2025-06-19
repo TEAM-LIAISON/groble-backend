@@ -14,8 +14,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 @Operation(
-    summary = "홈화면 헤더 정보 조회",
-    description = "홈화면에 표시될 사용자 헤더 정보를 조회합니다. 로그인 상태 여부에 관계없이 응답을 반환합니다.")
+    summary = "헤더에 담긴 사용자 정보 조회",
+    description = "헤더에 담길 사용자 정보를 조회합니다. 로그인 상태 여부에 관계없이 응답을 반환합니다.")
 @ApiResponses({
   @ApiResponse(
       responseCode = "200",

@@ -46,7 +46,9 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1")
-@Tag(name = "사용자 정보 관련 API", description = "마이페이지 조회 및 가입 유형 전환 API")
+@Tag(
+    name = "[✅️마이페이지] 마이페이지에서 사용하는 기능 관련 API",
+    description = "마이페이지 조회, 프로필 이미지 업로드, 가입 유형 전환을 진행합니다.")
 public class UserController {
 
   private final UserService userService;
@@ -101,7 +103,6 @@ public class UserController {
         GrobleResponse.success(userDtoMapper.toApiMyPageDetailResponse(detailDto)));
   }
 
-  // 홈화면 헤더 정보 조회
   @UserHeader
   @GetMapping("/me")
   public ResponseEntity<GrobleResponse<UserHeaderResponse>> getUserHeaderInform(
