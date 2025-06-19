@@ -76,7 +76,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     if (user.getLastUserType() == null) {
       // UserType 선택 필요 - 로그인 처리하지 않고 회원가입 페이지로 리다이렉트
       log.info("UserType 미선택 사용자 - 회원가입 페이지로 리다이렉트");
-      targetUrl = frontendDomain + "/auth/select-type"; // 프론트엔드 절대 URL
+      targetUrl = frontendDomain + "/auth/sign-up/user-type"; // 프론트엔드 절대 URL
 
     } else {
       // UserType이 있는 경우 - 모두 로그인 처리 진행
@@ -104,15 +104,15 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         // redirect_uri가 있으면 그곳으로, 없으면 홈으로
         targetUrl = redirectUri != null ? redirectUri : frontendDomain + "/";
 
-      } else if (user.getNickname() == null) {
+      } else if (user.getUserProfile() != null && user.getUserProfile().getNickname() != null) {
         // 닉네임 설정 필요
         log.info("닉네임 미설정 사용자 - 닉네임 설정 페이지로 리다이렉트");
-        targetUrl = frontendDomain + "/auth/set-nickname";
+        targetUrl = frontendDomain + "/auth/sign-up/nickname";
 
       } else {
         // 전화번호 입력 필요 - 온보딩 페이지로
         log.info("전화번호 미입력 사용자 - 온보딩 페이지로 리다이렉트");
-        targetUrl = frontendDomain + "/auth/onboarding";
+        targetUrl = frontendDomain + "/auth/sign-up/phone";
       }
     }
     // 세션에서 redirect_uri 제거
