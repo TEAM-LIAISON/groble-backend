@@ -72,6 +72,7 @@ public class AdminMakerController {
         .bankAccountOwner(infoDto.getBankAccountOwner())
         .bankName(infoDto.getBankName())
         .bankAccountNumber(infoDto.getBankAccountNumber())
+        .copyOfBankBookOriginalFileName(infoDto.getCopyOfBankBookOriginalFileName())
         .copyOfBankbookUrl(infoDto.getCopyOfBankbookUrl())
         .businessType(infoDto.getBusinessType())
         .businessCategory(infoDto.getBusinessCategory())
@@ -79,6 +80,7 @@ public class AdminMakerController {
         .businessName(infoDto.getBusinessName())
         .representativeName(infoDto.getRepresentativeName())
         .businessAddress(infoDto.getBusinessAddress())
+        .businessLicenseOriginalFileName(infoDto.getBusinessLicenseOriginalFileName())
         .businessLicenseFileUrl(infoDto.getBusinessLicenseFileUrl())
         .taxInvoiceEmail(infoDto.getTaxInvoiceEmail())
         .build();

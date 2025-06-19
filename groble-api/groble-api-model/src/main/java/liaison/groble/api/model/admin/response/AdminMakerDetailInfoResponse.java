@@ -51,6 +51,13 @@ public class AdminMakerDetailInfoResponse {
       requiredMode = Schema.RequiredMode.REQUIRED)
   private String bankAccountNumber;
 
+  @Schema(
+      description = "통장 사본 이미지 원본 파일 이름",
+      example = "abc123.jpg",
+      type = "string",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private String copyOfBankBookOriginalFileName;
+
   /** 4. 통장 사본 URL */
   @Schema(
       description = "통장 사본 이미지 URL",
@@ -108,6 +115,13 @@ public class AdminMakerDetailInfoResponse {
       type = "string",
       requiredMode = Schema.RequiredMode.REQUIRED)
   private String businessAddress;
+
+  @Schema(
+      description = "사업자등록증 이미지 원본 파일 이름",
+      example = "abc123.jpg",
+      type = "string",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private String businessLicenseOriginalFileName;
 
   /** 11. 사업자등록증 사본 URL */
   @Schema(
