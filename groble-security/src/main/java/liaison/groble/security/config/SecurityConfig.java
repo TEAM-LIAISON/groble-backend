@@ -196,6 +196,7 @@ public class SecurityConfig {
                     // [변경된 회원가입 및 로그인 플로우 적용]
                     .requestMatchers(
                         "/api/v1/auth/integrated/sign-up",
+                        "/api/v1/auth/integrated/sign-in",
                         "/api/v1/verification/email/code/sign-up",
                         "/api/v1/verification/email/code/verify/sign-up",
                         "/api/v1/verification/email/code/password-reset",
