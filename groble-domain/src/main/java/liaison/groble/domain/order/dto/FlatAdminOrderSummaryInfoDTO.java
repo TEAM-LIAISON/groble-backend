@@ -17,6 +17,7 @@ public class FlatAdminOrderSummaryInfoDTO {
   private String merchantUid;
   private LocalDateTime createdAt;
   private String contentType;
+  private String contentStatus;
   private String purchaserName;
   private String contentTitle;
   private BigDecimal finalPrice;

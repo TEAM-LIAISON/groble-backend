@@ -56,6 +56,7 @@ public class AdminOrderService {
         .merchantUid(flat.getMerchantUid())
         .createdAt(flat.getCreatedAt())
         .contentType(flat.getContentType())
+        .contentStatus(flat.getContentStatus())
         .purchaserName(flat.getPurchaserName())
         .contentTitle(flat.getContentTitle())
         .finalPrice(flat.getFinalPrice())

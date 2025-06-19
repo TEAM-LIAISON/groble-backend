@@ -125,6 +125,7 @@ public class AdminOrderController {
         .merchantUid(infoDto.getMerchantUid())
         .createdAt(infoDto.getCreatedAt())
         .contentType(infoDto.getContentType())
+        .contentStatus(infoDto.getContentStatus())
         .purchaserName(infoDto.getPurchaserName())
         .contentTitle(infoDto.getContentTitle())
         .finalPrice(infoDto.getFinalPrice())

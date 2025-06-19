@@ -53,6 +53,7 @@ public class OrderCustomRepositoryImpl implements OrderCustomRepository {
                     qOrder.merchantUid.as("merchantUid"),
                     qOrder.createdAt.as("createdAt"),
                     qContent.contentType.stringValue().as("contentType"),
+                    qContent.status.stringValue().as("contentStatus"),
                     qOrder.purchaser.name.as("purchaserName"),
                     qContent.title.as("contentTitle"),
                     qOrder.finalPrice.as("finalPrice"),

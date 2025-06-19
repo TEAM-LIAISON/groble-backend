@@ -61,10 +61,10 @@ public class AdminContentSummaryInfoResponse {
   private int priceOptionLength;
 
   @Schema(
-      description = "콘텐츠 상태 (예: 'DRAFT(작성중)', 'ACTIVE(판매중)'",
+      description = "콘텐츠 상태 (예: 'DRAFT(작성중)', 'ACTIVE(판매중)', 'DELETED(삭제됨)', 'DISCONTINUED(판매중단)')",
       example = "DRAFT",
       type = "string",
-      allowableValues = {"ACTIVE", "DRAFT"},
+      allowableValues = {"ACTIVE", "DRAFT", "DISCONTINUED", "DELETED"},
       requiredMode = Schema.RequiredMode.REQUIRED)
   private String contentStatus;
 

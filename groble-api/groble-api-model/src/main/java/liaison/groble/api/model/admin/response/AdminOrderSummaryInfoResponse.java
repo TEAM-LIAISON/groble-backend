@@ -44,6 +44,14 @@ public class AdminOrderSummaryInfoResponse {
       requiredMode = Schema.RequiredMode.REQUIRED)
   private String contentType;
 
+  @Schema(
+      description = "콘텐츠 상태 (예: 'DRAFT(작성중)', 'ACTIVE(판매중)', 'DELETED(삭제됨)', 'DISCONTINUED(판매중단)')",
+      example = "DRAFT",
+      type = "string",
+      allowableValues = {"ACTIVE", "DRAFT", "DISCONTINUED", "DELETED"},
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private String contentStatus;
+
   // 3. 구매자 이름
   @Schema(
       description = "구매자 이름",
