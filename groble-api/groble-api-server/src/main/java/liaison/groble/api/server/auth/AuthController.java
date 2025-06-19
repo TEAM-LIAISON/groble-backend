@@ -21,8 +21,6 @@ import liaison.groble.application.auth.dto.SignInAuthResultDTO;
 import liaison.groble.application.auth.dto.SignInDTO;
 import liaison.groble.application.auth.dto.UserWithdrawalDto;
 import liaison.groble.application.auth.service.AuthService;
-import liaison.groble.application.auth.service.PhoneAuthService;
-import liaison.groble.application.user.service.UserService;
 import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.model.Accessor;
 import liaison.groble.common.response.GrobleResponse;
@@ -44,13 +42,11 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/auth")
-@Tag(name = "인증 API", description = "통합 회원가입, 통합 로그인, 이메일 인증, 토큰 갱신 등의 인증 관련 API")
+@Tag(name = "[⚠️ 로그아웃, 회원탈퇴, 테스트용 로그인]", description = "로그아웃, 회원탈퇴, 테스트용 로그인 API")
 public class AuthController {
   private final AuthService authService;
-  private final UserService userService;
   private final AuthDtoMapper authDtoMapper;
   private final AuthMapper authMapper;
-  private final PhoneAuthService phoneAuthService;
 
   // 쿠키 설정값
   private static final int ACCESS_TOKEN_MAX_AGE = 60 * 60; // 1시간
@@ -61,15 +57,7 @@ public class AuthController {
   @Value("${app.cookie.domain}")
   private String cookieDomain; // 쿠키 도메인 설정
 
-  /**
-   * 로그인 API
-   *
-   * <p>이메일과 비밀번호로 로그인 처리
-   *
-   * @param request 로그인 요청 정보
-   * @return 로그인 결과 (액세스 토큰, 리프레시 토큰 포함)
-   */
-  @Operation(summary = "로그인", description = "이메일과 비밀번호로 로그인하고 인증 토큰을 발급합니다.")
+  @Operation(summary = "[Deprecated 예정] 통합 계정 로그인", description = "이메일과 비밀번호로 로그인하고 인증 토큰을 발급합니다.")
   @ApiResponses({
     @ApiResponse(
         responseCode = "200",
@@ -98,7 +86,9 @@ public class AuthController {
         .body(GrobleResponse.success(signInResponse, "로그인이 성공적으로 완료되었습니다.", 200));
   }
 
-  @Operation(summary = "로그인", description = "이메일과 비밀번호로 로그인하고 인증 토큰을 발급합니다.")
+  @Operation(
+      summary = "[Deprecated 예정] 테스트용 통합 계정 로그인",
+      description = "이메일과 비밀번호로 로그인하고 인증 토큰을 발급합니다.")
   @ApiResponses({
     @ApiResponse(
         responseCode = "200",

@@ -19,7 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/oauth2")
-@Tag(name = "소셜 로그인", description = "OAuth2 소셜 로그인 API")
+@Tag(name = "[소셜 계정] 소셜 로그인을 진행하는 기능 API", description = "OAuth2를 활용하여 소셜 로그인을 진행합니다.")
 public class OAuth2Controller {
 
   // 환경별 프론트엔드 도메인 설정
