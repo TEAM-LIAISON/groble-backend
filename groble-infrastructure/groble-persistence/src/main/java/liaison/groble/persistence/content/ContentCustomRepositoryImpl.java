@@ -563,7 +563,6 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                         .stringValue()
                         .as("adminContentCheckingStatus")))
             .from(qContent)
-            .where(qContent.status.ne(ContentStatus.DELETED))
             .orderBy(qContent.createdAt.desc())
             .offset(pageable.getOffset())
             .limit(pageable.getPageSize());
@@ -571,12 +570,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
     List<FlatAdminContentSummaryInfoDTO> content = query.fetch();
 
     // 동일한 조건으로 전체 카운트 조회
-    Long total =
-        queryFactory
-            .select(qContent.count())
-            .from(qContent)
-            .where(qContent.status.ne(ContentStatus.DELETED))
-            .fetchOne();
+    Long total = queryFactory.select(qContent.count()).from(qContent).fetchOne();
 
     return new PageImpl<>(content, pageable, total != null ? total : 0);
   }

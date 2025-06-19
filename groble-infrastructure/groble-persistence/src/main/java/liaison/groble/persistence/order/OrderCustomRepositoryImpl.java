@@ -39,6 +39,7 @@ public class OrderCustomRepositoryImpl implements OrderCustomRepository {
         qOrder.status.in(
             Order.OrderStatus.PAID,
             Order.OrderStatus.CANCELLED,
+            Order.OrderStatus.CANCEL_REQUEST,
             Order.OrderStatus.EXPIRED,
             Order.OrderStatus.FAILED);
 
