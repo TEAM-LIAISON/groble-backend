@@ -1,6 +1,8 @@
 package liaison.groble.security.oauth2.handler;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.time.Instant;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -65,24 +67,54 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             .findById(userId)
             .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다: " + userId));
 
-    // 직접 토큰 생성
-    String accessToken = jwtTokenProvider.createAccessToken(user.getId(), user.getEmail());
-    String refreshToken = jwtTokenProvider.createRefreshToken(user.getId(), user.getEmail());
-    Instant refreshTokenExpiresAt = jwtTokenProvider.getRefreshTokenExpirationInstant(refreshToken);
+    // 프론트엔드 도메인 추출 (redirect_uri에서 또는 환경 설정에서)
+    String frontendDomain = extractFrontendDomain(redirectUri);
+    log.info("프론트엔드 도메인: {}", frontendDomain);
 
-    // 리프레시 토큰 저장
-    user.updateRefreshToken(refreshToken, refreshTokenExpiresAt);
-    userRepository.save(user);
+    String targetUrl;
 
-    log.info("사용자 인증 완료: {}, 토큰 발급 완료", oAuth2User.getEmail());
+    if (user.getLastUserType() == null) {
+      // UserType 선택 필요 - 로그인 처리하지 않고 회원가입 페이지로 리다이렉트
+      log.info("UserType 미선택 사용자 - 회원가입 페이지로 리다이렉트");
+      targetUrl = frontendDomain + "/auth/select-type"; // 프론트엔드 절대 URL
 
-    // determineTargetUrl 메서드를 수정하여 인증 객체도 전달
-    String targetUrl = determineTargetUrl(request, response, authentication);
+    } else {
+      // UserType이 있는 경우 - 모두 로그인 처리 진행
 
-    // TokenCookieService를 사용하여 토큰을 쿠키에 저장
-    // TokenCookieService가 요청 출처를 자동으로 판단하여 적절한 쿠키 설정을 적용
-    tokenCookieService.addTokenCookies(request, response, accessToken, refreshToken);
+      // 직접 토큰 생성
+      String accessToken = jwtTokenProvider.createAccessToken(user.getId(), user.getEmail());
+      String refreshToken = jwtTokenProvider.createRefreshToken(user.getId(), user.getEmail());
+      Instant refreshTokenExpiresAt =
+          jwtTokenProvider.getRefreshTokenExpirationInstant(refreshToken);
 
+      // 리프레시 토큰 저장
+      user.updateRefreshToken(refreshToken, refreshTokenExpiresAt);
+      userRepository.save(user);
+
+      log.info("사용자 인증 완료: {}, 토큰 발급 완료", oAuth2User.getEmail());
+
+      // TokenCookieService를 사용하여 토큰을 쿠키에 저장
+      tokenCookieService.addTokenCookies(request, response, accessToken, refreshToken);
+
+      // 사용자 상태에 따라 리다이렉트 URL 결정
+      // UserProfile이 null이거나 phoneNumber가 null인 경우 체크
+      if (user.getUserProfile() != null && user.getUserProfile().getPhoneNumber() != null) {
+        // 온보딩 마친 사람 - 정상적인 리다이렉트
+        log.info("온보딩 완료된 사용자 - 정상 로그인 처리");
+        // redirect_uri가 있으면 그곳으로, 없으면 홈으로
+        targetUrl = redirectUri != null ? redirectUri : frontendDomain + "/";
+
+      } else if (user.getNickname() == null) {
+        // 닉네임 설정 필요
+        log.info("닉네임 미설정 사용자 - 닉네임 설정 페이지로 리다이렉트");
+        targetUrl = frontendDomain + "/auth/set-nickname";
+
+      } else {
+        // 전화번호 입력 필요 - 온보딩 페이지로
+        log.info("전화번호 미입력 사용자 - 온보딩 페이지로 리다이렉트");
+        targetUrl = frontendDomain + "/auth/onboarding";
+      }
+    }
     // 세션에서 redirect_uri 제거
     request.getSession().removeAttribute("redirect_uri");
 
@@ -91,6 +123,20 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
     // 프론트엔드로 리다이렉트
     getRedirectStrategy().sendRedirect(request, response, targetUrl);
+  }
+
+  // 프론트엔드 도메인 추출 헬퍼 메소드
+  private String extractFrontendDomain(String redirectUri) {
+    try {
+      URL url = new URL(redirectUri);
+      return url.getProtocol()
+          + "://"
+          + url.getHost()
+          + (url.getPort() != -1 ? ":" + url.getPort() : "");
+    } catch (MalformedURLException e) {
+      log.warn("redirect_uri에서 도메인 추출 실패: {}", redirectUri);
+      return redirectUri;
+    }
   }
 
   /** 리다이렉트 URL 결정 */
