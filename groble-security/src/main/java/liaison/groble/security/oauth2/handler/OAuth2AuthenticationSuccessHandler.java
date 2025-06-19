@@ -89,8 +89,8 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     // determineTargetUrl 메서드를 수정하여 인증 객체도 전달
     String targetUrl = determineTargetUrl(request, response, authentication);
 
-    // 토큰을 쿠키에 저장
-    addTokenCookies(response, accessToken, refreshToken);
+    // 토큰을 쿠키에 저장 - 요청 출처에 따라 동적으로 설정
+    addTokenCookies(request, response, accessToken, refreshToken, targetUrl);
 
     // 세션에서 redirect_uri 제거
     request.getSession().removeAttribute("redirect_uri");
@@ -127,34 +127,62 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
   }
 
   private void addTokenCookies(
-      HttpServletResponse response, String accessToken, String refreshToken) {
+      HttpServletRequest request,
+      HttpServletResponse response,
+      String accessToken,
+      String refreshToken,
+      String targetUrl) {
 
-    // 현재 환경 확인
-    String currentEnv = getCurrentEnvironment();
-    boolean isLocal = isLocalEnvironment();
-    boolean isDev = isDevEnvironment();
-    boolean isProd = isProdEnvironment();
+    // targetUrl에서 요청 출처 판단
+    boolean isFromLocalhost = targetUrl != null && targetUrl.contains("localhost");
+    boolean isFromDev = targetUrl != null && targetUrl.contains("dev.groble.im");
+    boolean isFromProd = targetUrl != null && targetUrl.contains("://groble.im");
+
+    // 요청 헤더에서도 확인 (fallback)
+    if (!isFromLocalhost && !isFromDev && !isFromProd) {
+      String origin = request.getHeader("Origin");
+      String referer = request.getHeader("Referer");
+
+      if ((origin != null && origin.contains("localhost"))
+          || (referer != null && referer.contains("localhost"))) {
+        isFromLocalhost = true;
+      } else if ((origin != null && origin.contains("dev.groble.im"))
+          || (referer != null && referer.contains("dev.groble.im"))) {
+        isFromDev = true;
+      } else if ((origin != null && origin.contains("://groble.im"))
+          || (referer != null && referer.contains("://groble.im"))) {
+        isFromProd = true;
+      }
+    }
+
+    log.info(
+        "요청 출처 판단 - localhost: {}, dev: {}, prod: {}, targetUrl: {}",
+        isFromLocalhost,
+        isFromDev,
+        isFromProd,
+        targetUrl);
 
     // 환경별 보안 설정
     boolean isSecure;
     String sameSite;
     String domain;
 
-    if (isLocal) {
-      // 로컬 환경: HTTP 허용, 도메인 설정 없음
+    if (isFromLocalhost) {
+      // localhost에서 온 요청: HTTP 허용, 도메인 설정 없음
       isSecure = false;
-      sameSite = "Lax"; // 로컬에서는 Lax 사용 가능
+      sameSite = "Lax"; // localhost에서는 Lax 사용
       domain = null;
-    } else if (isDev) {
-      // 개발 환경: HTTPS 사용, 개발 도메인
+    } else if (isFromDev || isFromProd) {
+      // dev.groble.im 또는 groble.im에서 온 요청: HTTPS 사용, 도메인 설정
       isSecure = true;
       sameSite = "None"; // 크로스 도메인을 위해 None 필요
-      domain = cookieDomain;
-    } else { // prod
-      // 운영 환경: 최고 보안 설정
-      isSecure = true;
-      sameSite = "None"; // 크로스 도메인을 위해 None 필요
-      domain = cookieDomain;
+      domain = cookieDomain; // .groble.im
+    } else {
+      // 기본값 (환경 기반 설정)
+      boolean isLocal = isLocalEnvironment();
+      isSecure = !isLocal;
+      sameSite = isLocal ? "Lax" : "None";
+      domain = isLocal ? null : cookieDomain;
     }
 
     // Access Token 쿠키 추가
@@ -181,10 +209,10 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         sameSite, // sameSite
         domain); // domain
 
-    log.debug(
-        "OAuth2 토큰 쿠키 추가 완료: env={}, domain={}, secure={}, sameSite={}",
-        currentEnv,
-        domain != null ? domain : "기본값(localhost)",
+    log.info(
+        "OAuth2 토큰 쿠키 추가 완료: 요청출처={}, domain={}, secure={}, sameSite={}",
+        isFromLocalhost ? "localhost" : (isFromDev ? "dev" : (isFromProd ? "prod" : "unknown")),
+        domain != null ? domain : "null(localhost)",
         isSecure,
         sameSite);
   }
