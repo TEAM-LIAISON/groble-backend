@@ -14,9 +14,6 @@ public class UserHeaderResponse {
   @Schema(description = "로그인 상태 여부", example = "true")
   private Boolean isLogin;
 
-  @Schema(description = "최종 로그인 상태 여부", example = "true")
-  private Boolean isLoginCompleted;
-
   @Schema(description = "사용자 닉네임", example = "홍길동")
   private String nickname;
 

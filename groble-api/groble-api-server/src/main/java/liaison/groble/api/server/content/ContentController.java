@@ -45,6 +45,7 @@ import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.model.Accessor;
 import liaison.groble.common.response.GrobleResponse;
 import liaison.groble.common.response.PageResponse;
+import liaison.groble.mapping.content.ContentMapper;
 
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -63,6 +64,7 @@ import lombok.extern.slf4j.Slf4j;
 public class ContentController {
 
   private final ContentService contentService;
+  private final ContentMapper contentMapper;
   private final ContentDtoMapper contentDtoMapper;
   private final FileService fileService;
   private final FileDtoMapper fileDtoMapper;
@@ -104,8 +106,6 @@ public class ContentController {
   @HomeContents
   @GetMapping("/home/contents")
   public ResponseEntity<GrobleResponse<HomeContentsResponse>> getHomeContents() {
-
-    // 서비스에서 콘텐츠 목록 조회 (List 형태)
     List<ContentCardDto> coachingContentCardDtos = contentService.getHomeContentsList("COACHING");
     List<ContentPreviewCardResponse> coachingItems =
         coachingContentCardDtos.stream()

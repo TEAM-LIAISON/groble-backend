@@ -113,7 +113,6 @@ public class UserController {
       UserHeaderResponse response =
           UserHeaderResponse.builder()
               .isLogin(false)
-              .isLoginCompleted(false)
               .nickname(null)
               .profileImageUrl(null)
               .canSwitchToSeller(false)

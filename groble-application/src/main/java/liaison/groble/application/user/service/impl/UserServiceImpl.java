@@ -239,16 +239,13 @@ public class UserServiceImpl implements UserService {
     User user = userReader.getUserById(userId);
 
     boolean isLogin = true;
-    boolean isLoginCompleted = false;
 
     if (user.getUserProfile() != null) {
       isLogin = user.getUserProfile().getPhoneNumber() != null;
-      isLoginCompleted = user.getUserProfile().getPhoneNumber() != null;
     }
 
     return UserHeaderDto.builder()
         .isLogin(isLogin)
-        .isLoginCompleted(isLoginCompleted)
         .nickname(user.getNickname())
         .profileImageUrl(user.getProfileImageUrl())
         .canSwitchToSeller(user.isSeller())
