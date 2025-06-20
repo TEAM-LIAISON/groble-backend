@@ -210,6 +210,7 @@ public class User extends BaseTimeEntity {
 
     if (accountType == AccountType.INTEGRATED && integratedAccount != null) {
       integratedAccount.anonymizeEmail(anonymizedEmail);
+      integratedAccount.updatePassword(null);
     } else if (accountType == AccountType.SOCIAL && socialAccount != null) {
       socialAccount.anonymizeEmail(anonymizedEmail);
     }

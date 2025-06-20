@@ -34,8 +34,7 @@ public class IntegratedAccount {
   @Column(nullable = false)
   private String integratedAccountEmail;
 
-  @Column(nullable = false)
-  private String password;
+  @Column private String password;
 
   @Builder
   private IntegratedAccount(User user, String integratedAccountEmail, String encodedPassword) {

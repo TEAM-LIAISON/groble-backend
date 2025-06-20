@@ -1,5 +1,6 @@
 package liaison.groble.api.server.auth;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 
@@ -58,7 +59,9 @@ public class AuthController {
   private final TokenCookieService tokenCookieService;
   private final ResponseHelper responseHelper;
 
-  @Operation(summary = "[Deprecated 예정] 통합 계정 로그인", description = "이메일과 비밀번호로 로그인하고 인증 토큰을 발급합니다.")
+  @Operation(
+      summary = "[🛠️ Deprecated 예정] 통합 계정 로그인",
+      description = "이메일과 비밀번호로 로그인하고 인증 토큰을 발급합니다.")
   @PostMapping(DEPRECATED_SIGN_IN_PATH)
   public ResponseEntity<GrobleResponse<SignInResponse>> signIn(
       @Parameter(description = "로그인 정보", required = true) @Valid @RequestBody
@@ -79,7 +82,7 @@ public class AuthController {
   }
 
   @Operation(
-      summary = "[Deprecated 예정] 테스트용 통합 계정 로그인",
+      summary = "[🛠 Deprecated 예정] 테스트용 통합 계정 로그인",
       description = "이메일과 비밀번호로 로그인하고 인증 토큰을 발급합니다.")
   @PostMapping(DEPRECATED_SIGN_IN_TEST_PATH)
   public ResponseEntity<GrobleResponse<SignInTestResponse>> signInTest(
@@ -98,16 +101,15 @@ public class AuthController {
         signInTestResponse, DEPRECATED_SIGN_IN_TEST_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 
-  @Operation(summary = "로그아웃", description = "로그아웃을 통해 쿠키와 토큰을 무효화합니다.")
+  @Operation(summary = "[🛠 로그아웃]", description = "로그아웃을 통해 쿠키와 토큰을 무효화합니다.")
   @PostMapping(LOGOUT)
   public ResponseEntity<GrobleResponse<Void>> logout(
-      @Auth Accessor accessor, HttpServletResponse response) {
-    authService.logout(accessor.getUserId());
-    tokenCookieService.removeTokenCookies(response);
+      @Auth Accessor accessor, HttpServletRequest request, HttpServletResponse response) {
+    tokenCookieService.clearTokenCookies(request, response);
     return responseHelper.success(null, LOGOUT_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 
-  @Operation(summary = "회원 탈퇴", description = "사용자 계정을 탈퇴 처리합니다.")
+  @Operation(summary = "[🛠 회원탈퇴]", description = "사용자 계정을 탈퇴 처리합니다.")
   @PostMapping(WITHDRAWAL)
   public ResponseEntity<GrobleResponse<Void>> withdrawUser(
       @Auth Accessor accessor,
