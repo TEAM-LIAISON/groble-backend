@@ -238,10 +238,10 @@ public class UserServiceImpl implements UserService {
   public UserHeaderDto getUserHeaderInform(Long userId) {
     User user = userReader.getUserById(userId);
 
-    boolean isLogin = true;
+    boolean isLogin = false;
 
     if (user.getUserProfile() != null) {
-      isLogin = user.getUserProfile().getPhoneNumber() != null;
+      isLogin = user.getLastUserType() != null;
     }
 
     return UserHeaderDto.builder()

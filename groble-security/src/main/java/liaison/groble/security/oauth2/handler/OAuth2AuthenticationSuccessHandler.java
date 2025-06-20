@@ -72,47 +72,40 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     log.info("프론트엔드 도메인: {}", frontendDomain);
 
     String targetUrl;
+    // UserType이 있는 경우 - 모두 로그인 처리 진행
 
-    if (user.getLastUserType() == null) {
+    // 직접 토큰 생성
+    String accessToken = jwtTokenProvider.createAccessToken(user.getId(), user.getEmail());
+    String refreshToken = jwtTokenProvider.createRefreshToken(user.getId(), user.getEmail());
+    Instant refreshTokenExpiresAt = jwtTokenProvider.getRefreshTokenExpirationInstant(refreshToken);
+
+    // 리프레시 토큰 저장
+    user.updateRefreshToken(refreshToken, refreshTokenExpiresAt);
+    userRepository.save(user);
+
+    log.info("사용자 인증 완료: {}, 토큰 발급 완료", oAuth2User.getEmail());
+
+    // TokenCookieService를 사용하여 토큰을 쿠키에 저장
+    tokenCookieService.addTokenCookies(request, response, accessToken, refreshToken);
+    if (!user.hasTermsAgreements()) {
       // UserType 선택 필요 - 로그인 처리하지 않고 회원가입 페이지로 리다이렉트
       log.info("UserType 미선택 사용자 - 회원가입 페이지로 리다이렉트");
-      targetUrl = frontendDomain + "/auth/sign-up/user-type"; // 프론트엔드 절대 URL
+      targetUrl = frontendDomain + "/auth/sign-up/user-type";
+    } else if (user.getUserProfile() != null && user.getUserProfile().getPhoneNumber() != null) {
+      // 온보딩 마친 사람 - 정상적인 리다이렉트
+      log.info("온보딩 완료된 사용자 - 정상 로그인 처리");
+      // redirect_uri가 있으면 그곳으로, 없으면 홈으로
+      targetUrl = redirectUri != null ? redirectUri : frontendDomain + "/";
+
+    } else if (user.getUserProfile() != null && user.getUserProfile().getNickname() != null) {
+      log.info("전화번호 미설정 사용자 - 전화번호 설정 페이지로 리다이렉트");
+      targetUrl = frontendDomain + "/auth/sign-up/phone";
 
     } else {
-      // UserType이 있는 경우 - 모두 로그인 처리 진행
-
-      // 직접 토큰 생성
-      String accessToken = jwtTokenProvider.createAccessToken(user.getId(), user.getEmail());
-      String refreshToken = jwtTokenProvider.createRefreshToken(user.getId(), user.getEmail());
-      Instant refreshTokenExpiresAt =
-          jwtTokenProvider.getRefreshTokenExpirationInstant(refreshToken);
-
-      // 리프레시 토큰 저장
-      user.updateRefreshToken(refreshToken, refreshTokenExpiresAt);
-      userRepository.save(user);
-
-      log.info("사용자 인증 완료: {}, 토큰 발급 완료", oAuth2User.getEmail());
-
-      // TokenCookieService를 사용하여 토큰을 쿠키에 저장
-      tokenCookieService.addTokenCookies(request, response, accessToken, refreshToken);
-
-      // 사용자 상태에 따라 리다이렉트 URL 결정
-      // UserProfile이 null이거나 phoneNumber가 null인 경우 체크
-      if (user.getUserProfile() != null && user.getUserProfile().getPhoneNumber() != null) {
-        // 온보딩 마친 사람 - 정상적인 리다이렉트
-        log.info("온보딩 완료된 사용자 - 정상 로그인 처리");
-        // redirect_uri가 있으면 그곳으로, 없으면 홈으로
-        targetUrl = redirectUri != null ? redirectUri : frontendDomain + "/";
-
-      } else if (user.getUserProfile() != null && user.getUserProfile().getNickname() != null) {
-        log.info("전화번호 미설정 사용자 - 전화번호 설정 페이지로 리다이렉트");
-        targetUrl = frontendDomain + "/auth/sign-up/phone";
-
-      } else {
-        log.info("닉네임 미입력 사용자 - 온보딩 페이지로 리다이렉트");
-        targetUrl = frontendDomain + "/auth/sign-up/nickname";
-      }
+      log.info("닉네임 미입력 사용자 - 온보딩 페이지로 리다이렉트");
+      targetUrl = frontendDomain + "/auth/sign-up/nickname";
     }
+
     // 세션에서 redirect_uri 제거
     request.getSession().removeAttribute("redirect_uri");
 

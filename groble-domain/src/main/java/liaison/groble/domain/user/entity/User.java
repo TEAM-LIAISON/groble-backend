@@ -21,6 +21,8 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
+import org.hibernate.LazyInitializationException;
+
 import liaison.groble.domain.common.entity.BaseTimeEntity;
 import liaison.groble.domain.role.Role;
 import liaison.groble.domain.role.UserRole;
@@ -375,5 +377,15 @@ public class User extends BaseTimeEntity {
   public boolean hasNickname() {
     String nickname = getNickname();
     return nickname != null && !nickname.trim().isEmpty();
+  }
+
+  /** 약관 동의 여부 확인 (LazyInitializationException 방지) Hibernate 세션이 없어도 안전하게 확인 가능 */
+  public boolean hasTermsAgreements() {
+    try {
+      return termsAgreements != null && !termsAgreements.isEmpty();
+    } catch (LazyInitializationException e) {
+      // 세션이 없는 경우 false 반환 (신규 사용자로 간주)
+      return false;
+    }
   }
 }
