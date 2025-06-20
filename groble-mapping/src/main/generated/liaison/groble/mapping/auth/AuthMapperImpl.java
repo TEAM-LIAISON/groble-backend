@@ -11,6 +11,7 @@ import liaison.groble.api.model.auth.request.SignUpRequest;
 import liaison.groble.api.model.auth.request.UserWithdrawalRequest;
 import liaison.groble.api.model.auth.request.VerifyEmailCodeRequest;
 import liaison.groble.api.model.auth.response.SignInResponse;
+import liaison.groble.api.model.auth.response.SignInTestResponse;
 import liaison.groble.application.auth.dto.PhoneNumberVerifyCodeRequestDto;
 import liaison.groble.application.auth.dto.PhoneNumberVerifyRequestDto;
 import liaison.groble.application.auth.dto.SignInAuthResultDTO;
@@ -21,7 +22,7 @@ import liaison.groble.application.auth.dto.VerifyEmailCodeDTO;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-06-17T20:03:51+0900",
+    date = "2025-06-20T17:33:31+0900",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.10 (Amazon.com Inc.)")
 @Component
 public class AuthMapperImpl implements AuthMapper {
@@ -68,6 +69,23 @@ public class AuthMapperImpl implements AuthMapper {
   }
 
   @Override
+  public UserWithdrawalDTO toUserWithdrawalDto(UserWithdrawalRequest request) {
+    if (request == null) {
+      return null;
+    }
+
+    UserWithdrawalDTO.UserWithdrawalDTOBuilder userWithdrawalDTO = UserWithdrawalDTO.builder();
+
+    if (request.getAdditionalComment() != null) {
+      userWithdrawalDTO.additionalComment(request.getAdditionalComment());
+    }
+
+    userWithdrawalDTO.reason(request.getReason().name());
+
+    return userWithdrawalDTO.build();
+  }
+
+  @Override
   public SignInResponse toSignInResponse(String email, SignInAuthResultDTO dto) {
     if (email == null && dto == null) {
       return null;
@@ -89,6 +107,32 @@ public class AuthMapperImpl implements AuthMapper {
   }
 
   @Override
+  public SignInTestResponse toSignInTestResponse(String email, SignInAuthResultDTO dto) {
+    if (email == null && dto == null) {
+      return null;
+    }
+
+    SignInTestResponse.SignInTestResponseBuilder signInTestResponse = SignInTestResponse.builder();
+
+    if (dto != null) {
+      signInTestResponse.hasAgreedToTerms(dto.isHasAgreedToTerms());
+      signInTestResponse.hasNickname(dto.isHasNickname());
+      if (dto.getAccessToken() != null) {
+        signInTestResponse.accessToken(dto.getAccessToken());
+      }
+      if (dto.getRefreshToken() != null) {
+        signInTestResponse.refreshToken(dto.getRefreshToken());
+      }
+    }
+    if (email != null) {
+      signInTestResponse.email(email);
+    }
+    signInTestResponse.authenticated(true);
+
+    return signInTestResponse.build();
+  }
+
+  @Override
   public VerifyEmailCodeDTO toVerifyEmailCodeDto(VerifyEmailCodeRequest request) {
     if (request == null) {
       return null;
@@ -104,23 +148,6 @@ public class AuthMapperImpl implements AuthMapper {
     }
 
     return verifyEmailCodeDTO.build();
-  }
-
-  @Override
-  public UserWithdrawalDTO toUserWithdrawalDto(UserWithdrawalRequest request) {
-    if (request == null) {
-      return null;
-    }
-
-    UserWithdrawalDTO.UserWithdrawalDtoBuilder userWithdrawalDto = UserWithdrawalDTO.builder();
-
-    if (request.getAdditionalComment() != null) {
-      userWithdrawalDto.additionalComment(request.getAdditionalComment());
-    }
-
-    userWithdrawalDto.reason(request.getReason().name());
-
-    return userWithdrawalDto.build();
   }
 
   @Override

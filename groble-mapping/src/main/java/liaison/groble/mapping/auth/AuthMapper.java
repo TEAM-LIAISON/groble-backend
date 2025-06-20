@@ -10,6 +10,7 @@ import liaison.groble.api.model.auth.request.SignUpRequest;
 import liaison.groble.api.model.auth.request.UserWithdrawalRequest;
 import liaison.groble.api.model.auth.request.VerifyEmailCodeRequest;
 import liaison.groble.api.model.auth.response.SignInResponse;
+import liaison.groble.api.model.auth.response.SignInTestResponse;
 import liaison.groble.application.auth.dto.PhoneNumberVerifyCodeRequestDto;
 import liaison.groble.application.auth.dto.PhoneNumberVerifyRequestDto;
 import liaison.groble.application.auth.dto.SignInAuthResultDTO;
@@ -41,6 +42,10 @@ public interface AuthMapper {
   /** (email + 인증 결과 DTO) → SignInResponse */
   @Mapping(target = "authenticated", constant = "true")
   SignInResponse toSignInResponse(String email, SignInAuthResultDTO dto);
+
+  @Mapping(target = "email", source = "email")
+  @Mapping(target = "authenticated", constant = "true")
+  SignInTestResponse toSignInTestResponse(String email, SignInAuthResultDTO dto);
 
   /** VerifyEmailCodeRequest → VerifyEmailCodeDTO */
   VerifyEmailCodeDTO toVerifyEmailCodeDto(VerifyEmailCodeRequest request);

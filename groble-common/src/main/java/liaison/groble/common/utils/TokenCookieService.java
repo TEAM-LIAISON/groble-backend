@@ -74,11 +74,6 @@ public class TokenCookieService {
         settings.fromLocalhost());
   }
 
-  public void addAdminTokenCookies(
-      HttpServletResponse response, String accessToken, String refreshToken) {
-    addAdminTokenCookies(null, response, accessToken, refreshToken);
-  }
-
   // --- User 쿠키 추가 ---
   public void addTokenCookies(
       HttpServletRequest request,
