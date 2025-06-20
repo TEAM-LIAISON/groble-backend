@@ -86,4 +86,6 @@ public interface UserService {
   UserHeaderDto getUserHeaderInform(Long userId);
 
   void updateProfileImageUrl(Long userId, String profileImagePath);
+
+  boolean isLoginAble(Long userId);
 }

@@ -262,4 +262,11 @@ public class UserServiceImpl implements UserService {
     user.updateProfileImageUrl(profileImageUrl);
     userRepository.save(user);
   }
+
+  @Override
+  @Transactional(readOnly = true)
+  public boolean isLoginAble(Long userId) {
+    User user = userReader.getUserById(userId);
+    return user.hasTermsAgreements();
+  }
 }

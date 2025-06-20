@@ -2,6 +2,7 @@ package liaison.groble.api.server.user;
 
 import java.io.IOException;
 
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 
 import org.springframework.http.HttpStatus;
@@ -36,6 +37,7 @@ import liaison.groble.application.user.service.UserService;
 import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.model.Accessor;
 import liaison.groble.common.response.GrobleResponse;
+import liaison.groble.common.utils.TokenCookieService;
 
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -55,6 +57,7 @@ public class UserController {
   private final UserDtoMapper userDtoMapper;
   private final FileService fileService;
   private final FileDtoMapper fileDtoMapper;
+  private final TokenCookieService tokenCookieService;
 
   @SwitchRole
   @PostMapping("/users/switch-role")
@@ -106,11 +109,23 @@ public class UserController {
   @UserHeader
   @GetMapping("/me")
   public ResponseEntity<GrobleResponse<UserHeaderResponse>> getUserHeaderInform(
-      @Auth Accessor accessor) {
+      @Auth Accessor accessor, HttpServletResponse httpResponse) {
 
-    // 로그인하지 않은 경우
-    if (accessor == null) {
-      UserHeaderResponse response =
+    // 로그인한 경우 - 기존 코드 활용
+    boolean isLogin = userService.isLoginAble(accessor.getUserId());
+
+    if (isLogin) {
+      UserHeaderDto userHeaderDto = userService.getUserHeaderInform(accessor.getUserId());
+      UserHeaderResponse userHeaderResponse = userDtoMapper.toApiUserHeaderResponse(userHeaderDto);
+
+      return ResponseEntity.ok(GrobleResponse.success(userHeaderResponse, "사용자 헤더 정보 조회 성공"));
+
+    } else {
+      // 로그아웃 처리
+      tokenCookieService.removeTokenCookies(httpResponse);
+
+      // 로그아웃된 사용자를 위한 기본 응답 생성
+      UserHeaderResponse loggedOutResponse =
           UserHeaderResponse.builder()
               .isLogin(false)
               .nickname(null)
@@ -121,14 +136,8 @@ public class UserController {
               .lastUserType(null)
               .build();
 
-      return ResponseEntity.ok(GrobleResponse.success(response, "사용자 정보 조회 성공"));
+      return ResponseEntity.ok(GrobleResponse.success(loggedOutResponse, "로그아웃 처리 완료"));
     }
-
-    // 로그인한 경우 - 기존 코드 활용
-    UserHeaderDto userHeaderDto = userService.getUserHeaderInform(accessor.getUserId());
-    UserHeaderResponse response = userDtoMapper.toApiUserHeaderResponse(userHeaderDto);
-
-    return ResponseEntity.ok(GrobleResponse.success(response, "사용자 헤더 정보 조회 성공"));
   }
 
   /** 사용자 프로필 이미지 업로드 */
