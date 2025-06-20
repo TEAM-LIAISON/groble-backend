@@ -8,7 +8,7 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public class UserCouponResponseDto {
+public class UserCouponResponseDTO {
   private String couponCode;
   private String name;
   private String couponType;
