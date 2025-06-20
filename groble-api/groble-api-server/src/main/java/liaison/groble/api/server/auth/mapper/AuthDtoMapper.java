@@ -8,7 +8,7 @@ import liaison.groble.api.model.auth.request.UserWithdrawalRequest;
 import liaison.groble.api.model.auth.request.VerifyEmailCodeRequest;
 import liaison.groble.application.auth.dto.EmailVerificationDTO;
 import liaison.groble.application.auth.dto.SignInDTO;
-import liaison.groble.application.auth.dto.UserWithdrawalDto;
+import liaison.groble.application.auth.dto.UserWithdrawalDTO;
 import liaison.groble.application.auth.dto.VerifyEmailCodeDTO;
 
 @Component
@@ -30,8 +30,8 @@ public class AuthDtoMapper {
         .build();
   }
 
-  public UserWithdrawalDto toServiceUserWithdrawalDto(UserWithdrawalRequest userWithdrawalRequest) {
-    return UserWithdrawalDto.builder()
+  public UserWithdrawalDTO toServiceUserWithdrawalDto(UserWithdrawalRequest userWithdrawalRequest) {
+    return UserWithdrawalDTO.builder()
         .reason(userWithdrawalRequest.getReason().name())
         .additionalComment(userWithdrawalRequest.getAdditionalComment())
         .build();

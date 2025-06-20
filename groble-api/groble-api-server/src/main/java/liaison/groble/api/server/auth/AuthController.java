@@ -19,12 +19,13 @@ import liaison.groble.api.model.auth.response.SignInTestResponse;
 import liaison.groble.api.server.auth.mapper.AuthDtoMapper;
 import liaison.groble.application.auth.dto.SignInAuthResultDTO;
 import liaison.groble.application.auth.dto.SignInDTO;
-import liaison.groble.application.auth.dto.UserWithdrawalDto;
+import liaison.groble.application.auth.dto.UserWithdrawalDTO;
 import liaison.groble.application.auth.service.AuthService;
 import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.model.Accessor;
 import liaison.groble.common.response.GrobleResponse;
 import liaison.groble.common.utils.CookieUtils;
+import liaison.groble.common.utils.TokenCookieService;
 import liaison.groble.mapping.auth.AuthMapper;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -53,6 +54,7 @@ public class AuthController {
   private static final int REFRESH_TOKEN_MAX_AGE = 60 * 60 * 24 * 7; // 1주일
   private static final String ACCESS_TOKEN_COOKIE_NAME = "accessToken";
   private static final String REFRESH_TOKEN_COOKIE_NAME = "refreshToken";
+  private final TokenCookieService tokenCookieService;
 
   @Value("${app.cookie.domain}")
   private String cookieDomain; // 쿠키 도메인 설정
@@ -170,20 +172,14 @@ public class AuthController {
   public ResponseEntity<GrobleResponse<Void>> withdrawUser(
       @Auth Accessor accessor,
       @Valid @RequestBody UserWithdrawalRequest request,
-      HttpServletRequest servletRequest,
-      HttpServletResponse servletResponse) {
+      HttpServletResponse response) {
 
-    // 1. 회원 탈퇴 처리
-    UserWithdrawalDto userWithdrawalDto = authDtoMapper.toServiceUserWithdrawalDto(request);
+    UserWithdrawalDTO dto = authMapper.toUserWithdrawalDto(request);
+    authService.withdrawUser(accessor.getUserId(), dto);
 
-    authService.withdrawUser(accessor.getUserId(), userWithdrawalDto);
+    tokenCookieService.removeTokenCookies(response);
 
-    // 2. 쿠키 삭제
-    CookieUtils.deleteCookie(servletRequest, servletResponse, ACCESS_TOKEN_COOKIE_NAME);
-    CookieUtils.deleteCookie(servletRequest, servletResponse, REFRESH_TOKEN_COOKIE_NAME);
-
-    // 3. 응답 반환
-    return ResponseEntity.ok().body(GrobleResponse.success(null, "회원 탈퇴가 성공적으로 처리되었습니다.", 200));
+    return ResponseEntity.ok().body(GrobleResponse.success(null, "회원탈퇴가 성공적으로 처리되었습니다.", 200));
   }
 
   private void addTokenCookies(

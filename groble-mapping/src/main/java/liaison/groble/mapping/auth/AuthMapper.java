@@ -15,7 +15,7 @@ import liaison.groble.application.auth.dto.PhoneNumberVerifyRequestDto;
 import liaison.groble.application.auth.dto.SignInAuthResultDTO;
 import liaison.groble.application.auth.dto.SignInDTO;
 import liaison.groble.application.auth.dto.SignUpDto;
-import liaison.groble.application.auth.dto.UserWithdrawalDto;
+import liaison.groble.application.auth.dto.UserWithdrawalDTO;
 import liaison.groble.application.auth.dto.VerifyEmailCodeDTO;
 import liaison.groble.mapping.config.GrobleMapperConfig;
 
@@ -32,6 +32,10 @@ public interface AuthMapper {
       expression = "java(request.getTermsTypes().stream().map(Enum::name).toList())")
   SignUpDto toSignUpDto(SignUpRequest request);
 
+  /** UserWithdrawalRequest → UserWithdrawalDTO */
+  @Mapping(target = "reason", expression = "java(request.getReason().name())")
+  UserWithdrawalDTO toUserWithdrawalDto(UserWithdrawalRequest request);
+
   // ====== 📤 DTO → Response 변환 ======
 
   /** (email + 인증 결과 DTO) → SignInResponse */
@@ -40,10 +44,6 @@ public interface AuthMapper {
 
   /** VerifyEmailCodeRequest → VerifyEmailCodeDTO */
   VerifyEmailCodeDTO toVerifyEmailCodeDto(VerifyEmailCodeRequest request);
-
-  /** UserWithdrawalRequest → UserWithdrawalDto */
-  @Mapping(target = "reason", expression = "java(request.getReason().name())")
-  UserWithdrawalDto toUserWithdrawalDto(UserWithdrawalRequest request);
 
   /** PhoneNumberVerifyRequest → PhoneNumberVerifyRequestDto */
   PhoneNumberVerifyRequestDto toPhoneNumberVerifyRequestDto(PhoneNumberVerifyRequest request);

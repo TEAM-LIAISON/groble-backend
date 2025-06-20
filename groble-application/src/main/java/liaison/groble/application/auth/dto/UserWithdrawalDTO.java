@@ -5,11 +5,11 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public class UserWithdrawalDto {
+public class UserWithdrawalDTO {
   private String reason;
   private String additionalComment;
 
-  public UserWithdrawalDto(String reason, String additionalComment) {
+  public UserWithdrawalDTO(String reason, String additionalComment) {
     this.reason = reason;
     this.additionalComment = additionalComment;
   }

@@ -196,8 +196,6 @@ public class User extends BaseTimeEntity {
     // 리프레시 토큰 제거
     this.refreshToken = null;
     this.refreshTokenExpiresAt = null;
-
-    // 도메일 별도 설정 필요 없음 (anonymize에서 처리)
   }
 
   /** 사용자 정보 익명화 처리 GDPR 등 개인정보보호 규정 준수를 위한 비식별화 */
@@ -387,5 +385,9 @@ public class User extends BaseTimeEntity {
       // 세션이 없는 경우 false 반환 (신규 사용자로 간주)
       return false;
     }
+  }
+
+  public boolean isWithdrawn() {
+    return this.userStatusInfo.getStatus() == UserStatus.WITHDRAWN;
   }
 }

@@ -6,14 +6,11 @@ import java.time.LocalDateTime;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import liaison.groble.application.auth.dto.PhoneNumberVerifyRequestDto;
 import liaison.groble.application.auth.dto.SignInAuthResultDTO;
 import liaison.groble.application.auth.dto.SignInDTO;
-import liaison.groble.application.auth.dto.TokenDto;
-import liaison.groble.application.auth.dto.UserWithdrawalDto;
+import liaison.groble.application.auth.dto.UserWithdrawalDTO;
 import liaison.groble.application.auth.service.AuthService;
 import liaison.groble.application.user.service.UserReader;
-import liaison.groble.common.exception.EntityNotFoundException;
 import liaison.groble.common.port.security.SecurityPort;
 import liaison.groble.domain.user.entity.IntegratedAccount;
 import liaison.groble.domain.user.entity.User;
@@ -266,99 +263,49 @@ public class AuthServiceImpl implements AuthService {
 
   @Override
   @Transactional
-  public TokenDto refreshTokens(String requestRefreshToken) {
-    // 1. 요청 온 refreshToken이 JWT로서 유효한지 검증 (서명, 토큰 타입, 포맷)
-    if (!securityPort.validateToken(requestRefreshToken, "refresh")) {
-      throw new IllegalArgumentException("유효하지 않은 리프레시 토큰입니다.");
-    }
+  public void withdrawUser(Long userId, UserWithdrawalDTO dto) {
+    // 1. 사용자 조회 및 검증
+    User user = userReader.getUserById(userId);
+    validateWithdrawalEligibility(user);
+    // 2. 탈퇴 사유 처리
+    WithdrawalReason reason = parseWithdrawalReason(dto.getReason());
 
-    // 2. refreshToken에서 userId 파싱
-    Long userId = securityPort.getUserIdFromRefreshToken(requestRefreshToken);
+    // 3. 회원 탈퇴 처리 (User 엔티티에 캡슐화)
+    user.withdraw();
+    user.anonymize();
 
-    // 3. DB에서 사용자 조회
-    User user =
-        userRepository
-            .findById(userId)
-            .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
-
-    // 4. DB에 저장된 refreshToken과 비교
-    if (!requestRefreshToken.equals(user.getRefreshToken())) {
-      throw new IllegalArgumentException("리프레시 토큰이 일치하지 않습니다.");
-    }
-
-    // 5. DB에 저장된 refreshToken 만료시간 체크
-    if (user.getRefreshTokenExpiresAt().isBefore(Instant.now())) {
-      throw new IllegalArgumentException("리프레시 토큰이 만료되었습니다. 다시 로그인해주세요.");
-    }
-
-    // 6. 새 accessToken + 새 refreshToken 발급
-    String newAccessToken = securityPort.createAccessToken(user.getId(), user.getEmail());
-    String newRefreshToken = securityPort.createRefreshToken(user.getId(), user.getEmail());
-    Instant newRefreshTokenExpiresAt = securityPort.getRefreshTokenExpirationTime(newRefreshToken);
-
-    // 7. DB에 새로운 refreshToken과 만료시간 업데이트
-    user.updateRefreshToken(newRefreshToken, newRefreshTokenExpiresAt);
-    userRepository.save(user);
-
-    // 8. 새 토큰들 반환
-    return TokenDto.builder()
-        .accessToken(newAccessToken)
-        .refreshToken(newRefreshToken)
-        .accessTokenExpiresIn(securityPort.getAccessTokenExpirationTime())
-        .build();
+    // 4. 탈퇴 이력 저장
+    saveWithdrawalHistory(user, reason, dto.getAdditionalComment());
   }
 
-  @Override
-  @Transactional
-  public void withdrawUser(Long userId, UserWithdrawalDto userWithdrawalDto) {
-    // 1. 사용자 조회
-    User user = userReader.getUserById(userId);
+  private void validateWithdrawalEligibility(User user) {
+    if (user.isWithdrawn()) {
+      throw new IllegalArgumentException("이미 탈퇴한 사용자입니다.");
+    }
+    // 정산 받아야 함
+  }
 
-    WithdrawalReason withdrawalReason;
-    try {
-      withdrawalReason = WithdrawalReason.valueOf(userWithdrawalDto.getReason().toUpperCase());
-    } catch (IllegalArgumentException | NullPointerException e) {
-      throw new IllegalArgumentException("유효하지 않은 탈퇴 사유입니다: " + userWithdrawalDto.getReason());
+  private WithdrawalReason parseWithdrawalReason(String reasonStr) {
+    if (reasonStr == null || reasonStr.trim().isEmpty()) {
+      return WithdrawalReason.OTHER; // 기본값
     }
 
-    // 3. 탈퇴 사유 기록
+    try {
+      return WithdrawalReason.valueOf(reasonStr.toUpperCase());
+    } catch (IllegalArgumentException e) {
+      log.warn("Invalid withdrawal reason: {}", reasonStr);
+      return WithdrawalReason.OTHER;
+    }
+  }
+
+  private void saveWithdrawalHistory(User user, WithdrawalReason reason, String comment) {
     userWithdrawalHistoryRepository.save(
         UserWithdrawalHistory.builder()
-            .userId(userId)
+            .userId(user.getId())
             .email(user.getEmail())
-            .reason(withdrawalReason)
-            .additionalComment(userWithdrawalDto.getAdditionalComment())
+            .reason(reason)
+            .additionalComment(comment)
             .withdrawalDate(LocalDateTime.now())
             .build());
-
-    // 3. 리프레시 토큰 무효화
-    //      refreshTokenRepository.deleteAllByUserId(userId);
-
-    // 5. 사용자 상태 변경 (논리적 삭제)
-    user.withdraw();
-    userRepository.save(user);
-
-    // 6. 사용자 정보 익명화 (GDPR 등 규정 준수)
-    user.anonymize();
-    userRepository.save(user);
-  }
-
-  @Override
-  @Transactional
-  public void resetPhoneNumber(
-      Long userId, PhoneNumberVerifyRequestDto phoneNumberVerifyRequestDto) {
-    // 1. 사용자 조회
-    User user = userReader.getUserById(userId);
-
-    // 2. 전화번호 중복 검사
-    if (userReader.existsByPhoneNumber(phoneNumberVerifyRequestDto.getPhoneNumber())) {
-      throw new IllegalArgumentException("이미 사용 중인 전화번호입니다.");
-    }
-
-    // 3. 전화번호 업데이트
-    user.updatePhoneNumber(phoneNumberVerifyRequestDto.getPhoneNumber());
-
-    // 4. 저장
-    userRepository.save(user);
   }
 }

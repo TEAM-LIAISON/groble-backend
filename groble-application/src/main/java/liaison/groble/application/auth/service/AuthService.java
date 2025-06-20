@@ -1,10 +1,8 @@
 package liaison.groble.application.auth.service;
 
-import liaison.groble.application.auth.dto.PhoneNumberVerifyRequestDto;
 import liaison.groble.application.auth.dto.SignInAuthResultDTO;
 import liaison.groble.application.auth.dto.SignInDTO;
-import liaison.groble.application.auth.dto.TokenDto;
-import liaison.groble.application.auth.dto.UserWithdrawalDto;
+import liaison.groble.application.auth.dto.UserWithdrawalDTO;
 
 public interface AuthService {
 
@@ -23,15 +21,5 @@ public interface AuthService {
    */
   void logout(Long userId);
 
-  /**
-   * Refresh tokens
-   *
-   * @param refreshToken refresh token
-   * @return TokenDto
-   */
-  TokenDto refreshTokens(String refreshToken);
-
-  void withdrawUser(Long userId, UserWithdrawalDto userWithdrawalDto);
-
-  void resetPhoneNumber(Long userId, PhoneNumberVerifyRequestDto phoneNumberVerifyRequestDto);
+  void withdrawUser(Long userId, UserWithdrawalDTO userWithdrawalDto);
 }
