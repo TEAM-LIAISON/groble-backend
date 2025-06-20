@@ -238,10 +238,16 @@ public class UserServiceImpl implements UserService {
   public UserHeaderDto getUserHeaderInform(Long userId) {
     User user = userReader.getUserById(userId);
 
-    boolean isLogin = false;
+    boolean isLogin;
 
     if (user.getUserProfile() != null) {
-      isLogin = user.getLastUserType() != null;
+      if (user.getUserProfile().getPhoneNumber() != null) {
+        isLogin = true;
+      } else {
+        isLogin = false;
+      }
+    } else {
+      isLogin = false;
     }
 
     return UserHeaderDto.builder()
@@ -267,6 +273,15 @@ public class UserServiceImpl implements UserService {
   @Transactional(readOnly = true)
   public boolean isLoginAble(Long userId) {
     User user = userReader.getUserById(userId);
-    return user.hasTermsAgreements();
+
+    if (user.getUserProfile() != null) {
+      if (user.getUserProfile().getPhoneNumber() != null) {
+        return true;
+      } else {
+        return false;
+      }
+    } else {
+      return false;
+    }
   }
 }

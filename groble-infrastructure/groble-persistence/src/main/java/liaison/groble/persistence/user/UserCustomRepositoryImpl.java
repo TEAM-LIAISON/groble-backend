@@ -32,6 +32,25 @@ public class UserCustomRepositoryImpl implements UserCustomRepository {
   private final JPAQueryFactory queryFactory;
 
   @Override
+  public boolean existsByIntegratedAccountEmailAndPhoneNumber(String integratedAccountEmail) {
+    QUser qUser = QUser.user;
+    QIntegratedAccount qIntegratedAccount = QIntegratedAccount.integratedAccount;
+
+    return queryFactory
+            .selectOne()
+            .from(qUser)
+            .leftJoin(qUser.integratedAccount, qIntegratedAccount)
+            .where(
+                qIntegratedAccount
+                    .integratedAccountEmail
+                    .eq(integratedAccountEmail)
+                    .and(qUser.userProfile.isNotNull())
+                    .and(qUser.userProfile.phoneNumber.isNotNull()))
+            .fetchFirst()
+        != null;
+  }
+
+  @Override
   public Page<FlatAdminUserSummaryInfoDTO> findUsersByPageable(Pageable pageable) {
     QUser qUser = QUser.user;
     QIntegratedAccount qInt = QIntegratedAccount.integratedAccount;

@@ -5,7 +5,7 @@ import org.springframework.stereotype.Component;
 import liaison.groble.application.auth.exception.EmailAlreadyExistsException;
 import liaison.groble.domain.port.VerificationCodePort;
 import liaison.groble.domain.user.enums.UserType;
-import liaison.groble.domain.user.repository.IntegratedAccountRepository;
+import liaison.groble.domain.user.repository.UserCustomRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,12 +14,12 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Slf4j
 public class AuthValidationHelper {
-  private final IntegratedAccountRepository integratedAccountRepository;
   private final VerificationCodePort verificationCodePort;
+  private final UserCustomRepository userCustomRepository;
 
   /** 이메일 중복 검증 */
   public void validateEmailNotRegistered(String email) {
-    if (integratedAccountRepository.existsByIntegratedAccountEmail(email)) {
+    if (userCustomRepository.existsByIntegratedAccountEmailAndPhoneNumber(email)) {
       throw new EmailAlreadyExistsException();
     }
   }

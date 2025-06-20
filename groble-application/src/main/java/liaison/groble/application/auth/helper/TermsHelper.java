@@ -84,6 +84,12 @@ public class TermsHelper {
   public void processTermsAgreements(User user, List<TermsType> agreedTermsTypes) {
     log.info("약관 동의 처리 시작 - 사용자 ID: {}, 동의한 약관 수: {}", user.getId(), agreedTermsTypes.size());
 
+    // 기존 약관 동의 정보가 있는지 확인
+    if (!user.getTermsAgreements().isEmpty()) {
+      log.info("기존 약관 동의 정보 발견 - 개수: {}", user.getTermsAgreements().size());
+      clearExistingTermsAgreements(user);
+    }
+
     // 현재 IP 주소와 User-Agent 정보 가져오기
     String clientIp = requestUtil.getClientIp();
     String userAgent = requestUtil.getUserAgent();
@@ -127,5 +133,19 @@ public class TermsHelper {
     }
 
     log.info("약관 동의 처리 완료");
+  }
+
+  /**
+   * 기존 약관 동의 정보를 제거합니다.
+   *
+   * @param user 사용자 엔티티
+   */
+  private void clearExistingTermsAgreements(User user) {
+    log.info("기존 약관 동의 정보 제거 시작");
+
+    // User 엔티티에서 약관 동의 정보 제거
+    user.getTermsAgreements().clear();
+
+    log.info("기존 약관 동의 정보 제거 완료");
   }
 }

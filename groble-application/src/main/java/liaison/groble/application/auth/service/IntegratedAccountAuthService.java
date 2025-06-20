@@ -28,6 +28,7 @@ import liaison.groble.domain.user.entity.IntegratedAccount;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.enums.UserType;
 import liaison.groble.domain.user.factory.UserFactory;
+import liaison.groble.domain.user.repository.UserCustomRepository;
 import liaison.groble.domain.user.repository.UserRepository;
 import liaison.groble.domain.user.service.UserStatusService;
 import liaison.groble.external.discord.dto.MemberCreateReportDto;
@@ -55,6 +56,7 @@ public class IntegratedAccountAuthService {
   // Repository
   private final UserReader userReader;
   private final UserRepository userRepository;
+  private final UserCustomRepository userCustomRepository;
 
   // Port
   private final SecurityPort securityPort;
@@ -76,19 +78,36 @@ public class IntegratedAccountAuthService {
     UserType userType = validateSignUpRequest(signUpDto);
     List<TermsType> agreedTermsTypes = validateAndProcessTerms(signUpDto, userType);
 
-    // 2. 사용자 생성 및 설정
-    User user = createAndSetupUser(signUpDto, userType, agreedTermsTypes);
+    if (userReader.existsByIntegratedAccountEmail(signUpDto.getEmail())) {
+      IntegratedAccount integratedAccount =
+          userReader.getUserByIntegratedAccountEmail(signUpDto.getEmail());
+      User existingUser = integratedAccount.getUser();
 
-    // 3. 사용자 저장 및 후처리
-    User savedUser = userRepository.save(user);
+      integratedAccount.updateEmail(signUpDto.getEmail());
+      integratedAccount.updatePassword(securityPort.encodePassword(signUpDto.getPassword()));
 
-    // 4. 토큰 발급 및 저장
-    TokenDto tokenDto = issueAndSaveTokens(savedUser);
+      existingUser.updateLastUserType(userType);
+      termsHelper.processTermsAgreements(existingUser, agreedTermsTypes);
 
-    // 5. 비동기 후처리 작업
-    processPostSignUpTasks(signUpDto.getEmail(), savedUser);
+      User savedUser = userRepository.save(existingUser);
+      TokenDto tokenDto = tokenHelper.issueTokens(savedUser);
+      processPostSignUpTasks(signUpDto.getEmail(), savedUser);
+      return buildSignUpResult(signUpDto.getEmail(), tokenDto);
+    } else {
+      // 2. 사용자 생성 및 설정
+      User user = createAndSetupUser(signUpDto, userType, agreedTermsTypes);
 
-    return buildSignUpResult(signUpDto.getEmail(), tokenDto);
+      // 3. 사용자 저장 및 후처리
+      User savedUser = userRepository.save(user);
+
+      // 4. 토큰 발급 및 저장
+      TokenDto tokenDto = issueAndSaveTokens(savedUser);
+
+      // 5. 비동기 후처리 작업
+      processPostSignUpTasks(signUpDto.getEmail(), savedUser);
+
+      return buildSignUpResult(signUpDto.getEmail(), tokenDto);
+    }
   }
 
   @Transactional
