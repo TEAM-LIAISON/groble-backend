@@ -156,7 +156,6 @@ public class AuthController {
     }
   }
 
-  // 회원탈퇴
   @Operation(summary = "회원 탈퇴", description = "사용자 계정을 탈퇴 처리합니다.")
   @ApiResponses({
     @ApiResponse(

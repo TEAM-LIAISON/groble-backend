@@ -41,16 +41,4 @@ public class CouponController {
     UserCouponsResponse userCouponResponse = new UserCouponsResponse(userCouponResponses);
     return ResponseEntity.ok(GrobleResponse.success(userCouponResponse));
   }
-  //
-  //          List<UserCouponResponse> userCouponResponses =
-  //
-  // userCouponResponseDtos.stream().map(couponMapper::toUserCouponsFromCouponDto).toList();
-  //    }
-  //    List<UserCouponResponse> userCouponResponses =
-  //        userCouponResponseDtos.stream().map(couponMapper::toUserCouponsFromCouponDto).toList();
-  //
-  //    UserCouponsResponse userCouponResponse = new UserCouponsResponse(userCouponResponses);
-  //
-  //    return ResponseEntity.ok(GrobleResponse.success(userCouponResponse));
-  //  }
 }
