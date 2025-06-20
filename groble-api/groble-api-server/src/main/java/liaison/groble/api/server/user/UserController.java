@@ -49,7 +49,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @RequestMapping("/api/v1")
 @Tag(
-    name = "[✅ 마이페이지] 마이페이지에서 사용하는 기능 관련 API",
+    name = "[👨‍💻 마이페이지] 마이페이지에서 사용하는 기능 관련 API",
     description = "마이페이지 조회, 프로필 이미지 업로드, 가입 유형 전환을 진행합니다.")
 public class UserController {
 
