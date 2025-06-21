@@ -78,7 +78,7 @@ public class IntegratedAccountAuthService {
     UserType userType = validateSignUpRequest(signUpDto);
     List<TermsType> agreedTermsTypes = validateAndProcessTerms(signUpDto, userType);
 
-    if (userReader.existsByIntegratedAccountEmail(signUpDto.getEmail())) {
+    if (userCustomRepository.existsByIntegratedAccountEmailAndPhoneNumber(signUpDto.getEmail())) {
       IntegratedAccount integratedAccount =
           userReader.getUserByIntegratedAccountEmail(signUpDto.getEmail());
       User existingUser = integratedAccount.getUser();
