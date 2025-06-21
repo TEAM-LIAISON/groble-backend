@@ -15,6 +15,7 @@ import liaison.groble.domain.terms.enums.TermsType;
 import liaison.groble.domain.terms.repository.TermsRepository;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.enums.UserType;
+import liaison.groble.domain.user.repository.UserRepository;
 import liaison.groble.domain.user.service.UserTermsService;
 
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Slf4j
 public class TermsHelper {
+  private final UserRepository userRepository;
   private final TermsRepository termsRepository;
   private final UserTermsService userTermsService;
   private final RequestUtil requestUtil;
@@ -145,7 +147,7 @@ public class TermsHelper {
 
     // User 엔티티에서 약관 동의 정보 제거
     user.getTermsAgreements().clear();
-
+    userRepository.save(user); // 이 한 줄로 JPA가 DB에서 DELETE 해줌
     log.info("기존 약관 동의 정보 제거 완료");
   }
 }

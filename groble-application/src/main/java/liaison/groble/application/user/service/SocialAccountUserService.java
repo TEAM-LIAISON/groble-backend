@@ -45,7 +45,7 @@ public class SocialAccountUserService {
     List<TermsType> agreedTermsTypes =
         termsHelper.convertToTermsTypes(socialBasicInfoDTO.getTermsTypeStrings());
     termsHelper.validateRequiredTermsAgreement(agreedTermsTypes, userType);
-
+    termsHelper.processTermsAgreements(user, agreedTermsTypes);
     // 사용자 정보 업데이트
     user.updateLastUserType(userType);
     if (userType == UserType.SELLER) {
