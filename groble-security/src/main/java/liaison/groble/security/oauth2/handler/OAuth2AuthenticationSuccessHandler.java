@@ -90,7 +90,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     if (!user.hasTermsAgreements()) {
       // UserType 선택 필요 - 로그인 처리하지 않고 회원가입 페이지로 리다이렉트
       log.info("UserType 미선택 사용자 - 회원가입 페이지로 리다이렉트");
-      targetUrl = frontendDomain + "/auth/sign-up/user-type";
+      targetUrl = frontendDomain + "/auth/sign-up/user-type?type=social";
     } else if (user.getUserProfile() != null && user.getUserProfile().getPhoneNumber() != null) {
       // 온보딩 마친 사람 - 정상적인 리다이렉트
       log.info("온보딩 완료된 사용자 - 정상 로그인 처리");
