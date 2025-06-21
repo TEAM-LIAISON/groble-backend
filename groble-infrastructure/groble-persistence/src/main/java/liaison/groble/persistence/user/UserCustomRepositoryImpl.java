@@ -19,6 +19,7 @@ import liaison.groble.domain.user.dto.FlatAdminUserSummaryInfoDTO;
 import liaison.groble.domain.user.entity.QIntegratedAccount;
 import liaison.groble.domain.user.entity.QSocialAccount;
 import liaison.groble.domain.user.entity.QUser;
+import liaison.groble.domain.user.enums.UserStatus;
 import liaison.groble.domain.user.repository.UserCustomRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -45,7 +46,9 @@ public class UserCustomRepositoryImpl implements UserCustomRepository {
                     .integratedAccountEmail
                     .eq(integratedAccountEmail)
                     .and(qUser.userProfile.isNotNull())
-                    .and(qUser.userProfile.phoneNumber.isNotNull()))
+                    .and(qUser.userProfile.phoneNumber.isNotNull())
+                    .and(qUser.userStatusInfo.isNotNull())
+                    .and(qUser.userStatusInfo.status.eq(UserStatus.ACTIVE)))
             .fetchFirst()
         != null;
   }
