@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import liaison.groble.common.request.RequestUtil;
 import liaison.groble.domain.terms.entity.Terms;
@@ -15,8 +16,8 @@ import liaison.groble.domain.terms.enums.TermsType;
 import liaison.groble.domain.terms.repository.TermsRepository;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.enums.UserType;
-import liaison.groble.domain.user.repository.UserRepository;
 import liaison.groble.domain.user.service.UserTermsService;
+import liaison.groble.persistence.terms.UserTermsCustomRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Slf4j
 public class TermsHelper {
-  private final UserRepository userRepository;
+  private final UserTermsCustomRepository userTermsCustomRepository;
   private final TermsRepository termsRepository;
   private final UserTermsService userTermsService;
   private final RequestUtil requestUtil;
@@ -83,6 +84,7 @@ public class TermsHelper {
    * @param user 사용자 엔티티
    * @param agreedTermsTypes 동의한 약관 유형 리스트
    */
+  @Transactional
   public void processTermsAgreements(User user, List<TermsType> agreedTermsTypes) {
     log.info("약관 동의 처리 시작 - 사용자 ID: {}, 동의한 약관 수: {}", user.getId(), agreedTermsTypes.size());
 
@@ -138,16 +140,18 @@ public class TermsHelper {
   }
 
   /**
-   * 기존 약관 동의 정보를 제거합니다.
+   * 기존 약관 동의 정보를 제거합니다. orphanRemoval = true가 설정되어 있으므로 컬렉션에서만 제거하면 JPA가 자동으로 DB에서도 삭제합니다.
    *
    * @param user 사용자 엔티티
    */
   private void clearExistingTermsAgreements(User user) {
     log.info("기존 약관 동의 정보 제거 시작");
 
-    // User 엔티티에서 약관 동의 정보 제거
+    // Repository를 통해 직접 삭제
+    userTermsCustomRepository.deleteAllByUserId(user.getId());
+    // 컬렉션도 비워줌
     user.getTermsAgreements().clear();
-    userRepository.save(user); // 이 한 줄로 JPA가 DB에서 DELETE 해줌
+
     log.info("기존 약관 동의 정보 제거 완료");
   }
 }
