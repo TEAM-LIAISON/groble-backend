@@ -77,8 +77,23 @@ public class IntegratedAccountAuthService {
     // 1. 사전 검증
     UserType userType = validateSignUpRequest(signUpDto);
     List<TermsType> agreedTermsTypes = validateAndProcessTerms(signUpDto, userType);
+    // 1. 해당 이메일로 가입한 사람이 있고 전화번호도 기입한 사람 -> EmailAlreadyExistsException 발생
+    authValidationHelper.validateEmailNotRegistered(signUpDto.getEmail());
+    if (!userReader.existsByIntegratedAccountEmail(signUpDto.getEmail())) {
+      // 2. 사용자 생성 및 설정
+      User user = createAndSetupUser(signUpDto, userType, agreedTermsTypes);
 
-    if (userCustomRepository.existsByIntegratedAccountEmailAndPhoneNumber(signUpDto.getEmail())) {
+      // 3. 사용자 저장 및 후처리
+      User savedUser = userRepository.save(user);
+
+      // 4. 토큰 발급 및 저장
+      TokenDto tokenDto = issueAndSaveTokens(savedUser);
+
+      // 5. 비동기 후처리 작업
+      processPostSignUpTasks(signUpDto.getEmail(), savedUser);
+
+      return buildSignUpResult(signUpDto.getEmail(), tokenDto);
+    } else {
       IntegratedAccount integratedAccount =
           userReader.getUserByIntegratedAccountEmail(signUpDto.getEmail());
       User existingUser = integratedAccount.getUser();
@@ -92,20 +107,6 @@ public class IntegratedAccountAuthService {
       User savedUser = userRepository.save(existingUser);
       TokenDto tokenDto = tokenHelper.issueTokens(savedUser);
       processPostSignUpTasks(signUpDto.getEmail(), savedUser);
-      return buildSignUpResult(signUpDto.getEmail(), tokenDto);
-    } else {
-      // 2. 사용자 생성 및 설정
-      User user = createAndSetupUser(signUpDto, userType, agreedTermsTypes);
-
-      // 3. 사용자 저장 및 후처리
-      User savedUser = userRepository.save(user);
-
-      // 4. 토큰 발급 및 저장
-      TokenDto tokenDto = issueAndSaveTokens(savedUser);
-
-      // 5. 비동기 후처리 작업
-      processPostSignUpTasks(signUpDto.getEmail(), savedUser);
-
       return buildSignUpResult(signUpDto.getEmail(), tokenDto);
     }
   }
