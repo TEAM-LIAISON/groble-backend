@@ -40,13 +40,6 @@ public interface UserService {
   void setOrUpdatePassword(Long userId, String password);
 
   /**
-   * 비밀번호 재설정 토큰 발송
-   *
-   * @param email 비밀번호를 재설정할 이메일
-   */
-  void sendPasswordResetToken(String email);
-
-  /**
    * 비밀번호 재설정
    *
    * @param token 비밀번호 재설정 토큰

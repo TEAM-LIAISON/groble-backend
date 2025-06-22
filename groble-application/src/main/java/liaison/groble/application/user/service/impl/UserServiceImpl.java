@@ -118,22 +118,6 @@ public class UserServiceImpl implements UserService {
   }
 
   @Override
-  public void sendPasswordResetToken(String email) {
-    IntegratedAccount integratedAccount =
-        integratedAccountRepository
-            .findByIntegratedAccountEmail(email)
-            .orElseThrow(() -> new IllegalArgumentException("해당 이메일로 가입된 사용자가 없습니다."));
-
-    // 2. 토큰 생성 (이메일 기반 JWT)
-    String token =
-        securityPort.createPasswordResetToken(
-            email, passwordResetSecret, PASSWORD_RESET_EXPIRATION_MINUTES);
-
-    // 메일 발송
-    String resetUrl = frontendUrl + "/reset-password?token=" + token;
-  }
-
-  @Override
   public void resetPasswordWithToken(String token, String newPassword) {
     // 토큰 검증 및 이메일 추출
     String email = securityPort.validatePasswordResetTokenAndGetEmail(token, passwordResetSecret);
