@@ -70,7 +70,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     qContent.status.stringValue().as("status")))
             .from(qContent)
             .leftJoin(qContent.user, qUser)
-            .where(qContent.isRepresentative.isTrue(), qContent.user.id.eq(user.getId()))
+            .where(qContent.user.id.eq(qUser.id).and(qContent.isRepresentative.isTrue()))
             .fetchOne();
 
     return Optional.ofNullable(result);

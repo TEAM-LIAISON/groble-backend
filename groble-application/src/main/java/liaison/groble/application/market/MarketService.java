@@ -1,5 +1,6 @@
 package liaison.groble.application.market;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
@@ -8,8 +9,10 @@ import org.springframework.transaction.annotation.Transactional;
 import liaison.groble.application.content.ContentReader;
 import liaison.groble.application.market.dto.ContactInfoDTO;
 import liaison.groble.application.market.dto.MarketIntroSectionDTO;
+import liaison.groble.application.sell.SellerContactReader;
 import liaison.groble.application.user.service.MakerReader;
 import liaison.groble.domain.content.dto.FlatContentPreviewDTO;
+import liaison.groble.domain.user.entity.SellerContact;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.vo.SellerInfo;
 
@@ -24,7 +27,7 @@ public class MarketService {
   private final MakerReader makerReader;
 
   // SellerContact 조회를 위한 Reader 필요 (추가해야 할 의존성)
-  // private final SellerContactReader sellerContactReader;
+  private final SellerContactReader sellerContactReader;
   private final ContentReader contentReader;
 
   @Transactional(readOnly = true)
@@ -45,12 +48,8 @@ public class MarketService {
   private ContactInfoDTO getContactInfo(User user) {
     try {
       // TODO: SellerContactReader를 통해 연락처 정보 조회
-      // List<SellerContact> contacts = sellerContactReader.getContactsByUser(user);
-      // return ContactInfoDTO.fromSellerContacts(contacts);
-
-      // 임시로 빈 ContactInfoDTO 반환
-      return ContactInfoDTO.builder().build();
-
+      List<SellerContact> contacts = sellerContactReader.getContactsByUser(user);
+      return ContactInfoDTO.from(contacts);
     } catch (Exception e) {
       log.error("Error occurred while getting contact info for user: {}", user.getId(), e);
       return ContactInfoDTO.builder().build();
