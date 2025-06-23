@@ -1,6 +1,6 @@
 package liaison.groble.application.market.dto;
 
-import liaison.groble.application.content.dto.ContentCardDTO;
+import liaison.groble.domain.content.dto.FlatContentPreviewDTO;
 
 import lombok.Builder;
 import lombok.Getter;
@@ -21,5 +21,5 @@ public class MarketIntroSectionDTO {
   private ContactInfoDTO contactInfo;
 
   // 대표 콘텐츠 정보
-  private ContentCardDTO representativeContent;
+  private FlatContentPreviewDTO representativeContent;
 }

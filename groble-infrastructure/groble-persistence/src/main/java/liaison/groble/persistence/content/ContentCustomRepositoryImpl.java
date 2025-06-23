@@ -35,6 +35,7 @@ import liaison.groble.domain.content.enums.ContentStatus;
 import liaison.groble.domain.content.enums.ContentType;
 import liaison.groble.domain.content.repository.ContentCustomRepository;
 import liaison.groble.domain.user.entity.QUser;
+import liaison.groble.domain.user.entity.User;
 
 import lombok.RequiredArgsConstructor;
 
@@ -43,6 +44,37 @@ import lombok.RequiredArgsConstructor;
 public class ContentCustomRepositoryImpl implements ContentCustomRepository {
 
   private final JPAQueryFactory queryFactory;
+
+  @Override
+  public Optional<FlatContentPreviewDTO> findRepresentativeContentByUser(User user) {
+    QContent qContent = QContent.content;
+    QUser qUser = QUser.user;
+    QContentOption qContentOption = QContentOption.contentOption;
+
+    FlatContentPreviewDTO result =
+        queryFactory
+            .select(
+                Projections.fields(
+                    FlatContentPreviewDTO.class,
+                    qContent.id.as("contentId"),
+                    qContent.createdAt.as("createdAt"),
+                    qContent.title.as("title"),
+                    qContent.thumbnailUrl.as("thumbnailUrl"),
+                    qUser.userProfile.nickname.as("sellerName"),
+                    qContent.lowestPrice.as("lowestPrice"),
+                    ExpressionUtils.as(
+                        select(qContentOption.count().intValue())
+                            .from(qContentOption)
+                            .where(qContentOption.content.eq(qContent)),
+                        "priceOptionLength"),
+                    qContent.status.stringValue().as("status")))
+            .from(qContent)
+            .leftJoin(qContent.user, qUser)
+            .where(qContent.isRepresentative.isTrue(), qContent.user.id.eq(user.getId()))
+            .fetchOne();
+
+    return Optional.ofNullable(result);
+  }
 
   @Override
   public Optional<FlatContentPreviewDTO> findFlatContentById(Long contentId) {

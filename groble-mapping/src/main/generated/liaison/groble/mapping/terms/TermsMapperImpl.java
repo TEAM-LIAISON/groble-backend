@@ -9,7 +9,7 @@ import liaison.groble.application.terms.dto.MakerTermsAgreementDTO;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-06-18T00:58:39+0900",
+    date = "2025-06-23T18:56:16+0900",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.10 (Amazon.com Inc.)")
 @Component
 public class TermsMapperImpl implements TermsMapper {

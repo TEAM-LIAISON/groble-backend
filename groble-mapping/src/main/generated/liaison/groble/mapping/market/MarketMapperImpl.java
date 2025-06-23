@@ -7,13 +7,13 @@ import org.springframework.stereotype.Component;
 import liaison.groble.api.model.content.response.ContentPreviewCardResponse;
 import liaison.groble.api.model.maker.response.ContactInfoResponse;
 import liaison.groble.api.model.maker.response.MakerIntroSectionResponse;
-import liaison.groble.application.content.dto.ContentCardDTO;
 import liaison.groble.application.market.dto.ContactInfoDTO;
 import liaison.groble.application.market.dto.MarketIntroSectionDTO;
+import liaison.groble.domain.content.dto.FlatContentPreviewDTO;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-06-23T16:53:12+0900",
+    date = "2025-06-23T18:56:16+0900",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.10 (Amazon.com Inc.)")
 @Component
 public class MarketMapperImpl implements MarketMapper {
@@ -43,7 +43,7 @@ public class MarketMapperImpl implements MarketMapper {
     }
     if (marketIntroSectionDTO.getRepresentativeContent() != null) {
       makerIntroSectionResponse.representativeContent(
-          contentCardDTOToContentPreviewCardResponse(
+          flatContentPreviewDTOToContentPreviewCardResponse(
               marketIntroSectionDTO.getRepresentativeContent()));
     }
 
@@ -75,36 +75,36 @@ public class MarketMapperImpl implements MarketMapper {
     return contactInfoResponse.build();
   }
 
-  protected ContentPreviewCardResponse contentCardDTOToContentPreviewCardResponse(
-      ContentCardDTO contentCardDTO) {
-    if (contentCardDTO == null) {
+  protected ContentPreviewCardResponse flatContentPreviewDTOToContentPreviewCardResponse(
+      FlatContentPreviewDTO flatContentPreviewDTO) {
+    if (flatContentPreviewDTO == null) {
       return null;
     }
 
     ContentPreviewCardResponse.ContentPreviewCardResponseBuilder contentPreviewCardResponse =
         ContentPreviewCardResponse.builder();
 
-    if (contentCardDTO.getContentId() != null) {
-      contentPreviewCardResponse.contentId(contentCardDTO.getContentId());
+    if (flatContentPreviewDTO.getContentId() != null) {
+      contentPreviewCardResponse.contentId(flatContentPreviewDTO.getContentId());
     }
-    if (contentCardDTO.getCreatedAt() != null) {
-      contentPreviewCardResponse.createdAt(contentCardDTO.getCreatedAt());
+    if (flatContentPreviewDTO.getCreatedAt() != null) {
+      contentPreviewCardResponse.createdAt(flatContentPreviewDTO.getCreatedAt());
     }
-    if (contentCardDTO.getTitle() != null) {
-      contentPreviewCardResponse.title(contentCardDTO.getTitle());
+    if (flatContentPreviewDTO.getTitle() != null) {
+      contentPreviewCardResponse.title(flatContentPreviewDTO.getTitle());
     }
-    if (contentCardDTO.getThumbnailUrl() != null) {
-      contentPreviewCardResponse.thumbnailUrl(contentCardDTO.getThumbnailUrl());
+    if (flatContentPreviewDTO.getThumbnailUrl() != null) {
+      contentPreviewCardResponse.thumbnailUrl(flatContentPreviewDTO.getThumbnailUrl());
     }
-    if (contentCardDTO.getSellerName() != null) {
-      contentPreviewCardResponse.sellerName(contentCardDTO.getSellerName());
+    if (flatContentPreviewDTO.getSellerName() != null) {
+      contentPreviewCardResponse.sellerName(flatContentPreviewDTO.getSellerName());
     }
-    if (contentCardDTO.getLowestPrice() != null) {
-      contentPreviewCardResponse.lowestPrice(contentCardDTO.getLowestPrice());
+    if (flatContentPreviewDTO.getLowestPrice() != null) {
+      contentPreviewCardResponse.lowestPrice(flatContentPreviewDTO.getLowestPrice());
     }
-    contentPreviewCardResponse.priceOptionLength(contentCardDTO.getPriceOptionLength());
-    if (contentCardDTO.getStatus() != null) {
-      contentPreviewCardResponse.status(contentCardDTO.getStatus());
+    contentPreviewCardResponse.priceOptionLength(flatContentPreviewDTO.getPriceOptionLength());
+    if (flatContentPreviewDTO.getStatus() != null) {
+      contentPreviewCardResponse.status(flatContentPreviewDTO.getStatus());
     }
 
     return contentPreviewCardResponse.build();

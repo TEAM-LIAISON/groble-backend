@@ -6,10 +6,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import liaison.groble.application.content.ContentReader;
-import liaison.groble.application.content.dto.ContentCardDTO;
 import liaison.groble.application.market.dto.ContactInfoDTO;
 import liaison.groble.application.market.dto.MarketIntroSectionDTO;
 import liaison.groble.application.user.service.MakerReader;
+import liaison.groble.domain.content.dto.FlatContentPreviewDTO;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.vo.SellerInfo;
 
@@ -36,7 +36,7 @@ public class MarketService {
     ContactInfoDTO contactInfo = getContactInfo(user);
 
     // 대표 콘텐츠 조회
-    ContentCardDTO representativeContent = getRepresentativeContent(user);
+    FlatContentPreviewDTO representativeContent = getRepresentativeContent(user);
 
     // 메이커 소개 섹션 빌드 결과
     return buildMarketIntroSectionResult(user, contactInfo, representativeContent);
@@ -57,10 +57,9 @@ public class MarketService {
     }
   }
 
-  private ContentCardDTO getRepresentativeContent(User user) {
+  private FlatContentPreviewDTO getRepresentativeContent(User user) {
     try {
-      //        contentReader.getRepresentativeContentByUser(user);
-      return null;
+      return contentReader.getRepresentativeContentByUser(user);
     } catch (Exception e) {
       log.error(
           "Error occurred while getting representative content for user: {}", user.getId(), e);
@@ -69,13 +68,13 @@ public class MarketService {
   }
 
   private MarketIntroSectionDTO buildMarketIntroSectionResult(
-      User user, ContactInfoDTO contactInfo, ContentCardDTO contentCardDTO) {
+      User user, ContactInfoDTO contactInfo, FlatContentPreviewDTO flatContentPreviewDTO) {
     return MarketIntroSectionDTO.builder()
         .profileImageUrl(user.getProfileImageUrl())
         .marketName(getMarketNameSafely(user))
         .verificationStatus(getVerificationStatusSafely(user))
         .contactInfo(Optional.ofNullable(contactInfo).orElse(ContactInfoDTO.builder().build()))
-        .representativeContent(contentCardDTO) // null 허용
+        .representativeContent(flatContentPreviewDTO)
         .build();
   }
 
