@@ -22,6 +22,12 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class SellerInfo {
+  @Column(name = "market_name", length = 30)
+  private String marketName;
+
+  @Column(name = "market_link_url", length = 32)
+  private String marketLinkUrl;
+
   /** 사업자 유형 (개인사업자-간이과세자, 개인사업자-일반과세자, 법인사업자) */
   @Column(name = "business_type")
   @Enumerated(EnumType.STRING)

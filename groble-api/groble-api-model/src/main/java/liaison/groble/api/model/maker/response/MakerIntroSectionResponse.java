@@ -24,6 +24,9 @@ public class MakerIntroSectionResponse {
   // 인증 상태
   private String verificationStatus;
 
+  // 판매자의 문의하기 (연락처 수단) 정보
+  private ContactInfoResponse contactInfo;
+
   // 대표 콘텐츠 정보
   private ContentPreviewCardResponse representativeContent;
 }

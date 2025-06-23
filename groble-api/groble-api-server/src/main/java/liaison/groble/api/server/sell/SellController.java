@@ -25,7 +25,7 @@ import liaison.groble.api.model.content.response.swagger.ContentExamineReject;
 import liaison.groble.api.model.content.response.swagger.ContentRegister;
 import liaison.groble.api.model.content.response.swagger.MySellingContents;
 import liaison.groble.api.server.content.mapper.ContentDtoMapper;
-import liaison.groble.application.content.dto.ContentCardDto;
+import liaison.groble.application.content.dto.ContentCardDTO;
 import liaison.groble.application.content.dto.ContentDto;
 import liaison.groble.application.content.service.ContentService;
 import liaison.groble.common.annotation.Auth;
@@ -141,7 +141,7 @@ public class SellController {
               @RequestParam(value = "type")
               String type) {
 
-    CursorResponse<ContentCardDto> cardDtos =
+    CursorResponse<ContentCardDTO> cardDtos =
         contentService.getMySellingContents(
             accessor.getUserId(), cursorRequest.getCursor(), cursorRequest.getSize(), state, type);
 

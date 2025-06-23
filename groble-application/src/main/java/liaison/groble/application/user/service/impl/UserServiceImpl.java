@@ -168,6 +168,7 @@ public class UserServiceImpl implements UserService {
     String email = null;
     String phoneNumber = null;
     String providerTypeName = null;
+    String verificationStatus = null;
 
     if (accountType == AccountType.INTEGRATED && user.getIntegratedAccount() != null) {
       IntegratedAccount account = user.getIntegratedAccount();
@@ -186,6 +187,10 @@ public class UserServiceImpl implements UserService {
         !user.hasAgreedTo(TermsType.SELLER_TERMS_POLICY) || user.getPhoneNumber() == null;
     log.info("sellerAccountNotCreated: {}", sellerAccountNotCreated);
 
+    if (user.getSellerInfo() != null) {
+      verificationStatus = user.getSellerInfo().getVerificationStatus().name();
+    }
+
     return UserMyPageDetailDto.builder()
         .nickname(user.getNickname())
         .userTypeName(user.getLastUserType().name())
@@ -196,6 +201,8 @@ public class UserServiceImpl implements UserService {
         .phoneNumber(phoneNumber)
         .canSwitchToSeller(canSwitchToSeller)
         .sellerAccountNotCreated(sellerAccountNotCreated)
+        .verificationStatus(verificationStatus)
+        .alreadyRegisteredAsSeller(user.isSeller())
         .build();
   }
 

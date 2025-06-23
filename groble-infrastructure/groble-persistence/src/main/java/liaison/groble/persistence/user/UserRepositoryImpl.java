@@ -28,6 +28,11 @@ public class UserRepositoryImpl implements UserRepository {
   }
 
   @Override
+  public Optional<User> findBySellerInfoMarketName(String marketName) {
+    return jpaUserRepository.findBySellerInfoMarketName(marketName);
+  }
+
+  @Override
   public User save(User user) {
     return jpaUserRepository.save(user);
   }

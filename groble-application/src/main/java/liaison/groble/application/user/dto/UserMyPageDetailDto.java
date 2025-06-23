@@ -21,4 +21,6 @@ public class UserMyPageDetailDto {
   private String phoneNumber;
   private boolean canSwitchToSeller;
   private boolean sellerAccountNotCreated;
+  private String verificationStatus;
+  private boolean alreadyRegisteredAsSeller;
 }

@@ -47,6 +47,10 @@ public class QSellerInfo extends BeanPath<SellerInfo> {
 
     public final DateTimePath<java.time.LocalDateTime> lastVerificationAttempt = createDateTime("lastVerificationAttempt", java.time.LocalDateTime.class);
 
+    public final StringPath marketLinkUrl = createString("marketLinkUrl");
+
+    public final StringPath marketName = createString("marketName");
+
     public final StringPath representativeName = createString("representativeName");
 
     public final StringPath taxInvoiceEmail = createString("taxInvoiceEmail");

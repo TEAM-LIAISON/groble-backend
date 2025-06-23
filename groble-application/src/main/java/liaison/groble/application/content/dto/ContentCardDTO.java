@@ -8,7 +8,7 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public class ContentCardDto {
+public class ContentCardDTO {
   private Long contentId;
   private LocalDateTime createdAt;
   private String title;

@@ -153,7 +153,8 @@ public class SecurityConfig {
                         "/api/v1/auth/phone-number/verify-request",
                         "/api/v1/auth/phone-number/verify-code",
                         "/api/v1/auth/password/reset-request",
-                        "/api/v1/auth/password/reset")
+                        "/api/v1/auth/password/reset",
+                        "/api/v1/market/view/intro/**")
                     .permitAll()
                     .requestMatchers("/api/v1/oauth2/**")
                     .permitAll()

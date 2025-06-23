@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import liaison.groble.application.content.ContentReader;
-import liaison.groble.application.content.dto.ContentCardDto;
+import liaison.groble.application.content.dto.ContentCardDTO;
 import liaison.groble.application.content.dto.ContentDetailDto;
 import liaison.groble.application.content.dto.ContentDto;
 import liaison.groble.application.content.dto.ContentOptionDto;
@@ -369,7 +369,7 @@ public class ContentService {
   }
 
   @Transactional(readOnly = true)
-  public CursorResponse<ContentCardDto> getMySellingContents(
+  public CursorResponse<ContentCardDTO> getMySellingContents(
       Long userId, String cursor, int size, String state, String type) {
     Long lastContentId = parseContentIdFromCursor(cursor);
     List<ContentStatus> contentStatusList = parseContentStatusList(state);
@@ -379,7 +379,7 @@ public class ContentService {
         contentCustomRepository.findMySellingContentsWithCursor(
             userId, lastContentId, size, contentStatusList, contentType);
 
-    List<ContentCardDto> cardDtos =
+    List<ContentCardDTO> cardDtos =
         flatDtos.getItems().stream()
             .map(this::convertFlatDtoToCardDto)
             .collect(Collectors.toList());
@@ -388,7 +388,7 @@ public class ContentService {
         contentCustomRepository.countMySellingContents(userId, contentStatusList, contentType);
 
     // 응답 구성
-    return CursorResponse.<ContentCardDto>builder()
+    return CursorResponse.<ContentCardDTO>builder()
         .items(cardDtos)
         .nextCursor(flatDtos.getNextCursor())
         .hasNext(flatDtos.isHasNext())
@@ -404,7 +404,7 @@ public class ContentService {
    * @return 콘텐츠 카드 DTO 목록
    */
   @Transactional(readOnly = true)
-  public List<ContentCardDto> getHomeContentsList(String type) {
+  public List<ContentCardDTO> getHomeContentsList(String type) {
     // 콘텐츠 타입 파싱
     ContentType contentType = parseContentType(type);
 
@@ -416,19 +416,19 @@ public class ContentService {
   }
 
   @Transactional(readOnly = true)
-  public CursorResponse<ContentCardDto> getHomeContents(String cursor, int size, String type) {
+  public CursorResponse<ContentCardDTO> getHomeContents(String cursor, int size, String type) {
     Long lastContentId = parseContentIdFromCursor(cursor);
     ContentType contentType = parseContentType(type);
 
     CursorResponse<FlatContentPreviewDTO> flatDtos =
         contentCustomRepository.findHomeContentsWithCursor(lastContentId, size, contentType);
 
-    List<ContentCardDto> cardDtos =
+    List<ContentCardDTO> cardDtos =
         flatDtos.getItems().stream()
             .map(this::convertFlatDtoToCardDto)
             .collect(Collectors.toList());
 
-    return CursorResponse.<ContentCardDto>builder()
+    return CursorResponse.<ContentCardDTO>builder()
         .items(cardDtos)
         .nextCursor(flatDtos.getNextCursor())
         .hasNext(flatDtos.isHasNext())
@@ -668,8 +668,8 @@ public class ContentService {
   }
 
   /** FlatPreviewContentDTO를 ContentCardDto로 변환합니다. */
-  private ContentCardDto convertFlatDtoToCardDto(FlatContentPreviewDTO flat) {
-    return ContentCardDto.builder()
+  private ContentCardDTO convertFlatDtoToCardDto(FlatContentPreviewDTO flat) {
+    return ContentCardDTO.builder()
         .contentId(flat.getContentId())
         .createdAt(flat.getCreatedAt())
         .title(flat.getTitle())
@@ -923,7 +923,7 @@ public class ContentService {
 
   /** 카테고리 ID가 null 이면 타입만, 아니면 카테고리＋타입으로 조회 */
   @Transactional(readOnly = true)
-  public PageResponse<ContentCardDto> getCoachingContentsByCategory(
+  public PageResponse<ContentCardDTO> getCoachingContentsByCategory(
       List<String> categoryIds, Pageable pageable) {
 
     if (categoryIds == null || categoryIds.isEmpty()) {
@@ -936,7 +936,7 @@ public class ContentService {
   }
 
   @Transactional(readOnly = true)
-  public PageResponse<ContentCardDto> getDocumentContentsByCategory(
+  public PageResponse<ContentCardDTO> getDocumentContentsByCategory(
       List<String> categoryIds, Pageable pageable) {
     if (categoryIds == null || categoryIds.isEmpty()) {
       return getContentsByType(ContentType.DOCUMENT, pageable);
@@ -946,9 +946,9 @@ public class ContentService {
   }
 
   // 타입만 조회
-  private PageResponse<ContentCardDto> getContentsByType(ContentType type, Pageable pageable) {
+  private PageResponse<ContentCardDTO> getContentsByType(ContentType type, Pageable pageable) {
     Page<FlatContentPreviewDTO> page = contentCustomRepository.findContentsByType(type, pageable);
-    List<ContentCardDto> items =
+    List<ContentCardDTO> items =
         page.getContent().stream().map(this::convertFlatDtoToCardDto).toList();
 
     PageResponse.MetaData meta =
@@ -961,12 +961,12 @@ public class ContentService {
   }
 
   // 기존 카테고리＋타입 조회
-  private PageResponse<ContentCardDto> getContentsByCategoriesAndType(
+  private PageResponse<ContentCardDTO> getContentsByCategoriesAndType(
       List<String> categoryIds, ContentType type, Pageable pageable) {
     Page<FlatContentPreviewDTO> page =
         contentCustomRepository.findContentsByCategoriesAndType(categoryIds, type, pageable);
 
-    List<ContentCardDto> items =
+    List<ContentCardDTO> items =
         page.getContent().stream().map(this::convertFlatDtoToCardDto).toList();
 
     PageResponse.MetaData meta =
