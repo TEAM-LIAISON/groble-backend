@@ -39,11 +39,17 @@ public class ContentReader {
         .orElseThrow(() -> new EntityNotFoundException("콘텐츠를 찾을 수 없습니다. ID: " + contentId));
   }
 
+  // ===== 메이커의 대표 Content 조회 =====
   public FlatContentPreviewDTO getRepresentativeContentByUser(User user) {
     return contentCustomRepository
         .findRepresentativeContentByUser(user)
         .orElseThrow(
             () -> new EntityNotFoundException("해당 유저가 소유한 대표 콘텐츠를 찾을 수 없습니다. ID: " + user.getId()));
+  }
+
+  // ===== 마켓 목록에 들어가는 모든 콘텐츠(페이지네이션) 조회 =====
+  public Page<FlatContentPreviewDTO> findAllMarketContentsByUserId(Long userId, Pageable pageable) {
+    return contentCustomRepository.findAllMarketContentsByUserId(userId, pageable);
   }
 
   public Page<FlatAdminContentSummaryInfoDTO> findContentsByPageable(Pageable pageable) {

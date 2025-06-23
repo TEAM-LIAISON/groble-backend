@@ -3,14 +3,18 @@ package liaison.groble.application.market;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import liaison.groble.application.content.ContentReader;
+import liaison.groble.application.content.dto.ContentCardDTO;
 import liaison.groble.application.market.dto.ContactInfoDTO;
 import liaison.groble.application.market.dto.MarketIntroSectionDTO;
 import liaison.groble.application.sell.SellerContactReader;
 import liaison.groble.application.user.service.MakerReader;
+import liaison.groble.common.response.PageResponse;
 import liaison.groble.domain.content.dto.FlatContentPreviewDTO;
 import liaison.groble.domain.user.entity.SellerContact;
 import liaison.groble.domain.user.entity.User;
@@ -43,6 +47,24 @@ public class MarketService {
 
     // 메이커 소개 섹션 빌드 결과
     return buildMarketIntroSectionResult(user, contactInfo, representativeContent);
+  }
+
+  @Transactional(readOnly = true)
+  public PageResponse<ContentCardDTO> getMarketContents(String marketName, Pageable pageable) {
+    // 마켓 이름으로 메이커 조회
+    User user = makerReader.getUserByMarketName(marketName);
+    Page<FlatContentPreviewDTO> page =
+        contentReader.findAllMarketContentsByUserId(user.getId(), pageable);
+    List<ContentCardDTO> items =
+        page.getContent().stream().map(this::convertFlatDtoToCardDto).toList();
+
+    PageResponse.MetaData meta =
+        PageResponse.MetaData.builder()
+            .sortBy(pageable.getSort().iterator().next().getProperty())
+            .sortDirection(pageable.getSort().iterator().next().getDirection().name())
+            .build();
+
+    return PageResponse.from(page, items, meta);
   }
 
   private ContactInfoDTO getContactInfo(User user) {
@@ -96,5 +118,19 @@ public class MarketService {
       log.warn("Error getting verification status for user: {}", user.getId(), e);
       return "UNVERIFIED";
     }
+  }
+
+  /** FlatPreviewContentDTO를 ContentCardDto로 변환합니다. */
+  private ContentCardDTO convertFlatDtoToCardDto(FlatContentPreviewDTO flat) {
+    return ContentCardDTO.builder()
+        .contentId(flat.getContentId())
+        .createdAt(flat.getCreatedAt())
+        .title(flat.getTitle())
+        .thumbnailUrl(flat.getThumbnailUrl())
+        .sellerName(flat.getSellerName())
+        .lowestPrice(flat.getLowestPrice())
+        .priceOptionLength(flat.getPriceOptionLength())
+        .status(flat.getStatus())
+        .build();
   }
 }

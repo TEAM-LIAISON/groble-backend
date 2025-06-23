@@ -44,6 +44,8 @@ public interface ContentCustomRepository {
   Page<FlatContentPreviewDTO> findContentsByCategoriesAndType(
       List<String> categoryId, ContentType contentType, Pageable pageable);
 
+  Page<FlatContentPreviewDTO> findAllMarketContentsByUserId(Long userId, Pageable pageable);
+
   int countMySellingContents(
       Long userId, List<ContentStatus> contentStatusList, ContentType contentType);
 
