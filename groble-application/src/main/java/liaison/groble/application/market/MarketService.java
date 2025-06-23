@@ -1,6 +1,7 @@
 package liaison.groble.application.market;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -11,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import liaison.groble.application.content.ContentReader;
 import liaison.groble.application.content.dto.ContentCardDTO;
 import liaison.groble.application.market.dto.ContactInfoDTO;
+import liaison.groble.application.market.dto.MarketEditDTO;
 import liaison.groble.application.market.dto.MarketIntroSectionDTO;
 import liaison.groble.application.sell.SellerContactReader;
 import liaison.groble.application.user.service.MakerReader;
@@ -65,6 +67,23 @@ public class MarketService {
             .build();
 
     return PageResponse.from(page, items, meta);
+  }
+
+  @Transactional
+  public void editMarket(Long userId, String marketName, MarketEditDTO marketEditDTO) {
+    // 마켓 이름으로 메이커 조회
+    User user = makerReader.getUserByMarketName(marketName);
+    if (!Objects.equals(user.getId(), userId)) {
+      throw new IllegalArgumentException("User ID does not match the market name.");
+    }
+
+    // 메이커 정보 업데이트
+    try {
+      user.updateProfileImageUrl(marketEditDTO.getProfileImageUrl());
+    } catch (Exception e) {
+      log.error("Error occurred while updating market information for user: {}", user.getId(), e);
+      throw new RuntimeException("Failed to update market information", e);
+    }
   }
 
   private ContactInfoDTO getContactInfo(User user) {

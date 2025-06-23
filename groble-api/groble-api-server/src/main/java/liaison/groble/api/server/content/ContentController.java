@@ -45,7 +45,6 @@ import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.model.Accessor;
 import liaison.groble.common.response.GrobleResponse;
 import liaison.groble.common.response.PageResponse;
-import liaison.groble.mapping.content.ContentMapper;
 
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -64,7 +63,6 @@ import lombok.extern.slf4j.Slf4j;
 public class ContentController {
 
   private final ContentService contentService;
-  private final ContentMapper contentMapper;
   private final ContentDtoMapper contentDtoMapper;
   private final FileService fileService;
   private final FileDtoMapper fileDtoMapper;
