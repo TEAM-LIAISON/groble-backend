@@ -5,6 +5,7 @@ import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import liaison.groble.application.content.ContentReader;
 import liaison.groble.application.content.dto.ContentCardDTO;
 import liaison.groble.application.market.dto.ContactInfoDTO;
 import liaison.groble.application.market.dto.MarketIntroSectionDTO;
@@ -24,7 +25,7 @@ public class MarketService {
 
   // SellerContact 조회를 위한 Reader 필요 (추가해야 할 의존성)
   // private final SellerContactReader sellerContactReader;
-  // private final ContentReader contentReader;
+  private final ContentReader contentReader;
 
   @Transactional(readOnly = true)
   public MarketIntroSectionDTO getViewerMakerIntroSection(String marketName) {
@@ -58,12 +59,8 @@ public class MarketService {
 
   private ContentCardDTO getRepresentativeContent(User user) {
     try {
-      // TODO: ContentReader를 통해 대표 콘텐츠 조회
-      // return contentReader.getRepresentativeContentByUser(user);
-
-      // 임시로 null 반환
+      //        contentReader.getRepresentativeContentByUser(user);
       return null;
-
     } catch (Exception e) {
       log.error(
           "Error occurred while getting representative content for user: {}", user.getId(), e);
