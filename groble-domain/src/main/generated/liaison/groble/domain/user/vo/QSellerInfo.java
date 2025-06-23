@@ -49,10 +49,6 @@ public class QSellerInfo extends BeanPath<SellerInfo> {
 
     public final StringPath representativeName = createString("representativeName");
 
-    public final StringPath sellerContactType = createString("sellerContactType");
-
-    public final StringPath sellerContactUrl = createString("sellerContactUrl");
-
     public final StringPath taxInvoiceEmail = createString("taxInvoiceEmail");
 
     public final StringPath verificationMessage = createString("verificationMessage");

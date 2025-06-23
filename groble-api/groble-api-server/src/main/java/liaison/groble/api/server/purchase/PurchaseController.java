@@ -18,7 +18,6 @@ import liaison.groble.api.server.purchase.mapper.PurchaseDtoMapper;
 import liaison.groble.application.purchase.PurchaseService;
 import liaison.groble.application.purchase.dto.PurchaseContentCardDto;
 import liaison.groble.application.purchase.dto.PurchasedContentDetailResponse;
-import liaison.groble.application.purchase.dto.PurchasedContentSellerContactResponse;
 import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.model.Accessor;
 import liaison.groble.common.request.CursorRequest;
@@ -41,17 +40,18 @@ public class PurchaseController {
   private final PurchaseService purchaseService;
   private final PurchaseDtoMapper purchaseDtoMapper;
 
-  @Operation(
-      summary = "내가 구매한 콘텐츠의 판매자에게 문의하기 버튼 액션",
-      description =
-          "내가 구매한 콘텐츠의 판매자에게 문의하기 버튼을 클릭했을 때의 액션입니다. email, 카카오 오픈톡방 링크, 별도 링크 등 STRING 값이 반환됩니다.")
-  @GetMapping("/inquiry/{merchantUid}")
-  public ResponseEntity<GrobleResponse<PurchasedContentSellerContactResponse>> getSellerContact(
-      @Auth Accessor accessor, @Valid @PathVariable("merchantUid") String merchantUid) {
-    PurchasedContentSellerContactResponse response =
-        purchaseService.getSellerContact(accessor.getUserId(), merchantUid);
-    return ResponseEntity.ok(GrobleResponse.success(response));
-  }
+  //  @Operation(
+  //      summary = "내가 구매한 콘텐츠의 판매자에게 문의하기 버튼 액션",
+  //      description =
+  //          "내가 구매한 콘텐츠의 판매자에게 문의하기 버튼을 클릭했을 때의 액션입니다. email, 카카오 오픈톡방 링크, 별도 링크 등 STRING 값이
+  // 반환됩니다.")
+  //  @GetMapping("/inquiry/{merchantUid}")
+  //  public ResponseEntity<GrobleResponse<PurchasedContentSellerContactResponse>> getSellerContact(
+  //      @Auth Accessor accessor, @Valid @PathVariable("merchantUid") String merchantUid) {
+  //    PurchasedContentSellerContactResponse response =
+  //        purchaseService.getSellerContact(accessor.getUserId(), merchantUid);
+  //    return ResponseEntity.ok(GrobleResponse.success(response));
+  //  }
 
   @Operation(
       summary = "내가 구매한 콘텐츠 상세 조회",
