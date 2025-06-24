@@ -394,9 +394,10 @@ public class User extends BaseTimeEntity {
 
   // SellerInfo 관련 메서드
   public void updateMarketName(String marketName) {
-    if (sellerInfo == null) {
-      sellerInfo = SellerInfo.builder().build();
-    }
     sellerInfo.updateMarketName(marketName);
+  }
+
+  public void updateMarketLinkUrl(String marketLinkUrl) {
+    sellerInfo.updateMarketLinkUrl(marketLinkUrl);
   }
 }

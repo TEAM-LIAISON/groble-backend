@@ -75,6 +75,11 @@ public class MarketService {
     // userId로 사용자 조회
     User user = userReader.getUserById(userId);
 
+    // 마켓 이름이 일치하는지 확인
+    if (!user.getSellerInfo().getMarketName().equals(marketName)) {
+      throw new IllegalArgumentException("해당 마켓에 대한 소유권이 없습니다.");
+    }
+
     try {
       // 3. 변경 사항 추적을 위한 플래그
       boolean hasChanges = false;
@@ -85,8 +90,19 @@ public class MarketService {
         hasChanges = true;
       }
 
-    } catch (Exception e) {
+      if (marketEditDTO.getProfileImageUrl() != null
+          && !marketEditDTO.getProfileImageUrl().isBlank()) {
+        user.updateProfileImageUrl(marketEditDTO.getProfileImageUrl());
+        hasChanges = true;
+      }
 
+      if (marketEditDTO.getMarketLinkUrl() != null && !marketEditDTO.getMarketLinkUrl().isBlank()) {
+        user.updateMarketLinkUrl(marketEditDTO.getMarketLinkUrl());
+        hasChanges = true;
+      }
+    } catch (Exception e) {
+      log.error("Error occurred while editing market for user: {}", user.getId(), e);
+      throw new RuntimeException("마켓 수정 중 오류가 발생했습니다.", e);
     }
   }
 

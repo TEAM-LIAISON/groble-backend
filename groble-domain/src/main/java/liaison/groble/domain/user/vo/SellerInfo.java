@@ -219,6 +219,12 @@ public class SellerInfo {
     }
   }
 
+  public void updateMarketLinkUrl(String marketLinkUrl) {
+    if (marketLinkUrl != null && !marketLinkUrl.isBlank()) {
+      this.marketLinkUrl = marketLinkUrl;
+    }
+  }
+
   // 개인 메이커 은행 정보만 업데이트
   public void updatePersonalMakerBankInfo(
       String bankAccountOwner,
