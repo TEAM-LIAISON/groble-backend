@@ -28,7 +28,6 @@ import liaison.groble.domain.user.entity.IntegratedAccount;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.enums.UserType;
 import liaison.groble.domain.user.factory.UserFactory;
-import liaison.groble.domain.user.repository.UserCustomRepository;
 import liaison.groble.domain.user.repository.UserRepository;
 import liaison.groble.domain.user.service.UserStatusService;
 import liaison.groble.external.discord.dto.MemberCreateReportDto;
@@ -56,7 +55,6 @@ public class IntegratedAccountAuthService {
   // Repository
   private final UserReader userReader;
   private final UserRepository userRepository;
-  private final UserCustomRepository userCustomRepository;
 
   // Port
   private final SecurityPort securityPort;

@@ -108,10 +108,6 @@ public class SellerInfo {
     this.lastVerificationAttempt = LocalDateTime.now();
   }
 
-  public void updateMarketName(String marketName) {
-    this.marketName = marketName;
-  }
-
   public void update(SellerInfo updatedInfo) {
     if (updatedInfo.getBusinessType() != null) {
       this.businessType = updatedInfo.getBusinessType();
@@ -215,5 +211,57 @@ public class SellerInfo {
     info.verificationStatus = status;
     info.verificationMessage = null;
     return info;
+  }
+
+  public void updateMarketName(String marketName) {
+    if (marketName != null && !marketName.isBlank()) {
+      this.marketName = marketName;
+    }
+  }
+
+  // 개인 메이커 은행 정보만 업데이트
+  public void updatePersonalMakerBankInfo(
+      String bankAccountOwner,
+      String bankName,
+      String bankAccountNumber,
+      String copyOfBankbookUrl) {
+    this.businessSellerRequest = false;
+    this.bankAccountOwner = bankAccountOwner;
+    this.bankName = bankName;
+    this.bankAccountNumber = bankAccountNumber;
+    this.copyOfBankbookUrl = copyOfBankbookUrl;
+  }
+
+  // 사업자 메이커 은행 정보만 업데이트
+  public void updateBusinessMakerBankInfo(
+      String bankAccountOwner,
+      String bankName,
+      String bankAccountNumber,
+      String copyOfBankbookUrl) {
+    this.businessSellerRequest = true;
+    this.bankAccountOwner = bankAccountOwner;
+    this.bankName = bankName;
+    this.bankAccountNumber = bankAccountNumber;
+    this.copyOfBankbookUrl = copyOfBankbookUrl;
+  }
+
+  // 사업자 정보만 업데이트
+  public void updateBusinessInfo(
+      BusinessType businessType,
+      String businessCategory,
+      String businessSector,
+      String businessName,
+      String representativeName,
+      String businessAddress,
+      String businessLicenseFileUrl,
+      String taxInvoiceEmail) {
+    this.businessType = businessType;
+    this.businessCategory = businessCategory;
+    this.businessSector = businessSector;
+    this.businessName = businessName;
+    this.representativeName = representativeName;
+    this.businessAddress = businessAddress;
+    this.businessLicenseFileUrl = businessLicenseFileUrl;
+    this.taxInvoiceEmail = taxInvoiceEmail;
   }
 }
