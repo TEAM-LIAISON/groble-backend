@@ -1,7 +1,6 @@
 package liaison.groble.application.market;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -16,6 +15,7 @@ import liaison.groble.application.market.dto.MarketEditDTO;
 import liaison.groble.application.market.dto.MarketIntroSectionDTO;
 import liaison.groble.application.sell.SellerContactReader;
 import liaison.groble.application.user.service.MakerReader;
+import liaison.groble.application.user.service.UserReader;
 import liaison.groble.common.response.PageResponse;
 import liaison.groble.domain.content.dto.FlatContentPreviewDTO;
 import liaison.groble.domain.user.entity.SellerContact;
@@ -35,6 +35,7 @@ public class MarketService {
   // SellerContact 조회를 위한 Reader 필요 (추가해야 할 의존성)
   private final SellerContactReader sellerContactReader;
   private final ContentReader contentReader;
+  private final UserReader userReader;
 
   @Transactional(readOnly = true)
   public MarketIntroSectionDTO getViewerMakerIntroSection(String marketName) {
@@ -71,18 +72,21 @@ public class MarketService {
 
   @Transactional
   public void editMarket(Long userId, String marketName, MarketEditDTO marketEditDTO) {
-    // 마켓 이름으로 메이커 조회
-    User user = makerReader.getUserByMarketName(marketName);
-    if (!Objects.equals(user.getId(), userId)) {
-      throw new IllegalArgumentException("User ID does not match the market name.");
-    }
+    // userId로 사용자 조회
+    User user = userReader.getUserById(userId);
 
-    // 메이커 정보 업데이트
     try {
-      user.updateProfileImageUrl(marketEditDTO.getProfileImageUrl());
+      // 3. 변경 사항 추적을 위한 플래그
+      boolean hasChanges = false;
+
+      // 4. 각 필드별 null 체크 후 업데이트
+      if (marketEditDTO.getMarketName() != null && !marketEditDTO.getMarketName().isBlank()) {
+        user.updateMarketName(marketEditDTO.getMarketName());
+        hasChanges = true;
+      }
+
     } catch (Exception e) {
-      log.error("Error occurred while updating market information for user: {}", user.getId(), e);
-      throw new RuntimeException("Failed to update market information", e);
+
     }
   }
 

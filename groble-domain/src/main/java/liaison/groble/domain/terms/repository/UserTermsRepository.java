@@ -11,4 +11,6 @@ public interface UserTermsRepository {
   Optional<UserTerms> findByUserIdAndTermsId(Long userId, Long termsId);
 
   UserTerms save(UserTerms userTerms);
+
+  boolean existsByUserId(Long userId);
 }

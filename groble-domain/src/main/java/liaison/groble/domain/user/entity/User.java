@@ -391,4 +391,12 @@ public class User extends BaseTimeEntity {
   public boolean isWithdrawn() {
     return this.userStatusInfo.getStatus() == UserStatus.WITHDRAWN;
   }
+
+  // SellerInfo 관련 메서드
+  public void updateMarketName(String marketName) {
+    if (sellerInfo == null) {
+      sellerInfo = SellerInfo.builder().build();
+    }
+    sellerInfo.updateMarketName(marketName);
+  }
 }

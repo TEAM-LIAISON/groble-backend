@@ -17,9 +17,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Embeddable
-@Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
+@Getter
 @Builder
 public class SellerInfo {
   @Column(name = "market_name", length = 30)
@@ -102,16 +102,14 @@ public class SellerInfo {
   @Column(name = "copy_of_bankbook_url", columnDefinition = "TEXT")
   private String copyOfBankbookUrl;
 
-  /**
-   * 판매자 인증 상태 업데이트
-   *
-   * @param status 변경할 인증 상태
-   * @param message 상태 변경 관련 메시지 (인증 실패 이유 등)
-   */
   public void updateVerificationStatus(SellerVerificationStatus status, String message) {
     this.verificationStatus = status;
     this.verificationMessage = message;
     this.lastVerificationAttempt = LocalDateTime.now();
+  }
+
+  public void updateMarketName(String marketName) {
+    this.marketName = marketName;
   }
 
   public void update(SellerInfo updatedInfo) {

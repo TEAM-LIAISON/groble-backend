@@ -16,5 +16,5 @@ public interface UserMapper {
   @Mapping(
       target = "termsTypeStrings",
       expression = "java(request.getTermsTypes().stream().map(Enum::name).toList())")
-  SocialBasicInfoDTO toSocialBasicInfoDto(SetSocialBasicInfoRequest request);
+  SocialBasicInfoDTO toSocialBasicInfoDTO(SetSocialBasicInfoRequest request);
 }

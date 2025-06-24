@@ -2,12 +2,12 @@ package liaison.groble.api.model.maker.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Getter
-@Setter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class MarketEditRequest {
@@ -23,7 +23,7 @@ public class MarketEditRequest {
       description = "프로필 이미지 경로",
       example = "https://example.com/profile.jpg",
       type = "string",
-      requiredMode = Schema.RequiredMode.REQUIRED)
+      requiredMode = Schema.RequiredMode.NOT_REQUIRED)
   private String profileImageUrl;
 
   @Schema(
@@ -40,6 +40,6 @@ public class MarketEditRequest {
       description = "대표 콘텐츠 ID",
       example = "1",
       type = "integer",
-      requiredMode = Schema.RequiredMode.REQUIRED)
+      requiredMode = Schema.RequiredMode.NOT_REQUIRED)
   private Long representativeContentId;
 }

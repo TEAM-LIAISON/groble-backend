@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -89,7 +90,7 @@ public class MarketController {
   @Operation(
       summary = "[❌ 마켓] 마켓 관리 수정창에서 수정 완료 항목을 저장",
       description = "마켓 관리 수정창에서 수정 완료한 항목을 저장합니다.")
-  @GetMapping(MARKET_EDIT_PATH)
+  @PostMapping(MARKET_EDIT_PATH)
   public ResponseEntity<GrobleResponse<Void>> editMarket(
       @Auth Accessor accessor,
       @Valid @PathVariable("marketName") String marketName,
@@ -97,10 +98,9 @@ public class MarketController {
           MarketEditRequest marketEditRequest) {
 
     MarketEditDTO marketEditDTO = marketMapper.toMarketEditDTO(marketEditRequest);
-    // 마켓 수정 서비스 호출
+
     marketService.editMarket(accessor.getUserId(), marketName, marketEditDTO);
 
-    // 성공 응답 반환
     return responseHelper.success(null, MARKET_EDIT_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 }

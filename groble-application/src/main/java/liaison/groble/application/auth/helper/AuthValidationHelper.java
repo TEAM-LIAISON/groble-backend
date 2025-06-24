@@ -39,20 +39,4 @@ public class AuthValidationHelper {
       throw new IllegalArgumentException("이메일 인증이 완료되지 않았습니다.");
     }
   }
-
-  /** 게스트 전화번호 인증 검증 */
-  public void validateVerifiedGuestPhoneFlag(String phoneNumber) {
-    String sanitizedPhoneNumber = phoneNumber.replaceAll("\\D", "");
-    if (!verificationCodePort.validateVerifiedGuestPhoneFlag(sanitizedPhoneNumber)) {
-      throw new IllegalArgumentException("전화번호 인증이 완료되지 않았습니다.");
-    }
-  }
-
-  /** 사용자 전화번호 인증 검증 */
-  public void validateVerifiedUserPhoneFlag(Long userId, String phoneNumber) {
-    String sanitizedPhoneNumber = phoneNumber.replaceAll("\\D", "");
-    if (!verificationCodePort.validateVerifiedUserPhoneFlag(userId, sanitizedPhoneNumber)) {
-      throw new IllegalArgumentException("전화번호 인증이 완료되지 않았습니다.");
-    }
-  }
 }

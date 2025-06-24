@@ -17,4 +17,6 @@ public interface JpaUserTermsAgreementRepository extends JpaRepository<UserTerms
   @Query("SELECT uta FROM UserTerms uta WHERE uta.user.id = :userId AND uta.terms.id = :termsId")
   Optional<UserTerms> findByUserIdAndTermsId(
       @Param("userId") Long userId, @Param("termsId") Long termsId);
+
+  boolean existsByUserId(Long userId);
 }

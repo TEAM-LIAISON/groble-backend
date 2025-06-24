@@ -9,6 +9,7 @@ import liaison.groble.common.utils.CodeGenerator;
 import liaison.groble.domain.port.VerificationCodePort;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.repository.UserRepository;
+import liaison.groble.domain.user.vo.SellerInfo;
 import liaison.groble.external.sms.Message;
 import liaison.groble.external.sms.SmsSender;
 import liaison.groble.external.sms.exception.SmsSendException;
@@ -43,24 +44,13 @@ public class PhoneAuthService {
     log.info("로그인 사용자 전화번호 인증 코드 발송 완료: userId={}", userId);
   }
 
-  /** 비회원(회원가입 전) 전화번호 인증 코드 발송 - 이미 가입된 전화번호인지 체크 - 비회원용 Redis 키로 저장 */
-  public void sendVerificationCodeForSignup(String phoneNumber) {
-    log.info("▶ 비회원 전화번호 인증 시작: phoneNumber={}", phoneNumber);
-
-    String sanitized = sanitizePhoneNumber(phoneNumber);
-
-    // 2. 인증 코드 생성 및 발송
-    String code = CodeGenerator.generateVerificationCode(4);
-    verificationCodePort.saveVerificationCodeForGuest(sanitized, code, CODE_TTL.toMinutes());
-
-    sendSms(sanitized, code);
-    log.info("비회원 전화번호 인증 코드 발송 완료: phoneNumber={}", sanitized);
-  }
-
   /** 로그인한 사용자의 전화번호 인증 코드 검증 */
+  // 닉네임은 무조건 존재한다
+  // 전화번호 인증 완료 후 SellerInfo 생성하는 과정이 필요하다
   public void verifyCodeForUser(Long userId, String phoneNumber, String code) {
     log.info("▶ 로그인 사용자 전화번호 인증 검증: userId={}, phoneNumber={}", userId, phoneNumber);
 
+    // 전화번호 정규화
     String sanitized = sanitizePhoneNumber(phoneNumber);
 
     boolean isValid = verificationCodePort.validateVerificationCodeForUser(userId, sanitized, code);
@@ -70,37 +60,22 @@ public class PhoneAuthService {
     }
 
     User user = userReader.getUserById(userId);
-    if (user.getNickname() != null) {
-      //      user.setSeller(true);
-      //      user.setSellerInfo(SellerInfo.ofVerificationStatus(SellerVerificationStatus.PENDING));
+
+    if (user.getPhoneNumber() != null && !user.getPhoneNumber().isEmpty()) {
+      // 1. 전화번호를 변경하는 경우
       user.updatePhoneNumber(phoneNumber);
       userRepository.save(user);
-      log.info("로그인한 기존 사용자 전화번호 인증 성공: userId={}", userId);
     } else {
-      verificationCodePort.saveVerifiedUserPhoneFlag(userId, sanitized, CODE_TTL.toMinutes());
-      log.info("로그인한 신규 사용자 전화번호 인증 성공: userId={}", userId);
+      // 2. /sign-up 플로우에서 전화번호를 인증하는 경우
+      if (user.isMakerTermsAgreed()) {
+        final SellerInfo sellerInfo =
+            SellerInfo.builder().marketName(user.getNickname() + "님의 마켓").build();
+        user.setSellerInfo(sellerInfo);
+      }
+      user.updatePhoneNumber(phoneNumber);
+      userRepository.save(user);
     }
     verificationCodePort.removeVerificationCodeForUser(userId, sanitized);
-    // 인증 성공 처리
-  }
-
-  /** 비회원 전화번호 인증 코드 검증 */
-  public void verifyCodeForSignup(String phoneNumber, String code) {
-    log.info("▶ 비회원 전화번호 인증 검증: phoneNumber={}", phoneNumber);
-
-    String sanitized = sanitizePhoneNumber(phoneNumber);
-
-    boolean isValid = verificationCodePort.validateVerificationCodeForGuest(sanitized, code);
-    if (!isValid) {
-      log.warn("비회원 인증 코드 검증 실패: phoneNumber={}", sanitized);
-      throw new IllegalArgumentException("인증 코드가 유효하지 않습니다.");
-    }
-
-    // 인증 성공 처리
-    verificationCodePort.saveVerifiedGuestPhoneFlag(sanitized, CODE_TTL.toMinutes());
-    verificationCodePort.removeVerificationCodeForGuest(sanitized);
-
-    log.info("비회원 전화번호 인증 성공: phoneNumber={}", sanitized);
   }
 
   // === Private Helper Methods ===

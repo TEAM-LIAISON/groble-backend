@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 
 import liaison.groble.common.exception.EntityNotFoundException;
 import liaison.groble.common.utils.TokenCookieService;
+import liaison.groble.domain.terms.repository.UserTermsRepository;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.repository.UserRepository;
 import liaison.groble.security.jwt.JwtTokenProvider;
@@ -30,6 +31,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
   private final JwtTokenProvider jwtTokenProvider;
   private final UserRepository userRepository;
   private final TokenCookieService tokenCookieService;
+  private final UserTermsRepository userTermsRepository;
 
   @Value("${app.frontend-url}")
   private String frontendUrl;
@@ -38,10 +40,12 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
   public OAuth2AuthenticationSuccessHandler(
       JwtTokenProvider jwtTokenProvider,
       UserRepository userRepository,
-      TokenCookieService tokenCookieService) {
+      TokenCookieService tokenCookieService,
+      UserTermsRepository userTermsRepository) {
     this.jwtTokenProvider = jwtTokenProvider;
     this.userRepository = userRepository;
     this.tokenCookieService = tokenCookieService;
+    this.userTermsRepository = userTermsRepository;
   }
 
   @Override
@@ -87,7 +91,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
     // TokenCookieService를 사용하여 토큰을 쿠키에 저장
     tokenCookieService.addTokenCookies(request, response, accessToken, refreshToken);
-    if (!user.hasTermsAgreements()) {
+    if (!userTermsRepository.existsByUserId(userId)) {
       // UserType 선택 필요 - 로그인 처리하지 않고 회원가입 페이지로 리다이렉트
       log.info("UserType 미선택 사용자 - 회원가입 페이지로 리다이렉트");
       targetUrl = frontendDomain + "/auth/sign-up/user-type?type=social";
