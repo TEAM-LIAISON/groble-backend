@@ -70,15 +70,12 @@ public class AdminMakerService {
 
   @Transactional
   public void approveMaker(Long userId, String nickname) {
-    final User user = userReader.getUserByNickname(nickname);
+    User user = userReader.getUserByNickname(nickname);
 
-    final SellerInfo sellerInfo =
-        SellerInfo.builder()
-            .isBusinessSeller(user.isBusinessMakerVerificationRequested())
-            .verificationStatus(SellerVerificationStatus.VERIFIED)
-            .build();
+    user.getSellerInfo()
+        .updateApprovedMaker(
+            user.isBusinessMakerVerificationRequested(), SellerVerificationStatus.VERIFIED);
 
-    user.setSellerInfo(sellerInfo);
     notificationService.sendMakerCertifiedVerificationNotification(user);
 
     log.info("사업자 메이커 인증 승인 처리: userId={}, nickname={}", userId, nickname);
@@ -86,12 +83,10 @@ public class AdminMakerService {
 
   @Transactional
   public void rejectMaker(Long userId, String nickname) {
-    final User user = userReader.getUserByNickname(nickname);
+    User user = userReader.getUserByNickname(nickname);
 
-    final SellerInfo sellerInfo =
-        SellerInfo.builder().verificationStatus(SellerVerificationStatus.FAILED).build();
+    user.getSellerInfo().updateRejectedMaker(SellerVerificationStatus.FAILED);
 
-    user.setSellerInfo(sellerInfo);
     notificationService.sendMakerRejectedVerificationNotification(user);
 
     log.info("사업자 메이커 인증 거절 처리: userId={}, nickname={}", userId, nickname);

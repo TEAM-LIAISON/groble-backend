@@ -264,4 +264,15 @@ public class SellerInfo {
     this.businessLicenseFileUrl = businessLicenseFileUrl;
     this.taxInvoiceEmail = taxInvoiceEmail;
   }
+
+  // 메이커 인증 완료
+  public void updateApprovedMaker(
+      Boolean isBusinessSeller, SellerVerificationStatus sellerVerificationStatus) {
+    this.isBusinessSeller = isBusinessSeller;
+    this.verificationStatus = sellerVerificationStatus;
+  }
+
+  public void updateRejectedMaker(SellerVerificationStatus sellerVerificationStatus) {
+    this.verificationStatus = sellerVerificationStatus;
+  }
 }
