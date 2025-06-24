@@ -9,7 +9,6 @@ import liaison.groble.common.utils.CodeGenerator;
 import liaison.groble.domain.port.VerificationCodePort;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.repository.UserRepository;
-import liaison.groble.domain.user.vo.SellerInfo;
 import liaison.groble.external.sms.Message;
 import liaison.groble.external.sms.SmsSender;
 import liaison.groble.external.sms.exception.SmsSendException;
@@ -67,10 +66,8 @@ public class PhoneAuthService {
       userRepository.save(user);
     } else {
       // 2. /sign-up 플로우에서 전화번호를 인증하는 경우
-      if (user.isMakerTermsAgreed()) {
-        final SellerInfo sellerInfo =
-            SellerInfo.builder().marketName(user.getNickname() + "님의 마켓").build();
-        user.setSellerInfo(sellerInfo);
+      if (user.isMakerTermsAgreed()) { // 메이커 이용 약관에 동의를 한 경우
+        user.updateMarketName(user.getNickname() + "님의 마켓");
       }
       user.updatePhoneNumber(phoneNumber);
       userRepository.save(user);
