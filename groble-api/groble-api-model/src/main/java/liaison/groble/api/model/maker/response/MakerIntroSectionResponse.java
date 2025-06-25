@@ -1,7 +1,5 @@
 package liaison.groble.api.model.maker.response;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-
 import liaison.groble.api.model.content.response.ContentPreviewCardResponse;
 
 import lombok.AllArgsConstructor;
@@ -13,7 +11,6 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@JsonInclude(JsonInclude.Include.NON_NULL)
 public class MakerIntroSectionResponse {
   // 판매자 프로필 이미지 경로
   private String profileImageUrl;

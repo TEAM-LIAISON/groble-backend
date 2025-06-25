@@ -112,7 +112,6 @@ public class MarketService {
       List<SellerContact> contacts = sellerContactReader.getContactsByUser(user);
       return ContactInfoDTO.from(contacts);
     } catch (Exception e) {
-      log.error("Error occurred while getting contact info for user: {}", user.getId(), e);
       return ContactInfoDTO.builder().build();
     }
   }
@@ -121,9 +120,7 @@ public class MarketService {
     try {
       return contentReader.getRepresentativeContentByUser(user);
     } catch (Exception e) {
-      log.error(
-          "Error occurred while getting representative content for user: {}", user.getId(), e);
-      return null;
+      return FlatContentPreviewDTO.builder().build();
     }
   }
 
