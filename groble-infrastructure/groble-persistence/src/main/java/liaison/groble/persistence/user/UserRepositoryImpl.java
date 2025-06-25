@@ -57,4 +57,9 @@ public class UserRepositoryImpl implements UserRepository {
   public User saveAndFlush(User user) {
     return jpaUserRepository.saveAndFlush(user);
   }
+
+  @Override
+  public boolean existsBySellerInfoMarketLinkUrl(String marketLinkUrl) {
+    return jpaUserRepository.existsBySellerInfoMarketLinkUrl(marketLinkUrl);
+  }
 }

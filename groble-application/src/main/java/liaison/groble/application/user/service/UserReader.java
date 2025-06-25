@@ -93,7 +93,7 @@ public class UserReader {
     return socialAccountRepository.existsBySocialAccountEmail(email);
   }
 
-  public boolean existsByPhoneNumber(String phoneNumber) {
-    return userRepository.existsByPhoneNumber(phoneNumber);
+  public boolean existsByMarketLinkUrl(String marketLinkUrl) {
+    return userRepository.existsBySellerInfoMarketLinkUrl(marketLinkUrl);
   }
 }

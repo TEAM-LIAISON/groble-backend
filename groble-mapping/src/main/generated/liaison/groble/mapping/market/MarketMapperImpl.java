@@ -10,17 +10,19 @@ import org.springframework.stereotype.Component;
 import liaison.groble.api.model.content.response.ContentPreviewCardResponse;
 import liaison.groble.api.model.maker.request.ContactInfoRequest;
 import liaison.groble.api.model.maker.request.MarketEditRequest;
+import liaison.groble.api.model.maker.request.MarketLinkCheckRequest;
 import liaison.groble.api.model.maker.response.ContactInfoResponse;
 import liaison.groble.api.model.maker.response.MakerIntroSectionResponse;
 import liaison.groble.application.content.dto.ContentCardDTO;
 import liaison.groble.application.market.dto.ContactInfoDTO;
 import liaison.groble.application.market.dto.MarketEditDTO;
 import liaison.groble.application.market.dto.MarketIntroSectionDTO;
+import liaison.groble.application.market.dto.MarketLinkCheckDTO;
 import liaison.groble.domain.content.dto.FlatContentPreviewDTO;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-06-25T17:06:07+0900",
+    date = "2025-06-25T20:21:10+0900",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.10 (Amazon.com Inc.)")
 @Component
 public class MarketMapperImpl implements MarketMapper {
@@ -74,6 +76,21 @@ public class MarketMapperImpl implements MarketMapper {
     }
 
     return contactInfoDTO.build();
+  }
+
+  @Override
+  public MarketLinkCheckDTO toMarketLinkCheckDTO(MarketLinkCheckRequest marketLinkCheckRequest) {
+    if (marketLinkCheckRequest == null) {
+      return null;
+    }
+
+    MarketLinkCheckDTO.MarketLinkCheckDTOBuilder marketLinkCheckDTO = MarketLinkCheckDTO.builder();
+
+    if (marketLinkCheckRequest.getMarketLinkUrl() != null) {
+      marketLinkCheckDTO.marketLinkUrl(marketLinkCheckRequest.getMarketLinkUrl());
+    }
+
+    return marketLinkCheckDTO.build();
   }
 
   @Override

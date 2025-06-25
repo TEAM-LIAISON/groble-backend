@@ -16,11 +16,13 @@ import org.springframework.web.bind.annotation.RestController;
 import liaison.groble.api.model.content.response.ContentPreviewCardResponse;
 import liaison.groble.api.model.content.response.swagger.ContentListResponse;
 import liaison.groble.api.model.maker.request.MarketEditRequest;
+import liaison.groble.api.model.maker.request.MarketLinkCheckRequest;
 import liaison.groble.api.model.maker.response.MakerIntroSectionResponse;
 import liaison.groble.application.content.dto.ContentCardDTO;
 import liaison.groble.application.market.MarketService;
 import liaison.groble.application.market.dto.MarketEditDTO;
 import liaison.groble.application.market.dto.MarketIntroSectionDTO;
+import liaison.groble.application.market.dto.MarketLinkCheckDTO;
 import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.model.Accessor;
 import liaison.groble.common.response.GrobleResponse;
@@ -49,12 +51,14 @@ public class MarketController {
   private static final String MARKET_INTRO_PATH = "/intro/{marketName}";
   private static final String MARKET_CONTENTS_PATH = "/contents/{marketName}";
   private static final String MARKET_EDIT_PATH = "/edit";
+  private static final String MARKET_LINK_CHECK_PATH = "/link-check";
 
   // 응답 메시지 상수화
   private static final String MARKET_INTRO_SUCCESS_MESSAGE =
       "마켓 뷰어 화면에서 메이커 정보 및 대표 콘텐츠 조회에 성공했습니다.";
   private static final String MARKET_CONTENTS_SUCCESS_MESSAGE = "마켓 뷰어 화면에서 콘텐츠 목록 전체 조회에 성공했습니다.";
   private static final String MARKET_EDIT_SUCCESS_MESSAGE = "마켓 관리 수정창에서 수정 완료 항목을 저장했습니다.";
+  private static final String MARKET_LINK_CHECK_SUCCESS_MESSAGE = "사용 가능한 마켓 링크입니다.";
 
   private final MarketMapper marketMapper;
   private final MarketService marketService;
@@ -114,5 +118,20 @@ public class MarketController {
     marketService.editMarket(accessor.getUserId(), marketEditDTO);
 
     return responseHelper.success(null, MARKET_EDIT_SUCCESS_MESSAGE, HttpStatus.OK);
+  }
+
+  @Operation(
+      summary = "[✅ 마켓 관리] 사용 가능한 마켓 링크 확인",
+      description = "마켓 관리에서 사용 가능한 마켓 링크를 확인합니다. 이미 사용 중인 링크는 사용할 수 없습니다.")
+  @GetMapping(MARKET_LINK_CHECK_PATH)
+  public ResponseEntity<GrobleResponse<Void>> checkMarketLink(
+      @Parameter(description = "마켓 수정 정보", required = true) @Valid @RequestBody
+          MarketLinkCheckRequest marketLinkCheckRequest) {
+
+    MarketLinkCheckDTO marketLinkCheckDTO =
+        marketMapper.toMarketLinkCheckDTO(marketLinkCheckRequest);
+    marketService.checkMarketLink(marketLinkCheckDTO);
+
+    return responseHelper.success(null, MARKET_LINK_CHECK_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 }

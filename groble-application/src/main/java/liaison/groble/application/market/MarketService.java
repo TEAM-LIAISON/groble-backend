@@ -13,9 +13,11 @@ import liaison.groble.application.content.dto.ContentCardDTO;
 import liaison.groble.application.market.dto.ContactInfoDTO;
 import liaison.groble.application.market.dto.MarketEditDTO;
 import liaison.groble.application.market.dto.MarketIntroSectionDTO;
+import liaison.groble.application.market.dto.MarketLinkCheckDTO;
 import liaison.groble.application.sell.SellerContactReader;
 import liaison.groble.application.user.service.MakerReader;
 import liaison.groble.application.user.service.UserReader;
+import liaison.groble.common.exception.DuplicateMarketLinkException;
 import liaison.groble.common.response.PageResponse;
 import liaison.groble.domain.content.dto.FlatContentPreviewDTO;
 import liaison.groble.domain.content.entity.Content;
@@ -113,6 +115,12 @@ public class MarketService {
     } catch (Exception e) {
       log.error("Error occurred while editing market for user: {}", user.getId(), e);
       throw new RuntimeException("마켓 수정 중 오류가 발생했습니다.", e);
+    }
+  }
+
+  public void checkMarketLink(MarketLinkCheckDTO marketLinkCheckDTO) {
+    if (userReader.existsByMarketLinkUrl(marketLinkCheckDTO.getMarketLinkUrl())) {
+      throw new DuplicateMarketLinkException("이미 사용 중인 링크입니다.");
     }
   }
 

@@ -21,4 +21,6 @@ public interface UserRepository {
   boolean existsByPhoneNumber(String phoneNumber);
 
   Optional<User> findByPhoneNumber(String phoneNumber);
+
+  boolean existsBySellerInfoMarketLinkUrl(String marketLinkUrl);
 }
