@@ -53,4 +53,9 @@ public class SellerContact {
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "user_id") // 또는 seller_info_id, 상황에 따라 다름
   private User user;
+
+  // 업데이트 메서드 추가
+  public void updateContactValue(String contactValue) {
+    this.contactValue = contactValue;
+  }
 }

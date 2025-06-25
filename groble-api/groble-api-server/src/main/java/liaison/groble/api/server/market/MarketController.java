@@ -44,7 +44,7 @@ public class MarketController {
   // API 경로 상수화
   private static final String MARKET_INTRO_PATH = "/intro/{marketName}";
   private static final String MARKET_CONTENTS_PATH = "/contents/{marketName}";
-  private static final String MARKET_EDIT_PATH = "/edit/{marketName}";
+  private static final String MARKET_EDIT_PATH = "/edit";
 
   // 응답 메시지 상수화
   private static final String MARKET_INTRO_SUCCESS_MESSAGE =
@@ -57,7 +57,7 @@ public class MarketController {
   private final ResponseHelper responseHelper;
 
   @Operation(
-      summary = "[❌ 마켓] 마켓 뷰어 화면에서 메이커 정보 및 대표 콘텐츠 조회",
+      summary = "[✅ 마켓 관리] 마켓 뷰어 화면에서 메이커 정보 및 대표 콘텐츠 조회",
       description = "마켓 뷰어 화면에서 메이커 정보를 조회하고 대표 콘텐츠가 존재한다면, 대표 콘텐츠 1개에 대한 정보를 반환합니다.")
   @GetMapping(MARKET_INTRO_PATH)
   public ResponseEntity<GrobleResponse<MakerIntroSectionResponse>> getViewerMakerIntroSection(
@@ -93,13 +93,12 @@ public class MarketController {
   @PostMapping(MARKET_EDIT_PATH)
   public ResponseEntity<GrobleResponse<Void>> editMarket(
       @Auth Accessor accessor,
-      @Valid @PathVariable("marketName") String marketName,
       @Parameter(description = "마켓 수정 정보", required = true) @Valid @RequestBody
           MarketEditRequest marketEditRequest) {
 
     MarketEditDTO marketEditDTO = marketMapper.toMarketEditDTO(marketEditRequest);
 
-    marketService.editMarket(accessor.getUserId(), marketName, marketEditDTO);
+    marketService.editMarket(accessor.getUserId(), marketEditDTO);
 
     return responseHelper.success(null, MARKET_EDIT_SUCCESS_MESSAGE, HttpStatus.OK);
   }

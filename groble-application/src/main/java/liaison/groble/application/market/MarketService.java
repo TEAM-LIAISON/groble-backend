@@ -20,6 +20,8 @@ import liaison.groble.common.response.PageResponse;
 import liaison.groble.domain.content.dto.FlatContentPreviewDTO;
 import liaison.groble.domain.user.entity.SellerContact;
 import liaison.groble.domain.user.entity.User;
+import liaison.groble.domain.user.enums.ContactType;
+import liaison.groble.domain.user.repository.SellerContactRepository;
 import liaison.groble.domain.user.vo.SellerInfo;
 
 import lombok.RequiredArgsConstructor;
@@ -31,9 +33,8 @@ import lombok.extern.slf4j.Slf4j;
 public class MarketService {
 
   private final MakerReader makerReader;
-
-  // SellerContact 조회를 위한 Reader 필요 (추가해야 할 의존성)
   private final SellerContactReader sellerContactReader;
+  private final SellerContactRepository sellerContactRepository;
   private final ContentReader contentReader;
   private final UserReader userReader;
 
@@ -71,14 +72,9 @@ public class MarketService {
   }
 
   @Transactional
-  public void editMarket(Long userId, String marketName, MarketEditDTO marketEditDTO) {
+  public void editMarket(Long userId, MarketEditDTO marketEditDTO) {
     // userId로 사용자 조회
     User user = userReader.getUserById(userId);
-
-    // 마켓 이름이 일치하는지 확인
-    if (!user.getSellerInfo().getMarketName().equals(marketName)) {
-      throw new IllegalArgumentException("해당 마켓에 대한 소유권이 없습니다.");
-    }
 
     try {
       // 3. 변경 사항 추적을 위한 플래그
@@ -100,9 +96,55 @@ public class MarketService {
         user.updateMarketLinkUrl(marketEditDTO.getMarketLinkUrl());
         hasChanges = true;
       }
+
+      if (marketEditDTO.getContactInfo() != null) {
+        updateSellerContacts(user, marketEditDTO.getContactInfo());
+        hasChanges = true;
+      }
     } catch (Exception e) {
       log.error("Error occurred while editing market for user: {}", user.getId(), e);
       throw new RuntimeException("마켓 수정 중 오류가 발생했습니다.", e);
+    }
+  }
+
+  private void updateSellerContacts(User user, ContactInfoDTO contactInfo) {
+    // Instagram 처리
+    if (contactInfo.getInstagram() != null && !contactInfo.getInstagram().isBlank()) {
+      updateOrCreateSellerContact(user, ContactType.INSTAGRAM, contactInfo.getInstagram());
+    }
+
+    // Email 처리
+    if (contactInfo.getEmail() != null && !contactInfo.getEmail().isBlank()) {
+      updateOrCreateSellerContact(user, ContactType.EMAIL, contactInfo.getEmail());
+    }
+
+    // OpenChat 처리
+    if (contactInfo.getOpenChat() != null && !contactInfo.getOpenChat().isBlank()) {
+      updateOrCreateSellerContact(user, ContactType.OPENCHAT, contactInfo.getOpenChat());
+    }
+
+    // Etc 처리
+    if (contactInfo.getEtc() != null && !contactInfo.getEtc().isBlank()) {
+      updateOrCreateSellerContact(user, ContactType.ETC, contactInfo.getEtc());
+    }
+  }
+
+  private void updateOrCreateSellerContact(
+      User user, ContactType contactType, String contactValue) {
+    SellerContact sellerContact =
+        sellerContactReader.findByUserAndContactType(user, contactType).orElse(null);
+
+    if (sellerContact != null) {
+      sellerContact.updateContactValue(contactValue);
+    } else {
+      // 없으면 새로 생성
+      sellerContact =
+          SellerContact.builder()
+              .user(user)
+              .contactType(contactType)
+              .contactValue(contactValue)
+              .build();
+      sellerContactRepository.save(sellerContact);
     }
   }
 
