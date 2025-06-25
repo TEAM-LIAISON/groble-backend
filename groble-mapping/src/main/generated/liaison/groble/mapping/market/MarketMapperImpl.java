@@ -16,12 +16,11 @@ import liaison.groble.application.content.dto.ContentCardDTO;
 import liaison.groble.application.market.dto.ContactInfoDTO;
 import liaison.groble.application.market.dto.MarketEditDTO;
 import liaison.groble.application.market.dto.MarketIntroSectionDTO;
-import liaison.groble.common.response.PageResponse;
 import liaison.groble.domain.content.dto.FlatContentPreviewDTO;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-06-24T01:52:04+0900",
+    date = "2025-06-25T17:04:26+0900",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.10 (Amazon.com Inc.)")
 @Component
 public class MarketMapperImpl implements MarketMapper {
@@ -183,27 +182,6 @@ public class MarketMapperImpl implements MarketMapper {
     }
 
     return list;
-  }
-
-  @Override
-  public PageResponse<ContentPreviewCardResponse> toContentPreviewCardResponsePage(
-      PageResponse<ContentCardDTO> dtoPageResponse) {
-    if (dtoPageResponse == null) {
-      return null;
-    }
-
-    PageResponse<ContentPreviewCardResponse> pageResponse =
-        new PageResponse<ContentPreviewCardResponse>();
-
-    if (pageResponse.getItems() != null) {
-      List<ContentPreviewCardResponse> list =
-          toContentPreviewCardResponseList(dtoPageResponse.getItems());
-      if (list != null) {
-        pageResponse.getItems().addAll(list);
-      }
-    }
-
-    return pageResponse;
   }
 
   protected ContentPreviewCardResponse flatContentPreviewDTOToContentPreviewCardResponse(

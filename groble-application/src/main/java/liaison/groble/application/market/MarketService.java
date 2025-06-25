@@ -58,10 +58,13 @@ public class MarketService {
   public PageResponse<ContentCardDTO> getMarketContents(String marketName, Pageable pageable) {
     // 마켓 이름으로 메이커 조회
     User user = makerReader.getUserByMarketName(marketName);
+    log.info("userId: {}, marketName: {}", user.getId(), marketName);
     Page<FlatContentPreviewDTO> page =
         contentReader.findAllMarketContentsByUserId(user.getId(), pageable);
     List<ContentCardDTO> items =
         page.getContent().stream().map(this::convertFlatDtoToCardDto).toList();
+
+    log.info("items: {}", items);
 
     PageResponse.MetaData meta =
         PageResponse.MetaData.builder()

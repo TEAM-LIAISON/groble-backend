@@ -69,8 +69,8 @@ public class MarketController {
   }
 
   @Operation(
-      summary = "[❌ 마켓] 마켓 뷰어 화면에서 콘텐츠 목록 전체 조회",
-      description = "마켓 뷰어 화면에서 모든 판매중인 콘텐츠 목록을 조회합니다.")
+      summary = "[❌ 마켓 관리] 마켓 뷰어 화면에서 콘텐츠 목록 전체 조회",
+      description = "마켓 뷰어 화면에서 모든 판매중인 콘텐츠 목록을 조회합니다. 대표 콘텐츠는 포함되지 않습니다.")
   @GetMapping(MARKET_CONTENTS_PATH)
   public ResponseEntity<GrobleResponse<PageResponse<ContentPreviewCardResponse>>> getViewerContents(
       @Valid @PathVariable("marketName") String marketName,
@@ -86,9 +86,8 @@ public class MarketController {
     return responseHelper.success(responsePage, MARKET_CONTENTS_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 
-  // TODO: 1. 마켓 관리 수정창에서 수정 완료 항목을 저장 (완료 버튼)
   @Operation(
-      summary = "[❌ 마켓] 마켓 관리 수정창에서 수정 완료 항목을 저장",
+      summary = "[✅ 마켓 관리] 마켓 관리 수정창에서 수정 완료 항목을 저장",
       description = "마켓 관리 수정창에서 수정 완료한 항목을 저장합니다.")
   @PostMapping(MARKET_EDIT_PATH)
   public ResponseEntity<GrobleResponse<Void>> editMarket(

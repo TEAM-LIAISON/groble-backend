@@ -483,7 +483,14 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
     QUser qUser = QUser.user;
     QContentOption qContentOption = QContentOption.contentOption;
 
-    // 2) QueryDSL 쿼리 빌드
+    // 1) 기본 조건
+    BooleanExpression condition =
+        qContent
+            .status
+            .eq(ContentStatus.ACTIVE)
+            .and(qContent.isRepresentative.isFalse())
+            .and(qContent.user.id.eq(userId));
+
     JPAQuery<FlatContentPreviewDTO> query =
         queryFactory
             .select(
@@ -502,7 +509,8 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                         "priceOptionLength"),
                     qContent.status.stringValue().as("status")))
             .from(qContent)
-            .leftJoin(qContent.user, qUser);
+            .leftJoin(qContent.user, qUser)
+            .where(condition);
 
     // 3) Pageable의 Sort 적용 (여기서는 예시로 createdAt 기준)
     if (pageable.getSort().isUnsorted()) {
@@ -532,7 +540,8 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
 
     // 5) 전체 카운트
     long total =
-        Optional.ofNullable(queryFactory.select(qContent.count()).from(qContent).fetchOne())
+        Optional.ofNullable(
+                queryFactory.select(qContent.count()).from(qContent).where(condition).fetchOne())
             .orElse(0L);
     return new PageImpl<>(items, pageable, total);
   }
