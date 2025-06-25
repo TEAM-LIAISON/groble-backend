@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import liaison.groble.api.model.content.response.swagger.ContentListResponse;
 import liaison.groble.api.model.payment.request.PaymentCancelRequest;
 import liaison.groble.api.model.payment.response.PaymentCancelResponse;
 import liaison.groble.application.payment.dto.AppCardPayplePaymentResponse;
@@ -25,7 +26,7 @@ import liaison.groble.common.response.GrobleResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +38,11 @@ import lombok.extern.slf4j.Slf4j;
 @RequestMapping("/api/v1/payments/payple")
 @RequiredArgsConstructor
 public class PayplePaymentController {
+
+  // API 경로 상수화
+  private static final String APP_CARD_REQUEST_PATH = "/app-card/request";
+  private static final String PAYMENT_CANCEL_PATH = "/{merchantUid}/cancel";
+
   private final PayplePaymentService payplePaymentService;
 
   // 앱카드 결제 인증 결과를 수신하고 결제 승인 요청을 페이플 서버에 보낸다.
@@ -46,37 +52,13 @@ public class PayplePaymentController {
       responses = {
         @ApiResponse(
             responseCode = "200",
-            description = "결제 승인 성공",
+            description = "성공",
             content =
                 @Content(
                     mediaType = "application/json",
-                    examples =
-                        @ExampleObject(
-                            value =
-                                """
-                  {
-                    "success": true,
-                    "data": {
-                      "payRst": "success",
-                      "payCode": "0000",
-                      "payMsg": "결제가 정상적으로 완료되었습니다.",
-                      "payOid": "ORDER_1234",
-                      "payType": "card",
-                      "payTime": "20250605123045",
-                      "payTotal": "10000",
-                      "payCardName": "Samsung Card",
-                      "payCardNum": "1234-****-****-5678",
-                      "payCardQuota": "00",
-                      "payCardTradeNum": "20250605123456001",
-                      "payCardAuthNo": "12345678",
-                      "payCardReceipt": "https://receipt.payple.kr/receipt/abcd1234"
-                    }
-                  }
-                  """))),
-        @ApiResponse(responseCode = "400", description = "잘못된 요청 (파라미터 검증 실패 등)"),
-        @ApiResponse(responseCode = "500", description = "서버 내부 오류")
+                    schema = @Schema(implementation = ContentListResponse.class)))
       })
-  @PostMapping("/app-card/request")
+  @PostMapping(APP_CARD_REQUEST_PATH)
   public ResponseEntity<GrobleResponse<AppCardPayplePaymentResponse>> requestAppCardPayment(
       @Auth Accessor accessor, @Valid @RequestBody PaypleAuthResultDto authResultDto) {
 
@@ -144,7 +126,7 @@ public class PayplePaymentController {
   }
 
   @Operation(
-      summary = "결제 취소",
+      summary = "[❌ 결제 취소] 결제를 취소합니다.",
       description = "결제를 취소하고 환불 처리합니다.",
       responses = {
         @ApiResponse(
@@ -153,25 +135,9 @@ public class PayplePaymentController {
             content =
                 @Content(
                     mediaType = "application/json",
-                    examples =
-                        @ExampleObject(
-                            value =
-                                """
-                  {
-                    "success": true,
-                    "data": {
-                      "orderId": "ORDER_1234",
-                      "status": "CANCELLED",
-                      "canceledAt": "2025-06-08T12:30:45",
-                      "cancelReason": "고객 요청"
-                    }
-                  }
-                  """))),
-        @ApiResponse(responseCode = "400", description = "잘못된 요청 (주문을 찾을 수 없음, 취소할 수 없는 상태 등)"),
-        @ApiResponse(responseCode = "401", description = "인증 실패"),
-        @ApiResponse(responseCode = "500", description = "서버 내부 오류")
+                    schema = @Schema(implementation = PaymentCancelResponse.class)))
       })
-  @PostMapping("/{merchantUid}/cancel")
+  @PostMapping(PAYMENT_CANCEL_PATH)
   public ResponseEntity<GrobleResponse<PaymentCancelResponse>> cancelPayment(
       @Auth Accessor accessor,
       @Valid @PathVariable("merchantUid") String merchantUid,
@@ -202,7 +168,6 @@ public class PayplePaymentController {
 
       log.info("결제 취소 완료 - 주문번호: {}", merchantUid);
       return ResponseEntity.ok(GrobleResponse.success(response));
-
     } catch (IllegalArgumentException e) {
       log.error("결제 취소 실패 - 주문을 찾을 수 없음: {}", merchantUid, e);
       throw new PayplePaymentAuthException("주문을 찾을 수 없습니다: " + merchantUid);
