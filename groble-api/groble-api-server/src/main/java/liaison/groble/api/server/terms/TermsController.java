@@ -52,8 +52,8 @@ public class TermsController {
   // 응답 메시지 상수화
   private static final String SETTING_PAGE_SUCCESS_MESSAGE =
       "설정 탭에서 광고성 정보 수신 동의 여부 및 탈퇴 가능 여부 조회 성공";
-  private final UserService userService;
 
+  private final UserService userService;
   private final ResponseHelper responseHelper;
 
   @Operation(summary = "회원가입 약관 동의", description = "사용자가 회원가입 과정에서 약관에 동의합니다.")
@@ -161,12 +161,15 @@ public class TermsController {
     return ResponseEntity.ok(GrobleResponse.success(responses));
   }
 
-  @Operation(summary = "광고성 정보 수신 동의 여부 조회", description = "현재 로그인한 사용자의 광고성 정보 수신 동의 여부를 조회합니다.")
+  @Operation(
+      summary = "[✅ 설정 탭] 광고성 정보 수신 동의 여부 및 탈퇴 가능 여부 조회",
+      description = "현재 로그인한 사용자의 광고성 정보 수신 동의 여부와 탈퇴 가능 여부를 조회합니다.")
   @GetMapping(ADVERTISING_AGREEMENT_PATH)
   public ResponseEntity<GrobleResponse<SettingResponse>> getAdvertisingAgreementStatus(
       @Auth Accessor accessor) {
     boolean isAdvertisingAgreed = termsService.getAdvertisingAgreementStatus(accessor.getUserId());
     boolean isAllowWithdraw = userService.isAllowWithdraw(accessor.getUserId());
+
     SettingResponse settingResponse =
         SettingResponse.builder()
             .isAdvertisingAgreement(isAdvertisingAgreed)
