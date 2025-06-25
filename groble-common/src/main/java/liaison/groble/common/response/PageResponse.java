@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -109,14 +110,28 @@ public class PageResponse<T> {
   @NoArgsConstructor
   @AllArgsConstructor
   @JsonInclude(JsonInclude.Include.NON_NULL)
+  @Schema(description = "페이지 정보")
   public static class PageInfo {
-    private int currentPage; // 현재 페이지 번호 (0부터 시작)
-    private int totalPages; // 전체 페이지 수
-    private int pageSize; // 페이지당 항목 수
-    private long totalElements; // 전체 항목 수
-    private boolean first; // 첫 페이지 여부
-    private boolean last; // 마지막 페이지 여부
-    private boolean empty; // 결과가 비어있는지 여부
+    @Schema(description = "현재 페이지 번호 (0부터 시작)", example = "0")
+    private int currentPage;
+
+    @Schema(description = "전체 페이지 수", example = "10")
+    private int totalPages;
+
+    @Schema(description = "페이지당 항목 수", example = "12")
+    private int pageSize;
+
+    @Schema(description = "전체 항목 수", example = "120")
+    private long totalElements;
+
+    @Schema(description = "첫 페이지 여부", example = "true")
+    private boolean first;
+
+    @Schema(description = "마지막 페이지 여부", example = "false")
+    private boolean last;
+
+    @Schema(description = "결과가 비어있는지 여부", example = "false")
+    private boolean empty;
 
     /**
      * Spring Data의 Page 객체로부터 PageInfo 생성
@@ -143,11 +158,21 @@ public class PageResponse<T> {
   @NoArgsConstructor
   @AllArgsConstructor
   @JsonInclude(JsonInclude.Include.NON_NULL)
+  @Schema(description = "추가 메타데이터")
   public static class MetaData {
-    private String searchTerm; // 검색어 (있는 경우)
-    private String filter; // 적용된 필터 (있는 경우)
-    private String sortBy; // 정렬 기준 (있는 경우)
-    private String sortDirection; // 정렬 방향 (있는 경우)
-    private List<String> categoryIds; // 카테고리 IDs (있는 경우)
+    @Schema(description = "검색어", example = "자바")
+    private String searchTerm;
+
+    @Schema(description = "적용된 필터", example = "ACTIVE")
+    private String filter;
+
+    @Schema(description = "정렬 기준", example = "createdAt")
+    private String sortBy;
+
+    @Schema(description = "정렬 방향", example = "DESC")
+    private String sortDirection;
+
+    @Schema(description = "카테고리 ID 목록", example = "[\"1\", \"2\", \"3\"]")
+    private List<String> categoryIds;
   }
 }

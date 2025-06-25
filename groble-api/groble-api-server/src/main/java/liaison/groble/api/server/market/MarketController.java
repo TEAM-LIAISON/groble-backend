@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import liaison.groble.api.model.content.response.ContentPreviewCardResponse;
+import liaison.groble.api.model.content.response.swagger.ContentListResponse;
 import liaison.groble.api.model.maker.request.MarketEditRequest;
 import liaison.groble.api.model.maker.response.MakerIntroSectionResponse;
 import liaison.groble.application.content.dto.ContentCardDTO;
@@ -30,6 +31,9 @@ import liaison.groble.mapping.market.MarketMapper;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -59,6 +63,9 @@ public class MarketController {
   @Operation(
       summary = "[✅ 마켓 관리] 마켓 뷰어 화면에서 메이커 정보 및 대표 콘텐츠 조회",
       description = "마켓 뷰어 화면에서 메이커 정보를 조회하고 대표 콘텐츠가 존재한다면, 대표 콘텐츠 1개에 대한 정보를 반환합니다.")
+  @ApiResponse(
+      responseCode = "200",
+      content = @Content(schema = @Schema(implementation = MakerIntroSectionResponse.class)))
   @GetMapping(MARKET_INTRO_PATH)
   public ResponseEntity<GrobleResponse<MakerIntroSectionResponse>> getViewerMakerIntroSection(
       @Valid @PathVariable("marketName") String marketName) {
@@ -69,8 +76,15 @@ public class MarketController {
   }
 
   @Operation(
-      summary = "[❌ 마켓 관리] 마켓 뷰어 화면에서 콘텐츠 목록 전체 조회",
+      summary = "[✅ 마켓 관리] 마켓 뷰어 화면에서 콘텐츠 목록 전체 조회",
       description = "마켓 뷰어 화면에서 모든 판매중인 콘텐츠 목록을 조회합니다. 대표 콘텐츠는 포함되지 않습니다.")
+  @ApiResponse(
+      responseCode = "200",
+      description = "성공",
+      content =
+          @Content(
+              mediaType = "application/json",
+              schema = @Schema(implementation = ContentListResponse.class)))
   @GetMapping(MARKET_CONTENTS_PATH)
   public ResponseEntity<GrobleResponse<PageResponse<ContentPreviewCardResponse>>> getViewerContents(
       @Valid @PathVariable("marketName") String marketName,
@@ -83,6 +97,7 @@ public class MarketController {
         marketService.getMarketContents(marketName, pageable);
     PageResponse<ContentPreviewCardResponse> responsePage =
         marketMapper.toContentPreviewCardResponsePage(dtoPageResponse);
+
     return responseHelper.success(responsePage, MARKET_CONTENTS_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 
@@ -96,7 +111,6 @@ public class MarketController {
           MarketEditRequest marketEditRequest) {
 
     MarketEditDTO marketEditDTO = marketMapper.toMarketEditDTO(marketEditRequest);
-
     marketService.editMarket(accessor.getUserId(), marketEditDTO);
 
     return responseHelper.success(null, MARKET_EDIT_SUCCESS_MESSAGE, HttpStatus.OK);
