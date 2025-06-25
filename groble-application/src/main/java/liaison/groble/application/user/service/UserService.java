@@ -81,4 +81,6 @@ public interface UserService {
   void updateProfileImageUrl(Long userId, String profileImagePath);
 
   boolean isLoginAble(Long userId);
+
+  boolean isAllowWithdraw(Long userId);
 }

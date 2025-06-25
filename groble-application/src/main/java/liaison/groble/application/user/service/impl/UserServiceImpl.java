@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import liaison.groble.application.content.ContentReader;
 import liaison.groble.application.user.dto.UserHeaderDto;
 import liaison.groble.application.user.dto.UserMyPageDetailDto;
 import liaison.groble.application.user.dto.UserMyPageSummaryDto;
@@ -34,6 +35,7 @@ public class UserServiceImpl implements UserService {
   // 변경: 24시간 (24 * 60 = 1440분)
   private final long PASSWORD_RESET_EXPIRATION_MINUTES = 1440;
   private final UserReader userReader;
+  private final ContentReader contentReader;
 
   @Value("${app.frontend-url}")
   private String frontendUrl;
@@ -274,5 +276,13 @@ public class UserServiceImpl implements UserService {
     } else {
       return false;
     }
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public boolean isAllowWithdraw(Long userId) {
+    User user = userReader.getUserById(userId);
+
+    return !contentReader.hasActiveContent(user);
   }
 }

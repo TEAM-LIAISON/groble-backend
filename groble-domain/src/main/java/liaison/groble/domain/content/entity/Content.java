@@ -130,7 +130,7 @@ public class Content extends BaseTimeEntity {
   private Long viewCount = 0L;
 
   @Column(name = "is_representative", nullable = false)
-  private boolean isRepresentative = false;
+  private Boolean isRepresentative = false;
 
   // 비즈니스 로직으로 옵션 유형 검증
   public void addOption(ContentOption option) {
@@ -195,6 +195,10 @@ public class Content extends BaseTimeEntity {
 
   public void setContentIntroduction(String contentIntroduction) {
     this.contentIntroduction = contentIntroduction;
+  }
+
+  public void setRepresentative(Boolean isRepresentative) {
+    this.isRepresentative = isRepresentative;
   }
 
   // Content 클래스에 추가

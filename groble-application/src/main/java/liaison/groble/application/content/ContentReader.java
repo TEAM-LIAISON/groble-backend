@@ -1,5 +1,7 @@
 package liaison.groble.application.content;
 
+import java.util.Optional;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
@@ -25,6 +27,15 @@ public class ContentReader {
   private final ContentRepository contentRepository;
   private final ContentCustomRepository contentCustomRepository;
 
+  public Optional<Content> findByUserAndIsRepresentativeTrue(User user) {
+    return contentRepository.findByUserAndIsRepresentativeTrue(user);
+  }
+
+  // 활성 콘텐츠 보유 여부 확인
+  public boolean hasActiveContent(User user) {
+    return contentRepository.existsByUserAndStatus(user, ContentStatus.ACTIVE);
+  }
+
   // ===== ID로 Content 조회 =====
   public Content getContentById(Long contentId) {
     return contentRepository
@@ -36,6 +47,12 @@ public class ContentReader {
   public Content getContentByStatusAndId(Long contentId, ContentStatus status) {
     return contentRepository
         .findByIdAndStatus(contentId, status)
+        .orElseThrow(() -> new EntityNotFoundException("콘텐츠를 찾을 수 없습니다. ID: " + contentId));
+  }
+
+  public Content findByIdAndUser(Long contentId, User user) {
+    return contentRepository
+        .findByIdAndUser(contentId, user)
         .orElseThrow(() -> new EntityNotFoundException("콘텐츠를 찾을 수 없습니다. ID: " + contentId));
   }
 

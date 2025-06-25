@@ -10,6 +10,7 @@ import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.content.enums.ContentStatus;
 import liaison.groble.domain.content.repository.ContentCustomRepository;
 import liaison.groble.domain.content.repository.ContentRepository;
+import liaison.groble.domain.user.entity.User;
 
 import lombok.RequiredArgsConstructor;
 
@@ -25,8 +26,23 @@ public class ContentRepositoryImpl implements ContentRepository {
   }
 
   @Override
+  public Optional<Content> findByIdAndUser(Long contentId, User user) {
+    return jpaContentRepository.findByIdAndUser(contentId, user);
+  }
+
+  @Override
+  public boolean existsByUserAndStatus(User user, ContentStatus status) {
+    return jpaContentRepository.existsByUserAndStatus(user, status);
+  }
+
+  @Override
   public Optional<Content> findByIdAndStatus(Long contentId, ContentStatus status) {
     return jpaContentRepository.findByIdAndStatus(contentId, status);
+  }
+
+  @Override
+  public Optional<Content> findByUserAndIsRepresentativeTrue(User user) {
+    return jpaContentRepository.findByUserAndIsRepresentativeTrue(user);
   }
 
   @Override

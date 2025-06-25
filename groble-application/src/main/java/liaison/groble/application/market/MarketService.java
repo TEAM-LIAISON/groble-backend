@@ -18,6 +18,7 @@ import liaison.groble.application.user.service.MakerReader;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.common.response.PageResponse;
 import liaison.groble.domain.content.dto.FlatContentPreviewDTO;
+import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.user.entity.SellerContact;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.enums.ContactType;
@@ -99,6 +100,11 @@ public class MarketService {
 
       if (marketEditDTO.getContactInfo() != null) {
         updateSellerContacts(user, marketEditDTO.getContactInfo());
+        hasChanges = true;
+      }
+
+      if (marketEditDTO.getRepresentativeContentId() != null) {
+        updateRepresentativeContent(user, marketEditDTO.getRepresentativeContentId());
         hasChanges = true;
       }
     } catch (Exception e) {
@@ -210,5 +216,54 @@ public class MarketService {
         .priceOptionLength(flat.getPriceOptionLength())
         .status(flat.getStatus())
         .build();
+  }
+
+  /**
+   * 사용자의 대표 콘텐츠를 업데이트합니다.
+   *
+   * @param user 사용자 엔티티
+   * @param representativeContentId 새로운 대표 콘텐츠 ID (null일 경우 대표 콘텐츠 해제)
+   */
+  private void updateRepresentativeContent(User user, Long representativeContentId) {
+    // 1. 현재 사용자의 기존 대표 콘텐츠 조회
+    Optional<Content> currentRepresentativeContent =
+        contentReader.findByUserAndIsRepresentativeTrue(user);
+
+    // 2. 새로운 대표 콘텐츠 ID가 null인 경우 (대표 콘텐츠 해제)
+    if (representativeContentId == null) {
+      currentRepresentativeContent.ifPresent(
+          content -> {
+            content.setRepresentative(false);
+            log.info("대표 콘텐츠가 해제되었습니다. User ID: {}, Content ID: {}", user.getId(), content.getId());
+          });
+      return;
+    }
+
+    // 3. 기존 대표 콘텐츠가 있는 경우
+    if (currentRepresentativeContent.isPresent()) {
+      Content currentContent = currentRepresentativeContent.get();
+
+      // 3-1. 기존 대표 콘텐츠와 새로운 대표 콘텐츠가 같은 경우 - 변경 없음
+      if (currentContent.getId().equals(representativeContentId)) {
+        log.info("대표 콘텐츠가 동일합니다. 변경하지 않습니다. Content ID: {}", representativeContentId);
+        return;
+      }
+
+      // 3-2. 다른 경우 - 기존 대표 콘텐츠 해제
+      currentContent.setRepresentative(false);
+      log.info(
+          "기존 대표 콘텐츠를 해제합니다. User ID: {}, Old Content ID: {}",
+          user.getId(),
+          currentContent.getId());
+    }
+
+    // 4. 새로운 대표 콘텐츠 설정
+    Content newRepresentativeContent = contentReader.findByIdAndUser(representativeContentId, user);
+
+    newRepresentativeContent.setRepresentative(true);
+    log.info(
+        "새로운 대표 콘텐츠가 설정되었습니다. User ID: {}, New Content ID: {}",
+        user.getId(),
+        representativeContentId);
   }
 }
