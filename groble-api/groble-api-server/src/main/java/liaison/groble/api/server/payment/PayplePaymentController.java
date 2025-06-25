@@ -23,6 +23,7 @@ import liaison.groble.application.payment.service.PayplePaymentService;
 import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.model.Accessor;
 import liaison.groble.common.response.GrobleResponse;
+import liaison.groble.mapping.payment.PaymentMapper;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -33,15 +34,20 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@Tag(name = "결제 관련 API", description = "페이플 결제 관련 API")
 @RestController
 @RequestMapping("/api/v1/payments/payple")
 @RequiredArgsConstructor
+@Tag(
+    name = "[💰 페이플 결제] 앱카드 결제 진행 및 결제 취소 기능 API",
+    description = "앱카드를 활용하여 결제를 진행하고, 결제 취소 기능을 제공합니다.")
 public class PayplePaymentController {
 
   // API 경로 상수화
   private static final String APP_CARD_REQUEST_PATH = "/app-card/request";
   private static final String PAYMENT_CANCEL_PATH = "/{merchantUid}/cancel";
+
+  // Mapper
+  private final PaymentMapper paymentMapper;
 
   private final PayplePaymentService payplePaymentService;
 
