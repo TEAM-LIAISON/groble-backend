@@ -39,6 +39,7 @@ public class OrderCustomRepositoryImpl implements OrderCustomRepository {
         qOrder.status.in(
             Order.OrderStatus.PAID,
             Order.OrderStatus.CANCELLED,
+            Order.OrderStatus.CANCEL_REQUEST,
             Order.OrderStatus.EXPIRED,
             Order.OrderStatus.FAILED);
 
@@ -48,8 +49,11 @@ public class OrderCustomRepositoryImpl implements OrderCustomRepository {
             .select(
                 Projections.constructor(
                     FlatAdminOrderSummaryInfoDTO.class,
+                    qContent.id.as("contentId"),
+                    qOrder.merchantUid.as("merchantUid"),
                     qOrder.createdAt.as("createdAt"),
                     qContent.contentType.stringValue().as("contentType"),
+                    qContent.status.stringValue().as("contentStatus"),
                     qOrder.purchaser.name.as("purchaserName"),
                     qContent.title.as("contentTitle"),
                     qOrder.finalPrice.as("finalPrice"),

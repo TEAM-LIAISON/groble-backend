@@ -20,7 +20,7 @@ import liaison.groble.api.model.content.response.ContentPreviewCardResponse;
 import liaison.groble.api.model.content.response.ContentResponse;
 import liaison.groble.api.model.content.response.ContentStatusResponse;
 import liaison.groble.api.model.content.response.DocumentOptionResponse;
-import liaison.groble.application.content.dto.ContentCardDto;
+import liaison.groble.application.content.dto.ContentCardDTO;
 import liaison.groble.application.content.dto.ContentDetailDto;
 import liaison.groble.application.content.dto.ContentDto;
 import liaison.groble.application.content.dto.ContentOptionDto;
@@ -455,7 +455,7 @@ public class ContentDtoMapper {
         .build();
   }
 
-  public ContentPreviewCardResponse toContentPreviewCardFromCardDto(ContentCardDto cardDto) {
+  public ContentPreviewCardResponse toContentPreviewCardFromCardDto(ContentCardDTO cardDto) {
     return ContentPreviewCardResponse.builder()
         .contentId(cardDto.getContentId())
         .createdAt(cardDto.getCreatedAt())

@@ -89,7 +89,8 @@ app:
   frontend-url: http://localhost:3000
   backend-url: http://localhost:8080
   cookie:
-    domain: localhost
+    domain:
+    admin-domain:
   reset:
     base-url: http://localhost:3000
     path: /reset-password
@@ -117,13 +118,6 @@ springdoc:
     enabled: true
     packages-and-classes: liaison.groble.common.response.GrobleResponse
 
-# Actuator Configuration
-# management:
-#  endpoints:
-#    web:
-#      exposure:
-#        include: health,info,metrics,prometheus
-
 # Logging
 logging:
   level:
@@ -133,24 +127,3 @@ logging:
     io.swagger.v3: DEBUG
     software.amazon.awssdk: DEBUG
     org.apache.http: DEBUG
-
-
-# 포트원 결제 관련 설정
-#portone:
-#  api-url-v2: https://api.portone.io
-#  store-id: "store-79cd1897-c594-4ca9-abec-eedce5321197"
-#  channel-key: "channel-key-13d64b34-b616-4b01-9a8c-c4cfb6c18ca2"
-#  api-secret: "8q1r4uoQvToCPixwJH8IZBBtribsZta2F96K1Wwlob1SQ4JuhAMrRS7PzQgsPTxcqYos8hZvQjs8H09g"
-#  default-pg: "tosspayments"
-#  payment-redirect-url: "http://localhost:3000/payment"
-#  identity-redirect-url: "http://localhost:3000/identity/verify"
-#  bank-callback-url: "http://localhost:3000/bank/callback"
-#  webhook-secret: "whsec_3ltrVN8oqF50N4fEXaaPryHSvQBl6PxwklNdIdyeQJM="
-
-# Payple 결제 관련 설정
-payple:
-  cst-id: test
-  cust-key: abcd1234567890
-  refund-key: a41ce010ede9fcbfb3be86b24858806596a9db68b79d138b147c3e563e1829a0
-  client-key: test_DF55F29DA654A8CBC0F0A9DD4B556486
-  test-mode: true

@@ -3,6 +3,7 @@ package liaison.groble.persistence.content;
 import static com.querydsl.jpa.JPAExpressions.select;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -34,6 +35,7 @@ import liaison.groble.domain.content.enums.ContentStatus;
 import liaison.groble.domain.content.enums.ContentType;
 import liaison.groble.domain.content.repository.ContentCustomRepository;
 import liaison.groble.domain.user.entity.QUser;
+import liaison.groble.domain.user.entity.User;
 
 import lombok.RequiredArgsConstructor;
 
@@ -42,6 +44,37 @@ import lombok.RequiredArgsConstructor;
 public class ContentCustomRepositoryImpl implements ContentCustomRepository {
 
   private final JPAQueryFactory queryFactory;
+
+  @Override
+  public Optional<FlatContentPreviewDTO> findRepresentativeContentByUser(User user) {
+    QContent qContent = QContent.content;
+    QUser qUser = QUser.user;
+    QContentOption qContentOption = QContentOption.contentOption;
+
+    FlatContentPreviewDTO result =
+        queryFactory
+            .select(
+                Projections.fields(
+                    FlatContentPreviewDTO.class,
+                    qContent.id.as("contentId"),
+                    qContent.createdAt.as("createdAt"),
+                    qContent.title.as("title"),
+                    qContent.thumbnailUrl.as("thumbnailUrl"),
+                    qUser.userProfile.nickname.as("sellerName"),
+                    qContent.lowestPrice.as("lowestPrice"),
+                    ExpressionUtils.as(
+                        select(qContentOption.count().intValue())
+                            .from(qContentOption)
+                            .where(qContentOption.content.eq(qContent)),
+                        "priceOptionLength"),
+                    qContent.status.stringValue().as("status")))
+            .from(qContent)
+            .leftJoin(qContent.user, qUser)
+            .where(qContent.user.id.eq(qUser.id).and(qContent.isRepresentative.isTrue()))
+            .fetchOne();
+
+    return Optional.ofNullable(result);
+  }
 
   @Override
   public Optional<FlatContentPreviewDTO> findFlatContentById(Long contentId) {
@@ -272,16 +305,10 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
     }
 
     // 메타데이터 (여러 상태를 표시)
-    String filterValue = null;
-    if (statusList != null && !statusList.isEmpty()) {
-      if (statusList.size() == 2
-          && statusList.contains(ContentStatus.VALIDATED)
-          && statusList.contains(ContentStatus.REJECTED)) {
-        filterValue = "APPROVED"; // VALIDATED와 REJECTED를 함께 조회할 경우 "APPROVED"로 표시
-      } else {
-        filterValue = statusList.stream().map(ContentStatus::name).collect(Collectors.joining(","));
-      }
-    }
+    String filterValue =
+        Objects.requireNonNull(statusList).stream()
+            .map(ContentStatus::name)
+            .collect(Collectors.joining(","));
 
     CursorResponse.MetaData meta =
         CursorResponse.MetaData.builder().filter(filterValue).cursorType("id").build();
@@ -451,6 +478,75 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
   }
 
   @Override
+  public Page<FlatContentPreviewDTO> findAllMarketContentsByUserId(Long userId, Pageable pageable) {
+    QContent qContent = QContent.content;
+    QUser qUser = QUser.user;
+    QContentOption qContentOption = QContentOption.contentOption;
+
+    // 1) 기본 조건
+    BooleanExpression condition =
+        qContent
+            .status
+            .eq(ContentStatus.ACTIVE)
+            .and(qContent.isRepresentative.isFalse())
+            .and(qContent.user.id.eq(userId));
+
+    JPAQuery<FlatContentPreviewDTO> query =
+        queryFactory
+            .select(
+                Projections.fields(
+                    FlatContentPreviewDTO.class,
+                    qContent.id.as("contentId"),
+                    qContent.createdAt.as("createdAt"),
+                    qContent.title.as("title"),
+                    qContent.thumbnailUrl.as("thumbnailUrl"),
+                    qUser.userProfile.nickname.as("sellerName"),
+                    qContent.lowestPrice.as("lowestPrice"),
+                    ExpressionUtils.as(
+                        select(qContentOption.count().intValue())
+                            .from(qContentOption)
+                            .where(qContentOption.content.eq(qContent)),
+                        "priceOptionLength"),
+                    qContent.status.stringValue().as("status")))
+            .from(qContent)
+            .leftJoin(qContent.user, qUser)
+            .where(condition);
+
+    // 3) Pageable의 Sort 적용 (여기서는 예시로 createdAt 기준)
+    if (pageable.getSort().isUnsorted()) {
+      query.orderBy(qContent.createdAt.desc());
+    } else {
+      // qContent 는 QContent.content
+      PathBuilder<Content> path = new PathBuilder<>(Content.class, qContent.getMetadata());
+
+      // Sort.Order 순회
+      for (Sort.Order order : pageable.getSort()) {
+        // ASC / DESC
+        Order direction = order.isAscending() ? Order.ASC : Order.DESC;
+
+        // ComparableExpression 으로 꺼내오기
+        // (모든 필드를 Comparable 으로 가정)
+        ComparableExpressionBase<?> expr =
+            path.getComparable(order.getProperty(), Comparable.class);
+
+        // 이제 Expression 타입이 맞아서 컴파일 OK
+        query.orderBy(new OrderSpecifier<>(direction, expr));
+      }
+    }
+
+    // 4) 페이징(Offset + Limit)
+    List<FlatContentPreviewDTO> items =
+        query.offset(pageable.getOffset()).limit(pageable.getPageSize()).fetch();
+
+    // 5) 전체 카운트
+    long total =
+        Optional.ofNullable(
+                queryFactory.select(qContent.count()).from(qContent).where(condition).fetchOne())
+            .orElse(0L);
+    return new PageImpl<>(items, pageable, total);
+  }
+
+  @Override
   public Page<FlatContentPreviewDTO> findContentsByCategoriesAndType(
       List<String> categoryCodes, ContentType type, Pageable pageable) {
     QContent qContent = QContent.content;
@@ -551,6 +647,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
             .select(
                 Projections.constructor(
                     FlatAdminContentSummaryInfoDTO.class,
+                    qContent.id.as("contentId"),
                     qContent.createdAt.as("createdAt"),
                     qContent.contentType.stringValue().as("contentType"),
                     qContent.user.userProfile.nickname.as("sellerName"),
@@ -560,6 +657,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                             .from(qContentOption)
                             .where(qContentOption.content.eq(qContent)),
                         "priceOptionLength"),
+                    qContent.lowestPrice.as("minPrice"),
                     qContent.status.stringValue().as("contentStatus"),
                     qContent
                         .adminContentCheckingStatus
@@ -576,5 +674,16 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
     Long total = queryFactory.select(qContent.count()).from(qContent).fetchOne();
 
     return new PageImpl<>(content, pageable, total != null ? total : 0);
+  }
+
+  @Override
+  public boolean existsSellingContentByUser(Long userId) {
+    QContent qContent = QContent.content;
+    return queryFactory
+            .selectOne()
+            .from(qContent)
+            .where(qContent.user.id.eq(userId).and(qContent.status.eq(ContentStatus.ACTIVE)))
+            .fetchFirst()
+        != null;
   }
 }

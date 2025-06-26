@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import liaison.groble.application.terms.dto.MakerTermsAgreementDto;
+import liaison.groble.application.terms.dto.MakerTermsAgreementDTO;
 import liaison.groble.application.terms.dto.TermsAgreementDto;
 import liaison.groble.application.terms.service.TermsService;
 import liaison.groble.application.user.service.UserReader;
@@ -195,12 +195,12 @@ public class TermsServiceImpl implements TermsService {
 
   @Override
   @Transactional
-  public MakerTermsAgreementDto agreeMakerTerms(
-      MakerTermsAgreementDto agreementDto, String clientIp, String userAgent) {
-    log.info("메이커 이용약관 동의 처리: userId={}", agreementDto.getUserId());
+  public MakerTermsAgreementDTO agreeMakerTerms(
+      Long userId, MakerTermsAgreementDTO agreementDto, String clientIp, String userAgent) {
+    log.info("메이커 이용약관 동의 처리: userId={}", userId);
 
     // 1. 사용자 조회
-    User user = userReader.getUserById(agreementDto.getUserId());
+    User user = userReader.getUserById(userId);
 
     // 2. 현재 유효한 메이커 약관 조회
     Terms currentMakerTerms =
@@ -210,12 +210,9 @@ public class TermsServiceImpl implements TermsService {
 
     // 3. 이미 동의한 사용자인지 확인
     if (user.isMakerTermsAgreed()) {
-      log.info("이미 메이커 약관에 동의한 사용자: userId={}", agreementDto.getUserId());
+      log.info("이미 메이커 약관에 동의한 사용자: userId={}", userId);
 
-      return MakerTermsAgreementDto.builder()
-          .userId(user.getId())
-          .makerTermsAgreement(true)
-          .build();
+      return MakerTermsAgreementDTO.builder().makerTermsAgreement(true).build();
     }
 
     // 4. 메이커 약관 동의 처리
@@ -229,9 +226,6 @@ public class TermsServiceImpl implements TermsService {
     log.info("메이커 이용약관 동의 완료: userId={}", savedUser.getId());
 
     // 6. 결과 반환
-    return MakerTermsAgreementDto.builder()
-        .userId(savedUser.getId())
-        .makerTermsAgreement(true)
-        .build();
+    return MakerTermsAgreementDTO.builder().makerTermsAgreement(true).build();
   }
 }

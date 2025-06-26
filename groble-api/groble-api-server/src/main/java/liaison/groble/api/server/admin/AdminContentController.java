@@ -38,7 +38,9 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/admin")
-@Tag(name = "관리자의 콘텐츠 기능 관련 API", description = "관리자 콘텐츠 기능 API")
+@Tag(
+    name = "[✅ 관리자] 관리자의 콘텐츠 목록 조회 및 모니터링 API",
+    description = "관리자 페이지에서 콘텐츠 목록을 조회하고 모니터링(승인/거절)하는 기능을 제공합니다.")
 public class AdminContentController {
 
   private final AdminContentService adminContentService;
@@ -62,7 +64,7 @@ public class AdminContentController {
     PageResponse<AdminContentSummaryInfoDto> infoDtoPage =
         adminContentService.getAllContents(pageable);
     PageResponse<AdminContentSummaryInfoResponse> responsePage =
-        toAdminOrderSummaryInfoResponsePage(infoDtoPage);
+        toAdminContentSummaryInfoResponsePage(infoDtoPage);
 
     return ResponseEntity.ok(GrobleResponse.success(responsePage));
   }
@@ -110,7 +112,7 @@ public class AdminContentController {
     return PageRequest.of(page, size, Sort.by(direction, property));
   }
 
-  private PageResponse<AdminContentSummaryInfoResponse> toAdminOrderSummaryInfoResponsePage(
+  private PageResponse<AdminContentSummaryInfoResponse> toAdminContentSummaryInfoResponsePage(
       PageResponse<AdminContentSummaryInfoDto> dtoPage) {
     List<AdminContentSummaryInfoResponse> items =
         dtoPage.getItems().stream()
@@ -127,10 +129,12 @@ public class AdminContentController {
   private AdminContentSummaryInfoResponse toAdminContentSummaryInfoResponseFromDto(
       AdminContentSummaryInfoDto infoDto) {
     return AdminContentSummaryInfoResponse.builder()
+        .contentId(infoDto.getContentId())
         .createdAt(infoDto.getCreatedAt())
         .contentType(infoDto.getContentType())
         .sellerName(infoDto.getSellerName())
         .contentTitle(infoDto.getContentTitle())
+        .minPrice(infoDto.getMinPrice())
         .priceOptionLength(infoDto.getPriceOptionLength())
         .contentStatus(infoDto.getContentStatus())
         .adminContentCheckingStatus(infoDto.getAdminContentCheckingStatus())

@@ -29,7 +29,9 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/admin")
-@Tag(name = "관리자 메이커 기능 관련 API", description = "관리자 메이커 인증 API")
+@Tag(
+    name = "[✅ 관리자] 관리자 메이커 상세 조회 및 메이커 인증 API",
+    description = "개인 메이커 및 사업자 메이커의 상세 정보를 조회하고, 메이커 인증 요청을 처리하는 API입니다.")
 public class AdminMakerController {
 
   private final AdminMakerService adminMakerService;
@@ -67,10 +69,12 @@ public class AdminMakerController {
   private AdminMakerDetailInfoResponse toAdminMakerDetailInfoResponseFromDto(
       AdminMakerDetailInfoDto infoDto) {
     return AdminMakerDetailInfoResponse.builder()
-        .isBusinessMaker(infoDto.isBusinessMaker())
+        .isBusinessMaker(infoDto.getIsBusinessMaker())
+        .verificationStatus(infoDto.getVerificationStatus())
         .bankAccountOwner(infoDto.getBankAccountOwner())
         .bankName(infoDto.getBankName())
         .bankAccountNumber(infoDto.getBankAccountNumber())
+        .copyOfBankBookOriginalFileName(infoDto.getCopyOfBankBookOriginalFileName())
         .copyOfBankbookUrl(infoDto.getCopyOfBankbookUrl())
         .businessType(infoDto.getBusinessType())
         .businessCategory(infoDto.getBusinessCategory())
@@ -78,6 +82,7 @@ public class AdminMakerController {
         .businessName(infoDto.getBusinessName())
         .representativeName(infoDto.getRepresentativeName())
         .businessAddress(infoDto.getBusinessAddress())
+        .businessLicenseOriginalFileName(infoDto.getBusinessLicenseOriginalFileName())
         .businessLicenseFileUrl(infoDto.getBusinessLicenseFileUrl())
         .taxInvoiceEmail(infoDto.getTaxInvoiceEmail())
         .build();

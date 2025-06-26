@@ -12,8 +12,12 @@ import liaison.groble.domain.content.dto.FlatContentPreviewDTO;
 import liaison.groble.domain.content.dto.FlatDynamicContentDTO;
 import liaison.groble.domain.content.enums.ContentStatus;
 import liaison.groble.domain.content.enums.ContentType;
+import liaison.groble.domain.user.entity.User;
 
 public interface ContentCustomRepository {
+
+  Optional<FlatContentPreviewDTO> findRepresentativeContentByUser(User user);
+
   Optional<FlatContentPreviewDTO> findFlatContentById(Long contentId);
 
   List<FlatContentPreviewDTO> findFlatContentsByUserId(Long userId);
@@ -40,6 +44,8 @@ public interface ContentCustomRepository {
   Page<FlatContentPreviewDTO> findContentsByCategoriesAndType(
       List<String> categoryId, ContentType contentType, Pageable pageable);
 
+  Page<FlatContentPreviewDTO> findAllMarketContentsByUserId(Long userId, Pageable pageable);
+
   int countMySellingContents(
       Long userId, List<ContentStatus> contentStatusList, ContentType contentType);
 
@@ -48,4 +54,6 @@ public interface ContentCustomRepository {
   List<FlatDynamicContentDTO> findAllDynamicContents();
 
   Page<FlatAdminContentSummaryInfoDTO> findContentsByPageable(Pageable pageable);
+
+  boolean existsSellingContentByUser(Long userId);
 }

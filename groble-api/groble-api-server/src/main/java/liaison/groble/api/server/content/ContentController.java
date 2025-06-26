@@ -35,7 +35,7 @@ import liaison.groble.api.model.content.response.swagger.UploadContentThumbnail;
 import liaison.groble.api.model.file.response.FileUploadResponse;
 import liaison.groble.api.server.content.mapper.ContentDtoMapper;
 import liaison.groble.api.server.file.mapper.FileDtoMapper;
-import liaison.groble.application.content.dto.ContentCardDto;
+import liaison.groble.application.content.dto.ContentCardDTO;
 import liaison.groble.application.content.dto.ContentDetailDto;
 import liaison.groble.application.content.service.ContentService;
 import liaison.groble.application.file.FileService;
@@ -104,17 +104,15 @@ public class ContentController {
   @HomeContents
   @GetMapping("/home/contents")
   public ResponseEntity<GrobleResponse<HomeContentsResponse>> getHomeContents() {
-
-    // 서비스에서 콘텐츠 목록 조회 (List 형태)
-    List<ContentCardDto> coachingContentCardDtos = contentService.getHomeContentsList("COACHING");
+    List<ContentCardDTO> coachingContentCardDTOS = contentService.getHomeContentsList("COACHING");
     List<ContentPreviewCardResponse> coachingItems =
-        coachingContentCardDtos.stream()
+        coachingContentCardDTOS.stream()
             .map(contentDtoMapper::toContentPreviewCardFromCardDto)
             .toList();
 
-    List<ContentCardDto> documentContentCardDtos = contentService.getHomeContentsList("DOCUMENT");
+    List<ContentCardDTO> documentContentCardDTOS = contentService.getHomeContentsList("DOCUMENT");
     List<ContentPreviewCardResponse> documentItems =
-        documentContentCardDtos.stream()
+        documentContentCardDTOS.stream()
             .map(contentDtoMapper::toContentPreviewCardFromCardDto)
             .toList();
 
@@ -141,7 +139,7 @@ public class ContentController {
           @RequestParam(value = "sort", defaultValue = "createdAt,popular") String sort) {
 
     Pageable pageable = createPageable(page, size, sort);
-    PageResponse<ContentCardDto> dtoPage =
+    PageResponse<ContentCardDTO> dtoPage =
         contentService.getCoachingContentsByCategory(categoryIds, pageable);
 
     PageResponse<ContentPreviewCardResponse> responsePage = toPreviewResponsePage(dtoPage);
@@ -164,7 +162,7 @@ public class ContentController {
           @RequestParam(value = "sort", defaultValue = "createdAt,popular") String sort) {
 
     Pageable pageable = createPageable(page, size, sort);
-    PageResponse<ContentCardDto> dtoPage =
+    PageResponse<ContentCardDTO> dtoPage =
         contentService.getDocumentContentsByCategory(categoryIds, pageable);
 
     PageResponse<ContentPreviewCardResponse> responsePage = toPreviewResponsePage(dtoPage);
@@ -195,9 +193,9 @@ public class ContentController {
     return PageRequest.of(page, size, Sort.by(direction, key));
   }
 
-  // ContentCardDto → ContentPreviewCardResponse + PageResponse 재구성 헬퍼
+  // ContentCardDTO → ContentPreviewCardResponse + PageResponse 재구성 헬퍼
   private PageResponse<ContentPreviewCardResponse> toPreviewResponsePage(
-      PageResponse<ContentCardDto> dtoPage) {
+      PageResponse<ContentCardDTO> dtoPage) {
     List<ContentPreviewCardResponse> items =
         dtoPage.getItems().stream()
             .map(contentDtoMapper::toContentPreviewCardFromCardDto)

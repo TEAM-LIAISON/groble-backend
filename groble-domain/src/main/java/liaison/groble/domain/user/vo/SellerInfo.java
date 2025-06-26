@@ -17,11 +17,17 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Embeddable
-@Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
+@Getter
 @Builder
 public class SellerInfo {
+  @Column(name = "market_name", length = 30)
+  private String marketName;
+
+  @Column(name = "market_link_url", length = 32)
+  private String marketLinkUrl;
+
   /** 사업자 유형 (개인사업자-간이과세자, 개인사업자-일반과세자, 법인사업자) */
   @Column(name = "business_type")
   @Enumerated(EnumType.STRING)
@@ -30,6 +36,10 @@ public class SellerInfo {
   /** 판매자가 사업자 등록을 한 경우 true, 개인 판매자 등 사업자 등록이 없는 경우 false */
   @Column(name = "is_business_seller")
   private Boolean isBusinessSeller;
+
+  /** 사업자 판매자 요청 여부 */
+  @Column(name = "is_business_seller_request")
+  private Boolean businessSellerRequest;
 
   /** 상호명 (사업체 이름) */
   @Column(name = "business_name")
@@ -92,20 +102,6 @@ public class SellerInfo {
   @Column(name = "copy_of_bankbook_url", columnDefinition = "TEXT")
   private String copyOfBankbookUrl;
 
-  /** 판매자 연락 수단 (관리자가 직접 기입) */
-  @Column(name = "seller_contact_type")
-  private String sellerContactType;
-
-  /** 판매자 연락 경로 (URL) */
-  @Column(name = "seller_contact_url", columnDefinition = "TEXT")
-  private String sellerContactUrl;
-
-  /**
-   * 판매자 인증 상태 업데이트
-   *
-   * @param status 변경할 인증 상태
-   * @param message 상태 변경 관련 메시지 (인증 실패 이유 등)
-   */
   public void updateVerificationStatus(SellerVerificationStatus status, String message) {
     this.verificationStatus = status;
     this.verificationMessage = message;
@@ -215,5 +211,74 @@ public class SellerInfo {
     info.verificationStatus = status;
     info.verificationMessage = null;
     return info;
+  }
+
+  public void updateMarketName(String marketName) {
+    if (marketName != null && !marketName.isBlank()) {
+      this.marketName = marketName;
+    }
+  }
+
+  public void updateMarketLinkUrl(String marketLinkUrl) {
+    if (marketLinkUrl != null && !marketLinkUrl.isBlank()) {
+      this.marketLinkUrl = marketLinkUrl;
+    }
+  }
+
+  // 개인 메이커 은행 정보만 업데이트
+  public void updatePersonalMakerBankInfo(
+      String bankAccountOwner,
+      String bankName,
+      String bankAccountNumber,
+      String copyOfBankbookUrl) {
+    this.businessSellerRequest = false;
+    this.bankAccountOwner = bankAccountOwner;
+    this.bankName = bankName;
+    this.bankAccountNumber = bankAccountNumber;
+    this.copyOfBankbookUrl = copyOfBankbookUrl;
+  }
+
+  // 사업자 메이커 은행 정보만 업데이트
+  public void updateBusinessMakerBankInfo(
+      String bankAccountOwner,
+      String bankName,
+      String bankAccountNumber,
+      String copyOfBankbookUrl) {
+    this.businessSellerRequest = true;
+    this.bankAccountOwner = bankAccountOwner;
+    this.bankName = bankName;
+    this.bankAccountNumber = bankAccountNumber;
+    this.copyOfBankbookUrl = copyOfBankbookUrl;
+  }
+
+  // 사업자 정보만 업데이트
+  public void updateBusinessInfo(
+      BusinessType businessType,
+      String businessCategory,
+      String businessSector,
+      String businessName,
+      String representativeName,
+      String businessAddress,
+      String businessLicenseFileUrl,
+      String taxInvoiceEmail) {
+    this.businessType = businessType;
+    this.businessCategory = businessCategory;
+    this.businessSector = businessSector;
+    this.businessName = businessName;
+    this.representativeName = representativeName;
+    this.businessAddress = businessAddress;
+    this.businessLicenseFileUrl = businessLicenseFileUrl;
+    this.taxInvoiceEmail = taxInvoiceEmail;
+  }
+
+  // 메이커 인증 완료
+  public void updateApprovedMaker(
+      Boolean isBusinessSeller, SellerVerificationStatus sellerVerificationStatus) {
+    this.isBusinessSeller = isBusinessSeller;
+    this.verificationStatus = sellerVerificationStatus;
+  }
+
+  public void updateRejectedMaker(SellerVerificationStatus sellerVerificationStatus) {
+    this.verificationStatus = sellerVerificationStatus;
   }
 }

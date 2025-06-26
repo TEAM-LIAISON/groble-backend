@@ -42,8 +42,9 @@ public class AdminOrderService {
   public AdminOrderCancellationReasonDto getOrderCancellationReason(String merchantUid) {
 
     Order order = orderReader.getOrderByMerchantUid(merchantUid);
-    if (!order.getStatus().equals(Order.OrderStatus.CANCELLED)) {
-      throw new IllegalArgumentException("취소된 주문이 아닙니다.");
+    Order.OrderStatus status = order.getStatus();
+    if (status != Order.OrderStatus.CANCELLED && status != Order.OrderStatus.CANCEL_REQUEST) {
+      throw new IllegalArgumentException("취소 또는 취소 요청 상태가 아닙니다.");
     }
 
     return AdminOrderCancellationReasonDto.builder().cancelReason(order.getOrderNote()).build();
@@ -51,8 +52,11 @@ public class AdminOrderService {
 
   private AdminOrderSummaryInfoDto convertFlatDtoToInfoResponse(FlatAdminOrderSummaryInfoDTO flat) {
     return AdminOrderSummaryInfoDto.builder()
+        .contentId(flat.getContentId())
+        .merchantUid(flat.getMerchantUid())
         .createdAt(flat.getCreatedAt())
         .contentType(flat.getContentType())
+        .contentStatus(flat.getContentStatus())
         .purchaserName(flat.getPurchaserName())
         .contentTitle(flat.getContentTitle())
         .finalPrice(flat.getFinalPrice())

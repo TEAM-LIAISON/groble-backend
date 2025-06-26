@@ -37,7 +37,9 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/admin")
-@Tag(name = "관리자의 주문 기능 관련 API", description = "관리자 주문 관리 기능 API")
+@Tag(
+    name = "[✅ 관리자] 모든 주문을 조회하고 취소 사유 조회 기능 API",
+    description = "모든 주문 목록을 조회하고, 취소 요청 및 환불 완료 주문에 대한 사유를 조회하는 API입니다.")
 public class AdminOrderController {
   private final AdminOrderService adminOrderService;
 
@@ -121,8 +123,11 @@ public class AdminOrderController {
   private AdminOrderSummaryInfoResponse toAdminOrderSummaryInfoResponseFromDto(
       AdminOrderSummaryInfoDto infoDto) {
     return AdminOrderSummaryInfoResponse.builder()
+        .contentId(infoDto.getContentId())
+        .merchantUid(infoDto.getMerchantUid())
         .createdAt(infoDto.getCreatedAt())
         .contentType(infoDto.getContentType())
+        .contentStatus(infoDto.getContentStatus())
         .purchaserName(infoDto.getPurchaserName())
         .contentTitle(infoDto.getContentTitle())
         .finalPrice(infoDto.getFinalPrice())

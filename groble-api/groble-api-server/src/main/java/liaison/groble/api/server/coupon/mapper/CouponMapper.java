@@ -3,11 +3,11 @@ package liaison.groble.api.server.coupon.mapper;
 import org.springframework.stereotype.Component;
 
 import liaison.groble.api.model.coupon.response.UserCouponResponse;
-import liaison.groble.application.coupon.dto.UserCouponResponseDto;
+import liaison.groble.application.coupon.dto.UserCouponResponseDTO;
 
 @Component
 public class CouponMapper {
-  public UserCouponResponse toUserCouponResponse(UserCouponResponseDto userCouponResponseDto) {
+  public UserCouponResponse toUserCouponResponse(UserCouponResponseDTO userCouponResponseDto) {
     return UserCouponResponse.builder()
         .couponCode(userCouponResponseDto.getCouponCode())
         .name(userCouponResponseDto.getName())
@@ -19,7 +19,7 @@ public class CouponMapper {
   }
 
   public UserCouponResponse toUserCouponsFromCouponDto(
-      UserCouponResponseDto userCouponResponseDto) {
+      UserCouponResponseDTO userCouponResponseDto) {
     return UserCouponResponse.builder()
         .couponCode(userCouponResponseDto.getCouponCode())
         .name(userCouponResponseDto.getName())

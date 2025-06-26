@@ -35,32 +35,4 @@ public interface VerificationCodePort {
 
   /** 로그인한 사용자의 전화번호 인증 코드 삭제 */
   void removeVerificationCodeForUser(Long userId, String phoneNumber);
-
-  /** 로그인한 사용자의 전화번호 인증 완료 플래그 저장 Redis Key: phone:verified:user:{userId}:{phoneNumber} */
-  void saveVerifiedUserPhoneFlag(Long userId, String phoneNumber, long expirationTimeInMinutes);
-
-  /** 로그인한 사용자의 전화번호 인증 완료 플래그 검증 */
-  boolean validateVerifiedUserPhoneFlag(Long userId, String phoneNumber);
-
-  /** 로그인한 사용자의 전화번호 인증 완료 플래그 삭제 */
-  void removeVerifiedUserPhoneFlag(Long userId, String phoneNumber);
-
-  // === 비회원(게스트) 전화번호 인증 관련 ===
-  /** 비회원의 전화번호 인증 코드 저장 Redis Key: phone:auth:guest:{phoneNumber} */
-  void saveVerificationCodeForGuest(String phoneNumber, String code, long expirationTimeInMinutes);
-
-  /** 비회원의 전화번호 인증 코드 검증 */
-  boolean validateVerificationCodeForGuest(String phoneNumber, String code);
-
-  /** 비회원의 전화번호 인증 코드 삭제 */
-  void removeVerificationCodeForGuest(String phoneNumber);
-
-  /** 비회원의 전화번호 인증 완료 플래그 저장 Redis Key: phone:verified:guest:{phoneNumber} */
-  void saveVerifiedGuestPhoneFlag(String phoneNumber, long expirationTimeInMinutes);
-
-  /** 비회원의 전화번호 인증 완료 플래그 검증 */
-  boolean validateVerifiedGuestPhoneFlag(String phoneNumber);
-
-  /** 비회원의 전화번호 인증 완료 플래그 삭제 */
-  void removeVerifiedGuestPhoneFlag(String phoneNumber);
 }

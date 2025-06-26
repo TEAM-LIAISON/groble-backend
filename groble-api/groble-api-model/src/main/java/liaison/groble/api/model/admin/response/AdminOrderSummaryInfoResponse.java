@@ -17,6 +17,21 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Schema(description = "관리자 페이지에서 주문 요약 정보에 대한 응답 DTO")
 public class AdminOrderSummaryInfoResponse {
+
+  @Schema(
+      description = "콘텐츠 ID",
+      example = "1",
+      type = "integer",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private Long contentId;
+
+  @Schema(
+      description = "주문 식별 ID",
+      example = "20251020349820",
+      type = "string",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private String merchantUid;
+
   @Schema(description = "주문 생성 시간", requiredMode = Schema.RequiredMode.REQUIRED)
   @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
   private LocalDateTime createdAt;
@@ -28,6 +43,14 @@ public class AdminOrderSummaryInfoResponse {
       type = "string",
       requiredMode = Schema.RequiredMode.REQUIRED)
   private String contentType;
+
+  @Schema(
+      description = "콘텐츠 상태 (예: 'DRAFT(작성중)', 'ACTIVE(판매중)', 'DELETED(삭제됨)', 'DISCONTINUED(판매중단)')",
+      example = "DRAFT",
+      type = "string",
+      allowableValues = {"ACTIVE", "DRAFT", "DISCONTINUED", "DELETED"},
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private String contentStatus;
 
   // 3. 구매자 이름
   @Schema(

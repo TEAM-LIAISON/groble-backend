@@ -30,6 +30,13 @@ public class GlobalExceptionHandler {
         .body(GrobleResponse.error(ex.getMessage(), 404, ex));
   }
 
+  @ExceptionHandler(DuplicateMarketLinkException.class)
+  public ResponseEntity<GrobleResponse<Void>> handleDuplicateMarketLinkException(
+      DuplicateMarketLinkException ex) {
+    return ResponseEntity.status(HttpStatus.CONFLICT)
+        .body(GrobleResponse.error(ex.getMessage(), 409, ex));
+  }
+
   @ExceptionHandler(GrobleException.class)
   public ResponseEntity<GrobleResponse<Void>> handleGrobleException(GrobleException ex) {
     return ResponseEntity.status(ex.getStatusCode())

@@ -17,7 +17,15 @@ public class AdminMakerDetailInfoResponse {
       example = "true",
       type = "boolean",
       requiredMode = Schema.RequiredMode.REQUIRED)
-  private boolean isBusinessMaker;
+  private Boolean isBusinessMaker;
+
+  @Schema(
+      description = "메이커 인증 상태 (isSellerInfo가 true라는 전제 하에 사용됩니다.)",
+      example = "VERIFIED",
+      type = "string",
+      allowableValues = {"PENDING", "IN_PROGRESS", "FAILED", "VERIFIED"},
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private String verificationStatus;
 
   /** 1. 정산 예금주 */
   @Schema(
@@ -42,6 +50,13 @@ public class AdminMakerDetailInfoResponse {
       type = "string",
       requiredMode = Schema.RequiredMode.REQUIRED)
   private String bankAccountNumber;
+
+  @Schema(
+      description = "통장 사본 이미지 원본 파일 이름",
+      example = "abc123.jpg",
+      type = "string",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private String copyOfBankBookOriginalFileName;
 
   /** 4. 통장 사본 URL */
   @Schema(
@@ -100,6 +115,13 @@ public class AdminMakerDetailInfoResponse {
       type = "string",
       requiredMode = Schema.RequiredMode.REQUIRED)
   private String businessAddress;
+
+  @Schema(
+      description = "사업자등록증 이미지 원본 파일 이름",
+      example = "abc123.jpg",
+      type = "string",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private String businessLicenseOriginalFileName;
 
   /** 11. 사업자등록증 사본 URL */
   @Schema(

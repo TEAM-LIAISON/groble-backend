@@ -110,7 +110,7 @@ public class SmtpEmailAdapter implements EmailSenderPort {
       helper.setTo(to);
       helper.setSubject("Groble 비밀번호 재설정");
 
-      String resetUrl = frontendUrl + "/reset-password?token=" + resetToken;
+      String resetUrl = frontendUrl + "/auth/reset-password/new?token=" + resetToken;
 
       // ── 플레인 텍스트
       String plainText =

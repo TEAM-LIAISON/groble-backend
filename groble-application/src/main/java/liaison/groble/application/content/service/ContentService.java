@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import liaison.groble.application.content.ContentReader;
-import liaison.groble.application.content.dto.ContentCardDto;
+import liaison.groble.application.content.dto.ContentCardDTO;
 import liaison.groble.application.content.dto.ContentDetailDto;
 import liaison.groble.application.content.dto.ContentDto;
 import liaison.groble.application.content.dto.ContentOptionDto;
@@ -33,6 +33,7 @@ import liaison.groble.domain.content.entity.CoachingOption;
 import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.content.entity.ContentOption;
 import liaison.groble.domain.content.entity.DocumentOption;
+import liaison.groble.domain.content.enums.AdminContentCheckingStatus;
 import liaison.groble.domain.content.enums.CoachingPeriod;
 import liaison.groble.domain.content.enums.CoachingType;
 import liaison.groble.domain.content.enums.ContentDeliveryMethod;
@@ -147,7 +148,7 @@ public class ContentService {
     // 5. Content 필드 업데이트
     updateContentFromDto(content, contentDto);
     content.setCategory(category); // 카테고리 설정
-    content.setStatus(ContentStatus.PENDING); // 심사중으로 설정
+    content.setStatus(ContentStatus.ACTIVE); // 심사중으로 설정
 
     // 4) 새 옵션 추가
     if (contentDto.getOptions() != null && !contentDto.getOptions().isEmpty()) {
@@ -368,7 +369,7 @@ public class ContentService {
   }
 
   @Transactional(readOnly = true)
-  public CursorResponse<ContentCardDto> getMySellingContents(
+  public CursorResponse<ContentCardDTO> getMySellingContents(
       Long userId, String cursor, int size, String state, String type) {
     Long lastContentId = parseContentIdFromCursor(cursor);
     List<ContentStatus> contentStatusList = parseContentStatusList(state);
@@ -378,7 +379,7 @@ public class ContentService {
         contentCustomRepository.findMySellingContentsWithCursor(
             userId, lastContentId, size, contentStatusList, contentType);
 
-    List<ContentCardDto> cardDtos =
+    List<ContentCardDTO> cardDtos =
         flatDtos.getItems().stream()
             .map(this::convertFlatDtoToCardDto)
             .collect(Collectors.toList());
@@ -387,7 +388,7 @@ public class ContentService {
         contentCustomRepository.countMySellingContents(userId, contentStatusList, contentType);
 
     // 응답 구성
-    return CursorResponse.<ContentCardDto>builder()
+    return CursorResponse.<ContentCardDTO>builder()
         .items(cardDtos)
         .nextCursor(flatDtos.getNextCursor())
         .hasNext(flatDtos.isHasNext())
@@ -403,7 +404,7 @@ public class ContentService {
    * @return 콘텐츠 카드 DTO 목록
    */
   @Transactional(readOnly = true)
-  public List<ContentCardDto> getHomeContentsList(String type) {
+  public List<ContentCardDTO> getHomeContentsList(String type) {
     // 콘텐츠 타입 파싱
     ContentType contentType = parseContentType(type);
 
@@ -415,19 +416,19 @@ public class ContentService {
   }
 
   @Transactional(readOnly = true)
-  public CursorResponse<ContentCardDto> getHomeContents(String cursor, int size, String type) {
+  public CursorResponse<ContentCardDTO> getHomeContents(String cursor, int size, String type) {
     Long lastContentId = parseContentIdFromCursor(cursor);
     ContentType contentType = parseContentType(type);
 
     CursorResponse<FlatContentPreviewDTO> flatDtos =
         contentCustomRepository.findHomeContentsWithCursor(lastContentId, size, contentType);
 
-    List<ContentCardDto> cardDtos =
+    List<ContentCardDTO> cardDtos =
         flatDtos.getItems().stream()
             .map(this::convertFlatDtoToCardDto)
             .collect(Collectors.toList());
 
-    return CursorResponse.<ContentCardDto>builder()
+    return CursorResponse.<ContentCardDTO>builder()
         .items(cardDtos)
         .nextCursor(flatDtos.getNextCursor())
         .hasNext(flatDtos.isHasNext())
@@ -452,17 +453,6 @@ public class ContentService {
   /** 사용자의 Content를 찾고 접근 권한을 검증합니다. */
   private Content findAndValidateUserContent(Long userId, Long contentId) {
     Content content = contentReader.getContentById(contentId);
-
-    if (!content.getUser().getId().equals(userId)) {
-      throw new ForbiddenException("해당 콘텐츠를 수정할 권한이 없습니다.");
-    }
-
-    return content;
-  }
-
-  /** 사용자의 심사 완료된 Content를 찾고 접근 권한을 검증합니다. */
-  private Content findAndValidateUserValidatedContent(Long userId, Long contentId) {
-    Content content = contentReader.getContentByStatusAndId(contentId, ContentStatus.VALIDATED);
 
     if (!content.getUser().getId().equals(userId)) {
       throw new ForbiddenException("해당 콘텐츠를 수정할 권한이 없습니다.");
@@ -678,8 +668,8 @@ public class ContentService {
   }
 
   /** FlatPreviewContentDTO를 ContentCardDto로 변환합니다. */
-  private ContentCardDto convertFlatDtoToCardDto(FlatContentPreviewDTO flat) {
-    return ContentCardDto.builder()
+  private ContentCardDTO convertFlatDtoToCardDto(FlatContentPreviewDTO flat) {
+    return ContentCardDTO.builder()
         .contentId(flat.getContentId())
         .createdAt(flat.getCreatedAt())
         .title(flat.getTitle())
@@ -709,11 +699,6 @@ public class ContentService {
   private List<ContentStatus> parseContentStatusList(String state) {
     if (state == null || state.isBlank()) {
       return null;
-    }
-
-    // "APPROVED"는 특별한 경우로, VALIDATED와 REJECTED 두 상태를 모두 포함
-    if ("APPROVED".equalsIgnoreCase(state)) {
-      return List.of(ContentStatus.VALIDATED, ContentStatus.REJECTED);
     }
 
     try {
@@ -913,24 +898,13 @@ public class ContentService {
   }
 
   @Transactional
-  public ContentDto activateContent(Long userId, Long contentId) {
-    // 1. Content 조회 및 권한 검증
-    Content content = findAndValidateUserValidatedContent(userId, contentId);
-
-    // 2. 상태 업데이트
-    content.setStatus(ContentStatus.ACTIVE);
-
-    // 3. 저장 및 변환
-    return saveAndConvertToDto(content);
-  }
-
-  @Transactional
   public ContentDto stopContent(Long userId, Long contentId) {
     // 1. Content 조회 및 권한 검증
     Content content = findAndValidateUserActiveContent(userId, contentId);
 
     // 2. 상태 업데이트
-    content.setStatus(ContentStatus.VALIDATED);
+    content.setStatus(ContentStatus.DRAFT);
+    content.setAdminContentCheckingStatus(AdminContentCheckingStatus.PENDING);
 
     // 3. 저장 및 변환
     return saveAndConvertToDto(content);
@@ -949,7 +923,7 @@ public class ContentService {
 
   /** 카테고리 ID가 null 이면 타입만, 아니면 카테고리＋타입으로 조회 */
   @Transactional(readOnly = true)
-  public PageResponse<ContentCardDto> getCoachingContentsByCategory(
+  public PageResponse<ContentCardDTO> getCoachingContentsByCategory(
       List<String> categoryIds, Pageable pageable) {
 
     if (categoryIds == null || categoryIds.isEmpty()) {
@@ -962,7 +936,7 @@ public class ContentService {
   }
 
   @Transactional(readOnly = true)
-  public PageResponse<ContentCardDto> getDocumentContentsByCategory(
+  public PageResponse<ContentCardDTO> getDocumentContentsByCategory(
       List<String> categoryIds, Pageable pageable) {
     if (categoryIds == null || categoryIds.isEmpty()) {
       return getContentsByType(ContentType.DOCUMENT, pageable);
@@ -972,9 +946,9 @@ public class ContentService {
   }
 
   // 타입만 조회
-  private PageResponse<ContentCardDto> getContentsByType(ContentType type, Pageable pageable) {
+  private PageResponse<ContentCardDTO> getContentsByType(ContentType type, Pageable pageable) {
     Page<FlatContentPreviewDTO> page = contentCustomRepository.findContentsByType(type, pageable);
-    List<ContentCardDto> items =
+    List<ContentCardDTO> items =
         page.getContent().stream().map(this::convertFlatDtoToCardDto).toList();
 
     PageResponse.MetaData meta =
@@ -987,12 +961,12 @@ public class ContentService {
   }
 
   // 기존 카테고리＋타입 조회
-  private PageResponse<ContentCardDto> getContentsByCategoriesAndType(
+  private PageResponse<ContentCardDTO> getContentsByCategoriesAndType(
       List<String> categoryIds, ContentType type, Pageable pageable) {
     Page<FlatContentPreviewDTO> page =
         contentCustomRepository.findContentsByCategoriesAndType(categoryIds, type, pageable);
 
-    List<ContentCardDto> items =
+    List<ContentCardDTO> items =
         page.getContent().stream().map(this::convertFlatDtoToCardDto).toList();
 
     PageResponse.MetaData meta =

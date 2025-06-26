@@ -13,9 +13,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import liaison.groble.application.order.service.OrderReader;
 import liaison.groble.application.payment.dto.PaypleAuthResponseDto;
-import liaison.groble.application.payment.dto.PaypleAuthResultDto;
+import liaison.groble.application.payment.dto.PaypleAuthResultDTO;
 import liaison.groble.application.payment.dto.link.PaypleLinkResendResponse;
-import liaison.groble.application.payment.dto.link.PaypleLinkResponseDto;
 import liaison.groble.application.payment.dto.link.PaypleLinkStatusResponse;
 import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.order.repository.OrderRepository;
@@ -74,19 +73,8 @@ public class PayplePaymentService {
   private final PurchaseRepository purchaseRepository;
   private final ObjectMapper objectMapper;
 
-  /**
-   * 앱카드 결제 인증 결과 저장
-   *
-   * <p>페이플 SDK를 통해 클라이언트에서 받은 결제 인증 정보를 저장합니다. 이 단계에서는 실제 결제가 이루어지지 않고, 인증 정보만 저장됩니다.
-   *
-   * @param userId 결제를 요청한 사용자 ID
-   * @param dto 페이플 인증 결과 데이터
-   * @throws IllegalStateException 주문 사용자와 요청 사용자가 다른 경우
-   * @throws IllegalStateException 결제 대기 상태가 아닌 주문인 경우
-   * @throws IllegalStateException 결제 금액이 주문 금액과 다른 경우
-   */
   @Transactional
-  public void saveAppCardAuthResponse(Long userId, PaypleAuthResultDto dto) {
+  public void saveAppCardAuthResponse(Long userId, PaypleAuthResultDTO dto) {
     log.info("앱카드 인증 정보 저장 시작 - 주문번호: {}, userId: {}", dto.getPayOid(), userId);
 
     // 1. 주문 조회 및 검증
@@ -120,7 +108,7 @@ public class PayplePaymentService {
    * @throws RuntimeException 결제 승인 처리 중 오류가 발생한 경우
    */
   @Transactional
-  public JSONObject processAppCardApproval(PaypleAuthResultDto authResult) {
+  public JSONObject processAppCardApproval(PaypleAuthResultDTO authResult) {
     log.info("앱카드 승인 처리 시작 - 주문번호: {}", authResult.getPayOid());
 
     try {
@@ -206,144 +194,6 @@ public class PayplePaymentService {
 
     // 취소 요청을 위한 일반 인증 사용
     return getPaymentAuth("AUTH");
-  }
-
-  /**
-   * 페이플 링크 결제 처리
-   *
-   * <p>페이플 링크 결제를 위한 링크를 생성합니다. 생성된 링크를 통해 고객이 결제를 진행할 수 있습니다.
-   *
-   * @param merchantUid 주문 번호 (merchantUid)
-   * @param authResponse 파트너 인증 응답 정보
-   * @return 링크 결제 응답 정보 (결제 링크 URL 포함)
-   * @throws RuntimeException 링크 생성 실패 시
-   */
-  @Transactional
-  public PaypleLinkResponseDto processLinkPayment(
-      String merchantUid, PaypleAuthResponseDto authResponse) {
-    log.info("페이플 링크 결제 처리 시작 - merchantUid: {}", merchantUid);
-
-    try {
-      Order order = orderReader.getOrderByMerchantUid(merchantUid);
-      // 2. 주문 상태 검증
-      if (order.getStatus() != Order.OrderStatus.PENDING) {
-        throw new IllegalStateException("결제 대기 상태의 주문만 처리할 수 있습니다.");
-      }
-
-      // 3. 링크 결제 요청 파라미터 생성
-      Map<String, String> params = createLinkPaymentParams(order, authResponse);
-
-      // 4. 가격 정보 생성
-      Map<String, BigDecimal> prices = new HashMap<>();
-      prices.put("PCD_PAY_TOTAL", order.getFinalPrice());
-
-      // 5. 페이플 링크 생성 요청
-      JSONObject linkResult = paypleService.payLinkCreate(params, prices);
-
-      // 6. 링크 생성 결과 확인
-      String linkRst = (String) linkResult.get("PCD_LINK_RST");
-      if (!"success".equalsIgnoreCase(linkRst)) {
-        String errorMsg = (String) linkResult.get("PCD_LINK_MSG");
-        log.error("페이플 링크 생성 실패 - message: {}", errorMsg);
-        throw new RuntimeException("페이플 링크 생성 실패: " + errorMsg);
-      }
-
-      // 7. PayplePayment 엔티티 생성 및 저장
-      PayplePayment payplePayment = createPaypleLinkPayment(order, linkResult);
-      payplePaymentRepository.save(payplePayment);
-
-      // 8. 응답 생성
-      PaypleLinkResponseDto response =
-          PaypleLinkResponseDto.builder()
-              .linkRst(linkRst)
-              .linkMsg((String) linkResult.get("PCD_LINK_MSG"))
-              .linkKey((String) linkResult.get("PCD_LINK_KEY"))
-              .linkUrl((String) linkResult.get("PCD_LINK_URL"))
-              .linkOid((String) linkResult.get("PCD_PAY_OID"))
-              .linkGoods((String) linkResult.get("PCD_PAY_GOODS"))
-              .linkTotal((String) linkResult.get("PCD_PAY_TOTAL"))
-              .linkTime((String) linkResult.get("PCD_LINK_TIME"))
-              .linkExpire((String) linkResult.get("PCD_LINK_EXPIRE"))
-              .build();
-
-      log.info(
-          "페이플 링크 결제 생성 완료 - linkKey: {}, linkUrl: {}",
-          response.getLinkKey(),
-          response.getLinkUrl());
-
-      return response;
-
-    } catch (Exception e) {
-      log.error("페이플 링크 결제 처리 중 오류 발생", e);
-      throw new RuntimeException("링크 결제 처리 실패: " + e.getMessage(), e);
-    }
-  }
-
-  /**
-   * 링크 결제 요청 파라미터 생성
-   *
-   * @param order 주문 정보
-   * @param authResponse 인증 응답
-   * @return 요청 파라미터
-   */
-  private Map<String, String> createLinkPaymentParams(
-      Order order, PaypleAuthResponseDto authResponse) {
-    Map<String, String> params = new HashMap<>();
-
-    // 인증 정보
-    params.put("PCD_CST_ID", authResponse.getCstId()); // 필수값
-    params.put("PCD_CUST_KEY", authResponse.getCustKey()); // 필수값
-    params.put("PCD_AUTH_KEY", authResponse.getAuthKey()); // 필수값
-
-    // 결제 정보
-    params.put("PCD_PAY_WORK", "LINKREG"); // 필수값
-    params.put("PCD_PAY_TYPE", "card"); // 필수값
-    params.put("PCD_PAY_GOODS", order.getOrderItems().get(0).getContent().getTitle()); // 필수값
-
-    // 주문 정보
-    params.put("PCD_PAY_OID", order.getMerchantUid());
-
-    // 구매자 정보
-    params.put("PCD_PAYER_NO", order.getUser().getId().toString());
-    params.put("PCD_PAYER_NAME", order.getUser().getUserProfile().getNickname());
-    params.put("PCD_PAYER_HP", order.getUser().getPhoneNumber());
-    params.put("PCD_PAYER_EMAIL", order.getUser().getEmail());
-
-    params.put("PCD_PAY_ISTAX", "Y");
-    params.put("PCD_LINK_NOTI_MSG", "카드 결제가 완료되었습니다.");
-
-    // 콜백 URL
-    params.put("PCD_RST_URL", null);
-
-    return params;
-  }
-
-  /**
-   * 링크 결제용 PayplePayment 엔티티 생성
-   *
-   * @param order 주문
-   * @param linkResult 링크 생성 결과
-   * @return PayplePayment 엔티티
-   */
-  private PayplePayment createPaypleLinkPayment(Order order, JSONObject linkResult) {
-    return PayplePayment.builder()
-        .pcdPayRst("pending")
-        .pcdPayCode((String) linkResult.get("PCD_LINK_CODE"))
-        .pcdPayMsg((String) linkResult.get("PCD_LINK_MSG"))
-        .pcdPayType("card")
-        .pcdPayWork("LINKREG")
-        .pcdPayAuthKey((String) linkResult.get("PCD_AUTH_KEY"))
-        .pcdPayReqKey((String) linkResult.get("PCD_LINK_KEY"))
-        .pcdPayerNo(order.getUser().getId().toString())
-        .pcdPayerName(order.getUser().getUserProfile().getNickname())
-        .pcdPayerHp(order.getUser().getPhoneNumber())
-        .pcdPayerEmail(order.getUser().getEmail())
-        .pcdPayOid(order.getMerchantUid())
-        .pcdPayGoods(order.getOrderItems().get(0).getContent().getTitle())
-        .pcdPayTotal(order.getFinalPrice().toString())
-        .pcdRstUrl(null)
-        .status(PayplePaymentStatus.LINK_CREATED)
-        .build();
   }
 
   /**
@@ -507,11 +357,11 @@ public class PayplePaymentService {
     }
   }
 
-  private PayplePayment createPayplePayment(Order order, PaypleAuthResultDto dto) {
+  private PayplePayment createPayplePayment(Order order, PaypleAuthResultDTO dto) {
     // 1) 들어온 DTO 전체를 JSON 문자열로 변환해서 로그로 출력
     try {
       String dtoJson = objectMapper.writeValueAsString(dto);
-      log.debug("▶▶▶ PaypleAuthResultDto = {}", dtoJson);
+      log.debug("▶▶▶ PaypleAuthResultDTO = {}", dtoJson);
     } catch (JsonProcessingException e) {
       log.warn("DTO to JSON 변환 중 오류 발생, dto={}", dto, e);
     }
@@ -585,7 +435,7 @@ public class PayplePaymentService {
    * @param authResult 인증 결과
    * @return 승인 응답
    */
-  private JSONObject requestPaypleApproval(PaypleAuthResultDto authResult) {
+  private JSONObject requestPaypleApproval(PaypleAuthResultDTO authResult) {
     Map<String, String> params = new HashMap<>();
     params.put("PCD_CST_ID", paypleConfig.getCstId());
     params.put("PCD_CUST_KEY", paypleConfig.getCustKey());
@@ -992,7 +842,7 @@ public class PayplePaymentService {
    * @param resultDto 결제 결과 정보
    */
   @Transactional
-  public void handleLinkPaymentFailure(PaypleAuthResultDto resultDto) {
+  public void handleLinkPaymentFailure(PaypleAuthResultDTO resultDto) {
     log.info("링크 결제 실패 처리 시작 - 주문번호: {}, 사유: {}", resultDto.getPayOid(), resultDto.getPayMsg());
 
     try {
@@ -1024,7 +874,7 @@ public class PayplePaymentService {
    * @param resultDto 결제 결과 정보
    */
   @Transactional
-  public void handleLinkPaymentSuccess(PaypleAuthResultDto resultDto) {
+  public void handleLinkPaymentSuccess(PaypleAuthResultDTO resultDto) {
     log.info("링크 결제 성공 처리 시작 - 주문번호: {}", resultDto.getPayOid());
 
     try {
@@ -1064,7 +914,7 @@ public class PayplePaymentService {
    * @param resultDto 결제 결과
    */
   private void updatePayplePaymentFromLinkResult(
-      PayplePayment payplePayment, PaypleAuthResultDto resultDto) {
+      PayplePayment payplePayment, PaypleAuthResultDTO resultDto) {
     payplePayment.updateStatus(PayplePaymentStatus.COMPLETED);
     payplePayment.updateApprovalInfo(
         resultDto.getPayTime(),
@@ -1179,7 +1029,7 @@ public class PayplePaymentService {
    * @throws RuntimeException 등록 실패 시
    */
   @Transactional
-  public Map<String, Object> registerBillingCard(Long userId, PaypleAuthResultDto authResult) {
+  public Map<String, Object> registerBillingCard(Long userId, PaypleAuthResultDTO authResult) {
     log.info("빌링 카드 등록 시작 - userId: {}, payerId: {}", userId, authResult.getPayerId());
 
     try {

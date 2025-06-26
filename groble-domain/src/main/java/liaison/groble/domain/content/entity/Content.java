@@ -44,7 +44,11 @@ import lombok.NoArgsConstructor;
       @Index(name = "idx_content_category_id", columnList = "category_id"),
       @Index(name = "idx_content_status", columnList = "status"),
       @Index(name = "idx_content_user_status", columnList = "user_id, status"),
-      @Index(name = "idx_content_user_category", columnList = "user_id, category_id")
+      @Index(name = "idx_content_user_category", columnList = "user_id, category_id"),
+      @Index(
+          name = "ux_user_representative_content",
+          columnList = "user_id, is_representative",
+          unique = true)
     })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -125,6 +129,9 @@ public class Content extends BaseTimeEntity {
   @Column(name = "view_count", nullable = false)
   private Long viewCount = 0L;
 
+  @Column(name = "is_representative", nullable = false)
+  private Boolean isRepresentative = false;
+
   // 비즈니스 로직으로 옵션 유형 검증
   public void addOption(ContentOption option) {
     if (contentType == ContentType.COACHING && !(option instanceof CoachingOption)) {
@@ -188,6 +195,10 @@ public class Content extends BaseTimeEntity {
 
   public void setContentIntroduction(String contentIntroduction) {
     this.contentIntroduction = contentIntroduction;
+  }
+
+  public void setRepresentative(Boolean isRepresentative) {
+    this.isRepresentative = isRepresentative;
   }
 
   // Content 클래스에 추가
