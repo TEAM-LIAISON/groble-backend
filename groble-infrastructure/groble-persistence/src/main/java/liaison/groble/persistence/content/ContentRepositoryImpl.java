@@ -55,6 +55,10 @@ public class ContentRepositoryImpl implements ContentRepository {
     jpaContentRepository.delete(content);
   }
 
+  public boolean existsSellingContentByUser(Long userId) {
+    return contentCustomRepository.existsSellingContentByUser(userId);
+  }
+
   public Optional<FlatContentPreviewDTO> findFlatContentById(Long contentId) {
     return contentCustomRepository.findFlatContentById(contentId);
   }

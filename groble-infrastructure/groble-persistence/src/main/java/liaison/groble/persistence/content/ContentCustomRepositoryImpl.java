@@ -675,4 +675,15 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
 
     return new PageImpl<>(content, pageable, total != null ? total : 0);
   }
+
+  @Override
+  public boolean existsSellingContentByUser(Long userId) {
+    QContent qContent = QContent.content;
+    return queryFactory
+            .selectOne()
+            .from(qContent)
+            .where(qContent.user.id.eq(userId).and(qContent.status.eq(ContentStatus.ACTIVE)))
+            .fetchFirst()
+        != null;
+  }
 }

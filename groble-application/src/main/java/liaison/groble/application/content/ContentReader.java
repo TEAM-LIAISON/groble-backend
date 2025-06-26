@@ -69,4 +69,8 @@ public class ContentReader {
   public Page<FlatAdminContentSummaryInfoDTO> findContentsByPageable(Pageable pageable) {
     return contentCustomRepository.findContentsByPageable(pageable);
   }
+
+  public boolean existsSellingContentByUser(Long userId) {
+    return contentCustomRepository.existsSellingContentByUser(userId);
+  }
 }

@@ -10,6 +10,7 @@ import liaison.groble.application.auth.dto.SignInAuthResultDTO;
 import liaison.groble.application.auth.dto.SignInDTO;
 import liaison.groble.application.auth.dto.UserWithdrawalDTO;
 import liaison.groble.application.auth.service.AuthService;
+import liaison.groble.application.content.ContentReader;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.common.port.security.SecurityPort;
 import liaison.groble.domain.user.entity.IntegratedAccount;
@@ -27,6 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
   private final UserReader userReader;
+  private final ContentReader contentReader;
   private final UserRepository userRepository;
   private final SecurityPort securityPort;
   private final UserWithdrawalHistoryRepository userWithdrawalHistoryRepository;
@@ -80,6 +82,7 @@ public class AuthServiceImpl implements AuthService {
   public void withdrawUser(Long userId, UserWithdrawalDTO dto) {
     // 1. 사용자 조회 및 검증
     User user = userReader.getUserById(userId);
+
     validateWithdrawalEligibility(user);
     // 2. 탈퇴 사유 처리
     WithdrawalReason reason = parseWithdrawalReason(dto.getReason());
@@ -93,10 +96,15 @@ public class AuthServiceImpl implements AuthService {
   }
 
   private void validateWithdrawalEligibility(User user) {
+    // 판매 중인 콘텐츠가 있으면 탈퇴 불가
+    boolean hasSellingContents = contentReader.existsSellingContentByUser(user.getId());
+    if (hasSellingContents) {
+      throw new IllegalStateException("판매 중인 콘텐츠가 있어 탈퇴할 수 없습니다.");
+    }
+
     if (user.isWithdrawn()) {
       throw new IllegalArgumentException("이미 탈퇴한 사용자입니다.");
     }
-    // 정산 받아야 함
   }
 
   private WithdrawalReason parseWithdrawalReason(String reasonStr) {

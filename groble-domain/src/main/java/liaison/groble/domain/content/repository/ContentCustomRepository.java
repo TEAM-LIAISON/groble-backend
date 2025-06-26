@@ -54,4 +54,6 @@ public interface ContentCustomRepository {
   List<FlatDynamicContentDTO> findAllDynamicContents();
 
   Page<FlatAdminContentSummaryInfoDTO> findContentsByPageable(Pageable pageable);
+
+  boolean existsSellingContentByUser(Long userId);
 }
