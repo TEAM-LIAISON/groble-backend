@@ -26,6 +26,9 @@ import liaison.groble.mapping.auth.AuthMapper;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -50,7 +53,18 @@ public class IntegratedAccountAuthController {
   private final TokenCookieService tokenCookieService;
   private final ResponseHelper responseHelper;
 
-  @Operation(summary = "통합 계정 로그인", description = "이메일과 비밀번호로 통합 계정 로그인을 수행하고 인증 토큰을 발급합니다.")
+  @Operation(
+      summary = "[✅ 통합 계정 로그인]",
+      description = "이메일과 비밀번호로 통합 계정 로그인을 수행하고 인증 토큰을 발급합니다.",
+      responses = {
+        @ApiResponse(
+            responseCode = "200",
+            description = SIGN_IN_SUCCESS_MESSAGE,
+            content =
+                @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = SignInResponse.class)))
+      })
   @PostMapping(SIGN_IN_PATH)
   public ResponseEntity<GrobleResponse<SignInResponse>> signIn(
       @Parameter(description = "로그인 정보 (이메일, 비밀번호)", required = true) @Valid @RequestBody
@@ -72,7 +86,18 @@ public class IntegratedAccountAuthController {
     return responseHelper.success(signInResponse, SIGN_IN_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 
-  @Operation(summary = "통합 계정 회원가입", description = "통합 계정으로 회원가입을 수행하고 인증 토큰을 발급합니다.")
+  @Operation(
+      summary = "[✅ 통합 계정 회원가입]",
+      description = "통합 계정으로 회원가입을 수행하고 인증 토큰을 발급합니다.",
+      responses = {
+        @ApiResponse(
+            responseCode = "200",
+            description = SIGN_UP_SUCCESS_MESSAGE,
+            content =
+                @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = SignUpResponse.class)))
+      })
   @PostMapping(SIGN_UP_PATH)
   public ResponseEntity<GrobleResponse<SignUpResponse>> signUp(
       @Parameter(description = "회원가입 정보 (이메일, 비밀번호, 사용자 타입, 약관 동의 등)", required = true)

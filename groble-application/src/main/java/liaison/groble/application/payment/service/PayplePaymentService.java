@@ -13,7 +13,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import liaison.groble.application.order.service.OrderReader;
 import liaison.groble.application.payment.dto.PaypleAuthResponseDto;
-import liaison.groble.application.payment.dto.PaypleAuthResultDto;
+import liaison.groble.application.payment.dto.PaypleAuthResultDTO;
 import liaison.groble.application.payment.dto.link.PaypleLinkResendResponse;
 import liaison.groble.application.payment.dto.link.PaypleLinkStatusResponse;
 import liaison.groble.domain.order.entity.Order;
@@ -73,19 +73,8 @@ public class PayplePaymentService {
   private final PurchaseRepository purchaseRepository;
   private final ObjectMapper objectMapper;
 
-  /**
-   * 앱카드 결제 인증 결과 저장
-   *
-   * <p>페이플 SDK를 통해 클라이언트에서 받은 결제 인증 정보를 저장합니다. 이 단계에서는 실제 결제가 이루어지지 않고, 인증 정보만 저장됩니다.
-   *
-   * @param userId 결제를 요청한 사용자 ID
-   * @param dto 페이플 인증 결과 데이터
-   * @throws IllegalStateException 주문 사용자와 요청 사용자가 다른 경우
-   * @throws IllegalStateException 결제 대기 상태가 아닌 주문인 경우
-   * @throws IllegalStateException 결제 금액이 주문 금액과 다른 경우
-   */
   @Transactional
-  public void saveAppCardAuthResponse(Long userId, PaypleAuthResultDto dto) {
+  public void saveAppCardAuthResponse(Long userId, PaypleAuthResultDTO dto) {
     log.info("앱카드 인증 정보 저장 시작 - 주문번호: {}, userId: {}", dto.getPayOid(), userId);
 
     // 1. 주문 조회 및 검증
@@ -119,7 +108,7 @@ public class PayplePaymentService {
    * @throws RuntimeException 결제 승인 처리 중 오류가 발생한 경우
    */
   @Transactional
-  public JSONObject processAppCardApproval(PaypleAuthResultDto authResult) {
+  public JSONObject processAppCardApproval(PaypleAuthResultDTO authResult) {
     log.info("앱카드 승인 처리 시작 - 주문번호: {}", authResult.getPayOid());
 
     try {
@@ -368,11 +357,11 @@ public class PayplePaymentService {
     }
   }
 
-  private PayplePayment createPayplePayment(Order order, PaypleAuthResultDto dto) {
+  private PayplePayment createPayplePayment(Order order, PaypleAuthResultDTO dto) {
     // 1) 들어온 DTO 전체를 JSON 문자열로 변환해서 로그로 출력
     try {
       String dtoJson = objectMapper.writeValueAsString(dto);
-      log.debug("▶▶▶ PaypleAuthResultDto = {}", dtoJson);
+      log.debug("▶▶▶ PaypleAuthResultDTO = {}", dtoJson);
     } catch (JsonProcessingException e) {
       log.warn("DTO to JSON 변환 중 오류 발생, dto={}", dto, e);
     }
@@ -446,7 +435,7 @@ public class PayplePaymentService {
    * @param authResult 인증 결과
    * @return 승인 응답
    */
-  private JSONObject requestPaypleApproval(PaypleAuthResultDto authResult) {
+  private JSONObject requestPaypleApproval(PaypleAuthResultDTO authResult) {
     Map<String, String> params = new HashMap<>();
     params.put("PCD_CST_ID", paypleConfig.getCstId());
     params.put("PCD_CUST_KEY", paypleConfig.getCustKey());
@@ -853,7 +842,7 @@ public class PayplePaymentService {
    * @param resultDto 결제 결과 정보
    */
   @Transactional
-  public void handleLinkPaymentFailure(PaypleAuthResultDto resultDto) {
+  public void handleLinkPaymentFailure(PaypleAuthResultDTO resultDto) {
     log.info("링크 결제 실패 처리 시작 - 주문번호: {}, 사유: {}", resultDto.getPayOid(), resultDto.getPayMsg());
 
     try {
@@ -885,7 +874,7 @@ public class PayplePaymentService {
    * @param resultDto 결제 결과 정보
    */
   @Transactional
-  public void handleLinkPaymentSuccess(PaypleAuthResultDto resultDto) {
+  public void handleLinkPaymentSuccess(PaypleAuthResultDTO resultDto) {
     log.info("링크 결제 성공 처리 시작 - 주문번호: {}", resultDto.getPayOid());
 
     try {
@@ -925,7 +914,7 @@ public class PayplePaymentService {
    * @param resultDto 결제 결과
    */
   private void updatePayplePaymentFromLinkResult(
-      PayplePayment payplePayment, PaypleAuthResultDto resultDto) {
+      PayplePayment payplePayment, PaypleAuthResultDTO resultDto) {
     payplePayment.updateStatus(PayplePaymentStatus.COMPLETED);
     payplePayment.updateApprovalInfo(
         resultDto.getPayTime(),
@@ -1040,7 +1029,7 @@ public class PayplePaymentService {
    * @throws RuntimeException 등록 실패 시
    */
   @Transactional
-  public Map<String, Object> registerBillingCard(Long userId, PaypleAuthResultDto authResult) {
+  public Map<String, Object> registerBillingCard(Long userId, PaypleAuthResultDTO authResult) {
     log.info("빌링 카드 등록 시작 - userId: {}, payerId: {}", userId, authResult.getPayerId());
 
     try {

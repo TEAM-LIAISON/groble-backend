@@ -12,17 +12,18 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import liaison.groble.api.model.content.response.swagger.ContentListResponse;
 import liaison.groble.api.model.payment.request.PaymentCancelRequest;
+import liaison.groble.api.model.payment.request.PaypleAuthResultRequest;
 import liaison.groble.api.model.payment.response.PaymentCancelResponse;
 import liaison.groble.application.payment.dto.AppCardPayplePaymentResponse;
 import liaison.groble.application.payment.dto.PaypleAuthResponseDto;
-import liaison.groble.application.payment.dto.PaypleAuthResultDto;
+import liaison.groble.application.payment.dto.PaypleAuthResultDTO;
 import liaison.groble.application.payment.exception.PayplePaymentAuthException;
 import liaison.groble.application.payment.service.PayplePaymentService;
 import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.model.Accessor;
 import liaison.groble.common.response.GrobleResponse;
+import liaison.groble.common.response.ResponseHelper;
 import liaison.groble.mapping.payment.PaymentMapper;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -46,10 +47,15 @@ public class PayplePaymentController {
   private static final String APP_CARD_REQUEST_PATH = "/app-card/request";
   private static final String PAYMENT_CANCEL_PATH = "/{merchantUid}/cancel";
 
+  // 응답 메시지 상수화
+  private static final String APP_CARD_SUCCESS_MESSAGE = "페이플 앱카드 결제가 성공적으로 완료되었습니다.";
+
   // Mapper
   private final PaymentMapper paymentMapper;
 
   private final PayplePaymentService payplePaymentService;
+
+  private final ResponseHelper responseHelper;
 
   // 앱카드 결제 인증 결과를 수신하고 결제 승인 요청을 페이플 서버에 보낸다.
   @Operation(
@@ -62,32 +68,37 @@ public class PayplePaymentController {
             content =
                 @Content(
                     mediaType = "application/json",
-                    schema = @Schema(implementation = ContentListResponse.class)))
+                    schema = @Schema(implementation = AppCardPayplePaymentResponse.class)))
       })
   @PostMapping(APP_CARD_REQUEST_PATH)
   public ResponseEntity<GrobleResponse<AppCardPayplePaymentResponse>> requestAppCardPayment(
-      @Auth Accessor accessor, @Valid @RequestBody PaypleAuthResultDto authResultDto) {
+      @Auth Accessor accessor,
+      @Valid @RequestBody PaypleAuthResultRequest paypleAuthResultRequest) {
 
     log.info(
         "페이플 인증 결과 수신 - 결과: {}, 코드: {}, 메시지: {}, 주문번호: {}",
-        authResultDto.getPayRst(),
-        authResultDto.getPayCode(),
-        authResultDto.getPayMsg(),
-        authResultDto.getPayOid());
+        paypleAuthResultRequest.getPayRst(),
+        paypleAuthResultRequest.getPayCode(),
+        paypleAuthResultRequest.getPayMsg(),
+        paypleAuthResultRequest.getPayOid());
 
-    if (authResultDto.isError()) {
+    if (paypleAuthResultRequest.isError()) {
       log.error(
-          "페이플 인증 실패 - 코드: {}, 메시지: {}", authResultDto.getPayCode(), authResultDto.getPayMsg());
-      throw new PayplePaymentAuthException("페이플 인증 실패: " + authResultDto.getPayMsg());
+          "페이플 인증 실패 - 코드: {}, 메시지: {}",
+          paypleAuthResultRequest.getPayCode(),
+          paypleAuthResultRequest.getPayMsg());
+      throw new PayplePaymentAuthException("페이플 인증 실패: " + paypleAuthResultRequest.getPayMsg());
     }
 
-    if (authResultDto.isClosed()) {
+    if (paypleAuthResultRequest.isClosed()) {
       log.warn("페이플 인증 취소 - 사용자가 결제창을 닫음");
       return ResponseEntity.ok(
           GrobleResponse.success(AppCardPayplePaymentResponse.builder().build()));
     }
 
-    // 인증 결과 저장
+    PaypleAuthResultDTO authResultDto =
+        paymentMapper.toPaypleAuthResultDTO(paypleAuthResultRequest);
+
     payplePaymentService.saveAppCardAuthResponse(accessor.getUserId(), authResultDto);
 
     try {
