@@ -24,6 +24,8 @@ public class QContent extends EntityPathBase<Content> {
 
     public final liaison.groble.domain.common.entity.QBaseTimeEntity _super = new liaison.groble.domain.common.entity.QBaseTimeEntity(this);
 
+    public final EnumPath<liaison.groble.domain.content.enums.AdminContentCheckingStatus> adminContentCheckingStatus = createEnum("adminContentCheckingStatus", liaison.groble.domain.content.enums.AdminContentCheckingStatus.class);
+
     public final QCategory category;
 
     public final ListPath<String, StringPath> contentDetailImageUrls = this.<String, StringPath>createList("contentDetailImageUrls", String.class, StringPath.class, PathInits.DIRECT2);
@@ -36,6 +38,8 @@ public class QContent extends EntityPathBase<Content> {
     public final DateTimePath<java.time.LocalDateTime> createdAt = _super.createdAt;
 
     public final NumberPath<Long> id = createNumber("id", Long.class);
+
+    public final BooleanPath isRepresentative = createBoolean("isRepresentative");
 
     public final NumberPath<java.math.BigDecimal> lowestPrice = createNumber("lowestPrice", java.math.BigDecimal.class);
 

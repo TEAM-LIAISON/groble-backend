@@ -70,6 +70,8 @@ public class UserDtoMapper {
         .phoneNumber(userMyPageDetailDto.getPhoneNumber())
         .canSwitchToSeller(userMyPageDetailDto.isCanSwitchToSeller())
         .sellerAccountNotCreated(userMyPageDetailDto.isSellerAccountNotCreated())
+        .verificationStatus(userMyPageDetailDto.getVerificationStatus())
+        .sellerAccountNotCreated(userMyPageDetailDto.isAlreadyRegisteredAsSeller())
         .build();
   }
 

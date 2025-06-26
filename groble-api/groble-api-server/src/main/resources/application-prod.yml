@@ -97,6 +97,7 @@ app:
   backend-url: https://api.groble.im
   cookie:
     domain: groble.im
+    admin-domain: groble.im
   reset:
     base-url: https://groble.im
     path: /reset-password
@@ -121,14 +122,6 @@ springdoc:
   show-actuator: false
   model-and-view-allowed: true
 
-# Actuator Configuration
-# management:
-#  endpoints:
-#    web:
-#      exposure:
-#        include: health,info,metrics,prometheus
-
-
 logging:
   level:
     root: INFO
@@ -139,15 +132,3 @@ logging:
     org.apache.http: WARN         # Set HTTP client to WARN level
     org.apache.http.wire: WARN    # Specifically disable wire logging
     com.amazonaws: INFO           # Control AWS SDK logging
-
-# 포트원 결제 관련 설정
-#portone:
-#  api-url-v2: https://api.portone.io
-#  merchant-id: "your_merchant_id"
-#  client-key: "your_client_key"
-#  api-secret: "8q1r4uoQvToCPixwJH8IZBBtribsZta2F96K1Wwlob1SQ4JuhAMrRS7PzQgsPTxcqYos8hZvQjs8H09g"
-#  default-pg: "tosspayments"
-#  payment-redirect-url: "https://groble.im/payment"
-#  identity-redirect-url: "https://groble.im/identity/verify"
-#  bank-callback-url: "https://groble.im/bank/callback"
-#  webhook-secret: "your_webhook_secret"

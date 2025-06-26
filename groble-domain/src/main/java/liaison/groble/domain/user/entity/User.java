@@ -21,6 +21,8 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
+import org.hibernate.LazyInitializationException;
+
 import liaison.groble.domain.common.entity.BaseTimeEntity;
 import liaison.groble.domain.role.Role;
 import liaison.groble.domain.role.UserRole;
@@ -194,8 +196,6 @@ public class User extends BaseTimeEntity {
     // 리프레시 토큰 제거
     this.refreshToken = null;
     this.refreshTokenExpiresAt = null;
-
-    // 도메일 별도 설정 필요 없음 (anonymize에서 처리)
   }
 
   /** 사용자 정보 익명화 처리 GDPR 등 개인정보보호 규정 준수를 위한 비식별화 */
@@ -210,6 +210,7 @@ public class User extends BaseTimeEntity {
 
     if (accountType == AccountType.INTEGRATED && integratedAccount != null) {
       integratedAccount.anonymizeEmail(anonymizedEmail);
+      integratedAccount.updatePassword(null);
     } else if (accountType == AccountType.SOCIAL && socialAccount != null) {
       socialAccount.anonymizeEmail(anonymizedEmail);
     }
@@ -364,5 +365,39 @@ public class User extends BaseTimeEntity {
       userProfile = UserProfile.builder().build();
     }
     userProfile.updatePhoneNumber(phoneNumber);
+  }
+
+  /** 약관 동의 여부 확인 */
+  public boolean checkTermsAgreement() {
+    return !this.getTermsAgreements().isEmpty();
+  }
+
+  /** 닉네임 존재 여부 확인 */
+  public boolean hasNickname() {
+    String nickname = getNickname();
+    return nickname != null && !nickname.trim().isEmpty();
+  }
+
+  /** 약관 동의 여부 확인 (LazyInitializationException 방지) Hibernate 세션이 없어도 안전하게 확인 가능 */
+  public boolean hasTermsAgreements() {
+    try {
+      return termsAgreements != null && !termsAgreements.isEmpty();
+    } catch (LazyInitializationException e) {
+      // 세션이 없는 경우 false 반환 (신규 사용자로 간주)
+      return false;
+    }
+  }
+
+  public boolean isWithdrawn() {
+    return this.userStatusInfo.getStatus() == UserStatus.WITHDRAWN;
+  }
+
+  // SellerInfo 관련 메서드
+  public void updateMarketName(String marketName) {
+    sellerInfo.updateMarketName(marketName);
+  }
+
+  public void updateMarketLinkUrl(String marketLinkUrl) {
+    sellerInfo.updateMarketLinkUrl(marketLinkUrl);
   }
 }

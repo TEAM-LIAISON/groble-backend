@@ -38,7 +38,9 @@ public class WebConfig implements WebMvcConfigurer {
     registry
         .addMapping("/**")
         .allowedOriginPatterns(
-            "http://localhost:3000", "https://*.groble.im" // ← www, api, dev 모두 허용
+            "http://localhost:3000",
+            "http://localhost:3001",
+            "https://*.groble.im" // ← www, api, dev 모두 허용
             )
         .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS") // 허용할 HTTP 메서드
         .allowedHeaders("*") // 모든 헤더 허용

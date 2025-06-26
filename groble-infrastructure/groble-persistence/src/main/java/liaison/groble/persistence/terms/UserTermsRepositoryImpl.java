@@ -30,4 +30,9 @@ public class UserTermsRepositoryImpl implements UserTermsRepository {
   public UserTerms save(UserTerms userTerms) {
     return jpaUserTermsAgreementRepository.save(userTerms);
   }
+
+  @Override
+  public boolean existsByUserId(Long userId) {
+    return jpaUserTermsAgreementRepository.existsByUserId(userId);
+  }
 }

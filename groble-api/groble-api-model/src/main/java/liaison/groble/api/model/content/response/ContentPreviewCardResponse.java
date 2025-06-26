@@ -11,7 +11,19 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-@Schema(description = "콘텐츠 미리보기 카드 응답 DTO")
+@Schema(
+    name = "ContentPreviewCardResponse",
+    description = "콘텐츠 미리보기 카드 응답 DTO",
+    example =
+        "{"
+            + "\"contentId\":42,"
+            + "\"title\":\"AI 그림 그리기 입문\","
+            + "\"thumbnailUrl\":\"https://.../thumb.png\","
+            + "\"category\":\"디자인/예술\","
+            + "\"lowestPrice\":10000,"
+            + "\"priceOptionLength\":3,"
+            + "\"status\":\"VERIFIED\""
+            + "}")
 @Getter
 @Builder
 @NoArgsConstructor

@@ -1,6 +1,0 @@
-# Hyphen API 설정 예시
-hyphen:
-  api-url: https://api.hyphen.im
-  user-id: ${HYPHEN_USER_ID}
-  hkey: ${HYPHEN_HKEY}
-  test-mode: true

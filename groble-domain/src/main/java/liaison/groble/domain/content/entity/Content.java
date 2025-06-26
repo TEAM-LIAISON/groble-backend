@@ -27,6 +27,7 @@ import jakarta.persistence.Table;
 import org.hibernate.annotations.DynamicUpdate;
 
 import liaison.groble.domain.common.entity.BaseTimeEntity;
+import liaison.groble.domain.content.enums.AdminContentCheckingStatus;
 import liaison.groble.domain.content.enums.ContentStatus;
 import liaison.groble.domain.content.enums.ContentType;
 import liaison.groble.domain.user.entity.User;
@@ -43,7 +44,11 @@ import lombok.NoArgsConstructor;
       @Index(name = "idx_content_category_id", columnList = "category_id"),
       @Index(name = "idx_content_status", columnList = "status"),
       @Index(name = "idx_content_user_status", columnList = "user_id, status"),
-      @Index(name = "idx_content_user_category", columnList = "user_id, category_id")
+      @Index(name = "idx_content_user_category", columnList = "user_id, category_id"),
+      @Index(
+          name = "ux_user_representative_content",
+          columnList = "user_id, is_representative",
+          unique = true)
     })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -103,6 +108,11 @@ public class Content extends BaseTimeEntity {
   @Column(nullable = false)
   private ContentStatus status = ContentStatus.DRAFT;
 
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
+  private AdminContentCheckingStatus adminContentCheckingStatus =
+      AdminContentCheckingStatus.PENDING;
+
   @Column(name = "lowest_price")
   private BigDecimal lowestPrice; // 최저가
 
@@ -118,6 +128,9 @@ public class Content extends BaseTimeEntity {
   /** 조회수 */
   @Column(name = "view_count", nullable = false)
   private Long viewCount = 0L;
+
+  @Column(name = "is_representative", nullable = false)
+  private Boolean isRepresentative = false;
 
   // 비즈니스 로직으로 옵션 유형 검증
   public void addOption(ContentOption option) {
@@ -168,6 +181,10 @@ public class Content extends BaseTimeEntity {
     this.status = status;
   }
 
+  public void setAdminContentCheckingStatus(AdminContentCheckingStatus adminContentCheckingStatus) {
+    this.adminContentCheckingStatus = adminContentCheckingStatus;
+  }
+
   public void setLowestPrice(BigDecimal lowestPrice) {
     this.lowestPrice = lowestPrice;
   }
@@ -178,6 +195,10 @@ public class Content extends BaseTimeEntity {
 
   public void setContentIntroduction(String contentIntroduction) {
     this.contentIntroduction = contentIntroduction;
+  }
+
+  public void setRepresentative(Boolean isRepresentative) {
+    this.isRepresentative = isRepresentative;
   }
 
   // Content 클래스에 추가

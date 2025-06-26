@@ -85,17 +85,15 @@ public class UserReader {
 
   // ===== 사용자 존재 여부 확인 =====
 
-  /**
-   * 이메일로 통합 계정 존재 여부 확인
-   *
-   * @param email 이메일
-   * @return 존재 여부
-   */
   public boolean existsByIntegratedAccountEmail(String email) {
     return integratedAccountRepository.existsByIntegratedAccountEmail(email);
   }
 
-  public boolean existsByPhoneNumber(String phoneNumber) {
-    return userRepository.existsByPhoneNumber(phoneNumber);
+  public boolean existsBySocialAccountEmail(String email) {
+    return socialAccountRepository.existsBySocialAccountEmail(email);
+  }
+
+  public boolean existsByMarketLinkUrl(String marketLinkUrl) {
+    return userRepository.existsBySellerInfoMarketLinkUrl(marketLinkUrl);
   }
 }

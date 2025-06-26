@@ -20,8 +20,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
-import org.springframework.security.oauth2.client.web.AuthorizationRequestRepository;
-import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -33,7 +31,6 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import liaison.groble.security.jwt.JwtAuthenticationFilter;
 import liaison.groble.security.jwt.UserDetailsServiceImpl;
 import liaison.groble.security.oauth2.handler.OAuth2AuthenticationSuccessHandler;
-import liaison.groble.security.oauth2.repository.HttpCookieOAuth2AuthorizationRequestRepository;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -50,8 +47,6 @@ public class SecurityConfig {
   private final JwtTokenAuthenticationEntryPoint jwtTokenAuthenticationEntryPoint;
   private final JwtTokenAccessDeniedHandler jwtTokenAccessDeniedHandler;
   private final OAuth2UserService<OAuth2UserRequest, OAuth2User> oAuth2UserService;
-  private final HttpCookieOAuth2AuthorizationRequestRepository
-      httpCookieOAuth2AuthorizationRequestRepository;
 
   public SecurityConfig(
       UserDetailsServiceImpl userDetailsService,
@@ -59,17 +54,13 @@ public class SecurityConfig {
       OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler,
       JwtTokenAuthenticationEntryPoint jwtTokenAuthenticationEntryPoint,
       JwtTokenAccessDeniedHandler jwtTokenAccessDeniedHandler,
-      OAuth2UserService<OAuth2UserRequest, OAuth2User> oAuth2UserService,
-      HttpCookieOAuth2AuthorizationRequestRepository
-          httpCookieOAuth2AuthorizationRequestRepository) {
+      OAuth2UserService<OAuth2UserRequest, OAuth2User> oAuth2UserService) {
     this.userDetailsService = userDetailsService;
     this.jwtAuthenticationFilter = jwtAuthenticationFilter;
     this.oAuth2AuthenticationSuccessHandler = oAuth2AuthenticationSuccessHandler;
     this.jwtTokenAuthenticationEntryPoint = jwtTokenAuthenticationEntryPoint;
     this.jwtTokenAccessDeniedHandler = jwtTokenAccessDeniedHandler;
     this.oAuth2UserService = oAuth2UserService;
-    this.httpCookieOAuth2AuthorizationRequestRepository =
-        httpCookieOAuth2AuthorizationRequestRepository;
   }
 
   /** 비밀번호 인코더 빈 설정 */
@@ -97,7 +88,8 @@ public class SecurityConfig {
   @Bean
   public CorsConfigurationSource corsConfigurationSource() {
     CorsConfiguration configuration = new CorsConfiguration();
-    configuration.setAllowedOriginPatterns(List.of("https://*.groble.im", "http://localhost:3000"));
+    configuration.setAllowedOriginPatterns(
+        List.of("https://*.groble.im", "http://localhost:3000", "http://localhost:3001"));
     configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
 
     // 이 부분 수정: 더 많은 헤더 허용
@@ -124,13 +116,6 @@ public class SecurityConfig {
     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
     source.registerCorsConfiguration("/**", configuration);
     return source;
-  }
-
-  /** OAuth2 인증 요청 리포지토리 빈 설정 */
-  @Bean
-  public AuthorizationRequestRepository<OAuth2AuthorizationRequest>
-      authorizationRequestRepository() {
-    return httpCookieOAuth2AuthorizationRequestRepository;
   }
 
   @Bean
@@ -168,7 +153,9 @@ public class SecurityConfig {
                         "/api/v1/auth/phone-number/verify-request",
                         "/api/v1/auth/phone-number/verify-code",
                         "/api/v1/auth/password/reset-request",
-                        "/api/v1/auth/password/reset")
+                        "/api/v1/auth/password/reset",
+                        "/api/v1/market/intro/**",
+                        "/api/v1/market/contents/**")
                     .permitAll()
                     .requestMatchers("/api/v1/oauth2/**")
                     .permitAll()
@@ -205,7 +192,18 @@ public class SecurityConfig {
                     .permitAll()
                     .requestMatchers("/env")
                     .permitAll()
-
+                    // [관리자 API 접근 허용 설정]
+                    .requestMatchers("/api/v1/admin/auth/sign-in")
+                    .permitAll()
+                    // [변경된 회원가입 및 로그인 플로우 적용]
+                    .requestMatchers(
+                        "/api/v1/auth/integrated/sign-up",
+                        "/api/v1/auth/integrated/sign-in",
+                        "/api/v1/verification/email/code/sign-up",
+                        "/api/v1/verification/email/code/verify/sign-up",
+                        "/api/v1/verification/email/code/password-reset",
+                        "/api/v1/verification/password/reset")
+                    .permitAll()
                     // Swagger UI 관련 경로 모두 허용
                     .requestMatchers("/swagger-ui.html")
                     .permitAll()
@@ -233,10 +231,7 @@ public class SecurityConfig {
             oauth2 ->
                 oauth2
                     .authorizationEndpoint(
-                        authorization ->
-                            authorization
-                                .baseUri("/oauth2/authorize")
-                                .authorizationRequestRepository(authorizationRequestRepository()))
+                        authorization -> authorization.baseUri("/oauth2/authorize"))
                     .redirectionEndpoint(redirection -> redirection.baseUri("/login/oauth2/code/*"))
                     .userInfoEndpoint(userInfo -> userInfo.userService(oAuth2UserService))
                     .successHandler(oAuth2AuthenticationSuccessHandler))

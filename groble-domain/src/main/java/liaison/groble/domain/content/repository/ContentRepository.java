@@ -6,11 +6,16 @@ import java.util.Optional;
 import liaison.groble.domain.content.dto.FlatContentPreviewDTO;
 import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.content.enums.ContentStatus;
+import liaison.groble.domain.user.entity.User;
 
 public interface ContentRepository {
   Optional<Content> findById(Long contentId);
 
+  Optional<Content> findByIdAndUser(Long contentId, User user);
+
   Optional<Content> findByIdAndStatus(Long contentId, ContentStatus status);
+
+  Optional<Content> findByUserAndIsRepresentativeTrue(User user);
 
   Content save(Content content);
 
@@ -19,4 +24,6 @@ public interface ContentRepository {
   Optional<FlatContentPreviewDTO> findFlatContentById(Long contentId);
 
   List<FlatContentPreviewDTO> findFlatContentsByUserId(Long userId);
+
+  boolean existsByUserAndStatus(User user, ContentStatus status);
 }

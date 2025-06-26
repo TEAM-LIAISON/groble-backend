@@ -145,6 +145,7 @@ project(':groble-api:groble-api-server') {
         implementation project(':groble-api:groble-api-model')
         implementation project(':groble-application')
         implementation project(':groble-security')
+        implementation project(':groble-mapping')  // groble-mapping 모듈 추가
 
         // Spring Data JPA
         implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
@@ -331,5 +332,42 @@ project(':groble-security') {
 
         // Spring Data Redis (토큰 저장, 세션 관리)
         implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    }
+}
+
+project(':groble-mapping') {
+    dependencies {
+        // 프로젝트 의존성
+        implementation project(':groble-domain')
+        implementation project(':groble-api:groble-api-model')
+        implementation project(':groble-application')
+        implementation project(':groble-common')
+        
+        // MapStruct
+        implementation 'org.mapstruct:mapstruct:1.5.5.Final'
+        annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
+        
+        // Lombok과 MapStruct 함께 사용 시 필요
+        annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
+        
+        // Spring
+        implementation 'org.springframework:spring-context'
+    }
+
+    // MapStruct 프로세서 옵션
+    compileJava {
+        options.compilerArgs = [
+            '-Amapstruct.defaultComponentModel=spring',
+            '-Amapstruct.defaultInjectionStrategy=constructor',
+            '-Amapstruct.unmappedTargetPolicy=ERROR'
+        ]
+    }
+    
+    // 생성된 MapStruct 파일은 Spotless 검사에서 제외
+    spotless {
+        java {
+            target '**/*.java'
+            targetExclude 'build/generated/**'
+        }
     }
 }

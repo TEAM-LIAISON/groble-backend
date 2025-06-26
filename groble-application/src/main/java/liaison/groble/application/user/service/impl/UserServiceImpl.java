@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import liaison.groble.application.content.ContentReader;
 import liaison.groble.application.user.dto.UserHeaderDto;
 import liaison.groble.application.user.dto.UserMyPageDetailDto;
 import liaison.groble.application.user.dto.UserMyPageSummaryDto;
@@ -34,6 +35,7 @@ public class UserServiceImpl implements UserService {
   // 변경: 24시간 (24 * 60 = 1440분)
   private final long PASSWORD_RESET_EXPIRATION_MINUTES = 1440;
   private final UserReader userReader;
+  private final ContentReader contentReader;
 
   @Value("${app.frontend-url}")
   private String frontendUrl;
@@ -118,22 +120,6 @@ public class UserServiceImpl implements UserService {
   }
 
   @Override
-  public void sendPasswordResetToken(String email) {
-    IntegratedAccount integratedAccount =
-        integratedAccountRepository
-            .findByIntegratedAccountEmail(email)
-            .orElseThrow(() -> new IllegalArgumentException("해당 이메일로 가입된 사용자가 없습니다."));
-
-    // 2. 토큰 생성 (이메일 기반 JWT)
-    String token =
-        securityPort.createPasswordResetToken(
-            email, passwordResetSecret, PASSWORD_RESET_EXPIRATION_MINUTES);
-
-    // 메일 발송
-    String resetUrl = frontendUrl + "/reset-password?token=" + token;
-  }
-
-  @Override
   public void resetPasswordWithToken(String token, String newPassword) {
     // 토큰 검증 및 이메일 추출
     String email = securityPort.validatePasswordResetTokenAndGetEmail(token, passwordResetSecret);
@@ -184,6 +170,7 @@ public class UserServiceImpl implements UserService {
     String email = null;
     String phoneNumber = null;
     String providerTypeName = null;
+    String verificationStatus = null;
 
     if (accountType == AccountType.INTEGRATED && user.getIntegratedAccount() != null) {
       IntegratedAccount account = user.getIntegratedAccount();
@@ -202,6 +189,10 @@ public class UserServiceImpl implements UserService {
         !user.hasAgreedTo(TermsType.SELLER_TERMS_POLICY) || user.getPhoneNumber() == null;
     log.info("sellerAccountNotCreated: {}", sellerAccountNotCreated);
 
+    if (user.getSellerInfo() != null) {
+      verificationStatus = user.getSellerInfo().getVerificationStatus().name();
+    }
+
     return UserMyPageDetailDto.builder()
         .nickname(user.getNickname())
         .userTypeName(user.getLastUserType().name())
@@ -212,6 +203,8 @@ public class UserServiceImpl implements UserService {
         .phoneNumber(phoneNumber)
         .canSwitchToSeller(canSwitchToSeller)
         .sellerAccountNotCreated(sellerAccountNotCreated)
+        .verificationStatus(verificationStatus)
+        .alreadyRegisteredAsSeller(user.isSeller())
         .build();
   }
 
@@ -238,8 +231,20 @@ public class UserServiceImpl implements UserService {
   public UserHeaderDto getUserHeaderInform(Long userId) {
     User user = userReader.getUserById(userId);
 
+    boolean isLogin;
+
+    if (user.getUserProfile() != null) {
+      if (user.getUserProfile().getPhoneNumber() != null) {
+        isLogin = true;
+      } else {
+        isLogin = false;
+      }
+    } else {
+      isLogin = false;
+    }
+
     return UserHeaderDto.builder()
-        .isLogin(true)
+        .isLogin(isLogin)
         .nickname(user.getNickname())
         .profileImageUrl(user.getProfileImageUrl())
         .canSwitchToSeller(user.isSeller())
@@ -255,5 +260,29 @@ public class UserServiceImpl implements UserService {
 
     user.updateProfileImageUrl(profileImageUrl);
     userRepository.save(user);
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public boolean isLoginAble(Long userId) {
+    User user = userReader.getUserById(userId);
+
+    if (user.getUserProfile() != null) {
+      if (user.getUserProfile().getPhoneNumber() != null) {
+        return true;
+      } else {
+        return false;
+      }
+    } else {
+      return false;
+    }
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public boolean isAllowWithdraw(Long userId) {
+    User user = userReader.getUserById(userId);
+
+    return !contentReader.hasActiveContent(user);
   }
 }
