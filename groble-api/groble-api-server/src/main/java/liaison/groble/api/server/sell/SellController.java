@@ -41,7 +41,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/v1/sell")
+@RequestMapping("/api/v1/sell/content")
 @RequiredArgsConstructor
 @Tag(
     name = "[🎁 상품 관리] 상품 관리 단일 페이지 기능",
@@ -49,12 +49,12 @@ import lombok.RequiredArgsConstructor;
 public class SellController {
 
   // API 경로 상수화
-  private static final String DRAFT_CONTENT_PATH = "/content/draft";
-  private static final String REGISTER_CONTENT_PATH = "/content/register";
-  private static final String STOP_CONTENT_PATH = "/content/{contentId}/stop";
-  private static final String DELETE_CONTENT_PATH = "/content/{contentId}/delete";
-  private static final String EXAMINE_REJECT_REASON_PATH = "/content/{contentId}/examine/reject";
-  private static final String MY_SELLING_CONTENTS_PATH = "/content/my/selling-contents";
+  private static final String DRAFT_CONTENT_PATH = "/draft";
+  private static final String REGISTER_CONTENT_PATH = "/register";
+  private static final String STOP_CONTENT_PATH = "/{contentId}/stop";
+  private static final String DELETE_CONTENT_PATH = "/{contentId}/delete";
+  private static final String EXAMINE_REJECT_REASON_PATH = "/{contentId}/examine/reject";
+  private static final String MY_SELLING_CONTENTS_PATH = "/my/selling-contents";
 
   // 응답 메시지 상수화
   private static final String MY_SELLING_CONTENTS_SUCCESS_MESSAGE = "나의 판매 콘텐츠 조회에 성공하였습니다.";
@@ -104,17 +104,21 @@ public class SellController {
     return responseHelper.success(response, CONTENT_REGISTER_SUCCESS_MESSAGE, HttpStatus.CREATED);
   }
 
-  @Operation(summary = "콘텐츠 판매 중단 (작성중으로 변경)", description = "판매 중인 콘텐츠를 판매 중단합니다.")
+  @Operation(
+      summary = "[✅ 콘텐츠 심사 요청] 콘텐츠 판매 중단",
+      description = "상품 관리 탭에서 판매중인 콘텐츠를 판매 중단합니다. (작성중 탭으로 이동합니다.)")
   @RequireRole("ROLE_SELLER")
   @PostMapping(STOP_CONTENT_PATH)
   public ResponseEntity<GrobleResponse<ContentStatusResponse>> stopContent(
       @Auth Accessor accessor, @PathVariable("contentId") Long contentId) {
-    ContentDTO contentDto = contentService.stopContent(accessor.getUserId(), contentId);
-    ContentStatusResponse response = contentMapper.toContentStatusResponse(contentDto);
+    ContentDTO contentDTO = contentService.stopContent(accessor.getUserId(), contentId);
+    ContentStatusResponse response = contentMapper.toContentStatusResponse(contentDTO);
     return responseHelper.success(response, STOP_CONTENT_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 
-  @Operation(summary = "콘텐츠 삭제", description = "작성 중인 콘텐츠를 삭제합니다. 판매 중단된 콘텐츠는 삭제할 수 없습니다.")
+  @Operation(
+      summary = "[✅ 콘텐츠 삭제 요청] 콘텐츠 삭제",
+      description = "작성 중인 콘텐츠를 삭제합니다. 판매 중단된 콘텐츠는 삭제할 수 없습니다.")
   @RequireRole("ROLE_SELLER")
   @PostMapping(DELETE_CONTENT_PATH)
   public ResponseEntity<GrobleResponse<Void>> deleteContent(

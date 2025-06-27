@@ -3,6 +3,7 @@ package liaison.groble.persistence.purchase;
 import static com.querydsl.jpa.JPAExpressions.select;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Repository;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Repository;
 import com.querydsl.core.types.ExpressionUtils;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
 import liaison.groble.common.response.CursorResponse;
@@ -18,10 +20,14 @@ import liaison.groble.domain.content.entity.QContentOption;
 import liaison.groble.domain.content.enums.ContentType;
 import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.order.entity.QOrder;
+import liaison.groble.domain.purchase.dto.FlatContentSellDetailDTO;
 import liaison.groble.domain.purchase.dto.FlatPurchaseContentPreviewDTO;
 import liaison.groble.domain.purchase.entity.QPurchase;
 import liaison.groble.domain.purchase.repository.PurchaseCustomRepository;
+import liaison.groble.domain.user.entity.QIntegratedAccount;
+import liaison.groble.domain.user.entity.QSocialAccount;
 import liaison.groble.domain.user.entity.QUser;
+import liaison.groble.domain.user.enums.AccountType;
 
 import lombok.RequiredArgsConstructor;
 
@@ -145,5 +151,47 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
             .fetchOne();
 
     return count != null ? count.intValue() : 0;
+  }
+
+  @Override
+  public Optional<FlatContentSellDetailDTO> getContentSellDetailDTO(
+      Long userId, Long contentId, Long purchaseId) {
+    QPurchase qPurchase = QPurchase.purchase;
+    QContent qContent = QContent.content;
+    QUser qUser = QUser.user;
+    QIntegratedAccount qIntegratedAccount = QIntegratedAccount.integratedAccount;
+    QSocialAccount qSocialAccount = QSocialAccount.socialAccount;
+
+    BooleanExpression conditions =
+        qContent.id.eq(contentId).and(qContent.user.id.eq(userId)).and(qPurchase.id.eq(purchaseId));
+
+    FlatContentSellDetailDTO result =
+        queryFactory
+            .select(
+                Projections.fields(
+                    FlatContentSellDetailDTO.class,
+                    qContent.title.as("title"),
+                    qPurchase.purchasedAt.as("purchasedAt"),
+                    qUser.userProfile.nickname.as("purchaserNickname"),
+                    // 조건부 이메일 처리
+                    Expressions.cases()
+                        .when(qUser.accountType.eq(AccountType.INTEGRATED))
+                        .then(qIntegratedAccount.integratedAccountEmail)
+                        .when(qUser.accountType.eq(AccountType.SOCIAL))
+                        .then(qSocialAccount.socialAccountEmail)
+                        .otherwise(Expressions.nullExpression(String.class))
+                        .as("purchaserEmail"),
+                    qUser.userProfile.phoneNumber.as("purchaserPhoneNumber"),
+                    qPurchase.selectedOptionName.as("selectedOptionName"),
+                    qPurchase.finalPrice.as("finalPrice")))
+            .from(qPurchase)
+            .leftJoin(qPurchase.user, qUser)
+            .leftJoin(qUser.integratedAccount, qIntegratedAccount)
+            .leftJoin(qUser.socialAccount, qSocialAccount)
+            .leftJoin(qPurchase.content, qContent)
+            .where(conditions)
+            .fetchOne();
+
+    return Optional.ofNullable(result);
   }
 }
