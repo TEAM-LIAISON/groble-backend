@@ -13,6 +13,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class FlatContentSellDetailDTO {
+  private Long purchaseId; // Purchase.id
   private String contentTitle; // Content.title
   private LocalDateTime purchasedAt; // Purchase.purchasedAt
   private String purchaserNickname; // Purchase.user.userProfile.nickname

@@ -28,6 +28,7 @@ public class SellContentService {
   private ContentSellDetailDTO buildContentSellDetail(
       FlatContentSellDetailDTO contentSellDetailDTO) {
     return ContentSellDetailDTO.builder()
+        .purchaseId(contentSellDetailDTO.getPurchaseId())
         .contentTitle(contentSellDetailDTO.getContentTitle())
         .purchasedAt(contentSellDetailDTO.getPurchasedAt())
         .purchaserNickname(contentSellDetailDTO.getPurchaserNickname())

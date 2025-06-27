@@ -15,6 +15,13 @@ import lombok.Getter;
 public class ContentSellDetailResponse {
 
   @Schema(
+      description = "구매 ID",
+      example = "200",
+      type = "integer",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private Long purchaseId;
+
+  @Schema(
       description = "콘텐츠 제목",
       example = "자바 프로그래밍 코칭",
       type = "string",

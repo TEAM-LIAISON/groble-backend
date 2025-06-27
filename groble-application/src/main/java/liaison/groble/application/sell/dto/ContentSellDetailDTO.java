@@ -9,6 +9,7 @@ import lombok.Getter;
 @Getter
 @Builder
 public class ContentSellDetailDTO {
+  private Long purchaseId; // Purchase.id
   private String contentTitle; // Content.title
   private LocalDateTime purchasedAt; // Purchase.purchasedAt
   private String purchaserNickname; // Purchase.user.userProfile.nickname

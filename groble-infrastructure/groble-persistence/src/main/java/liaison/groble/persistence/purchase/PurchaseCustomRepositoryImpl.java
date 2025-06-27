@@ -170,6 +170,7 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
             .select(
                 Projections.fields(
                     FlatContentSellDetailDTO.class,
+                    qPurchase.id.as("purchaseId"),
                     qContent.title.as("title"),
                     qPurchase.purchasedAt.as("purchasedAt"),
                     qUser.userProfile.nickname.as("purchaserNickname"),
