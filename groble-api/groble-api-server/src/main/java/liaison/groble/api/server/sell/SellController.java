@@ -1,13 +1,11 @@
 package liaison.groble.api.server.sell;
 
-import java.util.List;
-
 import jakarta.validation.Valid;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -22,77 +20,105 @@ import liaison.groble.api.model.content.response.ContentResponse;
 import liaison.groble.api.model.content.response.ContentStatusResponse;
 import liaison.groble.api.model.content.response.swagger.ContentDraft;
 import liaison.groble.api.model.content.response.swagger.ContentExamineReject;
+import liaison.groble.api.model.content.response.swagger.ContentListResponse;
 import liaison.groble.api.model.content.response.swagger.ContentRegister;
 import liaison.groble.api.model.content.response.swagger.MySellingContents;
 import liaison.groble.api.server.content.mapper.ContentDtoMapper;
 import liaison.groble.application.content.dto.ContentCardDTO;
-import liaison.groble.application.content.dto.ContentDto;
+import liaison.groble.application.content.dto.ContentDTO;
 import liaison.groble.application.content.service.ContentService;
 import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.annotation.RequireRole;
 import liaison.groble.common.model.Accessor;
-import liaison.groble.common.request.CursorRequest;
-import liaison.groble.common.response.CursorResponse;
 import liaison.groble.common.response.GrobleResponse;
+import liaison.groble.common.response.PageResponse;
+import liaison.groble.common.response.ResponseHelper;
+import liaison.groble.common.utils.PageUtils;
+import liaison.groble.mapping.content.ContentMapper;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/v1/sell")
 @RequiredArgsConstructor
-@Tag(name = "판매 관련 API", description = "콘텐츠 임시 저장 및 심사 요청, 콘텐츠 활성화, 나의 판매 콘텐츠 조회 등")
+@Tag(
+    name = "[🎁 상품 관리] 상품 관리 단일 페이지 기능",
+    description = "나의 판매중, 작성중 콘텐츠 조회를 포함한 상품 관리 단일 페이지 기능을 제공합니다.")
 public class SellController {
+
+  // API 경로 상수화
+  private static final String DRAFT_CONTENT_PATH = "/content/draft";
+  private static final String REGISTER_CONTENT_PATH = "/content/register";
+  private static final String STOP_CONTENT_PATH = "/content/{contentId}/stop";
+  private static final String DELETE_CONTENT_PATH = "/content/{contentId}/delete";
+  private static final String EXAMINE_REJECT_REASON_PATH = "/content/{contentId}/examine/reject";
+  private static final String MY_SELLING_CONTENTS_PATH = "/content/my/selling-contents";
+
+  // 응답 메시지 상수화
+  private static final String MY_SELLING_CONTENTS_SUCCESS_MESSAGE = "나의 판매 콘텐츠 조회 성공";
+  private static final String CONTENT_DRAFT_SUCCESS_MESSAGE = "콘텐츠 임시 저장에 성공하였습니다.";
+  private static final String CONTENT_REGISTER_SUCCESS_MESSAGE = "콘텐츠 심사 요청에 성공하였습니다.";
+
   private final ContentService contentService;
   private final ContentDtoMapper contentDtoMapper;
+  private final ContentMapper contentMapper;
 
-  // 콘텐츠 임시 저장
+  private final ResponseHelper responseHelper;
+
   @ContentDraft
   @RequireRole("ROLE_SELLER")
-  @PostMapping("/content/draft")
+  @Operation(
+      summary = "[❌ 콘텐츠 임시 저장] 작성 완료한 콘텐츠 임시 저장",
+      description = "콘텐츠를 임시 저장합니다. 콘텐츠 유형(코칭/문서)에 따라 옵션 구조가 달라집니다.")
+  @PostMapping(DRAFT_CONTENT_PATH)
   public ResponseEntity<GrobleResponse<ContentResponse>> saveDraft(
       @Parameter(hidden = true) @Auth Accessor accessor,
       @Valid @RequestBody ContentDraftRequest request) {
 
-    ContentDto contentDto = contentDtoMapper.toServiceContentDtoFromDraft(request);
-    ContentDto savedContentDto =
-        contentService.saveDraftAndReturn(accessor.getUserId(), contentDto);
+    ContentDTO contentDTO = contentDtoMapper.toServiceContentDtoFromDraft(request);
+    ContentDTO savedContentDTO =
+        contentService.saveDraftAndReturn(accessor.getUserId(), contentDTO);
 
-    ContentResponse response = contentDtoMapper.toContentDraftResponse(savedContentDto);
-    return ResponseEntity.ok(GrobleResponse.success(response, "콘텐츠 임시 저장 성공"));
+    ContentResponse response = contentDtoMapper.toContentDraftResponse(savedContentDTO);
+    return responseHelper.success(response, CONTENT_DRAFT_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 
   // 콘텐츠 심사 요청
   @ContentRegister
   @RequireRole("ROLE_SELLER")
-  @PostMapping("/content/register")
+  @Operation(
+      summary = "[❌ 콘텐츠 심사 요청] 작성 완료한 콘텐츠 심사 요청",
+      description = "콘텐츠 심사를 요청합니다. 콘텐츠 유형(코칭/문서)에 따라 옵션 구조가 달라집니다.")
+  @PostMapping(REGISTER_CONTENT_PATH)
   public ResponseEntity<GrobleResponse<ContentResponse>> registerContent(
       @Parameter(hidden = true) @Auth Accessor accessor,
       @Valid @RequestBody ContentRegisterRequest request) {
-    ContentDto contentDto = contentDtoMapper.toServiceContentDtoFromRegister(request);
-    ContentDto savedContentDto = contentService.registerContent(accessor.getUserId(), contentDto);
-    ContentResponse response = contentDtoMapper.toContentDraftResponse(savedContentDto);
-    return ResponseEntity.status(HttpStatus.CREATED)
-        .body(GrobleResponse.success(response, "콘텐츠 심사 요청 성공"));
+    ContentDTO contentDto = contentDtoMapper.toServiceContentDtoFromRegister(request);
+    ContentDTO savedContentDTO = contentService.registerContent(accessor.getUserId(), contentDto);
+    ContentResponse response = contentDtoMapper.toContentDraftResponse(savedContentDTO);
+    return responseHelper.success(response, CONTENT_REGISTER_SUCCESS_MESSAGE, HttpStatus.CREATED);
   }
 
   @Operation(summary = "콘텐츠 판매 중단 (작성중으로 변경)", description = "판매 중인 콘텐츠를 판매 중단합니다.")
   @RequireRole("ROLE_SELLER")
-  @PostMapping("/content/{contentId}/stop")
+  @PostMapping(STOP_CONTENT_PATH)
   public ResponseEntity<GrobleResponse<ContentStatusResponse>> stopContent(
       @Parameter(hidden = true) @Auth Accessor accessor,
       @PathVariable("contentId") Long contentId) {
-    ContentDto contentDto = contentService.stopContent(accessor.getUserId(), contentId);
+    ContentDTO contentDto = contentService.stopContent(accessor.getUserId(), contentId);
     ContentStatusResponse response = contentDtoMapper.toContentStatusResponse(contentDto);
     return ResponseEntity.ok(GrobleResponse.success(response, "콘텐츠 판매 중단 성공"));
   }
 
   @Operation(summary = "콘텐츠 삭제", description = "작성 중인 콘텐츠를 삭제합니다. 판매 중단된 콘텐츠는 삭제할 수 없습니다.")
   @RequireRole("ROLE_SELLER")
-  @PostMapping("/content/{contentId}/delete")
+  @PostMapping(DELETE_CONTENT_PATH)
   public ResponseEntity<GrobleResponse<Void>> deleteContent(
       @Parameter(hidden = true) @Auth Accessor accessor,
       @PathVariable("contentId") Long contentId) {
@@ -103,7 +129,7 @@ public class SellController {
   // 심사 거절된 콘텐츠의 거절 사유를 조회
   @ContentExamineReject
   @RequireRole("ROLE_SELLER")
-  @GetMapping("/content/{contentId}/examine/reject")
+  @GetMapping(EXAMINE_REJECT_REASON_PATH)
   public ResponseEntity<GrobleResponse<String>> getExamineRejectReason(
       @Auth Accessor accessor, @PathVariable("contentId") Long contentId) {
     String rejectReason = contentService.getExamineRejectReason(accessor.getUserId(), contentId);
@@ -111,57 +137,32 @@ public class SellController {
   }
 
   @MySellingContents
-  @GetMapping("/content/my/selling-contents")
-  public ResponseEntity<GrobleResponse<CursorResponse<ContentPreviewCardResponse>>>
+  @Operation(
+      summary = "[❌ 상품 관리] 상품 관리 화면에서 판매중, 작성중인 콘텐츠를 조회합니다.",
+      description = "상품 관리 화면에서 판매중, 작성중인 콘텐츠를 조회합니다. 커서 기반 페이지네이션으로 작동합니다.")
+  @ApiResponse(
+      responseCode = "200",
+      description = "상품 관리 화면에서 콘텐츠 목록 전체 조회 성공",
+      content =
+          @Content(
+              mediaType = "application/json",
+              schema = @Schema(implementation = ContentListResponse.class)))
+  @GetMapping(MY_SELLING_CONTENTS_PATH)
+  public ResponseEntity<GrobleResponse<PageResponse<ContentPreviewCardResponse>>>
       getMySellingContents(
-          @Parameter(hidden = true) @Auth Accessor accessor,
-          @Parameter(
-                  description = "커서 기반 페이지네이션 요청 정보",
-                  required = true,
-                  schema = @Schema(implementation = CursorRequest.class))
-              @Valid
-              @ModelAttribute
-              CursorRequest cursorRequest,
-          @Parameter(
-                  description =
-                      "콘텐츠 상태 필터 [ACTIVE - 판매중], [DRAFT - 작성중], [PENDING - 심사중], [APPROVED - 심사완료]",
-                  schema =
-                      @Schema(
-                          implementation = String.class,
-                          allowableValues = {"ACTIVE", "DRAFT", "PENDING", "APPROVED"}))
-              @RequestParam(value = "state")
-              String state,
-          @Parameter(
-                  description = "콘텐츠 유형 [COACHING - 코칭], [DOCUMENT - 자료]",
-                  required = true,
-                  schema =
-                      @Schema(
-                          implementation = String.class,
-                          allowableValues = {"COACHING", "DOCUMENT"}))
-              @RequestParam(value = "type")
-              String type) {
+          @Auth Accessor accessor,
+          @RequestParam(value = "page", defaultValue = "0") int page,
+          @RequestParam(value = "size", defaultValue = "12") int size,
+          @RequestParam(value = "sort", defaultValue = "createdAt") String sort,
+          @RequestParam(value = "state") String state) {
+    Pageable pageable = PageUtils.createPageable(page, size, sort);
 
-    CursorResponse<ContentCardDTO> cardDtos =
-        contentService.getMySellingContents(
-            accessor.getUserId(), cursorRequest.getCursor(), cursorRequest.getSize(), state, type);
+    PageResponse<ContentCardDTO> dtoPageResponse =
+        contentService.getMySellingContents(accessor.getUserId(), pageable, state);
 
-    // DTO 변환
-    List<ContentPreviewCardResponse> responseItems =
-        cardDtos.getItems().stream()
-            .map(contentDtoMapper::toContentPreviewCardFromCardDto)
-            .toList();
+    PageResponse<ContentPreviewCardResponse> responsePage =
+        contentMapper.toContentPreviewCardResponsePage(dtoPageResponse);
 
-    // CursorResponse 생성
-    CursorResponse<ContentPreviewCardResponse> response =
-        CursorResponse.<ContentPreviewCardResponse>builder()
-            .items(responseItems)
-            .nextCursor(cardDtos.getNextCursor())
-            .hasNext(cardDtos.isHasNext())
-            .totalCount(cardDtos.getTotalCount())
-            .meta(cardDtos.getMeta())
-            .build();
-
-    String successMessage = "COACHING".equals(type) ? "나의 코칭 콘텐츠 조회 성공" : "나의 자료 콘텐츠 조회 성공";
-    return ResponseEntity.ok(GrobleResponse.success(response, successMessage));
+    return responseHelper.success(responsePage, MY_SELLING_CONTENTS_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 }

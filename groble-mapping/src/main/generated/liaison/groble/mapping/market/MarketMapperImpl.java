@@ -2,11 +2,7 @@ package liaison.groble.mapping.market;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import javax.annotation.processing.Generated;
-
-import org.springframework.stereotype.Component;
-
 import liaison.groble.api.model.content.response.ContentPreviewCardResponse;
 import liaison.groble.api.model.maker.request.ContactInfoRequest;
 import liaison.groble.api.model.maker.request.MarketEditRequest;
@@ -19,220 +15,211 @@ import liaison.groble.application.market.dto.MarketEditDTO;
 import liaison.groble.application.market.dto.MarketIntroSectionDTO;
 import liaison.groble.application.market.dto.MarketLinkCheckDTO;
 import liaison.groble.domain.content.dto.FlatContentPreviewDTO;
+import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-06-25T20:22:25+0900",
-    comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.10 (Amazon.com Inc.)")
+    date = "2025-06-27T14:48:48+0900",
+    comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.10 (Amazon.com Inc.)"
+)
 @Component
 public class MarketMapperImpl implements MarketMapper {
 
-  @Override
-  public MarketEditDTO toMarketEditDTO(MarketEditRequest marketEditRequest) {
-    if (marketEditRequest == null) {
-      return null;
+    @Override
+    public MarketEditDTO toMarketEditDTO(MarketEditRequest marketEditRequest) {
+        if ( marketEditRequest == null ) {
+            return null;
+        }
+
+        MarketEditDTO.MarketEditDTOBuilder marketEditDTO = MarketEditDTO.builder();
+
+        if ( marketEditRequest.getMarketName() != null ) {
+            marketEditDTO.marketName( marketEditRequest.getMarketName() );
+        }
+        if ( marketEditRequest.getProfileImageUrl() != null ) {
+            marketEditDTO.profileImageUrl( marketEditRequest.getProfileImageUrl() );
+        }
+        if ( marketEditRequest.getMarketLinkUrl() != null ) {
+            marketEditDTO.marketLinkUrl( marketEditRequest.getMarketLinkUrl() );
+        }
+        if ( marketEditRequest.getContactInfo() != null ) {
+            marketEditDTO.contactInfo( toContactInfoDTO( marketEditRequest.getContactInfo() ) );
+        }
+        if ( marketEditRequest.getRepresentativeContentId() != null ) {
+            marketEditDTO.representativeContentId( marketEditRequest.getRepresentativeContentId() );
+        }
+
+        return marketEditDTO.build();
     }
 
-    MarketEditDTO.MarketEditDTOBuilder marketEditDTO = MarketEditDTO.builder();
+    @Override
+    public ContactInfoDTO toContactInfoDTO(ContactInfoRequest contactInfoRequest) {
+        if ( contactInfoRequest == null ) {
+            return null;
+        }
 
-    if (marketEditRequest.getMarketName() != null) {
-      marketEditDTO.marketName(marketEditRequest.getMarketName());
-    }
-    if (marketEditRequest.getProfileImageUrl() != null) {
-      marketEditDTO.profileImageUrl(marketEditRequest.getProfileImageUrl());
-    }
-    if (marketEditRequest.getMarketLinkUrl() != null) {
-      marketEditDTO.marketLinkUrl(marketEditRequest.getMarketLinkUrl());
-    }
-    if (marketEditRequest.getContactInfo() != null) {
-      marketEditDTO.contactInfo(toContactInfoDTO(marketEditRequest.getContactInfo()));
-    }
-    if (marketEditRequest.getRepresentativeContentId() != null) {
-      marketEditDTO.representativeContentId(marketEditRequest.getRepresentativeContentId());
-    }
+        ContactInfoDTO.ContactInfoDTOBuilder contactInfoDTO = ContactInfoDTO.builder();
 
-    return marketEditDTO.build();
-  }
+        if ( contactInfoRequest.getInstagram() != null ) {
+            contactInfoDTO.instagram( contactInfoRequest.getInstagram() );
+        }
+        if ( contactInfoRequest.getEmail() != null ) {
+            contactInfoDTO.email( contactInfoRequest.getEmail() );
+        }
+        if ( contactInfoRequest.getOpenChat() != null ) {
+            contactInfoDTO.openChat( contactInfoRequest.getOpenChat() );
+        }
+        if ( contactInfoRequest.getEtc() != null ) {
+            contactInfoDTO.etc( contactInfoRequest.getEtc() );
+        }
 
-  @Override
-  public ContactInfoDTO toContactInfoDTO(ContactInfoRequest contactInfoRequest) {
-    if (contactInfoRequest == null) {
-      return null;
+        return contactInfoDTO.build();
     }
 
-    ContactInfoDTO.ContactInfoDTOBuilder contactInfoDTO = ContactInfoDTO.builder();
+    @Override
+    public MarketLinkCheckDTO toMarketLinkCheckDTO(MarketLinkCheckRequest marketLinkCheckRequest) {
+        if ( marketLinkCheckRequest == null ) {
+            return null;
+        }
 
-    if (contactInfoRequest.getInstagram() != null) {
-      contactInfoDTO.instagram(contactInfoRequest.getInstagram());
-    }
-    if (contactInfoRequest.getEmail() != null) {
-      contactInfoDTO.email(contactInfoRequest.getEmail());
-    }
-    if (contactInfoRequest.getOpenChat() != null) {
-      contactInfoDTO.openChat(contactInfoRequest.getOpenChat());
-    }
-    if (contactInfoRequest.getEtc() != null) {
-      contactInfoDTO.etc(contactInfoRequest.getEtc());
-    }
+        MarketLinkCheckDTO.MarketLinkCheckDTOBuilder marketLinkCheckDTO = MarketLinkCheckDTO.builder();
 
-    return contactInfoDTO.build();
-  }
+        if ( marketLinkCheckRequest.getMarketLinkUrl() != null ) {
+            marketLinkCheckDTO.marketLinkUrl( marketLinkCheckRequest.getMarketLinkUrl() );
+        }
 
-  @Override
-  public MarketLinkCheckDTO toMarketLinkCheckDTO(MarketLinkCheckRequest marketLinkCheckRequest) {
-    if (marketLinkCheckRequest == null) {
-      return null;
+        return marketLinkCheckDTO.build();
     }
 
-    MarketLinkCheckDTO.MarketLinkCheckDTOBuilder marketLinkCheckDTO = MarketLinkCheckDTO.builder();
+    @Override
+    public MakerIntroSectionResponse toMakerIntroSectionResponse(MarketIntroSectionDTO marketIntroSectionDTO) {
+        if ( marketIntroSectionDTO == null ) {
+            return null;
+        }
 
-    if (marketLinkCheckRequest.getMarketLinkUrl() != null) {
-      marketLinkCheckDTO.marketLinkUrl(marketLinkCheckRequest.getMarketLinkUrl());
-    }
+        MakerIntroSectionResponse.MakerIntroSectionResponseBuilder makerIntroSectionResponse = MakerIntroSectionResponse.builder();
 
-    return marketLinkCheckDTO.build();
-  }
+        if ( marketIntroSectionDTO.getProfileImageUrl() != null ) {
+            makerIntroSectionResponse.profileImageUrl( marketIntroSectionDTO.getProfileImageUrl() );
+        }
+        if ( marketIntroSectionDTO.getMarketName() != null ) {
+            makerIntroSectionResponse.marketName( marketIntroSectionDTO.getMarketName() );
+        }
+        if ( marketIntroSectionDTO.getVerificationStatus() != null ) {
+            makerIntroSectionResponse.verificationStatus( marketIntroSectionDTO.getVerificationStatus() );
+        }
+        if ( marketIntroSectionDTO.getContactInfo() != null ) {
+            makerIntroSectionResponse.contactInfo( toContactInfoResponse( marketIntroSectionDTO.getContactInfo() ) );
+        }
+        if ( marketIntroSectionDTO.getRepresentativeContent() != null ) {
+            makerIntroSectionResponse.representativeContent( flatContentPreviewDTOToContentPreviewCardResponse( marketIntroSectionDTO.getRepresentativeContent() ) );
+        }
 
-  @Override
-  public MakerIntroSectionResponse toMakerIntroSectionResponse(
-      MarketIntroSectionDTO marketIntroSectionDTO) {
-    if (marketIntroSectionDTO == null) {
-      return null;
-    }
-
-    MakerIntroSectionResponse.MakerIntroSectionResponseBuilder makerIntroSectionResponse =
-        MakerIntroSectionResponse.builder();
-
-    if (marketIntroSectionDTO.getProfileImageUrl() != null) {
-      makerIntroSectionResponse.profileImageUrl(marketIntroSectionDTO.getProfileImageUrl());
-    }
-    if (marketIntroSectionDTO.getMarketName() != null) {
-      makerIntroSectionResponse.marketName(marketIntroSectionDTO.getMarketName());
-    }
-    if (marketIntroSectionDTO.getVerificationStatus() != null) {
-      makerIntroSectionResponse.verificationStatus(marketIntroSectionDTO.getVerificationStatus());
-    }
-    if (marketIntroSectionDTO.getContactInfo() != null) {
-      makerIntroSectionResponse.contactInfo(
-          toContactInfoResponse(marketIntroSectionDTO.getContactInfo()));
-    }
-    if (marketIntroSectionDTO.getRepresentativeContent() != null) {
-      makerIntroSectionResponse.representativeContent(
-          flatContentPreviewDTOToContentPreviewCardResponse(
-              marketIntroSectionDTO.getRepresentativeContent()));
+        return makerIntroSectionResponse.build();
     }
 
-    return makerIntroSectionResponse.build();
-  }
+    @Override
+    public ContactInfoResponse toContactInfoResponse(ContactInfoDTO contactInfoDTO) {
+        if ( contactInfoDTO == null ) {
+            return null;
+        }
 
-  @Override
-  public ContactInfoResponse toContactInfoResponse(ContactInfoDTO contactInfoDTO) {
-    if (contactInfoDTO == null) {
-      return null;
-    }
+        ContactInfoResponse.ContactInfoResponseBuilder contactInfoResponse = ContactInfoResponse.builder();
 
-    ContactInfoResponse.ContactInfoResponseBuilder contactInfoResponse =
-        ContactInfoResponse.builder();
+        if ( contactInfoDTO.getInstagram() != null ) {
+            contactInfoResponse.instagram( contactInfoDTO.getInstagram() );
+        }
+        if ( contactInfoDTO.getEmail() != null ) {
+            contactInfoResponse.email( contactInfoDTO.getEmail() );
+        }
+        if ( contactInfoDTO.getOpenChat() != null ) {
+            contactInfoResponse.openChat( contactInfoDTO.getOpenChat() );
+        }
+        if ( contactInfoDTO.getEtc() != null ) {
+            contactInfoResponse.etc( contactInfoDTO.getEtc() );
+        }
 
-    if (contactInfoDTO.getInstagram() != null) {
-      contactInfoResponse.instagram(contactInfoDTO.getInstagram());
-    }
-    if (contactInfoDTO.getEmail() != null) {
-      contactInfoResponse.email(contactInfoDTO.getEmail());
-    }
-    if (contactInfoDTO.getOpenChat() != null) {
-      contactInfoResponse.openChat(contactInfoDTO.getOpenChat());
-    }
-    if (contactInfoDTO.getEtc() != null) {
-      contactInfoResponse.etc(contactInfoDTO.getEtc());
-    }
-
-    return contactInfoResponse.build();
-  }
-
-  @Override
-  public ContentPreviewCardResponse toContentPreviewCardResponse(ContentCardDTO contentCardDTO) {
-    if (contentCardDTO == null) {
-      return null;
+        return contactInfoResponse.build();
     }
 
-    ContentPreviewCardResponse.ContentPreviewCardResponseBuilder contentPreviewCardResponse =
-        ContentPreviewCardResponse.builder();
+    @Override
+    public ContentPreviewCardResponse toContentPreviewCardResponse(ContentCardDTO contentCardDTO) {
+        if ( contentCardDTO == null ) {
+            return null;
+        }
 
-    if (contentCardDTO.getContentId() != null) {
-      contentPreviewCardResponse.contentId(contentCardDTO.getContentId());
-    }
-    if (contentCardDTO.getCreatedAt() != null) {
-      contentPreviewCardResponse.createdAt(contentCardDTO.getCreatedAt());
-    }
-    if (contentCardDTO.getTitle() != null) {
-      contentPreviewCardResponse.title(contentCardDTO.getTitle());
-    }
-    if (contentCardDTO.getThumbnailUrl() != null) {
-      contentPreviewCardResponse.thumbnailUrl(contentCardDTO.getThumbnailUrl());
-    }
-    if (contentCardDTO.getSellerName() != null) {
-      contentPreviewCardResponse.sellerName(contentCardDTO.getSellerName());
-    }
-    if (contentCardDTO.getLowestPrice() != null) {
-      contentPreviewCardResponse.lowestPrice(contentCardDTO.getLowestPrice());
-    }
-    contentPreviewCardResponse.priceOptionLength(contentCardDTO.getPriceOptionLength());
-    if (contentCardDTO.getStatus() != null) {
-      contentPreviewCardResponse.status(contentCardDTO.getStatus());
-    }
+        ContentPreviewCardResponse.ContentPreviewCardResponseBuilder contentPreviewCardResponse = ContentPreviewCardResponse.builder();
 
-    return contentPreviewCardResponse.build();
-  }
+        if ( contentCardDTO.getContentId() != null ) {
+            contentPreviewCardResponse.contentId( contentCardDTO.getContentId() );
+        }
+        if ( contentCardDTO.getCreatedAt() != null ) {
+            contentPreviewCardResponse.createdAt( contentCardDTO.getCreatedAt() );
+        }
+        if ( contentCardDTO.getTitle() != null ) {
+            contentPreviewCardResponse.title( contentCardDTO.getTitle() );
+        }
+        if ( contentCardDTO.getThumbnailUrl() != null ) {
+            contentPreviewCardResponse.thumbnailUrl( contentCardDTO.getThumbnailUrl() );
+        }
+        if ( contentCardDTO.getSellerName() != null ) {
+            contentPreviewCardResponse.sellerName( contentCardDTO.getSellerName() );
+        }
+        if ( contentCardDTO.getLowestPrice() != null ) {
+            contentPreviewCardResponse.lowestPrice( contentCardDTO.getLowestPrice() );
+        }
+        contentPreviewCardResponse.priceOptionLength( contentCardDTO.getPriceOptionLength() );
+        if ( contentCardDTO.getStatus() != null ) {
+            contentPreviewCardResponse.status( contentCardDTO.getStatus() );
+        }
 
-  @Override
-  public List<ContentPreviewCardResponse> toContentPreviewCardResponseList(
-      List<ContentCardDTO> contentCardDTOList) {
-    if (contentCardDTOList == null) {
-      return null;
+        return contentPreviewCardResponse.build();
     }
 
-    List<ContentPreviewCardResponse> list =
-        new ArrayList<ContentPreviewCardResponse>(contentCardDTOList.size());
-    for (ContentCardDTO contentCardDTO : contentCardDTOList) {
-      list.add(toContentPreviewCardResponse(contentCardDTO));
+    @Override
+    public List<ContentPreviewCardResponse> toContentPreviewCardResponseList(List<ContentCardDTO> contentCardDTOList) {
+        if ( contentCardDTOList == null ) {
+            return null;
+        }
+
+        List<ContentPreviewCardResponse> list = new ArrayList<ContentPreviewCardResponse>( contentCardDTOList.size() );
+        for ( ContentCardDTO contentCardDTO : contentCardDTOList ) {
+            list.add( toContentPreviewCardResponse( contentCardDTO ) );
+        }
+
+        return list;
     }
 
-    return list;
-  }
+    protected ContentPreviewCardResponse flatContentPreviewDTOToContentPreviewCardResponse(FlatContentPreviewDTO flatContentPreviewDTO) {
+        if ( flatContentPreviewDTO == null ) {
+            return null;
+        }
 
-  protected ContentPreviewCardResponse flatContentPreviewDTOToContentPreviewCardResponse(
-      FlatContentPreviewDTO flatContentPreviewDTO) {
-    if (flatContentPreviewDTO == null) {
-      return null;
-    }
+        ContentPreviewCardResponse.ContentPreviewCardResponseBuilder contentPreviewCardResponse = ContentPreviewCardResponse.builder();
 
-    ContentPreviewCardResponse.ContentPreviewCardResponseBuilder contentPreviewCardResponse =
-        ContentPreviewCardResponse.builder();
+        if ( flatContentPreviewDTO.getContentId() != null ) {
+            contentPreviewCardResponse.contentId( flatContentPreviewDTO.getContentId() );
+        }
+        if ( flatContentPreviewDTO.getCreatedAt() != null ) {
+            contentPreviewCardResponse.createdAt( flatContentPreviewDTO.getCreatedAt() );
+        }
+        if ( flatContentPreviewDTO.getTitle() != null ) {
+            contentPreviewCardResponse.title( flatContentPreviewDTO.getTitle() );
+        }
+        if ( flatContentPreviewDTO.getThumbnailUrl() != null ) {
+            contentPreviewCardResponse.thumbnailUrl( flatContentPreviewDTO.getThumbnailUrl() );
+        }
+        if ( flatContentPreviewDTO.getSellerName() != null ) {
+            contentPreviewCardResponse.sellerName( flatContentPreviewDTO.getSellerName() );
+        }
+        if ( flatContentPreviewDTO.getLowestPrice() != null ) {
+            contentPreviewCardResponse.lowestPrice( flatContentPreviewDTO.getLowestPrice() );
+        }
+        contentPreviewCardResponse.priceOptionLength( flatContentPreviewDTO.getPriceOptionLength() );
+        if ( flatContentPreviewDTO.getStatus() != null ) {
+            contentPreviewCardResponse.status( flatContentPreviewDTO.getStatus() );
+        }
 
-    if (flatContentPreviewDTO.getContentId() != null) {
-      contentPreviewCardResponse.contentId(flatContentPreviewDTO.getContentId());
+        return contentPreviewCardResponse.build();
     }
-    if (flatContentPreviewDTO.getCreatedAt() != null) {
-      contentPreviewCardResponse.createdAt(flatContentPreviewDTO.getCreatedAt());
-    }
-    if (flatContentPreviewDTO.getTitle() != null) {
-      contentPreviewCardResponse.title(flatContentPreviewDTO.getTitle());
-    }
-    if (flatContentPreviewDTO.getThumbnailUrl() != null) {
-      contentPreviewCardResponse.thumbnailUrl(flatContentPreviewDTO.getThumbnailUrl());
-    }
-    if (flatContentPreviewDTO.getSellerName() != null) {
-      contentPreviewCardResponse.sellerName(flatContentPreviewDTO.getSellerName());
-    }
-    if (flatContentPreviewDTO.getLowestPrice() != null) {
-      contentPreviewCardResponse.lowestPrice(flatContentPreviewDTO.getLowestPrice());
-    }
-    contentPreviewCardResponse.priceOptionLength(flatContentPreviewDTO.getPriceOptionLength());
-    if (flatContentPreviewDTO.getStatus() != null) {
-      contentPreviewCardResponse.status(flatContentPreviewDTO.getStatus());
-    }
-
-    return contentPreviewCardResponse.build();
-  }
 }

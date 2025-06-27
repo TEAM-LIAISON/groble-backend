@@ -51,7 +51,7 @@ public class PaypleConfig {
   }
 
   public String getRefererUrl() {
-    return testMode ? "https://test.groble.im" : "https://groble.im";
+    return testMode ? "https://dev.groble.im" : "https://groble.im";
   }
 
   public String getSimplePaymentUrl() {

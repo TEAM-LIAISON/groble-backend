@@ -7,14 +7,14 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public class ContentDto {
+public class ContentDTO {
   private Long contentId;
   private String title;
   private String contentType;
   private String categoryId;
   private String thumbnailUrl;
   private String status;
-  private List<ContentOptionDto> options;
+  private List<ContentOptionDTO> options;
   private String contentIntroduction;
   private String serviceTarget;
   private String serviceProcess;

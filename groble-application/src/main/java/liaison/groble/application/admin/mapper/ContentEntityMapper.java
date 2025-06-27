@@ -5,8 +5,8 @@ import java.util.List;
 
 import org.springframework.stereotype.Component;
 
-import liaison.groble.application.content.dto.ContentDto;
-import liaison.groble.application.content.dto.ContentOptionDto;
+import liaison.groble.application.content.dto.ContentDTO;
+import liaison.groble.application.content.dto.ContentOptionDTO;
 import liaison.groble.domain.content.entity.CoachingOption;
 import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.content.entity.ContentOption;
@@ -17,12 +17,12 @@ import liaison.groble.domain.content.enums.ContentStatus;
 public class ContentEntityMapper {
 
   /** Content Entity를 ContentDto로 변환합니다. */
-  public ContentDto toDto(Content content) {
+  public ContentDTO toDto(Content content) {
     if (content == null) {
       return null;
     }
 
-    return ContentDto.builder()
+    return ContentDTO.builder()
         .contentId(content.getId())
         .title(content.getTitle())
         .thumbnailUrl(content.getThumbnailUrl())
@@ -49,12 +49,12 @@ public class ContentEntityMapper {
     return content.getCategory() != null ? content.getCategory().getCode() : null;
   }
 
-  private List<ContentOptionDto> convertOptions(List<ContentOption> options) {
+  private List<ContentOptionDTO> convertOptions(List<ContentOption> options) {
     if (options == null || options.isEmpty()) {
       return null;
     }
 
-    List<ContentOptionDto> optionDtos = new ArrayList<>();
+    List<ContentOptionDTO> optionDtos = new ArrayList<>();
     for (ContentOption option : options) {
       if (option != null) {
         optionDtos.add(convertSingleOption(option));
@@ -64,9 +64,9 @@ public class ContentEntityMapper {
     return optionDtos.isEmpty() ? null : optionDtos;
   }
 
-  private ContentOptionDto convertSingleOption(ContentOption option) {
-    ContentOptionDto.ContentOptionDtoBuilder builder =
-        ContentOptionDto.builder()
+  private ContentOptionDTO convertSingleOption(ContentOption option) {
+    ContentOptionDTO.ContentOptionDTOBuilder builder =
+        ContentOptionDTO.builder()
             .contentOptionId(option.getId())
             .name(option.getName())
             .description(option.getDescription())
@@ -81,8 +81,8 @@ public class ContentEntityMapper {
     return builder.build();
   }
 
-  private ContentOptionDto addCoachingOptionFields(
-      ContentOptionDto.ContentOptionDtoBuilder builder, CoachingOption coachingOption) {
+  private ContentOptionDTO addCoachingOptionFields(
+      ContentOptionDTO.ContentOptionDTOBuilder builder, CoachingOption coachingOption) {
 
     return builder
         .coachingPeriod(getEnumName(coachingOption.getCoachingPeriod()))
@@ -92,8 +92,8 @@ public class ContentEntityMapper {
         .build();
   }
 
-  private ContentOptionDto addDocumentOptionFields(
-      ContentOptionDto.ContentOptionDtoBuilder builder, DocumentOption documentOption) {
+  private ContentOptionDTO addDocumentOptionFields(
+      ContentOptionDTO.ContentOptionDTOBuilder builder, DocumentOption documentOption) {
 
     return builder
         .contentDeliveryMethod(getEnumName(documentOption.getContentDeliveryMethod()))

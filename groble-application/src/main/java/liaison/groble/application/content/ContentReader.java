@@ -17,9 +17,7 @@ import liaison.groble.domain.content.repository.ContentRepository;
 import liaison.groble.domain.user.entity.User;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 @Component
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -27,16 +25,17 @@ public class ContentReader {
   private final ContentRepository contentRepository;
   private final ContentCustomRepository contentCustomRepository;
 
+  // ===== 특정 사용자의 대표 콘텐츠를 조회합니다. =====
   public Optional<Content> findByUserAndIsRepresentativeTrue(User user) {
     return contentRepository.findByUserAndIsRepresentativeTrue(user);
   }
 
-  // 활성 콘텐츠 보유 여부 확인
+  // ===== 특정 사용자가 판매중인 콘텐츠를 보유하고 있는지 조회합니다.  =====
   public boolean hasActiveContent(User user) {
     return contentRepository.existsByUserAndStatus(user, ContentStatus.ACTIVE);
   }
 
-  // ===== ID로 Content 조회 =====
+  // ===== 특정 콘텐츠 ID로 콘텐츠 조회 =====
   public Content getContentById(Long contentId) {
     return contentRepository
         .findById(contentId)
@@ -68,6 +67,11 @@ public class ContentReader {
 
   public Page<FlatAdminContentSummaryInfoDTO> findContentsByPageable(Pageable pageable) {
     return contentCustomRepository.findContentsByPageable(pageable);
+  }
+
+  public Page<FlatContentPreviewDTO> findMyContentsWithStatus(
+      Pageable pageable, Long userId, ContentStatus contentStatus) {
+    return contentCustomRepository.findMyContentsWithStatus(pageable, userId, contentStatus);
   }
 
   public boolean existsSellingContentByUser(Long userId) {
