@@ -1,14 +1,11 @@
 package liaison.groble.api.model.content.response;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
 
 @Getter
 @Builder
-@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ContentStatusResponse {
   @Schema(description = "콘텐츠 ID", example = "1")
   private Long contentId;
