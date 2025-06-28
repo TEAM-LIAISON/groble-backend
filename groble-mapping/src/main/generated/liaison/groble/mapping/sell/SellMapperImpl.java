@@ -4,17 +4,35 @@ import javax.annotation.processing.Generated;
 
 import org.springframework.stereotype.Component;
 
+import liaison.groble.api.model.sell.request.AddReplyRequest;
+import liaison.groble.api.model.sell.response.AddReplyResponse;
 import liaison.groble.api.model.sell.response.ContentReviewDetailResponse;
 import liaison.groble.api.model.sell.response.ContentSellDetailResponse;
+import liaison.groble.application.sell.dto.AddReplyDTO;
 import liaison.groble.application.sell.dto.ContentReviewDetailDTO;
 import liaison.groble.application.sell.dto.ContentSellDetailDTO;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-06-28T23:55:28+0900",
+    date = "2025-06-29T01:10:09+0900",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.10 (Amazon.com Inc.)")
 @Component
 public class SellMapperImpl implements SellMapper {
+
+  @Override
+  public AddReplyDTO toAddReplyDTO(AddReplyRequest addReplyRequest) {
+    if (addReplyRequest == null) {
+      return null;
+    }
+
+    AddReplyDTO.AddReplyDTOBuilder addReplyDTO = AddReplyDTO.builder();
+
+    if (addReplyRequest.getReplyContent() != null) {
+      addReplyDTO.replyContent(addReplyRequest.getReplyContent());
+    }
+
+    return addReplyDTO.build();
+  }
 
   @Override
   public ContentSellDetailResponse toContentSellDetailResponse(
@@ -86,5 +104,20 @@ public class SellMapperImpl implements SellMapper {
     }
 
     return contentReviewDetailResponse.build();
+  }
+
+  @Override
+  public AddReplyResponse toAddReplyResponse(AddReplyDTO addReplyDTO) {
+    if (addReplyDTO == null) {
+      return null;
+    }
+
+    AddReplyResponse.AddReplyResponseBuilder addReplyResponse = AddReplyResponse.builder();
+
+    if (addReplyDTO.getReplyContent() != null) {
+      addReplyResponse.replyContent(addReplyDTO.getReplyContent());
+    }
+
+    return addReplyResponse.build();
   }
 }

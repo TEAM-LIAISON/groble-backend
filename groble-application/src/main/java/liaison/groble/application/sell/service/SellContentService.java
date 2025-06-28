@@ -3,9 +3,11 @@ package liaison.groble.application.sell.service;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import liaison.groble.application.content.ContentReplyWriter;
 import liaison.groble.application.content.ContentReviewReader;
 import liaison.groble.application.content.ContentReviewWriter;
 import liaison.groble.application.purchase.service.PurchaseReader;
+import liaison.groble.application.sell.dto.AddReplyDTO;
 import liaison.groble.application.sell.dto.ContentReviewDetailDTO;
 import liaison.groble.application.sell.dto.ContentSellDetailDTO;
 import liaison.groble.domain.content.dto.FlatContentReviewDetailDTO;
@@ -23,6 +25,7 @@ public class SellContentService {
 
   private final ContentReviewReader contentReviewReader;
   private final ContentReviewWriter contentReviewWriter;
+  private final ContentReplyWriter contentReplyWriter;
   private final PurchaseReader purchaseReader;
   private final DiscordDeleteReviewRequestReportService discordDeleteReviewRequestReportService;
 
@@ -40,6 +43,12 @@ public class SellContentService {
     // 디스코드 알림 발송
     DeleteReviewRequestReportDTO dto = buildDeleteReviewRequestReportDTO(userId, reviewId);
     discordDeleteReviewRequestReportService.sendDeleteReviewRequestReport(dto);
+  }
+
+  @Transactional
+  public AddReplyDTO addReviewReply(Long userId, Long reviewId, AddReplyDTO addReplyDTO) {
+    contentReplyWriter.addReply(userId, reviewId, addReplyDTO.getReplyContent());
+    return AddReplyDTO.builder().replyContent(addReplyDTO.getReplyContent()).build();
   }
 
   @Transactional(readOnly = true)
