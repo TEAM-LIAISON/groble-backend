@@ -7,7 +7,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import liaison.groble.api.model.sell.response.ContentReviewDetailResponse;
 import liaison.groble.api.model.sell.response.ContentSellDetailResponse;
+import liaison.groble.application.sell.dto.ContentReviewDetailDTO;
 import liaison.groble.application.sell.dto.ContentSellDetailDTO;
 import liaison.groble.application.sell.service.SellContentService;
 import liaison.groble.common.annotation.Auth;
@@ -36,9 +38,8 @@ public class SellContentController {
   private static final String CONTENT_HOME_PATH = "/{contentId}";
   private static final String CONTENT_SELL_LIST_PATH = "/{contentId}/sell-list";
   private static final String CONTENT_SELL_DETAIL_PATH = "/{contentId}/sell-detail/{purchaseId}";
-
   private static final String CONTENT_REVIEW_LIST_PATH = "/{contentId}/review-list";
-  private static final String CONTENT_REVIEW_DETAIL_PATH = "/{contentId}/review-detail";
+  private static final String CONTENT_REVIEW_DETAIL_PATH = "/{contentId}/review-detail/{reviewId}";
   private static final String DELETE_REVIEW_REQUEST_PATH = "/{reviewId}/review-delete-request";
   private static final String ADD_REVIEW_REPLY_PATH = "/{reviewId}/review-reply";
 
@@ -64,6 +65,31 @@ public class SellContentController {
   // TODO : 내 스토어 - 상품 관리 - 판매 리스트 전체보기
   // TODO : 내 스토어 - 상품 관리 - 리뷰 내역 전체보기
   // TODO : 내 스토어 - 상품 관리 - 리뷰 내역 상세
+  @Operation(
+      summary = "[✅ 내 스토어 - 상품 관리 - 리뷰 내역 상세] 리뷰 내역 상세보기 조회",
+      description = "특정 상품에 남겨진 리뷰의  상세 정보를 조회합니다.")
+  @ApiResponse(
+      responseCode = "200",
+      description = "판매 관리에서 판매 리스트 상세 정보 조회 성공",
+      content =
+          @Content(
+              mediaType = "application/json",
+              schema = @Schema(implementation = ContentReviewDetailResponse.class)))
+  @RequireRole("ROLE_SELLER")
+  @GetMapping(CONTENT_REVIEW_DETAIL_PATH)
+  public ResponseEntity<GrobleResponse<ContentReviewDetailResponse>> getContentReviewDetail(
+      @Auth Accessor accessor,
+      @PathVariable("contentId") Long contentId,
+      @PathVariable("reviewId") Long reviewId) {
+
+    ContentReviewDetailDTO contentReviewDetailDTO =
+        sellContentService.getContentReviewDetail(accessor.getUserId(), contentId, reviewId);
+
+    ContentReviewDetailResponse response =
+        sellMapper.toContentReviewDetailResponse(contentReviewDetailDTO);
+    return responseHelper.success(response, CONTENT_REVIEW_DETAIL_SUCCESS_MESSAGE, HttpStatus.OK);
+  }
+
   // TODO : 내 스토어 - 상품 관리 - 리뷰 내역 상세 - 리뷰 삭제 요청
   // TODO : 내 스토어 - 상품 관리 - 리뷰 내역 상세 - 리뷰 답글 달기
   // TODO : 내 스토어 - 상품 관리 - 판매 관리
@@ -80,7 +106,7 @@ public class SellContentController {
   //
   //    }
 
-  // TODO : 내 스토어 - 상품 관리 - 판매 관리 - 판매 리스트 상세
+  // 내 스토어 - 상품 관리 - 판매 관리 - 판매 리스트 상세
   @Operation(
       summary = "[✅ 내 스토어 - 상품 관리 - 판매 관리 - 판매 리스트 상세보기] 판매 리스트 상세보기 조회",
       description = "특정 상품의 판매 상세 정보를 조회합니다.")
