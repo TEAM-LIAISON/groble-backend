@@ -46,7 +46,7 @@ import liaison.groble.domain.file.entity.FileInfo;
 import liaison.groble.domain.file.repository.FileRepository;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.vo.UserProfile;
-import liaison.groble.external.discord.dto.ContentRegisterCreateReportDto;
+import liaison.groble.external.discord.dto.ContentRegisterCreateReportDTO;
 import liaison.groble.external.discord.service.content.DiscordContentRegisterReportService;
 
 import lombok.RequiredArgsConstructor;
@@ -142,8 +142,8 @@ public class ContentService {
 
     final LocalDateTime nowInSeoul = LocalDateTime.now(ZoneId.of("Asia/Seoul"));
 
-    final ContentRegisterCreateReportDto contentRegisterCreateReportDto =
-        ContentRegisterCreateReportDto.builder()
+    final ContentRegisterCreateReportDTO contentRegisterCreateReportDto =
+        ContentRegisterCreateReportDTO.builder()
             .nickname(content.getUser().getNickname())
             .contentId(content.getId())
             .contentTitle(content.getTitle())

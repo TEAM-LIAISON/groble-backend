@@ -7,4 +7,6 @@ import liaison.groble.domain.content.dto.FlatContentReviewDetailDTO;
 public interface ContentReviewCustomRepository {
   Optional<FlatContentReviewDetailDTO> getContentReviewDetailDTO(
       Long userId, Long contentId, Long reviewId);
+
+  void updateContentReviewStatusToDeleteRequested(Long userId, Long reviewId);
 }

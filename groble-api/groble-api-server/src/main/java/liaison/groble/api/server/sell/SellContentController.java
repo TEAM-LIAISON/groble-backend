@@ -4,6 +4,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -41,7 +42,7 @@ public class SellContentController {
   private static final String CONTENT_REVIEW_LIST_PATH = "/{contentId}/review-list";
   private static final String CONTENT_REVIEW_DETAIL_PATH = "/{contentId}/review-detail/{reviewId}";
   private static final String DELETE_REVIEW_REQUEST_PATH = "/{reviewId}/review-delete-request";
-  private static final String ADD_REVIEW_REPLY_PATH = "/{reviewId}/review-reply";
+  private static final String ADD_REVIEW_REPLY_PATH = "/{reviewId}/review-reply/{reviewId}";
 
   // 응답 메시지 상수화
   private static final String CONTENT_HOME_SUCCESS_MESSAGE = "콘텐츠 판매 관리 페이지 조회에 성공하였습니다.";
@@ -66,7 +67,7 @@ public class SellContentController {
   // TODO : 내 스토어 - 상품 관리 - 리뷰 내역 전체보기
   // TODO : 내 스토어 - 상품 관리 - 리뷰 내역 상세
   @Operation(
-      summary = "[✅ 내 스토어 - 상품 관리 - 리뷰 내역 상세] 리뷰 내역 상세보기 조회",
+      summary = "[❌ 내 스토어 - 상품 관리 - 리뷰 내역 상세] 리뷰 내역 상세보기 조회",
       description = "특정 상품에 남겨진 리뷰의  상세 정보를 조회합니다.")
   @ApiResponse(
       responseCode = "200",
@@ -91,9 +92,17 @@ public class SellContentController {
   }
 
   // TODO : 내 스토어 - 상품 관리 - 리뷰 내역 상세 - 리뷰 삭제 요청
-  // TODO : 내 스토어 - 상품 관리 - 리뷰 내역 상세 - 리뷰 답글 달기
-  // TODO : 내 스토어 - 상품 관리 - 판매 관리
+  @RequireRole("ROLE_SELLER")
+  @PostMapping(DELETE_REVIEW_REQUEST_PATH)
+  public ResponseEntity<GrobleResponse<Void>> deleteReviewRequest(
+      @Auth Accessor accessor, @PathVariable("reviewId") Long reviewId) {
+    sellContentService.deleteReviewRequest(accessor.getUserId(), reviewId);
+    return responseHelper.success(null, DELETE_REVIEW_REQUEST_SUCCESS_MESSAGE, HttpStatus.OK);
+  }
 
+  // TODO : 내 스토어 - 상품 관리 - 리뷰 내역 상세 - 리뷰 답글 달기 [해당 콘텐츠의 게시자만 가능]
+
+  // TODO : 내 스토어 - 상품 관리 - 판매 관리
   //    @RequireRole("ROLE_SELLER")
   //    @Operation(
   //            summary = "[✅ 내 스토어 - 상품 관리 - 판매 관리] 판매 관리 페이지 조회",
@@ -108,7 +117,7 @@ public class SellContentController {
 
   // 내 스토어 - 상품 관리 - 판매 관리 - 판매 리스트 상세
   @Operation(
-      summary = "[✅ 내 스토어 - 상품 관리 - 판매 관리 - 판매 리스트 상세보기] 판매 리스트 상세보기 조회",
+      summary = "[❌ 내 스토어 - 상품 관리 - 판매 관리 - 판매 리스트 상세보기] 판매 리스트 상세보기 조회",
       description = "특정 상품의 판매 상세 정보를 조회합니다.")
   @ApiResponse(
       responseCode = "200",

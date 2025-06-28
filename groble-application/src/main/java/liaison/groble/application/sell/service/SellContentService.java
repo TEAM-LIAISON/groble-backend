@@ -4,11 +4,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import liaison.groble.application.content.ContentReviewReader;
+import liaison.groble.application.content.ContentReviewWriter;
 import liaison.groble.application.purchase.service.PurchaseReader;
 import liaison.groble.application.sell.dto.ContentReviewDetailDTO;
 import liaison.groble.application.sell.dto.ContentSellDetailDTO;
 import liaison.groble.domain.content.dto.FlatContentReviewDetailDTO;
 import liaison.groble.domain.purchase.dto.FlatContentSellDetailDTO;
+import liaison.groble.external.discord.dto.DeleteReviewRequestReportDTO;
+import liaison.groble.external.discord.service.content.DiscordDeleteReviewRequestReportService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,13 +22,24 @@ import lombok.extern.slf4j.Slf4j;
 public class SellContentService {
 
   private final ContentReviewReader contentReviewReader;
+  private final ContentReviewWriter contentReviewWriter;
   private final PurchaseReader purchaseReader;
+  private final DiscordDeleteReviewRequestReportService discordDeleteReviewRequestReportService;
 
   @Transactional(readOnly = true)
   public ContentReviewDetailDTO getContentReviewDetail(Long userId, Long contentId, Long reviewId) {
     FlatContentReviewDetailDTO contentReviewDetailDTO =
         contentReviewReader.getContentReviewDetail(userId, contentId, reviewId);
     return buildContentReviewDetail(contentReviewDetailDTO);
+  }
+
+  @Transactional
+  public void deleteReviewRequest(Long userId, Long reviewId) {
+    contentReviewWriter.updateContentReviewStatusToDeleteRequested(userId, reviewId);
+
+    // 디스코드 알림 발송
+    DeleteReviewRequestReportDTO dto = buildDeleteReviewRequestReportDTO(userId, reviewId);
+    discordDeleteReviewRequestReportService.sendDeleteReviewRequestReport(dto);
   }
 
   @Transactional(readOnly = true)
@@ -60,5 +74,10 @@ public class SellContentService {
         .selectedOptionName(flatContentReviewDetailDTO.getSelectedOptionName())
         .rating(flatContentReviewDetailDTO.getRating())
         .build();
+  }
+
+  private DeleteReviewRequestReportDTO buildDeleteReviewRequestReportDTO(
+      Long userId, Long reviewId) {
+    return DeleteReviewRequestReportDTO.builder().userId(userId).reviewId(reviewId).build();
   }
 }

@@ -2,6 +2,7 @@ package liaison.groble.persistence.content;
 
 import static com.querydsl.jpa.JPAExpressions.select;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import org.springframework.stereotype.Repository;
@@ -15,6 +16,7 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import liaison.groble.domain.content.dto.FlatContentReviewDetailDTO;
 import liaison.groble.domain.content.entity.QContent;
 import liaison.groble.domain.content.entity.QContentReview;
+import liaison.groble.domain.content.enums.ReviewStatus;
 import liaison.groble.domain.content.repository.ContentReviewCustomRepository;
 import liaison.groble.domain.purchase.entity.QPurchase;
 import liaison.groble.domain.user.entity.QUser;
@@ -68,5 +70,17 @@ public class ContentReviewCustomRepositoryImpl implements ContentReviewCustomRep
             .fetchOne();
 
     return Optional.ofNullable(result);
+  }
+
+  @Override
+  public void updateContentReviewStatusToDeleteRequested(Long userId, Long reviewId) {
+    QContentReview qContentReview = QContentReview.contentReview;
+
+    jpaQueryFactory
+        .update(qContentReview)
+        .set(qContentReview.reviewStatus, ReviewStatus.PENDING_DELETE)
+        .set(qContentReview.deletionRequestedAt, LocalDateTime.now())
+        .where(qContentReview.id.eq(reviewId).and(qContentReview.user.id.eq(userId)))
+        .execute();
   }
 }

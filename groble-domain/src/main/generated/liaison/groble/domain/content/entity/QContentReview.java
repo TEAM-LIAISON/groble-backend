@@ -29,13 +29,15 @@ public class QContentReview extends EntityPathBase<ContentReview> {
     //inherited
     public final DateTimePath<java.time.LocalDateTime> createdAt = _super.createdAt;
 
-    public final NumberPath<Long> id = createNumber("id", Long.class);
+    public final DateTimePath<java.time.LocalDateTime> deletionRequestedAt = createDateTime("deletionRequestedAt", java.time.LocalDateTime.class);
 
-    public final BooleanPath isDeleted = createBoolean("isDeleted");
+    public final NumberPath<Long> id = createNumber("id", Long.class);
 
     public final NumberPath<java.math.BigDecimal> rating = createNumber("rating", java.math.BigDecimal.class);
 
     public final StringPath reviewContent = createString("reviewContent");
+
+    public final EnumPath<liaison.groble.domain.content.enums.ReviewStatus> reviewStatus = createEnum("reviewStatus", liaison.groble.domain.content.enums.ReviewStatus.class);
 
     //inherited
     public final DateTimePath<java.time.LocalDateTime> updatedAt = _super.updatedAt;

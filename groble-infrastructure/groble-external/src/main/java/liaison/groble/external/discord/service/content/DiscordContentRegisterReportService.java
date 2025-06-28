@@ -3,7 +3,7 @@ package liaison.groble.external.discord.service.content;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import liaison.groble.external.discord.dto.ContentRegisterCreateReportDto;
+import liaison.groble.external.discord.dto.ContentRegisterCreateReportDTO;
 import liaison.groble.external.discord.service.DiscordService;
 
 import lombok.RequiredArgsConstructor;
@@ -19,7 +19,7 @@ public class DiscordContentRegisterReportService implements ContentRegisterRepor
 
   @Override
   public void sendCreateContentRegisterReport(
-      ContentRegisterCreateReportDto contentRegisterCreateReportDto) {
+      ContentRegisterCreateReportDTO contentRegisterCreateReportDto) {
     var msg =
         "## 콘텐츠 심사 요청 알림"
             + "\n**회원 닉네임:** "

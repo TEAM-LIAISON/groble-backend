@@ -4,12 +4,14 @@ import javax.annotation.processing.Generated;
 
 import org.springframework.stereotype.Component;
 
+import liaison.groble.api.model.sell.response.ContentReviewDetailResponse;
 import liaison.groble.api.model.sell.response.ContentSellDetailResponse;
+import liaison.groble.application.sell.dto.ContentReviewDetailDTO;
 import liaison.groble.application.sell.dto.ContentSellDetailDTO;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-06-28T01:45:47+0900",
+    date = "2025-06-28T23:55:28+0900",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.10 (Amazon.com Inc.)")
 @Component
 public class SellMapperImpl implements SellMapper {
@@ -24,6 +26,9 @@ public class SellMapperImpl implements SellMapper {
     ContentSellDetailResponse.ContentSellDetailResponseBuilder contentSellDetailResponse =
         ContentSellDetailResponse.builder();
 
+    if (contentSellDetailDTO.getPurchaseId() != null) {
+      contentSellDetailResponse.purchaseId(contentSellDetailDTO.getPurchaseId());
+    }
     if (contentSellDetailDTO.getContentTitle() != null) {
       contentSellDetailResponse.contentTitle(contentSellDetailDTO.getContentTitle());
     }
@@ -48,5 +53,38 @@ public class SellMapperImpl implements SellMapper {
     }
 
     return contentSellDetailResponse.build();
+  }
+
+  @Override
+  public ContentReviewDetailResponse toContentReviewDetailResponse(
+      ContentReviewDetailDTO contentReviewDetailDTO) {
+    if (contentReviewDetailDTO == null) {
+      return null;
+    }
+
+    ContentReviewDetailResponse.ContentReviewDetailResponseBuilder contentReviewDetailResponse =
+        ContentReviewDetailResponse.builder();
+
+    if (contentReviewDetailDTO.getReviewId() != null) {
+      contentReviewDetailResponse.reviewId(contentReviewDetailDTO.getReviewId());
+    }
+    if (contentReviewDetailDTO.getContentTitle() != null) {
+      contentReviewDetailResponse.contentTitle(contentReviewDetailDTO.getContentTitle());
+    }
+    if (contentReviewDetailDTO.getCreatedAt() != null) {
+      contentReviewDetailResponse.createdAt(contentReviewDetailDTO.getCreatedAt());
+    }
+    if (contentReviewDetailDTO.getReviewerNickname() != null) {
+      contentReviewDetailResponse.reviewerNickname(contentReviewDetailDTO.getReviewerNickname());
+    }
+    if (contentReviewDetailDTO.getSelectedOptionName() != null) {
+      contentReviewDetailResponse.selectedOptionName(
+          contentReviewDetailDTO.getSelectedOptionName());
+    }
+    if (contentReviewDetailDTO.getRating() != null) {
+      contentReviewDetailResponse.rating(contentReviewDetailDTO.getRating());
+    }
+
+    return contentReviewDetailResponse.build();
   }
 }
