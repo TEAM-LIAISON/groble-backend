@@ -3,6 +3,9 @@ package liaison.groble.domain.purchase.repository;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import liaison.groble.common.response.CursorResponse;
 import liaison.groble.domain.content.enums.ContentType;
 import liaison.groble.domain.order.entity.Order;
@@ -24,4 +27,7 @@ public interface PurchaseCustomRepository {
   // 내 스토어 - 상품 관리 - 판매 관리- 판매리스트 상세
   Optional<FlatContentSellDetailDTO> getContentSellDetailDTO(
       Long userId, Long contentId, Long purchaseId);
+
+  Page<FlatContentSellDetailDTO> getContentSellPageDTOs(
+      Long userId, Long contentId, Pageable pageable);
 }

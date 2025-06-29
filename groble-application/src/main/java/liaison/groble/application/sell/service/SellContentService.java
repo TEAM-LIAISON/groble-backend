@@ -35,6 +35,24 @@ public class SellContentService {
   private final DiscordDeleteReviewRequestReportService discordDeleteReviewRequestReportService;
 
   @Transactional(readOnly = true)
+  public PageResponse<ContentSellDetailDTO> getContentSells(
+      Long userId, Long contentId, Pageable pageable) {
+    Page<FlatContentSellDetailDTO> page =
+        purchaseReader.getContentSells(userId, contentId, pageable);
+
+    List<ContentSellDetailDTO> items =
+        page.getContent().stream().map(this::convertFlatDTOToDetailDTO).toList();
+
+    PageResponse.MetaData meta =
+        PageResponse.MetaData.builder()
+            .sortBy(pageable.getSort().iterator().next().getProperty())
+            .sortDirection(pageable.getSort().iterator().next().getDirection().name())
+            .build();
+
+    return PageResponse.from(page, items, meta);
+  }
+
+  @Transactional(readOnly = true)
   public PageResponse<ContentReviewDetailDTO> getContentReviews(
       Long userId, Long contentId, Pageable pageable) {
 
@@ -136,6 +154,19 @@ public class SellContentService {
         .reviewerNickname(flat.getReviewerNickname())
         .selectedOptionName(flat.getSelectedOptionName())
         .rating(flat.getRating())
+        .build();
+  }
+
+  private ContentSellDetailDTO convertFlatDTOToDetailDTO(FlatContentSellDetailDTO flat) {
+    return ContentSellDetailDTO.builder()
+        .purchaseId(flat.getPurchaseId())
+        .contentTitle(flat.getContentTitle())
+        .purchasedAt(flat.getPurchasedAt())
+        .purchaserNickname(flat.getPurchaserNickname())
+        .purchaserEmail(flat.getPurchaserEmail())
+        .purchaserPhoneNumber(flat.getPurchaserPhoneNumber())
+        .selectedOptionName(flat.getSelectedOptionName())
+        .finalPrice(flat.getFinalPrice())
         .build();
   }
 }

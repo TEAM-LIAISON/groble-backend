@@ -28,6 +28,51 @@ public interface SellMapper {
 
   ReplyContentResponse toReplyContentResponse(ReplyContentDTO replyContentDTO);
 
+  default PageResponse<ContentSellDetailResponse> toContentSellResponsePage(
+      PageResponse<ContentSellDetailDTO> dtoPageResponse) {
+    if (dtoPageResponse == null) {
+      return null;
+    }
+
+    // items 리스트 변환
+    List<ContentSellDetailResponse> convertedItems =
+        dtoPageResponse.getItems().stream()
+            .map(this::toContentSellDetailResponse)
+            .collect(Collectors.toList());
+
+    // PageInfo 복사
+    PageResponse.PageInfo pageInfo =
+        PageResponse.PageInfo.builder()
+            .currentPage(dtoPageResponse.getPageInfo().getCurrentPage())
+            .totalPages(dtoPageResponse.getPageInfo().getTotalPages())
+            .pageSize(dtoPageResponse.getPageInfo().getPageSize())
+            .totalElements(dtoPageResponse.getPageInfo().getTotalElements())
+            .first(dtoPageResponse.getPageInfo().isFirst())
+            .last(dtoPageResponse.getPageInfo().isLast())
+            .empty(dtoPageResponse.getPageInfo().isEmpty())
+            .build();
+
+    // MetaData 복사 (있는 경우)
+    PageResponse.MetaData meta = null;
+    if (dtoPageResponse.getMeta() != null) {
+      meta =
+          PageResponse.MetaData.builder()
+              .searchTerm(dtoPageResponse.getMeta().getSearchTerm())
+              .filter(dtoPageResponse.getMeta().getFilter())
+              .sortBy(dtoPageResponse.getMeta().getSortBy())
+              .sortDirection(dtoPageResponse.getMeta().getSortDirection())
+              .categoryIds(dtoPageResponse.getMeta().getCategoryIds())
+              .build();
+    }
+
+    // PageResponse 생성
+    return PageResponse.<ContentSellDetailResponse>builder()
+        .items(convertedItems)
+        .pageInfo(pageInfo)
+        .meta(meta)
+        .build();
+  }
+
   default PageResponse<ContentReviewDetailResponse> toContentReviewResponsePage(
       PageResponse<ContentReviewDetailDTO> dtoPageResponse) {
     if (dtoPageResponse == null) {
