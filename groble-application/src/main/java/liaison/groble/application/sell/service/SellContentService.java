@@ -1,5 +1,9 @@
 package liaison.groble.application.sell.service;
 
+import java.util.List;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -10,6 +14,7 @@ import liaison.groble.application.purchase.service.PurchaseReader;
 import liaison.groble.application.sell.dto.ContentReviewDetailDTO;
 import liaison.groble.application.sell.dto.ContentSellDetailDTO;
 import liaison.groble.application.sell.dto.ReplyContentDTO;
+import liaison.groble.common.response.PageResponse;
 import liaison.groble.domain.content.dto.FlatContentReviewDetailDTO;
 import liaison.groble.domain.purchase.dto.FlatContentSellDetailDTO;
 import liaison.groble.external.discord.dto.DeleteReviewRequestReportDTO;
@@ -28,6 +33,25 @@ public class SellContentService {
   private final ContentReplyWriter contentReplyWriter;
   private final PurchaseReader purchaseReader;
   private final DiscordDeleteReviewRequestReportService discordDeleteReviewRequestReportService;
+
+  @Transactional(readOnly = true)
+  public PageResponse<ContentReviewDetailDTO> getContentReviews(
+      Long userId, Long contentId, Pageable pageable) {
+
+    Page<FlatContentReviewDetailDTO> page =
+        contentReviewReader.getContentReviews(userId, contentId, pageable);
+
+    List<ContentReviewDetailDTO> items =
+        page.getContent().stream().map(this::convertFlatDTOToDetailDTO).toList();
+
+    PageResponse.MetaData meta =
+        PageResponse.MetaData.builder()
+            .sortBy(pageable.getSort().iterator().next().getProperty())
+            .sortDirection(pageable.getSort().iterator().next().getDirection().name())
+            .build();
+
+    return PageResponse.from(page, items, meta);
+  }
 
   @Transactional(readOnly = true)
   public ContentReviewDetailDTO getContentReviewDetail(Long userId, Long contentId, Long reviewId) {
@@ -101,5 +125,17 @@ public class SellContentService {
   private DeleteReviewRequestReportDTO buildDeleteReviewRequestReportDTO(
       Long userId, Long reviewId) {
     return DeleteReviewRequestReportDTO.builder().userId(userId).reviewId(reviewId).build();
+  }
+
+  /** FlatPreviewContentDTO를 ContentCardDto로 변환합니다. */
+  private ContentReviewDetailDTO convertFlatDTOToDetailDTO(FlatContentReviewDetailDTO flat) {
+    return ContentReviewDetailDTO.builder()
+        .reviewId(flat.getReviewId())
+        .contentTitle(flat.getContentTitle())
+        .createdAt(flat.getCreatedAt())
+        .reviewerNickname(flat.getReviewerNickname())
+        .selectedOptionName(flat.getSelectedOptionName())
+        .rating(flat.getRating())
+        .build();
   }
 }

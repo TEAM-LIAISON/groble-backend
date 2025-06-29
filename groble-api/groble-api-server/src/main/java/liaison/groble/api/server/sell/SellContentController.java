@@ -1,5 +1,6 @@
 package liaison.groble.api.server.sell;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -7,6 +8,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import liaison.groble.api.model.sell.request.ReplyContentRequest;
@@ -21,7 +23,9 @@ import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.annotation.RequireRole;
 import liaison.groble.common.model.Accessor;
 import liaison.groble.common.response.GrobleResponse;
+import liaison.groble.common.response.PageResponse;
 import liaison.groble.common.response.ResponseHelper;
+import liaison.groble.common.utils.PageUtils;
 import liaison.groble.mapping.sell.SellMapper;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -86,7 +90,26 @@ public class SellContentController {
   //
   //    }
   // TODO : 내 스토어 - 상품 관리 - 판매 리스트 전체보기
+
   // TODO : 내 스토어 - 상품 관리 - 리뷰 내역 전체보기
+  @RequireRole("ROLE_SELLER")
+  @GetMapping(CONTENT_REVIEW_LIST_PATH)
+  public ResponseEntity<GrobleResponse<PageResponse<ContentReviewDetailResponse>>>
+      getContentReviewList(
+          @Auth Accessor accessor,
+          @PathVariable("contentId") Long contentId,
+          @RequestParam(value = "page", defaultValue = "0") int page,
+          @RequestParam(value = "size", defaultValue = "12") int size,
+          @RequestParam(value = "sort", defaultValue = "createdAt,popular") String sort) {
+
+    Pageable pageable = PageUtils.createPageable(page, size, sort);
+    PageResponse<ContentReviewDetailDTO> dtoPageResponse =
+        sellContentService.getContentReviews(accessor.getId(), contentId, pageable);
+
+    PageResponse<ContentReviewDetailResponse> responsePage =
+        sellMapper.toContentReviewResponsePage(dtoPageResponse);
+    return responseHelper.success(responsePage, CONTENT_REVIEW_LIST_SUCCESS_MESSAGE, HttpStatus.OK);
+  }
 
   // 내 스토어 - 상품 관리 - 리뷰 내역 상세
   @Operation(

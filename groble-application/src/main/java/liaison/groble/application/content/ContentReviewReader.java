@@ -1,5 +1,7 @@
 package liaison.groble.application.content;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,5 +29,10 @@ public class ContentReviewReader {
                         + contentId
                         + ", Review ID: "
                         + reviewId));
+  }
+
+  public Page<FlatContentReviewDetailDTO> getContentReviews(
+      Long userId, Long contentId, Pageable pageable) {
+    return contentReviewCustomRepository.getContentReviewPageDTOs(userId, contentId, pageable);
   }
 }
