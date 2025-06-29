@@ -16,4 +16,12 @@ public class ContentReplyWriter {
   public void addReply(Long userId, Long reviewId, String replyContent) {
     contentReplyCustomRepository.addReply(userId, reviewId, replyContent);
   }
+
+  public void updateReply(Long userId, Long reviewId, Long replyId, String replyContent) {
+    contentReplyCustomRepository.updateReply(userId, reviewId, replyId, replyContent);
+  }
+
+  public void deleteReply(Long userId, Long reviewId, Long replyId) {
+    contentReplyCustomRepository.deleteReply(userId, reviewId, replyId);
+  }
 }

@@ -26,4 +26,34 @@ public class ContentReplyCustomRepositoryImpl implements ContentReplyCustomRepos
         .set(qContentReply.isDeleted, false)
         .execute();
   }
+
+  @Override
+  public void updateReply(Long userId, Long reviewId, Long replyId, String replyContent) {
+    QContentReply qContentReply = QContentReply.contentReply;
+    jpaQueryFactory
+        .update(qContentReply)
+        .set(qContentReply.replyContent, replyContent)
+        .where(
+            qContentReply
+                .id
+                .eq(replyId)
+                .and(qContentReply.contentReview.id.eq(reviewId))
+                .and(qContentReply.seller.id.eq(userId)))
+        .execute();
+  }
+
+  @Override
+  public void deleteReply(Long userId, Long reviewId, Long replyId) {
+    QContentReply qContentReply = QContentReply.contentReply;
+    jpaQueryFactory
+        .update(qContentReply)
+        .set(qContentReply.isDeleted, true)
+        .where(
+            qContentReply
+                .id
+                .eq(replyId)
+                .and(qContentReply.contentReview.id.eq(reviewId))
+                .and(qContentReply.seller.id.eq(userId)))
+        .execute();
+  }
 }

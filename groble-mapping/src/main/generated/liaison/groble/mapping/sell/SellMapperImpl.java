@@ -4,34 +4,34 @@ import javax.annotation.processing.Generated;
 
 import org.springframework.stereotype.Component;
 
-import liaison.groble.api.model.sell.request.AddReplyRequest;
-import liaison.groble.api.model.sell.response.AddReplyResponse;
+import liaison.groble.api.model.sell.request.ReplyContentRequest;
 import liaison.groble.api.model.sell.response.ContentReviewDetailResponse;
 import liaison.groble.api.model.sell.response.ContentSellDetailResponse;
-import liaison.groble.application.sell.dto.AddReplyDTO;
+import liaison.groble.api.model.sell.response.ReplyContentResponse;
 import liaison.groble.application.sell.dto.ContentReviewDetailDTO;
 import liaison.groble.application.sell.dto.ContentSellDetailDTO;
+import liaison.groble.application.sell.dto.ReplyContentDTO;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-06-29T01:10:09+0900",
+    date = "2025-06-29T15:32:51+0900",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.10 (Amazon.com Inc.)")
 @Component
 public class SellMapperImpl implements SellMapper {
 
   @Override
-  public AddReplyDTO toAddReplyDTO(AddReplyRequest addReplyRequest) {
-    if (addReplyRequest == null) {
+  public ReplyContentDTO toReplyContentDTO(ReplyContentRequest replyContentRequest) {
+    if (replyContentRequest == null) {
       return null;
     }
 
-    AddReplyDTO.AddReplyDTOBuilder addReplyDTO = AddReplyDTO.builder();
+    ReplyContentDTO.ReplyContentDTOBuilder replyContentDTO = ReplyContentDTO.builder();
 
-    if (addReplyRequest.getReplyContent() != null) {
-      addReplyDTO.replyContent(addReplyRequest.getReplyContent());
+    if (replyContentRequest.getReplyContent() != null) {
+      replyContentDTO.replyContent(replyContentRequest.getReplyContent());
     }
 
-    return addReplyDTO.build();
+    return replyContentDTO.build();
   }
 
   @Override
@@ -107,17 +107,18 @@ public class SellMapperImpl implements SellMapper {
   }
 
   @Override
-  public AddReplyResponse toAddReplyResponse(AddReplyDTO addReplyDTO) {
-    if (addReplyDTO == null) {
+  public ReplyContentResponse toReplyContentResponse(ReplyContentDTO replyContentDTO) {
+    if (replyContentDTO == null) {
       return null;
     }
 
-    AddReplyResponse.AddReplyResponseBuilder addReplyResponse = AddReplyResponse.builder();
+    ReplyContentResponse.ReplyContentResponseBuilder replyContentResponse =
+        ReplyContentResponse.builder();
 
-    if (addReplyDTO.getReplyContent() != null) {
-      addReplyResponse.replyContent(addReplyDTO.getReplyContent());
+    if (replyContentDTO.getReplyContent() != null) {
+      replyContentResponse.replyContent(replyContentDTO.getReplyContent());
     }
 
-    return addReplyResponse.build();
+    return replyContentResponse.build();
   }
 }

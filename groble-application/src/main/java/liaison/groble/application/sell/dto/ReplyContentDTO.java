@@ -5,6 +5,6 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public class AddReplyDTO {
+public class ReplyContentDTO {
   private String replyContent;
 }

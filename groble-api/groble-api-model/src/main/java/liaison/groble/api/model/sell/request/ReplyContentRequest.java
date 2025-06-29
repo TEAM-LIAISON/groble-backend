@@ -1,13 +1,16 @@
-package liaison.groble.api.model.sell.response;
+package liaison.groble.api.model.sell.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
 @Builder
-@Schema(description = "[내 스토어 - 상품 관리 - 리뷰 내역 상세 - 리뷰 답글 달기] 정보 응답")
-public class AddReplyResponse {
+@NoArgsConstructor
+@AllArgsConstructor
+public class ReplyContentRequest {
   @Schema(
       description = "답글 내용",
       example = "리뷰에 대한 답글이에요",

@@ -7,9 +7,9 @@ import liaison.groble.application.content.ContentReplyWriter;
 import liaison.groble.application.content.ContentReviewReader;
 import liaison.groble.application.content.ContentReviewWriter;
 import liaison.groble.application.purchase.service.PurchaseReader;
-import liaison.groble.application.sell.dto.AddReplyDTO;
 import liaison.groble.application.sell.dto.ContentReviewDetailDTO;
 import liaison.groble.application.sell.dto.ContentSellDetailDTO;
+import liaison.groble.application.sell.dto.ReplyContentDTO;
 import liaison.groble.domain.content.dto.FlatContentReviewDetailDTO;
 import liaison.groble.domain.purchase.dto.FlatContentSellDetailDTO;
 import liaison.groble.external.discord.dto.DeleteReviewRequestReportDTO;
@@ -46,9 +46,22 @@ public class SellContentService {
   }
 
   @Transactional
-  public AddReplyDTO addReviewReply(Long userId, Long reviewId, AddReplyDTO addReplyDTO) {
-    contentReplyWriter.addReply(userId, reviewId, addReplyDTO.getReplyContent());
-    return AddReplyDTO.builder().replyContent(addReplyDTO.getReplyContent()).build();
+  public ReplyContentDTO addReviewReply(
+      Long userId, Long reviewId, ReplyContentDTO replyContentDTO) {
+    contentReplyWriter.addReply(userId, reviewId, replyContentDTO.getReplyContent());
+    return ReplyContentDTO.builder().replyContent(replyContentDTO.getReplyContent()).build();
+  }
+
+  @Transactional
+  public ReplyContentDTO updateReviewReply(
+      Long userId, Long reviewId, Long replyId, ReplyContentDTO replyContentDTO) {
+    contentReplyWriter.updateReply(userId, reviewId, replyId, replyContentDTO.getReplyContent());
+    return ReplyContentDTO.builder().replyContent(replyContentDTO.getReplyContent()).build();
+  }
+
+  @Transactional
+  public void deleteReviewReply(Long userId, Long reviewId, Long replyId) {
+    contentReplyWriter.deleteReply(userId, reviewId, replyId);
   }
 
   @Transactional(readOnly = true)
