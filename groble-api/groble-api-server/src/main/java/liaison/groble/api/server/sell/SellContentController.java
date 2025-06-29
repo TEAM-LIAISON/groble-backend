@@ -15,6 +15,7 @@ import liaison.groble.api.model.sell.request.ReplyContentRequest;
 import liaison.groble.api.model.sell.response.ContentReviewDetailResponse;
 import liaison.groble.api.model.sell.response.ContentSellDetailResponse;
 import liaison.groble.api.model.sell.response.ReplyContentResponse;
+import liaison.groble.api.model.sell.response.swagger.ContentReviewListResponse;
 import liaison.groble.application.sell.dto.ContentReviewDetailDTO;
 import liaison.groble.application.sell.dto.ContentSellDetailDTO;
 import liaison.groble.application.sell.dto.ReplyContentDTO;
@@ -92,6 +93,16 @@ public class SellContentController {
   // TODO : 내 스토어 - 상품 관리 - 판매 리스트 전체보기
 
   // TODO : 내 스토어 - 상품 관리 - 리뷰 내역 전체보기
+  @Operation(
+      summary = "[❌ 내 스토어 - 상품 관리 - 리뷰 내역 전체보기] 리뷰 내역 전체보기 조회",
+      description = "특정 상품에 남겨진 리뷰의 전체 정보를 조회합니다.")
+  @ApiResponse(
+      responseCode = "200",
+      description = "판매 관리에서 리뷰 리스트 전체 정보 조회 성공",
+      content =
+          @Content(
+              mediaType = "application/json",
+              schema = @Schema(implementation = ContentReviewListResponse.class)))
   @RequireRole("ROLE_SELLER")
   @GetMapping(CONTENT_REVIEW_LIST_PATH)
   public ResponseEntity<GrobleResponse<PageResponse<ContentReviewDetailResponse>>>
