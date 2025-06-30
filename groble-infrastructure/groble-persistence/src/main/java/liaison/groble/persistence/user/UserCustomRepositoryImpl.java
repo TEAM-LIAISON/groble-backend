@@ -101,7 +101,13 @@ public class UserCustomRepositoryImpl implements UserCustomRepository {
                         .stringValue()
                         .coalesce("NONE")
                         .as("verificationStatus"),
-                    qUser.sellerInfo.businessSellerRequest.coalesce(false).as("isBusinessSeller")))
+                    qUser.sellerInfo.businessSellerRequest.coalesce(false).as("isBusinessSeller"),
+                    qUser
+                        .sellerInfo
+                        .businessType
+                        .stringValue()
+                        .coalesce("NONE")
+                        .as("businessType")))
             .from(qUser)
             .leftJoin(qUser.integratedAccount, qInt)
             .leftJoin(qUser.socialAccount, qSoc)

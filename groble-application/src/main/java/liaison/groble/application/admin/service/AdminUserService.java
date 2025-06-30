@@ -47,6 +47,7 @@ public class AdminUserService {
         .isSellerInfo(flat.isSellerInfo())
         .verificationStatus(flat.getVerificationStatus())
         .isBusinessSeller(flat.isBusinessSeller())
+        .businessType(flat.getBusinessType())
         .build();
   }
 }
