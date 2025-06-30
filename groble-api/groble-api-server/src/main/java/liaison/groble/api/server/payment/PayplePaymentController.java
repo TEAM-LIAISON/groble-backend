@@ -102,7 +102,6 @@ public class PayplePaymentController {
     payplePaymentService.saveAppCardAuthResponse(accessor.getUserId(), authResultDto);
 
     // 정상 처리 완료
-
     try {
       // 인증 성공에 대한 결제 승인 요청 처리
       JSONObject approvalResult = payplePaymentService.processAppCardApproval(authResultDto);

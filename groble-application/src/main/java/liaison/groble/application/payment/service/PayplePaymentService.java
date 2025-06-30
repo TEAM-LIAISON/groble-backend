@@ -116,7 +116,7 @@ public class PayplePaymentService {
       Order order = orderReader.getOrderByMerchantUid(authResult.getPayOid());
       PayplePayment payplePayment = findPayplePayment(authResult.getPayOid());
 
-      // 2. 결제 상태 검증
+      // 2. 결제 상태 검증ㄴ
       validatePaymentStatus(payplePayment);
 
       // 3. 페이플 승인 요청
