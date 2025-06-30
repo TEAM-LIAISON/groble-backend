@@ -11,10 +11,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Getter
-@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -31,7 +29,6 @@ public class ContentDraftRequest {
   @Schema(description = "콘텐츠 유형", example = "COACHING")
   private String contentType;
 
-  // TODO: 카테고리 대분류, 소분류 추가
   @Schema(description = "카테고리 ID", example = "1")
   private String categoryId;
 

@@ -1,0 +1,18 @@
+package liaison.groble.application.sell.dto;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+import lombok.Builder;
+import lombok.Getter;
+
+@Getter
+@Builder
+public class ContentReviewDetailDTO {
+  private Long reviewId;
+  private String contentTitle;
+  private LocalDateTime createdAt;
+  private String reviewerNickname;
+  private String selectedOptionName;
+  private BigDecimal rating;
+}

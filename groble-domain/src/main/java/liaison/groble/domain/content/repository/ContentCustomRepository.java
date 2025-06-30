@@ -28,11 +28,7 @@ public interface ContentCustomRepository {
       Long userId, Long lastContentId, int size, ContentStatus status, ContentType contentType);
 
   CursorResponse<FlatContentPreviewDTO> findMySellingContentsWithCursor(
-      Long userId,
-      Long lastContentId,
-      int size,
-      List<ContentStatus> statusList,
-      ContentType contentType);
+      Long userId, Long lastContentId, int size, List<ContentStatus> statusList);
 
   CursorResponse<FlatContentPreviewDTO> findHomeContentsWithCursor(
       Long lastContentId, int size, ContentType contentType);
@@ -46,14 +42,16 @@ public interface ContentCustomRepository {
 
   Page<FlatContentPreviewDTO> findAllMarketContentsByUserId(Long userId, Pageable pageable);
 
-  int countMySellingContents(
-      Long userId, List<ContentStatus> contentStatusList, ContentType contentType);
+  int countMySellingContents(Long userId, List<ContentStatus> contentStatusList);
 
   int countMyPurchasingContents(Long userId, ContentStatus status, ContentType contentType);
 
   List<FlatDynamicContentDTO> findAllDynamicContents();
 
   Page<FlatAdminContentSummaryInfoDTO> findContentsByPageable(Pageable pageable);
+
+  Page<FlatContentPreviewDTO> findMyContentsWithStatus(
+      Pageable pageable, Long userId, ContentStatus status);
 
   boolean existsSellingContentByUser(Long userId);
 }

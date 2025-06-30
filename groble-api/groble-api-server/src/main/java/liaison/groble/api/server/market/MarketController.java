@@ -29,6 +29,7 @@ import liaison.groble.common.response.GrobleResponse;
 import liaison.groble.common.response.PageResponse;
 import liaison.groble.common.response.ResponseHelper;
 import liaison.groble.common.utils.PageUtils;
+import liaison.groble.mapping.content.ContentMapper;
 import liaison.groble.mapping.market.MarketMapper;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -60,6 +61,7 @@ public class MarketController {
   private static final String MARKET_EDIT_SUCCESS_MESSAGE = "마켓 관리 수정창에서 수정 완료 항목을 저장했습니다.";
   private static final String MARKET_LINK_CHECK_SUCCESS_MESSAGE = "사용 가능한 마켓 링크입니다.";
 
+  private final ContentMapper contentMapper;
   private final MarketMapper marketMapper;
   private final MarketService marketService;
   private final ResponseHelper responseHelper;
@@ -84,7 +86,7 @@ public class MarketController {
       description = "마켓 뷰어 화면에서 모든 판매중인 콘텐츠 목록을 조회합니다. 대표 콘텐츠는 포함되지 않습니다.")
   @ApiResponse(
       responseCode = "200",
-      description = "성공",
+      description = "마켓 뷰어 화면에서 콘텐츠 목록 전체 조회 성공",
       content =
           @Content(
               mediaType = "application/json",
@@ -100,7 +102,7 @@ public class MarketController {
     PageResponse<ContentCardDTO> dtoPageResponse =
         marketService.getMarketContents(marketName, pageable);
     PageResponse<ContentPreviewCardResponse> responsePage =
-        marketMapper.toContentPreviewCardResponsePage(dtoPageResponse);
+        contentMapper.toContentPreviewCardResponsePage(dtoPageResponse);
 
     return responseHelper.success(responsePage, MARKET_CONTENTS_SUCCESS_MESSAGE, HttpStatus.OK);
   }

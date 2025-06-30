@@ -3,7 +3,6 @@ package liaison.groble.external.adapter.payment;
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.InputStreamReader;
-import java.math.BigDecimal;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Map;
@@ -133,67 +132,6 @@ public class PaypleServiceImpl implements PaypleService {
       jsonObject.put("PCD_PAY_MSG", "결제 승인 처리 중 오류가 발생했습니다: " + e.getMessage());
     }
 
-    return jsonObject;
-  }
-
-  @Override
-  public JSONObject payLinkCreate(Map<String, String> params, Map<String, BigDecimal> prices) {
-    JSONObject jsonObject = new JSONObject();
-    JSONParser jsonParser = new JSONParser();
-
-    try {
-      String linkApiUrl = paypleConfig.getLinkApiUrl();
-
-      JSONObject obj = new JSONObject();
-      obj.put("PCD_CST_ID", paypleConfig.getCstId());
-      obj.put("PCD_CUST_KEY", paypleConfig.getCustKey());
-      obj.put("PCD_AUTH_KEY", paypleConfig.getClientKey());
-      obj.put("PCD_PAY_TYPE", "transfer+card");
-
-      // PCD_AUTH_KEY, PCD_PAY_WORK
-      if (params != null) {
-        for (Map.Entry<String, String> entry : params.entrySet()) {
-          obj.put(entry.getKey(), entry.getValue());
-        }
-      }
-
-      // PCD_PAY_TOTAL
-      if (prices != null) {
-        for (Map.Entry<String, BigDecimal> entry : prices.entrySet()) {
-          obj.put(entry.getKey(), entry.getValue().toString());
-        }
-      }
-
-      URL url = new URL(linkApiUrl);
-      HttpURLConnection con = (HttpURLConnection) url.openConnection();
-
-      con.setRequestMethod("POST");
-      con.setRequestProperty("content-type", "application/json");
-      con.setRequestProperty("charset", "UTF-8");
-      con.setRequestProperty("referer", "https://groble.im"); // 실제 도메인으로 변경 필요
-      con.setDoOutput(true);
-
-      DataOutputStream wr = new DataOutputStream(con.getOutputStream());
-      wr.write(obj.toString().getBytes());
-      wr.flush();
-      wr.close();
-
-      int responseCode = con.getResponseCode();
-      BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
-      String inputLine;
-      StringBuffer response = new StringBuffer();
-
-      while ((inputLine = in.readLine()) != null) {
-        response.append(inputLine);
-      }
-
-      in.close();
-
-      jsonObject = (JSONObject) jsonParser.parse(response.toString());
-
-    } catch (Exception e) {
-      log.error("Payple 링크 결제 오류: ", e);
-    }
     return jsonObject;
   }
 
