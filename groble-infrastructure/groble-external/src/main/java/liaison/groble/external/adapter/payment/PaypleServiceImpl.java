@@ -55,7 +55,7 @@ public class PaypleServiceImpl implements PaypleService {
       con.setDoOutput(true);
 
       DataOutputStream wr = new DataOutputStream(con.getOutputStream());
-      wr.write(obj.toString().getBytes("UTF-8"));
+      wr.write(obj.toString().getBytes());
       wr.flush();
       wr.close();
 
