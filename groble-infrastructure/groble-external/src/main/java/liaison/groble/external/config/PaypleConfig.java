@@ -34,8 +34,8 @@ public class PaypleConfig {
 
   public String getAppCardPaymentUrl() {
     return testMode
-        ? "https://democpay.payple.kr/php/PayCardConfirmAct.php?ACT_=PAYM"
-        : "https://cpay.payple.kr/php/PayCardConfirmAct.php?ACT_=PAYM";
+        ? "https://demo-api-v2.payple.kr/api/v1/payments/cards/approval/confirm"
+        : "https://api-v2.payple.kr/api/v1/payments/cards/approval/confirm";
   }
 
   public String getPayConfirmUrl() {
