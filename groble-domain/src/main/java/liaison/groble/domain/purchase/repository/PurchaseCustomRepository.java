@@ -11,6 +11,7 @@ import liaison.groble.domain.content.enums.ContentType;
 import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.purchase.dto.FlatContentSellDetailDTO;
 import liaison.groble.domain.purchase.dto.FlatPurchaseContentPreviewDTO;
+import liaison.groble.domain.purchase.dto.FlatSellManageDetailDTO;
 
 public interface PurchaseCustomRepository {
 
@@ -30,4 +31,6 @@ public interface PurchaseCustomRepository {
 
   Page<FlatContentSellDetailDTO> getContentSellPageDTOs(
       Long userId, Long contentId, Pageable pageable);
+
+  Optional<FlatSellManageDetailDTO> getSellManageDetail(Long userId, Long contentId);
 }

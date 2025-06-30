@@ -3,7 +3,9 @@ package liaison.groble.application.sell.service;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,9 +16,12 @@ import liaison.groble.application.purchase.service.PurchaseReader;
 import liaison.groble.application.sell.dto.ContentReviewDetailDTO;
 import liaison.groble.application.sell.dto.ContentSellDetailDTO;
 import liaison.groble.application.sell.dto.ReplyContentDTO;
+import liaison.groble.application.sell.dto.SellManageDetailDTO;
+import liaison.groble.application.sell.dto.SellManagePageDTO;
 import liaison.groble.common.response.PageResponse;
 import liaison.groble.domain.content.dto.FlatContentReviewDetailDTO;
 import liaison.groble.domain.purchase.dto.FlatContentSellDetailDTO;
+import liaison.groble.domain.purchase.dto.FlatSellManageDetailDTO;
 import liaison.groble.external.discord.dto.DeleteReviewRequestReportDTO;
 import liaison.groble.external.discord.service.content.DiscordDeleteReviewRequestReportService;
 
@@ -33,6 +38,31 @@ public class SellContentService {
   private final ContentReplyWriter contentReplyWriter;
   private final PurchaseReader purchaseReader;
   private final DiscordDeleteReviewRequestReportService discordDeleteReviewRequestReportService;
+
+  @Transactional(readOnly = true)
+  public SellManagePageDTO getSellManagePage(Long userId, Long contentId) {
+    FlatSellManageDetailDTO flatSellManageDetailDTO =
+        purchaseReader.getSellManageDetail(userId, contentId);
+    // 상위 5개 판매 내역 조회
+    PageRequest pageRequest = PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "purchasedAt"));
+    Page<FlatContentSellDetailDTO> sellPage =
+        purchaseReader.getContentSells(userId, contentId, pageRequest);
+    List<ContentSellDetailDTO> contentSellList =
+        sellPage.getContent().stream().map(this::convertFlatDTOToDetailDTO).toList();
+
+    // 상위 5개 리뷰 조회
+    PageRequest reviewPageRequest = PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "createdAt"));
+    Page<FlatContentReviewDetailDTO> reviewPage =
+        contentReviewReader.getContentReviews(userId, contentId, reviewPageRequest);
+    List<ContentReviewDetailDTO> contentReviewList =
+        reviewPage.getContent().stream().map(this::convertFlatDTOToDetailDTO).toList();
+
+    return SellManagePageDTO.builder()
+        .sellManageDetail(buildSellManageDetailDTO(flatSellManageDetailDTO))
+        .contentSellDetailList(contentSellList)
+        .contentReviewDetailList(contentReviewList)
+        .build();
+  }
 
   @Transactional(readOnly = true)
   public PageResponse<ContentSellDetailDTO> getContentSells(
@@ -145,7 +175,7 @@ public class SellContentService {
     return DeleteReviewRequestReportDTO.builder().userId(userId).reviewId(reviewId).build();
   }
 
-  /** FlatPreviewContentDTO를 ContentCardDto로 변환합니다. */
+  /** FlatContentReviewDetailDTO ContentReviewDetailDTO 변환합니다. */
   private ContentReviewDetailDTO convertFlatDTOToDetailDTO(FlatContentReviewDetailDTO flat) {
     return ContentReviewDetailDTO.builder()
         .reviewId(flat.getReviewId())
@@ -157,6 +187,7 @@ public class SellContentService {
         .build();
   }
 
+  /** FlatContentSellDetailDTO ContentSellDetailDTO로 변환합니다. */
   private ContentSellDetailDTO convertFlatDTOToDetailDTO(FlatContentSellDetailDTO flat) {
     return ContentSellDetailDTO.builder()
         .purchaseId(flat.getPurchaseId())
@@ -167,6 +198,16 @@ public class SellContentService {
         .purchaserPhoneNumber(flat.getPurchaserPhoneNumber())
         .selectedOptionName(flat.getSelectedOptionName())
         .finalPrice(flat.getFinalPrice())
+        .build();
+  }
+
+  /** FlatContentSellDetailDTO ContentSellDetailDTO로 변환합니다. */
+  private SellManageDetailDTO buildSellManageDetailDTO(
+      FlatSellManageDetailDTO flatSellManageDetailDTO) {
+    return SellManageDetailDTO.builder()
+        .totalPaymentPrice(flatSellManageDetailDTO.getTotalPaymentPrice())
+        .totalPurchaseCustomer(flatSellManageDetailDTO.getTotalPurchaseCustomer())
+        .totalReviewCount(flatSellManageDetailDTO.getTotalReviewCount())
         .build();
   }
 }

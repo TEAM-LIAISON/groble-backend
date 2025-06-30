@@ -15,11 +15,13 @@ import liaison.groble.api.model.sell.request.ReplyContentRequest;
 import liaison.groble.api.model.sell.response.ContentReviewDetailResponse;
 import liaison.groble.api.model.sell.response.ContentSellDetailResponse;
 import liaison.groble.api.model.sell.response.ReplyContentResponse;
+import liaison.groble.api.model.sell.response.SellManagePageResponse;
 import liaison.groble.api.model.sell.response.swagger.ContentReviewListResponse;
 import liaison.groble.api.model.sell.response.swagger.ContentSellListResponse;
 import liaison.groble.application.sell.dto.ContentReviewDetailDTO;
 import liaison.groble.application.sell.dto.ContentSellDetailDTO;
 import liaison.groble.application.sell.dto.ReplyContentDTO;
+import liaison.groble.application.sell.dto.SellManagePageDTO;
 import liaison.groble.application.sell.service.SellContentService;
 import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.annotation.RequireRole;
@@ -80,17 +82,20 @@ public class SellContentController {
   private final ResponseHelper responseHelper;
 
   // TODO : 내 스토어 - 상품 관리 - 판매 관리
-  //    @RequireRole("ROLE_SELLER")
-  //    @Operation(
-  //            summary = "[✅ 내 스토어 - 상품 관리 - 판매 관리] 판매 관리 페이지 조회",
-  //            description = "특정 상품의 판매 관리, 상위 판매 리스트, 상위 리뷰 내역을 모두 조회합니다.")
-  //    @GetMapping(CONTENT_HOME_PATH)
-  //    public ResponseEntity<GrobleResponse<>> getContentHome(
-  //            @Auth Accessor accessor,
-  //            @PathVariable("contentId") Long contentId
-  //    ) {
-  //
-  //    }
+  @Operation(
+      summary = "[❌ 내 스토어 - 상품 관리 - 판매 관리] 판매 관리 페이지 조회",
+      description = "특정 상품의 판매 관리, 상위 판매 리스트, 상위 리뷰 내역을 모두 조회합니다.")
+  @RequireRole("ROLE_SELLER")
+  @GetMapping(CONTENT_HOME_PATH)
+  public ResponseEntity<GrobleResponse<SellManagePageResponse>> getContentHome(
+      @Auth Accessor accessor, @PathVariable("contentId") Long contentId) {
+    SellManagePageDTO sellManagePageDTO =
+        sellContentService.getSellManagePage(accessor.getId(), contentId);
+
+    SellManagePageResponse response = sellMapper.toSellManagePageResponse(sellManagePageDTO);
+
+    return responseHelper.success(response, CONTENT_HOME_SUCCESS_MESSAGE, HttpStatus.OK);
+  }
 
   // 내 스토어 - 상품 관리 - 리뷰 내역 전체보기
   @Operation(

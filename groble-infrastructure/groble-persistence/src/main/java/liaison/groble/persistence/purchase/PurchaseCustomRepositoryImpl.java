@@ -2,6 +2,7 @@ package liaison.groble.persistence.purchase;
 
 import static com.querydsl.jpa.JPAExpressions.select;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -19,6 +20,7 @@ import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.ComparableExpressionBase;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.PathBuilder;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
@@ -26,12 +28,15 @@ import liaison.groble.common.response.CursorResponse;
 import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.content.entity.QContent;
 import liaison.groble.domain.content.entity.QContentOption;
+import liaison.groble.domain.content.entity.QContentReview;
 import liaison.groble.domain.content.enums.ContentType;
 import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.order.entity.QOrder;
 import liaison.groble.domain.purchase.dto.FlatContentSellDetailDTO;
 import liaison.groble.domain.purchase.dto.FlatPurchaseContentPreviewDTO;
+import liaison.groble.domain.purchase.dto.FlatSellManageDetailDTO;
 import liaison.groble.domain.purchase.entity.QPurchase;
+import liaison.groble.domain.purchase.enums.PurchaseStatus;
 import liaison.groble.domain.purchase.repository.PurchaseCustomRepository;
 import liaison.groble.domain.user.entity.QIntegratedAccount;
 import liaison.groble.domain.user.entity.QSocialAccount;
@@ -278,5 +283,39 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
                 queryFactory.select(qPurchase.count()).from(qPurchase).where(conditions).fetchOne())
             .orElse(0L);
     return new PageImpl<>(items, pageable, total);
+  }
+
+  @Override
+  public Optional<FlatSellManageDetailDTO> getSellManageDetail(Long userId, Long contentId) {
+    QPurchase qPurchase = QPurchase.purchase;
+    QContent qContent = QContent.content;
+    QUser qUser = QUser.user;
+    QContentReview qContentReview = QContentReview.contentReview;
+
+    BooleanExpression conditions =
+        qPurchase
+            .content
+            .id
+            .eq(contentId)
+            .and(qPurchase.content.user.id.eq(userId))
+            .and(qPurchase.status.eq(PurchaseStatus.COMPLETED));
+
+    FlatSellManageDetailDTO result =
+        queryFactory
+            .select(
+                Projections.constructor(
+                    FlatSellManageDetailDTO.class,
+                    qPurchase.finalPrice.sum().coalesce(BigDecimal.ZERO).longValue(),
+                    qPurchase.user.id.countDistinct(),
+                    JPAExpressions.select(qContentReview.count())
+                        .from(qContentReview)
+                        .where(qContentReview.content.id.eq(contentId))))
+            .from(qPurchase)
+            .leftJoin(qPurchase.content, qContent)
+            .leftJoin(qPurchase.user, qUser)
+            .where(conditions)
+            .fetchOne();
+
+    return Optional.ofNullable(result);
   }
 }

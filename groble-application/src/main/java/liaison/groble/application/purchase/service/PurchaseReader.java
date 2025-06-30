@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import liaison.groble.common.exception.EntityNotFoundException;
 import liaison.groble.domain.purchase.dto.FlatContentSellDetailDTO;
+import liaison.groble.domain.purchase.dto.FlatSellManageDetailDTO;
 import liaison.groble.domain.purchase.entity.Purchase;
 import liaison.groble.domain.purchase.repository.PurchaseCustomRepository;
 import liaison.groble.domain.purchase.repository.PurchaseRepository;
@@ -46,5 +47,14 @@ public class PurchaseReader {
   public Page<FlatContentSellDetailDTO> getContentSells(
       Long userId, Long contentId, Pageable pageable) {
     return purchaseCustomRepository.getContentSellPageDTOs(userId, contentId, pageable);
+  }
+
+  public FlatSellManageDetailDTO getSellManageDetail(Long userId, Long contentId) {
+    return purchaseCustomRepository
+        .getSellManageDetail(userId, contentId)
+        .orElseThrow(
+            () ->
+                new EntityNotFoundException(
+                    "판매 관리 정보를 찾을 수 없습니다. User ID: " + userId + ", Content ID: " + contentId));
   }
 }
