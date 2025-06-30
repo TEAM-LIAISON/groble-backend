@@ -10,7 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import liaison.groble.application.admin.dto.AdminContentSummaryInfoDto;
 import liaison.groble.application.admin.mapper.ContentEntityMapper;
 import liaison.groble.application.content.ContentReader;
-import liaison.groble.application.content.dto.ContentDto;
+import liaison.groble.application.content.dto.ContentDTO;
 import liaison.groble.application.notification.mapper.NotificationMapper;
 import liaison.groble.common.response.PageResponse;
 import liaison.groble.domain.content.dto.FlatAdminContentSummaryInfoDTO;
@@ -75,7 +75,7 @@ public class AdminContentService {
     sendContentReviewNotification(content, SubNotificationType.CONTENT_REVIEW_REJECTED);
   }
 
-  private ContentDto saveAndConvertToDto(Content content) {
+  private ContentDTO saveAndConvertToDto(Content content) {
     content = contentRepository.save(content);
     log.info("콘텐츠 저장 완료. ID: {}, 유저 ID: {}", content.getId(), content.getUser().getId());
     return contentEntityMapper.toDto(content);

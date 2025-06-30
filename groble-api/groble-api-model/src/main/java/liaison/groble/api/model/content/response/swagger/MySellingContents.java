@@ -39,7 +39,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
                                                         "contentId": 1,
                                                         "createdAt": "2025-05-07 16:52:12",
                                                         "title": "사업계획서 컨설팅",
-                                                        "thumbnailUrl": "https://example.com/image1.jpg",
+                                                        "thumbnailUrl":
+ "https://example.com/image1.jpg",
                                                         "sellerName": "권동민",
                                                         "lowestPrice": 50000,
                                                         "status": "ACTIVE"
@@ -48,7 +49,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
                                                         "contentId": 2,
                                                         "createdAt": "2025-05-07 15:30:45",
                                                         "title": "스타트업 진단 코칭",
-                                                        "thumbnailUrl": "https://example.com/image2.jpg",
+                                                        "thumbnailUrl":
+ "https://example.com/image2.jpg",
                                                         "sellerName": "권동민",
                                                         "lowestPrice": 70000,
                                                         "status": "PENDING"
@@ -80,7 +82,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
                                                         "contentId": 3,
                                                         "createdAt": "2025-05-06 14:22:33",
                                                         "title": "사업계획서 템플릿",
-                                                        "thumbnailUrl": "https://example.com/doc1.jpg",
+                                                        "thumbnailUrl":
+ "https://example.com/doc1.jpg",
                                                         "sellerName": "권동민",
                                                         "lowestPrice": 20000,
                                                         "status": "ACTIVE"
@@ -89,7 +92,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
                                                         "contentId": 4,
                                                         "createdAt": "2025-05-05 09:15:21",
                                                         "title": "투자 유치 제안서",
-                                                        "thumbnailUrl": "https://example.com/doc2.jpg",
+                                                        "thumbnailUrl":
+ "https://example.com/doc2.jpg",
                                                         "sellerName": "권동민",
                                                         "lowestPrice": 15000,
                                                         "status": "DRAFT"

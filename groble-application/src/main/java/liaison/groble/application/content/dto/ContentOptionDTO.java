@@ -9,7 +9,7 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public class ContentOptionDto {
+public class ContentOptionDTO {
   private Long contentOptionId;
   private String name;
   private String description;

@@ -6,6 +6,8 @@ import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.purchase.entity.Purchase;
 
 public interface PurchaseRepository {
+  Optional<Purchase> findById(Long purchaseId);
+
   Purchase save(Purchase purchase);
 
   Optional<Purchase> findByOrderId(Long orderId);

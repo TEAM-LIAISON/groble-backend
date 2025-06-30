@@ -15,12 +15,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import liaison.groble.application.content.ContentReader;
 import liaison.groble.application.content.dto.ContentCardDTO;
+import liaison.groble.application.content.dto.ContentDTO;
 import liaison.groble.application.content.dto.ContentDetailDto;
-import liaison.groble.application.content.dto.ContentDto;
-import liaison.groble.application.content.dto.ContentOptionDto;
+import liaison.groble.application.content.dto.ContentOptionDTO;
 import liaison.groble.application.content.dto.DynamicContentDto;
 import liaison.groble.application.content.exception.InActiveContentException;
-import liaison.groble.application.notification.mapper.NotificationMapper;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.common.exception.EntityNotFoundException;
 import liaison.groble.common.exception.ForbiddenException;
@@ -45,10 +44,9 @@ import liaison.groble.domain.content.repository.ContentCustomRepository;
 import liaison.groble.domain.content.repository.ContentRepository;
 import liaison.groble.domain.file.entity.FileInfo;
 import liaison.groble.domain.file.repository.FileRepository;
-import liaison.groble.domain.notification.repository.NotificationRepository;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.vo.UserProfile;
-import liaison.groble.external.discord.dto.ContentRegisterCreateReportDto;
+import liaison.groble.external.discord.dto.ContentRegisterCreateReportDTO;
 import liaison.groble.external.discord.service.content.DiscordContentRegisterReportService;
 
 import lombok.RequiredArgsConstructor;
@@ -63,20 +61,11 @@ public class ContentService {
   private final ContentCustomRepository contentCustomRepository;
   private final CategoryRepository categoryRepository;
   private final ContentReader contentReader;
-  private final NotificationRepository notificationRepository;
-  private final NotificationMapper notificationMapper;
   private final DiscordContentRegisterReportService discordContentRegisterReportService;
   private final FileRepository fileRepository;
 
-  /**
-   * 콘텐츠를 임시 저장하고 저장된 정보를 반환합니다.
-   *
-   * @param userId 사용자 ID
-   * @param contentDto 저장할 콘텐츠 정보 (null 가능)
-   * @return 저장된 콘텐츠 정보
-   */
   @Transactional
-  public ContentDto saveDraftAndReturn(Long userId, ContentDto contentDto) {
+  public ContentDTO saveDraftAndReturn(Long userId, ContentDTO contentDto) {
     // 1. 사용자 조회
     User user = userReader.getUserById(userId);
 
@@ -108,15 +97,8 @@ public class ContentService {
     return saveAndConvertToDto(content);
   }
 
-  /**
-   * 콘텐츠를 심사 요청하고 결과를 반환합니다.
-   *
-   * @param userId 사용자 ID
-   * @param contentDto 심사 요청할 콘텐츠 정보
-   * @return 심사 요청된 콘텐츠 정보
-   */
   @Transactional
-  public ContentDto registerContent(Long userId, ContentDto contentDto) {
+  public ContentDTO registerContent(Long userId, ContentDTO contentDto) {
     validateContentForSubmission(contentDto);
 
     // 2. 사용자 조회
@@ -160,8 +142,8 @@ public class ContentService {
 
     final LocalDateTime nowInSeoul = LocalDateTime.now(ZoneId.of("Asia/Seoul"));
 
-    final ContentRegisterCreateReportDto contentRegisterCreateReportDto =
-        ContentRegisterCreateReportDto.builder()
+    final ContentRegisterCreateReportDTO contentRegisterCreateReportDto =
+        ContentRegisterCreateReportDTO.builder()
             .nickname(content.getUser().getNickname())
             .contentId(content.getId())
             .contentTitle(content.getTitle())
@@ -213,13 +195,13 @@ public class ContentService {
       contentImageUrls.add(content.getThumbnailUrl());
     }
 
-    // 옵션 목록 변환 - ContentOptionDto 사용
-    List<ContentOptionDto> optionDtos =
+    // 옵션 목록 변환 - ContentOptionDTO 사용
+    List<ContentOptionDTO> optionDtos =
         content.getOptions().stream()
             .map(
                 option -> {
-                  ContentOptionDto.ContentOptionDtoBuilder builder =
-                      ContentOptionDto.builder()
+                  ContentOptionDTO.ContentOptionDTOBuilder builder =
+                      ContentOptionDTO.builder()
                           .contentOptionId(option.getId())
                           .name(option.getName())
                           .description(option.getDescription())
@@ -305,13 +287,13 @@ public class ContentService {
       contentImageUrls.add(content.getThumbnailUrl());
     }
 
-    // 옵션 목록 변환 - ContentOptionDto 사용
-    List<ContentOptionDto> optionDtos =
+    // 옵션 목록 변환 - ContentOptionDTO 사용
+    List<ContentOptionDTO> optionDtos =
         content.getOptions().stream()
             .map(
                 option -> {
-                  ContentOptionDto.ContentOptionDtoBuilder builder =
-                      ContentOptionDto.builder()
+                  ContentOptionDTO.ContentOptionDTOBuilder builder =
+                      ContentOptionDTO.builder()
                           .contentOptionId(option.getId())
                           .name(option.getName())
                           .description(option.getDescription())
@@ -369,32 +351,21 @@ public class ContentService {
   }
 
   @Transactional(readOnly = true)
-  public CursorResponse<ContentCardDTO> getMySellingContents(
-      Long userId, String cursor, int size, String state, String type) {
-    Long lastContentId = parseContentIdFromCursor(cursor);
-    List<ContentStatus> contentStatusList = parseContentStatusList(state);
-    ContentType contentType = parseContentType(type);
+  public PageResponse<ContentCardDTO> getMySellingContents(
+      Long userId, Pageable pageable, String state) {
+    ContentStatus contentStatus = parseContentStatus(state);
+    Page<FlatContentPreviewDTO> page =
+        contentReader.findMyContentsWithStatus(pageable, userId, contentStatus);
+    List<ContentCardDTO> items =
+        page.getContent().stream().map(this::convertFlatDtoToCardDto).toList();
 
-    CursorResponse<FlatContentPreviewDTO> flatDtos =
-        contentCustomRepository.findMySellingContentsWithCursor(
-            userId, lastContentId, size, contentStatusList, contentType);
+    PageResponse.MetaData meta =
+        PageResponse.MetaData.builder()
+            .sortBy(pageable.getSort().iterator().next().getProperty())
+            .sortDirection(pageable.getSort().iterator().next().getDirection().name())
+            .build();
 
-    List<ContentCardDTO> cardDtos =
-        flatDtos.getItems().stream()
-            .map(this::convertFlatDtoToCardDto)
-            .collect(Collectors.toList());
-
-    int totalCount =
-        contentCustomRepository.countMySellingContents(userId, contentStatusList, contentType);
-
-    // 응답 구성
-    return CursorResponse.<ContentCardDTO>builder()
-        .items(cardDtos)
-        .nextCursor(flatDtos.getNextCursor())
-        .hasNext(flatDtos.isHasNext())
-        .totalCount(totalCount)
-        .meta(flatDtos.getMeta())
-        .build();
+    return PageResponse.from(page, items, meta);
   }
 
   /**
@@ -444,7 +415,7 @@ public class ContentService {
   // --- 유틸리티 메서드 ---
 
   /** Content를 저장하고 DTO로 변환합니다. */
-  private ContentDto saveAndConvertToDto(Content content) {
+  private ContentDTO saveAndConvertToDto(Content content) {
     content = contentRepository.save(content);
     log.info("콘텐츠 저장 완료. ID: {}, 유저 ID: {}", content.getId(), content.getUser().getId());
     return convertToDto(content);
@@ -484,7 +455,7 @@ public class ContentService {
   }
 
   /** DTO에서 Content 엔티티로 데이터를 업데이트합니다. */
-  private void updateContentFromDto(Content content, ContentDto dto) {
+  private void updateContentFromDto(Content content, ContentDTO dto) {
     // 타이틀 업데이트
     if (dto.getTitle() != null) {
       content.setTitle(dto.getTitle());
@@ -538,15 +509,15 @@ public class ContentService {
   }
 
   /** 옵션을 Content에 추가하고 최저가를 설정합니다. */
-  private void addOptionsToContent(Content content, ContentDto dto) {
+  private void addOptionsToContent(Content content, ContentDTO dto) {
     // dto.getOptions()가 null인 경우 빈 리스트 사용 (NPE 방지)
-    List<ContentOptionDto> options =
+    List<ContentOptionDTO> options =
         dto.getOptions() != null ? dto.getOptions() : Collections.emptyList();
 
     // 옵션 추가 전에 최저가 계산을 위한 리스트 생성
     List<BigDecimal> validPrices = new ArrayList<>();
 
-    for (ContentOptionDto optionDto : options) {
+    for (ContentOptionDTO optionDto : options) {
       // null 옵션 건너뛰기
       if (optionDto == null) continue;
 
@@ -582,7 +553,7 @@ public class ContentService {
 
   /** Content 유형에 맞는 옵션을 생성합니다. */
   private ContentOption createOptionByContentType(
-      ContentType contentType, ContentOptionDto optionDto) {
+      ContentType contentType, ContentOptionDTO optionDto) {
     ContentOption option;
 
     if (contentType == ContentType.COACHING) {
@@ -603,7 +574,7 @@ public class ContentService {
   }
 
   /** 코칭 옵션을 생성합니다. */
-  private CoachingOption createCoachingOption(ContentOptionDto optionDto) {
+  private CoachingOption createCoachingOption(ContentOptionDTO optionDto) {
     CoachingOption option = new CoachingOption();
 
     // 코칭 옵션 특화 필드 설정 - null 안전하게 처리
@@ -637,7 +608,7 @@ public class ContentService {
   }
 
   /** 문서 옵션을 생성합니다. */
-  private DocumentOption createDocumentOption(ContentOptionDto optionDto) {
+  private DocumentOption createDocumentOption(ContentOptionDTO optionDto) {
     DocumentOption option = new DocumentOption();
 
     // 문서 파일 URL이 null이 아닌지 확인
@@ -695,20 +666,6 @@ public class ContentService {
     }
   }
 
-  /** 문자열에서 ContentStatus를 파싱합니다. */
-  private List<ContentStatus> parseContentStatusList(String state) {
-    if (state == null || state.isBlank()) {
-      return null;
-    }
-
-    try {
-      return List.of(ContentStatus.valueOf(state.toUpperCase()));
-    } catch (IllegalArgumentException e) {
-      log.warn("유효하지 않은 콘텐츠 상태: {}", state);
-      return null;
-    }
-  }
-
   private ContentType parseContentType(String type) {
     if (type == null || type.isBlank()) {
       return null;
@@ -723,20 +680,20 @@ public class ContentService {
   }
 
   /** Content를 DTO로 변환합니다. */
-  private ContentDto convertToDto(Content content) {
+  private ContentDTO convertToDto(Content content) {
     // null 체크
     if (content == null) {
       return null;
     }
 
     // 옵션 변환
-    List<ContentOptionDto> optionDtos = new ArrayList<>();
+    List<ContentOptionDTO> optionDtos = new ArrayList<>();
     if (content.getOptions() != null) {
       for (ContentOption option : content.getOptions()) {
         if (option == null) continue;
 
-        ContentOptionDto.ContentOptionDtoBuilder builder =
-            ContentOptionDto.builder()
+        ContentOptionDTO.ContentOptionDTOBuilder builder =
+            ContentOptionDTO.builder()
                 .contentOptionId(option.getId())
                 .name(option.getName())
                 .description(option.getDescription())
@@ -778,8 +735,8 @@ public class ContentService {
     }
 
     // Content DTO 구성
-    ContentDto.ContentDtoBuilder dtoBuilder =
-        ContentDto.builder()
+    ContentDTO.ContentDTOBuilder dtoBuilder =
+        ContentDTO.builder()
             .contentId(content.getId())
             .title(content.getTitle())
             .thumbnailUrl(content.getThumbnailUrl())
@@ -828,7 +785,7 @@ public class ContentService {
   }
 
   /** 심사 요청 시 필수 항목을 검증합니다. */
-  private void validateContentForSubmission(ContentDto contentDto) {
+  private void validateContentForSubmission(ContentDTO contentDto) {
     List<String> missingFields = new ArrayList<>();
 
     // 필수 필드 검증
@@ -864,7 +821,7 @@ public class ContentService {
     } else {
       // 각 옵션별 필수 필드 검증
       for (int i = 0; i < contentDto.getOptions().size(); i++) {
-        ContentOptionDto option = contentDto.getOptions().get(i);
+        ContentOptionDTO option = contentDto.getOptions().get(i);
 
         if (option.getName() == null || option.getName().trim().isEmpty()) {
           missingFields.add("옵션" + (i + 1) + " 이름");
@@ -898,7 +855,7 @@ public class ContentService {
   }
 
   @Transactional
-  public ContentDto stopContent(Long userId, Long contentId) {
+  public ContentDTO stopContent(Long userId, Long contentId) {
     // 1. Content 조회 및 권한 검증
     Content content = findAndValidateUserActiveContent(userId, contentId);
 
@@ -998,5 +955,18 @@ public class ContentService {
 
   private String safeEnumName(Enum<?> e) {
     return e != null ? e.name() : null;
+  }
+
+  // 콘텐츠 상태 파싱 메서드 (DRAFT, ACTIVE)
+  private ContentStatus parseContentStatus(String state) {
+    if (state == null || state.isBlank()) {
+      return null;
+    }
+
+    try {
+      return ContentStatus.valueOf(state.toUpperCase());
+    } catch (IllegalArgumentException e) {
+      return null;
+    }
   }
 }

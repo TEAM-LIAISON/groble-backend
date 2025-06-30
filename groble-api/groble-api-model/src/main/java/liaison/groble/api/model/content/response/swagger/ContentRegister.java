@@ -5,7 +5,6 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -14,7 +13,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
-@Operation(summary = "콘텐츠 심사 요청", description = "콘텐츠 심사를 요청합니다. 콘텐츠 유형(코칭/문서)에 따라 옵션 구조가 달라집니다.")
 @ApiResponses({
   @ApiResponse(
       responseCode = "200",

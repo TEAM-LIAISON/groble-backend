@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 import lombok.Builder;
 
 @Builder
-public record ContentRegisterCreateReportDto(
+public record ContentRegisterCreateReportDTO(
     String nickname,
     Long contentId,
     String contentTitle,

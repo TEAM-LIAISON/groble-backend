@@ -21,9 +21,9 @@ import liaison.groble.api.model.content.response.ContentResponse;
 import liaison.groble.api.model.content.response.ContentStatusResponse;
 import liaison.groble.api.model.content.response.DocumentOptionResponse;
 import liaison.groble.application.content.dto.ContentCardDTO;
+import liaison.groble.application.content.dto.ContentDTO;
 import liaison.groble.application.content.dto.ContentDetailDto;
-import liaison.groble.application.content.dto.ContentDto;
-import liaison.groble.application.content.dto.ContentOptionDto;
+import liaison.groble.application.content.dto.ContentOptionDTO;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -32,12 +32,12 @@ import lombok.extern.slf4j.Slf4j;
 public class ContentDtoMapper {
 
   /** ContentDraftRequest를 ContentDto로 변환 (임시 저장용) - 모든 필드가 null일 수 있음 */
-  public ContentDto toServiceContentDtoFromDraft(ContentDraftRequest request) {
+  public ContentDTO toServiceContentDtoFromDraft(ContentDraftRequest request) {
     if (request == null) {
       return null;
     }
 
-    List<ContentOptionDto> options = new ArrayList<>();
+    List<ContentOptionDTO> options = new ArrayList<>();
 
     // ContentType에 따라 적절한 옵션 목록 생성
     String contentType = request.getContentType();
@@ -45,7 +45,7 @@ public class ContentDtoMapper {
       if ("COACHING".equals(contentType) && request.getCoachingOptions() != null) {
         for (CoachingOptionDraftRequest optionRequest : request.getCoachingOptions()) {
           if (optionRequest != null) {
-            ContentOptionDto option = mapToCoachingOptionDto(optionRequest);
+            ContentOptionDTO option = mapToCoachingOptionDto(optionRequest);
             if (option != null) {
               options.add(option);
             }
@@ -54,7 +54,7 @@ public class ContentDtoMapper {
       } else if ("DOCUMENT".equals(contentType) && request.getDocumentOptions() != null) {
         for (DocumentOptionDraftRequest optionRequest : request.getDocumentOptions()) {
           if (optionRequest != null) {
-            ContentOptionDto option = mapToDocumentOptionDto(optionRequest);
+            ContentOptionDTO option = mapToDocumentOptionDto(optionRequest);
             if (option != null) {
               options.add(option);
             }
@@ -64,7 +64,7 @@ public class ContentDtoMapper {
     }
 
     // 모든 필드가 null일 수 있음을 고려
-    ContentDto.ContentDtoBuilder builder = ContentDto.builder();
+    ContentDTO.ContentDTOBuilder builder = ContentDTO.builder();
 
     // 모든 필드에 대해 null 체크 없이 그대로 설정
     builder.contentId(request.getContentId());
@@ -86,7 +86,7 @@ public class ContentDtoMapper {
   }
 
   /** ContentRegisterRequest를 ContentDto로 변환 (등록용) - 필수 필드에 대한 검증 수행 */
-  public ContentDto toServiceContentDtoFromRegister(ContentRegisterRequest request) {
+  public ContentDTO toServiceContentDtoFromRegister(ContentRegisterRequest request) {
     if (request == null) {
       throw new IllegalArgumentException("콘텐츠 심사 요청이 null입니다.");
     }
@@ -94,7 +94,7 @@ public class ContentDtoMapper {
     // 필수 필드 검증
     validateRegisterRequest(request);
 
-    List<ContentOptionDto> options = new ArrayList<>();
+    List<ContentOptionDTO> options = new ArrayList<>();
 
     // ContentType에 따라 적절한 옵션 목록 생성
     String contentType = request.getContentType();
@@ -110,7 +110,7 @@ public class ContentDtoMapper {
       }
     }
 
-    ContentDto.ContentDtoBuilder builder = ContentDto.builder();
+    ContentDTO.ContentDTOBuilder builder = ContentDTO.builder();
 
     builder.contentId(request.getContentId());
     builder.title(request.getTitle());
@@ -227,7 +227,7 @@ public class ContentDtoMapper {
   }
 
   // T 타입은 특정 조건을 만족해야 함
-  private <T> ContentOptionDto mapToCoachingOptionDto(T optionRequest) {
+  private <T> ContentOptionDTO mapToCoachingOptionDto(T optionRequest) {
     if (optionRequest == null) {
       return null;
     }
@@ -267,7 +267,7 @@ public class ContentDtoMapper {
       coachingTypeDescription = request.getCoachingTypeDescription();
     }
 
-    return ContentOptionDto.builder()
+    return ContentOptionDTO.builder()
         .contentOptionId(null)
         .name(name)
         .description(description)
@@ -279,7 +279,7 @@ public class ContentDtoMapper {
         .build();
   }
 
-  private <T> ContentOptionDto mapToDocumentOptionDto(T optionRequest) {
+  private <T> ContentOptionDTO mapToDocumentOptionDto(T optionRequest) {
     if (optionRequest == null) {
       return null;
     }
@@ -324,7 +324,7 @@ public class ContentDtoMapper {
     }
 
     // DTO 생성 및 반환
-    return ContentOptionDto.builder()
+    return ContentOptionDTO.builder()
         .contentOptionId(null) // 새로 생성되는 옵션은 ID가 없음
         .name(name)
         .description(description)
@@ -335,7 +335,7 @@ public class ContentDtoMapper {
         .build();
   }
 
-  public ContentResponse toContentDraftResponse(ContentDto dto) {
+  public ContentResponse toContentDraftResponse(ContentDTO dto) {
     if (dto == null) {
       return null;
     }
@@ -343,7 +343,7 @@ public class ContentDtoMapper {
     List<ContentResponse.OptionResponse> optionResponses = new ArrayList<>();
 
     if (dto.getOptions() != null) {
-      for (ContentOptionDto optionDto : dto.getOptions()) {
+      for (ContentOptionDTO optionDto : dto.getOptions()) {
         if (optionDto != null) {
           // 모든 필드가 null일 수 있음을 고려
           ContentResponse.OptionResponse.OptionResponseBuilder optionBuilder =
@@ -425,7 +425,7 @@ public class ContentDtoMapper {
                         .documentLinkUrl(optionDto.getDocumentLinkUrl())
                         .build();
                   } else {
-                    log.warn("Unknown option type encountered in ContentOptionDto: {}", optionDto);
+                    log.warn("Unknown option type encountered in ContentOptionDTO: {}", optionDto);
                     return null; // 또는 Optional.empty()나 필터링
                   }
                 })
@@ -468,7 +468,7 @@ public class ContentDtoMapper {
         .build();
   }
 
-  public ContentStatusResponse toContentStatusResponse(ContentDto dto) {
+  public ContentStatusResponse toContentStatusResponse(ContentDTO dto) {
     if (dto == null) {
       return null;
     }

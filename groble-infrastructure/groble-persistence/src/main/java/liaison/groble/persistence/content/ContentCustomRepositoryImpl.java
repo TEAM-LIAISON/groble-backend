@@ -240,19 +240,14 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
 
   @Override
   public CursorResponse<FlatContentPreviewDTO> findMySellingContentsWithCursor(
-      Long userId,
-      Long lastContentId,
-      int size,
-      List<ContentStatus> statusList,
-      ContentType contentType) {
+      Long userId, Long lastContentId, int size, List<ContentStatus> statusList) {
 
     QContent qContent = QContent.content;
     QUser qUser = QUser.user;
     QContentOption qContentOption = QContentOption.contentOption;
 
     // 기본 조건 설정
-    BooleanExpression conditions =
-        qContent.user.id.eq(userId).and(qContent.contentType.eq(contentType));
+    BooleanExpression conditions = qContent.user.id.eq(userId);
 
     // 커서 조건 추가
     if (lastContentId != null) {
@@ -371,13 +366,11 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
   }
 
   @Override
-  public int countMySellingContents(
-      Long userId, List<ContentStatus> statusList, ContentType contentType) {
+  public int countMySellingContents(Long userId, List<ContentStatus> statusList) {
     QContent qContent = QContent.content;
 
     // 기본 조건 설정
-    BooleanExpression conditions =
-        qContent.user.id.eq(userId).and(qContent.contentType.eq(contentType));
+    BooleanExpression conditions = qContent.user.id.eq(userId);
 
     // 상태 필터 추가 (여러 상태 지원)
     if (statusList != null && !statusList.isEmpty()) {
@@ -685,5 +678,71 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
             .where(qContent.user.id.eq(userId).and(qContent.status.eq(ContentStatus.ACTIVE)))
             .fetchFirst()
         != null;
+  }
+
+  @Override
+  public Page<FlatContentPreviewDTO> findMyContentsWithStatus(
+      Pageable pageable, Long userId, ContentStatus status) {
+
+    QContent qContent = QContent.content;
+    QUser qUser = QUser.user;
+    QContentOption qContentOption = QContentOption.contentOption;
+
+    BooleanExpression cond =
+        qContent.status.eq(ContentStatus.ACTIVE).and(qContent.user.id.eq(userId));
+
+    JPAQuery<FlatContentPreviewDTO> query =
+        queryFactory
+            .select(
+                Projections.fields(
+                    FlatContentPreviewDTO.class,
+                    qContent.id.as("contentId"),
+                    qContent.createdAt.as("createdAt"),
+                    qContent.title.as("title"),
+                    qContent.thumbnailUrl.as("thumbnailUrl"),
+                    qUser.userProfile.nickname.as("sellerName"),
+                    qContent.lowestPrice.as("lowestPrice"),
+                    ExpressionUtils.as(
+                        select(qContentOption.count().intValue())
+                            .from(qContentOption)
+                            .where(qContentOption.content.eq(qContent)),
+                        "priceOptionLength"),
+                    qContent.status.stringValue().as("status")))
+            .from(qContent)
+            .leftJoin(qContent.user, qUser) // 사용자 정보는 반드시 필요하니까 남겨두고
+            .where(cond);
+
+    // 3) Pageable의 Sort 적용 (여기서는 예시로 createdAt 기준)
+    if (pageable.getSort().isUnsorted()) {
+      query.orderBy(qContent.createdAt.desc());
+    } else {
+      // qContent 는 QContent.content
+      PathBuilder<Content> path = new PathBuilder<>(Content.class, qContent.getMetadata());
+
+      // Sort.Order 순회
+      for (Sort.Order order : pageable.getSort()) {
+        // ASC / DESC
+        Order direction = order.isAscending() ? Order.ASC : Order.DESC;
+
+        // ComparableExpression 으로 꺼내오기
+        // (모든 필드를 Comparable 으로 가정)
+        ComparableExpressionBase<?> expr =
+            path.getComparable(order.getProperty(), Comparable.class);
+
+        // 이제 Expression 타입이 맞아서 컴파일 OK
+        query.orderBy(new OrderSpecifier<>(direction, expr));
+      }
+    }
+
+    // 4) 페이징(Offset + Limit)
+    List<FlatContentPreviewDTO> items =
+        query.offset(pageable.getOffset()).limit(pageable.getPageSize()).fetch();
+
+    // 5) 전체 카운트
+    long total =
+        Optional.ofNullable(
+                queryFactory.select(qContent.count()).from(qContent).where(cond).fetchOne())
+            .orElse(0L);
+    return new PageImpl<>(items, pageable, total);
   }
 }

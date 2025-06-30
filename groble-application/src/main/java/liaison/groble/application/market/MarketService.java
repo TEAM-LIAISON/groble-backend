@@ -66,8 +66,6 @@ public class MarketService {
     List<ContentCardDTO> items =
         page.getContent().stream().map(this::convertFlatDtoToCardDto).toList();
 
-    log.info("items: {}", items);
-
     PageResponse.MetaData meta =
         PageResponse.MetaData.builder()
             .sortBy(pageable.getSort().iterator().next().getProperty())

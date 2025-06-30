@@ -18,7 +18,7 @@ public class ContentDetailDto {
   private String sellerProfileImageUrl;
   private String sellerName;
   private BigDecimal lowestPrice;
-  private List<ContentOptionDto> options;
+  private List<ContentOptionDTO> options;
   private String contentIntroduction;
   private String serviceTarget;
   private String serviceProcess;
