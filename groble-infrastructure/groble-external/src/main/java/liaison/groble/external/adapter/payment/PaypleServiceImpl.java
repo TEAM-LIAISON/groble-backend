@@ -30,7 +30,8 @@ public class PaypleServiceImpl implements PaypleService {
 
     try {
       // 앱카드 승인 요청 URL
-      String appCardPaymentUrl = paypleConfig.getAppCardPaymentUrl();
+      String appCardPaymentUrl = params.get("PCD_PAY_COFURL");
+      log.info(appCardPaymentUrl);
 
       // 요청 파라미터 구성
       JSONObject obj = new JSONObject();
