@@ -1,0 +1,131 @@
+package liaison.groble.api.model.purchase.response;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+@Getter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@Schema(description = "구매 관리 페이지 내 콘텐츠 상세 응답 DTO")
+public class PurchasedContentDetailResponse {
+
+  @Schema(
+      description = "구매 상태 [PAID - 결제완료], [EXPIRED - 기간만료], [FAILED - 결제취소]",
+      example = "PAID - 결제완료",
+      type = "String",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private String orderStatus;
+
+  @Schema(
+      description = "주문 식별 ID",
+      example = "20251020349820",
+      type = "string",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private String merchantUid;
+
+  @Schema(description = "구매 일시", example = "2025-04-20T10:15:30")
+  @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+  private LocalDateTime purchasedAt;
+
+  // 콘텐츠 ID
+  @Schema(
+      description = "콘텐츠 ID",
+      example = "1",
+      type = "integer",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private Long contentId;
+
+  // 메이커 이름
+  @Schema(
+      description = "메이커(판매자) 이름",
+      example = "판매자판매자",
+      type = "string",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private String sellerName;
+
+  // 콘텐츠 제목
+  @Schema(
+      description = "콘텐츠 제목",
+      example = "콘텐츠 제목입니다.",
+      type = "string",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private String contentTitle;
+
+  // 선택된 옵션 이름
+  @Schema(
+      description = "구매한 콘텐츠 옵션 이름",
+      example = "옵션 이름",
+      type = "string",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private String selectedOptionName;
+
+  // 선택된 옵션 개수
+  @Schema(
+      description = "구매한 콘텐츠 옵션 개수",
+      example = "2",
+      type = "integer",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private Integer selectedOptionQuantity;
+
+  // 선택된 옵션의 유형
+  private String selectedOptionType;
+
+  // 파일 객체인 경우 다운로드 URL / 링크 문자열인 경우 링크 URL
+  @Schema(
+      description = "파일 객체 다운로드 URL 또는 링크 URL",
+      example = "true",
+      type = "boolean ",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private String documentOptionActionUrl;
+
+  // 무료 상품 여부
+  @Schema(
+      description = "무료 상품 여부",
+      example = "true",
+      type = "boolean ",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private Boolean isFreePurchase;
+
+  @Schema(
+      description = "콘텐츠 원가",
+      example = "30900",
+      type = "number",
+      format = "decimal",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private BigDecimal originalPrice;
+
+  // 할인금액
+  @Schema(
+      description = "할인 가격",
+      example = "1000",
+      type = "number",
+      format = "decimal",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private BigDecimal discountPrice;
+
+  // 총 결제 금액
+  @Schema(
+      description = "최종 가격",
+      example = "29900",
+      type = "number",
+      format = "decimal",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private BigDecimal finalPrice;
+
+  // 결제 수단 상세 정보 (카드사명, 은행명 등)
+  @Schema(
+      description = "결제 수단 상세 정보",
+      example = "신용카드 (롯데카드/일시불)",
+      type = "string",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private String methodDetail;
+}

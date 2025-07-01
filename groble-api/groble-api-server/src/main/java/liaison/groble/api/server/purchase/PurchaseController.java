@@ -42,9 +42,11 @@ public class PurchaseController {
 
   // API 경로 상수화
   private static final String MY_PURCHASING_CONTENT_PATH = "/content/my/purchasing-contents";
+  private static final String MY_PURCHASED_CONTENT_PATH = "/content/my/{merchantUid}";
 
   // 응답 메시지 상수화
   private static final String MY_PURCHASING_CONTENT_SUCCESS_MESSAGE = "내가 구매한 콘텐츠 목록 조회에 성공했습니다.";
+  private static final String My_PURCHASED_CONTENT_SUCCESS_MESSAGE = "내가 구매한 콘텐츠 상세 조회에 성공했습니다.";
 
   private final PurchaseService purchaseService;
   private final PurchaseDtoMapper purchaseDtoMapper;
@@ -68,13 +70,13 @@ public class PurchaseController {
   @Operation(
       summary = "내가 구매한 콘텐츠 상세 조회",
       description = "내가 구매한 콘텐츠의 상세 정보를 조회합니다. 구매 상태에 따라 콘텐츠 접근 권한이 다를 수 있습니다.")
-  @GetMapping("/content/my/{merchantUid}")
+  @GetMapping(MY_PURCHASED_CONTENT_PATH)
   public ResponseEntity<GrobleResponse<PurchasedContentDetailResponse>> getMyPurchasedContent(
       @Auth Accessor accessor, @Valid @PathVariable("merchantUid") String merchantUid) {
     PurchasedContentDetailResponse response =
         purchaseService.getMyPurchasedContent(accessor.getUserId(), merchantUid);
 
-    return ResponseEntity.ok(GrobleResponse.success(response));
+    return responseHelper.success(response, My_PURCHASED_CONTENT_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 
   @MyPurchasingContents
@@ -95,11 +97,11 @@ public class PurchaseController {
                       @Schema(
                           implementation = String.class,
                           allowableValues = {"PAID", "EXPIRED", "CANCELLED"}))
-              @RequestParam(value = "state")
+              @RequestParam(value = "state", required = false)
               String state) {
 
     CursorResponse<PurchaseContentCardDto> purchaseCardDtos =
-        purchaseService.getMyPurchasingContents(
+        purchaseService.getMyPurchasedContents(
             accessor.getUserId(), cursorRequest.getCursor(), cursorRequest.getSize(), state);
 
     // DTO 변환

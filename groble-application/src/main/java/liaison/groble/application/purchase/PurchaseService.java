@@ -29,7 +29,7 @@ public class PurchaseService {
   private final PurchaseReader purchaseReader;
 
   @Transactional(readOnly = true)
-  public CursorResponse<PurchaseContentCardDto> getMyPurchasingContents(
+  public CursorResponse<PurchaseContentCardDto> getMyPurchasedContents(
       Long userId, String cursor, int size, String state) {
     Long lastContentId = parseContentIdFromCursor(cursor);
     List<Order.OrderStatus> orderStatusList = parseOrderStatusList(state);
