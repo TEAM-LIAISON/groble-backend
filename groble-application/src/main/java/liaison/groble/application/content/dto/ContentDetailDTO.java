@@ -8,7 +8,7 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public class ContentDetailDto {
+public class ContentDetailDTO {
   private Long contentId;
   private String status;
   private String thumbnailUrl;

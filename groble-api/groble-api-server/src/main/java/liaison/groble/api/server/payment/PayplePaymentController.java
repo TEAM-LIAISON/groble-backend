@@ -55,6 +55,7 @@ public class PayplePaymentController {
 
   private final PayplePaymentService payplePaymentService;
 
+  // Helper
   private final ResponseHelper responseHelper;
 
   // 앱카드 결제 인증 결과를 수신하고 결제 승인 요청을 페이플 서버에 보낸다.
@@ -96,14 +97,14 @@ public class PayplePaymentController {
           GrobleResponse.success(AppCardPayplePaymentResponse.builder().build()));
     }
 
-    PaypleAuthResultDTO authResultDto =
+    PaypleAuthResultDTO authResultDTO =
         paymentMapper.toPaypleAuthResultDTO(paypleAuthResultRequest);
 
-    payplePaymentService.saveAppCardAuthResponse(accessor.getUserId(), authResultDto);
+    payplePaymentService.saveAppCardAuthResponse(accessor.getUserId(), authResultDTO);
 
     try {
       // 인증 성공에 대한 결제 승인 요청 처리
-      JSONObject approvalResult = payplePaymentService.processAppCardApproval(authResultDto);
+      JSONObject approvalResult = payplePaymentService.processAppCardApproval(authResultDTO);
 
       // 승인 결과 확인
       String payRst = (String) approvalResult.get("PCD_PAY_RST");

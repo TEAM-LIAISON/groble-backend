@@ -12,6 +12,7 @@ public interface PaypleService {
 
   JSONObject payAuth(Map<String, String> params);
 
+  // 환불(결제 취소)
   JSONObject payRefund(PaypleRefundRequest request);
 
   JSONObject paySimplePayment(Map<String, String> params);

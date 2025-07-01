@@ -7,9 +7,7 @@ import java.util.stream.Collectors;
 
 import jakarta.validation.Valid;
 
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -34,9 +32,9 @@ import liaison.groble.api.model.content.response.swagger.UploadContentDownloadFi
 import liaison.groble.api.model.content.response.swagger.UploadContentThumbnail;
 import liaison.groble.api.model.file.response.FileUploadResponse;
 import liaison.groble.api.server.content.mapper.ContentDtoMapper;
-import liaison.groble.api.server.file.mapper.FileDtoMapper;
+import liaison.groble.api.server.file.mapper.FileCustomMapper;
 import liaison.groble.application.content.dto.ContentCardDTO;
-import liaison.groble.application.content.dto.ContentDetailDto;
+import liaison.groble.application.content.dto.ContentDetailDTO;
 import liaison.groble.application.content.service.ContentService;
 import liaison.groble.application.file.FileService;
 import liaison.groble.application.file.dto.FileDto;
@@ -45,6 +43,9 @@ import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.model.Accessor;
 import liaison.groble.common.response.GrobleResponse;
 import liaison.groble.common.response.PageResponse;
+import liaison.groble.common.response.ResponseHelper;
+import liaison.groble.common.utils.PageUtils;
+import liaison.groble.mapping.content.ContentMapper;
 
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -62,47 +63,48 @@ import lombok.extern.slf4j.Slf4j;
 @Tag(name = "콘텐츠 관련 API", description = "콘텐츠 상세 조회, 홈화면 콘텐츠 조회")
 public class ContentController {
 
+  // API 경로 상수화
+  private static final String CONTENT_DETAIL_PATH = "/content/{contentId}";
+  private static final String HOME_CONTENTS_PATH = "/home/contents";
+  private static final String UPLOAD_CONTENT_THUMBNAIL_PATH = "/content/thumbnail/image";
+
+  // 응답 메시지 상수화
+  private static final String CONTENT_DETAIL_SUCCESS_MESSAGE = "콘텐츠 상세 조회에 성공하였습니다.";
+  private static final String HOME_CONTENTS_SUCCESS_MESSAGE = "홈화면 콘텐츠 조회에 성공하였습니다.";
+  private static final String UPLOAD_CONTENT_THUMBNAIL_SUCCESS_MESSAGE =
+      "콘텐츠 썸네일 이미지 업로드가 성공적으로 완료되었습니다.";
+
+  // Service
   private final ContentService contentService;
-  private final ContentDtoMapper contentDtoMapper;
   private final FileService fileService;
-  private final FileDtoMapper fileDtoMapper;
 
-  /**
-   * 콘텐츠 상세 조회 - Optional 인증
-   *
-   * @param contentId 콘텐츠 ID
-   * @param accessor 사용자 정보 (Optional)
-   */
+  // Mapper
+  private final ContentMapper contentMapper;
+  private final ContentDtoMapper contentDtoMapper;
+  private final FileCustomMapper fileCustomMapper;
+
+  // Helper
+  private final ResponseHelper responseHelper;
+
   @ContentDetail
-  @GetMapping("/content/{contentId}")
+  @GetMapping(CONTENT_DETAIL_PATH)
   public ResponseEntity<GrobleResponse<ContentDetailResponse>> getContentDetail(
-      @Auth(required = false) Accessor accessor, // Optional 인증
-      @PathVariable("contentId") Long contentId) {
-
-    log.info(
-        "콘텐츠 상세 조회 요청: contentId={}, isAuthenticated={}", contentId, accessor.isAuthenticated());
-
-    ContentDetailDto contentDetailDto;
+      @Auth(required = false) Accessor accessor, @PathVariable("contentId") Long contentId) {
+    ContentDetailDTO contentDetailDTO;
 
     if (accessor.isAuthenticated()) {
-      // 로그인 사용자: 내 콘텐츠인지 확인
-      log.info("로그인 사용자 콘텐츠 조회: userId={}, contentId={}", accessor.getId(), contentId);
-
-      contentDetailDto = contentService.getContentDetailForUser(accessor.getId(), contentId);
+      contentDetailDTO = contentService.getContentDetailForUser(accessor.getId(), contentId);
     } else {
-      // 비로그인 사용자: 공개 콘텐츠만 조회
-      log.info("비로그인 사용자 콘텐츠 조회: contentId={}", contentId);
-
-      contentDetailDto = contentService.getPublicContentDetail(contentId);
+      contentDetailDTO = contentService.getPublicContentDetail(contentId);
     }
 
-    ContentDetailResponse response = contentDtoMapper.toContentDetailResponse(contentDetailDto);
-    return ResponseEntity.ok(GrobleResponse.success(response, "콘텐츠 상세 조회 성공"));
+    ContentDetailResponse response = contentMapper.toContentDetailResponse(contentDetailDTO);
+    return responseHelper.success(response, CONTENT_DETAIL_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 
   // 홈화면 콘텐츠 조회
   @HomeContents
-  @GetMapping("/home/contents")
+  @GetMapping(HOME_CONTENTS_PATH)
   public ResponseEntity<GrobleResponse<HomeContentsResponse>> getHomeContents() {
     List<ContentCardDTO> coachingContentCardDTOS = contentService.getHomeContentsList("COACHING");
     List<ContentPreviewCardResponse> coachingItems =
@@ -116,11 +118,9 @@ public class ContentController {
             .map(contentDtoMapper::toContentPreviewCardFromCardDto)
             .toList();
 
-    // 래퍼 DTO에 담기
+    // Wrapper DTO에 담기
     HomeContentsResponse payload = new HomeContentsResponse(coachingItems, documentItems);
-
-    String successMessage = "홈화면 콘텐츠 조회 성공";
-    return ResponseEntity.ok(GrobleResponse.success(payload, successMessage));
+    return responseHelper.success(payload, HOME_CONTENTS_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 
   @ContentsCoachingCategory
@@ -138,7 +138,7 @@ public class ContentController {
           @RequestParam(value = "size", defaultValue = "12") int size,
           @RequestParam(value = "sort", defaultValue = "createdAt,popular") String sort) {
 
-    Pageable pageable = createPageable(page, size, sort);
+    Pageable pageable = PageUtils.createPageable(page, size, sort);
     PageResponse<ContentCardDTO> dtoPage =
         contentService.getCoachingContentsByCategory(categoryIds, pageable);
 
@@ -161,36 +161,12 @@ public class ContentController {
           @RequestParam(value = "size", defaultValue = "12") int size,
           @RequestParam(value = "sort", defaultValue = "createdAt,popular") String sort) {
 
-    Pageable pageable = createPageable(page, size, sort);
+    Pageable pageable = PageUtils.createPageable(page, size, sort);
     PageResponse<ContentCardDTO> dtoPage =
         contentService.getDocumentContentsByCategory(categoryIds, pageable);
 
     PageResponse<ContentPreviewCardResponse> responsePage = toPreviewResponsePage(dtoPage);
     return ResponseEntity.ok(GrobleResponse.success(responsePage));
-  }
-
-  /** PageRequest 생성 헬퍼 */
-  private Pageable createPageable(int page, int size, String sort) {
-    String[] parts = sort.split(",");
-    String key = parts[0].trim();
-    Sort.Direction direction;
-    if (parts.length > 1) {
-      try {
-        direction = Sort.Direction.fromString(parts[1].trim());
-      } catch (IllegalArgumentException e) {
-        direction = Sort.Direction.DESC;
-      }
-    } else {
-      direction = Sort.Direction.DESC;
-    }
-
-    // "popular" 로 넘어오면 viewCount 컬럼 기준 정렬
-    if ("popular".equalsIgnoreCase(key)) {
-      return PageRequest.of(page, size, Sort.by(direction, "viewCount"));
-    }
-
-    // 그 외엔 key 그대로
-    return PageRequest.of(page, size, Sort.by(direction, key));
   }
 
   // ContentCardDTO → ContentPreviewCardResponse + PageResponse 재구성 헬퍼
@@ -210,7 +186,7 @@ public class ContentController {
 
   // 콘텐츠의 썸네일 이미지 저장 요청
   @UploadContentThumbnail
-  @PostMapping("/content/thumbnail/image")
+  @PostMapping(UPLOAD_CONTENT_THUMBNAIL_PATH)
   public ResponseEntity<GrobleResponse<?>> addContentThumbnailImage(
       @Auth final Accessor accessor,
       @RequestPart("contentThumbnailImage")
@@ -232,7 +208,7 @@ public class ContentController {
     }
     try {
       FileUploadDto fileUploadDto =
-          fileDtoMapper.toServiceFileUploadDto(contentThumbnailImage, "contents/thumbnail");
+          fileCustomMapper.toServiceFileUploadDto(contentThumbnailImage, "contents/thumbnail");
       FileDto fileDto = fileService.uploadFile(accessor.getUserId(), fileUploadDto);
       FileUploadResponse response =
           FileUploadResponse.of(
@@ -279,7 +255,7 @@ public class ContentController {
             .body(GrobleResponse.error("모든 파일이 유효한 이미지여야 합니다.", HttpStatus.BAD_REQUEST.value()));
       }
       try {
-        FileUploadDto dto = fileDtoMapper.toServiceFileUploadDto(file, "contents/detail");
+        FileUploadDto dto = fileCustomMapper.toServiceFileUploadDto(file, "contents/detail");
         FileDto uploaded = fileService.uploadFile(accessor.getUserId(), dto);
         responses.add(
             FileUploadResponse.of(
@@ -324,7 +300,7 @@ public class ContentController {
     }
     try {
       FileUploadDto fileUploadDto =
-          fileDtoMapper.toServiceFileUploadDto(contentDocumentFile, "contents/document");
+          fileCustomMapper.toServiceFileUploadDto(contentDocumentFile, "contents/document");
       FileDto fileDto = fileService.uploadFile(accessor.getUserId(), fileUploadDto);
       FileUploadResponse response =
           FileUploadResponse.of(
