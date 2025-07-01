@@ -106,7 +106,7 @@ public class SellController {
 
   @Operation(
       summary = "[✅ 콘텐츠 심사 요청] 콘텐츠 판매 중단",
-      description = "상품 관리 탭에서 판매중인 콘텐츠를 판매 중단합니다. (작성중 탭으로 이동합니다.)")
+      description = "상품 관리 탭에서 판매중인 콘텐츠를 판매 중단합니다. (콘텐츠가 작성중 탭으로 이동합니다.)")
   @RequireRole("ROLE_SELLER")
   @PostMapping(STOP_CONTENT_PATH)
   public ResponseEntity<GrobleResponse<ContentStatusResponse>> stopContent(

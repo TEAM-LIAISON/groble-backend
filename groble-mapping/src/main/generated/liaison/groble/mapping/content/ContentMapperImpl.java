@@ -8,16 +8,18 @@ import org.springframework.stereotype.Component;
 
 import liaison.groble.api.model.content.request.draft.ContentDraftRequest;
 import liaison.groble.api.model.content.request.register.ContentRegisterRequest;
+import liaison.groble.api.model.content.response.ContentDetailResponse;
 import liaison.groble.api.model.content.response.ContentPreviewCardResponse;
 import liaison.groble.api.model.content.response.ContentResponse;
 import liaison.groble.api.model.content.response.ContentStatusResponse;
 import liaison.groble.application.content.dto.ContentCardDTO;
 import liaison.groble.application.content.dto.ContentDTO;
+import liaison.groble.application.content.dto.ContentDetailDTO;
 import liaison.groble.application.content.dto.ContentOptionDTO;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-06-28T01:42:29+0900",
+    date = "2025-07-01T14:43:07+0900",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.10 (Amazon.com Inc.)")
 @Component
 public class ContentMapperImpl implements ContentMapper {
@@ -206,5 +208,64 @@ public class ContentMapperImpl implements ContentMapper {
     }
 
     return contentStatusResponse.build();
+  }
+
+  @Override
+  public ContentDetailResponse toContentDetailResponse(ContentDetailDTO contentDetailDTO) {
+    if (contentDetailDTO == null) {
+      return null;
+    }
+
+    ContentDetailResponse.ContentDetailResponseBuilder contentDetailResponse =
+        ContentDetailResponse.builder();
+
+    List<?> list = mapOptionsToBaseOptionResponse(contentDetailDTO.getOptions());
+    if (list != null) {
+      contentDetailResponse.options(list);
+    }
+    if (contentDetailDTO.getContentId() != null) {
+      contentDetailResponse.contentId(contentDetailDTO.getContentId());
+    }
+    if (contentDetailDTO.getStatus() != null) {
+      contentDetailResponse.status(contentDetailDTO.getStatus());
+    }
+    if (contentDetailDTO.getThumbnailUrl() != null) {
+      contentDetailResponse.thumbnailUrl(contentDetailDTO.getThumbnailUrl());
+    }
+    if (contentDetailDTO.getContentType() != null) {
+      contentDetailResponse.contentType(contentDetailDTO.getContentType());
+    }
+    if (contentDetailDTO.getCategoryId() != null) {
+      contentDetailResponse.categoryId(contentDetailDTO.getCategoryId());
+    }
+    if (contentDetailDTO.getTitle() != null) {
+      contentDetailResponse.title(contentDetailDTO.getTitle());
+    }
+    if (contentDetailDTO.getSellerProfileImageUrl() != null) {
+      contentDetailResponse.sellerProfileImageUrl(contentDetailDTO.getSellerProfileImageUrl());
+    }
+    if (contentDetailDTO.getSellerName() != null) {
+      contentDetailResponse.sellerName(contentDetailDTO.getSellerName());
+    }
+    if (contentDetailDTO.getLowestPrice() != null) {
+      contentDetailResponse.lowestPrice(contentDetailDTO.getLowestPrice());
+    }
+    if (contentDetailDTO.getContentIntroduction() != null) {
+      contentDetailResponse.contentIntroduction(contentDetailDTO.getContentIntroduction());
+    }
+    if (contentDetailDTO.getServiceTarget() != null) {
+      contentDetailResponse.serviceTarget(contentDetailDTO.getServiceTarget());
+    }
+    if (contentDetailDTO.getServiceProcess() != null) {
+      contentDetailResponse.serviceProcess(contentDetailDTO.getServiceProcess());
+    }
+    if (contentDetailDTO.getMakerIntro() != null) {
+      contentDetailResponse.makerIntro(contentDetailDTO.getMakerIntro());
+    }
+
+    contentDetailResponse.priceOptionLength(
+        contentDetailDTO.getOptions() != null ? contentDetailDTO.getOptions().size() : 0);
+
+    return contentDetailResponse.build();
   }
 }

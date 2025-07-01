@@ -22,7 +22,7 @@ import liaison.groble.api.model.content.response.ContentStatusResponse;
 import liaison.groble.api.model.content.response.DocumentOptionResponse;
 import liaison.groble.application.content.dto.ContentCardDTO;
 import liaison.groble.application.content.dto.ContentDTO;
-import liaison.groble.application.content.dto.ContentDetailDto;
+import liaison.groble.application.content.dto.ContentDetailDTO;
 import liaison.groble.application.content.dto.ContentOptionDTO;
 
 import lombok.extern.slf4j.Slf4j;
@@ -388,7 +388,7 @@ public class ContentDtoMapper {
     return responseBuilder.build();
   }
 
-  public ContentDetailResponse toContentDetailResponse(ContentDetailDto contentDetailDto) {
+  public ContentDetailResponse toContentDetailResponse(ContentDetailDTO contentDetailDto) {
     List<BaseOptionResponse> optionResponses =
         contentDetailDto.getOptions().stream()
             .map(

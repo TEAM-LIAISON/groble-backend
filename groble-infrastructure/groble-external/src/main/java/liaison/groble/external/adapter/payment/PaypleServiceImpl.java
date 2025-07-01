@@ -199,10 +199,14 @@ public class PaypleServiceImpl implements PaypleService {
     JSONParser jsonParser = new JSONParser();
 
     try {
-      // 페이플 취소 API URL (고정)
+      // 페이플 취소 API URL
       String cancelUrl = paypleConfig.getCancelApiUrl();
 
-      log.info("페이플 결제 취소 요청 시작 - 주문번호: {}, 금액: {}", request.getPayOid(), request.getRefundTotal());
+      log.info(
+          "페이플 결제 취소 요청 시작 - 주문번호: {}, 금액: {}, 취소 API URL: {}",
+          request.getPayOid(),
+          request.getRefundTotal(),
+          cancelUrl);
 
       // 결제취소 요청 파라미터 구성
       JSONObject refundObj = new JSONObject();
