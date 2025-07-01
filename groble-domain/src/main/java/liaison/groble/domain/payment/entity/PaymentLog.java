@@ -48,14 +48,6 @@ public class PaymentLog extends BaseTimeEntity {
   @Column(nullable = false)
   private PaymentLogType type;
 
-  //  @Enumerated(EnumType.STRING)
-  //  @Column(nullable = false)
-  //  private Payment.PaymentStatus beforeStatus;
-  //
-  //  @Enumerated(EnumType.STRING)
-  //  @Column(nullable = false)
-  //  private Payment.PaymentStatus afterStatus;
-
   @Column(nullable = false)
   private String description;
 

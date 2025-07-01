@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import liaison.groble.api.model.purchase.response.PurchaserContentPreviewCardResponse;
 import liaison.groble.api.model.purchase.swagger.MyPurchasingContents;
-import liaison.groble.api.server.purchase.mapper.PurchaseDtoMapper;
 import liaison.groble.application.purchase.PurchaseService;
 import liaison.groble.application.purchase.dto.PurchaseContentCardDTO;
 import liaison.groble.application.purchase.dto.PurchasedContentDetailResponse;
@@ -24,7 +23,6 @@ import liaison.groble.common.response.PageResponse;
 import liaison.groble.common.response.ResponseHelper;
 import liaison.groble.common.utils.PageUtils;
 import liaison.groble.mapping.purchase.PurchaseMapper;
-import liaison.groble.mapping.sell.SellMapper;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -48,15 +46,14 @@ public class PurchaseController {
   private static final String MY_PURCHASING_CONTENT_SUCCESS_MESSAGE = "내가 구매한 콘텐츠 목록 조회에 성공했습니다.";
   private static final String My_PURCHASED_CONTENT_SUCCESS_MESSAGE = "내가 구매한 콘텐츠 상세 조회에 성공했습니다.";
 
+  // Service
   private final PurchaseService purchaseService;
-  private final PurchaseDtoMapper purchaseDtoMapper;
 
   // Mapper
   private final PurchaseMapper purchaseMapper;
 
   // Helper
   private final ResponseHelper responseHelper;
-  private final SellMapper sellMapper;
 
   //  @Operation(
   //      summary = "내가 구매한 콘텐츠의 판매자에게 문의하기 버튼 액션",
@@ -72,7 +69,7 @@ public class PurchaseController {
   //  }
 
   @Operation(
-      summary = "내가 구매한 콘텐츠 상세 조회",
+      summary = "[❌ 내 콘텐츠 - 구매 관리] 내가 구매한 콘텐츠 상세 조회 (결제완료/결제취소요청/환불완료)",
       description = "내가 구매한 콘텐츠의 상세 정보를 조회합니다. 구매 상태에 따라 콘텐츠 접근 권한이 다를 수 있습니다.")
   @GetMapping(MY_PURCHASED_CONTENT_PATH)
   public ResponseEntity<GrobleResponse<PurchasedContentDetailResponse>> getMyPurchasedContent(
@@ -99,7 +96,6 @@ public class PurchaseController {
                           allowableValues = {"PAID", "EXPIRED", "CANCELLED"}))
               @RequestParam(value = "state", required = false)
               String state) {
-
     Pageable pageable = PageUtils.createPageable(page, size, sort);
     PageResponse<PurchaseContentCardDTO> dtoPageResponse =
         purchaseService.getMyPurchasedContents(accessor.getUserId(), state, pageable);
