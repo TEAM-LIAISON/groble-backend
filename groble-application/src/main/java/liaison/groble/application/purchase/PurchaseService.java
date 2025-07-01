@@ -2,14 +2,16 @@ package liaison.groble.application.purchase;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import liaison.groble.application.order.service.OrderReader;
-import liaison.groble.application.purchase.dto.PurchaseContentCardDto;
+import liaison.groble.application.purchase.dto.PurchaseContentCardDTO;
 import liaison.groble.application.purchase.dto.PurchasedContentDetailResponse;
 import liaison.groble.application.purchase.service.PurchaseReader;
-import liaison.groble.common.response.CursorResponse;
+import liaison.groble.common.response.PageResponse;
 import liaison.groble.domain.content.enums.ContentType;
 import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.purchase.dto.FlatPurchaseContentPreviewDTO;
@@ -29,27 +31,23 @@ public class PurchaseService {
   private final PurchaseReader purchaseReader;
 
   @Transactional(readOnly = true)
-  public CursorResponse<PurchaseContentCardDto> getMyPurchasedContents(
-      Long userId, String cursor, int size, String state) {
-    Long lastContentId = parseContentIdFromCursor(cursor);
-    List<Order.OrderStatus> orderStatusList = parseOrderStatusList(state);
+  public PageResponse<PurchaseContentCardDTO> getMyPurchasedContents(
+      Long userId, String state, Pageable pageable) {
+    Order.OrderStatus orderStatus = parseOrderStatus(state);
 
-    CursorResponse<FlatPurchaseContentPreviewDTO> flatDtos =
-        purchaseCustomRepository.findMyPurchasingContentsWithCursor(
-            userId, lastContentId, size, orderStatusList);
+    Page<FlatPurchaseContentPreviewDTO> page =
+        purchaseReader.findMyPurchasingContents(userId, orderStatus, pageable);
 
-    List<PurchaseContentCardDto> cardDtos =
-        flatDtos.getItems().stream().map(this::convertFlatDtoToCardDto).toList();
+    List<PurchaseContentCardDTO> items =
+        page.getContent().stream().map(this::convertFlatDtoToCardDto).toList();
 
-    int totalCount = purchaseCustomRepository.countMyPurchasingContents(userId, orderStatusList);
+    PageResponse.MetaData meta =
+        PageResponse.MetaData.builder()
+            .sortBy(pageable.getSort().iterator().next().getProperty())
+            .sortDirection(pageable.getSort().iterator().next().getDirection().name())
+            .build();
 
-    return CursorResponse.<PurchaseContentCardDto>builder()
-        .items(cardDtos)
-        .nextCursor(flatDtos.getNextCursor())
-        .hasNext(flatDtos.isHasNext())
-        .totalCount(totalCount)
-        .meta(flatDtos.getMeta())
-        .build();
+    return PageResponse.from(page, items, meta);
   }
 
   @Transactional(readOnly = true)
@@ -80,8 +78,8 @@ public class PurchaseService {
   //  }
 
   /** FlatPreviewContentDTO를 ContentCardDto로 변환합니다. */
-  private PurchaseContentCardDto convertFlatDtoToCardDto(FlatPurchaseContentPreviewDTO flat) {
-    return PurchaseContentCardDto.builder()
+  private PurchaseContentCardDTO convertFlatDtoToCardDto(FlatPurchaseContentPreviewDTO flat) {
+    return PurchaseContentCardDTO.builder()
         .merchantUid(flat.getMerchantUid())
         .contentId(flat.getContentId())
         .contentType(flat.getContentType())
@@ -97,28 +95,14 @@ public class PurchaseService {
         .build();
   }
 
-  /** 커서에서 Content ID를 파싱합니다. */
-  private Long parseContentIdFromCursor(String cursor) {
-    if (cursor == null || cursor.isBlank()) {
-      return null;
-    }
-
-    try {
-      return Long.parseLong(cursor);
-    } catch (NumberFormatException e) {
-      log.warn("유효하지 않은 커서 형식: {}", cursor);
-      return null;
-    }
-  }
-
-  /** 문자열에서 ContentStatus를 파싱합니다. */
-  private List<Order.OrderStatus> parseOrderStatusList(String state) {
+  /** 문자열에서 OrderStatus 파싱합니다. */
+  private Order.OrderStatus parseOrderStatus(String state) {
     if (state == null || state.isBlank()) {
       return null;
     }
 
     try {
-      return List.of(Order.OrderStatus.valueOf(state.toUpperCase()));
+      return Order.OrderStatus.valueOf(state.toUpperCase());
     } catch (IllegalArgumentException e) {
       log.warn("유효하지 않은 구매 상태: {}", state);
       return null;

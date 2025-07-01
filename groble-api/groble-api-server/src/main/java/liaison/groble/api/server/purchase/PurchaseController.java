@@ -1,13 +1,11 @@
 package liaison.groble.api.server.purchase;
 
-import java.util.List;
-
 import jakarta.validation.Valid;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -17,14 +15,16 @@ import liaison.groble.api.model.purchase.response.PurchaserContentPreviewCardRes
 import liaison.groble.api.model.purchase.swagger.MyPurchasingContents;
 import liaison.groble.api.server.purchase.mapper.PurchaseDtoMapper;
 import liaison.groble.application.purchase.PurchaseService;
-import liaison.groble.application.purchase.dto.PurchaseContentCardDto;
+import liaison.groble.application.purchase.dto.PurchaseContentCardDTO;
 import liaison.groble.application.purchase.dto.PurchasedContentDetailResponse;
 import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.model.Accessor;
-import liaison.groble.common.request.CursorRequest;
-import liaison.groble.common.response.CursorResponse;
 import liaison.groble.common.response.GrobleResponse;
+import liaison.groble.common.response.PageResponse;
 import liaison.groble.common.response.ResponseHelper;
+import liaison.groble.common.utils.PageUtils;
+import liaison.groble.mapping.purchase.PurchaseMapper;
+import liaison.groble.mapping.sell.SellMapper;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -51,8 +51,12 @@ public class PurchaseController {
   private final PurchaseService purchaseService;
   private final PurchaseDtoMapper purchaseDtoMapper;
 
+  // Mapper
+  private final PurchaseMapper purchaseMapper;
+
   // Helper
   private final ResponseHelper responseHelper;
+  private final SellMapper sellMapper;
 
   //  @Operation(
   //      summary = "내가 구매한 콘텐츠의 판매자에게 문의하기 버튼 액션",
@@ -81,16 +85,12 @@ public class PurchaseController {
 
   @MyPurchasingContents
   @GetMapping(MY_PURCHASING_CONTENT_PATH)
-  public ResponseEntity<GrobleResponse<CursorResponse<PurchaserContentPreviewCardResponse>>>
+  public ResponseEntity<GrobleResponse<PageResponse<PurchaserContentPreviewCardResponse>>>
       getMyPurchasingContents(
-          @Parameter(hidden = true) @Auth Accessor accessor,
-          @Parameter(
-                  description = "커서 기반 페이지네이션 요청 정보",
-                  required = true,
-                  schema = @Schema(implementation = CursorRequest.class))
-              @Valid
-              @ModelAttribute
-              CursorRequest cursorRequest,
+          @Parameter @Auth Accessor accessor,
+          @RequestParam(value = "page", defaultValue = "0") int page,
+          @RequestParam(value = "size", defaultValue = "12") int size,
+          @RequestParam(value = "sort", defaultValue = "purchasedAt") String sort,
           @Parameter(
                   description = "구매한 콘텐츠 상태 필터 [PAID - 결제완료], [EXPIRED - 기간만료], [CANCELLED - 결제취소]",
                   schema =
@@ -100,26 +100,14 @@ public class PurchaseController {
               @RequestParam(value = "state", required = false)
               String state) {
 
-    CursorResponse<PurchaseContentCardDto> purchaseCardDtos =
-        purchaseService.getMyPurchasedContents(
-            accessor.getUserId(), cursorRequest.getCursor(), cursorRequest.getSize(), state);
+    Pageable pageable = PageUtils.createPageable(page, size, sort);
+    PageResponse<PurchaseContentCardDTO> dtoPageResponse =
+        purchaseService.getMyPurchasedContents(accessor.getUserId(), state, pageable);
 
-    // DTO 변환
-    List<PurchaserContentPreviewCardResponse> responseItems =
-        purchaseCardDtos.getItems().stream()
-            .map(purchaseDtoMapper::toPurchaseContentPreviewCardFromCardDto)
-            .toList();
+    PageResponse<PurchaserContentPreviewCardResponse> responsePage =
+        purchaseMapper.toPurchaserContentPreviewCardResponsePage(dtoPageResponse);
 
-    // CursorResponse 생성
-    CursorResponse<PurchaserContentPreviewCardResponse> response =
-        CursorResponse.<PurchaserContentPreviewCardResponse>builder()
-            .items(responseItems)
-            .nextCursor(purchaseCardDtos.getNextCursor())
-            .hasNext(purchaseCardDtos.isHasNext())
-            .totalCount(purchaseCardDtos.getTotalCount())
-            .meta(purchaseCardDtos.getMeta())
-            .build();
-
-    return responseHelper.success(response, MY_PURCHASING_CONTENT_SUCCESS_MESSAGE, HttpStatus.OK);
+    return responseHelper.success(
+        responsePage, MY_PURCHASING_CONTENT_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 }

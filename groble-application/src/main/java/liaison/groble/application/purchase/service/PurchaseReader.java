@@ -6,7 +6,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import liaison.groble.common.exception.EntityNotFoundException;
+import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.purchase.dto.FlatContentSellDetailDTO;
+import liaison.groble.domain.purchase.dto.FlatPurchaseContentPreviewDTO;
 import liaison.groble.domain.purchase.dto.FlatSellManageDetailDTO;
 import liaison.groble.domain.purchase.entity.Purchase;
 import liaison.groble.domain.purchase.repository.PurchaseCustomRepository;
@@ -47,6 +49,11 @@ public class PurchaseReader {
   public Page<FlatContentSellDetailDTO> getContentSells(
       Long userId, Long contentId, Pageable pageable) {
     return purchaseCustomRepository.getContentSellPageDTOs(userId, contentId, pageable);
+  }
+
+  public Page<FlatPurchaseContentPreviewDTO> findMyPurchasingContents(
+      Long userId, Order.OrderStatus orderStatus, Pageable pageable) {
+    return purchaseCustomRepository.findMyPurchasingContents(userId, orderStatus, pageable);
   }
 
   public FlatSellManageDetailDTO getSellManageDetail(Long userId, Long contentId) {

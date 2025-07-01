@@ -278,6 +278,80 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
   }
 
   @Override
+  public Page<FlatPurchaseContentPreviewDTO> findMyPurchasingContents(
+      Long userId, Order.OrderStatus orderStatus, Pageable pageable) {
+    QPurchase qPurchase = QPurchase.purchase;
+    QOrder qOrder = QOrder.order;
+    QContent qContent = QContent.content;
+    QContentOption qContentOption = QContentOption.contentOption;
+    QUser qUser = QUser.user;
+
+    BooleanExpression conditions = qOrder.status.eq(orderStatus).and(qContent.user.id.eq(userId));
+    JPAQuery<FlatPurchaseContentPreviewDTO> query =
+        queryFactory
+            .select(
+                Projections.fields(
+                    FlatPurchaseContentPreviewDTO.class,
+                    qOrder.merchantUid.as("merchantUid"),
+                    qContent.id.as("contentId"),
+                    qContent.contentType.stringValue().as("contentType"),
+                    qPurchase.purchasedAt.as("purchasedAt"),
+                    qContent.title.as("title"),
+                    qContent.thumbnailUrl.as("thumbnailUrl"),
+                    qContent.user.userProfile.nickname.as("sellerName"),
+                    qPurchase.originalPrice.as("originalPrice"),
+                    qPurchase.finalPrice.as("finalPrice"),
+                    ExpressionUtils.as(
+                        select(qContentOption.count().intValue())
+                            .from(qContentOption)
+                            .where(qContentOption.content.eq(qContent)),
+                        "priceOptionLength"),
+                    qOrder.status.stringValue().as("orderStatus"),
+                    qPurchase.status.stringValue().as("status")))
+            .from(qPurchase)
+            .leftJoin(qPurchase.user, qUser)
+            .leftJoin(qPurchase.content, qContent)
+            .leftJoin(qPurchase.order, qOrder)
+            .where(conditions);
+
+    // 3) Pageable의 Sort 적용 (여기서는 예시로 createdAt 기준)
+    if (pageable.getSort().isUnsorted()) {
+      query.orderBy(qContent.createdAt.desc());
+    } else {
+      // qContent 는 QContent.content
+      PathBuilder<Content> path = new PathBuilder<>(Content.class, qContent.getMetadata());
+
+      // Sort.Order 순회
+      for (Sort.Order order : pageable.getSort()) {
+        // ASC / DESC
+        com.querydsl.core.types.Order direction =
+            order.isAscending()
+                ? com.querydsl.core.types.Order.ASC
+                : com.querydsl.core.types.Order.DESC;
+
+        // ComparableExpression 으로 꺼내오기
+        // (모든 필드를 Comparable 으로 가정)
+        ComparableExpressionBase<?> expr =
+            path.getComparable(order.getProperty(), Comparable.class);
+
+        // 이제 Expression 타입이 맞아서 컴파일 OK
+        query.orderBy(new OrderSpecifier<>(direction, expr));
+      }
+    }
+
+    // 4) 페이징(Offset + Limit)
+    List<FlatPurchaseContentPreviewDTO> items =
+        query.offset(pageable.getOffset()).limit(pageable.getPageSize()).fetch();
+
+    // 5) 전체 카운트
+    long total =
+        Optional.ofNullable(
+                queryFactory.select(qPurchase.count()).from(qPurchase).where(conditions).fetchOne())
+            .orElse(0L);
+    return new PageImpl<>(items, pageable, total);
+  }
+
+  @Override
   public Optional<FlatSellManageDetailDTO> getSellManageDetail(Long userId, Long contentId) {
     QPurchase qPurchase = QPurchase.purchase;
     QContent qContent = QContent.content;

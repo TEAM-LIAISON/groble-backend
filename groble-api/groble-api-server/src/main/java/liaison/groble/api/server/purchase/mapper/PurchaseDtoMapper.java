@@ -3,7 +3,7 @@ package liaison.groble.api.server.purchase.mapper;
 import org.springframework.stereotype.Component;
 
 import liaison.groble.api.model.purchase.response.PurchaserContentPreviewCardResponse;
-import liaison.groble.application.purchase.dto.PurchaseContentCardDto;
+import liaison.groble.application.purchase.dto.PurchaseContentCardDTO;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -12,7 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 public class PurchaseDtoMapper {
 
   public PurchaserContentPreviewCardResponse toPurchaseContentPreviewCardFromCardDto(
-      PurchaseContentCardDto cardDto) {
+      PurchaseContentCardDTO cardDto) {
     return PurchaserContentPreviewCardResponse.builder()
         .merchantUid(cardDto.getMerchantUid())
         .contentId(cardDto.getContentId())
