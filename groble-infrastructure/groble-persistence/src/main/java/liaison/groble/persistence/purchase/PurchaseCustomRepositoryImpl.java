@@ -29,7 +29,6 @@ import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.content.entity.QContent;
 import liaison.groble.domain.content.entity.QContentOption;
 import liaison.groble.domain.content.entity.QContentReview;
-import liaison.groble.domain.content.enums.ContentType;
 import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.order.entity.QOrder;
 import liaison.groble.domain.purchase.dto.FlatContentSellDetailDTO;
@@ -53,11 +52,7 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
 
   @Override
   public CursorResponse<FlatPurchaseContentPreviewDTO> findMyPurchasingContentsWithCursor(
-      Long userId,
-      Long lastContentId,
-      int size,
-      List<Order.OrderStatus> statusList,
-      ContentType contentType) {
+      Long userId, Long lastContentId, int size, List<Order.OrderStatus> statusList) {
 
     QPurchase qPurchase = QPurchase.purchase;
     QContent qContent = QContent.content;
@@ -66,8 +61,7 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
     QOrder qOrder = QOrder.order;
 
     // 기본 조건 설정
-    BooleanExpression conditions =
-        qPurchase.user.id.eq(userId).and(qContent.contentType.eq(contentType));
+    BooleanExpression conditions = qPurchase.user.id.eq(userId);
 
     // 커서 조건 추가
     if (lastContentId != null) {
@@ -139,15 +133,13 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
   }
 
   @Override
-  public int countMyPurchasingContents(
-      Long userId, List<Order.OrderStatus> statusList, ContentType contentType) {
+  public int countMyPurchasingContents(Long userId, List<Order.OrderStatus> statusList) {
     QPurchase qPurchase = QPurchase.purchase;
     QContent qContent = QContent.content;
     QOrder qOrder = QOrder.order;
 
     // 기본 조건 설정: 사용자 ID, 콘텐츠 타입
-    BooleanExpression conditions =
-        qPurchase.user.id.eq(userId).and(qPurchase.content.contentType.eq(contentType));
+    BooleanExpression conditions = qPurchase.user.id.eq(userId);
 
     // 상태 필터 추가 (여러 상태 지원)
     if (statusList != null && !statusList.isEmpty()) {

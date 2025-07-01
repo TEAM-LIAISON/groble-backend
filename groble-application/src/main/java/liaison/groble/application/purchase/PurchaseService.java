@@ -30,20 +30,18 @@ public class PurchaseService {
 
   @Transactional(readOnly = true)
   public CursorResponse<PurchaseContentCardDto> getMyPurchasingContents(
-      Long userId, String cursor, int size, String state, String type) {
+      Long userId, String cursor, int size, String state) {
     Long lastContentId = parseContentIdFromCursor(cursor);
     List<Order.OrderStatus> orderStatusList = parseOrderStatusList(state);
-    ContentType contentType = parseContentType(type);
 
     CursorResponse<FlatPurchaseContentPreviewDTO> flatDtos =
         purchaseCustomRepository.findMyPurchasingContentsWithCursor(
-            userId, lastContentId, size, orderStatusList, contentType);
+            userId, lastContentId, size, orderStatusList);
 
     List<PurchaseContentCardDto> cardDtos =
         flatDtos.getItems().stream().map(this::convertFlatDtoToCardDto).toList();
 
-    int totalCount =
-        purchaseCustomRepository.countMyPurchasingContents(userId, orderStatusList, contentType);
+    int totalCount = purchaseCustomRepository.countMyPurchasingContents(userId, orderStatusList);
 
     return CursorResponse.<PurchaseContentCardDto>builder()
         .items(cardDtos)

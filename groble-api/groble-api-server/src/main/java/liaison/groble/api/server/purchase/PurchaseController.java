@@ -4,6 +4,7 @@ import java.util.List;
 
 import jakarta.validation.Valid;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -23,6 +24,7 @@ import liaison.groble.common.model.Accessor;
 import liaison.groble.common.request.CursorRequest;
 import liaison.groble.common.response.CursorResponse;
 import liaison.groble.common.response.GrobleResponse;
+import liaison.groble.common.response.ResponseHelper;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -37,8 +39,18 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Tag(name = "구매 관련 API", description = "내가 구매한 콘텐츠 조회, 내가 구매한 콘텐츠(자료) 다운로드 등")
 public class PurchaseController {
+
+  // API 경로 상수화
+  private static final String MY_PURCHASING_CONTENT_PATH = "/content/my/purchasing-contents";
+
+  // 응답 메시지 상수화
+  private static final String MY_PURCHASING_CONTENT_SUCCESS_MESSAGE = "내가 구매한 콘텐츠 목록 조회에 성공했습니다.";
+
   private final PurchaseService purchaseService;
   private final PurchaseDtoMapper purchaseDtoMapper;
+
+  // Helper
+  private final ResponseHelper responseHelper;
 
   //  @Operation(
   //      summary = "내가 구매한 콘텐츠의 판매자에게 문의하기 버튼 액션",
@@ -66,7 +78,7 @@ public class PurchaseController {
   }
 
   @MyPurchasingContents
-  @GetMapping("/content/my/purchasing-contents")
+  @GetMapping(MY_PURCHASING_CONTENT_PATH)
   public ResponseEntity<GrobleResponse<CursorResponse<PurchaserContentPreviewCardResponse>>>
       getMyPurchasingContents(
           @Parameter(hidden = true) @Auth Accessor accessor,
@@ -84,20 +96,11 @@ public class PurchaseController {
                           implementation = String.class,
                           allowableValues = {"PAID", "EXPIRED", "CANCELLED"}))
               @RequestParam(value = "state")
-              String state,
-          @Parameter(
-                  description = "콘텐츠 유형 [COACHING - 코칭], [DOCUMENT - 자료]",
-                  required = true,
-                  schema =
-                      @Schema(
-                          implementation = String.class,
-                          allowableValues = {"COACHING", "DOCUMENT"}))
-              @RequestParam(value = "type")
-              String type) {
+              String state) {
 
     CursorResponse<PurchaseContentCardDto> purchaseCardDtos =
         purchaseService.getMyPurchasingContents(
-            accessor.getUserId(), cursorRequest.getCursor(), cursorRequest.getSize(), state, type);
+            accessor.getUserId(), cursorRequest.getCursor(), cursorRequest.getSize(), state);
 
     // DTO 변환
     List<PurchaserContentPreviewCardResponse> responseItems =
@@ -115,7 +118,6 @@ public class PurchaseController {
             .meta(purchaseCardDtos.getMeta())
             .build();
 
-    String successMessage = "COACHING".equals(type) ? "내가 구매한 코칭 콘텐츠 조회 성공" : "내가 구매한 자료 콘텐츠 조회 성공";
-    return ResponseEntity.ok(GrobleResponse.success(response, successMessage));
+    return responseHelper.success(response, MY_PURCHASING_CONTENT_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 }
