@@ -107,6 +107,7 @@ public class AdminUserController {
         .isSellerInfo(infoDto.isSellerInfo())
         .verificationStatus(infoDto.getVerificationStatus())
         .isBusinessSeller(infoDto.isBusinessSeller())
+        .businessType(infoDto.getBusinessType())
         .build();
   }
 }

@@ -81,4 +81,13 @@ public class AdminUserSummaryInfoResponse {
       type = "boolean",
       requiredMode = Schema.RequiredMode.REQUIRED)
   private boolean isBusinessSeller;
+
+  /** 5. 사업자 유형 */
+  @Schema(
+      description = "사업자 유형 (예: 개인·간이, 개인·일반, 법인)",
+      example = "individual-simple",
+      type = "string",
+      allowableValues = {"individual-simple", "individual-general", "corporation"},
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private String businessType;
 }

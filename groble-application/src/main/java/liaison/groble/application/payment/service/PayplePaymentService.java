@@ -116,7 +116,7 @@ public class PayplePaymentService {
       Order order = orderReader.getOrderByMerchantUid(authResult.getPayOid());
       PayplePayment payplePayment = findPayplePayment(authResult.getPayOid());
 
-      // 2. 결제 상태 검증
+      // 2. 결제 상태 검증ㄴ
       validatePaymentStatus(payplePayment);
 
       // 3. 페이플 승인 요청
@@ -441,7 +441,7 @@ public class PayplePaymentService {
     params.put("PCD_CUST_KEY", paypleConfig.getCustKey());
     params.put("PCD_AUTH_KEY", authResult.getAuthKey());
     params.put("PCD_PAY_REQKEY", authResult.getPayReqKey());
-
+    params.put("PCD_PAY_COFURL", authResult.getPayCofUrl());
     log.info("페이플 승인 요청 - 주문번호: {}, authKey: {}", authResult.getPayOid(), authResult.getAuthKey());
 
     return paypleService.payAppCard(params);

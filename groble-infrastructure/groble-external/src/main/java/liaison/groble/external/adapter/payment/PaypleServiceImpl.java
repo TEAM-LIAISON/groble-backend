@@ -30,7 +30,8 @@ public class PaypleServiceImpl implements PaypleService {
 
     try {
       // 앱카드 승인 요청 URL
-      String appCardPaymentUrl = paypleConfig.getAppCardPaymentUrl();
+      String appCardPaymentUrl = params.get("PCD_PAY_COFURL");
+      log.info(appCardPaymentUrl);
 
       // 요청 파라미터 구성
       JSONObject obj = new JSONObject();
@@ -42,6 +43,10 @@ public class PaypleServiceImpl implements PaypleService {
       log.info("페이플 앱카드 승인 요청: {}", obj.toString());
 
       URL url = new URL(appCardPaymentUrl);
+      log.info("페이플 앱카드 결제 요청 URL: {}", url.toString());
+      // 또는 요청 전 로깅 추가
+      log.info("PCD_PAY_REQKEY 길이: {}", params.get("PCD_PAY_REQKEY").length());
+      log.info("PCD_PAY_REQKEY 값: {}", params.get("PCD_PAY_REQKEY"));
       HttpURLConnection con = (HttpURLConnection) url.openConnection();
 
       con.setRequestMethod("POST");

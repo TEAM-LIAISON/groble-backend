@@ -2,7 +2,11 @@ package liaison.groble.mapping.sell;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import javax.annotation.processing.Generated;
+
+import org.springframework.stereotype.Component;
+
 import liaison.groble.api.model.sell.request.ReplyContentRequest;
 import liaison.groble.api.model.sell.response.ContentReviewDetailResponse;
 import liaison.groble.api.model.sell.response.ContentSellDetailResponse;
@@ -14,179 +18,197 @@ import liaison.groble.application.sell.dto.ContentSellDetailDTO;
 import liaison.groble.application.sell.dto.ReplyContentDTO;
 import liaison.groble.application.sell.dto.SellManageDetailDTO;
 import liaison.groble.application.sell.dto.SellManagePageDTO;
-import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
     date = "2025-06-30T16:16:21+0900",
-    comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.10 (Amazon.com Inc.)"
-)
+    comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.10 (Amazon.com Inc.)")
 @Component
 public class SellMapperImpl implements SellMapper {
 
-    @Override
-    public ReplyContentDTO toReplyContentDTO(ReplyContentRequest replyContentRequest) {
-        if ( replyContentRequest == null ) {
-            return null;
-        }
-
-        ReplyContentDTO.ReplyContentDTOBuilder replyContentDTO = ReplyContentDTO.builder();
-
-        if ( replyContentRequest.getReplyContent() != null ) {
-            replyContentDTO.replyContent( replyContentRequest.getReplyContent() );
-        }
-
-        return replyContentDTO.build();
+  @Override
+  public ReplyContentDTO toReplyContentDTO(ReplyContentRequest replyContentRequest) {
+    if (replyContentRequest == null) {
+      return null;
     }
 
-    @Override
-    public SellManagePageResponse toSellManagePageResponse(SellManagePageDTO sellManagePageDTO) {
-        if ( sellManagePageDTO == null ) {
-            return null;
-        }
+    ReplyContentDTO.ReplyContentDTOBuilder replyContentDTO = ReplyContentDTO.builder();
 
-        SellManagePageResponse.SellManagePageResponseBuilder sellManagePageResponse = SellManagePageResponse.builder();
-
-        if ( sellManagePageDTO.getSellManageDetail() != null ) {
-            sellManagePageResponse.contentSellDetail( toSellManageDetailResponse( sellManagePageDTO.getSellManageDetail() ) );
-        }
-        List<ContentSellDetailResponse> list = contentSellDetailDTOListToContentSellDetailResponseList( sellManagePageDTO.getContentSellDetailList() );
-        if ( list != null ) {
-            sellManagePageResponse.contentSellList( list );
-        }
-        List<ContentReviewDetailResponse> list1 = contentReviewDetailDTOListToContentReviewDetailResponseList( sellManagePageDTO.getContentReviewDetailList() );
-        if ( list1 != null ) {
-            sellManagePageResponse.contentReviewList( list1 );
-        }
-
-        return sellManagePageResponse.build();
+    if (replyContentRequest.getReplyContent() != null) {
+      replyContentDTO.replyContent(replyContentRequest.getReplyContent());
     }
 
-    @Override
-    public SellManageDetailResponse toSellManageDetailResponse(SellManageDetailDTO sellManageDetailDTO) {
-        if ( sellManageDetailDTO == null ) {
-            return null;
-        }
+    return replyContentDTO.build();
+  }
 
-        SellManageDetailResponse.SellManageDetailResponseBuilder sellManageDetailResponse = SellManageDetailResponse.builder();
-
-        if ( sellManageDetailDTO.getTotalPaymentPrice() != null ) {
-            sellManageDetailResponse.totalPaymentPrice( sellManageDetailDTO.getTotalPaymentPrice() );
-        }
-        if ( sellManageDetailDTO.getTotalPurchaseCustomer() != null ) {
-            sellManageDetailResponse.totalPurchaseCustomer( sellManageDetailDTO.getTotalPurchaseCustomer() );
-        }
-        if ( sellManageDetailDTO.getTotalReviewCount() != null ) {
-            sellManageDetailResponse.totalReviewCount( sellManageDetailDTO.getTotalReviewCount() );
-        }
-
-        return sellManageDetailResponse.build();
+  @Override
+  public SellManagePageResponse toSellManagePageResponse(SellManagePageDTO sellManagePageDTO) {
+    if (sellManagePageDTO == null) {
+      return null;
     }
 
-    @Override
-    public ContentSellDetailResponse toContentSellDetailResponse(ContentSellDetailDTO contentSellDetailDTO) {
-        if ( contentSellDetailDTO == null ) {
-            return null;
-        }
+    SellManagePageResponse.SellManagePageResponseBuilder sellManagePageResponse =
+        SellManagePageResponse.builder();
 
-        ContentSellDetailResponse.ContentSellDetailResponseBuilder contentSellDetailResponse = ContentSellDetailResponse.builder();
-
-        if ( contentSellDetailDTO.getPurchaseId() != null ) {
-            contentSellDetailResponse.purchaseId( contentSellDetailDTO.getPurchaseId() );
-        }
-        if ( contentSellDetailDTO.getContentTitle() != null ) {
-            contentSellDetailResponse.contentTitle( contentSellDetailDTO.getContentTitle() );
-        }
-        if ( contentSellDetailDTO.getPurchasedAt() != null ) {
-            contentSellDetailResponse.purchasedAt( contentSellDetailDTO.getPurchasedAt() );
-        }
-        if ( contentSellDetailDTO.getPurchaserNickname() != null ) {
-            contentSellDetailResponse.purchaserNickname( contentSellDetailDTO.getPurchaserNickname() );
-        }
-        if ( contentSellDetailDTO.getPurchaserEmail() != null ) {
-            contentSellDetailResponse.purchaserEmail( contentSellDetailDTO.getPurchaserEmail() );
-        }
-        if ( contentSellDetailDTO.getPurchaserPhoneNumber() != null ) {
-            contentSellDetailResponse.purchaserPhoneNumber( contentSellDetailDTO.getPurchaserPhoneNumber() );
-        }
-        if ( contentSellDetailDTO.getSelectedOptionName() != null ) {
-            contentSellDetailResponse.selectedOptionName( contentSellDetailDTO.getSelectedOptionName() );
-        }
-        if ( contentSellDetailDTO.getFinalPrice() != null ) {
-            contentSellDetailResponse.finalPrice( contentSellDetailDTO.getFinalPrice() );
-        }
-
-        return contentSellDetailResponse.build();
+    if (sellManagePageDTO.getSellManageDetail() != null) {
+      sellManagePageResponse.contentSellDetail(
+          toSellManageDetailResponse(sellManagePageDTO.getSellManageDetail()));
+    }
+    List<ContentSellDetailResponse> list =
+        contentSellDetailDTOListToContentSellDetailResponseList(
+            sellManagePageDTO.getContentSellDetailList());
+    if (list != null) {
+      sellManagePageResponse.contentSellList(list);
+    }
+    List<ContentReviewDetailResponse> list1 =
+        contentReviewDetailDTOListToContentReviewDetailResponseList(
+            sellManagePageDTO.getContentReviewDetailList());
+    if (list1 != null) {
+      sellManagePageResponse.contentReviewList(list1);
     }
 
-    @Override
-    public ContentReviewDetailResponse toContentReviewDetailResponse(ContentReviewDetailDTO contentReviewDetailDTO) {
-        if ( contentReviewDetailDTO == null ) {
-            return null;
-        }
+    return sellManagePageResponse.build();
+  }
 
-        ContentReviewDetailResponse.ContentReviewDetailResponseBuilder contentReviewDetailResponse = ContentReviewDetailResponse.builder();
-
-        if ( contentReviewDetailDTO.getReviewId() != null ) {
-            contentReviewDetailResponse.reviewId( contentReviewDetailDTO.getReviewId() );
-        }
-        if ( contentReviewDetailDTO.getContentTitle() != null ) {
-            contentReviewDetailResponse.contentTitle( contentReviewDetailDTO.getContentTitle() );
-        }
-        if ( contentReviewDetailDTO.getCreatedAt() != null ) {
-            contentReviewDetailResponse.createdAt( contentReviewDetailDTO.getCreatedAt() );
-        }
-        if ( contentReviewDetailDTO.getReviewerNickname() != null ) {
-            contentReviewDetailResponse.reviewerNickname( contentReviewDetailDTO.getReviewerNickname() );
-        }
-        if ( contentReviewDetailDTO.getSelectedOptionName() != null ) {
-            contentReviewDetailResponse.selectedOptionName( contentReviewDetailDTO.getSelectedOptionName() );
-        }
-        if ( contentReviewDetailDTO.getRating() != null ) {
-            contentReviewDetailResponse.rating( contentReviewDetailDTO.getRating() );
-        }
-
-        return contentReviewDetailResponse.build();
+  @Override
+  public SellManageDetailResponse toSellManageDetailResponse(
+      SellManageDetailDTO sellManageDetailDTO) {
+    if (sellManageDetailDTO == null) {
+      return null;
     }
 
-    @Override
-    public ReplyContentResponse toReplyContentResponse(ReplyContentDTO replyContentDTO) {
-        if ( replyContentDTO == null ) {
-            return null;
-        }
+    SellManageDetailResponse.SellManageDetailResponseBuilder sellManageDetailResponse =
+        SellManageDetailResponse.builder();
 
-        ReplyContentResponse.ReplyContentResponseBuilder replyContentResponse = ReplyContentResponse.builder();
-
-        if ( replyContentDTO.getReplyContent() != null ) {
-            replyContentResponse.replyContent( replyContentDTO.getReplyContent() );
-        }
-
-        return replyContentResponse.build();
+    if (sellManageDetailDTO.getTotalPaymentPrice() != null) {
+      sellManageDetailResponse.totalPaymentPrice(sellManageDetailDTO.getTotalPaymentPrice());
+    }
+    if (sellManageDetailDTO.getTotalPurchaseCustomer() != null) {
+      sellManageDetailResponse.totalPurchaseCustomer(
+          sellManageDetailDTO.getTotalPurchaseCustomer());
+    }
+    if (sellManageDetailDTO.getTotalReviewCount() != null) {
+      sellManageDetailResponse.totalReviewCount(sellManageDetailDTO.getTotalReviewCount());
     }
 
-    protected List<ContentSellDetailResponse> contentSellDetailDTOListToContentSellDetailResponseList(List<ContentSellDetailDTO> list) {
-        if ( list == null ) {
-            return null;
-        }
+    return sellManageDetailResponse.build();
+  }
 
-        List<ContentSellDetailResponse> list1 = new ArrayList<ContentSellDetailResponse>( list.size() );
-        for ( ContentSellDetailDTO contentSellDetailDTO : list ) {
-            list1.add( toContentSellDetailResponse( contentSellDetailDTO ) );
-        }
-
-        return list1;
+  @Override
+  public ContentSellDetailResponse toContentSellDetailResponse(
+      ContentSellDetailDTO contentSellDetailDTO) {
+    if (contentSellDetailDTO == null) {
+      return null;
     }
 
-    protected List<ContentReviewDetailResponse> contentReviewDetailDTOListToContentReviewDetailResponseList(List<ContentReviewDetailDTO> list) {
-        if ( list == null ) {
-            return null;
-        }
+    ContentSellDetailResponse.ContentSellDetailResponseBuilder contentSellDetailResponse =
+        ContentSellDetailResponse.builder();
 
-        List<ContentReviewDetailResponse> list1 = new ArrayList<ContentReviewDetailResponse>( list.size() );
-        for ( ContentReviewDetailDTO contentReviewDetailDTO : list ) {
-            list1.add( toContentReviewDetailResponse( contentReviewDetailDTO ) );
-        }
-
-        return list1;
+    if (contentSellDetailDTO.getPurchaseId() != null) {
+      contentSellDetailResponse.purchaseId(contentSellDetailDTO.getPurchaseId());
     }
+    if (contentSellDetailDTO.getContentTitle() != null) {
+      contentSellDetailResponse.contentTitle(contentSellDetailDTO.getContentTitle());
+    }
+    if (contentSellDetailDTO.getPurchasedAt() != null) {
+      contentSellDetailResponse.purchasedAt(contentSellDetailDTO.getPurchasedAt());
+    }
+    if (contentSellDetailDTO.getPurchaserNickname() != null) {
+      contentSellDetailResponse.purchaserNickname(contentSellDetailDTO.getPurchaserNickname());
+    }
+    if (contentSellDetailDTO.getPurchaserEmail() != null) {
+      contentSellDetailResponse.purchaserEmail(contentSellDetailDTO.getPurchaserEmail());
+    }
+    if (contentSellDetailDTO.getPurchaserPhoneNumber() != null) {
+      contentSellDetailResponse.purchaserPhoneNumber(
+          contentSellDetailDTO.getPurchaserPhoneNumber());
+    }
+    if (contentSellDetailDTO.getSelectedOptionName() != null) {
+      contentSellDetailResponse.selectedOptionName(contentSellDetailDTO.getSelectedOptionName());
+    }
+    if (contentSellDetailDTO.getFinalPrice() != null) {
+      contentSellDetailResponse.finalPrice(contentSellDetailDTO.getFinalPrice());
+    }
+
+    return contentSellDetailResponse.build();
+  }
+
+  @Override
+  public ContentReviewDetailResponse toContentReviewDetailResponse(
+      ContentReviewDetailDTO contentReviewDetailDTO) {
+    if (contentReviewDetailDTO == null) {
+      return null;
+    }
+
+    ContentReviewDetailResponse.ContentReviewDetailResponseBuilder contentReviewDetailResponse =
+        ContentReviewDetailResponse.builder();
+
+    if (contentReviewDetailDTO.getReviewId() != null) {
+      contentReviewDetailResponse.reviewId(contentReviewDetailDTO.getReviewId());
+    }
+    if (contentReviewDetailDTO.getContentTitle() != null) {
+      contentReviewDetailResponse.contentTitle(contentReviewDetailDTO.getContentTitle());
+    }
+    if (contentReviewDetailDTO.getCreatedAt() != null) {
+      contentReviewDetailResponse.createdAt(contentReviewDetailDTO.getCreatedAt());
+    }
+    if (contentReviewDetailDTO.getReviewerNickname() != null) {
+      contentReviewDetailResponse.reviewerNickname(contentReviewDetailDTO.getReviewerNickname());
+    }
+    if (contentReviewDetailDTO.getSelectedOptionName() != null) {
+      contentReviewDetailResponse.selectedOptionName(
+          contentReviewDetailDTO.getSelectedOptionName());
+    }
+    if (contentReviewDetailDTO.getRating() != null) {
+      contentReviewDetailResponse.rating(contentReviewDetailDTO.getRating());
+    }
+
+    return contentReviewDetailResponse.build();
+  }
+
+  @Override
+  public ReplyContentResponse toReplyContentResponse(ReplyContentDTO replyContentDTO) {
+    if (replyContentDTO == null) {
+      return null;
+    }
+
+    ReplyContentResponse.ReplyContentResponseBuilder replyContentResponse =
+        ReplyContentResponse.builder();
+
+    if (replyContentDTO.getReplyContent() != null) {
+      replyContentResponse.replyContent(replyContentDTO.getReplyContent());
+    }
+
+    return replyContentResponse.build();
+  }
+
+  protected List<ContentSellDetailResponse> contentSellDetailDTOListToContentSellDetailResponseList(
+      List<ContentSellDetailDTO> list) {
+    if (list == null) {
+      return null;
+    }
+
+    List<ContentSellDetailResponse> list1 = new ArrayList<ContentSellDetailResponse>(list.size());
+    for (ContentSellDetailDTO contentSellDetailDTO : list) {
+      list1.add(toContentSellDetailResponse(contentSellDetailDTO));
+    }
+
+    return list1;
+  }
+
+  protected List<ContentReviewDetailResponse>
+      contentReviewDetailDTOListToContentReviewDetailResponseList(
+          List<ContentReviewDetailDTO> list) {
+    if (list == null) {
+      return null;
+    }
+
+    List<ContentReviewDetailResponse> list1 =
+        new ArrayList<ContentReviewDetailResponse>(list.size());
+    for (ContentReviewDetailDTO contentReviewDetailDTO : list) {
+      list1.add(toContentReviewDetailResponse(contentReviewDetailDTO));
+    }
+
+    return list1;
+  }
 }

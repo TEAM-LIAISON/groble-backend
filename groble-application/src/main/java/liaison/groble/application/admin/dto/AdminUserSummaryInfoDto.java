@@ -25,4 +25,6 @@ public class AdminUserSummaryInfoDto {
   private String verificationStatus;
 
   private boolean isBusinessSeller;
+
+  private String businessType;
 }

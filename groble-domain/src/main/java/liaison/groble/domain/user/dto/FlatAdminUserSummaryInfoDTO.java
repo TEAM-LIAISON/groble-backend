@@ -29,4 +29,6 @@ public class FlatAdminUserSummaryInfoDTO {
   private String verificationStatus;
 
   private boolean isBusinessSeller;
+
+  private String businessType;
 }
