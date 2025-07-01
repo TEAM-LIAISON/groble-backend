@@ -88,7 +88,7 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
                     qPurchase.purchasedAt.as("purchasedAt"),
                     qContent.title.as("title"),
                     qContent.thumbnailUrl.as("thumbnailUrl"),
-                    qUser.userProfile.nickname.as("sellerName"),
+                    qContent.user.userProfile.nickname.as("sellerName"),
                     qPurchase.originalPrice.as("originalPrice"),
                     qPurchase.finalPrice.as("finalPrice"),
                     ExpressionUtils.as(
