@@ -108,6 +108,7 @@ public class Payment extends BaseTimeEntity {
       Order order,
       BigDecimal price,
       PaymentMethod paymentMethod,
+      PaymentStatus status,
       String paymentKey,
       String purchaserName,
       String purchaserEmail,
@@ -115,6 +116,7 @@ public class Payment extends BaseTimeEntity {
     this.order = order;
     this.price = price != null ? price : BigDecimal.ZERO;
     this.paymentMethod = paymentMethod != null ? paymentMethod : PaymentMethod.FREE;
+    this.status = status != null ? status : PaymentStatus.READY;
     this.paymentKey = paymentKey;
     this.purchaserName = purchaserName;
     this.purchaserEmail = purchaserEmail;
@@ -157,6 +159,7 @@ public class Payment extends BaseTimeEntity {
     return Payment.builder()
         .order(order)
         .price(price)
+        .status(PaymentStatus.IN_PROGRESS)
         .paymentMethod(paymentMethod)
         .paymentKey(paymentKey)
         .purchaserName(order.getPurchaser().getName())
@@ -240,6 +243,14 @@ public class Payment extends BaseTimeEntity {
     this.status = PaymentStatus.IN_PROGRESS;
   }
 
+  public void markAsPaid() {
+    if (this.status != PaymentStatus.IN_PROGRESS) {
+      throw new IllegalStateException("결제 진행중 상태에서만 완료로 변경 가능합니다.");
+    }
+    this.status = PaymentStatus.PAID;
+    this.paidAt = LocalDateTime.now();
+  }
+
   // 편의 메서드들
   public boolean isPaid() {
     return status == PaymentStatus.PAID;
@@ -292,42 +303,4 @@ public class Payment extends BaseTimeEntity {
       return description;
     }
   }
-
-  // 향후 확장을 위한 주석 처리된 필드들...
-
-  //    /**
-  //     * 카드 정보 (향후 확장용)
-  //     */
-  //    @Column(name = "card_number")
-  //    private String cardNumber;
-  //
-  //    @Column(name = "card_issuer_name")
-  //    private String cardIssuerName;
-  //
-  //    @Column(name = "card_installment_plan_months")
-  //    private String cardInstallmentPlanMonths;
-  //
-  //    /**
-  //     * 가상계좌 정보 (향후 확장용)
-  //     */
-  //    @Column(name = "virtual_account_number")
-  //    private String virtualAccountNumber;
-  //
-  //    @Column(name = "virtual_account_bank_name")
-  //    private String virtualAccountBankName;
-  //
-  //    @Column(name = "virtual_account_expiry_date")
-  //    private LocalDateTime virtualAccountExpiryDate;
-  //
-  //    /**
-  //     * 영수증 및 기타 정보 (향후 확장용)
-  //     */
-  //    @Column(name = "receipt_url")
-  //    private String receiptUrl;
-  //
-  //    @Column(name = "escrow")
-  //    private Boolean escrow = false;
-  //
-  //    @Column(name = "cash_receipt")
-  //    private Boolean cashReceipt = false;
 }

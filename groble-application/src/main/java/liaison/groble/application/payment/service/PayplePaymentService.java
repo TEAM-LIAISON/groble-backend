@@ -482,6 +482,7 @@ public class PayplePaymentService {
       // 5. Purchase 생성 및 확정 처리
       Purchase purchase = createAndCompletePurchase(order);
 
+      payment.markAsPaid();
       log.info(
           "페이플 결제 승인 성공 처리 완료 - orderId: {}, paymentId: {}, purchaseId: {}, "
               + "userId: {}, contentId: {}, finalPrice: {}원, purchaseStatus: {}",
@@ -576,7 +577,6 @@ public class PayplePaymentService {
     Payment payment =
         Payment.createPgPayment(
             order, order.getFinalPrice(), Payment.PaymentMethod.CARD, order.getMerchantUid());
-    payment.markAsInProgress(); // 결제 진행 중 상태로 설정
     return paymentRepository.save(payment);
   }
 
@@ -853,47 +853,6 @@ public class PayplePaymentService {
     } catch (Exception e) {
       log.error("링크 결제 실패 처리 중 오류 발생", e);
       throw new RuntimeException("링크 결제 실패 처리 오류: " + e.getMessage(), e);
-    }
-  }
-
-  /**
-   * 링크 결제 성공 처리
-   *
-   * <p>링크 결제가 성공한 경우의 처리를 수행합니다. 일반 결제와 동일하게 Order, Payment, Purchase를 완료 상태로 업데이트합니다.
-   *
-   * @param resultDto 결제 결과 정보
-   */
-  @Transactional
-  public void handleLinkPaymentSuccess(PaypleAuthResultDTO resultDto) {
-    log.info("링크 결제 성공 처리 시작 - 주문번호: {}", resultDto.getPayOid());
-
-    try {
-      // 1. 주문 및 결제 정보 조회
-      Order order = orderReader.getOrderByMerchantUid(resultDto.getPayOid());
-      PayplePayment payplePayment = findPayplePayment(resultDto.getPayOid());
-
-      // 2. 결제 정보 업데이트
-      updatePayplePaymentFromLinkResult(payplePayment, resultDto);
-
-      // 3. Payment 엔티티 생성 및 완료 처리
-      Payment payment = createAndSavePayment(order);
-
-      // 4. Order 상태 업데이트 (결제 완료 + 쿠폰 사용 처리)
-      order.completePayment();
-      orderRepository.save(order);
-
-      // 5. Purchase 생성 및 확정 처리
-      Purchase purchase = createAndCompletePurchase(order);
-
-      log.info(
-          "링크 결제 성공 처리 완료 - orderId: {}, paymentId: {}, purchaseId: {}",
-          order.getId(),
-          payment.getId(),
-          purchase.getId());
-
-    } catch (Exception e) {
-      log.error("링크 결제 성공 처리 중 오류 발생", e);
-      throw new RuntimeException("링크 결제 성공 처리 오류: " + e.getMessage(), e);
     }
   }
 
