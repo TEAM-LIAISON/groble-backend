@@ -4,7 +4,7 @@ import java.util.List;
 
 import jakarta.validation.constraints.NotEmpty;
 
-import liaison.groble.api.model.terms.enums.TermsTypeDto;
+import liaison.groble.api.model.terms.enums.TermsTypeDTO;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -17,5 +17,5 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class TermsAgreementRequest {
   @NotEmpty(message = "약관 유형은 필수입니다.")
-  private List<TermsTypeDto> termsTypes;
+  private List<TermsTypeDTO> termsTypes;
 }

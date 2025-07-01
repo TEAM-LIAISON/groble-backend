@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 
-import liaison.groble.api.model.terms.enums.TermsTypeDto;
+import liaison.groble.api.model.terms.enums.TermsTypeDTO;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -38,5 +38,5 @@ public class SetSocialBasicInfoRequest {
         - MARKETING_POLICY: 마케팅 활용 및 수신 동의 (선택)
         """,
       example = "[\"AGE_POLICY\", \"PRIVACY_POLICY\", \"SERVICE_TERMS_POLICY\"]")
-  private List<TermsTypeDto> termsTypes;
+  private List<TermsTypeDTO> termsTypes;
 }

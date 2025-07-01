@@ -9,7 +9,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
-import liaison.groble.api.model.terms.enums.TermsTypeDto;
+import liaison.groble.api.model.terms.enums.TermsTypeDTO;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -47,7 +47,7 @@ public class SignUpRequest {
         "MARKETING_POLICY"
       })
   @NotEmpty(message = "가입 약관 유형 선택은 필수입니다.")
-  private List<TermsTypeDto> termsTypes;
+  private List<TermsTypeDTO> termsTypes;
 
   @NotBlank(message = "이메일은 필수 입력값입니다.")
   @Email(message = "유효한 이메일 형식이 아닙니다.")

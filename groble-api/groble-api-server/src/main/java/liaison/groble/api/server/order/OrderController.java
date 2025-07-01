@@ -19,7 +19,7 @@ import liaison.groble.application.order.dto.CreateOrderDto;
 import liaison.groble.application.order.dto.CreateOrderResponse;
 import liaison.groble.application.order.dto.OrderSuccessResponse;
 import liaison.groble.application.order.service.OrderService;
-import liaison.groble.application.terms.dto.TermsAgreementDto;
+import liaison.groble.application.terms.dto.TermsAgreementDTO;
 import liaison.groble.application.terms.service.OrderTermsService;
 import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.exception.InvalidRequestException;
@@ -141,7 +141,7 @@ public class OrderController {
    */
   private void processOrderTermsAgreement(Long userId, HttpServletRequest httpRequest) {
     try {
-      TermsAgreementDto termsAgreementDto = termsDtoMapper.toServiceOrderTermsAgreementDto();
+      TermsAgreementDTO termsAgreementDto = termsDtoMapper.toServiceOrderTermsAgreementDto();
       termsAgreementDto.setUserId(userId);
       // IP 및 User-Agent 설정
       termsAgreementDto.setIpAddress(httpRequest.getRemoteAddr());
