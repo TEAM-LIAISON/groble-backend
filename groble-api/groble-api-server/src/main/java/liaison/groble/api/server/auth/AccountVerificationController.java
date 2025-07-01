@@ -19,7 +19,7 @@ import liaison.groble.api.model.auth.response.swagger.BusinessMaker;
 import liaison.groble.api.model.auth.response.swagger.BusinessVerification;
 import liaison.groble.api.model.auth.response.swagger.PersonalMaker;
 import liaison.groble.api.model.file.response.FileUploadResponse;
-import liaison.groble.api.server.file.mapper.FileDtoMapper;
+import liaison.groble.api.server.file.mapper.FileCustomMapper;
 import liaison.groble.application.auth.dto.VerifyBusinessMakerAccountDto;
 import liaison.groble.application.auth.dto.VerifyPersonalMakerAccountDto;
 import liaison.groble.application.auth.service.AccountVerificationService;
@@ -43,7 +43,7 @@ public class AccountVerificationController {
 
   private final AccountVerificationService accountVerificationService;
   private final FileService fileService;
-  private final FileDtoMapper fileDtoMapper;
+  private final FileCustomMapper fileCustomMapper;
 
   /** 개인 메이커 계좌 인증 요청 처리 */
   @PersonalMaker
@@ -133,7 +133,7 @@ public class AccountVerificationController {
 
     try {
       FileUploadDto fileUploadDto =
-          fileDtoMapper.toServiceFileUploadDto(bankbookCopyImage, "bankbook");
+          fileCustomMapper.toServiceFileUploadDto(bankbookCopyImage, "bankbook");
       FileDto fileDto = fileService.uploadFile(accessor.getUserId(), fileUploadDto);
       FileUploadResponse response =
           FileUploadResponse.of(
@@ -179,7 +179,7 @@ public class AccountVerificationController {
 
     try {
       FileUploadDto fileUploadDto =
-          fileDtoMapper.toServiceFileUploadDto(businessLicenseImage, "business/license");
+          fileCustomMapper.toServiceFileUploadDto(businessLicenseImage, "business/license");
       FileDto fileDto = fileService.uploadFile(accessor.getUserId(), fileUploadDto);
       FileUploadResponse response =
           FileUploadResponse.of(

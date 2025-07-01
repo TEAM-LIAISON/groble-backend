@@ -9,7 +9,7 @@ import org.springframework.web.multipart.MultipartFile;
 import liaison.groble.application.file.dto.FileUploadDto;
 
 @Component
-public class FileDtoMapper {
+public class FileCustomMapper {
 
   public FileUploadDto toServiceFileUploadDto(MultipartFile file, String directory)
       throws IOException {

@@ -16,7 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import liaison.groble.application.content.ContentReader;
 import liaison.groble.application.content.dto.ContentCardDTO;
 import liaison.groble.application.content.dto.ContentDTO;
-import liaison.groble.application.content.dto.ContentDetailDto;
+import liaison.groble.application.content.dto.ContentDetailDTO;
 import liaison.groble.application.content.dto.ContentOptionDTO;
 import liaison.groble.application.content.dto.DynamicContentDto;
 import liaison.groble.application.content.exception.InActiveContentException;
@@ -158,7 +158,7 @@ public class ContentService {
   }
 
   @Transactional
-  public ContentDetailDto getContentDetailForUser(Long userId, Long contentId) {
+  public ContentDetailDTO getContentDetailForUser(Long userId, Long contentId) {
     log.info("로그인 사용자 콘텐츠 조회: userId={}, contentId={}", userId, contentId);
 
     // 1. 사용자 및 콘텐츠 조회
@@ -241,7 +241,7 @@ public class ContentService {
       }
     }
 
-    return ContentDetailDto.builder()
+    return ContentDetailDTO.builder()
         .contentId(content.getId())
         .status(safeEnumName(content.getStatus()))
         .thumbnailUrl(content.getThumbnailUrl())
@@ -266,7 +266,7 @@ public class ContentService {
    * @return 상품 상세 정보
    */
   @Transactional
-  public ContentDetailDto getPublicContentDetail(Long contentId) {
+  public ContentDetailDTO getPublicContentDetail(Long contentId) {
     Content content = contentReader.getContentById(contentId);
 
     // ACTIVE 상태인지 확인
@@ -332,7 +332,7 @@ public class ContentService {
         sellerName = userProfile.getNickname();
       }
     }
-    return ContentDetailDto.builder()
+    return ContentDetailDTO.builder()
         .contentId(content.getId())
         .status(safeEnumName(content.getStatus()))
         .thumbnailUrl(content.getThumbnailUrl())

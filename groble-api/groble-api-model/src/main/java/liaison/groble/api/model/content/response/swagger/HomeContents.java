@@ -14,7 +14,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
-@Operation(summary = "홈화면 콘텐츠 목록 조회", description = "홈화면에 표시할 콘텐츠 목록을 타입별로 조회합니다. [코칭 또는 자료]")
+@Operation(
+    summary = "[Deprecated 예정] 홈화면 콘텐츠 목록 조회",
+    description = "홈화면에 표시할 콘텐츠 목록을 타입별로 조회합니다. [코칭 또는 자료]")
 @ApiResponses({
   @ApiResponse(
       responseCode = "200",

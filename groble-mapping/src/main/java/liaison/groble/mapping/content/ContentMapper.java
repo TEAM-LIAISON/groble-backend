@@ -10,11 +10,16 @@ import org.mapstruct.Named;
 
 import liaison.groble.api.model.content.request.draft.ContentDraftRequest;
 import liaison.groble.api.model.content.request.register.ContentRegisterRequest;
+import liaison.groble.api.model.content.response.BaseOptionResponse;
+import liaison.groble.api.model.content.response.CoachingOptionResponse;
+import liaison.groble.api.model.content.response.ContentDetailResponse;
 import liaison.groble.api.model.content.response.ContentPreviewCardResponse;
 import liaison.groble.api.model.content.response.ContentResponse;
 import liaison.groble.api.model.content.response.ContentStatusResponse;
+import liaison.groble.api.model.content.response.DocumentOptionResponse;
 import liaison.groble.application.content.dto.ContentCardDTO;
 import liaison.groble.application.content.dto.ContentDTO;
+import liaison.groble.application.content.dto.ContentDetailDTO;
 import liaison.groble.application.content.dto.ContentOptionDTO;
 import liaison.groble.common.response.PageResponse;
 import liaison.groble.mapping.config.GrobleMapperConfig;
@@ -209,6 +214,54 @@ public interface ContentMapper {
                     .documentFileUrl(option.getDocumentFileUrl())
                     .documentLinkUrl(option.getDocumentLinkUrl())
                     .build())
+        .collect(Collectors.toList());
+  }
+
+  // ====== 📤 ContentDetailDTO → ContentDetailResponse 변환 ======
+  @Mapping(
+      target = "priceOptionLength",
+      expression =
+          "java(contentDetailDTO.getOptions() != null ? contentDetailDTO.getOptions().size() : 0)")
+  @Mapping(
+      target = "options",
+      source = "options",
+      qualifiedByName = "mapOptionsToBaseOptionResponse")
+  ContentDetailResponse toContentDetailResponse(ContentDetailDTO contentDetailDTO);
+
+  @Named("mapOptionsToBaseOptionResponse")
+  default List<BaseOptionResponse> mapOptionsToBaseOptionResponse(List<ContentOptionDTO> options) {
+    if (options == null) {
+      return null;
+    }
+
+    return options.stream()
+        .map(
+            option -> {
+              if (option.getContentType()
+                  == liaison.groble.domain.content.enums.ContentType.COACHING) {
+                return CoachingOptionResponse.builder()
+                    .optionId(option.getContentOptionId())
+                    .name(option.getName())
+                    .description(option.getDescription())
+                    .price(option.getPrice())
+                    .coachingPeriod(option.getCoachingPeriod())
+                    .documentProvision(option.getDocumentProvision())
+                    .coachingType(option.getCoachingType())
+                    .coachingTypeDescription(option.getCoachingTypeDescription())
+                    .build();
+              } else {
+                return DocumentOptionResponse.builder()
+                    .optionId(option.getContentOptionId())
+                    .name(option.getName())
+                    .description(option.getDescription())
+                    .price(option.getPrice())
+                    .contentDeliveryMethod(option.getContentDeliveryMethod())
+                    .documentOriginalFileName(option.getDocumentOriginalFileName())
+                    .documentFileUrl(option.getDocumentFileUrl())
+                    .documentLinkUrl(option.getDocumentLinkUrl())
+                    .build();
+              }
+            })
         .collect(Collectors.toList());
   }
 }
