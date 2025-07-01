@@ -230,9 +230,6 @@ public class Payment extends BaseTimeEntity {
     this.status = PaymentStatus.CANCELLED;
     this.cancelReason = reason;
     this.cancelledAt = LocalDateTime.now();
-
-    // 주문 상태도 함께 업데이트
-    this.order.cancelOrder("결제 취소: " + reason);
   }
 
   /** 결제 진행중 상태로 변경 */

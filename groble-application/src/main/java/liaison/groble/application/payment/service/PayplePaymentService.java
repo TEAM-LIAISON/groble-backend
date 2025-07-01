@@ -784,25 +784,15 @@ public class PayplePaymentService {
   private void handleRefundSuccess(
       Order order, PayplePayment payplePayment, Purchase purchase, String reason) {
 
-    // 1. PayplePayment 상태 업데이트
-    payplePayment.updateStatus(PayplePaymentStatus.CANCELLED);
-    payplePaymentRepository.save(payplePayment);
-
-    // 2. Payment 취소 처리
+    // 1. Payment 취소 처리
     Payment payment = order.getPayment();
     if (payment == null) {
       throw new IllegalStateException("결제 정보를 찾을 수 없습니다. orderId=" + order.getId());
     }
+
     payment.cancel(reason);
-    paymentRepository.save(payment);
-
-    // 3. Order 취소 처리 (쿠폰 사용 취소 포함)
     order.cancelOrder(reason);
-    orderRepository.save(order);
-
-    // 4. Purchase 취소 처리
     purchase.cancel(reason);
-    purchaseRepository.save(purchase);
 
     log.info(
         "결제 취소 완료 - orderId: {}, paymentId: {}, purchaseId: {}, " + "환불금액: {}원, 사유: {}",
