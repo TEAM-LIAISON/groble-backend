@@ -46,12 +46,15 @@ import lombok.extern.slf4j.Slf4j;
 public class TermsController {
 
   // API 경로 상수화
+  private static final String SIGN_UP_TERMS_AGREE_PATH = "/agree";
+  private static final String WITHDRAW__TERMS_PATH = "/withdraw";
   private static final String ADVERTISING_AGREEMENT_PATH = "/users/me/advertising-agreement";
 
   // 응답 메시지 상수화
+  private static final String SIGN_UP_AGREE_SUCCESS_MESSAGE = "회원가입 과정에서 약관 동의가 성공적으로 처리되었습니다.";
   private static final String SETTING_PAGE_SUCCESS_MESSAGE =
       "설정 탭에서 광고성 정보 수신 동의 여부 및 탈퇴 가능 여부 조회 성공";
-
+  private static final String ADVERTISING_AGREEMENT_SUCCESS_MESSAGE = "광고성 정보 수신 동의 상태 변경 성공";
   // Service
   private final UserService userService;
   private final TermsService termsService;
@@ -64,7 +67,7 @@ public class TermsController {
   private final ResponseHelper responseHelper;
 
   @Operation(summary = "회원가입 약관 동의", description = "사용자가 회원가입 과정에서 약관에 동의합니다.")
-  @PostMapping("/agree")
+  @PostMapping(SIGN_UP_TERMS_AGREE_PATH)
   public ResponseEntity<GrobleResponse<TermsAgreementResponse>> agreeToTerms(
       @Auth Accessor accessor,
       @Valid @RequestBody TermsAgreementRequest request,
@@ -72,22 +75,16 @@ public class TermsController {
 
     log.info("약관 동의 요청: {} -> 약관: {}", accessor.getEmail(), request.getTermsTypes());
 
-    // 1. API DTO → 서비스 DTO 변환
     TermsAgreementDTO termsAgreementDTO = termsMapper.toTermsAgreementDTO(request);
     termsAgreementDTO.setUserId(accessor.getUserId());
-
-    // IP 및 User-Agent 설정
     termsAgreementDTO.setIpAddress(httpRequest.getRemoteAddr());
     termsAgreementDTO.setUserAgent(httpRequest.getHeader("User-Agent"));
 
-    // 2. 서비스 호출
-    TermsAgreementDTO resultDto = termsService.agreeToTerms(termsAgreementDTO);
+    TermsAgreementDTO resultDTO = termsService.agreeToTerms(termsAgreementDTO);
 
-    // 3. 서비스 DTO → API DTO 변환
-    TermsAgreementResponse response = termsDtoMapper.toApiTermsAgreementResponse(resultDto);
+    TermsAgreementResponse response = termsMapper.toTermsAgreementResponse(resultDTO);
 
-    // 4. API 응답 생성
-    return ResponseEntity.ok(GrobleResponse.success(response, "약관 동의가 처리되었습니다."));
+    return responseHelper.success(response, SIGN_UP_AGREE_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 
   @Operation(summary = "약관 동의 철회", description = "사용자가 동의한 약관을 철회합니다. 필수 약관은 철회할 수 없습니다.")
@@ -99,7 +96,7 @@ public class TermsController {
     @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터"),
     @ApiResponse(responseCode = "403", description = "필수 약관은 철회할 수 없습니다.")
   })
-  @PostMapping("/withdraw")
+  @PostMapping(WITHDRAW__TERMS_PATH)
   @Logging(item = "Terms", action = "WITHDRAW", includeParam = true)
   public ResponseEntity<GrobleResponse<TermsAgreementResponse>> withdrawTermsAgreement(
       @Auth Accessor accessor,
@@ -199,6 +196,7 @@ public class TermsController {
         request.getAgreed(),
         httpRequest.getRemoteAddr(),
         httpRequest.getHeader("User-Agent"));
-    return ResponseEntity.ok(GrobleResponse.success(null, "광고성 정보 수신 동의 상태 변경 성공"));
+
+    return responseHelper.success(null, ADVERTISING_AGREEMENT_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 }

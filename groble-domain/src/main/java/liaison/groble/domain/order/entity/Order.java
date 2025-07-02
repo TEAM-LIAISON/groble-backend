@@ -132,6 +132,12 @@ public class Order extends BaseTimeEntity {
     }
   }
 
+  public void cancelRequestOrder(String reason) {
+    validateStateTransition(OrderStatus.CANCEL_REQUEST);
+    this.status = OrderStatus.CANCEL_REQUEST;
+    this.orderNote = reason;
+  }
+
   public void cancelOrder(String reason) {
     validateStateTransition(OrderStatus.CANCELLED);
     this.status = OrderStatus.CANCELLED;
@@ -210,8 +216,8 @@ public class Order extends BaseTimeEntity {
         }
         break;
       case PAID:
-        if (newStatus != OrderStatus.CANCELLED) {
-          throw new IllegalStateException("결제완료 상태에서는 취소 상태로만 변경 가능합니다.");
+        if (newStatus != OrderStatus.CANCEL_REQUEST) {
+          throw new IllegalStateException("결제 완료 상태에서는 결제 취소 요청 상태로만 변경 가능합니다.");
         }
         break;
       case CANCELLED:

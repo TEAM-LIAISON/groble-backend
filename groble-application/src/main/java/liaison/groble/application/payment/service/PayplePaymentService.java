@@ -16,6 +16,7 @@ import liaison.groble.application.payment.dto.PaypleAuthResponseDto;
 import liaison.groble.application.payment.dto.PaypleAuthResultDTO;
 import liaison.groble.application.payment.dto.link.PaypleLinkResendResponse;
 import liaison.groble.application.payment.dto.link.PaypleLinkStatusResponse;
+import liaison.groble.application.purchase.service.PurchaseReader;
 import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.order.repository.OrderRepository;
 import liaison.groble.domain.payment.entity.Payment;
@@ -32,33 +33,6 @@ import liaison.groble.external.config.PaypleConfig;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-/**
- * 페이플(Payple) 결제 서비스
- *
- * <p>페이플 PG사를 통한 결제 처리를 담당하는 서비스입니다.
- *
- * <p>주요 기능:
- *
- * <ul>
- *   <li>앱카드 결제 인증 정보 저장
- *   <li>앱카드 결제 승인 처리
- *   <li>결제 취소 및 환불 처리
- *   <li>결제 정보 검증
- *   <li>구매 완료 처리
- * </ul>
- *
- * <p>결제 프로세스:
- *
- * <ol>
- *   <li>클라이언트에서 페이플 SDK를 통해 결제 인증
- *   <li>인증 결과를 서버에 전송하여 저장
- *   <li>서버에서 페이플 API를 통해 결제 승인 요청
- *   <li>승인 성공 시 Order, Payment, Purchase 상태 업데이트
- * </ol>
- *
- * @author [oznchex]
- * @since [1.0]
- */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -67,6 +41,7 @@ public class PayplePaymentService {
   private final PayplePaymentRepository payplePaymentRepository;
   private final PaypleService paypleService;
   private final PaypleConfig paypleConfig;
+  private final PurchaseReader purchaseReader;
   private final OrderReader orderReader;
   private final OrderRepository orderRepository;
   private final PaymentRepository paymentRepository;
@@ -236,7 +211,7 @@ public class PayplePaymentService {
       log.debug("주문 및 결제 정보 조회 시작 - 주문번호: {}", merchantUid);
       Order order = findOrderByMerchantUid(merchantUid);
       PayplePayment payplePayment = findPayplePayment(merchantUid);
-      Purchase purchase = findPurchaseByOrder(order);
+      Purchase purchase = purchaseReader.getPurchaseByOrderId(order.getId());
       log.info(
           "주문 및 결제 정보 조회 완료 - 주문ID: {}, 결제ID: {}, 구매ID: {}",
           order.getId(),
@@ -731,20 +706,6 @@ public class PayplePaymentService {
     return orderRepository
         .findByMerchantUid(merchantUid)
         .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다: " + merchantUid));
-  }
-
-  /**
-   * 주문으로 구매 정보 조회
-   *
-   * @param order 주문
-   * @return 구매 정보
-   * @throws IllegalArgumentException 구매 정보를 찾을 수 없는 경우
-   */
-  private Purchase findPurchaseByOrder(Order order) {
-    return purchaseRepository
-        .findByOrder(order)
-        .orElseThrow(
-            () -> new IllegalArgumentException("구매 정보를 찾을 수 없습니다. orderId=" + order.getId()));
   }
 
   /**

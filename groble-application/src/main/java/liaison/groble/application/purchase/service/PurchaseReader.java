@@ -25,6 +25,7 @@ public class PurchaseReader {
   private final PurchaseRepository purchaseRepository;
   private final PurchaseCustomRepository purchaseCustomRepository;
 
+  // 주문 ID로 구매 정보 조회
   public Purchase getPurchaseByOrderId(Long orderId) {
     return purchaseRepository
         .findByOrderId(orderId)

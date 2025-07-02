@@ -4,7 +4,6 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Repository;
 
-import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.purchase.entity.Purchase;
 import liaison.groble.domain.purchase.repository.PurchaseRepository;
 
@@ -28,10 +27,5 @@ public class PurchaseRepositoryImpl implements PurchaseRepository {
   @Override
   public Optional<Purchase> findByOrderId(Long orderId) {
     return jpaPurchaseRepository.findByOrderId(orderId);
-  }
-
-  @Override
-  public Optional<Purchase> findByOrder(Order order) {
-    return jpaPurchaseRepository.findByOrder(order);
   }
 }

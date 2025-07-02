@@ -8,6 +8,7 @@ import org.mapstruct.Mapping;
 import liaison.groble.api.model.terms.enums.TermsTypeDTO;
 import liaison.groble.api.model.terms.request.MakerTermsAgreementRequest;
 import liaison.groble.api.model.terms.request.TermsAgreementRequest;
+import liaison.groble.api.model.terms.response.TermsAgreementResponse;
 import liaison.groble.application.terms.dto.MakerTermsAgreementDTO;
 import liaison.groble.application.terms.dto.TermsAgreementDTO;
 import liaison.groble.mapping.config.GrobleMapperConfig;
@@ -35,10 +36,25 @@ public interface TermsMapper {
   @Mapping(target = "effectiveTo", ignore = true)
   TermsAgreementDTO toTermsAgreementDTO(TermsAgreementRequest request);
 
+  // ====== 📤 DTO → Response 변환 ======
+  @Mapping(target = "type", expression = "java(mapStringToTermsType(dto.getTypeString()))")
+  TermsAgreementResponse toTermsAgreementResponse(TermsAgreementDTO dto);
+
   default List<String> mapTermsTypesToStrings(List<TermsTypeDTO> termsTypes) {
     if (termsTypes == null) {
       return null;
     }
     return termsTypes.stream().map(TermsTypeDTO::name).toList();
+  }
+
+  default TermsTypeDTO mapStringToTermsType(String typeString) {
+    if (typeString == null || typeString.isEmpty()) {
+      return null;
+    }
+    try {
+      return TermsTypeDTO.valueOf(typeString);
+    } catch (IllegalArgumentException e) {
+      return null; // 또는 기본값 반환
+    }
   }
 }

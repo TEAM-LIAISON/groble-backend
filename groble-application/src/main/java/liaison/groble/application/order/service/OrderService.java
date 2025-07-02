@@ -12,6 +12,7 @@ import liaison.groble.application.order.dto.CreateOrderDto;
 import liaison.groble.application.order.dto.CreateOrderResponse;
 import liaison.groble.application.order.dto.OrderSuccessResponse;
 import liaison.groble.application.order.dto.ValidatedOrderOptionDto;
+import liaison.groble.application.purchase.service.PurchaseReader;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.content.entity.ContentOption;
@@ -52,8 +53,10 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class OrderService {
 
+  // Reader
   private final UserReader userReader;
   private final ContentReader contentReader;
+  private final PurchaseReader purchaseReader;
   private final OrderRepository orderRepository;
   private final UserCouponRepository userCouponRepository;
   private final PurchaseRepository purchaseRepository;
@@ -469,7 +472,7 @@ public class OrderService {
     validateOrderPaidStatus(order);
 
     // 4. 구매 정보 조회
-    Purchase purchase = findPurchaseByOrder(order);
+    Purchase purchase = purchaseReader.getPurchaseByOrderId(order.getId());
 
     // 5. 응답 생성
     return buildOrderSuccessResponse(order, purchase);
@@ -513,19 +516,6 @@ public class OrderService {
           String.format(
               "결제가 완료되지 않은 주문입니다. orderId=%d, status=%s", order.getId(), order.getStatus()));
     }
-  }
-
-  /**
-   * 주문으로 구매 정보 조회
-   *
-   * @param order 주문
-   * @return 구매 정보
-   * @throws IllegalStateException 구매 정보를 찾을 수 없는 경우
-   */
-  private Purchase findPurchaseByOrder(Order order) {
-    return purchaseRepository
-        .findByOrder(order)
-        .orElseThrow(() -> new IllegalStateException("구매 정보를 찾을 수 없습니다. orderId=" + order.getId()));
   }
 
   /**
