@@ -34,6 +34,8 @@ public class QPayplePayment extends EntityPathBase<PayplePayment> {
 
     public final DateTimePath<java.time.LocalDateTime> paymentDate = createDateTime("paymentDate", java.time.LocalDateTime.class);
 
+    public final StringPath pcdEasyPayMethod = createString("pcdEasyPayMethod");
+
     public final StringPath pcdPayAuthKey = createString("pcdPayAuthKey");
 
     public final StringPath pcdPayCardAuthNo = createString("pcdPayCardAuthNo");
@@ -53,8 +55,6 @@ public class QPayplePayment extends EntityPathBase<PayplePayment> {
     public final StringPath pcdPayCode = createString("pcdPayCode");
 
     public final StringPath pcdPayCofUrl = createString("pcdPayCofUrl");
-
-    public final StringPath pcdPayEasyPayMethod = createString("pcdPayEasyPayMethod");
 
     public final StringPath pcdPayerEmail = createString("pcdPayerEmail");
 
