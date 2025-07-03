@@ -46,7 +46,7 @@ public class MarketService {
     // 마켓 이름으로 메이커 조회
     User user = makerReader.getUserByMarketName(marketName);
 
-    // 연락처 정보 조회
+    // 문의하기 정보 조회
     ContactInfoDTO contactInfo = getContactInfo(user);
 
     // 대표 콘텐츠 조회
@@ -163,6 +163,7 @@ public class MarketService {
     }
   }
 
+  // TODO : 2회 이상 재사용되는 메서드 MarketService, PurchaseService 2곳에서 사용
   private ContactInfoDTO getContactInfo(User user) {
     try {
       // TODO: SellerContactReader를 통해 연락처 정보 조회
