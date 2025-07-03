@@ -1,5 +1,7 @@
 package liaison.groble.domain.order.entity;
 
+import static jakarta.persistence.EnumType.STRING;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -10,7 +12,6 @@ import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -28,6 +29,7 @@ import liaison.groble.domain.common.entity.BaseTimeEntity;
 import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.content.enums.ContentStatus;
 import liaison.groble.domain.coupon.entity.UserCoupon;
+import liaison.groble.domain.order.enums.CancelReason;
 import liaison.groble.domain.order.vo.OrderOptionInfo;
 import liaison.groble.domain.payment.entity.Payment;
 import liaison.groble.domain.user.entity.User;
@@ -61,7 +63,7 @@ public class Order extends BaseTimeEntity {
   @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<OrderItem> orderItems = new ArrayList<>();
 
-  @Enumerated(EnumType.STRING)
+  @Enumerated(STRING)
   @Column(nullable = false)
   private OrderStatus status = OrderStatus.PENDING;
 
@@ -90,6 +92,10 @@ public class Order extends BaseTimeEntity {
   private Payment payment;
 
   @Embedded private Purchaser purchaser;
+
+  @Column(name = "cancel_reason")
+  @Enumerated(value = STRING)
+  private CancelReason cancelReason;
 
   @Column(name = "order_note", columnDefinition = "TEXT")
   private String orderNote;
@@ -130,6 +136,13 @@ public class Order extends BaseTimeEntity {
     if (appliedCoupon != null) {
       appliedCoupon.use(this);
     }
+  }
+
+  public void cancelRequestOrder(CancelReason cancelReason, String reason) {
+    validateStateTransition(OrderStatus.CANCEL_REQUEST);
+    this.status = OrderStatus.CANCEL_REQUEST;
+    this.cancelReason = cancelReason;
+    this.orderNote = reason;
   }
 
   public void cancelOrder(String reason) {
@@ -210,8 +223,8 @@ public class Order extends BaseTimeEntity {
         }
         break;
       case PAID:
-        if (newStatus != OrderStatus.CANCELLED) {
-          throw new IllegalStateException("결제완료 상태에서는 취소 상태로만 변경 가능합니다.");
+        if (newStatus != OrderStatus.CANCEL_REQUEST) {
+          throw new IllegalStateException("결제 완료 상태에서는 결제 취소 요청 상태로만 변경 가능합니다.");
         }
         break;
       case CANCELLED:

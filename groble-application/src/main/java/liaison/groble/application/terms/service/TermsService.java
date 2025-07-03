@@ -3,17 +3,17 @@ package liaison.groble.application.terms.service;
 import java.util.List;
 
 import liaison.groble.application.terms.dto.MakerTermsAgreementDTO;
-import liaison.groble.application.terms.dto.TermsAgreementDto;
+import liaison.groble.application.terms.dto.TermsAgreementDTO;
 
 public interface TermsService {
 
-  TermsAgreementDto agreeToTerms(TermsAgreementDto dto);
+  TermsAgreementDTO agreeToTerms(TermsAgreementDTO dto);
 
-  TermsAgreementDto withdrawTermsAgreement(TermsAgreementDto dto);
+  TermsAgreementDTO withdrawTermsAgreement(TermsAgreementDTO dto);
 
-  List<TermsAgreementDto> getUserTermsAgreements(Long userId);
+  List<TermsAgreementDTO> getUserTermsAgreements(Long userId);
 
-  List<TermsAgreementDto> getActiveTerms();
+  List<TermsAgreementDTO> getActiveTerms();
 
   boolean getAdvertisingAgreementStatus(Long userId);
 

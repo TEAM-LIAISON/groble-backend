@@ -6,7 +6,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import liaison.groble.application.terms.dto.TermsAgreementDto;
+import liaison.groble.application.terms.dto.TermsAgreementDTO;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.common.exception.EntityNotFoundException;
 import liaison.groble.domain.terms.entity.OrderTerms;
@@ -28,7 +28,7 @@ public class OrderTermsService {
   private final UserReader userReader;
 
   @Transactional
-  public void agreeToOrderTerms(TermsAgreementDto dto) {
+  public void agreeToOrderTerms(TermsAgreementDTO dto) {
     User user = userReader.getUserById(dto.getUserId());
     List<OrderTermsType> orderTermsTypes =
         dto.getTermsTypeStrings().stream().map(OrderTermsType::valueOf).toList();
@@ -84,10 +84,10 @@ public class OrderTermsService {
   }
 
   // 약관 동의 DTO 생성 헬퍼 메서드
-  private TermsAgreementDto createOrderTermsAgreementDto(UserOrderTerms agreement) {
+  private TermsAgreementDTO createOrderTermsAgreementDto(UserOrderTerms agreement) {
     OrderTerms orderTerms = agreement.getOrderTerms();
 
-    return TermsAgreementDto.builder()
+    return TermsAgreementDTO.builder()
         .id(orderTerms.getId())
         .userId(agreement.getUser().getId())
         .typeString(orderTerms.getType().name()) // TermsType을 문자열로 변환

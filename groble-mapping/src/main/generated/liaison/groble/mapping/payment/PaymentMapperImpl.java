@@ -4,12 +4,16 @@ import javax.annotation.processing.Generated;
 
 import org.springframework.stereotype.Component;
 
+import liaison.groble.api.model.payment.request.PaymentCancelRequest;
 import liaison.groble.api.model.payment.request.PaypleAuthResultRequest;
+import liaison.groble.api.model.payment.response.PaymentCancelInfoResponse;
 import liaison.groble.application.payment.dto.PaypleAuthResultDTO;
+import liaison.groble.application.payment.dto.cancel.PaymentCancelDTO;
+import liaison.groble.application.payment.dto.cancel.PaymentCancelInfoDTO;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-06-26T15:58:25+0900",
+    date = "2025-07-03T15:38:48+0900",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.10 (Amazon.com Inc.)")
 @Component
 public class PaymentMapperImpl implements PaymentMapper {
@@ -143,5 +147,58 @@ public class PaymentMapperImpl implements PaymentMapper {
     }
 
     return paypleAuthResultDTO.build();
+  }
+
+  @Override
+  public PaymentCancelDTO toPaymentCancelDTO(PaymentCancelRequest paymentCancelRequest) {
+    if (paymentCancelRequest == null) {
+      return null;
+    }
+
+    PaymentCancelDTO.PaymentCancelDTOBuilder paymentCancelDTO = PaymentCancelDTO.builder();
+
+    if (paymentCancelRequest.getCancelReason() != null) {
+      paymentCancelDTO.cancelReason(paymentCancelRequest.getCancelReason().name());
+    }
+    if (paymentCancelRequest.getDetailReason() != null) {
+      paymentCancelDTO.detailReason(paymentCancelRequest.getDetailReason());
+    }
+
+    return paymentCancelDTO.build();
+  }
+
+  @Override
+  public PaymentCancelInfoResponse toPaymentCancelInfoResponse(
+      PaymentCancelInfoDTO paymentCancelInfoDTO) {
+    if (paymentCancelInfoDTO == null) {
+      return null;
+    }
+
+    PaymentCancelInfoResponse.PaymentCancelInfoResponseBuilder paymentCancelInfoResponse =
+        PaymentCancelInfoResponse.builder();
+
+    if (paymentCancelInfoDTO.getMerchantUid() != null) {
+      paymentCancelInfoResponse.merchantUid(paymentCancelInfoDTO.getMerchantUid());
+    }
+    if (paymentCancelInfoDTO.getOriginalPrice() != null) {
+      paymentCancelInfoResponse.originalPrice(paymentCancelInfoDTO.getOriginalPrice());
+    }
+    if (paymentCancelInfoDTO.getDiscountPrice() != null) {
+      paymentCancelInfoResponse.discountPrice(paymentCancelInfoDTO.getDiscountPrice());
+    }
+    if (paymentCancelInfoDTO.getFinalPrice() != null) {
+      paymentCancelInfoResponse.finalPrice(paymentCancelInfoDTO.getFinalPrice());
+    }
+    if (paymentCancelInfoDTO.getPayType() != null) {
+      paymentCancelInfoResponse.payType(paymentCancelInfoDTO.getPayType());
+    }
+    if (paymentCancelInfoDTO.getPayCardName() != null) {
+      paymentCancelInfoResponse.payCardName(paymentCancelInfoDTO.getPayCardName());
+    }
+    if (paymentCancelInfoDTO.getPayCardNum() != null) {
+      paymentCancelInfoResponse.payCardNum(paymentCancelInfoDTO.getPayCardNum());
+    }
+
+    return paymentCancelInfoResponse.build();
   }
 }

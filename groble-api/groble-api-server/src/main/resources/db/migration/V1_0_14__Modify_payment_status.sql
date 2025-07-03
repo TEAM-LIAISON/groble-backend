@@ -1,0 +1,8 @@
+ALTER TABLE payments
+  MODIFY COLUMN status
+    enum ('CANCEL_REQUEST', 'CANCELLED', 'FAILED', 'IN_PROGRESS', 'PAID', 'READY')
+    NOT NULL;
+
+ALTER TABLE payments
+  ADD COLUMN cancel_requested_at TIMESTAMP NULL;
+

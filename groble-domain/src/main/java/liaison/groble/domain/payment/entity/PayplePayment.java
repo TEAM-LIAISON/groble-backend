@@ -66,6 +66,9 @@ public class PayplePayment extends BaseTimeEntity {
   @Column(name = "pcd_pay_oid", unique = true)
   private String pcdPayOid; // 주문번호 (orderId - PK)
 
+  @Column(name = "pcd_pay_easy_pay_method")
+  private String pcdPayEasyPayMethod; // 선택한 결제 수단의 상세 유형 (카드, 계좌이체 등)
+
   private String pcdPayerId; // 빌링키 (정기결제용)
   private String pcdPayerNo; // 그로블에서 이용하는 회원번호 (userId - PK)
   private String pcdPayerName; // 구매자 이름

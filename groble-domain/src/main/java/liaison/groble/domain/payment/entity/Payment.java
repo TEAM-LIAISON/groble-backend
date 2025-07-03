@@ -91,6 +91,9 @@ public class Payment extends BaseTimeEntity {
   @Column(name = "cancel_reason")
   private String cancelReason;
 
+  @Column(name = "cancel_requested_at")
+  private LocalDateTime cancelRequestedAt;
+
   /** 취소 시각 */
   @Column(name = "cancelled_at")
   private LocalDateTime cancelledAt;
@@ -235,12 +238,14 @@ public class Payment extends BaseTimeEntity {
     this.cancelledAt = LocalDateTime.now();
   }
 
-  /** 결제 진행중 상태로 변경 */
-  public void markAsInProgress() {
-    if (this.status != PaymentStatus.READY) {
-      throw new IllegalStateException("결제 준비 상태에서만 진행중으로 변경 가능합니다.");
+  public void cancelRequest(String reason) {
+    if (this.status != PaymentStatus.PAID) {
+      throw new IllegalStateException("결제 완료 상태에서만 취소 요청이 가능합니다.");
     }
-    this.status = PaymentStatus.IN_PROGRESS;
+
+    this.status = PaymentStatus.CANCEL_REQUEST;
+    this.cancelReason = reason;
+    this.cancelRequestedAt = LocalDateTime.now();
   }
 
   public void markAsPaid() {
@@ -274,6 +279,7 @@ public class Payment extends BaseTimeEntity {
     IN_PROGRESS("결제진행중"),
     PAID("결제완료"),
     CANCELLED("취소됨"),
+    CANCEL_REQUEST("취소요청"),
     FAILED("결제실패");
 
     private final String description;

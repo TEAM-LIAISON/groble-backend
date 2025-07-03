@@ -21,6 +21,7 @@ import liaison.groble.application.payment.dto.PaypleAuthResultDTO;
 import liaison.groble.application.payment.exception.PayplePaymentAuthException;
 import liaison.groble.application.payment.service.PayplePaymentService;
 import liaison.groble.common.annotation.Auth;
+import liaison.groble.common.annotation.Logging;
 import liaison.groble.common.model.Accessor;
 import liaison.groble.common.response.GrobleResponse;
 import liaison.groble.common.response.ResponseHelper;
@@ -53,6 +54,7 @@ public class PayplePaymentController {
   // Mapper
   private final PaymentMapper paymentMapper;
 
+  // Service
   private final PayplePaymentService payplePaymentService;
 
   // Helper
@@ -71,6 +73,11 @@ public class PayplePaymentController {
                     mediaType = "application/json",
                     schema = @Schema(implementation = AppCardPayplePaymentResponse.class)))
       })
+  @Logging(
+      item = "Payment",
+      action = "AppCardPaymentRequest",
+      includeParam = true,
+      includeResult = true)
   @PostMapping(APP_CARD_REQUEST_PATH)
   public ResponseEntity<GrobleResponse<AppCardPayplePaymentResponse>> requestAppCardPayment(
       @Auth Accessor accessor,
@@ -161,19 +168,13 @@ public class PayplePaymentController {
       @Valid @PathVariable("merchantUid") String merchantUid,
       @Valid @RequestBody PaymentCancelRequest request) {
 
-    log.info(
-        "결제 취소 요청 - 주문번호: {}, 사유: {}, userId: {}",
-        merchantUid,
-        request.getReason(),
-        accessor.getUserId());
-
     try {
       PaypleAuthResponseDto paypleAuthResponseDto = payplePaymentService.getPaymentAuthForCancel();
 
       // 결제 취소 처리
       JSONObject approvalResult =
           payplePaymentService.cancelPayment(
-              paypleAuthResponseDto, merchantUid, request.getReason());
+              paypleAuthResponseDto, merchantUid, request.getDetailReason());
 
       // 취소 성공 응답 생성
       PaymentCancelResponse response =
@@ -181,7 +182,7 @@ public class PayplePaymentController {
               .merchantUid(merchantUid)
               .status("CANCELLED")
               .canceledAt(LocalDateTime.now())
-              .cancelReason(request.getReason())
+              .cancelReason(request.getDetailReason())
               .build();
 
       log.info("결제 취소 완료 - 주문번호: {}", merchantUid);

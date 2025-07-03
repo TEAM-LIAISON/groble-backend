@@ -138,6 +138,15 @@ public class Purchase extends BaseTimeEntity {
     this.purchasedAt = LocalDateTime.now();
   }
 
+  public void cancelRequest(String reason) {
+    if (this.status != PurchaseStatus.COMPLETED) {
+      throw new IllegalStateException("완료 상태에서만 환불 취소 요청이 가능합니다.");
+    }
+    this.status = PurchaseStatus.REFUND_REQUESTED;
+    this.refundRequestedAt = LocalDateTime.now();
+    this.cancelReason = reason;
+  }
+
   public void cancel(String reason) {
     if (this.status != PurchaseStatus.COMPLETED) {
       throw new IllegalStateException("완료 상태에서만 구매 취소가 가능합니다.");

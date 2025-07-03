@@ -23,6 +23,7 @@ import liaison.groble.domain.content.enums.ReviewStatus;
 import liaison.groble.domain.user.entity.User;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -39,6 +40,7 @@ import lombok.NoArgsConstructor;
           columnList = "content_id, rating, review_status"),
     })
 @Getter
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor(access = PROTECTED)
 public class ContentReview extends BaseTimeEntity {
@@ -66,4 +68,9 @@ public class ContentReview extends BaseTimeEntity {
 
   @Column(name = "deletion_requested_at")
   private LocalDateTime deletionRequestedAt;
+
+  public void updateReview(BigDecimal rating, String reviewContent) {
+    this.rating = rating;
+    this.reviewContent = reviewContent;
+  }
 }

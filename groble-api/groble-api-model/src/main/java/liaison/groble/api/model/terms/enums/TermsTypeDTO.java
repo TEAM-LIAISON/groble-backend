@@ -1,6 +1,6 @@
 package liaison.groble.api.model.terms.enums;
 
-public enum TermsTypeDto {
+public enum TermsTypeDTO {
   AGE_POLICY,
   PRIVACY_POLICY,
   SERVICE_TERMS_POLICY,

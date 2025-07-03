@@ -3,7 +3,7 @@ package liaison.groble.api.model.terms.response;
 import java.time.Instant;
 import java.time.LocalDateTime;
 
-import liaison.groble.api.model.terms.enums.TermsTypeDto;
+import liaison.groble.api.model.terms.enums.TermsTypeDTO;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -17,7 +17,7 @@ import lombok.NoArgsConstructor;
 public class TermsAgreementResponse {
 
   private Long id;
-  private TermsTypeDto type;
+  private TermsTypeDTO type;
   private String title;
   private String version;
   private boolean required;

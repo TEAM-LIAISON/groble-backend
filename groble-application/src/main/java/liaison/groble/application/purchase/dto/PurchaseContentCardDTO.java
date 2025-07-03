@@ -8,7 +8,7 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public class PurchaseContentCardDto {
+public class PurchaseContentCardDTO {
   private String merchantUid;
   private Long contentId;
   private String contentType;
