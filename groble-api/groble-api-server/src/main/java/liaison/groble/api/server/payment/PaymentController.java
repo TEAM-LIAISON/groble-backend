@@ -24,6 +24,9 @@ import liaison.groble.common.response.ResponseHelper;
 import liaison.groble.mapping.payment.PaymentMapper;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,8 +36,8 @@ import lombok.extern.slf4j.Slf4j;
 @RequestMapping("/api/v1/payment")
 @RequiredArgsConstructor
 @Tag(
-    name = "[💰 결제 취소 요청] 구매자가 코칭 상품에 한해 결제 취소 요청을 할 수 있는 API",
-    description = "구매자에게 결제 취소 요청 기능을 제공합니다")
+    name = "[💰 결제 취소 요청] 결제 취소 요청, 결제 취소 요청 정보 조회 API",
+    description = "구매자의 결제 취소 요청에 대한 기능을 제공합니다.")
 public class PaymentController {
 
   // API 경로 상수화
@@ -72,8 +75,15 @@ public class PaymentController {
   }
 
   @Operation(
-      summary = "[❌ 결제 취소 요청 정보 조회] 결제 취소 요청 완료 이후 취소 요청에 대한 정보를 조회합니다.",
+      summary = "[✅ 결제 취소 요청 정보 조회] 결제 취소 요청 완료 이후 취소 요청에 대한 정보를 조회합니다.",
       description = "취소 요청이 정상적으로 완료된 경우 예상 환불 내역 및 총 환불 금액 정보 등을 반환합니다.")
+  @ApiResponse(
+      responseCode = "200",
+      description = PAYMENT_CANCEL_INFO_SUCCESS_MESSAGE,
+      content =
+          @Content(
+              mediaType = "application/json",
+              schema = @Schema(implementation = PaymentCancelInfoResponse.class)))
   @Logging(item = "Payment", action = "CancelInfo", includeParam = true, includeResult = true)
   @GetMapping(PAYMENT_CANCEL_INFO_PATH)
   public ResponseEntity<GrobleResponse<PaymentCancelInfoResponse>> getPaymentCancelInfo(
