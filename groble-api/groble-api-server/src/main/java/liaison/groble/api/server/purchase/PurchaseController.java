@@ -39,7 +39,9 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequestMapping("/api/v1/purchase")
 @RequiredArgsConstructor
-@Tag(name = "구매 관련 API", description = "내가 구매한 콘텐츠 조회, 내가 구매한 콘텐츠(자료) 다운로드 등")
+@Tag(
+    name = "[🧾 내 콘텐츠 - 구매 관리] 구매 콘텐츠 조회, 다운로드, 문의하기 API",
+    description = "내가 구매한 콘텐츠 (상세)조회, 내가 구매한 콘텐츠 다운로드, 문의하기 조회 등")
 public class PurchaseController {
 
   // API 경로 상수화
@@ -59,6 +61,7 @@ public class PurchaseController {
   // Mapper
   private final PurchaseMapper purchaseMapper;
   private final MarketMapper marketMapper;
+
   // Helper
   private final ResponseHelper responseHelper;
 
