@@ -8,14 +8,12 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Getter
-@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class TermsAgreementDto {
+public class TermsAgreementDTO {
 
   private Long id;
   private Long userId;
@@ -31,4 +29,16 @@ public class TermsAgreementDto {
   private String userAgent;
   private LocalDateTime effectiveFrom;
   private LocalDateTime effectiveTo;
+
+  public void setUserId(Long userId) {
+    this.userId = userId;
+  }
+
+  public void setIpAddress(String ipAddress) {
+    this.ipAddress = ipAddress;
+  }
+
+  public void setUserAgent(String userAgent) {
+    this.userAgent = userAgent;
+  }
 }

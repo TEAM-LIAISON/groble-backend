@@ -1,6 +1,7 @@
 package liaison.groble.persistence.order;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -89,5 +90,18 @@ public class OrderCustomRepositoryImpl implements OrderCustomRepository {
     log.debug("전체 카운트: {}", total);
 
     return new PageImpl<>(content, pageable, total != null ? total : 0);
+  }
+
+  @Override
+  public Optional<Order> findByMerchantUidAndUserId(String merchantUid, Long userId) {
+    QOrder qOrder = QOrder.order;
+
+    Order order =
+        jpaQueryFactory
+            .selectFrom(qOrder)
+            .where(qOrder.merchantUid.eq(merchantUid).and(qOrder.user.id.eq(userId)))
+            .fetchOne();
+
+    return Optional.ofNullable(order);
   }
 }

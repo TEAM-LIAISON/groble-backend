@@ -29,6 +29,15 @@ public class OrderReader {
             () -> new EntityNotFoundException("주문을 찾을 수 없습니다. Merchant UID: " + merchantUid));
   }
 
+  public Order getOrderByMerchantUidAndUserId(String merchantUid, Long userId) {
+    return orderCustomRepository
+        .findByMerchantUidAndUserId(merchantUid, userId)
+        .orElseThrow(
+            () ->
+                new EntityNotFoundException(
+                    "주문을 찾을 수 없습니다. Merchant UID: " + merchantUid + ", User ID: " + userId));
+  }
+
   public Page<FlatAdminOrderSummaryInfoDTO> getAllOrders(Pageable pageable) {
     return orderCustomRepository.findOrdersByPageable(pageable);
   }

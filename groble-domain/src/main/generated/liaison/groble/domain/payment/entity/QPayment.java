@@ -28,6 +28,8 @@ public class QPayment extends EntityPathBase<Payment> {
 
     public final StringPath cancelReason = createString("cancelReason");
 
+    public final DateTimePath<java.time.LocalDateTime> cancelRequestedAt = createDateTime("cancelRequestedAt", java.time.LocalDateTime.class);
+
     //inherited
     public final DateTimePath<java.time.LocalDateTime> createdAt = _super.createdAt;
 

@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import liaison.groble.application.terms.dto.MakerTermsAgreementDTO;
-import liaison.groble.application.terms.dto.TermsAgreementDto;
+import liaison.groble.application.terms.dto.TermsAgreementDTO;
 import liaison.groble.application.terms.service.TermsService;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.common.exception.EntityNotFoundException;
@@ -39,7 +39,7 @@ public class TermsServiceImpl implements TermsService {
   private final UserReader userReader;
 
   @Transactional
-  public TermsAgreementDto agreeToTerms(TermsAgreementDto dto) {
+  public TermsAgreementDTO agreeToTerms(TermsAgreementDTO dto) {
     User user = userReader.getUserById(dto.getUserId());
     // 문자열 타입을 domain TermsType으로 변환
     List<TermsType> termsTypes =
@@ -63,7 +63,7 @@ public class TermsServiceImpl implements TermsService {
   }
 
   @Transactional
-  public TermsAgreementDto withdrawTermsAgreement(TermsAgreementDto dto) {
+  public TermsAgreementDTO withdrawTermsAgreement(TermsAgreementDTO dto) {
     User user =
         userRepository
             .findById(dto.getUserId())
@@ -98,14 +98,14 @@ public class TermsServiceImpl implements TermsService {
   }
 
   @Transactional(readOnly = true)
-  public List<TermsAgreementDto> getUserTermsAgreements(Long userId) {
+  public List<TermsAgreementDTO> getUserTermsAgreements(Long userId) {
     List<UserTerms> agreements = userTermsRepository.findByUserId(userId);
 
     return agreements.stream().map(this::createTermsAgreementDto).collect(Collectors.toList());
   }
 
   @Transactional(readOnly = true)
-  public List<TermsAgreementDto> getActiveTerms() {
+  public List<TermsAgreementDTO> getActiveTerms() {
     List<Terms> activeTerms = termsRepository.findActiveTerms();
 
     return activeTerms.stream().map(this::createTermsDto).collect(Collectors.toList());
@@ -137,10 +137,10 @@ public class TermsServiceImpl implements TermsService {
   }
 
   // 약관 동의 DTO 생성 헬퍼 메서드
-  private TermsAgreementDto createTermsAgreementDto(UserTerms agreement) {
+  private TermsAgreementDTO createTermsAgreementDto(UserTerms agreement) {
     Terms terms = agreement.getTerms();
 
-    return TermsAgreementDto.builder()
+    return TermsAgreementDTO.builder()
         .id(terms.getId())
         .userId(agreement.getUser().getId())
         .typeString(terms.getType().name()) // TermsType을 문자열로 변환
@@ -158,8 +158,8 @@ public class TermsServiceImpl implements TermsService {
   }
 
   // 약관 DTO 생성 헬퍼 메서드 (동의 정보 없는 순수 약관 정보)
-  private TermsAgreementDto createTermsDto(Terms terms) {
-    return TermsAgreementDto.builder()
+  private TermsAgreementDTO createTermsDto(Terms terms) {
+    return TermsAgreementDTO.builder()
         .id(terms.getId())
         .typeString(terms.getType().name()) // TermsType을 문자열로 변환
         .title(terms.getTitle())
