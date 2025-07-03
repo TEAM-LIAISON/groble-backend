@@ -19,6 +19,7 @@ import liaison.groble.application.purchase.PurchaseService;
 import liaison.groble.application.purchase.dto.PurchaseContentCardDTO;
 import liaison.groble.application.purchase.dto.PurchasedContentDetailResponse;
 import liaison.groble.common.annotation.Auth;
+import liaison.groble.common.annotation.Logging;
 import liaison.groble.common.model.Accessor;
 import liaison.groble.common.response.GrobleResponse;
 import liaison.groble.common.response.PageResponse;
@@ -65,6 +66,11 @@ public class PurchaseController {
       summary = "[✅ 내 콘텐츠 - 구매 관리] 내가 구매한 콘텐츠의 판매자(메이커)에게 문의하기 버튼 액션",
       description = "내가 구매한 콘텐츠의 판매자에게 문의하기 버튼을 클릭했을 때의 액션입니다. 오픈 채팅, 인스타그램, 이메일 등 값이 반환됩니다.")
   @GetMapping(SELLER_CONTACT_INFO_PATH)
+  @Logging(
+      item = "Purchase",
+      action = "getSellerContactInfo",
+      includeParam = true,
+      includeResult = true)
   public ResponseEntity<GrobleResponse<ContactInfoResponse>> getSellerContactInfo(
       @Auth Accessor accessor, @Valid @PathVariable("merchantUid") String merchantUid) {
 
