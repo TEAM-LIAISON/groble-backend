@@ -57,6 +57,11 @@ public class PaymentService {
   public PaymentCancelInfoDTO getPaymentCancelInfo(Long userId, String merchantUid) {
     PayplePayment payplePayment = paymentReader.getPayplePaymentByOid(merchantUid);
     Order order = orderReader.getOrderByMerchantUidAndUserId(merchantUid, userId);
+
+    if (order.getStatus() != Order.OrderStatus.CANCEL_REQUEST) {
+      throw new IllegalStateException("취소 요청 상태가 아닌 주문입니다.");
+    }
+
     return buildPaymentCancelInfoDTO(merchantUid, order, payplePayment);
   }
 
