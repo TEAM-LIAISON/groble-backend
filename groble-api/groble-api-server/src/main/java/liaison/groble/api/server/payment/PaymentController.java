@@ -49,13 +49,14 @@ public class PaymentController {
   // Helper
   private final ResponseHelper responseHelper;
 
-  @Operation(summary = "구매자의 결제 취소 요청", description = "콘텐츠(코칭) 구매자가 결제 취소를 요청합니다.")
+  @Operation(summary = "[✅ 결제 취소 요청] 구매자의 결제 취소 요청", description = "콘텐츠(코칭에 한해) 구매자가 결제 취소를 요청합니다.")
   @Logging(item = "Payment", action = "Cancel", includeParam = true, includeResult = true)
   @PostMapping(PAYMENT_CANCEL_PATH)
   public ResponseEntity<GrobleResponse<Void>> requestPaymentCancel(
       @Auth Accessor accessor,
       @Valid @PathVariable("merchantUid") String merchantUid,
       @Valid @RequestBody PaymentCancelRequest request) {
+    // 결제 취소 요청 DTO로 변환
     PaymentCancelDTO paymentCancelDTO = paymentMapper.toPaymentCancelDTO(request);
 
     // 결제 취소 요청 처리
