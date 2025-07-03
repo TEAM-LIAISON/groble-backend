@@ -46,11 +46,36 @@ public class PurchaserReviewController {
 
   // Mapper
   private final PurchaserContentReviewMapper purchaserContentReviewMapper;
+
   // Service
   private final PurchaserReviewService purchaserReviewService;
 
   // Helper
   private final ResponseHelper responseHelper;
+
+  @Operation(
+      summary = "[❌ 내 콘텐츠 - 구매 관리 - 리뷰 수정] 내가 구매한 콘텐츠 리뷰 추가",
+      description = "내가 구매한 콘텐츠에 대해서 리뷰를 추가합니다.")
+  @Logging(
+      item = "PurchaserReview",
+      action = "addReview",
+      includeParam = true,
+      includeResult = true)
+  @PostMapping(PURCHASER_REVIEW_ADD_PATH)
+  public ResponseEntity<GrobleResponse<PurchaserContentReviewResponse>> addReview(
+      @Auth Accessor accessor,
+      @PathVariable("contentId") Long contentId,
+      @RequestBody PurchaserContentReviewRequest purchaserContentReviewRequest) {
+    PurchaserContentReviewDTO purchaserContentReviewDTO =
+        purchaserContentReviewMapper.toPurchaserContentReviewDTO(purchaserContentReviewRequest);
+    PurchaserContentReviewDTO addedReviewDTO =
+        purchaserReviewService.addReview(
+            accessor.getUserId(), contentId, purchaserContentReviewDTO);
+    PurchaserContentReviewResponse purchaserContentReviewResponse =
+        purchaserContentReviewMapper.toPurchaserContentReviewResponse(addedReviewDTO);
+    return responseHelper.success(
+        purchaserContentReviewResponse, PURCHASER_REVIEW_ADD_SUCCESS_MESSAGE, HttpStatus.CREATED);
+  }
 
   @Operation(
       summary = "[❌ 내 콘텐츠 - 구매 관리 - 리뷰 수정] 내가 작성한 콘텐츠의 리뷰 수정",
@@ -82,7 +107,11 @@ public class PurchaserReviewController {
   @Operation(
       summary = "[❌ 내 콘텐츠 - 구매 관리 - 리뷰 삭제] 내가 작성한 콘텐츠의 리뷰 삭제",
       description = "내가 구매한 콘텐츠에 대해서 작성한 리뷰를 삭제합니다.")
-  @Logging(item = "Review", action = "deleteReview", includeParam = true, includeResult = true)
+  @Logging(
+      item = "PurchaserReview",
+      action = "deleteReview",
+      includeParam = true,
+      includeResult = true)
   @PostMapping(PURCHASER_REVIEW_DELETE_PATH)
   public ResponseEntity<GrobleResponse<Void>> deleteReview(
       @Auth Accessor accessor,
