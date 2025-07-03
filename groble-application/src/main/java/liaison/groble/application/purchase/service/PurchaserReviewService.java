@@ -21,9 +21,13 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class PurchaserReviewService {
 
+  // Reader
   private final UserReader userReader;
   private final ContentReader contentReader;
   private final ContentReviewReader contentReviewReader;
+  private final PurchaseReader purchaseReader;
+
+  // Writer
   private final ContentReviewWriter contentReviewWriter;
 
   @Transactional
@@ -32,6 +36,10 @@ public class PurchaserReviewService {
 
     User user = userReader.getUserById(userId);
     Content content = contentReader.getContentById(contentId);
+
+    if (!purchaseReader.isContentPurchasedByUser(userId, contentId)) {
+      throw new IllegalArgumentException("사용자가 해당 콘텐츠를 구매하지 않았습니다.");
+    }
 
     ContentReview contentReview =
         ContentReview.builder()

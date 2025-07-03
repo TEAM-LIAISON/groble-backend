@@ -384,4 +384,20 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
 
     return Optional.ofNullable(result);
   }
+
+  @Override
+  public boolean existsByUserAndContent(Long userId, Long contentId) {
+
+    QPurchase qPurchase = QPurchase.purchase;
+    QContent qContent = QContent.content;
+    BooleanExpression conditions =
+        qPurchase.user.id.eq(userId).and(qPurchase.content.id.eq(contentId));
+    return queryFactory
+            .selectOne()
+            .from(qPurchase)
+            .leftJoin(qPurchase.content, qContent)
+            .where(conditions)
+            .fetchFirst()
+        != null;
+  }
 }

@@ -65,4 +65,8 @@ public class PurchaseReader {
                 new EntityNotFoundException(
                     "판매 관리 정보를 찾을 수 없습니다. User ID: " + userId + ", Content ID: " + contentId));
   }
+
+  public boolean isContentPurchasedByUser(Long userId, Long contentId) {
+    return purchaseCustomRepository.existsByUserAndContent(userId, contentId);
+  }
 }

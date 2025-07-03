@@ -30,4 +30,6 @@ public interface PurchaseCustomRepository {
       Long userId, Order.OrderStatus orderStatus, Pageable pageable);
 
   Optional<FlatSellManageDetailDTO> getSellManageDetail(Long userId, Long contentId);
+
+  boolean existsByUserAndContent(Long userId, Long contentId);
 }
