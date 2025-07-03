@@ -1,4 +1,4 @@
-package liaison.groble.application.payment.dto;
+package liaison.groble.application.payment.dto.cancel;
 
 import lombok.Builder;
 import lombok.Getter;

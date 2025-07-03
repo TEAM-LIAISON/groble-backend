@@ -6,12 +6,14 @@ import org.springframework.stereotype.Component;
 
 import liaison.groble.api.model.payment.request.PaymentCancelRequest;
 import liaison.groble.api.model.payment.request.PaypleAuthResultRequest;
-import liaison.groble.application.payment.dto.PaymentCancelDTO;
+import liaison.groble.api.model.payment.response.PaymentCancelInfoResponse;
 import liaison.groble.application.payment.dto.PaypleAuthResultDTO;
+import liaison.groble.application.payment.dto.cancel.PaymentCancelDTO;
+import liaison.groble.application.payment.dto.cancel.PaymentCancelInfoDTO;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-07-02T20:21:38+0900",
+    date = "2025-07-03T15:33:00+0900",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.10 (Amazon.com Inc.)")
 @Component
 public class PaymentMapperImpl implements PaymentMapper {
@@ -163,5 +165,40 @@ public class PaymentMapperImpl implements PaymentMapper {
     }
 
     return paymentCancelDTO.build();
+  }
+
+  @Override
+  public PaymentCancelInfoResponse toPaymentCancelInfoResponse(
+      PaymentCancelInfoDTO paymentCancelInfoDTO) {
+    if (paymentCancelInfoDTO == null) {
+      return null;
+    }
+
+    PaymentCancelInfoResponse.PaymentCancelInfoResponseBuilder paymentCancelInfoResponse =
+        PaymentCancelInfoResponse.builder();
+
+    if (paymentCancelInfoDTO.getMerchantUid() != null) {
+      paymentCancelInfoResponse.merchantUid(paymentCancelInfoDTO.getMerchantUid());
+    }
+    if (paymentCancelInfoDTO.getOriginalPrice() != null) {
+      paymentCancelInfoResponse.originalPrice(paymentCancelInfoDTO.getOriginalPrice());
+    }
+    if (paymentCancelInfoDTO.getDiscountPrice() != null) {
+      paymentCancelInfoResponse.discountPrice(paymentCancelInfoDTO.getDiscountPrice());
+    }
+    if (paymentCancelInfoDTO.getFinalPrice() != null) {
+      paymentCancelInfoResponse.finalPrice(paymentCancelInfoDTO.getFinalPrice());
+    }
+    if (paymentCancelInfoDTO.getPayType() != null) {
+      paymentCancelInfoResponse.payType(paymentCancelInfoDTO.getPayType());
+    }
+    if (paymentCancelInfoDTO.getPayCardName() != null) {
+      paymentCancelInfoResponse.payCardName(paymentCancelInfoDTO.getPayCardName());
+    }
+    if (paymentCancelInfoDTO.getPayCardNum() != null) {
+      paymentCancelInfoResponse.payCardNum(paymentCancelInfoDTO.getPayCardNum());
+    }
+
+    return paymentCancelInfoResponse.build();
   }
 }

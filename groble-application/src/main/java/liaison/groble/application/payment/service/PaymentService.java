@@ -1,9 +1,11 @@
 package liaison.groble.application.payment.service;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import liaison.groble.application.order.service.OrderReader;
-import liaison.groble.application.payment.dto.PaymentCancelDTO;
+import liaison.groble.application.payment.dto.cancel.PaymentCancelDTO;
+import liaison.groble.application.payment.dto.cancel.PaymentCancelInfoDTO;
 import liaison.groble.application.purchase.service.PurchaseReader;
 import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.order.enums.CancelReason;
@@ -25,6 +27,7 @@ public class PaymentService {
   private final PaymentReader paymentReader;
   private final PurchaseReader purchaseReader;
 
+  @Transactional
   public void requestPaymentCancel(
       Long userId, String merchantUid, PaymentCancelDTO paymentCancelDTO) {
     CancelReason cancelReason = parseCancelReason(paymentCancelDTO.getCancelReason());
@@ -48,6 +51,13 @@ public class PaymentService {
       log.error("결제 취소 처리 중 예상치 못한 오류 발생 - 주문번호: {}", merchantUid, e);
       throw e;
     }
+  }
+
+  @Transactional(readOnly = true)
+  public PaymentCancelInfoDTO getPaymentCancelInfo(Long userId, String merchantUid) {
+    PayplePayment payplePayment = paymentReader.getPayplePaymentByOid(merchantUid);
+    Order order = orderReader.getOrderByMerchantUidAndUserId(merchantUid, userId);
+    return buildPaymentCancelInfoDTO(merchantUid, order, payplePayment);
   }
 
   private void validateRequestCancellableStatus(Order order, PayplePayment payplePayment) {
@@ -86,5 +96,18 @@ public class PaymentService {
     } catch (IllegalArgumentException | NullPointerException e) {
       throw new IllegalArgumentException("유효하지 않은 취소 사유 유형입니다: " + cancelReason);
     }
+  }
+
+  private PaymentCancelInfoDTO buildPaymentCancelInfoDTO(
+      String merchantUid, Order order, PayplePayment payplePayment) {
+    return PaymentCancelInfoDTO.builder()
+        .merchantUid(merchantUid)
+        .originalPrice(order.getOriginalPrice())
+        .discountPrice(order.getDiscountPrice())
+        .finalPrice(order.getFinalPrice())
+        .payType(payplePayment.getPcdPayType())
+        .payCardName(payplePayment.getPcdPayCardName())
+        .payCardNum(payplePayment.getPcdPayCardNum())
+        .build();
   }
 }
