@@ -62,7 +62,7 @@ public class PurchaseController {
   private final ResponseHelper responseHelper;
 
   @Operation(
-      summary = "[❌ 내 콘텐츠 - 구매 관리] 내가 구매한 콘텐츠의 판매자(메이커)에게 문의하기 버튼 액션",
+      summary = "[✅ 내 콘텐츠 - 구매 관리] 내가 구매한 콘텐츠의 판매자(메이커)에게 문의하기 버튼 액션",
       description = "내가 구매한 콘텐츠의 판매자에게 문의하기 버튼을 클릭했을 때의 액션입니다. 오픈 채팅, 인스타그램, 이메일 등 값이 반환됩니다.")
   @GetMapping(SELLER_CONTACT_INFO_PATH)
   public ResponseEntity<GrobleResponse<ContactInfoResponse>> getSellerContactInfo(
