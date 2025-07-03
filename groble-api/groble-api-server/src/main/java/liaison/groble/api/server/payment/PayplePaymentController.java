@@ -21,6 +21,7 @@ import liaison.groble.application.payment.dto.PaypleAuthResultDTO;
 import liaison.groble.application.payment.exception.PayplePaymentAuthException;
 import liaison.groble.application.payment.service.PayplePaymentService;
 import liaison.groble.common.annotation.Auth;
+import liaison.groble.common.annotation.Logging;
 import liaison.groble.common.model.Accessor;
 import liaison.groble.common.response.GrobleResponse;
 import liaison.groble.common.response.ResponseHelper;
@@ -72,6 +73,11 @@ public class PayplePaymentController {
                     mediaType = "application/json",
                     schema = @Schema(implementation = AppCardPayplePaymentResponse.class)))
       })
+  @Logging(
+      item = "Payment",
+      action = "AppCardPaymentRequest",
+      includeParam = true,
+      includeResult = true)
   @PostMapping(APP_CARD_REQUEST_PATH)
   public ResponseEntity<GrobleResponse<AppCardPayplePaymentResponse>> requestAppCardPayment(
       @Auth Accessor accessor,
