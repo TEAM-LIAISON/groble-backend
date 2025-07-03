@@ -1,4 +1,4 @@
-package liaison.groble.application.purchase;
+package liaison.groble.application.purchase.service;
 
 import java.util.List;
 
@@ -11,7 +11,6 @@ import liaison.groble.application.market.dto.ContactInfoDTO;
 import liaison.groble.application.order.service.OrderReader;
 import liaison.groble.application.purchase.dto.PurchaseContentCardDTO;
 import liaison.groble.application.purchase.dto.PurchasedContentDetailResponse;
-import liaison.groble.application.purchase.service.PurchaseReader;
 import liaison.groble.application.sell.SellerContactReader;
 import liaison.groble.common.exception.ContactNotFoundException;
 import liaison.groble.common.response.PageResponse;

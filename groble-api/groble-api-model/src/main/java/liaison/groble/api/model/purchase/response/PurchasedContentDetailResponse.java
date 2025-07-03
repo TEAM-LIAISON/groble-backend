@@ -121,11 +121,8 @@ public class PurchasedContentDetailResponse {
       requiredMode = Schema.RequiredMode.REQUIRED)
   private BigDecimal finalPrice;
 
-  // 결제 수단 상세 정보 (카드사명, 은행명 등)
-  @Schema(
-      description = "결제 수단 상세 정보",
-      example = "신용카드 (롯데카드/일시불)",
-      type = "string",
-      requiredMode = Schema.RequiredMode.REQUIRED)
-  private String methodDetail;
+  // 결제 수단 상세 정보
+  private String payType;
+  private String payCardName;
+  private String payCardNum;
 }

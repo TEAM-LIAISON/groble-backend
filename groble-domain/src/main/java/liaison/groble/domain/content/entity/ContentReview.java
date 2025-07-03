@@ -66,4 +66,9 @@ public class ContentReview extends BaseTimeEntity {
 
   @Column(name = "deletion_requested_at")
   private LocalDateTime deletionRequestedAt;
+
+  public void updateReview(BigDecimal rating, String reviewContent) {
+    this.rating = rating;
+    this.reviewContent = reviewContent;
+  }
 }

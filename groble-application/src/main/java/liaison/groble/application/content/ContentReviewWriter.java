@@ -16,4 +16,8 @@ public class ContentReviewWriter {
   public void updateContentReviewStatusToDeleteRequested(Long userId, Long reviewId) {
     contentReviewCustomRepository.updateContentReviewStatusToDeleteRequested(userId, reviewId);
   }
+
+  public void deleteContentReview(Long userId, Long reviewId) {
+    contentReviewCustomRepository.deleteContentReview(userId, reviewId);
+  }
 }
