@@ -6,6 +6,7 @@ import liaison.groble.application.order.service.OrderReader;
 import liaison.groble.application.payment.dto.PaymentCancelDTO;
 import liaison.groble.application.purchase.service.PurchaseReader;
 import liaison.groble.domain.order.entity.Order;
+import liaison.groble.domain.order.enums.CancelReason;
 import liaison.groble.domain.payment.entity.Payment;
 import liaison.groble.domain.payment.entity.PayplePayment;
 import liaison.groble.domain.payment.enums.PayplePaymentStatus;
@@ -26,9 +27,11 @@ public class PaymentService {
 
   public void requestPaymentCancel(
       Long userId, String merchantUid, PaymentCancelDTO paymentCancelDTO) {
-    log.info("결제 취소 요청 처리 시작 - 주문번호: {}, 사유: {}", merchantUid, paymentCancelDTO.getCancelReason());
+    CancelReason cancelReason = parseCancelReason(paymentCancelDTO.getCancelReason());
+
+    log.info("결제 취소 요청 처리 시작 - 주문번호: {}, 사유: {}", merchantUid, cancelReason.getDescription());
     try {
-      Order order = orderReader.getOrderByMerchantUid(merchantUid);
+      Order order = orderReader.getOrderByMerchantUidAndUserId(merchantUid, userId);
       PayplePayment payplePayment = paymentReader.getPayplePaymentByOid(merchantUid);
       Purchase purchase = purchaseReader.getPurchaseByOrderId(order.getId());
 
@@ -37,7 +40,7 @@ public class PaymentService {
 
       // 환불 요청
       handlePaymentCancelSuccess(
-          order, payplePayment, purchase, paymentCancelDTO.getCancelReason());
+          order, payplePayment, purchase, cancelReason, paymentCancelDTO.getDetailReason());
     } catch (IllegalArgumentException | IllegalStateException e) {
       log.warn("결제 취소 처리 실패 - 주문번호: {}, 사유: {}", merchantUid, e.getMessage());
       throw e;
@@ -66,11 +69,22 @@ public class PaymentService {
   }
 
   private void handlePaymentCancelSuccess(
-      Order order, PayplePayment payplePayment, Purchase purchase, String reason) {
-    // 1. Payment 취소 처리
+      Order order,
+      PayplePayment payplePayment,
+      Purchase purchase,
+      CancelReason cancelReason,
+      String detailReason) {
     Payment payment = order.getPayment();
-    payment.cancelRequest(reason);
-    order.cancelRequestOrder(reason);
-    purchase.cancelRequest(reason);
+    payment.cancelRequest(cancelReason.getDescription());
+    order.cancelRequestOrder(cancelReason, detailReason);
+    purchase.cancelRequest(cancelReason.getDescription());
+  }
+
+  private CancelReason parseCancelReason(String cancelReason) {
+    try {
+      return CancelReason.valueOf(cancelReason.toUpperCase());
+    } catch (IllegalArgumentException | NullPointerException e) {
+      throw new IllegalArgumentException("유효하지 않은 취소 사유 유형입니다: " + cancelReason);
+    }
   }
 }
