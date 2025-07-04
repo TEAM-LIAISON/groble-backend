@@ -24,6 +24,7 @@ public class PaypleAuthResultDTO {
   private String payCofUrl; // 승인 요청 URL
   private String payDiscount; // 할인 금액
   private String payEasyPayMethod; // 선택한 결제 수단의 상세 유형
+  private String easyPayMethod;
   private String payerNo; // 회원번호
   private String payAmount; // 결제금액
   private String payAmountReal; // 실제 결제금액

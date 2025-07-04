@@ -62,6 +62,10 @@ public class PaypleAuthResultRequest {
 
   @Schema(description = "선택한 결제 수단의 상세 유형", example = "card")
   @JsonProperty("PCD_EASY_PAY_METHOD")
+  private String easyPayMethod;
+
+  @Schema(description = "선택한 결제 수단의 상세 유형", example = "card")
+  @JsonProperty("PCD_PAY_EASY_PAY_METHOD")
   private String payEasyPayMethod;
 
   @Schema(description = "회원번호", example = "12345")
