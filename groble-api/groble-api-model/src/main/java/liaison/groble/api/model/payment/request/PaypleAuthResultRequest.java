@@ -48,6 +48,10 @@ public class PaypleAuthResultRequest {
   @JsonProperty("PCD_PAY_REQKEY")
   private String payReqKey;
 
+  @Schema(description = "결제 요청 시간", example = "REQ_KEY_456")
+  @JsonProperty("PCD_PAY_REQ_TIME")
+  private String payReqTime;
+
   @Schema(description = "페이플 접속 호스트 주소", example = "https://payple.com")
   @JsonProperty("PCD_PAY_HOST")
   private String payHost;
@@ -59,6 +63,10 @@ public class PaypleAuthResultRequest {
   @Schema(description = "할인 금액", example = "1000")
   @JsonProperty("PCD_PAY_DISCOUNT")
   private String payDiscount;
+
+  @Schema(description = "선택한 결제 수단의 상세 유형", example = "card")
+  @JsonProperty("PCD_EASY_PAY_METHOD")
+  private String easyPayMethod;
 
   @Schema(description = "선택한 결제 수단의 상세 유형", example = "card")
   @JsonProperty("PCD_PAY_EASY_PAY_METHOD")
@@ -159,6 +167,10 @@ public class PaypleAuthResultRequest {
   @Schema(description = "결과 전송 URL", example = "https://yourapp.com/payment/result")
   @JsonProperty("PCD_RST_URL")
   private String rstUrl;
+
+  @Schema(description = "결과 전송 URL", example = "/payment-result")
+  @JsonProperty("resultUrl")
+  private String resultUrl;
 
   @Schema(description = "사용자 정의 필드1", example = "custom1")
   @JsonProperty("PCD_USER_DEFINE1")
