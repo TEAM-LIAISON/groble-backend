@@ -369,7 +369,7 @@ public class PayplePaymentService {
         .pcdPayerHp(dto.getPayerHp())
         .pcdPayerEmail(dto.getPayerEmail())
         .pcdPayOid(dto.getPayOid())
-        .pcdEasyPayMethod(dto.getPayEasyPayMethod())
+        .pcdEasyPayMethod(dto.getEasyPayMethod())
         .pcdPayGoods(dto.getPayGoods())
         .pcdPayTotal(dto.getPayTotal())
         .pcdPayTaxTotal(dto.getPayTaxTotal())
