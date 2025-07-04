@@ -168,6 +168,10 @@ public class PaypleAuthResultRequest {
   @JsonProperty("PCD_RST_URL")
   private String rstUrl;
 
+  @Schema(description = "결과 전송 URL", example = "/payment-result")
+  @JsonProperty("resultUrl")
+  private String resultUrl;
+
   @Schema(description = "사용자 정의 필드1", example = "custom1")
   @JsonProperty("PCD_USER_DEFINE1")
   private String userDefine1;
