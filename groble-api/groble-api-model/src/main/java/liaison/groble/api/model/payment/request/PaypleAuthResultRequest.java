@@ -48,6 +48,10 @@ public class PaypleAuthResultRequest {
   @JsonProperty("PCD_PAY_REQKEY")
   private String payReqKey;
 
+  @Schema(description = "결제 요청 시간", example = "REQ_KEY_456")
+  @JsonProperty("PCD_PAY_REQ_TIME")
+  private String payReqTime;
+
   @Schema(description = "페이플 접속 호스트 주소", example = "https://payple.com")
   @JsonProperty("PCD_PAY_HOST")
   private String payHost;

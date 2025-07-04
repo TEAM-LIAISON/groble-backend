@@ -20,6 +20,7 @@ public class PaypleAuthResultDTO {
   private String payWork; // CERT
   private String authKey; // 파트너 인증 키
   private String payReqKey; // 결제 키
+  private String payReqTime; // 결제 요청 시간
   private String payHost; // 페이플 접속 주소
   private String payCofUrl; // 승인 요청 URL
   private String payDiscount; // 할인 금액
