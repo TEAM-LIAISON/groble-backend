@@ -49,13 +49,15 @@ import lombok.extern.slf4j.Slf4j;
 public class MarketController {
 
   // API 경로 상수화
-  private static final String MARKET_EDIT_INTRO_PATH = "/intro";
+  private static final String MARKET_EDIT_INTRO_PATH = "/edit/intro";
   private static final String MARKET_INTRO_PATH = "/intro/{marketName}";
   private static final String MARKET_CONTENTS_PATH = "/contents/{marketName}";
   private static final String MARKET_EDIT_PATH = "/edit";
   private static final String MARKET_LINK_CHECK_PATH = "/link-check";
 
   // 응답 메시지 상수화
+  private static final String MARKET_EDIT_INTRO_SUCCESS_MESSAGE =
+      "마켓 수정창 화면에서 메이커 정보 및 대표 콘텐츠 조회에 성공했습니다.";
   private static final String MARKET_INTRO_SUCCESS_MESSAGE =
       "마켓 뷰어 화면에서 메이커 정보 및 대표 콘텐츠 조회에 성공했습니다.";
   private static final String MARKET_CONTENTS_SUCCESS_MESSAGE = "마켓 뷰어 화면에서 콘텐츠 목록 전체 조회에 성공했습니다.";
@@ -79,7 +81,7 @@ public class MarketController {
     MarketIntroSectionDTO dto = marketService.getEditIntroSection(accessor.getUserId());
     MakerIntroSectionResponse response = marketMapper.toMakerIntroSectionResponse(dto);
 
-    return responseHelper.success(response, MARKET_INTRO_SUCCESS_MESSAGE, HttpStatus.OK);
+    return responseHelper.success(response, MARKET_EDIT_INTRO_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 
   @Operation(
