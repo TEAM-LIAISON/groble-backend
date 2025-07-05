@@ -35,11 +35,25 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class MarketService {
 
+  // Reader
   private final MakerReader makerReader;
   private final SellerContactReader sellerContactReader;
-  private final SellerContactRepository sellerContactRepository;
   private final ContentReader contentReader;
   private final UserReader userReader;
+  private final SellerContactRepository sellerContactRepository;
+
+  @Transactional(readOnly = true)
+  public MarketIntroSectionDTO getEditIntroSection(Long userId) {
+    User user = userReader.getUserById(userId);
+    // 문의하기 정보 조회
+    ContactInfoDTO contactInfo = getContactInfo(user);
+
+    // 대표 콘텐츠 조회
+    FlatContentPreviewDTO representativeContent = getRepresentativeContent(user);
+
+    // 메이커 소개 섹션 빌드 결과
+    return buildMarketIntroSectionResult(user, contactInfo, representativeContent);
+  }
 
   @Transactional(readOnly = true)
   public MarketIntroSectionDTO getViewerMakerIntroSection(String marketName) {
@@ -166,7 +180,6 @@ public class MarketService {
   // TODO : 2회 이상 재사용되는 메서드 MarketService, PurchaseService 2곳에서 사용
   private ContactInfoDTO getContactInfo(User user) {
     try {
-      // TODO: SellerContactReader를 통해 연락처 정보 조회
       List<SellerContact> contacts = sellerContactReader.getContactsByUser(user);
       return ContactInfoDTO.from(contacts);
     } catch (Exception e) {

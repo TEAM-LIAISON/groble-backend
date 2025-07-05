@@ -49,6 +49,7 @@ import lombok.extern.slf4j.Slf4j;
 public class MarketController {
 
   // API 경로 상수화
+  private static final String MARKET_EDIT_INTRO_PATH = "/intro";
   private static final String MARKET_INTRO_PATH = "/intro/{marketName}";
   private static final String MARKET_CONTENTS_PATH = "/contents/{marketName}";
   private static final String MARKET_EDIT_PATH = "/edit";
@@ -65,6 +66,21 @@ public class MarketController {
   private final MarketMapper marketMapper;
   private final MarketService marketService;
   private final ResponseHelper responseHelper;
+
+  @Operation(
+      summary = "[✅ 마켓 관리] 마켓 수정창 화면에서 메이커 정보 및 대표 콘텐츠 조회",
+      description = "마켓 수정창 화면에서 메이커 정보를 조회하고 대표 콘텐츠가 존재한다면, 대표 콘텐츠 1개에 대한 정보를 반환합니다.")
+  @ApiResponse(
+      responseCode = "200",
+      content = @Content(schema = @Schema(implementation = MakerIntroSectionResponse.class)))
+  @GetMapping(MARKET_EDIT_INTRO_PATH)
+  public ResponseEntity<GrobleResponse<MakerIntroSectionResponse>> getEditIntroSection(
+      @Auth Accessor accessor) {
+    MarketIntroSectionDTO dto = marketService.getEditIntroSection(accessor.getUserId());
+    MakerIntroSectionResponse response = marketMapper.toMakerIntroSectionResponse(dto);
+
+    return responseHelper.success(response, MARKET_INTRO_SUCCESS_MESSAGE, HttpStatus.OK);
+  }
 
   @Operation(
       summary = "[✅ 마켓 관리] 마켓 뷰어 화면에서 메이커 정보 및 대표 콘텐츠 조회",
