@@ -11,11 +11,6 @@ public class OrderCancelActionValidator
   private static final Set<String> VALID_ACTIONS = Set.of("approve", "reject");
 
   @Override
-  public void initialize(ValidOrderCancelAction constraintAnnotation) {
-    // 초기화 로직이 필요한 경우 구현
-  }
-
-  @Override
   public boolean isValid(String action, ConstraintValidatorContext context) {
     if (action == null) {
       return false;

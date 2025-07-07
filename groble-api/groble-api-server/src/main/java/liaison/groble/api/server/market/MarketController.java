@@ -61,9 +61,14 @@ public class MarketController {
   private static final String MARKET_EDIT_SUCCESS_MESSAGE = "마켓 관리 수정창에서 수정 완료 항목을 저장했습니다.";
   private static final String MARKET_LINK_CHECK_SUCCESS_MESSAGE = "사용 가능한 마켓 링크입니다.";
 
+  // Service
+  private final MarketService marketService;
+
+  // Mapper
   private final ContentMapper contentMapper;
   private final MarketMapper marketMapper;
-  private final MarketService marketService;
+
+  // Helper
   private final ResponseHelper responseHelper;
 
   @Operation(

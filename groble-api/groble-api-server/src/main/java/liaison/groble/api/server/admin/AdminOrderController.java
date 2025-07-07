@@ -1,13 +1,8 @@
 package liaison.groble.api.server.admin;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
 import jakarta.validation.Valid;
 
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -32,7 +27,8 @@ import liaison.groble.common.model.Accessor;
 import liaison.groble.common.response.GrobleResponse;
 import liaison.groble.common.response.PageResponse;
 import liaison.groble.common.response.ResponseHelper;
-import liaison.groble.mapping.admin.AdminMapper;
+import liaison.groble.common.utils.PageUtils;
+import liaison.groble.mapping.admin.AdminOrderMapper;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -61,7 +57,7 @@ public class AdminOrderController {
   private final AdminOrderService adminOrderService;
 
   // Mapper
-  private final AdminMapper adminMapper;
+  private final AdminOrderMapper adminOrderMapper;
 
   // Helper
   private final ResponseHelper responseHelper;
@@ -81,10 +77,10 @@ public class AdminOrderController {
       @Parameter(description = "정렬 기준 (property,direction)", example = "createdAt,desc")
           @RequestParam(value = "sort", defaultValue = "createdAt")
           String sort) {
-    Pageable pageable = createPageable(page, size, sort);
+    Pageable pageable = PageUtils.createPageable(page, size, sort);
     PageResponse<AdminOrderSummaryInfoDTO> infoDtoPage = adminOrderService.getAllOrders(pageable);
     PageResponse<AdminOrderSummaryInfoResponse> responsePage =
-        toAdminOrderSummaryInfoResponsePage(infoDtoPage);
+        adminOrderMapper.toAdminOrderSummaryInfoResponsePage(infoDtoPage);
 
     return ResponseEntity.ok(GrobleResponse.success(responsePage));
   }
@@ -126,59 +122,7 @@ public class AdminOrderController {
     AdminOrderCancelRequestDTO adminOrderCancelRequestDTO =
         adminOrderService.handleCancelRequestOrder(merchantUid, action);
     AdminOrderCancelRequestResponse response =
-        adminMapper.toAdminOrderCancelRequestResponse(adminOrderCancelRequestDTO);
+        adminOrderMapper.toAdminOrderCancelRequestResponse(adminOrderCancelRequestDTO);
     return responseHelper.success(response, CANCEL_REQUEST_ORDER_RESPONSE_MESSAGE, HttpStatus.OK);
-  }
-
-  private Pageable createPageable(int page, int size, String sort) {
-    // sort 파라미터가 없거나 빈 문자열인 경우 기본값 설정
-    if (sort == null || sort.isBlank()) {
-      sort = "createdAt";
-    }
-
-    // "property,direction" 형태로 분리
-    String[] parts = sort.split(",");
-    String property = parts[0].trim();
-    Sort.Direction direction = Sort.Direction.DESC; // 기본 방향
-
-    // direction 지정이 있으면 파싱 시도
-    if (parts.length > 1 && !parts[1].isBlank()) {
-      try {
-        direction = Sort.Direction.fromString(parts[1].trim());
-      } catch (IllegalArgumentException e) {
-        log.warn("잘못된 정렬 방향: {}. DESC로 설정합니다.", parts[1].trim());
-      }
-    }
-
-    return PageRequest.of(page, size, Sort.by(direction, property));
-  }
-
-  private PageResponse<AdminOrderSummaryInfoResponse> toAdminOrderSummaryInfoResponsePage(
-      PageResponse<AdminOrderSummaryInfoDTO> dtoPage) {
-    List<AdminOrderSummaryInfoResponse> items =
-        dtoPage.getItems().stream()
-            .map(this::toAdminOrderSummaryInfoResponseFromDto)
-            .collect(Collectors.toList());
-
-    return PageResponse.<AdminOrderSummaryInfoResponse>builder()
-        .items(items)
-        .pageInfo(dtoPage.getPageInfo())
-        .meta(dtoPage.getMeta())
-        .build();
-  }
-
-  private AdminOrderSummaryInfoResponse toAdminOrderSummaryInfoResponseFromDto(
-      AdminOrderSummaryInfoDTO infoDto) {
-    return AdminOrderSummaryInfoResponse.builder()
-        .contentId(infoDto.getContentId())
-        .merchantUid(infoDto.getMerchantUid())
-        .createdAt(infoDto.getCreatedAt())
-        .contentType(infoDto.getContentType())
-        .contentStatus(infoDto.getContentStatus())
-        .purchaserName(infoDto.getPurchaserName())
-        .contentTitle(infoDto.getContentTitle())
-        .finalPrice(infoDto.getFinalPrice())
-        .orderStatus(infoDto.getOrderStatus())
-        .build();
   }
 }
