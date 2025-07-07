@@ -16,13 +16,11 @@ import org.springframework.web.bind.annotation.RestController;
 import liaison.groble.api.model.content.response.ContentPreviewCardResponse;
 import liaison.groble.api.model.content.response.swagger.ContentListResponse;
 import liaison.groble.api.model.maker.request.MarketEditRequest;
-import liaison.groble.api.model.maker.request.MarketLinkCheckRequest;
 import liaison.groble.api.model.maker.response.MakerIntroSectionResponse;
 import liaison.groble.application.content.dto.ContentCardDTO;
 import liaison.groble.application.market.MarketService;
 import liaison.groble.application.market.dto.MarketEditDTO;
 import liaison.groble.application.market.dto.MarketIntroSectionDTO;
-import liaison.groble.application.market.dto.MarketLinkCheckDTO;
 import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.model.Accessor;
 import liaison.groble.common.response.GrobleResponse;
@@ -33,7 +31,6 @@ import liaison.groble.mapping.content.ContentMapper;
 import liaison.groble.mapping.market.MarketMapper;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -130,9 +127,7 @@ public class MarketController {
       description = "마켓 관리 수정창에서 수정 완료한 항목을 저장합니다.")
   @PostMapping(MARKET_EDIT_PATH)
   public ResponseEntity<GrobleResponse<Void>> editMarket(
-      @Auth Accessor accessor,
-      @Parameter(description = "마켓 수정 정보", required = true) @Valid @RequestBody
-          MarketEditRequest marketEditRequest) {
+      @Auth Accessor accessor, @Valid @RequestBody MarketEditRequest marketEditRequest) {
 
     MarketEditDTO marketEditDTO = marketMapper.toMarketEditDTO(marketEditRequest);
     marketService.editMarket(accessor.getUserId(), marketEditDTO);
@@ -145,12 +140,9 @@ public class MarketController {
       description = "마켓 관리에서 사용 가능한 마켓 링크를 확인합니다. 이미 사용 중인 링크는 사용할 수 없습니다.")
   @GetMapping(MARKET_LINK_CHECK_PATH)
   public ResponseEntity<GrobleResponse<Void>> checkMarketLink(
-      @Parameter(description = "마켓 수정 정보", required = true) @Valid @RequestBody
-          MarketLinkCheckRequest marketLinkCheckRequest) {
+      @RequestParam("marketLinkUrl") String marketLinkUrl) {
 
-    MarketLinkCheckDTO marketLinkCheckDTO =
-        marketMapper.toMarketLinkCheckDTO(marketLinkCheckRequest);
-    marketService.checkMarketLink(marketLinkCheckDTO);
+    marketService.checkMarketLink(marketLinkUrl);
 
     return responseHelper.success(null, MARKET_LINK_CHECK_SUCCESS_MESSAGE, HttpStatus.OK);
   }

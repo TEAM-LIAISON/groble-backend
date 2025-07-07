@@ -13,7 +13,6 @@ import liaison.groble.application.content.dto.ContentCardDTO;
 import liaison.groble.application.market.dto.ContactInfoDTO;
 import liaison.groble.application.market.dto.MarketEditDTO;
 import liaison.groble.application.market.dto.MarketIntroSectionDTO;
-import liaison.groble.application.market.dto.MarketLinkCheckDTO;
 import liaison.groble.application.sell.SellerContactReader;
 import liaison.groble.application.user.service.MakerReader;
 import liaison.groble.application.user.service.UserReader;
@@ -51,6 +50,10 @@ public class MarketService {
     // 대표 콘텐츠 조회
     FlatContentPreviewDTO representativeContent = getRepresentativeContent(user);
 
+    // 나의 모든 콘텐츠 조회
+    //      List<FlatContentPreviewDTO> myContents =
+    // contentReader.findallMarketContentsByUserId(userId);
+
     // 메이커 소개 섹션 빌드 결과
     return buildMarketIntroSectionResult(user, contactInfo, representativeContent);
   }
@@ -76,7 +79,7 @@ public class MarketService {
     User user = makerReader.getUserByMarketLinkUrl(marketLinkUrl);
     log.info("userId: {}, marketLinkUrl: {}", user.getId(), marketLinkUrl);
     Page<FlatContentPreviewDTO> page =
-        contentReader.findAllMarketContentsByUserId(user.getId(), pageable);
+        contentReader.findAllMarketContentsByUserIdWithPaging(user.getId(), pageable);
     List<ContentCardDTO> items =
         page.getContent().stream().map(this::convertFlatDtoToCardDto).toList();
 
@@ -130,8 +133,8 @@ public class MarketService {
     }
   }
 
-  public void checkMarketLink(MarketLinkCheckDTO marketLinkCheckDTO) {
-    if (userReader.existsByMarketLinkUrl(marketLinkCheckDTO.getMarketLinkUrl())) {
+  public void checkMarketLink(String marketLinkUrl) {
+    if (userReader.existsByMarketLinkUrl(marketLinkUrl)) {
       throw new DuplicateMarketLinkException("이미 사용 중인 링크입니다.");
     }
   }

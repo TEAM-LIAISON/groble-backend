@@ -21,7 +21,7 @@ import liaison.groble.api.model.admin.response.AdminOrderCancelRequestResponse;
 import liaison.groble.api.model.admin.response.AdminOrderCancellationReasonResponse;
 import liaison.groble.api.model.admin.response.AdminOrderSummaryInfoResponse;
 import liaison.groble.api.model.admin.response.swagger.AdminOrderSummaryInfo;
-import liaison.groble.api.model.order.validation.ValidOrderCancelAction;
+import liaison.groble.api.model.admin.validation.ValidOrderCancelAction;
 import liaison.groble.application.admin.dto.AdminOrderCancelRequestDTO;
 import liaison.groble.application.admin.dto.AdminOrderCancellationReasonDto;
 import liaison.groble.application.admin.dto.AdminOrderSummaryInfoDTO;
@@ -36,6 +36,7 @@ import liaison.groble.mapping.admin.AdminMapper;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -106,8 +107,6 @@ public class AdminOrderController {
   }
 
   // 3. 결제 취소 요청 주문 (승인 및 거절)
-  // 승인 -> 페이플 실결제 취소 API 호출
-  // 거절 -> 주문 상태를 다시 결제 완료로 설정
   @Operation(
       summary = "[✅ 관리자 주문 관리] 결제 취소 요청 주문 승인 및 거절",
       description = "결제 취소 요청 주문을 승인하거나 거절합니다.")
@@ -116,7 +115,13 @@ public class AdminOrderController {
   public ResponseEntity<GrobleResponse<AdminOrderCancelRequestResponse>> cancelRequestOrder(
       @Auth Accessor accessor,
       @Valid @PathVariable("merchantUid") String merchantUid,
-      @ValidOrderCancelAction @RequestParam(value = "action") String action) {
+      @ValidOrderCancelAction
+          @Parameter(
+              description = "취소 요청 처리 액션",
+              required = true,
+              schema = @Schema(allowableValues = {"approve", "reject"}))
+          @RequestParam(value = "action")
+          String action) {
 
     AdminOrderCancelRequestDTO adminOrderCancelRequestDTO =
         adminOrderService.handleCancelRequestOrder(merchantUid, action);

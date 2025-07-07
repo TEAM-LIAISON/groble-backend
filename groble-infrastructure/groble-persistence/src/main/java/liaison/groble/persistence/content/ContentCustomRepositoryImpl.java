@@ -471,7 +471,8 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
   }
 
   @Override
-  public Page<FlatContentPreviewDTO> findAllMarketContentsByUserId(Long userId, Pageable pageable) {
+  public Page<FlatContentPreviewDTO> findAllMarketContentsByUserIdWithPaging(
+      Long userId, Pageable pageable) {
     QContent qContent = QContent.content;
     QUser qUser = QUser.user;
     QContentOption qContentOption = QContentOption.contentOption;

@@ -1,4 +1,4 @@
-package liaison.groble.api.model.order.validation;
+package liaison.groble.api.model.admin.validation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

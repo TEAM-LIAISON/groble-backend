@@ -1,4 +1,4 @@
-package liaison.groble.api.model.order.validation;
+package liaison.groble.api.model.admin.validation;
 
 import java.util.Set;
 
