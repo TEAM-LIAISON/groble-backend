@@ -8,24 +8,31 @@ import jakarta.validation.Valid;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import liaison.groble.api.model.admin.response.AdminOrderCancelRequestResponse;
 import liaison.groble.api.model.admin.response.AdminOrderCancellationReasonResponse;
 import liaison.groble.api.model.admin.response.AdminOrderSummaryInfoResponse;
 import liaison.groble.api.model.admin.response.swagger.AdminOrderSummaryInfo;
+import liaison.groble.api.model.order.validation.ValidOrderCancelAction;
+import liaison.groble.application.admin.dto.AdminOrderCancelRequestDTO;
 import liaison.groble.application.admin.dto.AdminOrderCancellationReasonDto;
-import liaison.groble.application.admin.dto.AdminOrderSummaryInfoDto;
+import liaison.groble.application.admin.dto.AdminOrderSummaryInfoDTO;
 import liaison.groble.application.admin.service.AdminOrderService;
 import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.annotation.RequireRole;
 import liaison.groble.common.model.Accessor;
 import liaison.groble.common.response.GrobleResponse;
 import liaison.groble.common.response.PageResponse;
+import liaison.groble.common.response.ResponseHelper;
+import liaison.groble.mapping.admin.AdminMapper;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -41,7 +48,22 @@ import lombok.extern.slf4j.Slf4j;
     name = "[✅ 관리자] 모든 주문을 조회하고 취소 사유 조회 기능 API",
     description = "모든 주문 목록을 조회하고, 취소 요청 및 환불 완료 주문에 대한 사유를 조회하는 API입니다.")
 public class AdminOrderController {
+
+  // API 경로 상수화
+  private static final String CANCEL_REQUEST_ORDER_PATH = "/order/{merchantUid}/cancel-request";
+
+  // 응답 메시지 상수화
+  private static final String CANCEL_REQUEST_ORDER_RESPONSE_MESSAGE =
+      "결제 취소 요청 주문에 대한 승인 및 거절 처리에 성공했습니다.";
+
+  // Service
   private final AdminOrderService adminOrderService;
+
+  // Mapper
+  private final AdminMapper adminMapper;
+
+  // Helper
+  private final ResponseHelper responseHelper;
 
   // 1. 주문 목록 전체 조회 (결제 완료 이후에 대한 주문만 모두 조회 가능)
   @AdminOrderSummaryInfo
@@ -59,7 +81,7 @@ public class AdminOrderController {
           @RequestParam(value = "sort", defaultValue = "createdAt")
           String sort) {
     Pageable pageable = createPageable(page, size, sort);
-    PageResponse<AdminOrderSummaryInfoDto> infoDtoPage = adminOrderService.getAllOrders(pageable);
+    PageResponse<AdminOrderSummaryInfoDTO> infoDtoPage = adminOrderService.getAllOrders(pageable);
     PageResponse<AdminOrderSummaryInfoResponse> responsePage =
         toAdminOrderSummaryInfoResponsePage(infoDtoPage);
 
@@ -81,6 +103,26 @@ public class AdminOrderController {
             .build();
 
     return ResponseEntity.ok(GrobleResponse.success(reasonResponse));
+  }
+
+  // 3. 결제 취소 요청 주문 (승인 및 거절)
+  // 승인 -> 페이플 실결제 취소 API 호출
+  // 거절 -> 주문 상태를 다시 결제 완료로 설정
+  @Operation(
+      summary = "[✅ 관리자 주문 관리] 결제 취소 요청 주문 승인 및 거절",
+      description = "결제 취소 요청 주문을 승인하거나 거절합니다.")
+  @RequireRole("ROLE_ADMIN")
+  @PostMapping(CANCEL_REQUEST_ORDER_PATH)
+  public ResponseEntity<GrobleResponse<AdminOrderCancelRequestResponse>> cancelRequestOrder(
+      @Auth Accessor accessor,
+      @Valid @PathVariable("merchantUid") String merchantUid,
+      @ValidOrderCancelAction @RequestParam(value = "action") String action) {
+
+    AdminOrderCancelRequestDTO adminOrderCancelRequestDTO =
+        adminOrderService.handleCancelRequestOrder(merchantUid, action);
+    AdminOrderCancelRequestResponse response =
+        adminMapper.toAdminOrderCancelRequestResponse(adminOrderCancelRequestDTO);
+    return responseHelper.success(response, CANCEL_REQUEST_ORDER_RESPONSE_MESSAGE, HttpStatus.OK);
   }
 
   private Pageable createPageable(int page, int size, String sort) {
@@ -107,7 +149,7 @@ public class AdminOrderController {
   }
 
   private PageResponse<AdminOrderSummaryInfoResponse> toAdminOrderSummaryInfoResponsePage(
-      PageResponse<AdminOrderSummaryInfoDto> dtoPage) {
+      PageResponse<AdminOrderSummaryInfoDTO> dtoPage) {
     List<AdminOrderSummaryInfoResponse> items =
         dtoPage.getItems().stream()
             .map(this::toAdminOrderSummaryInfoResponseFromDto)
@@ -121,7 +163,7 @@ public class AdminOrderController {
   }
 
   private AdminOrderSummaryInfoResponse toAdminOrderSummaryInfoResponseFromDto(
-      AdminOrderSummaryInfoDto infoDto) {
+      AdminOrderSummaryInfoDTO infoDto) {
     return AdminOrderSummaryInfoResponse.builder()
         .contentId(infoDto.getContentId())
         .merchantUid(infoDto.getMerchantUid())
