@@ -5,6 +5,6 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public class AdminOrderCancellationReasonDto {
+public class AdminOrderCancellationReasonDTO {
   private String cancelReason;
 }

@@ -13,7 +13,7 @@ import liaison.groble.application.payment.dto.cancel.PaymentCancelInfoDTO;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-07-03T15:38:48+0900",
+    date = "2025-07-07T21:45:28+0900",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.10 (Amazon.com Inc.)")
 @Component
 public class PaymentMapperImpl implements PaymentMapper {
@@ -55,6 +55,9 @@ public class PaymentMapperImpl implements PaymentMapper {
     if (paypleAuthResultRequest.getPayReqKey() != null) {
       paypleAuthResultDTO.payReqKey(paypleAuthResultRequest.getPayReqKey());
     }
+    if (paypleAuthResultRequest.getPayReqTime() != null) {
+      paypleAuthResultDTO.payReqTime(paypleAuthResultRequest.getPayReqTime());
+    }
     if (paypleAuthResultRequest.getPayHost() != null) {
       paypleAuthResultDTO.payHost(paypleAuthResultRequest.getPayHost());
     }
@@ -63,6 +66,12 @@ public class PaymentMapperImpl implements PaymentMapper {
     }
     if (paypleAuthResultRequest.getPayDiscount() != null) {
       paypleAuthResultDTO.payDiscount(paypleAuthResultRequest.getPayDiscount());
+    }
+    if (paypleAuthResultRequest.getPayEasyPayMethod() != null) {
+      paypleAuthResultDTO.payEasyPayMethod(paypleAuthResultRequest.getPayEasyPayMethod());
+    }
+    if (paypleAuthResultRequest.getEasyPayMethod() != null) {
+      paypleAuthResultDTO.easyPayMethod(paypleAuthResultRequest.getEasyPayMethod());
     }
     if (paypleAuthResultRequest.getPayerNo() != null) {
       paypleAuthResultDTO.payerNo(paypleAuthResultRequest.getPayerNo());

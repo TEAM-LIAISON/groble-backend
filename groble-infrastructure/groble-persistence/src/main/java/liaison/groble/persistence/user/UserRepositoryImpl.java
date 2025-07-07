@@ -28,8 +28,8 @@ public class UserRepositoryImpl implements UserRepository {
   }
 
   @Override
-  public Optional<User> findBySellerInfoMarketName(String marketName) {
-    return jpaUserRepository.findBySellerInfoMarketName(marketName);
+  public Optional<User> findBySellerInfoMarketLinkUrl(String marketLinkUrl) {
+    return jpaUserRepository.findBySellerInfoMarketLinkUrl(marketLinkUrl);
   }
 
   @Override

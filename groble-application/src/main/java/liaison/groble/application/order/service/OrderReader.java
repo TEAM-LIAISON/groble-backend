@@ -29,6 +29,7 @@ public class OrderReader {
             () -> new EntityNotFoundException("주문을 찾을 수 없습니다. Merchant UID: " + merchantUid));
   }
 
+  // 특정 사용자, 특정 주문 조회
   public Order getOrderByMerchantUidAndUserId(String merchantUid, Long userId) {
     return orderCustomRepository
         .findByMerchantUidAndUserId(merchantUid, userId)

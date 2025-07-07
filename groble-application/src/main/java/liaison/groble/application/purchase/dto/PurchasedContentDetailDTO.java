@@ -10,13 +10,17 @@ import lombok.Getter;
 @Builder
 public class PurchasedContentDetailDTO {
   // 구매 상태 [결제완료(PAID)/기간만료(EXPIRED)/결제취소(FAILED)]
-  private final String orderStatus;
+  private final String purchaseStatus;
 
   // 주문 기본 정보
   private final String merchantUid;
 
   // 구매 시간
   private final LocalDateTime purchasedAt;
+
+  private final LocalDateTime cancelRequestedAt;
+
+  private final LocalDateTime cancelledAt;
 
   // 콘텐츠 ID
   private final Long contentId;

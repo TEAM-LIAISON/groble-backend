@@ -41,7 +41,6 @@ public class OrderCustomRepositoryImpl implements OrderCustomRepository {
             Order.OrderStatus.PAID,
             Order.OrderStatus.CANCELLED,
             Order.OrderStatus.CANCEL_REQUEST,
-            Order.OrderStatus.EXPIRED,
             Order.OrderStatus.FAILED);
 
     // Order를 기준으로 조회하도록 변경

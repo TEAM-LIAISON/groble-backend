@@ -14,14 +14,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import liaison.groble.application.order.service.OrderReader;
 import liaison.groble.application.payment.dto.PaypleAuthResponseDto;
 import liaison.groble.application.payment.dto.PaypleAuthResultDTO;
-import liaison.groble.application.payment.dto.link.PaypleLinkResendResponse;
-import liaison.groble.application.payment.dto.link.PaypleLinkStatusResponse;
 import liaison.groble.application.purchase.service.PurchaseReader;
 import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.order.repository.OrderRepository;
 import liaison.groble.domain.payment.entity.Payment;
 import liaison.groble.domain.payment.entity.PayplePayment;
-import liaison.groble.domain.payment.enums.PayplePaymentStatus;
 import liaison.groble.domain.payment.repository.PaymentRepository;
 import liaison.groble.domain.payment.repository.PayplePaymentRepository;
 import liaison.groble.domain.purchase.entity.Purchase;
@@ -90,9 +87,6 @@ public class PayplePaymentService {
       // 1. 주문 및 결제 정보 조회
       Order order = orderReader.getOrderByMerchantUid(authResult.getPayOid());
       PayplePayment payplePayment = findPayplePayment(authResult.getPayOid());
-
-      // 2. 결제 상태 검증ㄴ
-      validatePaymentStatus(payplePayment);
 
       // 3. 페이플 승인 요청
       JSONObject approvalResult = requestPaypleApproval(authResult);
@@ -172,23 +166,6 @@ public class PayplePaymentService {
   }
 
   /**
-   * 결제 상태 검증
-   *
-   * <p>이미 처리된 결제인지 확인합니다.
-   *
-   * @param payplePayment 페이플 결제 정보
-   * @throws IllegalStateException 이미 처리된 결제인 경우
-   */
-  private void validatePaymentStatus(PayplePayment payplePayment) {
-    if (payplePayment.getStatus() != PayplePaymentStatus.PENDING) {
-      throw new IllegalStateException(
-          String.format(
-              "이미 처리된 결제입니다. 주문번호: %s, 상태: %s",
-              payplePayment.getPcdPayOid(), payplePayment.getStatus()));
-    }
-  }
-
-  /**
    * 결제 취소 처리
    *
    * <p>승인된 결제를 취소하고 환불 처리합니다. 페이플 API를 통해 환불을 요청하고, 성공 시 관련 엔티티들의 상태를 업데이트합니다.
@@ -219,9 +196,8 @@ public class PayplePaymentService {
           purchase.getId());
 
       // 2. 취소 가능 상태 검증
-      log.debug(
-          "취소 가능 상태 검증 시작 - 주문상태: {}, 결제상태: {}", order.getStatus(), payplePayment.getStatus());
-      validateCancellableStatus(order, payplePayment);
+      log.debug("취소 가능 상태 검증 시작 - 주문상태: {}", order.getStatus());
+      validateCancellableStatus(order);
       log.info("취소 가능 상태 검증 완료 - 주문번호: {}", merchantUid);
 
       // 3. 환불 요청
@@ -261,23 +237,14 @@ public class PayplePaymentService {
    * 취소 가능 상태 검증
    *
    * @param order 주문
-   * @param payplePayment 페이플 결제 정보
    * @throws IllegalStateException 취소할 수 없는 상태인 경우
    */
-  private void validateCancellableStatus(Order order, PayplePayment payplePayment) {
+  private void validateCancellableStatus(Order order) {
     // 주문 상태 검증
     if (order.getStatus() != Order.OrderStatus.PAID) {
       throw new IllegalStateException(
           String.format(
               "결제 완료된 주문만 취소할 수 있습니다. orderId: %d, status: %s", order.getId(), order.getStatus()));
-    }
-
-    // 결제 상태 검증
-    if (payplePayment.getStatus() != PayplePaymentStatus.COMPLETED) {
-      throw new IllegalStateException(
-          String.format(
-              "완료된 결제만 취소할 수 있습니다. 주문번호: %s, 결제상태: %s",
-              payplePayment.getPcdPayOid(), payplePayment.getStatus()));
     }
   }
 
@@ -388,7 +355,6 @@ public class PayplePaymentService {
         .pcdRstUrl(dto.getRstUrl())
         .pcdUserDefine1(dto.getUserDefine1())
         .pcdUserDefine2(dto.getUserDefine2())
-        .status(PayplePaymentStatus.PENDING)
         .build();
   }
 
@@ -458,17 +424,15 @@ public class PayplePaymentService {
       // 5. Purchase 생성 및 확정 처리
       Purchase purchase = createAndCompletePurchase(order);
 
-      payment.markAsPaid();
       log.info(
           "페이플 결제 승인 성공 처리 완료 - orderId: {}, paymentId: {}, purchaseId: {}, "
-              + "userId: {}, contentId: {}, finalPrice: {}원, purchaseStatus: {}",
+              + "userId: {}, contentId: {}, finalPrice: {}원",
           order.getId(),
           payment.getId(),
           purchase.getId(),
           order.getUser().getId(),
           purchase.getContent().getId(),
-          order.getFinalPrice(),
-          purchase.getStatus());
+          order.getFinalPrice());
 
     } catch (Exception e) {
       log.error("결제 승인 성공 처리 중 오류 발생 - orderId: {}", order.getId(), e);
@@ -509,11 +473,6 @@ public class PayplePaymentService {
       Order order, PayplePayment payplePayment, JSONObject approvalResult) {
     String errorMsg = (String) approvalResult.get("PCD_PAY_MSG");
     String errorCode = (String) approvalResult.get("PCD_PAY_CODE");
-
-    // PayplePayment 상태 업데이트
-    payplePayment.updateStatus(PayplePaymentStatus.FAILED);
-    payplePaymentRepository.save(payplePayment);
-
     // Order 실패 처리 (쿠폰 사용 취소 포함)
     order.failOrder(String.format("결제 승인 실패 [%s]: %s", errorCode, errorMsg));
     orderRepository.save(order);
@@ -532,7 +491,6 @@ public class PayplePaymentService {
    * @param approvalResult 승인 결과
    */
   private void updatePayplePaymentApproval(PayplePayment payplePayment, JSONObject approvalResult) {
-    payplePayment.updateStatus(PayplePaymentStatus.COMPLETED);
     payplePayment.updateApprovalInfo(
         (String) approvalResult.get("PCD_PAY_TIME"),
         (String) approvalResult.get("PCD_PAY_CARDNAME"),
@@ -567,15 +525,13 @@ public class PayplePaymentService {
   private Purchase createAndCompletePurchase(Order order) {
     try {
       Purchase purchase = Purchase.createFromOrder(order);
-      purchase.complete(); // PENDING → COMPLETED 상태 변경
       Purchase savedPurchase = purchaseRepository.save(purchase);
 
       log.debug(
-          "Purchase 생성 및 완료 처리 성공 - orderId: {}, purchaseId: {}, contentId: {}, status: {}",
+          "Purchase 생성 및 완료 처리 성공 - orderId: {}, purchaseId: {}, contentId: {}",
           order.getId(),
           savedPurchase.getId(),
-          savedPurchase.getContent().getId(),
-          savedPurchase.getStatus());
+          savedPurchase.getContent().getId());
 
       return savedPurchase;
     } catch (Exception e) {
@@ -752,9 +708,7 @@ public class PayplePaymentService {
       throw new IllegalStateException("결제 정보를 찾을 수 없습니다. orderId=" + order.getId());
     }
 
-    payment.cancel(reason);
     order.cancelOrder(reason);
-    purchase.cancel(reason);
 
     log.info(
         "결제 취소 완료 - orderId: {}, paymentId: {}, purchaseId: {}, " + "환불금액: {}원, 사유: {}",
@@ -784,348 +738,5 @@ public class PayplePaymentService {
 
   private String normalizeQuota(String quota) {
     return (quota == null || quota.trim().isEmpty()) ? "00" : quota;
-  }
-
-  /**
-   * 링크 결제 실패 처리
-   *
-   * <p>링크 결제가 실패하거나 취소된 경우의 처리를 수행합니다.
-   *
-   * @param resultDto 결제 결과 정보
-   */
-  @Transactional
-  public void handleLinkPaymentFailure(PaypleAuthResultDTO resultDto) {
-    log.info("링크 결제 실패 처리 시작 - 주문번호: {}, 사유: {}", resultDto.getPayOid(), resultDto.getPayMsg());
-
-    try {
-      // 1. PayplePayment 조회
-      PayplePayment payplePayment = findPayplePayment(resultDto.getPayOid());
-
-      // 2. 상태 업데이트
-      payplePayment.updateStatus(PayplePaymentStatus.FAILED);
-      payplePaymentRepository.save(payplePayment);
-
-      // 3. Order 실패 처리
-      Order order = orderReader.getOrderByMerchantUid(resultDto.getPayOid());
-      order.failOrder("링크 결제 실패: " + resultDto.getPayMsg());
-      orderRepository.save(order);
-
-      log.info("링크 결제 실패 처리 완료 - orderId: {}", order.getId());
-
-    } catch (Exception e) {
-      log.error("링크 결제 실패 처리 중 오류 발생", e);
-      throw new RuntimeException("링크 결제 실패 처리 오류: " + e.getMessage(), e);
-    }
-  }
-
-  /**
-   * 링크 결제 결과로 PayplePayment 업데이트
-   *
-   * @param payplePayment 페이플 결제 정보
-   * @param resultDto 결제 결과
-   */
-  private void updatePayplePaymentFromLinkResult(
-      PayplePayment payplePayment, PaypleAuthResultDTO resultDto) {
-    payplePayment.updateStatus(PayplePaymentStatus.COMPLETED);
-    payplePayment.updateApprovalInfo(
-        resultDto.getPayTime(),
-        resultDto.getPayCardName(),
-        resultDto.getPayCardNum(),
-        resultDto.getPayCardTradeNum(),
-        resultDto.getPayCardAuthNo(),
-        resultDto.getPayCardReceipt());
-    payplePaymentRepository.save(payplePayment);
-  }
-
-  /**
-   * 링크 결제 상태 조회
-   *
-   * @param merchantUid 주문번호
-   * @param userId 사용자 ID
-   * @return 링크 결제 상태 정보
-   */
-  @Transactional(readOnly = true)
-  public PaypleLinkStatusResponse getLinkPaymentStatus(String merchantUid, Long userId) {
-    log.info("링크 결제 상태 조회 - merchantUid: {}, userId: {}", merchantUid, userId);
-
-    // 1. 주문 조회 및 권한 검증
-    Order order = orderReader.getOrderByMerchantUid(merchantUid);
-    validateOrderOwnership(order, userId);
-
-    // 2. PayplePayment 조회
-    PayplePayment payplePayment = findPayplePayment(merchantUid);
-
-    // 3. 상태 정보 생성
-    return PaypleLinkStatusResponse.builder()
-        .merchantUid(merchantUid)
-        .status(payplePayment.getStatus().name())
-        .linkUrl(payplePayment.getPcdRstUrl())
-        .createdAt(payplePayment.getCreatedAt())
-        .expireAt(payplePayment.getCreatedAt().plusDays(7)) // 보통 7일 후 만료
-        .paymentStatus(payplePayment.getPcdPayRst())
-        .paymentMessage(payplePayment.getPcdPayMsg())
-        .paymentAt(
-            payplePayment.getStatus() == PayplePaymentStatus.COMPLETED
-                ? payplePayment.getUpdatedAt()
-                : null)
-        .build();
-  }
-
-  /**
-   * 링크 결제 재전송
-   *
-   * @param merchantUid 주문번호
-   * @param userId 사용자 ID
-   * @param method 전송 방법 (SMS/EMAIL)
-   * @return 재전송 결과
-   */
-  @Transactional
-  public PaypleLinkResendResponse resendLinkPayment(
-      String merchantUid, Long userId, String method) {
-    log.info("링크 결제 재전송 - merchantUid: {}, userId: {}, method: {}", merchantUid, userId, method);
-
-    // 1. 주문 조회 및 권한 검증
-    Order order = orderReader.getOrderByMerchantUid(merchantUid);
-    validateOrderOwnership(order, userId);
-
-    // 2. PayplePayment 조회
-    PayplePayment payplePayment = findPayplePayment(merchantUid);
-
-    // 3. 재전송 가능 상태 검증
-    if (payplePayment.getStatus() != PayplePaymentStatus.LINK_CREATED) {
-      throw new IllegalStateException(
-          "링크가 생성된 상태에서만 재전송이 가능합니다. 현재 상태: " + payplePayment.getStatus());
-    }
-
-    // 4. 링크 만료 검증 (7일)
-    if (payplePayment.getCreatedAt().plusDays(7).isBefore(java.time.LocalDateTime.now())) {
-      throw new IllegalStateException("링크가 만료되었습니다. 새로운 링크를 생성해주세요.");
-    }
-
-    // 5. 재전송 처리 (실제 SMS/EMAIL 전송 로직은 별도 서비스에서 구현)
-    String linkUrl = payplePayment.getPcdRstUrl();
-    String targetPhoneNumber = null;
-    String targetEmail = null;
-    String resultMessage = "";
-
-    if ("SMS".equals(method)) {
-      targetPhoneNumber = order.getUser().getPhoneNumber();
-      // TODO: SMS 전송 서비스 호출
-      resultMessage = "SMS 전송 완료";
-    } else if ("EMAIL".equals(method)) {
-      targetEmail = order.getUser().getEmail();
-      // TODO: Email 전송 서비스 호출
-      resultMessage = "이메일 전송 완료";
-    }
-
-    return PaypleLinkResendResponse.builder()
-        .merchantUid(merchantUid)
-        .linkUrl(linkUrl)
-        .sentAt(java.time.LocalDateTime.now())
-        .method(method)
-        .targetPhoneNumber(targetPhoneNumber)
-        .targetEmail(targetEmail)
-        .resultMessage(resultMessage)
-        .build();
-  }
-
-  /**
-   * 빌링 카드 등록
-   *
-   * <p>정기결제를 위한 빌링 카드를 등록하고 빌링키를 발급받습니다. AUTH 방식으로 카드 인증만 진행하며, 실제 결제는 이루어지지 않습니다.
-   *
-   * @param userId 사용자 ID
-   * @param authResult 카드 인증 결과
-   * @return 등록 결과 (빌링키, 카드 정보 등)
-   * @throws RuntimeException 등록 실패 시
-   */
-  @Transactional
-  public Map<String, Object> registerBillingCard(Long userId, PaypleAuthResultDTO authResult) {
-    log.info("빌링 카드 등록 시작 - userId: {}, payerId: {}", userId, authResult.getPayerId());
-
-    try {
-      // 1. 빌링키(PCD_PAYER_ID) 확인
-      String billingKey = authResult.getPayerId();
-      if (billingKey == null || billingKey.isEmpty()) {
-        throw new IllegalStateException("빌링키가 반환되지 않았습니다.");
-      }
-
-      // 2. PayplePayment에 빌링 정보 저장
-      PayplePayment billingInfo =
-          PayplePayment.builder()
-              .pcdPayRst(authResult.getPayRst())
-              .pcdPayCode(authResult.getPayCode())
-              .pcdPayMsg(authResult.getPayMsg())
-              .pcdPayType(authResult.getPayType())
-              .pcdPayWork("AUTH") // 빌링 카드 등록
-              .pcdPayerNo(userId.toString())
-              .pcdPayerId(billingKey) // 빌링키 저장
-              .pcdPayerName(authResult.getPayerName())
-              .pcdPayerHp(authResult.getPayerHp())
-              .pcdPayerEmail(authResult.getPayerEmail())
-              .pcdPayCardName(authResult.getPayCardName())
-              .pcdPayCardNum(authResult.getPayCardNum())
-              .pcdSimpleFlag("Y") // 빌링은 간편결제로 처리
-              .status(PayplePaymentStatus.BILLING_REGISTERED)
-              .build();
-
-      payplePaymentRepository.save(billingInfo);
-
-      // 3. 응답 생성
-      Map<String, Object> result = new HashMap<>();
-      result.put("payRst", authResult.getPayRst());
-      result.put("payCode", authResult.getPayCode());
-      result.put("payMsg", "빌링키 등록이 완료되었습니다.");
-      result.put("payerId", billingKey);
-      result.put("cardName", authResult.getPayCardName());
-      result.put("cardNum", authResult.getPayCardNum());
-      result.put("registeredAt", billingInfo.getCreatedAt());
-
-      log.info("빌링 카드 등록 완료 - userId: {}, billingKey: {}", userId, billingKey);
-      return result;
-
-    } catch (Exception e) {
-      log.error("빌링 카드 등록 실패 - userId: {}", userId, e);
-      throw new RuntimeException("빌링 카드 등록 실패: " + e.getMessage(), e);
-    }
-  }
-
-  /**
-   * 빌링 결제 실행
-   *
-   * <p>등록된 빌링키를 사용하여 정기결제를 실행합니다.
-   *
-   * @param merchantUid 주문번호
-   * @param userId 사용자 ID
-   * @return 결제 결과
-   * @throws IllegalArgumentException 주문 또는 빌링키를 찾을 수 없는 경우
-   * @throws IllegalStateException 결제 불가능한 상태인 경우
-   * @throws RuntimeException 결제 실패 시
-   */
-  @Transactional
-  public JSONObject executeBillingPayment(String merchantUid, Long userId) {
-    log.info("빌링 결제 실행 시작 - merchantUid: {}, userId: {}", merchantUid, userId);
-
-    try {
-      // 1. 주문 조회 및 검증
-      Order order = orderReader.getOrderByMerchantUid(merchantUid);
-      validateOrderOwnership(order, userId);
-      validateOrderPendingStatus(order);
-
-      // 2. 빌링키 조회
-      PayplePayment billingInfo =
-          payplePaymentRepository
-              .findByPcdPayerNoAndStatus(userId.toString(), PayplePaymentStatus.BILLING_REGISTERED)
-              .stream()
-              .findFirst()
-              .orElseThrow(() -> new IllegalArgumentException("등록된 빌링키를 찾을 수 없습니다."));
-
-      String billingKey = billingInfo.getPcdPayerId();
-      if (billingKey == null || billingKey.isEmpty()) {
-        throw new IllegalStateException("유효한 빌링키가 없습니다.");
-      }
-
-      // 3. 파트너 인증
-      PaypleAuthResponseDto authResponse = getPaymentAuth("PAY");
-
-      // 4. 빌링 결제 요청 파라미터 생성
-      Map<String, String> params = new HashMap<>();
-      params.put("PCD_CST_ID", authResponse.getCstId());
-      params.put("PCD_CUST_KEY", authResponse.getCustKey());
-      params.put("PCD_AUTH_KEY", authResponse.getAuthKey());
-      params.put("PCD_PAY_TYPE", "card");
-      params.put("PCD_PAYER_ID", billingKey); // 빌링키
-      params.put("PCD_PAY_GOODS", order.getOrderItems().get(0).getContent().getTitle());
-      params.put("PCD_PAY_TOTAL", order.getFinalPrice().toString());
-      params.put("PCD_SIMPLE_FLAG", "Y");
-      params.put("PCD_PAY_OID", merchantUid);
-      params.put("PCD_PAYER_NO", userId.toString());
-      params.put("PCD_PAYER_NAME", order.getUser().getUserProfile().getNickname());
-      params.put("PCD_PAYER_HP", order.getUser().getPhoneNumber());
-      params.put("PCD_PAYER_EMAIL", order.getUser().getEmail());
-
-      // 5. 빌링 결제 실행
-      JSONObject paymentResult = paypleService.paySimplePayment(params);
-
-      // 6. 결제 결과 확인
-      String payRst = (String) paymentResult.get("PCD_PAY_RST");
-
-      if ("success".equalsIgnoreCase(payRst)) {
-        // 결제 성공 처리
-        handleBillingPaymentSuccess(order, paymentResult);
-      } else {
-        // 결제 실패 처리
-        String errorMsg = (String) paymentResult.get("PCD_PAY_MSG");
-        log.error("빌링 결제 실패 - merchantUid: {}, message: {}", merchantUid, errorMsg);
-
-        // Order 상태 업데이트
-        order.failOrder("빌링 결제 실패: " + errorMsg);
-        orderRepository.save(order);
-      }
-
-      return paymentResult;
-
-    } catch (Exception e) {
-      log.error("빌링 결제 실행 중 오류 발생 - merchantUid: {}", merchantUid, e);
-      throw e;
-    }
-  }
-
-  /**
-   * 빌링 결제 성공 처리
-   *
-   * @param order 주문
-   * @param paymentResult 결제 결과
-   */
-  private void handleBillingPaymentSuccess(Order order, JSONObject paymentResult) {
-    try {
-      // 1. PayplePayment 엔티티 생성 및 저장
-      PayplePayment payplePayment =
-          PayplePayment.builder()
-              .pcdPayRst("success")
-              .pcdPayCode((String) paymentResult.get("PCD_PAY_CODE"))
-              .pcdPayMsg((String) paymentResult.get("PCD_PAY_MSG"))
-              .pcdPayType("card")
-              .pcdPayWork("PAY")
-              .pcdPayOid(order.getMerchantUid())
-              .pcdPayTotal(order.getFinalPrice().toString())
-              .pcdPayerNo(order.getUser().getId().toString())
-              .pcdPayerId((String) paymentResult.get("PCD_PAYER_ID"))
-              .pcdPayerName(order.getUser().getUserProfile().getNickname())
-              .pcdPayCardName((String) paymentResult.get("PCD_PAY_CARDNAME"))
-              .pcdPayCardNum((String) paymentResult.get("PCD_PAY_CARDNUM"))
-              .pcdPayCardTradeNum((String) paymentResult.get("PCD_PAY_CARDTRADENUM"))
-              .pcdPayCardAuthNo((String) paymentResult.get("PCD_PAY_CARDAUTHNO"))
-              .pcdPayCardReceipt((String) paymentResult.get("PCD_CARD_RECEIPT"))
-              .pcdPayTime((String) paymentResult.get("PCD_PAY_TIME"))
-              .pcdSimpleFlag("Y")
-              .status(PayplePaymentStatus.COMPLETED)
-              .build();
-
-      payplePaymentRepository.save(payplePayment);
-
-      // 2. Payment 엔티티 생성 및 저장
-      Payment payment = createAndSavePayment(order);
-
-      // 3. Order 상태 업데이트
-      order.completePayment();
-      orderRepository.save(order);
-
-      // 4. Purchase 생성 및 완료 처리
-      Purchase purchase = createAndCompletePurchase(order);
-
-      log.info(
-          "빌링 결제 성공 처리 완료 - orderId: {}, paymentId: {}, purchaseId: {}",
-          order.getId(),
-          payment.getId(),
-          purchase.getId());
-
-    } catch (Exception e) {
-      log.error("빌링 결제 성공 처리 중 오류 발생 - orderId: {}", order.getId(), e);
-
-      // 실패 시 Order 상태 롤백
-      rollbackOrderStatus(order, e);
-      throw new RuntimeException("빌링 결제 처리 실패: " + e.getMessage(), e);
-    }
   }
 }

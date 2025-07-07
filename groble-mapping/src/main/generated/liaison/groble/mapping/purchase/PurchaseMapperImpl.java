@@ -4,15 +4,93 @@ import javax.annotation.processing.Generated;
 
 import org.springframework.stereotype.Component;
 
+import liaison.groble.api.model.purchase.response.PurchasedContentDetailResponse;
 import liaison.groble.api.model.purchase.response.PurchaserContentPreviewCardResponse;
 import liaison.groble.application.purchase.dto.PurchaseContentCardDTO;
+import liaison.groble.application.purchase.dto.PurchasedContentDetailDTO;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-07-01T20:35:29+0900",
+    date = "2025-07-07T21:45:28+0900",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.10 (Amazon.com Inc.)")
 @Component
 public class PurchaseMapperImpl implements PurchaseMapper {
+
+  @Override
+  public PurchasedContentDetailResponse toPurchasedContentDetailResponse(
+      PurchasedContentDetailDTO purchasedContentDetailDTO) {
+    if (purchasedContentDetailDTO == null) {
+      return null;
+    }
+
+    PurchasedContentDetailResponse.PurchasedContentDetailResponseBuilder
+        purchasedContentDetailResponse = PurchasedContentDetailResponse.builder();
+
+    if (purchasedContentDetailDTO.getPurchaseStatus() != null) {
+      purchasedContentDetailResponse.purchaseStatus(purchasedContentDetailDTO.getPurchaseStatus());
+    }
+    if (purchasedContentDetailDTO.getMerchantUid() != null) {
+      purchasedContentDetailResponse.merchantUid(purchasedContentDetailDTO.getMerchantUid());
+    }
+    if (purchasedContentDetailDTO.getPurchasedAt() != null) {
+      purchasedContentDetailResponse.purchasedAt(purchasedContentDetailDTO.getPurchasedAt());
+    }
+    if (purchasedContentDetailDTO.getCancelRequestedAt() != null) {
+      purchasedContentDetailResponse.cancelRequestedAt(
+          purchasedContentDetailDTO.getCancelRequestedAt());
+    }
+    if (purchasedContentDetailDTO.getCancelledAt() != null) {
+      purchasedContentDetailResponse.cancelledAt(purchasedContentDetailDTO.getCancelledAt());
+    }
+    if (purchasedContentDetailDTO.getContentId() != null) {
+      purchasedContentDetailResponse.contentId(purchasedContentDetailDTO.getContentId());
+    }
+    if (purchasedContentDetailDTO.getSellerName() != null) {
+      purchasedContentDetailResponse.sellerName(purchasedContentDetailDTO.getSellerName());
+    }
+    if (purchasedContentDetailDTO.getContentTitle() != null) {
+      purchasedContentDetailResponse.contentTitle(purchasedContentDetailDTO.getContentTitle());
+    }
+    if (purchasedContentDetailDTO.getSelectedOptionName() != null) {
+      purchasedContentDetailResponse.selectedOptionName(
+          purchasedContentDetailDTO.getSelectedOptionName());
+    }
+    if (purchasedContentDetailDTO.getSelectedOptionQuantity() != null) {
+      purchasedContentDetailResponse.selectedOptionQuantity(
+          purchasedContentDetailDTO.getSelectedOptionQuantity());
+    }
+    if (purchasedContentDetailDTO.getSelectedOptionType() != null) {
+      purchasedContentDetailResponse.selectedOptionType(
+          purchasedContentDetailDTO.getSelectedOptionType());
+    }
+    if (purchasedContentDetailDTO.getDocumentOptionActionUrl() != null) {
+      purchasedContentDetailResponse.documentOptionActionUrl(
+          purchasedContentDetailDTO.getDocumentOptionActionUrl());
+    }
+    if (purchasedContentDetailDTO.getIsFreePurchase() != null) {
+      purchasedContentDetailResponse.isFreePurchase(purchasedContentDetailDTO.getIsFreePurchase());
+    }
+    if (purchasedContentDetailDTO.getOriginalPrice() != null) {
+      purchasedContentDetailResponse.originalPrice(purchasedContentDetailDTO.getOriginalPrice());
+    }
+    if (purchasedContentDetailDTO.getDiscountPrice() != null) {
+      purchasedContentDetailResponse.discountPrice(purchasedContentDetailDTO.getDiscountPrice());
+    }
+    if (purchasedContentDetailDTO.getFinalPrice() != null) {
+      purchasedContentDetailResponse.finalPrice(purchasedContentDetailDTO.getFinalPrice());
+    }
+    if (purchasedContentDetailDTO.getPayType() != null) {
+      purchasedContentDetailResponse.payType(purchasedContentDetailDTO.getPayType());
+    }
+    if (purchasedContentDetailDTO.getPayCardName() != null) {
+      purchasedContentDetailResponse.payCardName(purchasedContentDetailDTO.getPayCardName());
+    }
+    if (purchasedContentDetailDTO.getPayCardNum() != null) {
+      purchasedContentDetailResponse.payCardNum(purchasedContentDetailDTO.getPayCardNum());
+    }
+
+    return purchasedContentDetailResponse.build();
+  }
 
   @Override
   public PurchaserContentPreviewCardResponse toPurchaserContentPreviewCardResponse(
@@ -55,9 +133,6 @@ public class PurchaseMapperImpl implements PurchaseMapper {
         purchaseContentCardDTO.getPriceOptionLength());
     if (purchaseContentCardDTO.getOrderStatus() != null) {
       purchaserContentPreviewCardResponse.orderStatus(purchaseContentCardDTO.getOrderStatus());
-    }
-    if (purchaseContentCardDTO.getStatus() != null) {
-      purchaserContentPreviewCardResponse.status(purchaseContentCardDTO.getStatus());
     }
 
     return purchaserContentPreviewCardResponse.build();

@@ -6,24 +6,22 @@ import java.time.LocalDateTime;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 @Getter
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
-@Schema(description = "구매 관리 페이지 내 콘텐츠 상세 응답 DTO")
+@Schema(description = "[내 콘텐츠 - 구매 관리] 결제완료/결제 취소 요청/환불 완료 콘텐츠 상세 응답 Response")
 public class PurchasedContentDetailResponse {
 
   @Schema(
-      description = "구매 상태 [PAID - 결제완료], [EXPIRED - 기간만료], [FAILED - 결제취소]",
+      description =
+          "구매 상태 [COMPLETED - 구매 완료], [CANCELLED - 구매 취소], [REFUND_REQUESTED - 환불 요청], [REFUNDED - 환불완료]",
       example = "PAID - 결제완료",
       type = "String",
+      allowableValues = {"COMPLETED", "CANCELLED", "REFUND_REQUESTED", "REFUNDED"},
       requiredMode = Schema.RequiredMode.REQUIRED)
-  private String orderStatus;
+  private String purchaseStatus;
 
   @Schema(
       description = "주문 식별 ID",
@@ -35,6 +33,14 @@ public class PurchasedContentDetailResponse {
   @Schema(description = "구매 일시", example = "2025-04-20T10:15:30")
   @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
   private LocalDateTime purchasedAt;
+
+  @Schema(description = "취소 요청 일시", example = "2025-04-20T10:15:30")
+  @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+  private LocalDateTime cancelRequestedAt;
+
+  @Schema(description = "환불 완료 일시", example = "2025-04-20T10:15:30")
+  @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+  private LocalDateTime cancelledAt;
 
   // 콘텐츠 ID
   @Schema(

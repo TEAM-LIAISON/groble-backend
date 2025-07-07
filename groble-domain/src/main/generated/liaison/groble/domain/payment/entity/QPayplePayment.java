@@ -104,8 +104,6 @@ public class QPayplePayment extends EntityPathBase<PayplePayment> {
 
     public final StringPath pcdUserDefine2 = createString("pcdUserDefine2");
 
-    public final EnumPath<liaison.groble.domain.payment.enums.PayplePaymentStatus> status = createEnum("status", liaison.groble.domain.payment.enums.PayplePaymentStatus.class);
-
     //inherited
     public final DateTimePath<java.time.LocalDateTime> updatedAt = _super.updatedAt;
 

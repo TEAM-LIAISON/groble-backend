@@ -63,8 +63,6 @@ public class QPurchase extends EntityPathBase<Purchase> {
 
     public final EnumPath<Purchase.OptionType> selectedOptionType = createEnum("selectedOptionType", Purchase.OptionType.class);
 
-    public final EnumPath<liaison.groble.domain.purchase.enums.PurchaseStatus> status = createEnum("status", liaison.groble.domain.purchase.enums.PurchaseStatus.class);
-
     //inherited
     public final DateTimePath<java.time.LocalDateTime> updatedAt = _super.updatedAt;
 

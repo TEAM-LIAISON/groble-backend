@@ -15,7 +15,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 /** 관리자 주문 요약 조회 엔드포인트용 Swagger 애노테이션 */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-@Operation(summary = "현재까지 주문 목록들에 대한 조회", description = "결제 완료, 결제 취소 요청, 환불 완료 등에 대한 주문들을 조회합니다.")
+@Operation(
+    summary = "[✅ 관리자 주문 관리] 현재까지 주문 목록들에 대한 조회",
+    description = "결제 완료, 결제 취소 요청, 환불 완료 등에 대한 주문들을 조회합니다.")
 @ApiResponses({
   @ApiResponse(
       responseCode = "200",
