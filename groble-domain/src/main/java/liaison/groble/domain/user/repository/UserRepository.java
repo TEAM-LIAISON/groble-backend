@@ -10,7 +10,7 @@ public interface UserRepository {
 
   Optional<User> findByNickname(String nickname);
 
-  Optional<User> findBySellerInfoMarketName(String marketName);
+  Optional<User> findBySellerInfoMarketLinkUrl(String marketLinkUrl);
 
   User save(User user);
 

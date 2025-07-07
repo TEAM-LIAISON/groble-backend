@@ -50,8 +50,8 @@ public class MarketController {
 
   // API 경로 상수화
   private static final String MARKET_EDIT_INTRO_PATH = "/edit/intro";
-  private static final String MARKET_INTRO_PATH = "/intro/{marketName}";
-  private static final String MARKET_CONTENTS_PATH = "/contents/{marketName}";
+  private static final String MARKET_INTRO_PATH = "/intro/{marketLinkUrl}";
+  private static final String MARKET_CONTENTS_PATH = "/contents/{marketLinkUrl}";
   private static final String MARKET_EDIT_PATH = "/edit";
   private static final String MARKET_LINK_CHECK_PATH = "/link-check";
 
@@ -92,8 +92,8 @@ public class MarketController {
       content = @Content(schema = @Schema(implementation = MakerIntroSectionResponse.class)))
   @GetMapping(MARKET_INTRO_PATH)
   public ResponseEntity<GrobleResponse<MakerIntroSectionResponse>> getViewerMakerIntroSection(
-      @Valid @PathVariable("marketName") String marketName) {
-    MarketIntroSectionDTO dto = marketService.getViewerMakerIntroSection(marketName);
+      @Valid @PathVariable("marketLinkUrl") String marketLinkUrl) {
+    MarketIntroSectionDTO dto = marketService.getViewerMakerIntroSection(marketLinkUrl);
     MakerIntroSectionResponse response = marketMapper.toMakerIntroSectionResponse(dto);
 
     return responseHelper.success(response, MARKET_INTRO_SUCCESS_MESSAGE, HttpStatus.OK);
@@ -111,14 +111,14 @@ public class MarketController {
               schema = @Schema(implementation = ContentListResponse.class)))
   @GetMapping(MARKET_CONTENTS_PATH)
   public ResponseEntity<GrobleResponse<PageResponse<ContentPreviewCardResponse>>> getViewerContents(
-      @Valid @PathVariable("marketName") String marketName,
+      @Valid @PathVariable("marketLinkUrl") String marketLinkUrl,
       @RequestParam(value = "page", defaultValue = "0") int page,
       @RequestParam(value = "size", defaultValue = "12") int size,
       @RequestParam(value = "sort", defaultValue = "createdAt") String sort) {
 
     Pageable pageable = PageUtils.createPageable(page, size, sort);
     PageResponse<ContentCardDTO> dtoPageResponse =
-        marketService.getMarketContents(marketName, pageable);
+        marketService.getMarketContents(marketLinkUrl, pageable);
     PageResponse<ContentPreviewCardResponse> responsePage =
         contentMapper.toContentPreviewCardResponsePage(dtoPageResponse);
 

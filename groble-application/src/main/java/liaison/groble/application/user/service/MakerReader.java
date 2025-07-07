@@ -17,10 +17,12 @@ import lombok.extern.slf4j.Slf4j;
 public class MakerReader {
   private final UserRepository userRepository;
 
-  public User getUserByMarketName(String marketName) {
+  public User getUserByMarketLinkUrl(String marketLinkUrl) {
     return userRepository
-        .findBySellerInfoMarketName(marketName)
+        .findBySellerInfoMarketLinkUrl(marketLinkUrl)
         .orElseThrow(
-            () -> new EntityNotFoundException("해당 마켓 이름을 가진 메이커를 찾을 수 없습니다. ID: " + marketName));
+            () ->
+                new EntityNotFoundException(
+                    "해당 마켓 URL을 가진 메이커를 찾을 수 없습니다. 마켓 링크 URL : " + marketLinkUrl));
   }
 }

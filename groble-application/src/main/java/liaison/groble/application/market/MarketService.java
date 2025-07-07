@@ -56,9 +56,9 @@ public class MarketService {
   }
 
   @Transactional(readOnly = true)
-  public MarketIntroSectionDTO getViewerMakerIntroSection(String marketName) {
+  public MarketIntroSectionDTO getViewerMakerIntroSection(String marketLinkUrl) {
     // 마켓 이름으로 메이커 조회
-    User user = makerReader.getUserByMarketName(marketName);
+    User user = makerReader.getUserByMarketLinkUrl(marketLinkUrl);
 
     // 문의하기 정보 조회
     ContactInfoDTO contactInfo = getContactInfo(user);
@@ -71,10 +71,10 @@ public class MarketService {
   }
 
   @Transactional(readOnly = true)
-  public PageResponse<ContentCardDTO> getMarketContents(String marketName, Pageable pageable) {
+  public PageResponse<ContentCardDTO> getMarketContents(String marketLinkUrl, Pageable pageable) {
     // 마켓 이름으로 메이커 조회
-    User user = makerReader.getUserByMarketName(marketName);
-    log.info("userId: {}, marketName: {}", user.getId(), marketName);
+    User user = makerReader.getUserByMarketLinkUrl(marketLinkUrl);
+    log.info("userId: {}, marketLinkUrl: {}", user.getId(), marketLinkUrl);
     Page<FlatContentPreviewDTO> page =
         contentReader.findAllMarketContentsByUserId(user.getId(), pageable);
     List<ContentCardDTO> items =
