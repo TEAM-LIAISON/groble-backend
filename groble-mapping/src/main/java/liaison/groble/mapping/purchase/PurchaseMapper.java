@@ -5,8 +5,10 @@ import java.util.stream.Collectors;
 
 import org.mapstruct.Mapper;
 
+import liaison.groble.api.model.purchase.response.PurchasedContentDetailResponse;
 import liaison.groble.api.model.purchase.response.PurchaserContentPreviewCardResponse;
 import liaison.groble.application.purchase.dto.PurchaseContentCardDTO;
+import liaison.groble.application.purchase.dto.PurchasedContentDetailDTO;
 import liaison.groble.common.response.PageResponse;
 import liaison.groble.mapping.config.GrobleMapperConfig;
 
@@ -15,6 +17,9 @@ public interface PurchaseMapper {
   // ====== 📥 Request → DTO 변환 ======
 
   // ====== 📤 DTO → Response 변환 ======
+  PurchasedContentDetailResponse toPurchasedContentDetailResponse(
+      PurchasedContentDetailDTO purchasedContentDetailDTO);
+
   PurchaserContentPreviewCardResponse toPurchaserContentPreviewCardResponse(
       PurchaseContentCardDTO purchaseContentCardDTO);
 

@@ -83,23 +83,25 @@ public class PurchaseController {
     return responseHelper.success(response, SELLER_CONTACT_INFO_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 
-  //  @Operation(
-  //      summary = "[❌ 내 콘텐츠 - 구매 관리] 내가 구매한 콘텐츠 상세 조회 (결제완료/결제취소요청/환불완료)",
-  //      description = "내가 구매한 콘텐츠의 상세 정보를 조회합니다. 구매 상태에 따라 콘텐츠 접근 권한이 다를 수 있습니다.")
-  //  @GetMapping(MY_PURCHASED_CONTENT_PATH)
-  //  @Logging(
-  //          item = "Purchase",
-  //          action = "getMyPurchasedContent",
-  //          includeParam = true,
-  //          includeResult = true)
-  //  public ResponseEntity<GrobleResponse<PurchasedContentDetailResponse>> getMyPurchasedContent(
-  //      @Auth Accessor accessor, @Valid @PathVariable("merchantUid") String merchantUid) {
-  ////    PurchasedContentDetailResponse response =
-  ////        purchaseService.getMyPurchasedContent(accessor.getUserId(), merchantUid);
-  //
-  //    return responseHelper.success(response, My_PURCHASED_CONTENT_SUCCESS_MESSAGE,
-  // HttpStatus.OK);
-  //  }
+  @Operation(
+      summary = "[❌ 내 콘텐츠 - 구매 관리] 내가 구매한 콘텐츠 상세 조회 (결제완료/결제취소요청/환불완료)",
+      description = "내가 구매한 콘텐츠의 상세 정보를 조회합니다. 구매 상태에 따라 콘텐츠 접근 권한이 다를 수 있습니다.")
+  @GetMapping(MY_PURCHASED_CONTENT_PATH)
+  @Logging(
+      item = "Purchase",
+      action = "getMyPurchasedContent",
+      includeParam = true,
+      includeResult = true)
+  public ResponseEntity<GrobleResponse<Void>> getMyPurchasedContent(
+      @Auth Accessor accessor, @Valid @PathVariable("merchantUid") String merchantUid) {
+    //        PurchasedContentDetailDTO purchasedContentDetailDTO =
+    //            purchaseService.getMyPurchasedContent(accessor.getUserId(), merchantUid);
+
+    //        PurchasedContentDetailResponse response =
+    //            purchaseMapper.toPurchasedContentDetailResponse(purchasedContentDetailDTO);
+
+    return responseHelper.success(null, My_PURCHASED_CONTENT_SUCCESS_MESSAGE, HttpStatus.OK);
+  }
 
   @MyPurchasingContents
   @GetMapping(MY_PURCHASING_CONTENT_PATH)
