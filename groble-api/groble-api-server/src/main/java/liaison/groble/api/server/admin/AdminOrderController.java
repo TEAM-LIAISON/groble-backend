@@ -18,7 +18,7 @@ import liaison.groble.api.model.admin.response.AdminOrderSummaryInfoResponse;
 import liaison.groble.api.model.admin.response.swagger.AdminOrderSummaryInfo;
 import liaison.groble.api.model.admin.validation.ValidOrderCancelAction;
 import liaison.groble.application.admin.dto.AdminOrderCancelRequestDTO;
-import liaison.groble.application.admin.dto.AdminOrderCancellationReasonDto;
+import liaison.groble.application.admin.dto.AdminOrderCancellationReasonDTO;
 import liaison.groble.application.admin.dto.AdminOrderSummaryInfoDTO;
 import liaison.groble.application.admin.service.AdminOrderService;
 import liaison.groble.common.annotation.Auth;
@@ -47,11 +47,17 @@ import lombok.extern.slf4j.Slf4j;
 public class AdminOrderController {
 
   // API 경로 상수화
+  private static final String ADMIN_ORDERS_PATH = "/orders";
   private static final String CANCEL_REQUEST_ORDER_PATH = "/order/{merchantUid}/cancel-request";
+  private static final String ORDER_CANCELLATION_REASON_PATH =
+      "/order/{merchantUid}/cancellation-reason";
 
   // 응답 메시지 상수화
+  private static final String ADMIN_ORDERS_RESPONSE_MESSAGE = "모든 주문 목록을 조회하는 데 성공했습니다.";
   private static final String CANCEL_REQUEST_ORDER_RESPONSE_MESSAGE =
       "결제 취소 요청 주문에 대한 승인 및 거절 처리에 성공했습니다.";
+  private static final String ORDER_CANCELLATION_REASON_RESPONSE_MESSAGE =
+      "결제 취소 주문에 대한 사유 조회에 성공했습니다.";
 
   // Service
   private final AdminOrderService adminOrderService;
@@ -65,7 +71,7 @@ public class AdminOrderController {
   // 1. 주문 목록 전체 조회 (결제 완료 이후에 대한 주문만 모두 조회 가능)
   @AdminOrderSummaryInfo
   @RequireRole("ROLE_ADMIN")
-  @GetMapping("/orders")
+  @GetMapping(ADMIN_ORDERS_PATH)
   public ResponseEntity<GrobleResponse<PageResponse<AdminOrderSummaryInfoResponse>>> getAllOrders(
       @Auth Accessor accessor,
       @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
@@ -82,24 +88,22 @@ public class AdminOrderController {
     PageResponse<AdminOrderSummaryInfoResponse> responsePage =
         adminOrderMapper.toAdminOrderSummaryInfoResponsePage(infoDtoPage);
 
-    return ResponseEntity.ok(GrobleResponse.success(responsePage));
+    return responseHelper.success(responsePage, ADMIN_ORDERS_RESPONSE_MESSAGE, HttpStatus.OK);
   }
 
   // 2. 결제 취소 주문에 대한 사유 조회
-  @Operation(summary = "결제 취소 주문에 대한 사유 조회", description = "결제 취소 주문에 대한 사유를 조회합니다.")
+  @Operation(summary = "[✅ 관리자 주문 관리] 결제 취소 주문에 대한 사유 조회", description = "결제 취소 주문에 대한 사유를 조회합니다.")
   @RequireRole("ROLE_ADMIN")
-  @GetMapping("/order/{merchantUid}/cancellation-reason")
+  @GetMapping(ORDER_CANCELLATION_REASON_PATH)
   public ResponseEntity<GrobleResponse<AdminOrderCancellationReasonResponse>>
       getOrderCancellationReason(
           @Auth Accessor accessor, @Valid @PathVariable("merchantUid") String merchantUid) {
-    AdminOrderCancellationReasonDto reasonDto =
+    AdminOrderCancellationReasonDTO reasonDTO =
         adminOrderService.getOrderCancellationReason(merchantUid);
     AdminOrderCancellationReasonResponse reasonResponse =
-        AdminOrderCancellationReasonResponse.builder()
-            .cancelReason(reasonDto.getCancelReason())
-            .build();
-
-    return ResponseEntity.ok(GrobleResponse.success(reasonResponse));
+        adminOrderMapper.toAdminOrderCancellationReasonResponse(reasonDTO);
+    return responseHelper.success(
+        reasonResponse, ORDER_CANCELLATION_REASON_RESPONSE_MESSAGE, HttpStatus.OK);
   }
 
   // 3. 결제 취소 요청 주문 (승인 및 거절)

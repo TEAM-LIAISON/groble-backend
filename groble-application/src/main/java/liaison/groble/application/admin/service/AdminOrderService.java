@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import liaison.groble.application.admin.dto.AdminOrderCancelRequestDTO;
-import liaison.groble.application.admin.dto.AdminOrderCancellationReasonDto;
+import liaison.groble.application.admin.dto.AdminOrderCancellationReasonDTO;
 import liaison.groble.application.admin.dto.AdminOrderSummaryInfoDTO;
 import liaison.groble.application.order.service.OrderReader;
 import liaison.groble.application.payment.service.PayplePaymentService;
@@ -45,7 +45,7 @@ public class AdminOrderService {
   }
 
   // 주문 최소 사유 조회 메서드
-  public AdminOrderCancellationReasonDto getOrderCancellationReason(String merchantUid) {
+  public AdminOrderCancellationReasonDTO getOrderCancellationReason(String merchantUid) {
 
     Order order = orderReader.getOrderByMerchantUid(merchantUid);
     Order.OrderStatus status = order.getStatus();
@@ -53,7 +53,7 @@ public class AdminOrderService {
       throw new IllegalArgumentException("취소 또는 취소 요청 상태가 아닙니다.");
     }
 
-    return AdminOrderCancellationReasonDto.builder().cancelReason(order.getOrderNote()).build();
+    return AdminOrderCancellationReasonDTO.builder().cancelReason(order.getOrderNote()).build();
   }
 
   @Transactional
