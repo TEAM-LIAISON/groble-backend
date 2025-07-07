@@ -1,5 +1,6 @@
 package liaison.groble.application.content;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -66,9 +67,9 @@ public class ContentReader {
     return contentCustomRepository.findAllMarketContentsByUserIdWithPaging(userId, pageable);
   }
 
-  //    public List<FlatContentPreviewDTO> findAllMarketContentsByUserId(Long userId) {
-  //        return contentCustomRepository.findAllMarketContentsByUserId(userId);
-  //    }
+  public List<FlatContentPreviewDTO> findAllMarketContentsByUserId(Long userId) {
+    return contentCustomRepository.findAllMarketContentsByUserId(userId);
+  }
 
   public Page<FlatAdminContentSummaryInfoDTO> findContentsByPageable(Pageable pageable) {
     return contentCustomRepository.findContentsByPageable(pageable);

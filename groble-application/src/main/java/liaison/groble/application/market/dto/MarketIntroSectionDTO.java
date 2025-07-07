@@ -1,5 +1,8 @@
 package liaison.groble.application.market.dto;
 
+import java.util.List;
+
+import liaison.groble.application.content.dto.ContentCardDTO;
 import liaison.groble.domain.content.dto.FlatContentPreviewDTO;
 
 import lombok.Builder;
@@ -25,4 +28,6 @@ public class MarketIntroSectionDTO {
 
   // 대표 콘텐츠 정보
   private FlatContentPreviewDTO representativeContent;
+
+  private List<ContentCardDTO> contentCardList;
 }

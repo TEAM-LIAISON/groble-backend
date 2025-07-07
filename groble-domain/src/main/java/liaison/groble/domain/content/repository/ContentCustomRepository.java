@@ -24,6 +24,8 @@ public interface ContentCustomRepository {
 
   List<FlatContentPreviewDTO> findHomeContents(ContentType contentType);
 
+  List<FlatContentPreviewDTO> findAllMarketContentsByUserId(Long userId);
+
   CursorResponse<FlatContentPreviewDTO> findMyPurchasingContentsWithCursor(
       Long userId, Long lastContentId, int size, ContentStatus status, ContentType contentType);
 

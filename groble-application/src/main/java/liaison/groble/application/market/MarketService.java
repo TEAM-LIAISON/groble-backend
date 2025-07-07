@@ -51,11 +51,11 @@ public class MarketService {
     FlatContentPreviewDTO representativeContent = getRepresentativeContent(user);
 
     // 나의 모든 콘텐츠 조회
-    //      List<FlatContentPreviewDTO> myContents =
-    // contentReader.findallMarketContentsByUserId(userId);
+    List<FlatContentPreviewDTO> myContents = contentReader.findAllMarketContentsByUserId(userId);
+    List<ContentCardDTO> items = myContents.stream().map(this::convertFlatDtoToCardDto).toList();
 
     // 메이커 소개 섹션 빌드 결과
-    return buildMarketIntroSectionResult(user, contactInfo, representativeContent);
+    return buildEditMarketIntroSectionResult(user, items, contactInfo, representativeContent);
   }
 
   @Transactional(readOnly = true)
@@ -196,6 +196,22 @@ public class MarketService {
     } catch (Exception e) {
       return FlatContentPreviewDTO.builder().build();
     }
+  }
+
+  private MarketIntroSectionDTO buildEditMarketIntroSectionResult(
+      User user,
+      List<ContentCardDTO> contentCards,
+      ContactInfoDTO contactInfo,
+      FlatContentPreviewDTO flatContentPreviewDTO) {
+    return MarketIntroSectionDTO.builder()
+        .profileImageUrl(user.getProfileImageUrl())
+        .marketName(getMarketNameSafely(user))
+        .marketLinkUrl(getMarketLinkUrlSafely(user))
+        .verificationStatus(getVerificationStatusSafely(user))
+        .contactInfo(Optional.ofNullable(contactInfo).orElse(ContactInfoDTO.builder().build()))
+        .representativeContent(flatContentPreviewDTO)
+        .contentCardList(contentCards)
+        .build();
   }
 
   private MarketIntroSectionDTO buildMarketIntroSectionResult(

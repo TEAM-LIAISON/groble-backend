@@ -1,5 +1,7 @@
 package liaison.groble.api.model.maker.response;
 
+import java.util.List;
+
 import liaison.groble.api.model.content.response.ContentPreviewCardResponse;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -57,4 +59,11 @@ public class MakerIntroSectionResponse {
       implementation = ContentPreviewCardResponse.class,
       requiredMode = Schema.RequiredMode.NOT_REQUIRED)
   private ContentPreviewCardResponse representativeContent;
+
+  // 콘텐츠 목록
+  @Schema(
+      description = "콘텐츠 목록",
+      implementation = ContentPreviewCardResponse.class,
+      requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  private List<ContentPreviewCardResponse> contentCardList;
 }
