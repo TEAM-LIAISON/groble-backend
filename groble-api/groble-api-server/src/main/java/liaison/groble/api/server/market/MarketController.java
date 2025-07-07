@@ -22,6 +22,7 @@ import liaison.groble.application.market.MarketService;
 import liaison.groble.application.market.dto.MarketEditDTO;
 import liaison.groble.application.market.dto.MarketIntroSectionDTO;
 import liaison.groble.common.annotation.Auth;
+import liaison.groble.common.annotation.Logging;
 import liaison.groble.common.model.Accessor;
 import liaison.groble.common.response.GrobleResponse;
 import liaison.groble.common.response.PageResponse;
@@ -78,6 +79,7 @@ public class MarketController {
       responseCode = "200",
       content = @Content(schema = @Schema(implementation = MakerIntroSectionResponse.class)))
   @GetMapping(MARKET_EDIT_INTRO_PATH)
+  @Logging(item = "Market", action = "getEditIntroSection", includeResult = true)
   public ResponseEntity<GrobleResponse<MakerIntroSectionResponse>> getEditIntroSection(
       @Auth Accessor accessor) {
     MarketIntroSectionDTO dto = marketService.getEditIntroSection(accessor.getUserId());
@@ -93,6 +95,7 @@ public class MarketController {
       responseCode = "200",
       content = @Content(schema = @Schema(implementation = MakerIntroSectionResponse.class)))
   @GetMapping(MARKET_INTRO_PATH)
+  @Logging(item = "Market", action = "getViewerMakerIntroSection", includeResult = true)
   public ResponseEntity<GrobleResponse<MakerIntroSectionResponse>> getViewerMakerIntroSection(
       @Valid @PathVariable("marketLinkUrl") String marketLinkUrl) {
     MarketIntroSectionDTO dto = marketService.getViewerMakerIntroSection(marketLinkUrl);
@@ -112,6 +115,7 @@ public class MarketController {
               mediaType = "application/json",
               schema = @Schema(implementation = ContentListResponse.class)))
   @GetMapping(MARKET_CONTENTS_PATH)
+  @Logging(item = "Market", action = "getViewerContents", includeParam = true, includeResult = true)
   public ResponseEntity<GrobleResponse<PageResponse<ContentPreviewCardResponse>>> getViewerContents(
       @Valid @PathVariable("marketLinkUrl") String marketLinkUrl,
       @RequestParam(value = "page", defaultValue = "0") int page,
@@ -131,6 +135,7 @@ public class MarketController {
       summary = "[✅ 마켓 관리] 마켓 관리 수정창에서 수정 완료 항목을 저장",
       description = "마켓 관리 수정창에서 수정 완료한 항목을 저장합니다.")
   @PostMapping(MARKET_EDIT_PATH)
+  @Logging(item = "Market", action = "editMarket", includeParam = true, includeResult = true)
   public ResponseEntity<GrobleResponse<Void>> editMarket(
       @Auth Accessor accessor, @Valid @RequestBody MarketEditRequest marketEditRequest) {
 
@@ -144,6 +149,7 @@ public class MarketController {
       summary = "[✅ 마켓 관리] 사용 가능한 마켓 링크 확인",
       description = "마켓 관리에서 사용 가능한 마켓 링크를 확인합니다. 이미 사용 중인 링크는 사용할 수 없습니다.")
   @GetMapping(MARKET_LINK_CHECK_PATH)
+  @Logging(item = "Market", action = "checkMarketLink", includeParam = true)
   public ResponseEntity<GrobleResponse<Void>> checkMarketLink(
       @RequestParam("marketLinkUrl") String marketLinkUrl) {
 
