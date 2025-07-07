@@ -35,7 +35,6 @@ import liaison.groble.domain.purchase.dto.FlatContentSellDetailDTO;
 import liaison.groble.domain.purchase.dto.FlatPurchaseContentPreviewDTO;
 import liaison.groble.domain.purchase.dto.FlatSellManageDetailDTO;
 import liaison.groble.domain.purchase.entity.QPurchase;
-import liaison.groble.domain.purchase.enums.PurchaseStatus;
 import liaison.groble.domain.purchase.repository.PurchaseCustomRepository;
 import liaison.groble.domain.user.entity.QIntegratedAccount;
 import liaison.groble.domain.user.entity.QSocialAccount;
@@ -306,8 +305,7 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
                             .from(qContentOption)
                             .where(qContentOption.content.eq(qContent)),
                         "priceOptionLength"),
-                    qOrder.status.stringValue().as("orderStatus"),
-                    qPurchase.status.stringValue().as("status")))
+                    qOrder.status.stringValue().as("orderStatus")))
             .from(qPurchase)
             .leftJoin(qPurchase.user, qUser)
             .leftJoin(qPurchase.content, qContent)
@@ -354,6 +352,7 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
   @Override
   public Optional<FlatSellManageDetailDTO> getSellManageDetail(Long userId, Long contentId) {
     QPurchase qPurchase = QPurchase.purchase;
+    QOrder qOrder = QOrder.order;
     QContent qContent = QContent.content;
     QUser qUser = QUser.user;
     QContentReview qContentReview = QContentReview.contentReview;
@@ -364,7 +363,7 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
             .id
             .eq(contentId)
             .and(qPurchase.content.user.id.eq(userId))
-            .and(qPurchase.status.eq(PurchaseStatus.COMPLETED));
+            .and(qOrder.status.eq(Order.OrderStatus.PAID));
 
     FlatSellManageDetailDTO result =
         queryFactory
@@ -379,6 +378,7 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
             .from(qPurchase)
             .leftJoin(qPurchase.content, qContent)
             .leftJoin(qPurchase.user, qUser)
+            .leftJoin(qPurchase.order, qOrder)
             .where(conditions)
             .fetchOne();
 

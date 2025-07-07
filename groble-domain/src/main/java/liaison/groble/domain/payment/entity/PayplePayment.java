@@ -4,8 +4,6 @@ import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -13,7 +11,6 @@ import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 
 import liaison.groble.domain.common.entity.BaseTimeEntity;
-import liaison.groble.domain.payment.enums.PayplePaymentStatus;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -39,10 +36,6 @@ public class PayplePayment extends BaseTimeEntity {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
-
-  @Enumerated(EnumType.STRING)
-  @Column(nullable = false)
-  private PayplePaymentStatus status = PayplePaymentStatus.PENDING;
 
   private String pcdPayRst; // 페이플 인증 결과 (SUCCESS/ERROR/CLOSE)
   private String pcdPayCode; // 페이플 결제 응답 코드 (0000)
@@ -103,46 +96,10 @@ public class PayplePayment extends BaseTimeEntity {
   private String failReason;
   private String cancelReason;
 
-  // 결제 완료
-  public void complete(
-      String payRst,
-      String payCode,
-      String payMsg,
-      String cardName,
-      String cardNum,
-      String cardTradeNum,
-      String cardAuthNo,
-      String receiptUrl,
-      LocalDateTime paymentDate) {
-    this.status = PayplePaymentStatus.COMPLETED;
-    this.pcdPayRst = payRst;
-    this.pcdPayCode = payCode;
-    this.pcdPayMsg = payMsg;
-    this.pcdPayCardName = cardName;
-    this.pcdPayCardNum = cardNum;
-    this.pcdPayCardTradeNum = cardTradeNum;
-    this.pcdPayCardAuthNo = cardAuthNo;
-    this.pcdPayCardReceipt = receiptUrl;
-    this.paymentDate = paymentDate != null ? paymentDate : LocalDateTime.now();
-  }
-
-  // 결제 실패
-  public void fail(String payMsg, String failReason) {
-    this.status = PayplePaymentStatus.FAILED;
-    this.pcdPayMsg = payMsg;
-    this.failReason = failReason;
-  }
-
   // 결제 취소
   public void cancel(String cancelReason, LocalDateTime cancelTime) {
-    this.status = PayplePaymentStatus.CANCELLED;
     this.cancelReason = cancelReason;
     this.canceledAt = cancelTime != null ? cancelTime : LocalDateTime.now();
-  }
-
-  // 상태 업데이트
-  public void updateStatus(PayplePaymentStatus status) {
-    this.status = status;
   }
 
   // 승인 정보 업데이트

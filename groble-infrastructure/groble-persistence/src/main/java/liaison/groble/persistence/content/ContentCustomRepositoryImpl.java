@@ -168,6 +168,39 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
   }
 
   @Override
+  public List<FlatContentPreviewDTO> findAllMarketContentsByUserId(Long userId) {
+    QContent qContent = QContent.content;
+    QUser qUser = QUser.user;
+    QContentOption qContentOption = QContentOption.contentOption;
+
+    BooleanExpression condition =
+        qContent
+            .status
+            .eq(ContentStatus.ACTIVE)
+            .and(qContent.isRepresentative.isFalse())
+            .and(qContent.user.id.eq(userId));
+
+    return queryFactory
+        .select(
+            Projections.fields(
+                FlatContentPreviewDTO.class,
+                qContent.id.as("contentId"),
+                qContent.createdAt.as("createdAt"),
+                qContent.title.as("title"),
+                qContent.thumbnailUrl.as("thumbnailUrl"),
+                qUser.userProfile.nickname.as("sellerName"),
+                ExpressionUtils.as(
+                    select(qContentOption.count().intValue())
+                        .from(qContentOption)
+                        .where(qContentOption.content.eq(qContent)),
+                    "priceOptionLength"),
+                qContent.status.stringValue().as("status")))
+        .from(qContent)
+        .where(condition)
+        .fetch();
+  }
+
+  @Override
   public CursorResponse<FlatContentPreviewDTO> findMyPurchasingContentsWithCursor(
       Long userId, Long lastContentId, int size, ContentStatus status, ContentType contentType) {
     QContent qContent = QContent.content;
@@ -471,7 +504,8 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
   }
 
   @Override
-  public Page<FlatContentPreviewDTO> findAllMarketContentsByUserId(Long userId, Pageable pageable) {
+  public Page<FlatContentPreviewDTO> findAllMarketContentsByUserIdWithPaging(
+      Long userId, Pageable pageable) {
     QContent qContent = QContent.content;
     QUser qUser = QUser.user;
     QContentOption qContentOption = QContentOption.contentOption;

@@ -13,7 +13,6 @@ import liaison.groble.application.content.dto.ContentCardDTO;
 import liaison.groble.application.market.dto.ContactInfoDTO;
 import liaison.groble.application.market.dto.MarketEditDTO;
 import liaison.groble.application.market.dto.MarketIntroSectionDTO;
-import liaison.groble.application.market.dto.MarketLinkCheckDTO;
 import liaison.groble.application.sell.SellerContactReader;
 import liaison.groble.application.user.service.MakerReader;
 import liaison.groble.application.user.service.UserReader;
@@ -35,16 +34,34 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class MarketService {
 
+  // Reader
   private final MakerReader makerReader;
   private final SellerContactReader sellerContactReader;
-  private final SellerContactRepository sellerContactRepository;
   private final ContentReader contentReader;
   private final UserReader userReader;
+  private final SellerContactRepository sellerContactRepository;
 
   @Transactional(readOnly = true)
-  public MarketIntroSectionDTO getViewerMakerIntroSection(String marketName) {
+  public MarketIntroSectionDTO getEditIntroSection(Long userId) {
+    User user = userReader.getUserById(userId);
+    // 문의하기 정보 조회
+    ContactInfoDTO contactInfo = getContactInfo(user);
+
+    // 대표 콘텐츠 조회
+    FlatContentPreviewDTO representativeContent = getRepresentativeContent(user);
+
+    // 나의 모든 콘텐츠 조회
+    List<FlatContentPreviewDTO> myContents = contentReader.findAllMarketContentsByUserId(userId);
+    List<ContentCardDTO> items = myContents.stream().map(this::convertFlatDtoToCardDto).toList();
+
+    // 메이커 소개 섹션 빌드 결과
+    return buildEditMarketIntroSectionResult(user, items, contactInfo, representativeContent);
+  }
+
+  @Transactional(readOnly = true)
+  public MarketIntroSectionDTO getViewerMakerIntroSection(String marketLinkUrl) {
     // 마켓 이름으로 메이커 조회
-    User user = makerReader.getUserByMarketName(marketName);
+    User user = makerReader.getUserByMarketLinkUrl(marketLinkUrl);
 
     // 문의하기 정보 조회
     ContactInfoDTO contactInfo = getContactInfo(user);
@@ -57,12 +74,12 @@ public class MarketService {
   }
 
   @Transactional(readOnly = true)
-  public PageResponse<ContentCardDTO> getMarketContents(String marketName, Pageable pageable) {
+  public PageResponse<ContentCardDTO> getMarketContents(String marketLinkUrl, Pageable pageable) {
     // 마켓 이름으로 메이커 조회
-    User user = makerReader.getUserByMarketName(marketName);
-    log.info("userId: {}, marketName: {}", user.getId(), marketName);
+    User user = makerReader.getUserByMarketLinkUrl(marketLinkUrl);
+    log.info("userId: {}, marketLinkUrl: {}", user.getId(), marketLinkUrl);
     Page<FlatContentPreviewDTO> page =
-        contentReader.findAllMarketContentsByUserId(user.getId(), pageable);
+        contentReader.findAllMarketContentsByUserIdWithPaging(user.getId(), pageable);
     List<ContentCardDTO> items =
         page.getContent().stream().map(this::convertFlatDtoToCardDto).toList();
 
@@ -116,8 +133,8 @@ public class MarketService {
     }
   }
 
-  public void checkMarketLink(MarketLinkCheckDTO marketLinkCheckDTO) {
-    if (userReader.existsByMarketLinkUrl(marketLinkCheckDTO.getMarketLinkUrl())) {
+  public void checkMarketLink(String marketLinkUrl) {
+    if (userReader.existsByMarketLinkUrl(marketLinkUrl)) {
       throw new DuplicateMarketLinkException("이미 사용 중인 링크입니다.");
     }
   }
@@ -166,7 +183,6 @@ public class MarketService {
   // TODO : 2회 이상 재사용되는 메서드 MarketService, PurchaseService 2곳에서 사용
   private ContactInfoDTO getContactInfo(User user) {
     try {
-      // TODO: SellerContactReader를 통해 연락처 정보 조회
       List<SellerContact> contacts = sellerContactReader.getContactsByUser(user);
       return ContactInfoDTO.from(contacts);
     } catch (Exception e) {
@@ -182,11 +198,28 @@ public class MarketService {
     }
   }
 
+  private MarketIntroSectionDTO buildEditMarketIntroSectionResult(
+      User user,
+      List<ContentCardDTO> contentCards,
+      ContactInfoDTO contactInfo,
+      FlatContentPreviewDTO flatContentPreviewDTO) {
+    return MarketIntroSectionDTO.builder()
+        .profileImageUrl(user.getProfileImageUrl())
+        .marketName(getMarketNameSafely(user))
+        .marketLinkUrl(getMarketLinkUrlSafely(user))
+        .verificationStatus(getVerificationStatusSafely(user))
+        .contactInfo(Optional.ofNullable(contactInfo).orElse(ContactInfoDTO.builder().build()))
+        .representativeContent(flatContentPreviewDTO)
+        .contentCardList(contentCards)
+        .build();
+  }
+
   private MarketIntroSectionDTO buildMarketIntroSectionResult(
       User user, ContactInfoDTO contactInfo, FlatContentPreviewDTO flatContentPreviewDTO) {
     return MarketIntroSectionDTO.builder()
         .profileImageUrl(user.getProfileImageUrl())
         .marketName(getMarketNameSafely(user))
+        .marketLinkUrl(getMarketLinkUrlSafely(user))
         .verificationStatus(getVerificationStatusSafely(user))
         .contactInfo(Optional.ofNullable(contactInfo).orElse(ContactInfoDTO.builder().build()))
         .representativeContent(flatContentPreviewDTO)
@@ -198,6 +231,15 @@ public class MarketService {
       return Optional.ofNullable(user.getSellerInfo()).map(SellerInfo::getMarketName).orElse("");
     } catch (Exception e) {
       log.warn("Error getting market name for user: {}", user.getId(), e);
+      return "";
+    }
+  }
+
+  private String getMarketLinkUrlSafely(User user) {
+    try {
+      return Optional.ofNullable(user.getSellerInfo()).map(SellerInfo::getMarketLinkUrl).orElse("");
+    } catch (Exception e) {
+      log.warn("Error getting market link URL for user: {}", user.getId(), e);
       return "";
     }
   }

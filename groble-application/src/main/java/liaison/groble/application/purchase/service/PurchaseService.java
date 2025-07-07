@@ -10,7 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import liaison.groble.application.market.dto.ContactInfoDTO;
 import liaison.groble.application.order.service.OrderReader;
 import liaison.groble.application.purchase.dto.PurchaseContentCardDTO;
-import liaison.groble.application.purchase.dto.PurchasedContentDetailResponse;
+import liaison.groble.application.purchase.dto.PurchasedContentDetailDTO;
 import liaison.groble.application.sell.SellerContactReader;
 import liaison.groble.common.exception.ContactNotFoundException;
 import liaison.groble.common.response.PageResponse;
@@ -54,15 +54,12 @@ public class PurchaseService {
   }
 
   @Transactional(readOnly = true)
-  public PurchasedContentDetailResponse getMyPurchasedContent(Long userId, String merchantUid) {
-    Order order = orderReader.getOrderByMerchantUid(merchantUid);
+  public PurchasedContentDetailDTO getMyPurchasedContent(Long userId, String merchantUid) {
 
-    if (!order.getUser().getId().equals(userId)) {
-      throw new IllegalArgumentException("해당 주문은 사용자의 것이 아닙니다.");
-    }
-
+    Order order = orderReader.getOrderByMerchantUidAndUserId(merchantUid, userId);
     Purchase purchase = purchaseReader.getPurchaseByOrderId(order.getId());
-    return toPurchasedContentDetailResponse(purchase);
+
+    return toPurchasedContentDetailDTO(purchase);
   }
 
   /** FlatPreviewContentDTO를 ContentCardDto로 변환합니다. */
@@ -79,7 +76,6 @@ public class PurchaseService {
         .finalPrice(flat.getFinalPrice())
         .priceOptionLength(flat.getPriceOptionLength())
         .orderStatus(flat.getOrderStatus())
-        .status(flat.getStatus())
         .build();
   }
 
@@ -102,12 +98,12 @@ public class PurchaseService {
    *
    * @param purchase 구매 정보
    */
-  private PurchasedContentDetailResponse toPurchasedContentDetailResponse(Purchase purchase) {
+  private PurchasedContentDetailDTO toPurchasedContentDetailDTO(Purchase purchase) {
     Order order = purchase.getOrder();
     var content = purchase.getContent();
     var seller = content.getUser();
 
-    return PurchasedContentDetailResponse.builder()
+    return PurchasedContentDetailDTO.builder()
         // 주문 정보
         .merchantUid(order.getMerchantUid())
         .purchasedAt(purchase.getPurchasedAt())

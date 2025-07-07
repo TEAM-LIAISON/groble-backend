@@ -1,5 +1,6 @@
 package liaison.groble.application.content;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -61,8 +62,13 @@ public class ContentReader {
   }
 
   // ===== 마켓 목록에 들어가는 모든 콘텐츠(페이지네이션) 조회 =====
-  public Page<FlatContentPreviewDTO> findAllMarketContentsByUserId(Long userId, Pageable pageable) {
-    return contentCustomRepository.findAllMarketContentsByUserId(userId, pageable);
+  public Page<FlatContentPreviewDTO> findAllMarketContentsByUserIdWithPaging(
+      Long userId, Pageable pageable) {
+    return contentCustomRepository.findAllMarketContentsByUserIdWithPaging(userId, pageable);
+  }
+
+  public List<FlatContentPreviewDTO> findAllMarketContentsByUserId(Long userId) {
+    return contentCustomRepository.findAllMarketContentsByUserId(userId);
   }
 
   public Page<FlatAdminContentSummaryInfoDTO> findContentsByPageable(Pageable pageable) {

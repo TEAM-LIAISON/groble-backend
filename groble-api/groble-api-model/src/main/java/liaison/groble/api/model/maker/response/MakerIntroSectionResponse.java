@@ -1,5 +1,7 @@
 package liaison.groble.api.model.maker.response;
 
+import java.util.List;
+
 import liaison.groble.api.model.content.response.ContentPreviewCardResponse;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -29,6 +31,13 @@ public class MakerIntroSectionResponse {
   private String marketName;
 
   @Schema(
+      description = "groble.im/ 뒤에 붙는 메이커만의 마켓 링크 URL",
+      example = "dongmin",
+      type = "string",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private String marketLinkUrl;
+
+  @Schema(
       description =
           "메이커 인증 상태 (PENDING - 인증 필요, IN_PROGRESS - 인증 대기 중, FAILED - 인증 실패, VERIFIED - 인증 완료)",
       example = "VERIFIED",
@@ -50,4 +59,11 @@ public class MakerIntroSectionResponse {
       implementation = ContentPreviewCardResponse.class,
       requiredMode = Schema.RequiredMode.NOT_REQUIRED)
   private ContentPreviewCardResponse representativeContent;
+
+  // 콘텐츠 목록
+  @Schema(
+      description = "콘텐츠 목록",
+      implementation = ContentPreviewCardResponse.class,
+      requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  private List<ContentPreviewCardResponse> contentCardList;
 }

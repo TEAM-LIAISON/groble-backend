@@ -430,7 +430,6 @@ public class OrderService {
    */
   private Purchase createAndCompletePurchase(Order order) {
     Purchase purchase = Purchase.createFromOrder(order);
-    purchase.complete(); // PENDING → COMPLETED 상태 변경
     return purchaseRepository.save(purchase);
   }
 

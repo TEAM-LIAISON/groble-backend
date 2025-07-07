@@ -12,9 +12,9 @@ public interface JpaUserRepository extends JpaRepository<User, Long> {
 
   Optional<User> findByUserProfileNickname(String nickname);
 
-  Optional<User> findBySellerInfoMarketName(String marketName);
-
   Optional<User> findByUserProfilePhoneNumber(String phoneNumber);
+
+  Optional<User> findBySellerInfoMarketLinkUrl(String marketLinkUrl);
 
   boolean existsByUserProfileNicknameAndUserStatusInfo_Status(String nickname, UserStatus status);
 
