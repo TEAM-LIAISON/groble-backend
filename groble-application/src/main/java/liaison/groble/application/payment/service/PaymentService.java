@@ -9,10 +9,7 @@ import liaison.groble.application.payment.dto.cancel.PaymentCancelInfoDTO;
 import liaison.groble.application.purchase.service.PurchaseReader;
 import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.order.enums.CancelReason;
-import liaison.groble.domain.payment.entity.Payment;
 import liaison.groble.domain.payment.entity.PayplePayment;
-import liaison.groble.domain.payment.enums.PayplePaymentStatus;
-import liaison.groble.domain.purchase.entity.Purchase;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,14 +33,12 @@ public class PaymentService {
     try {
       Order order = orderReader.getOrderByMerchantUidAndUserId(merchantUid, userId);
       PayplePayment payplePayment = paymentReader.getPayplePaymentByOid(merchantUid);
-      Purchase purchase = purchaseReader.getPurchaseByOrderId(order.getId());
 
       validateRequestCancellableStatus(order, payplePayment);
       log.info("환불 요청 가능 상태 검증 완료 - 주문번호: {}", merchantUid);
 
       // 환불 요청
-      handlePaymentCancelSuccess(
-          order, payplePayment, purchase, cancelReason, paymentCancelDTO.getDetailReason());
+      handlePaymentCancelSuccess(order, cancelReason, paymentCancelDTO.getDetailReason());
     } catch (IllegalArgumentException | IllegalStateException e) {
       log.warn("결제 취소 처리 실패 - 주문번호: {}, 사유: {}", merchantUid, e.getMessage());
       throw e;
@@ -75,24 +70,11 @@ public class PaymentService {
     }
 
     // 결제 상태 검증
-    if (payplePayment.getStatus() != PayplePaymentStatus.COMPLETED) {
-      throw new IllegalStateException(
-          String.format(
-              "완료된 결제만 취소 요청할 수 있습니다. 주문번호: %s, 결제상태: %s",
-              payplePayment.getPcdPayOid(), payplePayment.getStatus()));
-    }
   }
 
   private void handlePaymentCancelSuccess(
-      Order order,
-      PayplePayment payplePayment,
-      Purchase purchase,
-      CancelReason cancelReason,
-      String detailReason) {
-    Payment payment = order.getPayment();
-    payment.cancelRequest(cancelReason.getDescription());
+      Order order, CancelReason cancelReason, String detailReason) {
     order.cancelRequestOrder(cancelReason, detailReason);
-    purchase.cancelRequest(cancelReason.getDescription());
   }
 
   private CancelReason parseCancelReason(String cancelReason) {

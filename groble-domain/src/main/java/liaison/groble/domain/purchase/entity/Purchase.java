@@ -25,7 +25,6 @@ import liaison.groble.domain.content.entity.ContentOption;
 import liaison.groble.domain.coupon.entity.UserCoupon;
 import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.payment.entity.Payment;
-import liaison.groble.domain.purchase.enums.PurchaseStatus;
 import liaison.groble.domain.user.entity.User;
 
 import lombok.AllArgsConstructor;
@@ -72,10 +71,6 @@ public class Purchase extends BaseTimeEntity {
   @OneToOne(fetch = LAZY)
   @JoinColumn(name = "payment_id")
   private Payment payment;
-
-  @Enumerated(EnumType.STRING)
-  @Column(nullable = false)
-  private PurchaseStatus status = PurchaseStatus.COMPLETED;
 
   // 구매 시점의 금액 정보 (기록용)
   @Column(name = "original_price", nullable = false, precision = 10, scale = 2)
@@ -128,49 +123,6 @@ public class Purchase extends BaseTimeEntity {
   @Column(name = "refund_reason")
   private String refundReason;
 
-  // 비즈니스 메서드들
-  public void complete() {
-    if (this.status != PurchaseStatus.PENDING) {
-      throw new IllegalStateException("대기 상태에서만 구매 완료 처리가 가능합니다.");
-    }
-
-    this.status = PurchaseStatus.COMPLETED;
-    this.purchasedAt = LocalDateTime.now();
-  }
-
-  public void cancelRequest(String reason) {
-    if (this.status != PurchaseStatus.COMPLETED) {
-      throw new IllegalStateException("완료 상태에서만 환불 취소 요청이 가능합니다.");
-    }
-    this.status = PurchaseStatus.REFUND_REQUESTED;
-    this.refundRequestedAt = LocalDateTime.now();
-    this.cancelReason = reason;
-  }
-
-  public void cancel(String reason) {
-    if (this.status != PurchaseStatus.COMPLETED) {
-      throw new IllegalStateException("완료 상태에서만 구매 취소가 가능합니다.");
-    }
-
-    this.status = PurchaseStatus.REFUNDED;
-    this.cancelledAt = LocalDateTime.now();
-    this.cancelReason = reason;
-  }
-
-  public void processRefund() {
-    if (this.status != PurchaseStatus.REFUND_REQUESTED) {
-      throw new IllegalStateException("환불 요청 상태에서만 환불 처리가 가능합니다.");
-    }
-
-    this.status = PurchaseStatus.REFUNDED;
-    this.refundedAt = LocalDateTime.now();
-  }
-
-  public void fail(String reason) {
-    this.status = PurchaseStatus.FAILED;
-    this.cancelReason = reason;
-  }
-
   // 팩토리 메서드
   public static Purchase createFromOrder(Order order) {
     if (order.getOrderItems().isEmpty()) {
@@ -192,7 +144,6 @@ public class Purchase extends BaseTimeEntity {
         .content(orderItem.getContent())
         .order(order)
         .payment(order.getPayment())
-        .status(PurchaseStatus.PENDING)
         .originalPrice(order.getOriginalPrice())
         .discountPrice(order.getDiscountPrice())
         .finalPrice(order.getFinalPrice())
@@ -207,22 +158,6 @@ public class Purchase extends BaseTimeEntity {
         .selectedOptionName(selectedOptionName)
         .selectedOptionId(orderItem.getOptionId())
         .build();
-  }
-
-  public boolean isCompleted() {
-    return status == PurchaseStatus.COMPLETED;
-  }
-
-  public boolean isCancelled() {
-    return status == PurchaseStatus.REFUNDED;
-  }
-
-  public boolean hasDiscount() {
-    return discountPrice.compareTo(BigDecimal.ZERO) > 0;
-  }
-
-  public boolean hasCouponApplied() {
-    return usedCoupon != null;
   }
 
   // 내부 열거형

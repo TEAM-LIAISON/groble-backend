@@ -20,5 +20,4 @@ public class PurchaseContentCardDTO {
   private BigDecimal finalPrice;
   private int priceOptionLength;
   private String orderStatus;
-  private String status;
 }

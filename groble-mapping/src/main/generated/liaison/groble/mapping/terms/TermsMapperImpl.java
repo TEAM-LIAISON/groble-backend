@@ -12,7 +12,7 @@ import liaison.groble.application.terms.dto.TermsAgreementDTO;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-07-07T19:10:40+0900",
+    date = "2025-07-07T21:45:28+0900",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.10 (Amazon.com Inc.)")
 @Component
 public class TermsMapperImpl implements TermsMapper {

@@ -12,10 +12,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import liaison.groble.api.model.maker.response.ContactInfoResponse;
+import liaison.groble.api.model.purchase.response.PurchasedContentDetailResponse;
 import liaison.groble.api.model.purchase.response.PurchaserContentPreviewCardResponse;
 import liaison.groble.api.model.purchase.swagger.MyPurchasingContents;
 import liaison.groble.application.market.dto.ContactInfoDTO;
 import liaison.groble.application.purchase.dto.PurchaseContentCardDTO;
+import liaison.groble.application.purchase.dto.PurchasedContentDetailDTO;
 import liaison.groble.application.purchase.service.PurchaseService;
 import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.annotation.Logging;
@@ -92,15 +94,15 @@ public class PurchaseController {
       action = "getMyPurchasedContent",
       includeParam = true,
       includeResult = true)
-  public ResponseEntity<GrobleResponse<Void>> getMyPurchasedContent(
+  public ResponseEntity<GrobleResponse<PurchasedContentDetailResponse>> getMyPurchasedContent(
       @Auth Accessor accessor, @Valid @PathVariable("merchantUid") String merchantUid) {
-    //        PurchasedContentDetailDTO purchasedContentDetailDTO =
-    //            purchaseService.getMyPurchasedContent(accessor.getUserId(), merchantUid);
+    PurchasedContentDetailDTO purchasedContentDetailDTO =
+        purchaseService.getMyPurchasedContent(accessor.getUserId(), merchantUid);
 
-    //        PurchasedContentDetailResponse response =
-    //            purchaseMapper.toPurchasedContentDetailResponse(purchasedContentDetailDTO);
+    PurchasedContentDetailResponse response =
+        purchaseMapper.toPurchasedContentDetailResponse(purchasedContentDetailDTO);
 
-    return responseHelper.success(null, My_PURCHASED_CONTENT_SUCCESS_MESSAGE, HttpStatus.OK);
+    return responseHelper.success(response, My_PURCHASED_CONTENT_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 
   @MyPurchasingContents

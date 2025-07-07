@@ -51,11 +51,6 @@ public class Payment extends BaseTimeEntity {
   @Column(name = "price", nullable = false, precision = 10, scale = 2)
   private BigDecimal price;
 
-  /** 결제 상태 */
-  @Enumerated(EnumType.STRING)
-  @Column(name = "status", nullable = false)
-  private PaymentStatus status = PaymentStatus.READY;
-
   /** 결제 수단 */
   @Enumerated(EnumType.STRING)
   @Column(name = "payment_method", nullable = false)
@@ -111,7 +106,6 @@ public class Payment extends BaseTimeEntity {
       Order order,
       BigDecimal price,
       PaymentMethod paymentMethod,
-      PaymentStatus status,
       String paymentKey,
       String purchaserName,
       String purchaserEmail,
@@ -119,7 +113,6 @@ public class Payment extends BaseTimeEntity {
     this.order = order;
     this.price = price != null ? price : BigDecimal.ZERO;
     this.paymentMethod = paymentMethod != null ? paymentMethod : PaymentMethod.FREE;
-    this.status = status != null ? status : PaymentStatus.READY;
     this.paymentKey = paymentKey;
     this.purchaserName = purchaserName;
     this.purchaserEmail = purchaserEmail;
@@ -162,7 +155,6 @@ public class Payment extends BaseTimeEntity {
     return Payment.builder()
         .order(order)
         .price(price)
-        .status(PaymentStatus.IN_PROGRESS)
         .paymentMethod(paymentMethod)
         .paymentKey(paymentKey)
         .purchaserName(order.getPurchaser().getName())
@@ -179,118 +171,10 @@ public class Payment extends BaseTimeEntity {
       throw new IllegalStateException("무료 결제만 즉시 완료 처리가 가능합니다.");
     }
 
-    this.status = PaymentStatus.PAID;
     this.paidAt = LocalDateTime.now();
 
     // 주문 상태도 함께 업데이트
     this.order.completePayment();
-  }
-
-  /**
-   * PG 결제 완료 처리
-   *
-   * @param pgTid PG사 거래번호
-   * @param methodDetail 결제 수단 상세 정보
-   */
-  public void completePgPayment(String pgTid, String methodDetail) {
-    if (this.status != PaymentStatus.READY && this.status != PaymentStatus.IN_PROGRESS) {
-      throw new IllegalStateException("결제 준비 또는 진행 상태에서만 결제 완료 처리가 가능합니다.");
-    }
-
-    this.status = PaymentStatus.PAID;
-    this.pgTid = pgTid;
-    this.methodDetail = methodDetail;
-    this.paidAt = LocalDateTime.now();
-
-    // 주문 상태도 함께 업데이트
-    this.order.completePayment();
-  }
-
-  /**
-   * 결제 실패 처리
-   *
-   * @param failReason 실패 사유
-   */
-  public void markAsFailed(String failReason) {
-    if (this.status == PaymentStatus.PAID || this.status == PaymentStatus.CANCELLED) {
-      throw new IllegalStateException("이미 완료되거나 취소된 결제는 실패 처리할 수 없습니다.");
-    }
-
-    this.status = PaymentStatus.FAILED;
-    this.failReason = failReason;
-
-    // 주문 상태도 함께 업데이트
-    this.order.failOrder("결제 실패: " + failReason);
-  }
-
-  /**
-   * 결제 취소 처리
-   *
-   * @param reason 취소 사유
-   */
-  public void cancel(String reason) {
-    if (this.status != PaymentStatus.PAID) {
-      throw new IllegalStateException("결제 완료 상태에서만 취소가 가능합니다.");
-    }
-
-    this.status = PaymentStatus.CANCELLED;
-    this.cancelReason = reason;
-    this.cancelledAt = LocalDateTime.now();
-  }
-
-  public void cancelRequest(String reason) {
-    if (this.status != PaymentStatus.PAID) {
-      throw new IllegalStateException("결제 완료 상태에서만 취소 요청이 가능합니다.");
-    }
-
-    this.status = PaymentStatus.CANCEL_REQUEST;
-    this.cancelReason = reason;
-    this.cancelRequestedAt = LocalDateTime.now();
-  }
-
-  public void markAsPaid() {
-    if (this.status != PaymentStatus.IN_PROGRESS) {
-      throw new IllegalStateException("결제 진행중 상태에서만 완료로 변경 가능합니다.");
-    }
-    this.status = PaymentStatus.PAID;
-    this.paidAt = LocalDateTime.now();
-  }
-
-  // 편의 메서드들
-  public boolean isPaid() {
-    return status == PaymentStatus.PAID;
-  }
-
-  public boolean isFreePayment() {
-    return paymentMethod == PaymentMethod.FREE;
-  }
-
-  public boolean isCancelled() {
-    return status == PaymentStatus.CANCELLED;
-  }
-
-  public boolean isFailed() {
-    return status == PaymentStatus.FAILED;
-  }
-
-  // 열거형 정의
-  public enum PaymentStatus {
-    READY("결제준비"),
-    IN_PROGRESS("결제진행중"),
-    PAID("결제완료"),
-    CANCELLED("취소됨"),
-    CANCEL_REQUEST("취소요청"),
-    FAILED("결제실패");
-
-    private final String description;
-
-    PaymentStatus(String description) {
-      this.description = description;
-    }
-
-    public String getDescription() {
-      return description;
-    }
   }
 
   public enum PaymentMethod {

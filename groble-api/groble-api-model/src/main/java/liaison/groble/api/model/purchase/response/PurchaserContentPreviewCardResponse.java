@@ -52,7 +52,4 @@ public class PurchaserContentPreviewCardResponse {
       description = "콘텐츠 주문 상태 [PAID - 결제완료], [EXPIRED - 기간만료], [CANCELLED - 결제취소]",
       example = "PAID")
   private String orderStatus;
-
-  @Schema(description = "콘텐츠 구매 상태 [PAID - 결제완료], [CANCELLED - 결제취소]")
-  private String status;
 }

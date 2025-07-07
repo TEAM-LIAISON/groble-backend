@@ -425,9 +425,8 @@ public class Order extends BaseTimeEntity {
   public enum OrderStatus {
     PENDING("결제대기"),
     PAID("결제완료"),
-    CANCEL_REQUEST("결제취소요청"),
-    CANCELLED("결제취소"),
-    EXPIRED("기간만료"),
+    CANCEL_REQUEST("결제취소"),
+    CANCELLED("환불완료"),
     FAILED("결제실패");
 
     private final String description;
