@@ -10,14 +10,12 @@ import org.springframework.transaction.annotation.Transactional;
 import liaison.groble.application.market.dto.ContactInfoDTO;
 import liaison.groble.application.order.service.OrderReader;
 import liaison.groble.application.purchase.dto.PurchaseContentCardDTO;
-import liaison.groble.application.purchase.dto.PurchasedContentDetailResponse;
 import liaison.groble.application.sell.SellerContactReader;
 import liaison.groble.common.exception.ContactNotFoundException;
 import liaison.groble.common.response.PageResponse;
 import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.order.entity.OrderItem;
 import liaison.groble.domain.purchase.dto.FlatPurchaseContentPreviewDTO;
-import liaison.groble.domain.purchase.entity.Purchase;
 import liaison.groble.domain.user.entity.SellerContact;
 import liaison.groble.domain.user.entity.User;
 
@@ -53,17 +51,17 @@ public class PurchaseService {
     return PageResponse.from(page, items, meta);
   }
 
-  @Transactional(readOnly = true)
-  public PurchasedContentDetailResponse getMyPurchasedContent(Long userId, String merchantUid) {
-    Order order = orderReader.getOrderByMerchantUid(merchantUid);
-
-    if (!order.getUser().getId().equals(userId)) {
-      throw new IllegalArgumentException("해당 주문은 사용자의 것이 아닙니다.");
-    }
-
-    Purchase purchase = purchaseReader.getPurchaseByOrderId(order.getId());
-    return toPurchasedContentDetailResponse(purchase);
-  }
+  //  @Transactional(readOnly = true)
+  //  public PurchasedContentDetailResponse getMyPurchasedContent(Long userId, String merchantUid) {
+  //    Order order = orderReader.getOrderByMerchantUid(merchantUid);
+  //
+  //    if (!order.getUser().getId().equals(userId)) {
+  //      throw new IllegalArgumentException("해당 주문은 사용자의 것이 아닙니다.");
+  //    }
+  //
+  //    Purchase purchase = purchaseReader.getPurchaseByOrderId(order.getId());
+  //    return toPurchasedContentDetailResponse(purchase);
+  //  }
 
   /** FlatPreviewContentDTO를 ContentCardDto로 변환합니다. */
   private PurchaseContentCardDTO convertFlatDtoToCardDto(FlatPurchaseContentPreviewDTO flat) {
@@ -97,33 +95,33 @@ public class PurchaseService {
     }
   }
 
-  /**
-   * 구매한 상품 상세 응답 DTO 생성
-   *
-   * @param purchase 구매 정보
-   */
-  private PurchasedContentDetailResponse toPurchasedContentDetailResponse(Purchase purchase) {
-    Order order = purchase.getOrder();
-    var content = purchase.getContent();
-    var seller = content.getUser();
-
-    return PurchasedContentDetailResponse.builder()
-        // 주문 정보
-        .merchantUid(order.getMerchantUid())
-        .purchasedAt(purchase.getPurchasedAt())
-
-        // 콘텐츠 정보
-        .contentId(content.getId())
-        .contentTitle(content.getTitle())
-        .sellerName(seller.getNickname())
-
-        // 가격 정보
-        .originalPrice(purchase.getOriginalPrice())
-        .discountPrice(purchase.getDiscountPrice())
-        .finalPrice(purchase.getFinalPrice())
-        .isFreePurchase(purchase.getFinalPrice().signum() == 0)
-        .build();
-  }
+  //  /**
+  //   * 구매한 상품 상세 응답 DTO 생성
+  //   *
+  //   * @param purchase 구매 정보
+  //   */
+  //  private PurchasedContentDetailResponse toPurchasedContentDetailResponse(Purchase purchase) {
+  //    Order order = purchase.getOrder();
+  //    var content = purchase.getContent();
+  //    var seller = content.getUser();
+  //
+  //    return PurchasedContentDetailResponse.builder()
+  //        // 주문 정보
+  //        .merchantUid(order.getMerchantUid())
+  //        .purchasedAt(purchase.getPurchasedAt())
+  //
+  //        // 콘텐츠 정보
+  //        .contentId(content.getId())
+  //        .contentTitle(content.getTitle())
+  //        .sellerName(seller.getNickname())
+  //
+  //        // 가격 정보
+  //        .originalPrice(purchase.getOriginalPrice())
+  //        .discountPrice(purchase.getDiscountPrice())
+  //        .finalPrice(purchase.getFinalPrice())
+  //        .isFreePurchase(purchase.getFinalPrice().signum() == 0)
+  //        .build();
+  //  }
 
   public ContactInfoDTO getContactInfo(Long userId, String merchantUid) {
     Order order = orderReader.getOrderByMerchantUidAndUserId(merchantUid, userId);

@@ -16,7 +16,6 @@ import liaison.groble.api.model.purchase.response.PurchaserContentPreviewCardRes
 import liaison.groble.api.model.purchase.swagger.MyPurchasingContents;
 import liaison.groble.application.market.dto.ContactInfoDTO;
 import liaison.groble.application.purchase.dto.PurchaseContentCardDTO;
-import liaison.groble.application.purchase.dto.PurchasedContentDetailResponse;
 import liaison.groble.application.purchase.service.PurchaseService;
 import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.annotation.Logging;
@@ -84,20 +83,31 @@ public class PurchaseController {
     return responseHelper.success(response, SELLER_CONTACT_INFO_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 
-  @Operation(
-      summary = "[❌ 내 콘텐츠 - 구매 관리] 내가 구매한 콘텐츠 상세 조회 (결제완료/결제취소요청/환불완료)",
-      description = "내가 구매한 콘텐츠의 상세 정보를 조회합니다. 구매 상태에 따라 콘텐츠 접근 권한이 다를 수 있습니다.")
-  @GetMapping(MY_PURCHASED_CONTENT_PATH)
-  public ResponseEntity<GrobleResponse<PurchasedContentDetailResponse>> getMyPurchasedContent(
-      @Auth Accessor accessor, @Valid @PathVariable("merchantUid") String merchantUid) {
-    PurchasedContentDetailResponse response =
-        purchaseService.getMyPurchasedContent(accessor.getUserId(), merchantUid);
-
-    return responseHelper.success(response, My_PURCHASED_CONTENT_SUCCESS_MESSAGE, HttpStatus.OK);
-  }
+  //  @Operation(
+  //      summary = "[❌ 내 콘텐츠 - 구매 관리] 내가 구매한 콘텐츠 상세 조회 (결제완료/결제취소요청/환불완료)",
+  //      description = "내가 구매한 콘텐츠의 상세 정보를 조회합니다. 구매 상태에 따라 콘텐츠 접근 권한이 다를 수 있습니다.")
+  //  @GetMapping(MY_PURCHASED_CONTENT_PATH)
+  //  @Logging(
+  //          item = "Purchase",
+  //          action = "getMyPurchasedContent",
+  //          includeParam = true,
+  //          includeResult = true)
+  //  public ResponseEntity<GrobleResponse<PurchasedContentDetailResponse>> getMyPurchasedContent(
+  //      @Auth Accessor accessor, @Valid @PathVariable("merchantUid") String merchantUid) {
+  ////    PurchasedContentDetailResponse response =
+  ////        purchaseService.getMyPurchasedContent(accessor.getUserId(), merchantUid);
+  //
+  //    return responseHelper.success(response, My_PURCHASED_CONTENT_SUCCESS_MESSAGE,
+  // HttpStatus.OK);
+  //  }
 
   @MyPurchasingContents
   @GetMapping(MY_PURCHASING_CONTENT_PATH)
+  @Logging(
+      item = "Purchase",
+      action = "getMyPurchasingContents",
+      includeParam = true,
+      includeResult = true)
   public ResponseEntity<GrobleResponse<PageResponse<PurchaserContentPreviewCardResponse>>>
       getMyPurchasingContents(
           @Parameter @Auth Accessor accessor,

@@ -5,21 +5,23 @@ import javax.annotation.processing.Generated;
 import org.springframework.stereotype.Component;
 
 import liaison.groble.api.model.admin.response.AdminOrderCancelRequestResponse;
+import liaison.groble.api.model.admin.response.AdminOrderCancellationReasonResponse;
 import liaison.groble.api.model.admin.response.AdminOrderSummaryInfoResponse;
 import liaison.groble.application.admin.dto.AdminOrderCancelRequestDTO;
+import liaison.groble.application.admin.dto.AdminOrderCancellationReasonDTO;
 import liaison.groble.application.admin.dto.AdminOrderSummaryInfoDTO;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-07-07T16:52:09+0900",
+    date = "2025-07-07T19:10:40+0900",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.10 (Amazon.com Inc.)")
 @Component
 public class AdminOrderMapperImpl implements AdminOrderMapper {
 
   @Override
   public AdminOrderCancelRequestResponse toAdminOrderCancelRequestResponse(
-      AdminOrderCancelRequestDTO adminOrderCancelRequestDTO) {
-    if (adminOrderCancelRequestDTO == null) {
+      AdminOrderCancelRequestDTO dto) {
+    if (dto == null) {
       return null;
     }
 
@@ -30,42 +32,39 @@ public class AdminOrderMapperImpl implements AdminOrderMapper {
   }
 
   @Override
+  public AdminOrderCancellationReasonResponse toAdminOrderCancellationReasonResponse(
+      AdminOrderCancellationReasonDTO dto) {
+    if (dto == null) {
+      return null;
+    }
+
+    AdminOrderCancellationReasonResponse.AdminOrderCancellationReasonResponseBuilder
+        adminOrderCancellationReasonResponse = AdminOrderCancellationReasonResponse.builder();
+
+    adminOrderCancellationReasonResponse.cancelReason(dto.getCancelReason());
+
+    return adminOrderCancellationReasonResponse.build();
+  }
+
+  @Override
   public AdminOrderSummaryInfoResponse toAdminOrderSummaryInfoResponse(
-      AdminOrderSummaryInfoDTO adminOrderSummaryInfoDTO) {
-    if (adminOrderSummaryInfoDTO == null) {
+      AdminOrderSummaryInfoDTO dto) {
+    if (dto == null) {
       return null;
     }
 
     AdminOrderSummaryInfoResponse.AdminOrderSummaryInfoResponseBuilder
         adminOrderSummaryInfoResponse = AdminOrderSummaryInfoResponse.builder();
 
-    if (adminOrderSummaryInfoDTO.getContentId() != null) {
-      adminOrderSummaryInfoResponse.contentId(adminOrderSummaryInfoDTO.getContentId());
-    }
-    if (adminOrderSummaryInfoDTO.getMerchantUid() != null) {
-      adminOrderSummaryInfoResponse.merchantUid(adminOrderSummaryInfoDTO.getMerchantUid());
-    }
-    if (adminOrderSummaryInfoDTO.getCreatedAt() != null) {
-      adminOrderSummaryInfoResponse.createdAt(adminOrderSummaryInfoDTO.getCreatedAt());
-    }
-    if (adminOrderSummaryInfoDTO.getContentType() != null) {
-      adminOrderSummaryInfoResponse.contentType(adminOrderSummaryInfoDTO.getContentType());
-    }
-    if (adminOrderSummaryInfoDTO.getContentStatus() != null) {
-      adminOrderSummaryInfoResponse.contentStatus(adminOrderSummaryInfoDTO.getContentStatus());
-    }
-    if (adminOrderSummaryInfoDTO.getPurchaserName() != null) {
-      adminOrderSummaryInfoResponse.purchaserName(adminOrderSummaryInfoDTO.getPurchaserName());
-    }
-    if (adminOrderSummaryInfoDTO.getContentTitle() != null) {
-      adminOrderSummaryInfoResponse.contentTitle(adminOrderSummaryInfoDTO.getContentTitle());
-    }
-    if (adminOrderSummaryInfoDTO.getFinalPrice() != null) {
-      adminOrderSummaryInfoResponse.finalPrice(adminOrderSummaryInfoDTO.getFinalPrice());
-    }
-    if (adminOrderSummaryInfoDTO.getOrderStatus() != null) {
-      adminOrderSummaryInfoResponse.orderStatus(adminOrderSummaryInfoDTO.getOrderStatus());
-    }
+    adminOrderSummaryInfoResponse.contentId(dto.getContentId());
+    adminOrderSummaryInfoResponse.merchantUid(dto.getMerchantUid());
+    adminOrderSummaryInfoResponse.createdAt(dto.getCreatedAt());
+    adminOrderSummaryInfoResponse.contentType(dto.getContentType());
+    adminOrderSummaryInfoResponse.contentStatus(dto.getContentStatus());
+    adminOrderSummaryInfoResponse.purchaserName(dto.getPurchaserName());
+    adminOrderSummaryInfoResponse.contentTitle(dto.getContentTitle());
+    adminOrderSummaryInfoResponse.finalPrice(dto.getFinalPrice());
+    adminOrderSummaryInfoResponse.orderStatus(dto.getOrderStatus());
 
     return adminOrderSummaryInfoResponse.build();
   }

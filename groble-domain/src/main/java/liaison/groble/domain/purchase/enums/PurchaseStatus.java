@@ -1,12 +1,12 @@
 package liaison.groble.domain.purchase.enums;
 
 public enum PurchaseStatus {
-  PENDING("구매대기"),
-  COMPLETED("구매완료"),
-  CANCELLED("구매취소"),
-  REFUND_REQUESTED("환불요청"),
-  REFUNDED("환불완료"),
-  FAILED("구매실패");
+  PENDING("구매 대기"),
+  COMPLETED("구매 완료"),
+  CANCEL_REQUESTED("구매 취소 요청"),
+  REFUND_REQUESTED("환불 요청"),
+  REFUNDED("환불 완료"),
+  FAILED("구매 실패");
 
   private final String description;
 
@@ -20,9 +20,5 @@ public enum PurchaseStatus {
 
   public boolean isActive() {
     return this == COMPLETED;
-  }
-
-  public boolean isTerminated() {
-    return this == CANCELLED || this == REFUNDED || this == FAILED;
   }
 }

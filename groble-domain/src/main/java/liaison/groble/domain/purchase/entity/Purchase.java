@@ -152,7 +152,7 @@ public class Purchase extends BaseTimeEntity {
       throw new IllegalStateException("완료 상태에서만 구매 취소가 가능합니다.");
     }
 
-    this.status = PurchaseStatus.CANCELLED;
+    this.status = PurchaseStatus.REFUNDED;
     this.cancelledAt = LocalDateTime.now();
     this.cancelReason = reason;
   }
@@ -214,10 +214,6 @@ public class Purchase extends BaseTimeEntity {
   }
 
   public boolean isCancelled() {
-    return status == PurchaseStatus.CANCELLED;
-  }
-
-  public boolean isRefunded() {
     return status == PurchaseStatus.REFUNDED;
   }
 

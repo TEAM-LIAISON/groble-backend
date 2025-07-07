@@ -11,17 +11,16 @@ import liaison.groble.application.admin.dto.AdminOrderCancelRequestDTO;
 import liaison.groble.application.admin.dto.AdminOrderCancellationReasonDTO;
 import liaison.groble.application.admin.dto.AdminOrderSummaryInfoDTO;
 import liaison.groble.common.response.PageResponse;
-import liaison.groble.mapping.config.GrobleMapperConfig;
 
-@Mapper(config = GrobleMapperConfig.class)
+@Mapper(componentModel = "spring")
 public interface AdminOrderMapper {
 
-  // ====== 📤 DTO → Response 변환 ======
-  AdminOrderCancelRequestResponse toAdminOrderCancelRequestResponse(
-      AdminOrderCancelRequestDTO adminOrderCancelRequestDTO);
+  AdminOrderCancelRequestResponse toAdminOrderCancelRequestResponse(AdminOrderCancelRequestDTO dto);
 
   AdminOrderCancellationReasonResponse toAdminOrderCancellationReasonResponse(
-      AdminOrderCancellationReasonDTO adminOrderCancellationReasonDTO);
+      AdminOrderCancellationReasonDTO dto);
+
+  AdminOrderSummaryInfoResponse toAdminOrderSummaryInfoResponse(AdminOrderSummaryInfoDTO dto);
 
   default PageResponse<AdminOrderSummaryInfoResponse> toAdminOrderSummaryInfoResponsePage(
       PageResponse<AdminOrderSummaryInfoDTO> dtoPage) {
@@ -34,7 +33,4 @@ public interface AdminOrderMapper {
         .meta(dtoPage.getMeta())
         .build();
   }
-
-  AdminOrderSummaryInfoResponse toAdminOrderSummaryInfoResponse(
-      AdminOrderSummaryInfoDTO adminOrderSummaryInfoDTO);
 }
