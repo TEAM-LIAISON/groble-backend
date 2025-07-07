@@ -22,6 +22,7 @@ import liaison.groble.application.admin.dto.AdminOrderCancellationReasonDTO;
 import liaison.groble.application.admin.dto.AdminOrderSummaryInfoDTO;
 import liaison.groble.application.admin.service.AdminOrderService;
 import liaison.groble.common.annotation.Auth;
+import liaison.groble.common.annotation.Logging;
 import liaison.groble.common.annotation.RequireRole;
 import liaison.groble.common.model.Accessor;
 import liaison.groble.common.response.GrobleResponse;
@@ -42,7 +43,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/admin")
 @Tag(
-    name = "[✅ 관리자] 모든 주문을 조회하고 취소 사유 조회 기능 API",
+    name = "[✅ 관리자 주문 페이지] 모든 주문을 조회하고 취소 사유 조회 기능 API",
     description = "모든 주문 목록을 조회하고, 취소 요청 및 환불 완료 주문에 대한 사유를 조회하는 API입니다.")
 public class AdminOrderController {
 
@@ -72,6 +73,7 @@ public class AdminOrderController {
   @AdminOrderSummaryInfo
   @RequireRole("ROLE_ADMIN")
   @GetMapping(ADMIN_ORDERS_PATH)
+  @Logging(item = "AdminOrder", action = "getAllOrders", includeParam = true, includeResult = true)
   public ResponseEntity<GrobleResponse<PageResponse<AdminOrderSummaryInfoResponse>>> getAllOrders(
       @Auth Accessor accessor,
       @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
@@ -95,6 +97,11 @@ public class AdminOrderController {
   @Operation(summary = "[✅ 관리자 주문 관리] 결제 취소 주문에 대한 사유 조회", description = "결제 취소 주문에 대한 사유를 조회합니다.")
   @RequireRole("ROLE_ADMIN")
   @GetMapping(ORDER_CANCELLATION_REASON_PATH)
+  @Logging(
+      item = "AdminOrder",
+      action = "getOrderCancellationReason",
+      includeParam = true,
+      includeResult = true)
   public ResponseEntity<GrobleResponse<AdminOrderCancellationReasonResponse>>
       getOrderCancellationReason(
           @Auth Accessor accessor, @Valid @PathVariable("merchantUid") String merchantUid) {
@@ -112,6 +119,11 @@ public class AdminOrderController {
       description = "결제 취소 요청 주문을 승인하거나 거절합니다.")
   @RequireRole("ROLE_ADMIN")
   @PostMapping(CANCEL_REQUEST_ORDER_PATH)
+  @Logging(
+      item = "AdminOrder",
+      action = "cancelRequestOrder",
+      includeParam = true,
+      includeResult = true)
   public ResponseEntity<GrobleResponse<AdminOrderCancelRequestResponse>> cancelRequestOrder(
       @Auth Accessor accessor,
       @Valid @PathVariable("merchantUid") String merchantUid,
