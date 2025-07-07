@@ -14,6 +14,9 @@ public class MarketIntroSectionDTO {
   // 마켓 이름
   private String marketName;
 
+  // groble.im/ 뒤에 붙는 메이커만의 마켓 링크 URL
+  private String marketLinkUrl;
+
   // 인증 상태
   private String verificationStatus;
 

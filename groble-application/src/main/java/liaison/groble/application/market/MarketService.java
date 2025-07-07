@@ -200,6 +200,7 @@ public class MarketService {
     return MarketIntroSectionDTO.builder()
         .profileImageUrl(user.getProfileImageUrl())
         .marketName(getMarketNameSafely(user))
+        .marketLinkUrl(getMarketLinkUrlSafely(user))
         .verificationStatus(getVerificationStatusSafely(user))
         .contactInfo(Optional.ofNullable(contactInfo).orElse(ContactInfoDTO.builder().build()))
         .representativeContent(flatContentPreviewDTO)
@@ -211,6 +212,15 @@ public class MarketService {
       return Optional.ofNullable(user.getSellerInfo()).map(SellerInfo::getMarketName).orElse("");
     } catch (Exception e) {
       log.warn("Error getting market name for user: {}", user.getId(), e);
+      return "";
+    }
+  }
+
+  private String getMarketLinkUrlSafely(User user) {
+    try {
+      return Optional.ofNullable(user.getSellerInfo()).map(SellerInfo::getMarketLinkUrl).orElse("");
+    } catch (Exception e) {
+      log.warn("Error getting market link URL for user: {}", user.getId(), e);
       return "";
     }
   }
