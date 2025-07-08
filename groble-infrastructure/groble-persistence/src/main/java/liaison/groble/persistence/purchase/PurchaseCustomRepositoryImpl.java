@@ -285,9 +285,10 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
     QContentOption qContentOption = QContentOption.contentOption;
     QUser qUser = QUser.user;
 
-    // 수정: eq → in, 그리고 구매자 조건으로 변경
-    BooleanExpression conditions =
-        qOrder.status.in(orderStatuses).and(qPurchase.user.id.eq(userId));
+    BooleanExpression conditions = qPurchase.user.id.eq(userId);
+    if (orderStatuses != null) {
+      conditions = conditions.and(qOrder.status.in(orderStatuses));
+    }
 
     JPAQuery<FlatPurchaseContentPreviewDTO> query =
         queryFactory

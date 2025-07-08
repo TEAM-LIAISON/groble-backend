@@ -130,9 +130,14 @@ public class PurchaseService {
   }
 
   private List<Order.OrderStatus> parseOrderStatuses(String state) {
+    if (state == null || state.isBlank()) {
+      return null;
+    }
+
     if ("CANCEL".equalsIgnoreCase(state)) {
       return List.of(Order.OrderStatus.CANCEL_REQUEST, Order.OrderStatus.CANCELLED);
     }
+
     return List.of(parseOrderStatus(state));
   }
 
