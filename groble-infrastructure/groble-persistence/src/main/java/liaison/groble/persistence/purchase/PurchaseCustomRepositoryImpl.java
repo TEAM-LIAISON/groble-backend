@@ -288,6 +288,7 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
     // 수정: eq → in, 그리고 구매자 조건으로 변경
     BooleanExpression conditions =
         qOrder.status.in(orderStatuses).and(qPurchase.user.id.eq(userId));
+
     JPAQuery<FlatPurchaseContentPreviewDTO> query =
         queryFactory
             .select(
@@ -314,28 +315,26 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
             .leftJoin(qPurchase.order, qOrder)
             .where(conditions);
 
-    // 3) Pageable의 Sort 적용 (여기서는 예시로 createdAt 기준)
+    // 3) Pageable의 Sort 적용
     if (pageable.getSort().isUnsorted()) {
-      query.orderBy(qContent.createdAt.desc());
+      query.orderBy(qPurchase.purchasedAt.desc()); // qContent -> qPurchase
     } else {
-      // qContent 는 QContent.content
-      PathBuilder<Content> path = new PathBuilder<>(Content.class, qContent.getMetadata());
-
-      // Sort.Order 순회
       for (Sort.Order order : pageable.getSort()) {
-        // ASC / DESC
         com.querydsl.core.types.Order direction =
             order.isAscending()
                 ? com.querydsl.core.types.Order.ASC
                 : com.querydsl.core.types.Order.DESC;
 
-        // ComparableExpression 으로 꺼내오기
-        // (모든 필드를 Comparable 으로 가정)
-        ComparableExpressionBase<?> expr =
-            path.getComparable(order.getProperty(), Comparable.class);
-
-        // 이제 Expression 타입이 맞아서 컴파일 OK
-        query.orderBy(new OrderSpecifier<>(direction, expr));
+        // purchasedAt은 Purchase 엔티티에서 처리
+        if ("purchasedAt".equals(order.getProperty())) {
+          query.orderBy(new OrderSpecifier<>(direction, qPurchase.purchasedAt));
+        } else {
+          // 다른 필드는 Content에서 처리
+          PathBuilder<Content> path = new PathBuilder<>(Content.class, qContent.getMetadata());
+          ComparableExpressionBase<?> expr =
+              path.getComparable(order.getProperty(), Comparable.class);
+          query.orderBy(new OrderSpecifier<>(direction, expr));
+        }
       }
     }
 
@@ -346,8 +345,14 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
     // 5) 전체 카운트
     long total =
         Optional.ofNullable(
-                queryFactory.select(qPurchase.count()).from(qPurchase).where(conditions).fetchOne())
+                queryFactory
+                    .select(qPurchase.count())
+                    .from(qPurchase)
+                    .leftJoin(qPurchase.order, qOrder) // 이 라인 추가
+                    .where(conditions)
+                    .fetchOne())
             .orElse(0L);
+
     return new PageImpl<>(items, pageable, total);
   }
 

@@ -20,12 +20,14 @@ public class PageUtils {
       direction = Sort.Direction.DESC;
     }
 
-    // "popular" 로 넘어오면 viewCount 컬럼 기준 정렬
-    if ("popular".equalsIgnoreCase(key)) {
-      return PageRequest.of(page, size, Sort.by(direction, "viewCount"));
-    }
+    // 키워드 매핑
+    String sortProperty =
+        switch (key.toLowerCase()) {
+          case "popular" -> "viewCount";
+          case "recent" -> "purchasedAt"; // 추가
+          default -> key;
+        };
 
-    // 그 외엔 key 그대로
-    return PageRequest.of(page, size, Sort.by(direction, key));
+    return PageRequest.of(page, size, Sort.by(direction, sortProperty));
   }
 }

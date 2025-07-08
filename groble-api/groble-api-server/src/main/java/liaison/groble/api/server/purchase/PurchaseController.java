@@ -14,8 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import liaison.groble.api.model.maker.response.ContactInfoResponse;
 import liaison.groble.api.model.purchase.response.PurchasedContentDetailResponse;
 import liaison.groble.api.model.purchase.response.PurchaserContentPreviewCardResponse;
-import liaison.groble.api.model.purchase.swagger.MyPurchasingContents;
-import liaison.groble.api.model.purchase.validation.ValidPurchasedContentsAction;
+import liaison.groble.api.model.purchase.swagger.PurchasedContentsListResponse;
 import liaison.groble.application.market.dto.ContactInfoDTO;
 import liaison.groble.application.purchase.dto.PurchaseContentCardDTO;
 import liaison.groble.application.purchase.dto.PurchasedContentDetailDTO;
@@ -32,7 +31,9 @@ import liaison.groble.mapping.purchase.PurchaseMapper;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -48,7 +49,7 @@ public class PurchaseController {
 
   // API 경로 상수화
   private static final String SELLER_CONTACT_INFO_PATH = "/inquiry/{merchantUid}";
-  private static final String MY_PURCHASING_CONTENT_PATH = "/content/my/purchasing-contents";
+  private static final String MY_PURCHASING_CONTENT_PATH = "/content/my/purchased-contents";
   private static final String MY_PURCHASED_CONTENT_PATH = "/content/my/{merchantUid}";
 
   // 응답 메시지 상수화
@@ -106,7 +107,13 @@ public class PurchaseController {
     return responseHelper.success(response, My_PURCHASED_CONTENT_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 
-  @MyPurchasingContents
+  @ApiResponse(
+      responseCode = "200",
+      description = "[내 콘텐츠 - 구매 관리] 주문 상태에 따른 내가 구매한 콘텐츠 목록 조회 성공",
+      content =
+          @Content(
+              mediaType = "application/json",
+              schema = @Schema(implementation = PurchasedContentsListResponse.class)))
   @GetMapping(MY_PURCHASING_CONTENT_PATH)
   @Logging(
       item = "Purchase",
@@ -119,8 +126,7 @@ public class PurchaseController {
           @RequestParam(value = "page", defaultValue = "0") int page,
           @RequestParam(value = "size", defaultValue = "12") int size,
           @RequestParam(value = "sort", defaultValue = "purchasedAt") String sort,
-          @ValidPurchasedContentsAction
-              @Parameter(
+          @Parameter(
                   description = "구매한 콘텐츠 상태 필터 [PAID - 결제완료], [CANCEL - 취소/환불]",
                   schema =
                       @Schema(
