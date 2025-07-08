@@ -10,8 +10,8 @@ import org.springframework.transaction.annotation.Transactional;
 import liaison.groble.application.content.ContentReader;
 import liaison.groble.application.order.dto.CreateOrderRequestDTO;
 import liaison.groble.application.order.dto.CreateOrderSuccessDTO;
-import liaison.groble.application.order.dto.OrderSuccessResponse;
-import liaison.groble.application.order.dto.ValidatedOrderOptionDto;
+import liaison.groble.application.order.dto.OrderSuccessDTO;
+import liaison.groble.application.order.dto.ValidatedOrderOptionDTO;
 import liaison.groble.application.purchase.service.PurchaseReader;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.domain.content.entity.Content;
@@ -71,7 +71,7 @@ public class OrderService {
     final Content content = contentReader.getContentById(dto.getContentId());
 
     // 2. 주문 옵션 검증 및 변환
-    final List<ValidatedOrderOptionDto> validatedOptions =
+    final List<ValidatedOrderOptionDTO> validatedOptions =
         validateAndEnrichOptions(content, dto.getOptions());
     final List<OrderOptionInfo> orderOptions = convertToDomainOptions(validatedOptions);
 
@@ -104,7 +104,7 @@ public class OrderService {
    * @return 검증되고 가격 정보가 추가된 옵션 목록
    * @throws IllegalArgumentException 요청한 옵션이 콘텐츠에 존재하지 않는 경우
    */
-  private List<ValidatedOrderOptionDto> validateAndEnrichOptions(
+  private List<ValidatedOrderOptionDTO> validateAndEnrichOptions(
       Content content, List<CreateOrderRequestDTO.OrderOptionDTO> requestedOptions) {
 
     if (requestedOptions == null || requestedOptions.isEmpty()) {
@@ -123,7 +123,7 @@ public class OrderService {
    * @param requestedOption 요청된 옵션
    * @return 검증된 옵션 정보
    */
-  private ValidatedOrderOptionDto validateAndEnrichSingleOption(
+  private ValidatedOrderOptionDTO validateAndEnrichSingleOption(
       Content content, CreateOrderRequestDTO.OrderOptionDTO requestedOption) {
 
     // 콘텐츠에서 해당 옵션 찾기
@@ -135,7 +135,7 @@ public class OrderService {
           "옵션 수량은 1개 이상이어야 합니다. optionId=" + requestedOption.getOptionId());
     }
 
-    return ValidatedOrderOptionDto.builder()
+    return ValidatedOrderOptionDTO.builder()
         .optionId(matchedOption.getId())
         .optionType(mapToDomainOptionType(requestedOption.getOptionType()))
         .price(matchedOption.getPrice())
@@ -441,7 +441,7 @@ public class OrderService {
    * @throws IllegalStateException 권한이 없거나 결제가 완료되지 않은 경우
    */
   @Transactional(readOnly = true)
-  public OrderSuccessResponse getOrderSuccess(String merchantUid, Long userId) {
+  public OrderSuccessDTO getOrderSuccess(String merchantUid, Long userId) {
     // 1. 주문 조회
     Order order = findOrderByMerchantUid(merchantUid);
 
@@ -528,12 +528,12 @@ public class OrderService {
    * @param purchase 구매 정보
    * @return 주문 성공 응답
    */
-  private OrderSuccessResponse buildOrderSuccessResponse(Order order, Purchase purchase) {
+  private OrderSuccessDTO buildOrderSuccessResponse(Order order, Purchase purchase) {
     // 첫 번째 주문 아이템 정보 (현재는 단일 콘텐츠 구매만 지원)
     OrderItem orderItem = order.getOrderItems().get(0);
     Content content = orderItem.getContent();
 
-    return OrderSuccessResponse.builder()
+    return OrderSuccessDTO.builder()
         // 주문 기본 정보
         .merchantUid(order.getMerchantUid())
         .purchasedAt(purchase.getPurchasedAt())
@@ -569,7 +569,7 @@ public class OrderService {
    * @param options 검증된 옵션 목록
    * @return 도메인 옵션 정보 목록
    */
-  private List<OrderOptionInfo> convertToDomainOptions(List<ValidatedOrderOptionDto> options) {
+  private List<OrderOptionInfo> convertToDomainOptions(List<ValidatedOrderOptionDTO> options) {
     return options.stream().map(this::convertSingleOption).collect(Collectors.toList());
   }
 
@@ -579,7 +579,7 @@ public class OrderService {
    * @param option 검증된 옵션
    * @return 도메인 옵션 정보
    */
-  private OrderOptionInfo convertSingleOption(ValidatedOrderOptionDto option) {
+  private OrderOptionInfo convertSingleOption(ValidatedOrderOptionDTO option) {
     return OrderOptionInfo.builder()
         .optionId(option.getOptionId())
         .optionType(option.getOptionType())

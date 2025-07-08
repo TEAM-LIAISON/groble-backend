@@ -8,8 +8,10 @@ import org.mapstruct.Mapping;
 import liaison.groble.api.model.order.request.CreateOrderOptionRequest;
 import liaison.groble.api.model.order.request.CreateOrderRequest;
 import liaison.groble.api.model.order.response.CreateOrderResponse;
+import liaison.groble.api.model.order.response.OrderSuccessResponse;
 import liaison.groble.application.order.dto.CreateOrderRequestDTO;
 import liaison.groble.application.order.dto.CreateOrderSuccessDTO;
+import liaison.groble.application.order.dto.OrderSuccessDTO;
 import liaison.groble.mapping.config.GrobleMapperConfig;
 
 @Mapper(config = GrobleMapperConfig.class)
@@ -38,4 +40,6 @@ public interface OrderMapper {
 
   // ====== 📤 DTO → Response 변환 ======
   CreateOrderResponse toCreateOrderResponse(CreateOrderSuccessDTO createOrderSuccessDTO);
+
+  OrderSuccessResponse toOrderSuccessResponse(OrderSuccessDTO orderSuccessDTO);
 }

@@ -21,7 +21,7 @@ public class PurchasedContentDetailResponse {
       type = "String",
       allowableValues = {"COMPLETED", "CANCELLED", "REFUND_REQUESTED", "REFUNDED"},
       requiredMode = Schema.RequiredMode.REQUIRED)
-  private String purchaseStatus;
+  private String orderStatus;
 
   @Schema(
       description = "주문 식별 ID",

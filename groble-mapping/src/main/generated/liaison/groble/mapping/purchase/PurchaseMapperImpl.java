@@ -11,7 +11,7 @@ import liaison.groble.application.purchase.dto.PurchasedContentDetailDTO;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-07-07T21:45:28+0900",
+    date = "2025-07-09T02:19:34+0900",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.10 (Amazon.com Inc.)")
 @Component
 public class PurchaseMapperImpl implements PurchaseMapper {
@@ -26,8 +26,8 @@ public class PurchaseMapperImpl implements PurchaseMapper {
     PurchasedContentDetailResponse.PurchasedContentDetailResponseBuilder
         purchasedContentDetailResponse = PurchasedContentDetailResponse.builder();
 
-    if (purchasedContentDetailDTO.getPurchaseStatus() != null) {
-      purchasedContentDetailResponse.purchaseStatus(purchasedContentDetailDTO.getPurchaseStatus());
+    if (purchasedContentDetailDTO.getOrderStatus() != null) {
+      purchasedContentDetailResponse.orderStatus(purchasedContentDetailDTO.getOrderStatus());
     }
     if (purchasedContentDetailDTO.getMerchantUid() != null) {
       purchasedContentDetailResponse.merchantUid(purchasedContentDetailDTO.getMerchantUid());
