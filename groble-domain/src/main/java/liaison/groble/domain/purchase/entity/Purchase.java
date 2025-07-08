@@ -155,6 +155,7 @@ public class Purchase extends BaseTimeEntity {
                 ? OptionType.valueOf(orderItem.getOptionType().name())
                 : null)
         .selectedOptionName(selectedOptionName)
+        .purchasedAt(LocalDateTime.now())
         .selectedOptionId(orderItem.getOptionId())
         .build();
   }

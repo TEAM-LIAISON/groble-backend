@@ -525,15 +525,7 @@ public class PayplePaymentService {
   private Purchase createAndCompletePurchase(Order order) {
     try {
       Purchase purchase = Purchase.createFromOrder(order);
-      Purchase savedPurchase = purchaseRepository.save(purchase);
-
-      log.debug(
-          "Purchase 생성 및 완료 처리 성공 - orderId: {}, purchaseId: {}, contentId: {}",
-          order.getId(),
-          savedPurchase.getId(),
-          savedPurchase.getContent().getId());
-
-      return savedPurchase;
+      return purchaseRepository.save(purchase);
     } catch (Exception e) {
       log.error("Purchase 생성 및 완료 처리 실패 - orderId: {}", order.getId(), e);
       throw new RuntimeException("구매 정보 생성 실패: " + e.getMessage(), e);
