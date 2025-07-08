@@ -185,20 +185,12 @@ public class MarketService {
 
   // TODO : 2회 이상 재사용되는 메서드 MarketService, PurchaseService 2곳에서 사용
   private ContactInfoDTO getContactInfo(User user) {
-    try {
-      List<SellerContact> contacts = sellerContactReader.getContactsByUser(user);
-      return ContactInfoDTO.from(contacts);
-    } catch (Exception e) {
-      return ContactInfoDTO.builder().build();
-    }
+    List<SellerContact> contacts = sellerContactReader.getContactsByUser(user);
+    return ContactInfoDTO.from(contacts);
   }
 
   private FlatContentPreviewDTO getRepresentativeContent(User user) {
-    try {
-      return contentReader.getRepresentativeContentByUser(user);
-    } catch (Exception e) {
-      return FlatContentPreviewDTO.builder().build();
-    }
+    return contentReader.getRepresentativeContentByUser(user);
   }
 
   private MarketIntroSectionDTO buildEditMarketIntroSectionResult(
@@ -230,33 +222,18 @@ public class MarketService {
   }
 
   private String getMarketNameSafely(User user) {
-    try {
-      return Optional.ofNullable(user.getSellerInfo()).map(SellerInfo::getMarketName).orElse("");
-    } catch (Exception e) {
-      log.warn("Error getting market name for user: {}", user.getId(), e);
-      return "";
-    }
+    return Optional.ofNullable(user.getSellerInfo()).map(SellerInfo::getMarketName).orElse("");
   }
 
   private String getMarketLinkUrlSafely(User user) {
-    try {
-      return Optional.ofNullable(user.getSellerInfo()).map(SellerInfo::getMarketLinkUrl).orElse("");
-    } catch (Exception e) {
-      log.warn("Error getting market link URL for user: {}", user.getId(), e);
-      return "";
-    }
+    return Optional.ofNullable(user.getSellerInfo()).map(SellerInfo::getMarketLinkUrl).orElse("");
   }
 
   private String getVerificationStatusSafely(User user) {
-    try {
-      return Optional.ofNullable(user.getSellerInfo())
-          .map(SellerInfo::getVerificationStatus)
-          .map(Enum::name)
-          .orElse("UNVERIFIED");
-    } catch (Exception e) {
-      log.warn("Error getting verification status for user: {}", user.getId(), e);
-      return "UNVERIFIED";
-    }
+    return Optional.ofNullable(user.getSellerInfo())
+        .map(SellerInfo::getVerificationStatus)
+        .map(Enum::name)
+        .orElse("UNVERIFIED");
   }
 
   /** FlatPreviewContentDTO를 ContentCardDto로 변환합니다. */
