@@ -36,10 +36,10 @@ public class PurchaseService {
   @Transactional(readOnly = true)
   public PageResponse<PurchaseContentCardDTO> getMyPurchasedContents(
       Long userId, String state, Pageable pageable) {
-    Order.OrderStatus orderStatus = parseOrderStatus(state);
+    List<Order.OrderStatus> orderStatuses = parseOrderStatuses(state);
 
     Page<FlatPurchaseContentPreviewDTO> page =
-        purchaseReader.findMyPurchasingContents(userId, orderStatus, pageable);
+        purchaseReader.findMyPurchasedContents(userId, orderStatuses, pageable);
 
     List<PurchaseContentCardDTO> items =
         page.getContent().stream().map(this::convertFlatDtoToCardDto).toList();
@@ -77,20 +77,6 @@ public class PurchaseService {
         .priceOptionLength(flat.getPriceOptionLength())
         .orderStatus(flat.getOrderStatus())
         .build();
-  }
-
-  /** 문자열에서 OrderStatus 파싱합니다. */
-  private Order.OrderStatus parseOrderStatus(String state) {
-    if (state == null || state.isBlank()) {
-      return null;
-    }
-
-    try {
-      return Order.OrderStatus.valueOf(state.toUpperCase());
-    } catch (IllegalArgumentException e) {
-      log.warn("유효하지 않은 구매 상태: {}", state);
-      return null;
-    }
   }
 
   /**
@@ -140,6 +126,27 @@ public class PurchaseService {
     } catch (ContactNotFoundException e) {
       log.warn("판매자 연락처 정보 없음: userId={}", user.getId());
       return ContactInfoDTO.builder().build();
+    }
+  }
+
+  private List<Order.OrderStatus> parseOrderStatuses(String state) {
+    if ("CANCEL".equalsIgnoreCase(state)) {
+      return List.of(Order.OrderStatus.CANCEL_REQUEST, Order.OrderStatus.CANCELLED);
+    }
+    return List.of(parseOrderStatus(state));
+  }
+
+  /** 문자열에서 OrderStatus 파싱합니다. */
+  private Order.OrderStatus parseOrderStatus(String state) {
+    if (state == null || state.isBlank()) {
+      return null;
+    }
+
+    try {
+      return Order.OrderStatus.valueOf(state.toUpperCase());
+    } catch (IllegalArgumentException e) {
+      log.warn("유효하지 않은 구매 상태: {}", state);
+      return null;
     }
   }
 }

@@ -110,11 +110,11 @@ public class PurchaseController {
   @GetMapping(MY_PURCHASING_CONTENT_PATH)
   @Logging(
       item = "Purchase",
-      action = "getMyPurchasingContents",
+      action = "getMyPurchasedContents",
       includeParam = true,
       includeResult = true)
   public ResponseEntity<GrobleResponse<PageResponse<PurchaserContentPreviewCardResponse>>>
-      getMyPurchasingContents(
+      getMyPurchasedContents(
           @Parameter @Auth Accessor accessor,
           @RequestParam(value = "page", defaultValue = "0") int page,
           @RequestParam(value = "size", defaultValue = "12") int size,

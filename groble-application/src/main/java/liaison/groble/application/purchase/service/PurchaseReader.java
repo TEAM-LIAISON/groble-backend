@@ -1,5 +1,7 @@
 package liaison.groble.application.purchase.service;
 
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
@@ -52,9 +54,9 @@ public class PurchaseReader {
     return purchaseCustomRepository.getContentSellPageDTOs(userId, contentId, pageable);
   }
 
-  public Page<FlatPurchaseContentPreviewDTO> findMyPurchasingContents(
-      Long userId, Order.OrderStatus orderStatus, Pageable pageable) {
-    return purchaseCustomRepository.findMyPurchasingContents(userId, orderStatus, pageable);
+  public Page<FlatPurchaseContentPreviewDTO> findMyPurchasedContents(
+      Long userId, List<Order.OrderStatus> orderStatuses, Pageable pageable) {
+    return purchaseCustomRepository.findMyPurchasedContents(userId, orderStatuses, pageable);
   }
 
   public FlatSellManageDetailDTO getSellManageDetail(Long userId, Long contentId) {

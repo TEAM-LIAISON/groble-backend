@@ -277,15 +277,17 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
   }
 
   @Override
-  public Page<FlatPurchaseContentPreviewDTO> findMyPurchasingContents(
-      Long userId, Order.OrderStatus orderStatus, Pageable pageable) {
+  public Page<FlatPurchaseContentPreviewDTO> findMyPurchasedContents(
+      Long userId, List<Order.OrderStatus> orderStatuses, Pageable pageable) {
     QPurchase qPurchase = QPurchase.purchase;
     QOrder qOrder = QOrder.order;
     QContent qContent = QContent.content;
     QContentOption qContentOption = QContentOption.contentOption;
     QUser qUser = QUser.user;
 
-    BooleanExpression conditions = qOrder.status.eq(orderStatus).and(qContent.user.id.eq(userId));
+    // 수정: eq → in, 그리고 구매자 조건으로 변경
+    BooleanExpression conditions =
+        qOrder.status.in(orderStatuses).and(qPurchase.user.id.eq(userId));
     JPAQuery<FlatPurchaseContentPreviewDTO> query =
         queryFactory
             .select(
