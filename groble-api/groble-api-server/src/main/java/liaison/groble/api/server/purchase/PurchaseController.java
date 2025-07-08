@@ -15,6 +15,7 @@ import liaison.groble.api.model.maker.response.ContactInfoResponse;
 import liaison.groble.api.model.purchase.response.PurchasedContentDetailResponse;
 import liaison.groble.api.model.purchase.response.PurchaserContentPreviewCardResponse;
 import liaison.groble.api.model.purchase.swagger.MyPurchasingContents;
+import liaison.groble.api.model.purchase.validation.ValidPurchasedContentsAction;
 import liaison.groble.application.market.dto.ContactInfoDTO;
 import liaison.groble.application.purchase.dto.PurchaseContentCardDTO;
 import liaison.groble.application.purchase.dto.PurchasedContentDetailDTO;
@@ -118,12 +119,13 @@ public class PurchaseController {
           @RequestParam(value = "page", defaultValue = "0") int page,
           @RequestParam(value = "size", defaultValue = "12") int size,
           @RequestParam(value = "sort", defaultValue = "purchasedAt") String sort,
-          @Parameter(
-                  description = "구매한 콘텐츠 상태 필터 [PAID - 결제완료], [EXPIRED - 기간만료], [CANCELLED - 결제취소]",
+          @ValidPurchasedContentsAction
+              @Parameter(
+                  description = "구매한 콘텐츠 상태 필터 [PAID - 결제완료], [CANCEL - 취소/환불]",
                   schema =
                       @Schema(
                           implementation = String.class,
-                          allowableValues = {"PAID", "EXPIRED", "CANCELLED"}))
+                          allowableValues = {"PAID", "CANCEL"}))
               @RequestParam(value = "state", required = false)
               String state) {
     Pageable pageable = PageUtils.createPageable(page, size, sort);
