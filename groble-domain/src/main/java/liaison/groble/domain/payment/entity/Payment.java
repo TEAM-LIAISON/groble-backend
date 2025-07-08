@@ -30,7 +30,6 @@ import lombok.NoArgsConstructor;
     name = "payments",
     indexes = {
       @Index(name = "idx_payment_order", columnList = "order_id"),
-      @Index(name = "idx_payment_status", columnList = "status"),
       @Index(name = "idx_payment_method", columnList = "payment_method"),
       @Index(name = "idx_payment_created_at", columnList = "created_at")
     })

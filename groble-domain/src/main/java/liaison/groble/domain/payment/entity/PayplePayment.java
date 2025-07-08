@@ -24,7 +24,6 @@ import lombok.NoArgsConstructor;
     indexes = {
       @Index(name = "idx_pcd_pay_oid", columnList = "pcd_pay_oid"),
       @Index(name = "idx_pcd_payer_no", columnList = "pcd_payer_no"),
-      @Index(name = "idx_payple_payment_status", columnList = "status"),
       @Index(name = "idx_payple_payment_created_at", columnList = "created_at")
     })
 @Getter

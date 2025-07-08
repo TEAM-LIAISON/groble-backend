@@ -39,7 +39,6 @@ import lombok.NoArgsConstructor;
       @Index(name = "idx_purchase_user", columnList = "user_id"),
       @Index(name = "idx_purchase_content", columnList = "content_id"),
       @Index(name = "idx_purchase_order", columnList = "order_id", unique = true),
-      @Index(name = "idx_purchase_status", columnList = "status"),
       @Index(name = "idx_purchase_created_at", columnList = "created_at")
     })
 @Getter
