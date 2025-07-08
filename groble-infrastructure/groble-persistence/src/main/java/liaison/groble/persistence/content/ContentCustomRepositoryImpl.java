@@ -35,7 +35,6 @@ import liaison.groble.domain.content.enums.ContentStatus;
 import liaison.groble.domain.content.enums.ContentType;
 import liaison.groble.domain.content.repository.ContentCustomRepository;
 import liaison.groble.domain.user.entity.QUser;
-import liaison.groble.domain.user.entity.User;
 
 import lombok.RequiredArgsConstructor;
 
@@ -46,7 +45,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
   private final JPAQueryFactory queryFactory;
 
   @Override
-  public Optional<FlatContentPreviewDTO> findRepresentativeContentByUser(User user) {
+  public Optional<FlatContentPreviewDTO> findRepresentativeContentByUser(Long userId) {
     QContent qContent = QContent.content;
     QUser qUser = QUser.user;
     QContentOption qContentOption = QContentOption.contentOption;
@@ -70,7 +69,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     qContent.status.stringValue().as("status")))
             .from(qContent)
             .leftJoin(qContent.user, qUser)
-            .where(qContent.user.id.eq(qUser.id).and(qContent.isRepresentative.isTrue()))
+            .where(qContent.user.id.eq(userId).and(qContent.isRepresentative.isTrue()))
             .fetchOne();
 
     return Optional.ofNullable(result);

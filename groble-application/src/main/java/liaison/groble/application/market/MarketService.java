@@ -49,7 +49,7 @@ public class MarketService {
     ContactInfoDTO contactInfo = getContactInfo(user);
 
     // 대표 콘텐츠 조회
-    FlatContentPreviewDTO representativeContent = getRepresentativeContent(user);
+    FlatContentPreviewDTO representativeContent = getRepresentativeContent(userId);
     log.info("Get representative content for user: {}", userId);
 
     // 나의 모든 콘텐츠 조회
@@ -70,7 +70,7 @@ public class MarketService {
     ContactInfoDTO contactInfo = getContactInfo(user);
 
     // 대표 콘텐츠 조회
-    FlatContentPreviewDTO representativeContent = getRepresentativeContent(user);
+    FlatContentPreviewDTO representativeContent = getRepresentativeContent(user.getId());
 
     // 메이커 소개 섹션 빌드 결과
     return buildMarketIntroSectionResult(user, contactInfo, representativeContent);
@@ -189,8 +189,8 @@ public class MarketService {
     return ContactInfoDTO.from(contacts);
   }
 
-  private FlatContentPreviewDTO getRepresentativeContent(User user) {
-    return contentReader.getRepresentativeContentByUser(user);
+  private FlatContentPreviewDTO getRepresentativeContent(Long userId) {
+    return contentReader.getRepresentativeContentByUser(userId);
   }
 
   private MarketIntroSectionDTO buildEditMarketIntroSectionResult(
