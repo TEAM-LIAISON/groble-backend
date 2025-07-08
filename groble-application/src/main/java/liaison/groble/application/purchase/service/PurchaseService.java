@@ -107,6 +107,7 @@ public class PurchaseService {
         .build();
   }
 
+  @Transactional(readOnly = true)
   public ContactInfoDTO getContactInfo(Long userId, String merchantUid) {
     Order order = orderReader.getOrderByMerchantUidAndUserId(merchantUid, userId);
 

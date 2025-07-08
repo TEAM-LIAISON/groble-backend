@@ -196,6 +196,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     "priceOptionLength"),
                 qContent.status.stringValue().as("status")))
         .from(qContent)
+        .leftJoin(qContent.user, qUser)
         .where(condition)
         .fetch();
   }

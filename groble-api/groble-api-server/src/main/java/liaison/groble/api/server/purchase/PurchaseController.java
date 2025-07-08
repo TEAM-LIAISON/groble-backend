@@ -107,6 +107,9 @@ public class PurchaseController {
     return responseHelper.success(response, My_PURCHASED_CONTENT_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 
+  @Operation(
+      summary = "[✅ 내 콘텐츠 - 구매 관리] 내가 구매한 콘텐츠 목록 조회",
+      description = "내가 구매한 콘텐츠 목록을 조회합니다. 구매 상태에 따라 필터링할 수 있습니다.")
   @ApiResponse(
       responseCode = "200",
       description = "[내 콘텐츠 - 구매 관리] 주문 상태에 따른 내가 구매한 콘텐츠 목록 조회 성공",
@@ -124,7 +127,7 @@ public class PurchaseController {
       getMyPurchasedContents(
           @Parameter @Auth Accessor accessor,
           @RequestParam(value = "page", defaultValue = "0") int page,
-          @RequestParam(value = "size", defaultValue = "12") int size,
+          @RequestParam(value = "size", defaultValue = "9") int size,
           @RequestParam(value = "sort", defaultValue = "purchasedAt") String sort,
           @Parameter(
                   description = "구매한 콘텐츠 상태 필터 [PAID - 결제완료], [CANCEL - 취소/환불]",
