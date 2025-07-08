@@ -44,16 +44,19 @@ public class MarketService {
   @Transactional(readOnly = true)
   public MarketIntroSectionDTO getEditIntroSection(Long userId) {
     User user = userReader.getUserById(userId);
+    log.info("Get edit intro section");
     // 문의하기 정보 조회
     ContactInfoDTO contactInfo = getContactInfo(user);
 
     // 대표 콘텐츠 조회
     FlatContentPreviewDTO representativeContent = getRepresentativeContent(user);
+    log.info("Get representative content for user: {}", userId);
 
     // 나의 모든 콘텐츠 조회
     List<FlatContentPreviewDTO> myContents = contentReader.findAllMarketContentsByUserId(userId);
+    log.info("Get market content for user: {}", userId);
     List<ContentCardDTO> items = myContents.stream().map(this::convertFlatDtoToCardDto).toList();
-
+    log.info("Get market content cards for user: {}", userId);
     // 메이커 소개 섹션 빌드 결과
     return buildEditMarketIntroSectionResult(user, items, contactInfo, representativeContent);
   }
