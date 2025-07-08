@@ -8,8 +8,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import liaison.groble.application.content.ContentReader;
-import liaison.groble.application.order.dto.CreateOrderDto;
-import liaison.groble.application.order.dto.CreateOrderResponse;
+import liaison.groble.application.order.dto.CreateOrderRequestDTO;
+import liaison.groble.application.order.dto.CreateOrderSuccessDTO;
 import liaison.groble.application.order.dto.OrderSuccessResponse;
 import liaison.groble.application.order.dto.ValidatedOrderOptionDto;
 import liaison.groble.application.purchase.service.PurchaseReader;
@@ -62,27 +62,8 @@ public class OrderService {
   private final PurchaseRepository purchaseRepository;
   private final PaymentRepository paymentRepository;
 
-  /**
-   * 사용자를 위한 주문 생성
-   *
-   * <p>주문 생성 프로세스:
-   *
-   * <ol>
-   *   <li>사용자 및 콘텐츠 정보 조회
-   *   <li>주문 옵션 검증 (콘텐츠에 해당 옵션이 존재하는지 확인)
-   *   <li>주문 생성 및 고유 번호(merchantUid) 할당
-   *   <li>쿠폰 적용 (여러 쿠폰 중 최대 할인 쿠폰 자동 선택)
-   *   <li>무료 주문인 경우 즉시 구매 완료 처리
-   * </ol>
-   *
-   * @param dto 주문 생성 요청 정보 (콘텐츠ID, 옵션 정보, 쿠폰 코드 등)
-   * @param userId 주문을 생성하는 사용자 ID
-   * @return 생성된 주문 정보 응답
-   * @throws IllegalArgumentException 사용자나 콘텐츠를 찾을 수 없는 경우
-   * @throws IllegalArgumentException 요청한 옵션이 콘텐츠에 존재하지 않는 경우
-   */
   @Transactional
-  public CreateOrderResponse createOrderForUser(CreateOrderDto dto, Long userId) {
+  public CreateOrderSuccessDTO createOrderForUser(CreateOrderRequestDTO dto, Long userId) {
     log.info("주문 생성 시작 - userId: {}, contentId: {}", userId, dto.getContentId());
 
     // 1. 주문에 필요한 기본 정보 조회
@@ -110,7 +91,7 @@ public class OrderService {
     logOrderCreation(order, userId, dto.getContentId(), validatedOptions.size(), isFreePurchase);
 
     // 8. 응답 생성
-    return buildCreateOrderResponse(order, isFreePurchase);
+    return buildCreateOrderDTO(order, isFreePurchase);
   }
 
   /**
@@ -124,7 +105,7 @@ public class OrderService {
    * @throws IllegalArgumentException 요청한 옵션이 콘텐츠에 존재하지 않는 경우
    */
   private List<ValidatedOrderOptionDto> validateAndEnrichOptions(
-      Content content, List<CreateOrderDto.OrderOptionDto> requestedOptions) {
+      Content content, List<CreateOrderRequestDTO.OrderOptionDTO> requestedOptions) {
 
     if (requestedOptions == null || requestedOptions.isEmpty()) {
       throw new IllegalArgumentException("주문 옵션은 최소 1개 이상 선택해야 합니다.");
@@ -143,7 +124,7 @@ public class OrderService {
    * @return 검증된 옵션 정보
    */
   private ValidatedOrderOptionDto validateAndEnrichSingleOption(
-      Content content, CreateOrderDto.OrderOptionDto requestedOption) {
+      Content content, CreateOrderRequestDTO.OrderOptionDTO requestedOption) {
 
     // 콘텐츠에서 해당 옵션 찾기
     ContentOption matchedOption = findContentOption(content, requestedOption.getOptionId());
@@ -189,7 +170,7 @@ public class OrderService {
    * @throws IllegalArgumentException 유효하지 않은 옵션 타입인 경우
    */
   private OrderItem.OptionType mapToDomainOptionType(
-      CreateOrderDto.OrderOptionDto.OptionType clientOptionType) {
+      CreateOrderRequestDTO.OrderOptionDTO.OptionType clientOptionType) {
     try {
       return OrderItem.OptionType.valueOf(clientOptionType.name());
     } catch (IllegalArgumentException e) {
@@ -524,36 +505,14 @@ public class OrderService {
    * @param isPurchasedContent 구매 완료 여부 (무료 주문인 경우 true)
    * @return 주문 생성 응답
    */
-  private CreateOrderResponse buildCreateOrderResponse(Order order, boolean isPurchasedContent) {
+  private CreateOrderSuccessDTO buildCreateOrderDTO(Order order, boolean isPurchasedContent) {
     // 첫 번째 주문 항목의 콘텐츠 제목 (현재는 단일 콘텐츠 구매만 지원)
     String contentTitle = order.getOrderItems().get(0).getContent().getTitle();
 
-    return CreateOrderResponse.builder()
+    return CreateOrderSuccessDTO.builder()
         .merchantUid(order.getMerchantUid())
         .email(order.getUser().getEmail())
         .phoneNumber(order.getUser().getPhoneNumber())
-        .contentTitle(contentTitle)
-        .totalPrice(order.getTotalPrice())
-        .isPurchasedContent(isPurchasedContent)
-        .build();
-  }
-
-  /**
-   * 주문 응답 DTO 생성 (비회원 주문용)
-   *
-   * <p>비회원 주문의 경우 Purchaser 정보를 사용하여 응답을 구성합니다. 현재는 사용되지 않지만, 향후 비회원 구매 기능 추가 시 사용될 예정입니다.
-   *
-   * @param order 주문
-   * @param isPurchasedContent 구매 완료 여부
-   * @return 주문 생성 응답
-   */
-  private CreateOrderResponse buildPublicOrderResponse(Order order, boolean isPurchasedContent) {
-    String contentTitle = order.getOrderItems().get(0).getContent().getTitle();
-
-    return CreateOrderResponse.builder()
-        .merchantUid(order.getMerchantUid())
-        .email(order.getPurchaser().getEmail())
-        .phoneNumber(order.getPurchaser().getPhone())
         .contentTitle(contentTitle)
         .totalPrice(order.getTotalPrice())
         .isPurchasedContent(isPurchasedContent)

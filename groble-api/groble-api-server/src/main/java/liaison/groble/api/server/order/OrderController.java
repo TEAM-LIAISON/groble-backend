@@ -1,10 +1,9 @@
 package liaison.groble.api.server.order;
 
-import java.util.List;
-
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -14,9 +13,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import liaison.groble.api.model.order.request.CreateOrderRequest;
+import liaison.groble.api.model.order.response.CreateOrderResponse;
 import liaison.groble.api.server.terms.mapper.TermsDtoMapper;
-import liaison.groble.application.order.dto.CreateOrderDto;
-import liaison.groble.application.order.dto.CreateOrderResponse;
+import liaison.groble.application.order.dto.CreateOrderRequestDTO;
+import liaison.groble.application.order.dto.CreateOrderSuccessDTO;
 import liaison.groble.application.order.dto.OrderSuccessResponse;
 import liaison.groble.application.order.service.OrderService;
 import liaison.groble.application.terms.dto.TermsAgreementDTO;
@@ -25,6 +25,8 @@ import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.exception.InvalidRequestException;
 import liaison.groble.common.model.Accessor;
 import liaison.groble.common.response.GrobleResponse;
+import liaison.groble.common.response.ResponseHelper;
+import liaison.groble.mapping.order.OrderMapper;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -38,32 +40,40 @@ import lombok.extern.slf4j.Slf4j;
 @Tag(name = "주문 관련 API", description = "회원/비회원 주문 생성 API")
 public class OrderController {
 
+  // API 경로 상수화
+  private static final String CREATE_ORDER_PATH = "/create";
+
+  // 응답 메시지 상수화
+  private static final String CREATE_ORDER_SUCCESS_MESSAGE = "주문 생성에 성공했습니다.";
+
+  // Service
   private final OrderService orderService;
   private final OrderTermsService orderTermsService;
   private final TermsDtoMapper termsDtoMapper;
+
+  // Mapper
+  private final OrderMapper orderMapper;
+
+  // Helper
+  private final ResponseHelper responseHelper;
 
   @Operation(
       summary = "결제 창에서 주문 발행",
       description =
           "결제 창에서 회원이 merchantUid를 받기 위해 실행." + "콘텐츠 구매를 위한 결제 주문을 발행합니다. 회원은 쿠폰 사용이 가능합니다.")
-  @PostMapping("/create")
+  @PostMapping(CREATE_ORDER_PATH)
   public ResponseEntity<GrobleResponse<CreateOrderResponse>> createOrder(
       @Auth Accessor accessor,
       @Valid @RequestBody CreateOrderRequest request,
       HttpServletRequest httpRequest) {
-    CreateOrderResponse response;
+    CreateOrderRequestDTO dto = orderMapper.toCreateOrderDTO(request);
 
-    response = processAuthenticatedOrder(request, accessor.getUserId());
+    CreateOrderSuccessDTO createOrderSuccessDTO =
+        processAuthenticatedOrder(dto, accessor.getUserId());
 
-    // 회원 주문 약관 동의 처리
     processOrderTermsAgreement(accessor.getUserId(), httpRequest);
-
-    log.info(
-        "주문 생성 완료 - merchantUid: {}, isAuthenticated: {}",
-        response.getMerchantUid(),
-        accessor.isAuthenticated());
-
-    return ResponseEntity.ok(GrobleResponse.success(response));
+    CreateOrderResponse response = orderMapper.toCreateOrderResponse(createOrderSuccessDTO);
+    return responseHelper.success(response, CREATE_ORDER_SUCCESS_MESSAGE, HttpStatus.CREATED);
   }
 
   @Operation(
@@ -104,33 +114,8 @@ public class OrderController {
     }
   }
 
-  /**
-   * 회원 주문 처리
-   *
-   * @param request 주문 요청 정보
-   * @param userId 인증된 사용자의 ID 정보
-   * @return 주문 생성 응답
-   */
-  private CreateOrderResponse processAuthenticatedOrder(CreateOrderRequest request, Long userId) {
-    CreateOrderDto dto = convertToCreateOrderDto(request);
+  private CreateOrderSuccessDTO processAuthenticatedOrder(CreateOrderRequestDTO dto, Long userId) {
     return orderService.createOrderForUser(dto, userId);
-  }
-
-  private CreateOrderDto convertToCreateOrderDto(CreateOrderRequest request) {
-    List<CreateOrderDto.OrderOptionDto> optionDtos =
-        request.getOptions().stream()
-            .map(
-                opt ->
-                    CreateOrderDto.OrderOptionDto.builder()
-                        .optionId(opt.getOptionId())
-                        .optionType(
-                            CreateOrderDto.OrderOptionDto.OptionType.valueOf(
-                                opt.getOptionType().name()))
-                        .quantity(opt.getQuantity())
-                        .build())
-            .toList();
-
-    return CreateOrderDto.of(request.getContentId(), optionDtos, request.getCouponCodes());
   }
 
   /**
