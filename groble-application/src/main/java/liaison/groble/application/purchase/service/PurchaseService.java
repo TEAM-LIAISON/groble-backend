@@ -55,7 +55,6 @@ public class PurchaseService {
 
   @Transactional(readOnly = true)
   public PurchasedContentDetailDTO getMyPurchasedContent(Long userId, String merchantUid) {
-
     Order order = orderReader.getOrderByMerchantUidAndUserId(merchantUid, userId);
     Purchase purchase = purchaseReader.getPurchaseByOrderId(order.getId());
 
@@ -85,21 +84,19 @@ public class PurchaseService {
    * @param purchase 구매 정보
    */
   private PurchasedContentDetailDTO toPurchasedContentDetailDTO(Purchase purchase) {
-    Order order = purchase.getOrder();
+    var order = purchase.getOrder();
     var content = purchase.getContent();
     var seller = content.getUser();
 
     return PurchasedContentDetailDTO.builder()
+        .orderStatus(order.getStatus().name())
         // 주문 정보
         .merchantUid(order.getMerchantUid())
         .purchasedAt(purchase.getPurchasedAt())
-
         // 콘텐츠 정보
         .contentId(content.getId())
         .contentTitle(content.getTitle())
         .sellerName(seller.getNickname())
-
-        // 가격 정보
         .originalPrice(purchase.getOriginalPrice())
         .discountPrice(purchase.getDiscountPrice())
         .finalPrice(purchase.getFinalPrice())

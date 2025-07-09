@@ -26,8 +26,6 @@ public class QOrder extends EntityPathBase<Order> {
 
     public final liaison.groble.domain.coupon.entity.QUserCoupon appliedCoupon;
 
-    public final EnumPath<liaison.groble.domain.order.enums.CancelReason> cancelReason = createEnum("cancelReason", liaison.groble.domain.order.enums.CancelReason.class);
-
     public final NumberPath<java.math.BigDecimal> couponDiscountPrice = createNumber("couponDiscountPrice", java.math.BigDecimal.class);
 
     //inherited

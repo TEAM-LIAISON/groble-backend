@@ -8,8 +8,8 @@ import liaison.groble.application.payment.dto.cancel.PaymentCancelDTO;
 import liaison.groble.application.payment.dto.cancel.PaymentCancelInfoDTO;
 import liaison.groble.application.purchase.service.PurchaseReader;
 import liaison.groble.domain.order.entity.Order;
-import liaison.groble.domain.order.enums.CancelReason;
 import liaison.groble.domain.payment.entity.PayplePayment;
+import liaison.groble.domain.purchase.enums.CancelReason;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

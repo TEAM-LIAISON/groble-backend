@@ -1,4 +1,4 @@
-package liaison.groble.domain.order.enums;
+package liaison.groble.domain.purchase.enums;
 
 public enum CancelReason {
   OTHER_PAYMENT_METHOD("다른 수단으로 결제할게요"),
