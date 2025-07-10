@@ -131,4 +131,10 @@ public class PurchasedContentDetailResponse {
   private String payType;
   private String payCardName;
   private String payCardNum;
+
+  // 누락 변수 추가
+  private String thumbnailUrl;
+  private Boolean isRefundable;
+  private String cancelReason;
+  // 문의하기 링크 추가
 }

@@ -68,8 +68,6 @@ public class PaymentLog extends BaseTimeEntity {
   public PaymentLog(
       Payment payment,
       PaymentLogType type,
-      //      Payment.PaymentStatus beforeStatus,
-      //      Payment.PaymentStatus afterStatus,
       String description,
       Map<String, Object> requestData,
       Map<String, Object> responseData,
@@ -77,8 +75,6 @@ public class PaymentLog extends BaseTimeEntity {
       String userAgent) {
     this.payment = payment;
     this.type = type;
-    //    this.beforeStatus = beforeStatus;
-    //    this.afterStatus = afterStatus;
     this.description = description;
     this.requestData = requestData;
     this.responseData = responseData;
