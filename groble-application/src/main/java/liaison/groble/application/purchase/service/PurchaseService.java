@@ -90,6 +90,10 @@ public class PurchaseService {
     var order = purchase.getOrder();
     var content = purchase.getContent();
     var seller = content.getUser();
+    boolean isRefundable = false;
+    if (order.getStatus().equals(Order.OrderStatus.PAID)) {
+      isRefundable = true;
+    }
 
     return PurchasedContentDetailDTO.builder()
         .orderStatus(order.getStatus().name())
@@ -105,6 +109,7 @@ public class PurchaseService {
         .finalPrice(purchase.getFinalPrice())
         .isFreePurchase(purchase.getFinalPrice().signum() == 0)
         .thumbnailUrl(content.getThumbnailUrl())
+        .isRefundable(isRefundable)
         .cancelReason(purchase.getCancelReason().name())
         .build();
   }
