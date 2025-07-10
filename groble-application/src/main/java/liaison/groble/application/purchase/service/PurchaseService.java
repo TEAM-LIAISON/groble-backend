@@ -55,7 +55,10 @@ public class PurchaseService {
 
   @Transactional(readOnly = true)
   public PurchasedContentDetailDTO getMyPurchasedContent(Long userId, String merchantUid) {
+    // 주문 정보 조회
     Order order = orderReader.getOrderByMerchantUidAndUserId(merchantUid, userId);
+
+    // 구매 정보 조회
     Purchase purchase = purchaseReader.getPurchaseByOrderId(order.getId());
 
     return toPurchasedContentDetailDTO(purchase);
@@ -101,6 +104,8 @@ public class PurchaseService {
         .discountPrice(purchase.getDiscountPrice())
         .finalPrice(purchase.getFinalPrice())
         .isFreePurchase(purchase.getFinalPrice().signum() == 0)
+        .thumbnailUrl(content.getThumbnailUrl())
+        .cancelReason(purchase.getCancelReason().name())
         .build();
   }
 
