@@ -11,7 +11,7 @@ import liaison.groble.application.purchase.dto.PurchasedContentDetailDTO;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-07-09T02:19:34+0900",
+    date = "2025-07-11T00:10:13+0900",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.10 (Amazon.com Inc.)")
 @Component
 public class PurchaseMapperImpl implements PurchaseMapper {
@@ -87,6 +87,15 @@ public class PurchaseMapperImpl implements PurchaseMapper {
     }
     if (purchasedContentDetailDTO.getPayCardNum() != null) {
       purchasedContentDetailResponse.payCardNum(purchasedContentDetailDTO.getPayCardNum());
+    }
+    if (purchasedContentDetailDTO.getThumbnailUrl() != null) {
+      purchasedContentDetailResponse.thumbnailUrl(purchasedContentDetailDTO.getThumbnailUrl());
+    }
+    if (purchasedContentDetailDTO.getIsRefundable() != null) {
+      purchasedContentDetailResponse.isRefundable(purchasedContentDetailDTO.getIsRefundable());
+    }
+    if (purchasedContentDetailDTO.getCancelReason() != null) {
+      purchasedContentDetailResponse.cancelReason(purchasedContentDetailDTO.getCancelReason());
     }
 
     return purchasedContentDetailResponse.build();

@@ -101,8 +101,13 @@ public class PurchaseController {
     PurchasedContentDetailDTO purchasedContentDetailDTO =
         purchaseService.getMyPurchasedContent(accessor.getUserId(), merchantUid);
 
+    ContactInfoDTO contactInfoDTO =
+        purchaseService.getContactInfo(accessor.getUserId(), merchantUid);
+    ContactInfoResponse contactInfoResponse = marketMapper.toContactInfoResponse(contactInfoDTO);
+
     PurchasedContentDetailResponse response =
-        purchaseMapper.toPurchasedContentDetailResponse(purchasedContentDetailDTO);
+        purchaseMapper.toPurchasedContentDetailResponse(
+            purchasedContentDetailDTO, contactInfoResponse);
 
     return responseHelper.success(response, My_PURCHASED_CONTENT_SUCCESS_MESSAGE, HttpStatus.OK);
   }

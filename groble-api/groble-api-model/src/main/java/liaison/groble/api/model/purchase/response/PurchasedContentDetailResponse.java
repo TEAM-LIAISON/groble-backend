@@ -5,6 +5,8 @@ import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 
+import liaison.groble.api.model.maker.response.ContactInfoResponse;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
@@ -137,4 +139,5 @@ public class PurchasedContentDetailResponse {
   private Boolean isRefundable;
   private String cancelReason;
   // 문의하기 링크 추가
+  private ContactInfoResponse contactInfo;
 }

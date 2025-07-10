@@ -75,4 +75,16 @@ public class OrderTerms {
   public void updateEffectiveTo(LocalDateTime effectiveTo) {
     this.effectiveTo = effectiveTo;
   }
+
+  public void updateTitle(String title) {
+    this.title = title;
+  }
+
+  public void updateContentUrl(String contentUrl) {
+    this.contentUrl = contentUrl;
+  }
+
+  public void updateEffectiveFrom(LocalDateTime effectiveFrom) {
+    this.effectiveFrom = effectiveFrom;
+  }
 }
