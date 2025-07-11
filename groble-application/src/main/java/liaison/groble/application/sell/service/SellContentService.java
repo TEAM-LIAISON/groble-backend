@@ -33,10 +33,14 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class SellContentService {
 
+  // Reader
   private final ContentReviewReader contentReviewReader;
+  private final PurchaseReader purchaseReader;
+
+  // Writer
   private final ContentReviewWriter contentReviewWriter;
   private final ContentReplyWriter contentReplyWriter;
-  private final PurchaseReader purchaseReader;
+
   private final DiscordDeleteReviewRequestReportService discordDeleteReviewRequestReportService;
 
   @Transactional(readOnly = true)

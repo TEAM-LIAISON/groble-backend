@@ -1,6 +1,7 @@
 package liaison.groble.application.purchase.service;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -110,7 +111,7 @@ public class PurchaseService {
         .isFreePurchase(purchase.getFinalPrice().signum() == 0)
         .thumbnailUrl(content.getThumbnailUrl())
         .isRefundable(isRefundable)
-        .cancelReason(purchase.getCancelReason().name())
+        .cancelReason(getCancelReasonSafely(purchase))
         .build();
   }
 
@@ -161,5 +162,9 @@ public class PurchaseService {
       log.warn("유효하지 않은 구매 상태: {}", state);
       return null;
     }
+  }
+
+  private String getCancelReasonSafely(Purchase purchase) {
+    return Optional.ofNullable(purchase.getCancelReason()).map(Enum::name).orElse(null);
   }
 }
