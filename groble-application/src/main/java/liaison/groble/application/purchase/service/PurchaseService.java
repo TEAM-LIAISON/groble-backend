@@ -82,37 +82,44 @@ public class PurchaseService {
         .build();
   }
 
-  /**
-   * 구매한 상품 상세 응답 DTO 생성
-   *
-   * @param purchase 구매 정보
-   */
   private PurchasedContentDetailDTO toPurchasedContentDetailDTO(Purchase purchase) {
     var order = purchase.getOrder();
     var content = purchase.getContent();
     var seller = content.getUser();
-    boolean isRefundable = false;
-    if (order.getStatus().equals(Order.OrderStatus.PAID)) {
-      isRefundable = true;
+
+    boolean isRefundable = order.getStatus() == Order.OrderStatus.PAID;
+
+    // 1) 빌더 인스턴스 생성 ― 필수·null-불가 필드만 먼저 세팅
+    var builder =
+        PurchasedContentDetailDTO.builder()
+            .orderStatus(order.getStatus().name())
+            // 주문 정보
+            .merchantUid(order.getMerchantUid())
+            .purchasedAt(purchase.getPurchasedAt())
+            // 콘텐츠 정보
+            .contentId(content.getId())
+            .sellerName(seller.getNickname())
+            .contentTitle(content.getTitle())
+            .selectedOptionName(purchase.getSelectedOptionName())
+            .selectedOptionQuantity(1)
+            .isFreePurchase(purchase.getFinalPrice().signum() == 0)
+            .originalPrice(purchase.getOriginalPrice())
+            .discountPrice(purchase.getDiscountPrice())
+            .finalPrice(purchase.getFinalPrice())
+            .thumbnailUrl(content.getThumbnailUrl())
+            .isRefundable(isRefundable)
+            .cancelReason(getCancelReasonSafely(purchase));
+
+    // 2) null 가능 필드는 조건부로 세팅
+    if (purchase.getCancelRequestedAt() != null) {
+      builder.cancelRequestedAt(purchase.getCancelRequestedAt());
+    }
+    if (purchase.getCancelledAt() != null) {
+      builder.cancelledAt(purchase.getCancelledAt());
     }
 
-    return PurchasedContentDetailDTO.builder()
-        .orderStatus(order.getStatus().name())
-        // 주문 정보
-        .merchantUid(order.getMerchantUid())
-        .purchasedAt(purchase.getPurchasedAt())
-        // 콘텐츠 정보
-        .contentId(content.getId())
-        .contentTitle(content.getTitle())
-        .sellerName(seller.getNickname())
-        .originalPrice(purchase.getOriginalPrice())
-        .discountPrice(purchase.getDiscountPrice())
-        .finalPrice(purchase.getFinalPrice())
-        .isFreePurchase(purchase.getFinalPrice().signum() == 0)
-        .thumbnailUrl(content.getThumbnailUrl())
-        .isRefundable(isRefundable)
-        .cancelReason(getCancelReasonSafely(purchase))
-        .build();
+    // 3) 최종 객체 반환
+    return builder.build();
   }
 
   @Transactional(readOnly = true)
