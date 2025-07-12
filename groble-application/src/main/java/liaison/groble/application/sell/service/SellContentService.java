@@ -186,6 +186,7 @@ public class SellContentService {
         .contentTitle(flatContentReviewDetailDTO.getContentTitle())
         .createdAt(flatContentReviewDetailDTO.getCreatedAt())
         .reviewerNickname(flatContentReviewDetailDTO.getReviewerNickname())
+        .reviewContent(flatContentReviewDetailDTO.getReviewContent())
         .selectedOptionName(flatContentReviewDetailDTO.getSelectedOptionName())
         .rating(flatContentReviewDetailDTO.getRating())
         .build();
