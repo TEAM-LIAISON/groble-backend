@@ -112,6 +112,13 @@ public class SellContentService {
     return buildContentReviewDetail(contentReviewDetailDTO);
   }
 
+  @Transactional(readOnly = true)
+  public ContentReviewDetailDTO getContentReviewDetail(Long userId, String merchantUid) {
+    FlatContentReviewDetailDTO contentReviewDetailDTO =
+        contentReviewReader.getContentReviewDetail(userId, merchantUid);
+    return buildContentReviewDetail(contentReviewDetailDTO);
+  }
+
   @Transactional
   public void deleteReviewRequest(Long userId, Long reviewId) {
     contentReviewWriter.updateContentReviewStatusToDeleteRequested(userId, reviewId);

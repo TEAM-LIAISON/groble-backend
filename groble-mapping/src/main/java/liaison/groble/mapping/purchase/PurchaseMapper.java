@@ -9,6 +9,7 @@ import org.mapstruct.Mapping;
 import liaison.groble.api.model.maker.response.ContactInfoResponse;
 import liaison.groble.api.model.purchase.response.PurchasedContentDetailResponse;
 import liaison.groble.api.model.purchase.response.PurchaserContentPreviewCardResponse;
+import liaison.groble.api.model.sell.response.ContentReviewDetailResponse;
 import liaison.groble.application.purchase.dto.PurchaseContentCardDTO;
 import liaison.groble.application.purchase.dto.PurchasedContentDetailDTO;
 import liaison.groble.common.response.PageResponse;
@@ -20,13 +21,15 @@ public interface PurchaseMapper {
 
   // ====== 📤 DTO → Response 변환 ======
   @Mapping(target = "contactInfo", ignore = true)
+  @Mapping(target = "myReview", ignore = true)
   PurchasedContentDetailResponse toPurchasedContentDetailResponse(
       PurchasedContentDetailDTO purchasedContentDetailDTO);
 
   // ContactInfo를 포함한 상세 응답 생성
   default PurchasedContentDetailResponse toPurchasedContentDetailResponse(
       PurchasedContentDetailDTO purchasedContentDetailDTO,
-      ContactInfoResponse contactInfoResponse) {
+      ContactInfoResponse contactInfoResponse,
+      ContentReviewDetailResponse contentReviewDetailResponse) {
     if (purchasedContentDetailDTO == null) {
       return null;
     }
@@ -60,6 +63,7 @@ public interface PurchaseMapper {
         .isRefundable(response.getIsRefundable())
         .cancelReason(response.getCancelReason())
         .contactInfo(contactInfoResponse)
+        .myReview(contentReviewDetailResponse)
         .build();
   }
 

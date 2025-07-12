@@ -20,7 +20,7 @@ import liaison.groble.domain.content.dto.FlatContentPreviewDTO;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-07-09T02:19:34+0900",
+    date = "2025-07-12T17:14:39+0900",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.10 (Amazon.com Inc.)")
 @Component
 public class MarketMapperImpl implements MarketMapper {

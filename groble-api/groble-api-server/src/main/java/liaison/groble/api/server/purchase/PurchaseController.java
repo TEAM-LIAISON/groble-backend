@@ -15,10 +15,13 @@ import liaison.groble.api.model.maker.response.ContactInfoResponse;
 import liaison.groble.api.model.purchase.response.PurchasedContentDetailResponse;
 import liaison.groble.api.model.purchase.response.PurchaserContentPreviewCardResponse;
 import liaison.groble.api.model.purchase.swagger.PurchasedContentsListResponse;
+import liaison.groble.api.model.sell.response.ContentReviewDetailResponse;
 import liaison.groble.application.market.dto.ContactInfoDTO;
 import liaison.groble.application.purchase.dto.PurchaseContentCardDTO;
 import liaison.groble.application.purchase.dto.PurchasedContentDetailDTO;
 import liaison.groble.application.purchase.service.PurchaseService;
+import liaison.groble.application.sell.dto.ContentReviewDetailDTO;
+import liaison.groble.application.sell.service.SellContentService;
 import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.annotation.Logging;
 import liaison.groble.common.model.Accessor;
@@ -28,6 +31,7 @@ import liaison.groble.common.response.ResponseHelper;
 import liaison.groble.common.utils.PageUtils;
 import liaison.groble.mapping.market.MarketMapper;
 import liaison.groble.mapping.purchase.PurchaseMapper;
+import liaison.groble.mapping.sell.SellMapper;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -60,10 +64,11 @@ public class PurchaseController {
 
   // Service
   private final PurchaseService purchaseService;
-
+  private final SellContentService sellContentService;
   // Mapper
   private final PurchaseMapper purchaseMapper;
   private final MarketMapper marketMapper;
+  private final SellMapper sellMapper;
 
   // Helper
   private final ResponseHelper responseHelper;
@@ -105,9 +110,15 @@ public class PurchaseController {
         purchaseService.getContactInfo(accessor.getUserId(), merchantUid);
     ContactInfoResponse contactInfoResponse = marketMapper.toContactInfoResponse(contactInfoDTO);
 
+    ContentReviewDetailDTO contentReviewDetailDTO =
+        sellContentService.getContentReviewDetail(accessor.getUserId(), merchantUid);
+
+    ContentReviewDetailResponse contentReviewDetailResponse =
+        sellMapper.toContentReviewDetailResponse(contentReviewDetailDTO);
+
     PurchasedContentDetailResponse response =
         purchaseMapper.toPurchasedContentDetailResponse(
-            purchasedContentDetailDTO, contactInfoResponse);
+            purchasedContentDetailDTO, contactInfoResponse, contentReviewDetailResponse);
 
     return responseHelper.success(response, My_PURCHASED_CONTENT_SUCCESS_MESSAGE, HttpStatus.OK);
   }

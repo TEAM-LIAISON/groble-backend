@@ -46,6 +46,15 @@ public class ContentReviewReader {
                         + reviewId));
   }
 
+  public FlatContentReviewDetailDTO getContentReviewDetail(Long userId, String merchantUid) {
+    return contentReviewCustomRepository
+        .getContentReviewDetailDTOByMerchantUid(userId, merchantUid)
+        .orElseThrow(
+            () ->
+                new IllegalArgumentException(
+                    "리뷰 상세 정보를 찾을 수 없습니다. User ID: " + userId + ", Merchant UID: " + merchantUid));
+  }
+
   public Page<FlatContentReviewDetailDTO> getContentReviews(
       Long userId, Long contentId, Pageable pageable) {
     return contentReviewCustomRepository.getContentReviewPageDTOs(userId, contentId, pageable);

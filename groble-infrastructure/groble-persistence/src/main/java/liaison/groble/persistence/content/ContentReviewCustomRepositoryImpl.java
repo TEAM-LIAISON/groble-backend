@@ -20,6 +20,7 @@ import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.ComparableExpressionBase;
 import com.querydsl.core.types.dsl.PathBuilder;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
@@ -29,6 +30,7 @@ import liaison.groble.domain.content.entity.QContent;
 import liaison.groble.domain.content.entity.QContentReview;
 import liaison.groble.domain.content.enums.ReviewStatus;
 import liaison.groble.domain.content.repository.ContentReviewCustomRepository;
+import liaison.groble.domain.order.entity.QOrder;
 import liaison.groble.domain.purchase.entity.QPurchase;
 import liaison.groble.domain.user.entity.QUser;
 
@@ -173,6 +175,56 @@ public class ContentReviewCustomRepositoryImpl implements ContentReviewCustomRep
             .from(qContentReview)
             .leftJoin(qContentReview.content, qContent)
             .leftJoin(qContentReview.user, qUser)
+            .where(conditions)
+            .fetchOne();
+
+    return Optional.ofNullable(result);
+  }
+
+  @Override
+  public Optional<FlatContentReviewDetailDTO> getContentReviewDetailDTOByMerchantUid(
+      Long userId, String merchantUid) {
+    QUser qUser = QUser.user;
+    QContent qContent = QContent.content;
+    QPurchase qPurchase = QPurchase.purchase;
+    QOrder qOrder = qPurchase.order;
+    QContentReview qContentReview = QContentReview.contentReview;
+
+    /* 서브쿼리: 구매자가 어떤 옵션을 골랐는지 */
+    Expression<String> selectedOptionNameExpression =
+        ExpressionUtils.as(
+            JPAExpressions.select(qPurchase.selectedOptionName)
+                .from(qPurchase)
+                .join(qPurchase.order, qOrder) // ★ Purchase → Order 조인
+                .where(
+                    qPurchase.user.id.eq(userId), // 구매자 ID
+                    qOrder.merchantUid.eq(merchantUid) // Order.merchantUid
+                    )
+                .limit(1),
+            "selectedOptionName");
+
+    /* 메인 조건 */
+    BooleanExpression conditions =
+        qOrder
+            .merchantUid
+            .eq(merchantUid) // ★ Order 기준으로 merchantUid 필터
+            .and(qContent.user.id.eq(userId)); // 판매자/리뷰어 조건(필요에 따라 수정)
+
+    FlatContentReviewDetailDTO result =
+        jpaQueryFactory
+            .select(
+                Projections.fields(
+                    FlatContentReviewDetailDTO.class,
+                    qContentReview.id.as("reviewId"),
+                    qContent.title.as("contentTitle"),
+                    qContentReview.createdAt.as("createdAt"),
+                    qUser.userProfile.nickname.as("reviewerNickname"),
+                    selectedOptionNameExpression,
+                    qContentReview.rating.as("rating")))
+            .from(qContentReview)
+            .leftJoin(qContentReview.content, qContent)
+            .leftJoin(qContentReview.user, qUser)
+            .leftJoin(qPurchase.order, qOrder) // ★
             .where(conditions)
             .fetchOne();
 
