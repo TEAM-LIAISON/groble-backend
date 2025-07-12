@@ -12,10 +12,12 @@ import liaison.groble.domain.content.entity.ContentReview;
 import liaison.groble.domain.content.repository.ContentReviewCustomRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Component
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
+@Slf4j
 public class ContentReviewReader {
   private final ContentReviewCustomRepository contentReviewCustomRepository;
 
@@ -48,11 +50,11 @@ public class ContentReviewReader {
                         + reviewId));
   }
 
-  public Optional<FlatContentReviewDetailDTO> getContentReviewDetail(
-      Long userId, String merchantUid) {
+  public Optional<FlatContentReviewDetailDTO> getContentReviewDetail(Long userId, Long contentId) {
+    log.info("getContentReviewDetail by contentId: {}", contentId);
 
-    return contentReviewCustomRepository.getContentReviewDetailDTOByMerchantUid(
-        userId, merchantUid); // ➜ 그대로 Optional 반환
+    return contentReviewCustomRepository.getContentReviewDetailDTOByContentId(
+        userId, contentId); // ➜ 그대로 Optional 반환
   }
 
   public Page<FlatContentReviewDetailDTO> getContentReviews(

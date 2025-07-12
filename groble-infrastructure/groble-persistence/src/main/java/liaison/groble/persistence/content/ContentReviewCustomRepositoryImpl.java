@@ -30,7 +30,6 @@ import liaison.groble.domain.content.entity.QContent;
 import liaison.groble.domain.content.entity.QContentReview;
 import liaison.groble.domain.content.enums.ReviewStatus;
 import liaison.groble.domain.content.repository.ContentReviewCustomRepository;
-import liaison.groble.domain.order.entity.QOrder;
 import liaison.groble.domain.purchase.entity.QPurchase;
 import liaison.groble.domain.user.entity.QUser;
 
@@ -101,6 +100,7 @@ public class ContentReviewCustomRepositoryImpl implements ContentReviewCustomRep
                     qContent.title.as("contentTitle"),
                     qContentReview.createdAt.as("createdAt"),
                     qUser.userProfile.nickname.as("reviewerNickname"),
+                    qContentReview.reviewContent.as("reviewContent"),
                     selectedOptionNameExpression,
                     qContentReview.rating.as("rating")))
             .from(qContentReview)
@@ -170,6 +170,7 @@ public class ContentReviewCustomRepositoryImpl implements ContentReviewCustomRep
                     qContent.title.as("contentTitle"),
                     qContentReview.createdAt.as("createdAt"),
                     qUser.userProfile.nickname.as("reviewerNickname"),
+                    qContentReview.reviewContent.as("reviewContent"),
                     selectedOptionNameExpression,
                     qContentReview.rating.as("rating")))
             .from(qContentReview)
@@ -182,34 +183,26 @@ public class ContentReviewCustomRepositoryImpl implements ContentReviewCustomRep
   }
 
   @Override
-  public Optional<FlatContentReviewDetailDTO> getContentReviewDetailDTOByMerchantUid(
-      Long userId, String merchantUid) {
+  public Optional<FlatContentReviewDetailDTO> getContentReviewDetailDTOByContentId(
+      Long userId, Long contentId) {
 
     QUser qUser = QUser.user;
     QContent qContent = QContent.content;
     QPurchase qPurchase = QPurchase.purchase;
-    QOrder qOrder = QOrder.order;
     QContentReview qContentReview = QContentReview.contentReview;
 
-    /* ① 서브쿼리: 옵션명 */
-    Expression<String> selectedOptionNameExpression =
+    /* 1) 서브쿼리 – min() 으로 다중 row 방지 */
+    Expression<String> selectedOptionNameExpr =
         ExpressionUtils.as(
-            JPAExpressions.select(qPurchase.selectedOptionName)
+            JPAExpressions.select(qPurchase.selectedOptionName.min()) // ★ 집계 함수
                 .from(qPurchase)
-                .join(qPurchase.order, qOrder)
-                .where(qPurchase.user.id.eq(userId), qOrder.merchantUid.eq(merchantUid))
-                .limit(1),
+                .where(qPurchase.user.id.eq(userId), qPurchase.content.id.eq(contentId)),
             "selectedOptionName");
 
-    /* ② 메인 조건 */
+    // 기본 조건 설정 (특정 reviewId를 가진 리뷰를 찾고, 해당 리뷰가 특정 contentId에 속하고 판매자가 이를 조회했는지 확인)
     BooleanExpression conditions =
-        qOrder
-            .merchantUid
-            .eq(merchantUid) // 주문 식별
-            .and(qPurchase.user.id.eq(userId)) // ▶︎ 구매자 필터 추가
-            .and(qContentReview.user.id.eq(userId)); // (리뷰 작성자 = 구매자)
+        qContentReview.content.id.eq(contentId).and(qContentReview.user.id.eq(userId)); // ← 수정
 
-    /* ③ 메인 쿼리 */
     FlatContentReviewDetailDTO result =
         jpaQueryFactory
             .select(
@@ -219,23 +212,12 @@ public class ContentReviewCustomRepositoryImpl implements ContentReviewCustomRep
                     qContent.title.as("contentTitle"),
                     qContentReview.createdAt.as("createdAt"),
                     qUser.userProfile.nickname.as("reviewerNickname"),
-                    selectedOptionNameExpression,
+                    qContentReview.reviewContent.as("reviewContent"),
+                    selectedOptionNameExpr,
                     qContentReview.rating.as("rating")))
             .from(qContentReview)
-            /* ContentReview → Content */
             .leftJoin(qContentReview.content, qContent)
-
-            /* Content → Purchase (ON 절로 연결) */
-            .leftJoin(qPurchase)
-            .on(qPurchase.content.eq(qContent))
-
-            /* Purchase → Order */
-            .leftJoin(qPurchase.order, qOrder)
-
-            /* 리뷰 작성자 */
             .leftJoin(qContentReview.user, qUser)
-
-            /* 조건 */
             .where(conditions)
             .fetchOne();
 

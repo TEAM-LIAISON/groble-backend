@@ -14,8 +14,8 @@ public interface ContentReviewCustomRepository {
   Optional<FlatContentReviewDetailDTO> getContentReviewDetailDTO(
       Long userId, Long contentId, Long reviewId);
 
-  Optional<FlatContentReviewDetailDTO> getContentReviewDetailDTOByMerchantUid(
-      Long userId, String merchantUid);
+  Optional<FlatContentReviewDetailDTO> getContentReviewDetailDTOByContentId(
+      Long userId, Long contentId);
 
   void updateContentReviewStatusToDeleteRequested(Long userId, Long reviewId);
 
