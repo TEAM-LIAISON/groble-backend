@@ -184,32 +184,31 @@ public class ContentReviewCustomRepositoryImpl implements ContentReviewCustomRep
   @Override
   public Optional<FlatContentReviewDetailDTO> getContentReviewDetailDTOByMerchantUid(
       Long userId, String merchantUid) {
+
     QUser qUser = QUser.user;
     QContent qContent = QContent.content;
     QPurchase qPurchase = QPurchase.purchase;
-    QOrder qOrder = qPurchase.order;
+    QOrder qOrder = QOrder.order;
     QContentReview qContentReview = QContentReview.contentReview;
 
-    /* 서브쿼리: 구매자가 어떤 옵션을 골랐는지 */
+    /* ① 서브쿼리: 옵션명 */
     Expression<String> selectedOptionNameExpression =
         ExpressionUtils.as(
             JPAExpressions.select(qPurchase.selectedOptionName)
                 .from(qPurchase)
-                .join(qPurchase.order, qOrder) // ★ Purchase → Order 조인
-                .where(
-                    qPurchase.user.id.eq(userId), // 구매자 ID
-                    qOrder.merchantUid.eq(merchantUid) // Order.merchantUid
-                    )
+                .join(qPurchase.order, qOrder)
+                .where(qPurchase.user.id.eq(userId), qOrder.merchantUid.eq(merchantUid))
                 .limit(1),
             "selectedOptionName");
 
-    /* 메인 조건 */
+    /* ② 메인 조건 */
     BooleanExpression conditions =
         qOrder
             .merchantUid
-            .eq(merchantUid) // ★ Order 기준으로 merchantUid 필터
-            .and(qContent.user.id.eq(userId)); // 판매자/리뷰어 조건(필요에 따라 수정)
+            .eq(merchantUid) // 주문 식별
+            .and(qContentReview.user.id.eq(userId)); // 리뷰 작성자
 
+    /* ③ 메인 쿼리 */
     FlatContentReviewDetailDTO result =
         jpaQueryFactory
             .select(
@@ -222,9 +221,20 @@ public class ContentReviewCustomRepositoryImpl implements ContentReviewCustomRep
                     selectedOptionNameExpression,
                     qContentReview.rating.as("rating")))
             .from(qContentReview)
+            /* ContentReview → Content */
             .leftJoin(qContentReview.content, qContent)
+
+            /* Content → Purchase (ON 절로 연결) */
+            .leftJoin(qPurchase)
+            .on(qPurchase.content.eq(qContent))
+
+            /* Purchase → Order */
+            .leftJoin(qPurchase.order, qOrder)
+
+            /* 리뷰 작성자 */
             .leftJoin(qContentReview.user, qUser)
-            .leftJoin(qPurchase.order, qOrder) // ★
+
+            /* 조건 */
             .where(conditions)
             .fetchOne();
 
