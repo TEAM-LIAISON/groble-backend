@@ -52,7 +52,8 @@ public class ContentReviewCustomRepositoryImpl implements ContentReviewCustomRep
             .eq(reviewId)
             .and(qContentReview.content.id.eq(contentId))
             .and(qContent.user.id.eq(userId))
-            .and(qContentReview.user.id.eq(qUser.id));
+            .and(qContentReview.user.id.eq(qUser.id))
+            .and(qContentReview.reviewStatus.eq(ReviewStatus.ACTIVE));
 
     return Optional.ofNullable(
         jpaQueryFactory
@@ -73,7 +74,12 @@ public class ContentReviewCustomRepositoryImpl implements ContentReviewCustomRep
 
     // 조건: 해당 콘텐츠에 대한 리뷰이며, 해당 콘텐츠의 소유자가 userId인 경우
     BooleanExpression cond =
-        qContentReview.content.id.eq(contentId).and(qContent.user.id.eq(userId));
+        qContentReview
+            .content
+            .id
+            .eq(contentId)
+            .and(qContent.user.id.eq(userId))
+            .and(qContentReview.reviewStatus.eq(ReviewStatus.ACTIVE));
 
     // selectedOptionName 서브쿼리
     Expression<String> selectedOptionNameExpression =
@@ -159,7 +165,8 @@ public class ContentReviewCustomRepositoryImpl implements ContentReviewCustomRep
             .id
             .eq(reviewId)
             .and(qContentReview.content.id.eq(contentId))
-            .and(qContent.user.id.eq(userId));
+            .and(qContent.user.id.eq(userId))
+            .and(qContentReview.reviewStatus.eq(ReviewStatus.ACTIVE));
 
     FlatContentReviewDetailDTO result =
         jpaQueryFactory
@@ -201,7 +208,12 @@ public class ContentReviewCustomRepositoryImpl implements ContentReviewCustomRep
 
     // 기본 조건 설정 (특정 reviewId를 가진 리뷰를 찾고, 해당 리뷰가 특정 contentId에 속하고 판매자가 이를 조회했는지 확인)
     BooleanExpression conditions =
-        qContentReview.content.id.eq(contentId).and(qContentReview.user.id.eq(userId)); // ← 수정
+        qContentReview
+            .content
+            .id
+            .eq(contentId)
+            .and(qContentReview.user.id.eq(userId))
+            .and(qContentReview.reviewStatus.eq(ReviewStatus.ACTIVE)); // ← 수정
 
     FlatContentReviewDetailDTO result =
         jpaQueryFactory

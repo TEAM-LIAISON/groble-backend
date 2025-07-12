@@ -28,6 +28,7 @@ import liaison.groble.common.annotation.RequireRole;
 import liaison.groble.common.model.Accessor;
 import liaison.groble.common.response.GrobleResponse;
 import liaison.groble.common.response.PageResponse;
+import liaison.groble.mapping.admin.AdminContentMapper;
 
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -43,7 +44,11 @@ import lombok.extern.slf4j.Slf4j;
     description = "관리자 페이지에서 콘텐츠 목록을 조회하고 모니터링(승인/거절)하는 기능을 제공합니다.")
 public class AdminContentController {
 
+  // Service
   private final AdminContentService adminContentService;
+
+  // Mapper
+  private final AdminContentMapper adminContentMapper;
 
   @AdminContentSummaryInfo
   @RequireRole("ROLE_ADMIN")
