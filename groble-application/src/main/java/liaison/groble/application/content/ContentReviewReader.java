@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import liaison.groble.domain.content.dto.FlatContentReviewDetailDTO;
 import liaison.groble.domain.content.entity.ContentReview;
 import liaison.groble.domain.content.repository.ContentReviewCustomRepository;
+import liaison.groble.domain.content.repository.ContentReviewRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ContentReviewReader {
   private final ContentReviewCustomRepository contentReviewCustomRepository;
+  private final ContentReviewRepository contentReviewRepository;
 
   public ContentReview getContentReview(Long userId, Long contentId, Long reviewId) {
     return contentReviewCustomRepository
@@ -60,5 +62,9 @@ public class ContentReviewReader {
   public Page<FlatContentReviewDetailDTO> getContentReviews(
       Long userId, Long contentId, Pageable pageable) {
     return contentReviewCustomRepository.getContentReviewPageDTOs(userId, contentId, pageable);
+  }
+
+  public boolean existsContentReview(Long userId, Long contentId) {
+    return contentReviewRepository.existsContentReview(userId, contentId);
   }
 }

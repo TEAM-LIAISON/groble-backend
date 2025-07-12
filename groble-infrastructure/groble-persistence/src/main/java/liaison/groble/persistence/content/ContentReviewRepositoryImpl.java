@@ -15,4 +15,8 @@ public class ContentReviewRepositoryImpl implements ContentReviewRepository {
   public ContentReview save(ContentReview contentReview) {
     return jpaContentReviewRepository.save(contentReview);
   }
+
+  public boolean existsContentReview(Long userId, Long contentId) {
+    return jpaContentReviewRepository.existsByUserIdAndContentId(userId, contentId);
+  }
 }
