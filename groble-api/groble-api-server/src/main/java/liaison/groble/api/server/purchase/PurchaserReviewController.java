@@ -54,7 +54,7 @@ public class PurchaserReviewController {
   private final ResponseHelper responseHelper;
 
   @Operation(
-      summary = "[❌ 내 콘텐츠 - 구매 관리 - 리뷰 수정] 내가 구매한 콘텐츠 리뷰 추가",
+      summary = "[❌ 내 콘텐츠 - 구매 관리 - 리뷰 추가] 내가 구매한 콘텐츠 리뷰 추가",
       description = "내가 구매한 콘텐츠에 대해서 리뷰를 추가합니다.")
   @Logging(
       item = "PurchaserReview",

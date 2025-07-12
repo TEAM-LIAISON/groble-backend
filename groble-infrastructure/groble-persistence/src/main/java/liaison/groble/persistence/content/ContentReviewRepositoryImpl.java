@@ -3,6 +3,7 @@ package liaison.groble.persistence.content;
 import org.springframework.stereotype.Repository;
 
 import liaison.groble.domain.content.entity.ContentReview;
+import liaison.groble.domain.content.enums.ReviewStatus;
 import liaison.groble.domain.content.repository.ContentReviewRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,7 @@ public class ContentReviewRepositoryImpl implements ContentReviewRepository {
   }
 
   public boolean existsContentReview(Long userId, Long contentId) {
-    return jpaContentReviewRepository.existsByUserIdAndContentId(userId, contentId);
+    return jpaContentReviewRepository.existsByUserIdAndContentIdAndReviewStatus(
+        userId, contentId, ReviewStatus.ACTIVE);
   }
 }

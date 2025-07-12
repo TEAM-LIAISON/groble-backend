@@ -3,8 +3,10 @@ package liaison.groble.persistence.content;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import liaison.groble.domain.content.entity.ContentReview;
+import liaison.groble.domain.content.enums.ReviewStatus;
 
 public interface JpaContentReviewRepository extends JpaRepository<ContentReview, Long> {
 
-  boolean existsByUserIdAndContentId(Long userId, Long contentId);
+  boolean existsByUserIdAndContentIdAndReviewStatus(
+      Long userId, Long contentId, ReviewStatus reviewStatus);
 }
