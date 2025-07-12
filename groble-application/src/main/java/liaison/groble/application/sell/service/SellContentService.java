@@ -114,9 +114,10 @@ public class SellContentService {
 
   @Transactional(readOnly = true)
   public ContentReviewDetailDTO getContentReviewDetail(Long userId, String merchantUid) {
-    FlatContentReviewDetailDTO contentReviewDetailDTO =
-        contentReviewReader.getContentReviewDetail(userId, merchantUid);
-    return buildContentReviewDetail(contentReviewDetailDTO);
+    return contentReviewReader
+        .getContentReviewDetail(userId, merchantUid)
+        .map(this::buildContentReviewDetail) // 값이 있을 때만 DTO 변환
+        .orElse(null); // 없으면 null 반환 (필요하면 Optional 그대로 넘겨도 OK)
   }
 
   @Transactional

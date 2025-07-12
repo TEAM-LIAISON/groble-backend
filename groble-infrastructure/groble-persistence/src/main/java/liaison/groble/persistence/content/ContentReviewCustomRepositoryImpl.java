@@ -206,7 +206,8 @@ public class ContentReviewCustomRepositoryImpl implements ContentReviewCustomRep
         qOrder
             .merchantUid
             .eq(merchantUid) // 주문 식별
-            .and(qContentReview.user.id.eq(userId)); // 리뷰 작성자
+            .and(qPurchase.user.id.eq(userId)) // ▶︎ 구매자 필터 추가
+            .and(qContentReview.user.id.eq(userId)); // (리뷰 작성자 = 구매자)
 
     /* ③ 메인 쿼리 */
     FlatContentReviewDetailDTO result =

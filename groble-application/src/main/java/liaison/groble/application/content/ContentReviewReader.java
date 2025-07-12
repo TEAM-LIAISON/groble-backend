@@ -1,5 +1,7 @@
 package liaison.groble.application.content;
 
+import java.util.Optional;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
@@ -46,13 +48,11 @@ public class ContentReviewReader {
                         + reviewId));
   }
 
-  public FlatContentReviewDetailDTO getContentReviewDetail(Long userId, String merchantUid) {
-    return contentReviewCustomRepository
-        .getContentReviewDetailDTOByMerchantUid(userId, merchantUid)
-        .orElseThrow(
-            () ->
-                new IllegalArgumentException(
-                    "리뷰 상세 정보를 찾을 수 없습니다. User ID: " + userId + ", Merchant UID: " + merchantUid));
+  public Optional<FlatContentReviewDetailDTO> getContentReviewDetail(
+      Long userId, String merchantUid) {
+
+    return contentReviewCustomRepository.getContentReviewDetailDTOByMerchantUid(
+        userId, merchantUid); // ➜ 그대로 Optional 반환
   }
 
   public Page<FlatContentReviewDetailDTO> getContentReviews(
