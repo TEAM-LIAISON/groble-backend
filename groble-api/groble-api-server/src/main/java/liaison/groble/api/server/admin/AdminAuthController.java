@@ -32,9 +32,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/admin/auth")
-@Tag(
-    name = "[✅ 관리자 인증/인가] 관리자의 로그인 및 로그아웃 기능",
-    description = "관리자 권한을 부여 받은 계정으로 로그인 및 로그아웃을 처리하는 API입니다.")
+@Tag(name = "[✅ 관리자 인증/인가] 관리자의 로그인 및 로그아웃 기능")
 public class AdminAuthController {
 
   // API 경로 상수화

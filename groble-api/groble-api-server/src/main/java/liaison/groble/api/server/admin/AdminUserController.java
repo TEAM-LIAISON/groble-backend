@@ -35,6 +35,7 @@ public class AdminUserController {
   private static final String ADMIN_USER_SUMMARY_INFO_PATH = "/users";
   // 응답 메시지 상수화
   private static final String ADMIN_USER_SUMMARY_INFO_SUCCESS_MESSAGE = "관리자 전체 사용자 목록 조회에 성공했습니다.";
+
   // Service
   private final AdminUserService adminUserService;
 

@@ -8,7 +8,7 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public class AdminContentSummaryInfoDto {
+public class AdminContentSummaryInfoDTO {
   private Long contentId;
   private LocalDateTime createdAt;
   private String contentType;

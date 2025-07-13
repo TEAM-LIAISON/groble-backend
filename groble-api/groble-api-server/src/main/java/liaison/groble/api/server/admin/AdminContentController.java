@@ -1,13 +1,9 @@
 package liaison.groble.api.server.admin;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
 import jakarta.validation.Valid;
 
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -21,13 +17,15 @@ import liaison.groble.api.model.admin.response.AdminContentSummaryInfoResponse;
 import liaison.groble.api.model.admin.response.swagger.AdminContentSummaryInfo;
 import liaison.groble.api.model.content.request.examine.ContentExamineRequest;
 import liaison.groble.api.model.content.response.swagger.ContentExamine;
-import liaison.groble.application.admin.dto.AdminContentSummaryInfoDto;
+import liaison.groble.application.admin.dto.AdminContentSummaryInfoDTO;
 import liaison.groble.application.admin.service.AdminContentService;
 import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.annotation.RequireRole;
 import liaison.groble.common.model.Accessor;
 import liaison.groble.common.response.GrobleResponse;
 import liaison.groble.common.response.PageResponse;
+import liaison.groble.common.response.ResponseHelper;
+import liaison.groble.common.utils.PageUtils;
 import liaison.groble.mapping.admin.AdminContentMapper;
 
 import io.swagger.v3.oas.annotations.Parameter;
@@ -39,10 +37,17 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/admin")
-@Tag(
-    name = "[✅ 관리자] 관리자의 콘텐츠 목록 조회 및 모니터링 API",
-    description = "관리자 페이지에서 콘텐츠 목록을 조회하고 모니터링(승인/거절)하는 기능을 제공합니다.")
+@Tag(name = "[✅ 관리자] 관리자의 콘텐츠 목록 조회 및 모니터링 API")
 public class AdminContentController {
+
+  // API 경로 상수화
+  private static final String ADMIN_CONTENT_SUMMARY_INFO_PATH = "/contents";
+  private static final String ADMIN_CONTENT_EXAMINE_PATH = "/content/{contentId}/examine";
+
+  // 응답 메시지 상수화
+  private static final String ADMIN_CONTENT_SUMMARY_INFO_SUCCESS_MESSAGE = "관리자 콘텐츠 목록 조회에 성공했습니다.";
+  private static final String ADMIN_CONTENT_EXAMINE_SUCCESS_MESSAGE = "콘텐츠 심사 승인에 성공했습니다.";
+  private static final String ADMIN_CONTENT_REJECT_SUCCESS_MESSAGE = "콘텐츠 심사 반려에 성공했습니다.";
 
   // Service
   private final AdminContentService adminContentService;
@@ -50,9 +55,12 @@ public class AdminContentController {
   // Mapper
   private final AdminContentMapper adminContentMapper;
 
+  // Helper
+  private final ResponseHelper responseHelper;
+
   @AdminContentSummaryInfo
   @RequireRole("ROLE_ADMIN")
-  @GetMapping("/contents")
+  @GetMapping(ADMIN_CONTENT_SUMMARY_INFO_PATH)
   public ResponseEntity<GrobleResponse<PageResponse<AdminContentSummaryInfoResponse>>>
       getAllContents(
           @Auth Accessor accessor,
@@ -65,18 +73,19 @@ public class AdminContentController {
           @Parameter(description = "정렬 기준 (property,direction)", example = "createdAt,desc")
               @RequestParam(value = "sort", defaultValue = "createdAt")
               String sort) {
-    Pageable pageable = createPageable(page, size, sort);
-    PageResponse<AdminContentSummaryInfoDto> infoDtoPage =
+    Pageable pageable = PageUtils.createPageable(page, size, sort);
+    PageResponse<AdminContentSummaryInfoDTO> infoDtoPage =
         adminContentService.getAllContents(pageable);
     PageResponse<AdminContentSummaryInfoResponse> responsePage =
-        toAdminContentSummaryInfoResponsePage(infoDtoPage);
+        adminContentMapper.toAdminContentSummaryInfoResponsePage(infoDtoPage);
 
-    return ResponseEntity.ok(GrobleResponse.success(responsePage));
+    return responseHelper.success(
+        responsePage, ADMIN_CONTENT_SUMMARY_INFO_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 
   @ContentExamine
   @RequireRole("ROLE_ADMIN")
-  @PostMapping("/content/{contentId}/examine")
+  @PostMapping(ADMIN_CONTENT_EXAMINE_PATH)
   public ResponseEntity<GrobleResponse<Void>> examineContent(
       @Parameter(hidden = true) @Auth Accessor accessor,
       @PathVariable("contentId") Long contentId,
@@ -85,64 +94,12 @@ public class AdminContentController {
     return switch (examineRequest.getAction()) {
       case APPROVE -> {
         adminContentService.approveContent(contentId);
-        yield ResponseEntity.ok(GrobleResponse.success(null, "콘텐츠 심사 승인 성공"));
+        yield responseHelper.success(null, ADMIN_CONTENT_EXAMINE_SUCCESS_MESSAGE, HttpStatus.OK);
       }
       case REJECT -> {
         adminContentService.rejectContent(contentId, examineRequest.getRejectReason());
-        yield ResponseEntity.ok(GrobleResponse.success(null, "콘텐츠 심사 반려 성공"));
+        yield responseHelper.success(null, ADMIN_CONTENT_REJECT_SUCCESS_MESSAGE, HttpStatus.OK);
       }
     };
-  }
-
-  private Pageable createPageable(int page, int size, String sort) {
-    // sort 파라미터가 없거나 빈 문자열인 경우 기본값 설정
-    if (sort == null || sort.isBlank()) {
-      sort = "createdAt";
-    }
-
-    // "property,direction" 형태로 분리
-    String[] parts = sort.split(",");
-    String property = parts[0].trim();
-    Sort.Direction direction = Sort.Direction.DESC; // 기본 방향
-
-    // direction 지정이 있으면 파싱 시도
-    if (parts.length > 1 && !parts[1].isBlank()) {
-      try {
-        direction = Sort.Direction.fromString(parts[1].trim());
-      } catch (IllegalArgumentException e) {
-        log.warn("잘못된 정렬 방향: {}. DESC로 설정합니다.", parts[1].trim());
-      }
-    }
-
-    return PageRequest.of(page, size, Sort.by(direction, property));
-  }
-
-  private PageResponse<AdminContentSummaryInfoResponse> toAdminContentSummaryInfoResponsePage(
-      PageResponse<AdminContentSummaryInfoDto> dtoPage) {
-    List<AdminContentSummaryInfoResponse> items =
-        dtoPage.getItems().stream()
-            .map(this::toAdminContentSummaryInfoResponseFromDto)
-            .collect(Collectors.toList());
-
-    return PageResponse.<AdminContentSummaryInfoResponse>builder()
-        .items(items)
-        .pageInfo(dtoPage.getPageInfo())
-        .meta(dtoPage.getMeta())
-        .build();
-  }
-
-  private AdminContentSummaryInfoResponse toAdminContentSummaryInfoResponseFromDto(
-      AdminContentSummaryInfoDto infoDto) {
-    return AdminContentSummaryInfoResponse.builder()
-        .contentId(infoDto.getContentId())
-        .createdAt(infoDto.getCreatedAt())
-        .contentType(infoDto.getContentType())
-        .sellerName(infoDto.getSellerName())
-        .contentTitle(infoDto.getContentTitle())
-        .minPrice(infoDto.getMinPrice())
-        .priceOptionLength(infoDto.getPriceOptionLength())
-        .contentStatus(infoDto.getContentStatus())
-        .adminContentCheckingStatus(infoDto.getAdminContentCheckingStatus())
-        .build();
   }
 }
