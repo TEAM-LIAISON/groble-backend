@@ -25,8 +25,10 @@ import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
 import liaison.groble.domain.content.dto.FlatContentReviewDetailDTO;
+import liaison.groble.domain.content.dto.FlatContentReviewReplyDTO;
 import liaison.groble.domain.content.entity.ContentReview;
 import liaison.groble.domain.content.entity.QContent;
+import liaison.groble.domain.content.entity.QContentReply;
 import liaison.groble.domain.content.entity.QContentReview;
 import liaison.groble.domain.content.enums.ReviewStatus;
 import liaison.groble.domain.content.repository.ContentReviewCustomRepository;
@@ -234,6 +236,59 @@ public class ContentReviewCustomRepositoryImpl implements ContentReviewCustomRep
             .fetchOne();
 
     return Optional.ofNullable(result);
+  }
+
+  @Override
+  public List<FlatContentReviewReplyDTO> findReviewsWithRepliesByContentId(Long contentId) {
+    QContentReview qContentReview = QContentReview.contentReview;
+    QContentReply qContentReply = QContentReply.contentReply;
+    QUser qReviewer = new QUser("reviewer");
+    QUser qSeller = new QUser("seller");
+    QPurchase qPurchase = QPurchase.purchase;
+
+    // selectedOptionName 서브쿼리
+    Expression<String> selectedOptionNameExpression =
+        ExpressionUtils.as(
+            select(qPurchase.selectedOptionName)
+                .from(qPurchase)
+                .where(
+                    qPurchase.user.id.eq(qContentReview.user.id),
+                    qPurchase.content.id.eq(contentId))
+                .limit(1),
+            "selectedOptionName");
+
+    return jpaQueryFactory
+        .select(
+            Projections.fields(
+                FlatContentReviewReplyDTO.class,
+                // Review 정보
+                qContentReview.id.as("reviewId"),
+                qContentReview.createdAt.as("reviewCreatedAt"),
+                qReviewer.userProfile.profileImageUrl.as("reviewerProfileImageUrl"),
+                qReviewer.userProfile.nickname.as("reviewerNickname"),
+                qContentReview.reviewContent.as("reviewContent"),
+                selectedOptionNameExpression,
+                qContentReview.rating.as("rating"),
+                // Reply 정보
+                qContentReply.id.as("replyId"),
+                qContentReply.createdAt.as("replyCreatedAt"),
+                qSeller.userProfile.nickname.as("replierNickname"),
+                qContentReply.replyContent.as("replyContent")))
+        .from(qContentReview)
+        .leftJoin(qContentReview.user, qReviewer)
+        .leftJoin(qContentReply)
+        .on(
+            qContentReply
+                .contentReview
+                .id
+                .eq(qContentReview.id)
+                .and(qContentReply.isDeleted.eq(false)))
+        .leftJoin(qContentReply.seller, qSeller)
+        .where(
+            qContentReview.content.id.eq(contentId),
+            qContentReview.reviewStatus.eq(ReviewStatus.ACTIVE))
+        .orderBy(qContentReview.createdAt.desc(), qContentReply.createdAt.asc())
+        .fetch();
   }
 
   @Override

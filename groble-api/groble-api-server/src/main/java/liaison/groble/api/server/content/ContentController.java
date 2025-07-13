@@ -23,6 +23,7 @@ import org.springframework.web.multipart.MultipartFile;
 import liaison.groble.api.model.content.response.ContentDetailResponse;
 import liaison.groble.api.model.content.response.ContentPreviewCardResponse;
 import liaison.groble.api.model.content.response.HomeContentsResponse;
+import liaison.groble.api.model.content.response.review.ContentReviewResponse;
 import liaison.groble.api.model.content.response.swagger.ContentDetail;
 import liaison.groble.api.model.content.response.swagger.ContentsCoachingCategory;
 import liaison.groble.api.model.content.response.swagger.ContentsDocumentCategory;
@@ -34,6 +35,7 @@ import liaison.groble.api.model.file.response.FileUploadResponse;
 import liaison.groble.api.server.file.mapper.FileCustomMapper;
 import liaison.groble.application.content.dto.ContentCardDTO;
 import liaison.groble.application.content.dto.ContentDetailDTO;
+import liaison.groble.application.content.dto.review.ContentReviewDTO;
 import liaison.groble.application.content.service.ContentService;
 import liaison.groble.application.file.FileService;
 import liaison.groble.application.file.dto.FileDto;
@@ -45,6 +47,7 @@ import liaison.groble.common.response.PageResponse;
 import liaison.groble.common.response.ResponseHelper;
 import liaison.groble.common.utils.PageUtils;
 import liaison.groble.mapping.content.ContentMapper;
+import liaison.groble.mapping.content.ContentReviewMapper;
 
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -84,17 +87,22 @@ public class ContentController {
 
   // Mapper
   private final ContentMapper contentMapper;
+  private final ContentReviewMapper contentReviewMapper;
   private final FileCustomMapper fileCustomMapper;
 
   // Helper
   private final ResponseHelper responseHelper;
 
-  //  @GetMapping(CONTENT_REVIEWS_PATH)
-  //  public ResponseEntity<GrobleResponse<>> getContentReviews(
-  //          @PathVariable("contentId") Long contentId
-  //  ) {
-  //
-  //  }
+  @GetMapping(CONTENT_REVIEWS_PATH)
+  public ResponseEntity<GrobleResponse<ContentReviewResponse>> getContentReviews(
+      @PathVariable("contentId") Long contentId,
+      @RequestParam(value = "sort", defaultValue = "LATEST") String sort) {
+
+    ContentReviewDTO contentReviewDTO = contentService.getContentReviews(contentId, sort);
+
+    ContentReviewResponse response = contentReviewMapper.toContentReviewResponse(contentReviewDTO);
+    return responseHelper.success(response, CONTENT_REVIEWS_SUCCESS_MESSAGE, HttpStatus.OK);
+  }
 
   @ContentDetail
   @GetMapping(CONTENT_DETAIL_PATH)

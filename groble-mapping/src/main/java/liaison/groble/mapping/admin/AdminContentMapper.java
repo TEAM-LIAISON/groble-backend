@@ -8,8 +8,9 @@ import org.mapstruct.Mapper;
 import liaison.groble.api.model.admin.response.AdminContentSummaryInfoResponse;
 import liaison.groble.application.admin.dto.AdminContentSummaryInfoDTO;
 import liaison.groble.common.response.PageResponse;
+import liaison.groble.mapping.config.GrobleMapperConfig;
 
-@Mapper(componentModel = "spring")
+@Mapper(config = GrobleMapperConfig.class)
 public interface AdminContentMapper {
   /* 페이지 변환 – default 메서드는 수동 구현 + 재사용 */
   default PageResponse<AdminContentSummaryInfoResponse> toAdminContentSummaryInfoResponsePage(

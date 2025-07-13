@@ -1,5 +1,6 @@
 package liaison.groble.application.content;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -8,6 +9,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import liaison.groble.domain.content.dto.FlatContentReviewDetailDTO;
+import liaison.groble.domain.content.dto.FlatContentReviewReplyDTO;
 import liaison.groble.domain.content.entity.ContentReview;
 import liaison.groble.domain.content.repository.ContentReviewCustomRepository;
 import liaison.groble.domain.content.repository.ContentReviewRepository;
@@ -53,10 +55,11 @@ public class ContentReviewReader {
   }
 
   public Optional<FlatContentReviewDetailDTO> getContentReviewDetail(Long userId, Long contentId) {
-    log.info("getContentReviewDetail by contentId: {}", contentId);
+    return contentReviewCustomRepository.getContentReviewDetailDTOByContentId(userId, contentId);
+  }
 
-    return contentReviewCustomRepository.getContentReviewDetailDTOByContentId(
-        userId, contentId); // ➜ 그대로 Optional 반환
+  public List<FlatContentReviewReplyDTO> findReviewsWithRepliesByContentId(Long contentId) {
+    return contentReviewCustomRepository.findReviewsWithRepliesByContentId(contentId);
   }
 
   public Page<FlatContentReviewDetailDTO> getContentReviews(

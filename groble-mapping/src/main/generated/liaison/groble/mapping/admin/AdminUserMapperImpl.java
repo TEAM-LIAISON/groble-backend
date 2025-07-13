@@ -9,7 +9,7 @@ import liaison.groble.application.admin.dto.AdminUserSummaryInfoDTO;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-07-12T23:01:27+0900",
+    date = "2025-07-14T00:06:09+0900",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.10 (Amazon.com Inc.)")
 @Component
 public class AdminUserMapperImpl implements AdminUserMapper {
@@ -27,12 +27,24 @@ public class AdminUserMapperImpl implements AdminUserMapper {
     adminUserSummaryInfoResponse.isMarketingAgreed(dto.isMarketingAgreed());
     adminUserSummaryInfoResponse.isSellerInfo(dto.isSellerInfo());
     adminUserSummaryInfoResponse.isBusinessSeller(dto.isBusinessSeller());
-    adminUserSummaryInfoResponse.createdAt(dto.getCreatedAt());
-    adminUserSummaryInfoResponse.nickname(dto.getNickname());
-    adminUserSummaryInfoResponse.email(dto.getEmail());
-    adminUserSummaryInfoResponse.phoneNumber(dto.getPhoneNumber());
-    adminUserSummaryInfoResponse.verificationStatus(dto.getVerificationStatus());
-    adminUserSummaryInfoResponse.businessType(dto.getBusinessType());
+    if (dto.getCreatedAt() != null) {
+      adminUserSummaryInfoResponse.createdAt(dto.getCreatedAt());
+    }
+    if (dto.getNickname() != null) {
+      adminUserSummaryInfoResponse.nickname(dto.getNickname());
+    }
+    if (dto.getEmail() != null) {
+      adminUserSummaryInfoResponse.email(dto.getEmail());
+    }
+    if (dto.getPhoneNumber() != null) {
+      adminUserSummaryInfoResponse.phoneNumber(dto.getPhoneNumber());
+    }
+    if (dto.getVerificationStatus() != null) {
+      adminUserSummaryInfoResponse.verificationStatus(dto.getVerificationStatus());
+    }
+    if (dto.getBusinessType() != null) {
+      adminUserSummaryInfoResponse.businessType(dto.getBusinessType());
+    }
 
     return adminUserSummaryInfoResponse.build();
   }

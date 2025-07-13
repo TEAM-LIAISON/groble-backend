@@ -9,7 +9,7 @@ import liaison.groble.application.admin.dto.AdminContentSummaryInfoDTO;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-07-13T16:30:11+0900",
+    date = "2025-07-14T00:06:09+0900",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.10 (Amazon.com Inc.)")
 @Component
 public class AdminContentMapperImpl implements AdminContentMapper {
@@ -24,17 +24,33 @@ public class AdminContentMapperImpl implements AdminContentMapper {
     AdminContentSummaryInfoResponse.AdminContentSummaryInfoResponseBuilder
         adminContentSummaryInfoResponse = AdminContentSummaryInfoResponse.builder();
 
-    adminContentSummaryInfoResponse.contentId(adminContentSummaryInfoDTO.getContentId());
-    adminContentSummaryInfoResponse.createdAt(adminContentSummaryInfoDTO.getCreatedAt());
-    adminContentSummaryInfoResponse.contentType(adminContentSummaryInfoDTO.getContentType());
-    adminContentSummaryInfoResponse.sellerName(adminContentSummaryInfoDTO.getSellerName());
-    adminContentSummaryInfoResponse.contentTitle(adminContentSummaryInfoDTO.getContentTitle());
-    adminContentSummaryInfoResponse.minPrice(adminContentSummaryInfoDTO.getMinPrice());
+    if (adminContentSummaryInfoDTO.getContentId() != null) {
+      adminContentSummaryInfoResponse.contentId(adminContentSummaryInfoDTO.getContentId());
+    }
+    if (adminContentSummaryInfoDTO.getCreatedAt() != null) {
+      adminContentSummaryInfoResponse.createdAt(adminContentSummaryInfoDTO.getCreatedAt());
+    }
+    if (adminContentSummaryInfoDTO.getContentType() != null) {
+      adminContentSummaryInfoResponse.contentType(adminContentSummaryInfoDTO.getContentType());
+    }
+    if (adminContentSummaryInfoDTO.getSellerName() != null) {
+      adminContentSummaryInfoResponse.sellerName(adminContentSummaryInfoDTO.getSellerName());
+    }
+    if (adminContentSummaryInfoDTO.getContentTitle() != null) {
+      adminContentSummaryInfoResponse.contentTitle(adminContentSummaryInfoDTO.getContentTitle());
+    }
+    if (adminContentSummaryInfoDTO.getMinPrice() != null) {
+      adminContentSummaryInfoResponse.minPrice(adminContentSummaryInfoDTO.getMinPrice());
+    }
     adminContentSummaryInfoResponse.priceOptionLength(
         adminContentSummaryInfoDTO.getPriceOptionLength());
-    adminContentSummaryInfoResponse.contentStatus(adminContentSummaryInfoDTO.getContentStatus());
-    adminContentSummaryInfoResponse.adminContentCheckingStatus(
-        adminContentSummaryInfoDTO.getAdminContentCheckingStatus());
+    if (adminContentSummaryInfoDTO.getContentStatus() != null) {
+      adminContentSummaryInfoResponse.contentStatus(adminContentSummaryInfoDTO.getContentStatus());
+    }
+    if (adminContentSummaryInfoDTO.getAdminContentCheckingStatus() != null) {
+      adminContentSummaryInfoResponse.adminContentCheckingStatus(
+          adminContentSummaryInfoDTO.getAdminContentCheckingStatus());
+    }
 
     return adminContentSummaryInfoResponse.build();
   }

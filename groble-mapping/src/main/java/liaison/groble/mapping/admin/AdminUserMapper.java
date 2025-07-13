@@ -9,8 +9,9 @@ import org.mapstruct.Mapping;
 import liaison.groble.api.model.admin.response.AdminUserSummaryInfoResponse;
 import liaison.groble.application.admin.dto.AdminUserSummaryInfoDTO;
 import liaison.groble.common.response.PageResponse;
+import liaison.groble.mapping.config.GrobleMapperConfig;
 
-@Mapper(componentModel = "spring")
+@Mapper(config = GrobleMapperConfig.class)
 public interface AdminUserMapper {
   @Mapping(target = "isSellerTermsAgreed", source = "sellerTermsAgreed")
   @Mapping(target = "isMarketingAgreed", source = "marketingAgreed")
