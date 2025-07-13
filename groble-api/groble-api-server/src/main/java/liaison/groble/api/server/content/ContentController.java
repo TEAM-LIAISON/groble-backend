@@ -49,11 +49,13 @@ import liaison.groble.common.utils.PageUtils;
 import liaison.groble.mapping.content.ContentMapper;
 import liaison.groble.mapping.content.ContentReviewMapper;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -62,7 +64,7 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequestMapping("/api/v1")
 @RequiredArgsConstructor
-@Tag(name = "콘텐츠 관련 API", description = "콘텐츠 상세 조회, 홈화면 콘텐츠 조회")
+@Tag(name = "[📝 콘텐츠] 콘텐츠 관련 API", description = "콘텐츠 상세 조회, 콘텐츠 리뷰 목록 조회, 콘텐츠 이미지 업로드 등")
 public class ContentController {
 
   // API 경로 상수화
@@ -93,10 +95,21 @@ public class ContentController {
   // Helper
   private final ResponseHelper responseHelper;
 
+  @Operation(summary = "[✅ 콘텐츠 리뷰 목록 조회]")
+  @ApiResponse(
+      responseCode = "200",
+      content = @Content(schema = @Schema(implementation = ContentReviewResponse.class)))
   @GetMapping(CONTENT_REVIEWS_PATH)
   public ResponseEntity<GrobleResponse<ContentReviewResponse>> getContentReviews(
       @PathVariable("contentId") Long contentId,
-      @RequestParam(value = "sort", defaultValue = "LATEST") String sort) {
+      @Parameter(
+              description = "정렬 기준",
+              schema =
+                  @Schema(
+                      allowableValues = {"LATEST", "RATING_HIGH", "RATING_LOW"},
+                      defaultValue = "LATEST"))
+          @RequestParam(value = "sort", defaultValue = "LATEST")
+          String sort) {
 
     ContentReviewDTO contentReviewDTO = contentService.getContentReviews(contentId, sort);
 
