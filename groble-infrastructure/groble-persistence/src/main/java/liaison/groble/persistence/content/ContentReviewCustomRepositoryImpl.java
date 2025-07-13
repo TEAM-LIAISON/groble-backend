@@ -249,7 +249,7 @@ public class ContentReviewCustomRepositoryImpl implements ContentReviewCustomRep
     // selectedOptionName 서브쿼리
     Expression<String> selectedOptionNameExpression =
         ExpressionUtils.as(
-            select(qPurchase.selectedOptionName)
+            select(qPurchase.selectedOptionName.min()) // min() 추가
                 .from(qPurchase)
                 .where(
                     qPurchase.user.id.eq(qContentReview.user.id),
