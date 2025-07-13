@@ -722,8 +722,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
     QUser qUser = QUser.user;
     QContentOption qContentOption = QContentOption.contentOption;
 
-    BooleanExpression cond =
-        qContent.status.eq(ContentStatus.ACTIVE).and(qContent.user.id.eq(userId));
+    BooleanExpression cond = qContent.status.eq(status).and(qContent.user.id.eq(userId));
 
     JPAQuery<FlatContentPreviewDTO> query =
         queryFactory

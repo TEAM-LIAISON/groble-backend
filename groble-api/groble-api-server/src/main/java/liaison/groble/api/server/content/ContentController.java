@@ -31,7 +31,6 @@ import liaison.groble.api.model.content.response.swagger.UploadContentDetailImag
 import liaison.groble.api.model.content.response.swagger.UploadContentDownloadFile;
 import liaison.groble.api.model.content.response.swagger.UploadContentThumbnail;
 import liaison.groble.api.model.file.response.FileUploadResponse;
-import liaison.groble.api.server.content.mapper.ContentDtoMapper;
 import liaison.groble.api.server.file.mapper.FileCustomMapper;
 import liaison.groble.application.content.dto.ContentCardDTO;
 import liaison.groble.application.content.dto.ContentDetailDTO;
@@ -67,12 +66,17 @@ public class ContentController {
   private static final String CONTENT_DETAIL_PATH = "/content/{contentId}";
   private static final String HOME_CONTENTS_PATH = "/home/contents";
   private static final String UPLOAD_CONTENT_THUMBNAIL_PATH = "/content/thumbnail/image";
+  private static final String UPLOAD_CONTENT_DETAIL_IMAGES_PATH = "/content/detail/images";
+  private static final String CONTENT_COACHING_CATEGORY_PATH = "/contents/coaching/category";
+  private static final String CONTENT_DOCUMENT_CATEGORY_PATH = "/contents/document/category";
+  private static final String CONTENT_REVIEWS_PATH = "/content/{contentId}/reviews";
 
   // 응답 메시지 상수화
   private static final String CONTENT_DETAIL_SUCCESS_MESSAGE = "콘텐츠 상세 조회에 성공하였습니다.";
   private static final String HOME_CONTENTS_SUCCESS_MESSAGE = "홈화면 콘텐츠 조회에 성공하였습니다.";
   private static final String UPLOAD_CONTENT_THUMBNAIL_SUCCESS_MESSAGE =
       "콘텐츠 썸네일 이미지 업로드가 성공적으로 완료되었습니다.";
+  private static final String CONTENT_REVIEWS_SUCCESS_MESSAGE = "콘텐츠 리뷰 목록 조회에 성공하였습니다.";
 
   // Service
   private final ContentService contentService;
@@ -80,11 +84,17 @@ public class ContentController {
 
   // Mapper
   private final ContentMapper contentMapper;
-  private final ContentDtoMapper contentDtoMapper;
   private final FileCustomMapper fileCustomMapper;
 
   // Helper
   private final ResponseHelper responseHelper;
+
+  //  @GetMapping(CONTENT_REVIEWS_PATH)
+  //  public ResponseEntity<GrobleResponse<>> getContentReviews(
+  //          @PathVariable("contentId") Long contentId
+  //  ) {
+  //
+  //  }
 
   @ContentDetail
   @GetMapping(CONTENT_DETAIL_PATH)
@@ -108,15 +118,11 @@ public class ContentController {
   public ResponseEntity<GrobleResponse<HomeContentsResponse>> getHomeContents() {
     List<ContentCardDTO> coachingContentCardDTOS = contentService.getHomeContentsList("COACHING");
     List<ContentPreviewCardResponse> coachingItems =
-        coachingContentCardDTOS.stream()
-            .map(contentDtoMapper::toContentPreviewCardFromCardDto)
-            .toList();
+        coachingContentCardDTOS.stream().map(contentMapper::toContentPreviewCardResponse).toList();
 
     List<ContentCardDTO> documentContentCardDTOS = contentService.getHomeContentsList("DOCUMENT");
     List<ContentPreviewCardResponse> documentItems =
-        documentContentCardDTOS.stream()
-            .map(contentDtoMapper::toContentPreviewCardFromCardDto)
-            .toList();
+        documentContentCardDTOS.stream().map(contentMapper::toContentPreviewCardResponse).toList();
 
     // Wrapper DTO에 담기
     HomeContentsResponse payload = new HomeContentsResponse(coachingItems, documentItems);
@@ -124,7 +130,7 @@ public class ContentController {
   }
 
   @ContentsCoachingCategory
-  @GetMapping("/contents/coaching/category")
+  @GetMapping(CONTENT_COACHING_CATEGORY_PATH)
   public ResponseEntity<GrobleResponse<PageResponse<ContentPreviewCardResponse>>>
       getCoachingContentsByCategory(
           @Parameter(
@@ -147,7 +153,7 @@ public class ContentController {
   }
 
   @ContentsDocumentCategory
-  @GetMapping("/contents/document/category")
+  @GetMapping(CONTENT_DOCUMENT_CATEGORY_PATH)
   public ResponseEntity<GrobleResponse<PageResponse<ContentPreviewCardResponse>>>
       getDocumentContentsByCategory(
           @Parameter(
@@ -174,7 +180,7 @@ public class ContentController {
       PageResponse<ContentCardDTO> dtoPage) {
     List<ContentPreviewCardResponse> items =
         dtoPage.getItems().stream()
-            .map(contentDtoMapper::toContentPreviewCardFromCardDto)
+            .map(contentMapper::toContentPreviewCardResponse)
             .collect(Collectors.toList());
 
     return PageResponse.<ContentPreviewCardResponse>builder()
@@ -184,7 +190,6 @@ public class ContentController {
         .build();
   }
 
-  // 콘텐츠의 썸네일 이미지 저장 요청
   @UploadContentThumbnail
   @PostMapping(UPLOAD_CONTENT_THUMBNAIL_PATH)
   public ResponseEntity<GrobleResponse<?>> addContentThumbnailImage(
@@ -221,7 +226,6 @@ public class ContentController {
               GrobleResponse.success(
                   response, "썸네일 이미지 업로드가 성공적으로 완료되었습니다.", HttpStatus.CREATED.value()));
     } catch (IOException ioe) {
-      // I/O 문제(파일 읽기 실패 등)
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
           .body(
               GrobleResponse.error(
@@ -230,7 +234,7 @@ public class ContentController {
   }
 
   @UploadContentDetailImages
-  @PostMapping("/content/detail/images")
+  @PostMapping(UPLOAD_CONTENT_DETAIL_IMAGES_PATH)
   public ResponseEntity<GrobleResponse<?>> addContentDetailImages(
       @Auth Accessor accessor,
       @RequestPart("contentDetailImages")
