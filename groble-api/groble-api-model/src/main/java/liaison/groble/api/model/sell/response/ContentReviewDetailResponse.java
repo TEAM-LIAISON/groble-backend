@@ -39,6 +39,13 @@ public class ContentReviewDetailResponse {
   private String reviewerNickname;
 
   @Schema(
+      description = "리뷰 작성 내용",
+      example = "마음에 들어요",
+      type = "string",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private String reviewContent;
+
+  @Schema(
       description = "구매한 콘텐츠 옵션 이름",
       example = "옵션 이름",
       type = "string",

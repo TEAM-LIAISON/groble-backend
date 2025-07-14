@@ -26,7 +26,9 @@ public class QPurchase extends EntityPathBase<Purchase> {
 
     public final DateTimePath<java.time.LocalDateTime> cancelledAt = createDateTime("cancelledAt", java.time.LocalDateTime.class);
 
-    public final StringPath cancelReason = createString("cancelReason");
+    public final EnumPath<liaison.groble.domain.purchase.enums.CancelReason> cancelReason = createEnum("cancelReason", liaison.groble.domain.purchase.enums.CancelReason.class);
+
+    public final DateTimePath<java.time.LocalDateTime> cancelRequestedAt = createDateTime("cancelRequestedAt", java.time.LocalDateTime.class);
 
     public final liaison.groble.domain.content.entity.QContent content;
 
@@ -50,12 +52,6 @@ public class QPurchase extends EntityPathBase<Purchase> {
     public final liaison.groble.domain.payment.entity.QPayment payment;
 
     public final DateTimePath<java.time.LocalDateTime> purchasedAt = createDateTime("purchasedAt", java.time.LocalDateTime.class);
-
-    public final DateTimePath<java.time.LocalDateTime> refundedAt = createDateTime("refundedAt", java.time.LocalDateTime.class);
-
-    public final StringPath refundReason = createString("refundReason");
-
-    public final DateTimePath<java.time.LocalDateTime> refundRequestedAt = createDateTime("refundRequestedAt", java.time.LocalDateTime.class);
 
     public final NumberPath<Long> selectedOptionId = createNumber("selectedOptionId", Long.class);
 

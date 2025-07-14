@@ -1,5 +1,6 @@
 package liaison.groble.domain.purchase.entity;
 
+import static jakarta.persistence.EnumType.STRING;
 import static jakarta.persistence.FetchType.LAZY;
 import static lombok.AccessLevel.PROTECTED;
 
@@ -25,6 +26,7 @@ import liaison.groble.domain.content.entity.ContentOption;
 import liaison.groble.domain.coupon.entity.UserCoupon;
 import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.payment.entity.Payment;
+import liaison.groble.domain.purchase.enums.CancelReason;
 import liaison.groble.domain.user.entity.User;
 
 import lombok.AllArgsConstructor;
@@ -39,7 +41,6 @@ import lombok.NoArgsConstructor;
       @Index(name = "idx_purchase_user", columnList = "user_id"),
       @Index(name = "idx_purchase_content", columnList = "content_id"),
       @Index(name = "idx_purchase_order", columnList = "order_id", unique = true),
-      @Index(name = "idx_purchase_status", columnList = "status"),
       @Index(name = "idx_purchase_created_at", columnList = "created_at")
     })
 @Getter
@@ -108,20 +109,15 @@ public class Purchase extends BaseTimeEntity {
   @Column(name = "purchased_at")
   private LocalDateTime purchasedAt;
 
+  @Column(name = "cancel_requested_at")
+  private LocalDateTime cancelRequestedAt;
+
   @Column(name = "cancelled_at")
   private LocalDateTime cancelledAt;
 
   @Column(name = "cancel_reason")
-  private String cancelReason;
-
-  @Column(name = "refund_requested_at")
-  private LocalDateTime refundRequestedAt;
-
-  @Column(name = "refunded_at")
-  private LocalDateTime refundedAt;
-
-  @Column(name = "refund_reason")
-  private String refundReason;
+  @Enumerated(value = STRING)
+  private CancelReason cancelReason;
 
   // 팩토리 메서드
   public static Purchase createFromOrder(Order order) {
@@ -156,6 +152,7 @@ public class Purchase extends BaseTimeEntity {
                 ? OptionType.valueOf(orderItem.getOptionType().name())
                 : null)
         .selectedOptionName(selectedOptionName)
+        .purchasedAt(LocalDateTime.now())
         .selectedOptionId(orderItem.getOptionId())
         .build();
   }

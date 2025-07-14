@@ -15,7 +15,6 @@ import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
-import jakarta.persistence.Version;
 
 import liaison.groble.domain.common.entity.BaseTimeEntity;
 import liaison.groble.domain.order.entity.Order;
@@ -30,7 +29,6 @@ import lombok.NoArgsConstructor;
     name = "payments",
     indexes = {
       @Index(name = "idx_payment_order", columnList = "order_id"),
-      @Index(name = "idx_payment_status", columnList = "status"),
       @Index(name = "idx_payment_method", columnList = "payment_method"),
       @Index(name = "idx_payment_created_at", columnList = "created_at")
     })
@@ -81,24 +79,6 @@ public class Payment extends BaseTimeEntity {
   /** 결제 완료 시각 */
   @Column(name = "paid_at")
   private LocalDateTime paidAt;
-
-  /** 취소 사유 */
-  @Column(name = "cancel_reason")
-  private String cancelReason;
-
-  @Column(name = "cancel_requested_at")
-  private LocalDateTime cancelRequestedAt;
-
-  /** 취소 시각 */
-  @Column(name = "cancelled_at")
-  private LocalDateTime cancelledAt;
-
-  /** 실패 사유 */
-  @Column(name = "fail_reason")
-  private String failReason;
-
-  /** 낙관적 락 버전 */
-  @Version private Long version;
 
   // 생성자
   @Builder

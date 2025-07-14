@@ -9,7 +9,7 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public class ValidatedOrderOptionDto {
+public class ValidatedOrderOptionDTO {
   private final Long optionId;
   private final OrderItem.OptionType optionType;
   private final BigDecimal price;

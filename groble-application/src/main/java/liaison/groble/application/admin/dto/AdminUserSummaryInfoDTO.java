@@ -7,7 +7,7 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public class AdminUserSummaryInfoDto {
+public class AdminUserSummaryInfoDTO {
   private final LocalDateTime createdAt;
 
   private boolean isSellerTermsAgreed;

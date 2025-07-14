@@ -46,19 +46,19 @@ public class AdminUserSummaryInfoResponse {
   private String email;
 
   @Schema(
-      description = "마케팅 수신 동의 여부",
-      example = "false",
-      type = "boolean",
-      requiredMode = Schema.RequiredMode.REQUIRED)
-  private boolean isMarketingAgreed;
-
-  @Schema(
       description = "사용자 전화번호",
       example = "010-1234-5678",
       type = "string",
       pattern = "^\\d{3}-\\d{4}-\\d{4}$",
       requiredMode = Schema.RequiredMode.NOT_REQUIRED)
   private String phoneNumber;
+
+  @Schema(
+      description = "마케팅 수신 동의 여부",
+      example = "false",
+      type = "boolean",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private boolean isMarketingAgreed;
 
   @Schema(
       description = "판매자 정보 등록 여부 (false: 메이커 인증 부분에서 '해당없음'으로 띄워주기, true: 메이커 인증 부분에서 상태를 나타내야함)",

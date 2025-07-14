@@ -14,11 +14,14 @@ import org.springframework.web.bind.annotation.RestController;
 import liaison.groble.api.model.maker.response.ContactInfoResponse;
 import liaison.groble.api.model.purchase.response.PurchasedContentDetailResponse;
 import liaison.groble.api.model.purchase.response.PurchaserContentPreviewCardResponse;
-import liaison.groble.api.model.purchase.swagger.MyPurchasingContents;
+import liaison.groble.api.model.purchase.swagger.PurchasedContentsListResponse;
+import liaison.groble.api.model.sell.response.ContentReviewDetailResponse;
 import liaison.groble.application.market.dto.ContactInfoDTO;
 import liaison.groble.application.purchase.dto.PurchaseContentCardDTO;
 import liaison.groble.application.purchase.dto.PurchasedContentDetailDTO;
 import liaison.groble.application.purchase.service.PurchaseService;
+import liaison.groble.application.sell.dto.ContentReviewDetailDTO;
+import liaison.groble.application.sell.service.SellContentService;
 import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.annotation.Logging;
 import liaison.groble.common.model.Accessor;
@@ -28,10 +31,13 @@ import liaison.groble.common.response.ResponseHelper;
 import liaison.groble.common.utils.PageUtils;
 import liaison.groble.mapping.market.MarketMapper;
 import liaison.groble.mapping.purchase.PurchaseMapper;
+import liaison.groble.mapping.sell.SellMapper;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -47,7 +53,7 @@ public class PurchaseController {
 
   // API 경로 상수화
   private static final String SELLER_CONTACT_INFO_PATH = "/inquiry/{merchantUid}";
-  private static final String MY_PURCHASING_CONTENT_PATH = "/content/my/purchasing-contents";
+  private static final String MY_PURCHASING_CONTENT_PATH = "/content/my/purchased-contents";
   private static final String MY_PURCHASED_CONTENT_PATH = "/content/my/{merchantUid}";
 
   // 응답 메시지 상수화
@@ -58,10 +64,11 @@ public class PurchaseController {
 
   // Service
   private final PurchaseService purchaseService;
-
+  private final SellContentService sellContentService;
   // Mapper
   private final PurchaseMapper purchaseMapper;
   private final MarketMapper marketMapper;
+  private final SellMapper sellMapper;
 
   // Helper
   private final ResponseHelper responseHelper;
@@ -99,31 +106,51 @@ public class PurchaseController {
     PurchasedContentDetailDTO purchasedContentDetailDTO =
         purchaseService.getMyPurchasedContent(accessor.getUserId(), merchantUid);
 
+    ContactInfoDTO contactInfoDTO =
+        purchaseService.getContactInfo(accessor.getUserId(), merchantUid);
+    ContactInfoResponse contactInfoResponse = marketMapper.toContactInfoResponse(contactInfoDTO);
+
+    ContentReviewDetailDTO contentReviewDetailDTO =
+        sellContentService.getContentReviewDetail(accessor.getUserId(), merchantUid);
+
+    ContentReviewDetailResponse contentReviewDetailResponse =
+        sellMapper.toContentReviewDetailResponse(contentReviewDetailDTO);
+
     PurchasedContentDetailResponse response =
-        purchaseMapper.toPurchasedContentDetailResponse(purchasedContentDetailDTO);
+        purchaseMapper.toPurchasedContentDetailResponse(
+            purchasedContentDetailDTO, contactInfoResponse, contentReviewDetailResponse);
 
     return responseHelper.success(response, My_PURCHASED_CONTENT_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 
-  @MyPurchasingContents
+  @Operation(
+      summary = "[✅ 내 콘텐츠 - 구매 관리] 내가 구매한 콘텐츠 목록 조회",
+      description = "내가 구매한 콘텐츠 목록을 조회합니다. 구매 상태에 따라 필터링할 수 있습니다.")
+  @ApiResponse(
+      responseCode = "200",
+      description = "[내 콘텐츠 - 구매 관리] 주문 상태에 따른 내가 구매한 콘텐츠 목록 조회 성공",
+      content =
+          @Content(
+              mediaType = "application/json",
+              schema = @Schema(implementation = PurchasedContentsListResponse.class)))
   @GetMapping(MY_PURCHASING_CONTENT_PATH)
   @Logging(
       item = "Purchase",
-      action = "getMyPurchasingContents",
+      action = "getMyPurchasedContents",
       includeParam = true,
       includeResult = true)
   public ResponseEntity<GrobleResponse<PageResponse<PurchaserContentPreviewCardResponse>>>
-      getMyPurchasingContents(
+      getMyPurchasedContents(
           @Parameter @Auth Accessor accessor,
           @RequestParam(value = "page", defaultValue = "0") int page,
-          @RequestParam(value = "size", defaultValue = "12") int size,
+          @RequestParam(value = "size", defaultValue = "9") int size,
           @RequestParam(value = "sort", defaultValue = "purchasedAt") String sort,
           @Parameter(
-                  description = "구매한 콘텐츠 상태 필터 [PAID - 결제완료], [EXPIRED - 기간만료], [CANCELLED - 결제취소]",
+                  description = "구매한 콘텐츠 상태 필터 [PAID - 결제완료], [CANCEL - 취소/환불]",
                   schema =
                       @Schema(
                           implementation = String.class,
-                          allowableValues = {"PAID", "EXPIRED", "CANCELLED"}))
+                          allowableValues = {"PAID", "CANCEL"}))
               @RequestParam(value = "state", required = false)
               String state) {
     Pageable pageable = PageUtils.createPageable(page, size, sort);

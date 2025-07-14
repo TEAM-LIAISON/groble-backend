@@ -17,6 +17,7 @@ public class FlatContentReviewDetailDTO {
   private String contentTitle;
   private LocalDateTime createdAt;
   private String reviewerNickname;
+  private String reviewContent;
   private String selectedOptionName;
   private BigDecimal rating;
 }

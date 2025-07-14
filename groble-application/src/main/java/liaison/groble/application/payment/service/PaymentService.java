@@ -6,10 +6,9 @@ import org.springframework.transaction.annotation.Transactional;
 import liaison.groble.application.order.service.OrderReader;
 import liaison.groble.application.payment.dto.cancel.PaymentCancelDTO;
 import liaison.groble.application.payment.dto.cancel.PaymentCancelInfoDTO;
-import liaison.groble.application.purchase.service.PurchaseReader;
 import liaison.groble.domain.order.entity.Order;
-import liaison.groble.domain.order.enums.CancelReason;
 import liaison.groble.domain.payment.entity.PayplePayment;
+import liaison.groble.domain.purchase.enums.CancelReason;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,7 +21,6 @@ public class PaymentService {
   // Reader
   private final OrderReader orderReader;
   private final PaymentReader paymentReader;
-  private final PurchaseReader purchaseReader;
 
   @Transactional
   public void requestPaymentCancel(

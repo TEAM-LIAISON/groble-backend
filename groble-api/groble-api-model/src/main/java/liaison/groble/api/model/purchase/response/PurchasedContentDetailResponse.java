@@ -5,6 +5,9 @@ import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 
+import liaison.groble.api.model.maker.response.ContactInfoResponse;
+import liaison.groble.api.model.sell.response.ContentReviewDetailResponse;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
@@ -21,7 +24,7 @@ public class PurchasedContentDetailResponse {
       type = "String",
       allowableValues = {"COMPLETED", "CANCELLED", "REFUND_REQUESTED", "REFUNDED"},
       requiredMode = Schema.RequiredMode.REQUIRED)
-  private String purchaseStatus;
+  private String orderStatus;
 
   @Schema(
       description = "주문 식별 ID",
@@ -131,4 +134,14 @@ public class PurchasedContentDetailResponse {
   private String payType;
   private String payCardName;
   private String payCardNum;
+
+  // 누락 변수 추가
+  private String thumbnailUrl;
+  private Boolean isRefundable;
+  private String cancelReason;
+  // 문의하기 링크 추가
+  private ContactInfoResponse contactInfo;
+
+  // 내 리뷰 정보
+  private ContentReviewDetailResponse myReview;
 }

@@ -1,6 +1,7 @@
 package liaison.groble.application.purchase.service;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -36,10 +37,10 @@ public class PurchaseService {
   @Transactional(readOnly = true)
   public PageResponse<PurchaseContentCardDTO> getMyPurchasedContents(
       Long userId, String state, Pageable pageable) {
-    Order.OrderStatus orderStatus = parseOrderStatus(state);
+    List<Order.OrderStatus> orderStatuses = parseOrderStatuses(state);
 
     Page<FlatPurchaseContentPreviewDTO> page =
-        purchaseReader.findMyPurchasingContents(userId, orderStatus, pageable);
+        purchaseReader.findMyPurchasedContents(userId, orderStatuses, pageable);
 
     List<PurchaseContentCardDTO> items =
         page.getContent().stream().map(this::convertFlatDtoToCardDto).toList();
@@ -55,8 +56,10 @@ public class PurchaseService {
 
   @Transactional(readOnly = true)
   public PurchasedContentDetailDTO getMyPurchasedContent(Long userId, String merchantUid) {
-
+    // 주문 정보 조회
     Order order = orderReader.getOrderByMerchantUidAndUserId(merchantUid, userId);
+
+    // 구매 정보 조회
     Purchase purchase = purchaseReader.getPurchaseByOrderId(order.getId());
 
     return toPurchasedContentDetailDTO(purchase);
@@ -79,48 +82,47 @@ public class PurchaseService {
         .build();
   }
 
-  /** 문자열에서 OrderStatus 파싱합니다. */
-  private Order.OrderStatus parseOrderStatus(String state) {
-    if (state == null || state.isBlank()) {
-      return null;
-    }
-
-    try {
-      return Order.OrderStatus.valueOf(state.toUpperCase());
-    } catch (IllegalArgumentException e) {
-      log.warn("유효하지 않은 구매 상태: {}", state);
-      return null;
-    }
-  }
-
-  /**
-   * 구매한 상품 상세 응답 DTO 생성
-   *
-   * @param purchase 구매 정보
-   */
   private PurchasedContentDetailDTO toPurchasedContentDetailDTO(Purchase purchase) {
-    Order order = purchase.getOrder();
+    var order = purchase.getOrder();
     var content = purchase.getContent();
     var seller = content.getUser();
 
-    return PurchasedContentDetailDTO.builder()
-        // 주문 정보
-        .merchantUid(order.getMerchantUid())
-        .purchasedAt(purchase.getPurchasedAt())
+    boolean isRefundable = order.getStatus() == Order.OrderStatus.PAID;
 
-        // 콘텐츠 정보
-        .contentId(content.getId())
-        .contentTitle(content.getTitle())
-        .sellerName(seller.getNickname())
+    // 1) 빌더 인스턴스 생성 ― 필수·null-불가 필드만 먼저 세팅
+    var builder =
+        PurchasedContentDetailDTO.builder()
+            .orderStatus(order.getStatus().name())
+            // 주문 정보
+            .merchantUid(order.getMerchantUid())
+            .purchasedAt(purchase.getPurchasedAt())
+            // 콘텐츠 정보
+            .contentId(content.getId())
+            .sellerName(seller.getNickname())
+            .contentTitle(content.getTitle())
+            .selectedOptionName(purchase.getSelectedOptionName())
+            .selectedOptionQuantity(1)
+            .isFreePurchase(purchase.getFinalPrice().signum() == 0)
+            .originalPrice(purchase.getOriginalPrice())
+            .discountPrice(purchase.getDiscountPrice())
+            .finalPrice(purchase.getFinalPrice())
+            .thumbnailUrl(content.getThumbnailUrl())
+            .isRefundable(isRefundable)
+            .cancelReason(getCancelReasonSafely(purchase));
 
-        // 가격 정보
-        .originalPrice(purchase.getOriginalPrice())
-        .discountPrice(purchase.getDiscountPrice())
-        .finalPrice(purchase.getFinalPrice())
-        .isFreePurchase(purchase.getFinalPrice().signum() == 0)
-        .build();
+    // 2) null 가능 필드는 조건부로 세팅
+    if (purchase.getCancelRequestedAt() != null) {
+      builder.cancelRequestedAt(purchase.getCancelRequestedAt());
+    }
+    if (purchase.getCancelledAt() != null) {
+      builder.cancelledAt(purchase.getCancelledAt());
+    }
+
+    // 3) 최종 객체 반환
+    return builder.build();
   }
 
+  @Transactional(readOnly = true)
   public ContactInfoDTO getContactInfo(Long userId, String merchantUid) {
     Order order = orderReader.getOrderByMerchantUidAndUserId(merchantUid, userId);
 
@@ -141,5 +143,35 @@ public class PurchaseService {
       log.warn("판매자 연락처 정보 없음: userId={}", user.getId());
       return ContactInfoDTO.builder().build();
     }
+  }
+
+  private List<Order.OrderStatus> parseOrderStatuses(String state) {
+    if (state == null || state.isBlank()) {
+      return null;
+    }
+
+    if ("CANCEL".equalsIgnoreCase(state)) {
+      return List.of(Order.OrderStatus.CANCEL_REQUEST, Order.OrderStatus.CANCELLED);
+    }
+
+    return List.of(parseOrderStatus(state));
+  }
+
+  /** 문자열에서 OrderStatus 파싱합니다. */
+  private Order.OrderStatus parseOrderStatus(String state) {
+    if (state == null || state.isBlank()) {
+      return null;
+    }
+
+    try {
+      return Order.OrderStatus.valueOf(state.toUpperCase());
+    } catch (IllegalArgumentException e) {
+      log.warn("유효하지 않은 구매 상태: {}", state);
+      return null;
+    }
+  }
+
+  private String getCancelReasonSafely(Purchase purchase) {
+    return Optional.ofNullable(purchase.getCancelReason()).map(Enum::name).orElse(null);
   }
 }

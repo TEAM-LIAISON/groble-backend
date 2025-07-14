@@ -11,8 +11,9 @@ import liaison.groble.application.admin.dto.AdminOrderCancelRequestDTO;
 import liaison.groble.application.admin.dto.AdminOrderCancellationReasonDTO;
 import liaison.groble.application.admin.dto.AdminOrderSummaryInfoDTO;
 import liaison.groble.common.response.PageResponse;
+import liaison.groble.mapping.config.GrobleMapperConfig;
 
-@Mapper(componentModel = "spring")
+@Mapper(config = GrobleMapperConfig.class)
 public interface AdminOrderMapper {
 
   AdminOrderCancelRequestResponse toAdminOrderCancelRequestResponse(AdminOrderCancelRequestDTO dto);

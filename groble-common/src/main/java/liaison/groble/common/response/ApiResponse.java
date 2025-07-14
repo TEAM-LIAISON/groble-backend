@@ -7,11 +7,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-/**
- * API 응답 공통 포맷
- *
- * @param <T> 응답 데이터 타입
- */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
@@ -30,13 +25,6 @@ public class ApiResponse<T> {
   @JsonInclude(JsonInclude.Include.NON_NULL)
   private T data;
 
-  /**
-   * 성공 응답 생성 (데이터 포함)
-   *
-   * @param data 응답 데이터
-   * @param <T> 데이터 타입
-   * @return 성공 응답 객체
-   */
   public static <T> ApiResponse<T> success(T data) {
     return new ApiResponse<>(true, "SUCCESS", "요청이 성공적으로 처리되었습니다.", data);
   }

@@ -18,7 +18,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import liaison.groble.domain.terms.entity.OrderTerms;
-import liaison.groble.domain.terms.entity.Terms;
 import liaison.groble.domain.terms.enums.OrderTermsType;
 import liaison.groble.domain.terms.repository.OrderTermsRepository;
 
@@ -95,21 +94,14 @@ public class OrderTermsDataInitializer implements ApplicationRunner {
                     || !Objects.equals(existingOrderTerm.getEffectiveTo(), effectiveTo);
 
             if (needsUpdate) {
-              OrderTerms updatedOrderTerm =
-                  OrderTerms.builder()
-                      .title(title)
-                      .type(type)
-                      .version(version)
-                      .contentUrl(contentUrl)
-                      .effectiveFrom(effectiveFrom)
-                      .build();
-
+              // 기존 엔티티를 직접 수정
+              existingOrderTerm.updateTitle(title);
+              existingOrderTerm.updateContentUrl(contentUrl);
+              existingOrderTerm.updateEffectiveFrom(effectiveFrom);
               if (effectiveTo != null) {
-                updatedOrderTerm.updateEffectiveTo(effectiveTo);
+                existingOrderTerm.updateEffectiveTo(effectiveTo);
               }
-
-              updatedOrderTerm = setId(updatedOrderTerm, existingOrderTerm.getId());
-              updatedOrderTerms.add(updatedOrderTerm);
+              updatedOrderTerms.add(existingOrderTerm);
             }
           } else {
             // 새로운 데이터 추가
@@ -154,9 +146,25 @@ public class OrderTermsDataInitializer implements ApplicationRunner {
   // ID를 설정하기 위한 헬퍼 메서드 (리플렉션이나 다른 방법으로 대체 가능)
   private OrderTerms setId(OrderTerms orderTerms, Long id) {
     try {
-      java.lang.reflect.Field field = Terms.class.getDeclaredField("id");
-      field.setAccessible(true);
-      field.set(orderTerms, id);
+      // OrderTerms가 Terms를 상속받는 경우, 부모 클래스에서 id 필드를 찾아야 함
+      Class<?> clazz = orderTerms.getClass();
+      java.lang.reflect.Field field = null;
+
+      // 현재 클래스와 상위 클래스에서 id 필드 찾기
+      while (clazz != null && field == null) {
+        try {
+          field = clazz.getDeclaredField("id");
+        } catch (NoSuchFieldException e) {
+          // 상위 클래스에서 찾기
+          clazz = clazz.getSuperclass();
+        }
+      }
+
+      if (field != null) {
+        field.setAccessible(true);
+        field.set(orderTerms, id);
+      }
+
       return orderTerms;
     } catch (Exception e) {
       log.error("Error setting ID field", e);

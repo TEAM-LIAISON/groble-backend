@@ -81,7 +81,6 @@ public class SellContentController {
   // Helper
   private final ResponseHelper responseHelper;
 
-  // TODO : 내 스토어 - 상품 관리 - 판매 관리
   @Operation(
       summary = "[❌ 내 스토어 - 상품 관리 - 판매 관리] 판매 관리 페이지 조회",
       description = "특정 상품의 판매 관리, 상위 판매 리스트, 상위 리뷰 내역을 모두 조회합니다.")
