@@ -28,7 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequestMapping("/api/v1")
 @RequiredArgsConstructor
-@Tag(name = "[💰 콘텐츠 결제 페이지 조회]")
+@Tag(name = "[💰 콘텐츠 결제 페이지 조회]", description = "콘텐츠 결제 페이지 정보를 조회하는 API")
 public class ContentPaymentController {
 
   // API 경로 상수화
