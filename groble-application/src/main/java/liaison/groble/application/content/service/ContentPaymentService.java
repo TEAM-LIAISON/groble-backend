@@ -1,10 +1,13 @@
 package liaison.groble.application.content.service;
 
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import liaison.groble.application.content.ContentReader;
-import liaison.groble.application.content.dto.ContentPayPageResponse;
+import liaison.groble.application.content.dto.ContentPayPageDTO;
+import liaison.groble.application.coupon.service.CouponService;
 import liaison.groble.common.exception.EntityNotFoundException;
 import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.content.entity.ContentOption;
@@ -16,24 +19,38 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 public class ContentPaymentService {
+  // Reader
   private final ContentReader contentReader;
 
+  // Service
+  private final CouponService couponService;
+
   @Transactional(readOnly = true)
-  public ContentPayPageResponse getContentPayPage(Long contentId, Long optionId) {
+  public ContentPayPageDTO getContentPayPage(Long userId, Long contentId, Long optionId) {
     // 1. 콘텐츠 조회
     Content content = contentReader.getContentById(contentId);
 
     // 2. 콘텐츠 옵션 조회
     ContentOption contentOption = findContentOptionById(content, optionId);
 
-    // 4. 응답 DTO 생성
-    return ContentPayPageResponse.builder()
+    List<ContentPayPageDTO.UserCouponDTO> userCoupons = couponService.getUserCoupons(userId);
+
+    // 3. 응답 DTO 생성
+    return buildContentPayPageDTO(content, contentOption, userCoupons);
+  }
+
+  private ContentPayPageDTO buildContentPayPageDTO(
+      Content content,
+      ContentOption contentOption,
+      List<ContentPayPageDTO.UserCouponDTO> userCoupons) {
+    return ContentPayPageDTO.builder()
         .thumbnailUrl(content.getThumbnailUrl())
         .sellerName(content.getUser().getNickname())
         .title(content.getTitle())
         .contentType(content.getContentType().name())
         .optionName(contentOption.getName())
         .price(contentOption.getPrice())
+        .userCoupons(userCoupons)
         .build();
   }
 

@@ -15,7 +15,6 @@ import liaison.groble.application.auth.service.UserInfoService;
 import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.model.Accessor;
 import liaison.groble.common.response.GrobleResponse;
-import liaison.groble.mapping.user.UserInfoMapper;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -30,7 +29,6 @@ import lombok.extern.slf4j.Slf4j;
     name = "[사용자 정보] 사용자 정보(닉네임, 가입 유형 등) 기능 관련 API",
     description = "닉네임 중복 체크, 닉네임 설정 및 수정, 가입 유형 변경 등의 기능을 제공합니다.")
 public class UserInfoController {
-  private final UserInfoMapper userInfoMapper;
   private final UserInfoService userInfoService;
 
   @Operation(summary = "닉네임 설정 및 수정", description = "첫 회원가입 과정에서 닉네임을 설정하거나, 기존 닉네임을 수정합니다.")

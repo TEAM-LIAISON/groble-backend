@@ -48,9 +48,14 @@ public class IntegratedAccountAuthController {
   private static final String SIGN_IN_SUCCESS_MESSAGE = "통합 계정으로 로그인이 성공적으로 완료되었습니다.";
   private static final String SIGN_UP_SUCCESS_MESSAGE = "회원가입이 성공적으로 완료되었습니다.";
 
+  // Mapper
   private final AuthMapper authMapper;
+
+  // Service
   private final IntegratedAccountAuthService integratedAccountAuthService;
   private final TokenCookieService tokenCookieService;
+
+  // Helper
   private final ResponseHelper responseHelper;
 
   @Operation(
