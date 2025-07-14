@@ -10,7 +10,7 @@ import liaison.groble.application.purchase.dto.PurchaserContentReviewDTO;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-07-14T18:50:59+0900",
+    date = "2025-07-15T02:53:08+0900",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.10 (Amazon.com Inc.)")
 @Component
 public class PurchaserContentReviewMapperImpl implements PurchaserContentReviewMapper {

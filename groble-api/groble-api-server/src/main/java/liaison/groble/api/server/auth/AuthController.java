@@ -54,9 +54,14 @@ public class AuthController {
   private static final String LOGOUT_SUCCESS_MESSAGE = "로그아웃이 성공적으로 처리되었습니다.";
   private static final String WITHDRAWAL_SUCCESS_MESSAGE = "회원탈퇴가 성공적으로 처리되었습니다.";
 
+  // Service
   private final AuthService authService;
-  private final AuthMapper authMapper;
   private final TokenCookieService tokenCookieService;
+
+  // Mapper
+  private final AuthMapper authMapper;
+
+  // Helper
   private final ResponseHelper responseHelper;
 
   @Operation(
