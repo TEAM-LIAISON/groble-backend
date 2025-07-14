@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.RestController;
 import liaison.groble.api.model.content.response.pay.ContentPayPageResponse;
 import liaison.groble.application.content.dto.ContentPayPageDTO;
 import liaison.groble.application.content.service.ContentPaymentService;
-import liaison.groble.application.coupon.service.CouponService;
 import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.model.Accessor;
 import liaison.groble.common.response.GrobleResponse;
@@ -29,7 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequestMapping("/api/v1")
 @RequiredArgsConstructor
-@Tag(name = "콘텐츠 결제 관련 API", description = "콘텐츠 결제창 정보 조회")
+@Tag(name = "[💰 콘텐츠 결제 페이지 조회]")
 public class ContentPaymentController {
 
   // API 경로 상수화
@@ -41,7 +40,6 @@ public class ContentPaymentController {
 
   // Service
   private final ContentPaymentService contentPaymentService;
-  private final CouponService couponService;
 
   // Mapper
   private final ContentPaymentMapper contentPaymentMapper;
@@ -49,7 +47,7 @@ public class ContentPaymentController {
   // Helper
   private final ResponseHelper responseHelper;
 
-  @Operation(summary = "콘텐츠 결제 페이지 정보 조회")
+  @Operation(summary = "[✅ 콘텐츠 결제 페이지 정보 조회]")
   @ApiResponse(
       responseCode = "200",
       description = CONTENT_PAYMENT_PAGE_RESPONSE_MESSAGE,
