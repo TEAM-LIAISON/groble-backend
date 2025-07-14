@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import liaison.groble.application.content.ContentReplyWriter;
 import liaison.groble.application.content.ContentReviewReader;
 import liaison.groble.application.content.ContentReviewWriter;
+import liaison.groble.application.order.service.OrderReader;
 import liaison.groble.application.purchase.service.PurchaseReader;
 import liaison.groble.application.sell.dto.ContentReviewDetailDTO;
 import liaison.groble.application.sell.dto.ContentSellDetailDTO;
@@ -20,8 +21,10 @@ import liaison.groble.application.sell.dto.SellManageDetailDTO;
 import liaison.groble.application.sell.dto.SellManagePageDTO;
 import liaison.groble.common.response.PageResponse;
 import liaison.groble.domain.content.dto.FlatContentReviewDetailDTO;
+import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.purchase.dto.FlatContentSellDetailDTO;
 import liaison.groble.domain.purchase.dto.FlatSellManageDetailDTO;
+import liaison.groble.domain.purchase.entity.Purchase;
 import liaison.groble.external.discord.dto.DeleteReviewRequestReportDTO;
 import liaison.groble.external.discord.service.content.DiscordDeleteReviewRequestReportService;
 
@@ -33,11 +36,16 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class SellContentService {
 
+  // Reader
   private final ContentReviewReader contentReviewReader;
+  private final PurchaseReader purchaseReader;
+
+  // Writer
   private final ContentReviewWriter contentReviewWriter;
   private final ContentReplyWriter contentReplyWriter;
-  private final PurchaseReader purchaseReader;
+
   private final DiscordDeleteReviewRequestReportService discordDeleteReviewRequestReportService;
+  private final OrderReader orderReader;
 
   @Transactional(readOnly = true)
   public SellManagePageDTO getSellManagePage(Long userId, Long contentId) {
@@ -108,6 +116,18 @@ public class SellContentService {
     return buildContentReviewDetail(contentReviewDetailDTO);
   }
 
+  @Transactional(readOnly = true)
+  public ContentReviewDetailDTO getContentReviewDetail(Long userId, String merchantUid) {
+
+    Order order = orderReader.getOrderByMerchantUid(merchantUid);
+    Purchase purchase = purchaseReader.getPurchaseByOrderId(order.getId());
+
+    return contentReviewReader
+        .getContentReviewDetail(userId, purchase.getContent().getId())
+        .map(this::buildContentReviewDetail) // 값이 있을 때만 DTO 변환
+        .orElse(null); // 없으면 null 반환 (필요하면 Optional 그대로 넘겨도 OK)
+  }
+
   @Transactional
   public void deleteReviewRequest(Long userId, Long reviewId) {
     contentReviewWriter.updateContentReviewStatusToDeleteRequested(userId, reviewId);
@@ -160,11 +180,13 @@ public class SellContentService {
 
   private ContentReviewDetailDTO buildContentReviewDetail(
       FlatContentReviewDetailDTO flatContentReviewDetailDTO) {
+    log.info(flatContentReviewDetailDTO.toString());
     return ContentReviewDetailDTO.builder()
         .reviewId(flatContentReviewDetailDTO.getReviewId())
         .contentTitle(flatContentReviewDetailDTO.getContentTitle())
         .createdAt(flatContentReviewDetailDTO.getCreatedAt())
         .reviewerNickname(flatContentReviewDetailDTO.getReviewerNickname())
+        .reviewContent(flatContentReviewDetailDTO.getReviewContent())
         .selectedOptionName(flatContentReviewDetailDTO.getSelectedOptionName())
         .rating(flatContentReviewDetailDTO.getRating())
         .build();

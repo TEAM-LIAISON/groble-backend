@@ -12,11 +12,10 @@ import liaison.groble.domain.content.dto.FlatContentPreviewDTO;
 import liaison.groble.domain.content.dto.FlatDynamicContentDTO;
 import liaison.groble.domain.content.enums.ContentStatus;
 import liaison.groble.domain.content.enums.ContentType;
-import liaison.groble.domain.user.entity.User;
 
 public interface ContentCustomRepository {
 
-  Optional<FlatContentPreviewDTO> findRepresentativeContentByUser(User user);
+  Optional<FlatContentPreviewDTO> findRepresentativeContentByUser(Long userId);
 
   Optional<FlatContentPreviewDTO> findFlatContentById(Long contentId);
 

@@ -44,16 +44,19 @@ public class MarketService {
   @Transactional(readOnly = true)
   public MarketIntroSectionDTO getEditIntroSection(Long userId) {
     User user = userReader.getUserById(userId);
+    log.info("Get edit intro section");
     // 문의하기 정보 조회
     ContactInfoDTO contactInfo = getContactInfo(user);
 
     // 대표 콘텐츠 조회
-    FlatContentPreviewDTO representativeContent = getRepresentativeContent(user);
+    FlatContentPreviewDTO representativeContent = getRepresentativeContent(userId);
+    log.info("Get representative content for user: {}", userId);
 
     // 나의 모든 콘텐츠 조회
     List<FlatContentPreviewDTO> myContents = contentReader.findAllMarketContentsByUserId(userId);
+    log.info("Get market content for user: {}", userId);
     List<ContentCardDTO> items = myContents.stream().map(this::convertFlatDtoToCardDto).toList();
-
+    log.info("Get market content cards for user: {}", userId);
     // 메이커 소개 섹션 빌드 결과
     return buildEditMarketIntroSectionResult(user, items, contactInfo, representativeContent);
   }
@@ -67,7 +70,7 @@ public class MarketService {
     ContactInfoDTO contactInfo = getContactInfo(user);
 
     // 대표 콘텐츠 조회
-    FlatContentPreviewDTO representativeContent = getRepresentativeContent(user);
+    FlatContentPreviewDTO representativeContent = getRepresentativeContent(user.getId());
 
     // 메이커 소개 섹션 빌드 결과
     return buildMarketIntroSectionResult(user, contactInfo, representativeContent);
@@ -182,20 +185,12 @@ public class MarketService {
 
   // TODO : 2회 이상 재사용되는 메서드 MarketService, PurchaseService 2곳에서 사용
   private ContactInfoDTO getContactInfo(User user) {
-    try {
-      List<SellerContact> contacts = sellerContactReader.getContactsByUser(user);
-      return ContactInfoDTO.from(contacts);
-    } catch (Exception e) {
-      return ContactInfoDTO.builder().build();
-    }
+    List<SellerContact> contacts = sellerContactReader.getContactsByUser(user);
+    return ContactInfoDTO.from(contacts);
   }
 
-  private FlatContentPreviewDTO getRepresentativeContent(User user) {
-    try {
-      return contentReader.getRepresentativeContentByUser(user);
-    } catch (Exception e) {
-      return FlatContentPreviewDTO.builder().build();
-    }
+  private FlatContentPreviewDTO getRepresentativeContent(Long userId) {
+    return contentReader.getRepresentativeContentByUser(userId);
   }
 
   private MarketIntroSectionDTO buildEditMarketIntroSectionResult(
@@ -227,33 +222,18 @@ public class MarketService {
   }
 
   private String getMarketNameSafely(User user) {
-    try {
-      return Optional.ofNullable(user.getSellerInfo()).map(SellerInfo::getMarketName).orElse("");
-    } catch (Exception e) {
-      log.warn("Error getting market name for user: {}", user.getId(), e);
-      return "";
-    }
+    return Optional.ofNullable(user.getSellerInfo()).map(SellerInfo::getMarketName).orElse("");
   }
 
   private String getMarketLinkUrlSafely(User user) {
-    try {
-      return Optional.ofNullable(user.getSellerInfo()).map(SellerInfo::getMarketLinkUrl).orElse("");
-    } catch (Exception e) {
-      log.warn("Error getting market link URL for user: {}", user.getId(), e);
-      return "";
-    }
+    return Optional.ofNullable(user.getSellerInfo()).map(SellerInfo::getMarketLinkUrl).orElse("");
   }
 
   private String getVerificationStatusSafely(User user) {
-    try {
-      return Optional.ofNullable(user.getSellerInfo())
-          .map(SellerInfo::getVerificationStatus)
-          .map(Enum::name)
-          .orElse("UNVERIFIED");
-    } catch (Exception e) {
-      log.warn("Error getting verification status for user: {}", user.getId(), e);
-      return "UNVERIFIED";
-    }
+    return Optional.ofNullable(user.getSellerInfo())
+        .map(SellerInfo::getVerificationStatus)
+        .map(Enum::name)
+        .orElse("UNVERIFIED");
   }
 
   /** FlatPreviewContentDTO를 ContentCardDto로 변환합니다. */

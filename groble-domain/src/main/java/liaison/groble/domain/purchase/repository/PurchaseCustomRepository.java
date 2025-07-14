@@ -26,8 +26,8 @@ public interface PurchaseCustomRepository {
   Page<FlatContentSellDetailDTO> getContentSellPageDTOs(
       Long userId, Long contentId, Pageable pageable);
 
-  Page<FlatPurchaseContentPreviewDTO> findMyPurchasingContents(
-      Long userId, Order.OrderStatus orderStatus, Pageable pageable);
+  Page<FlatPurchaseContentPreviewDTO> findMyPurchasedContents(
+      Long userId, List<Order.OrderStatus> orderStatuses, Pageable pageable);
 
   Optional<FlatSellManageDetailDTO> getSellManageDetail(Long userId, Long contentId);
 

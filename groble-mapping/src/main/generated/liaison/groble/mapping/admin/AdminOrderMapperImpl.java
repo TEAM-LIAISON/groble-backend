@@ -13,7 +13,7 @@ import liaison.groble.application.admin.dto.AdminOrderSummaryInfoDTO;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-07-07T21:45:28+0900",
+    date = "2025-07-14T00:06:51+0900",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.10 (Amazon.com Inc.)")
 @Component
 public class AdminOrderMapperImpl implements AdminOrderMapper {
@@ -41,7 +41,9 @@ public class AdminOrderMapperImpl implements AdminOrderMapper {
     AdminOrderCancellationReasonResponse.AdminOrderCancellationReasonResponseBuilder
         adminOrderCancellationReasonResponse = AdminOrderCancellationReasonResponse.builder();
 
-    adminOrderCancellationReasonResponse.cancelReason(dto.getCancelReason());
+    if (dto.getCancelReason() != null) {
+      adminOrderCancellationReasonResponse.cancelReason(dto.getCancelReason());
+    }
 
     return adminOrderCancellationReasonResponse.build();
   }
@@ -56,15 +58,33 @@ public class AdminOrderMapperImpl implements AdminOrderMapper {
     AdminOrderSummaryInfoResponse.AdminOrderSummaryInfoResponseBuilder
         adminOrderSummaryInfoResponse = AdminOrderSummaryInfoResponse.builder();
 
-    adminOrderSummaryInfoResponse.contentId(dto.getContentId());
-    adminOrderSummaryInfoResponse.merchantUid(dto.getMerchantUid());
-    adminOrderSummaryInfoResponse.createdAt(dto.getCreatedAt());
-    adminOrderSummaryInfoResponse.contentType(dto.getContentType());
-    adminOrderSummaryInfoResponse.contentStatus(dto.getContentStatus());
-    adminOrderSummaryInfoResponse.purchaserName(dto.getPurchaserName());
-    adminOrderSummaryInfoResponse.contentTitle(dto.getContentTitle());
-    adminOrderSummaryInfoResponse.finalPrice(dto.getFinalPrice());
-    adminOrderSummaryInfoResponse.orderStatus(dto.getOrderStatus());
+    if (dto.getContentId() != null) {
+      adminOrderSummaryInfoResponse.contentId(dto.getContentId());
+    }
+    if (dto.getMerchantUid() != null) {
+      adminOrderSummaryInfoResponse.merchantUid(dto.getMerchantUid());
+    }
+    if (dto.getCreatedAt() != null) {
+      adminOrderSummaryInfoResponse.createdAt(dto.getCreatedAt());
+    }
+    if (dto.getContentType() != null) {
+      adminOrderSummaryInfoResponse.contentType(dto.getContentType());
+    }
+    if (dto.getContentStatus() != null) {
+      adminOrderSummaryInfoResponse.contentStatus(dto.getContentStatus());
+    }
+    if (dto.getPurchaserName() != null) {
+      adminOrderSummaryInfoResponse.purchaserName(dto.getPurchaserName());
+    }
+    if (dto.getContentTitle() != null) {
+      adminOrderSummaryInfoResponse.contentTitle(dto.getContentTitle());
+    }
+    if (dto.getFinalPrice() != null) {
+      adminOrderSummaryInfoResponse.finalPrice(dto.getFinalPrice());
+    }
+    if (dto.getOrderStatus() != null) {
+      adminOrderSummaryInfoResponse.orderStatus(dto.getOrderStatus());
+    }
 
     return adminOrderSummaryInfoResponse.build();
   }

@@ -24,16 +24,8 @@ public class QPayment extends EntityPathBase<Payment> {
 
     public final liaison.groble.domain.common.entity.QBaseTimeEntity _super = new liaison.groble.domain.common.entity.QBaseTimeEntity(this);
 
-    public final DateTimePath<java.time.LocalDateTime> cancelledAt = createDateTime("cancelledAt", java.time.LocalDateTime.class);
-
-    public final StringPath cancelReason = createString("cancelReason");
-
-    public final DateTimePath<java.time.LocalDateTime> cancelRequestedAt = createDateTime("cancelRequestedAt", java.time.LocalDateTime.class);
-
     //inherited
     public final DateTimePath<java.time.LocalDateTime> createdAt = _super.createdAt;
-
-    public final StringPath failReason = createString("failReason");
 
     public final NumberPath<Long> id = createNumber("id", Long.class);
 
@@ -59,8 +51,6 @@ public class QPayment extends EntityPathBase<Payment> {
 
     //inherited
     public final DateTimePath<java.time.LocalDateTime> updatedAt = _super.updatedAt;
-
-    public final NumberPath<Long> version = createNumber("version", Long.class);
 
     public QPayment(String variable) {
         this(Payment.class, forVariable(variable), INITS);

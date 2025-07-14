@@ -57,8 +57,8 @@ public class ContentReader {
   }
 
   // ===== 메이커의 대표 Content 조회 =====
-  public FlatContentPreviewDTO getRepresentativeContentByUser(User user) {
-    return contentCustomRepository.findRepresentativeContentByUser(user).orElse(null);
+  public FlatContentPreviewDTO getRepresentativeContentByUser(Long userId) {
+    return contentCustomRepository.findRepresentativeContentByUser(userId).orElse(null);
   }
 
   // ===== 마켓 목록에 들어가는 모든 콘텐츠(페이지네이션) 조회 =====

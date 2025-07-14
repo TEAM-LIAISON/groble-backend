@@ -7,7 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import liaison.groble.application.admin.dto.AdminContentSummaryInfoDto;
+import liaison.groble.application.admin.dto.AdminContentSummaryInfoDTO;
 import liaison.groble.application.admin.mapper.ContentEntityMapper;
 import liaison.groble.application.content.ContentReader;
 import liaison.groble.application.content.dto.ContentDTO;
@@ -37,11 +37,11 @@ public class AdminContentService {
   private final NotificationRepository notificationRepository;
   private final ContentEntityMapper contentEntityMapper;
 
-  public PageResponse<AdminContentSummaryInfoDto> getAllContents(Pageable pageable) {
+  public PageResponse<AdminContentSummaryInfoDTO> getAllContents(Pageable pageable) {
     Page<FlatAdminContentSummaryInfoDTO> contentPage =
         contentReader.findContentsByPageable(pageable);
 
-    List<AdminContentSummaryInfoDto> items =
+    List<AdminContentSummaryInfoDTO> items =
         contentPage.getContent().stream().map(this::convertFlatDtoToInfoResponse).toList();
 
     PageResponse.MetaData meta =
@@ -93,9 +93,9 @@ public class AdminContentService {
             content.getUser().getId(), NotificationType.REVIEW, subType, reviewDetails));
   }
 
-  private AdminContentSummaryInfoDto convertFlatDtoToInfoResponse(
+  private AdminContentSummaryInfoDTO convertFlatDtoToInfoResponse(
       FlatAdminContentSummaryInfoDTO flat) {
-    return AdminContentSummaryInfoDto.builder()
+    return AdminContentSummaryInfoDTO.builder()
         .contentId(flat.getContentId())
         .createdAt(flat.getCreatedAt())
         .contentType(flat.getContentType())

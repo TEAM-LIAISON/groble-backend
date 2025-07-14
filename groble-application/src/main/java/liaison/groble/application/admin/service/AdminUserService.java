@@ -6,7 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import liaison.groble.application.admin.dto.AdminUserSummaryInfoDto;
+import liaison.groble.application.admin.dto.AdminUserSummaryInfoDTO;
 import liaison.groble.common.response.PageResponse;
 import liaison.groble.domain.user.dto.FlatAdminUserSummaryInfoDTO;
 import liaison.groble.domain.user.repository.UserCustomRepository;
@@ -21,10 +21,10 @@ public class AdminUserService {
 
   private final UserCustomRepository userCustomRepository;
 
-  public PageResponse<AdminUserSummaryInfoDto> getAllUsers(Pageable pageable) {
+  public PageResponse<AdminUserSummaryInfoDTO> getAllUsers(Pageable pageable) {
     Page<FlatAdminUserSummaryInfoDTO> userPage = userCustomRepository.findUsersByPageable(pageable);
 
-    List<AdminUserSummaryInfoDto> items =
+    List<AdminUserSummaryInfoDTO> items =
         userPage.getContent().stream().map(this::convertFlatDtoToInfoResponse).toList();
 
     PageResponse.MetaData meta =
@@ -36,8 +36,8 @@ public class AdminUserService {
     return PageResponse.from(userPage, items, meta);
   }
 
-  private AdminUserSummaryInfoDto convertFlatDtoToInfoResponse(FlatAdminUserSummaryInfoDTO flat) {
-    return AdminUserSummaryInfoDto.builder()
+  private AdminUserSummaryInfoDTO convertFlatDtoToInfoResponse(FlatAdminUserSummaryInfoDTO flat) {
+    return AdminUserSummaryInfoDTO.builder()
         .createdAt(flat.getCreatedAt())
         .isSellerTermsAgreed(flat.isSellerTermsAgreed())
         .nickname(flat.getNickname())

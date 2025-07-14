@@ -1,11 +1,15 @@
 package liaison.groble.application.content.service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
@@ -14,11 +18,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import liaison.groble.application.content.ContentReader;
+import liaison.groble.application.content.ContentReviewReader;
 import liaison.groble.application.content.dto.ContentCardDTO;
 import liaison.groble.application.content.dto.ContentDTO;
 import liaison.groble.application.content.dto.ContentDetailDTO;
 import liaison.groble.application.content.dto.ContentOptionDTO;
 import liaison.groble.application.content.dto.DynamicContentDto;
+import liaison.groble.application.content.dto.review.ContentDetailReviewDTO;
+import liaison.groble.application.content.dto.review.ContentReviewDTO;
+import liaison.groble.application.content.dto.review.ReviewReplyDTO;
 import liaison.groble.application.content.exception.InActiveContentException;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.common.exception.EntityNotFoundException;
@@ -26,6 +34,7 @@ import liaison.groble.common.exception.ForbiddenException;
 import liaison.groble.common.response.CursorResponse;
 import liaison.groble.common.response.PageResponse;
 import liaison.groble.domain.content.dto.FlatContentPreviewDTO;
+import liaison.groble.domain.content.dto.FlatContentReviewReplyDTO;
 import liaison.groble.domain.content.dto.FlatDynamicContentDTO;
 import liaison.groble.domain.content.entity.Category;
 import liaison.groble.domain.content.entity.CoachingOption;
@@ -61,8 +70,79 @@ public class ContentService {
   private final ContentCustomRepository contentCustomRepository;
   private final CategoryRepository categoryRepository;
   private final ContentReader contentReader;
+  private final ContentReviewReader contentReviewReader;
   private final DiscordContentRegisterReportService discordContentRegisterReportService;
   private final FileRepository fileRepository;
+
+  @Transactional(readOnly = true)
+  public ContentReviewDTO getContentReviews(Long contentId, String sort) {
+    List<FlatContentReviewReplyDTO> flatList =
+        contentReviewReader.findReviewsWithRepliesByContentId(contentId);
+
+    Map<Long, List<FlatContentReviewReplyDTO>> groupedByReview =
+        flatList.stream().collect(Collectors.groupingBy(FlatContentReviewReplyDTO::getReviewId));
+
+    List<ContentDetailReviewDTO> reviews =
+        groupedByReview.entrySet().stream()
+            .map(
+                entry -> {
+                  List<FlatContentReviewReplyDTO> reviewGroup = entry.getValue();
+                  FlatContentReviewReplyDTO firstRow = reviewGroup.get(0);
+
+                  List<ReviewReplyDTO> replies =
+                      reviewGroup.stream()
+                          .filter(row -> row.getReplyId() != null)
+                          .map(
+                              row ->
+                                  ReviewReplyDTO.builder()
+                                      .replyId(row.getReplyId())
+                                      .createdAt(row.getReplyCreatedAt())
+                                      .replierNickname(row.getReplierNickname())
+                                      .replyContent(row.getReplyContent())
+                                      .build())
+                          .collect(Collectors.toList());
+
+                  return ContentDetailReviewDTO.builder()
+                      .reviewId(firstRow.getReviewId())
+                      .createdAt(firstRow.getReviewCreatedAt())
+                      .reviewerProfileImageUrl(firstRow.getReviewerProfileImageUrl())
+                      .reviewerNickname(firstRow.getReviewerNickname())
+                      .reviewContent(firstRow.getReviewContent())
+                      .selectedOptionName(firstRow.getSelectedOptionName())
+                      .rating(firstRow.getRating())
+                      .reviewReplies(replies)
+                      .build();
+                })
+            .sorted(getComparator(sort))
+            .collect(Collectors.toList());
+
+    BigDecimal averageRating =
+        reviews.isEmpty()
+            ? BigDecimal.ZERO
+            : reviews.stream()
+                .map(ContentDetailReviewDTO::getRating)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add)
+                .divide(BigDecimal.valueOf(reviews.size()), 2, RoundingMode.HALF_UP);
+
+    return ContentReviewDTO.builder()
+        .averageRating(averageRating)
+        .totalReviewCount((long) reviews.size())
+        .reviews(reviews)
+        .build();
+  }
+
+  private Comparator<ContentDetailReviewDTO> getComparator(String sort) {
+    switch (sort.toUpperCase()) {
+      case "RATING_HIGH":
+        return Comparator.comparing(ContentDetailReviewDTO::getRating).reversed();
+      case "RATING_LOW":
+        return Comparator.comparing(ContentDetailReviewDTO::getRating);
+      case "LATEST":
+      default:
+        return Comparator.comparing(ContentDetailReviewDTO::getCreatedAt).reversed();
+    }
+  }
 
   @Transactional
   public ContentDTO saveDraftAndReturn(Long userId, ContentDTO contentDto) {

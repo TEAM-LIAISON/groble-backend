@@ -29,9 +29,9 @@ import liaison.groble.domain.common.entity.BaseTimeEntity;
 import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.content.enums.ContentStatus;
 import liaison.groble.domain.coupon.entity.UserCoupon;
-import liaison.groble.domain.order.enums.CancelReason;
 import liaison.groble.domain.order.vo.OrderOptionInfo;
 import liaison.groble.domain.payment.entity.Payment;
+import liaison.groble.domain.purchase.enums.CancelReason;
 import liaison.groble.domain.user.entity.User;
 
 import lombok.AccessLevel;
@@ -93,10 +93,6 @@ public class Order extends BaseTimeEntity {
 
   @Embedded private Purchaser purchaser;
 
-  @Column(name = "cancel_reason")
-  @Enumerated(value = STRING)
-  private CancelReason cancelReason;
-
   @Column(name = "order_note", columnDefinition = "TEXT")
   private String orderNote;
 
@@ -141,7 +137,6 @@ public class Order extends BaseTimeEntity {
   public void cancelRequestOrder(CancelReason cancelReason, String reason) {
     validateStateTransition(OrderStatus.CANCEL_REQUEST);
     this.status = OrderStatus.CANCEL_REQUEST;
-    this.cancelReason = cancelReason;
     this.orderNote = reason;
   }
 

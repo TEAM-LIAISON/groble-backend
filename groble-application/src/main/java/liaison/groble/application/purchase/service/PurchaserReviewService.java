@@ -41,6 +41,10 @@ public class PurchaserReviewService {
       throw new IllegalArgumentException("사용자가 해당 콘텐츠를 구매하지 않았습니다.");
     }
 
+    if (contentReviewReader.existsContentReview(userId, contentId)) {
+      throw new IllegalArgumentException("이미 해당 콘텐츠에 대한 리뷰가 존재합니다.");
+    }
+
     ContentReview contentReview =
         ContentReview.builder()
             .user(user)
