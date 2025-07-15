@@ -199,3 +199,623 @@
 [2025-07-15 22:58:58:308173] DEBUG 40578 --- [nnection-reaper] h.i.c.PoolingHttpClientConnectionManager : Closing connections idle longer than 60000 MILLISECONDS
 [2025-07-15 22:59:58:368178] DEBUG 40578 --- [nnection-reaper] h.i.c.PoolingHttpClientConnectionManager : Closing connections idle longer than 60000 MILLISECONDS
 [2025-07-15 23:00:58:428185] DEBUG 40578 --- [nnection-reaper] h.i.c.PoolingHttpClientConnectionManager : Closing connections idle longer than 60000 MILLISECONDS
+[2025-07-15 23:01:58:488193] DEBUG 40578 --- [nnection-reaper] h.i.c.PoolingHttpClientConnectionManager : Closing connections idle longer than 60000 MILLISECONDS
+[2025-07-15 23:02:58:548198] DEBUG 40578 --- [nnection-reaper] h.i.c.PoolingHttpClientConnectionManager : Closing connections idle longer than 60000 MILLISECONDS
+[2025-07-15 23:03:58:608203] DEBUG 40578 --- [nnection-reaper] h.i.c.PoolingHttpClientConnectionManager : Closing connections idle longer than 60000 MILLISECONDS
+[2025-07-15 23:04:43:653223] DEBUG 40578 --- [ionShutdownHook] h.i.c.PoolingHttpClientConnectionManager : Connection manager is shutting down
+[2025-07-15 23:04:43:653224] DEBUG 40578 --- [ionShutdownHook] h.i.c.PoolingHttpClientConnectionManager : Connection manager shut down
+[2025-07-15 23:04:43:653226] INFO  40578 --- [ionShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+[2025-07-15 23:04:43:653229] INFO  40578 --- [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-3 - Shutdown initiated...
+[2025-07-15 23:04:43:653230] INFO  40578 --- [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-3 - Shutdown completed.
+[2025-07-15 23:04:44:316] INFO  45414 --- [  restartedMain] l.g.a.s.GrobleApiServerApplication       : Starting GrobleApiServerApplication using Java 17.0.10 with PID 45414 (/Users/gwondongmin/Desktop/groble_dev/groble/groble-api/groble-api-server/out/production/classes started by gwondongmin in /Users/gwondongmin/Desktop/groble_dev/groble)
+[2025-07-15 23:04:44:316] DEBUG 45414 --- [  restartedMain] l.g.a.s.GrobleApiServerApplication       : Running with Spring Boot v3.3.10, Spring v6.1.18
+[2025-07-15 23:04:44:316] INFO  45414 --- [  restartedMain] l.g.a.s.GrobleApiServerApplication       : The following 3 profiles are active: "local", "common", "secret"
+[2025-07-15 23:04:44:340] INFO  45414 --- [  restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : Devtools property defaults active! Set 'spring.devtools.add-properties' to 'false' to disable
+[2025-07-15 23:04:44:340] INFO  45414 --- [  restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : For additional web related logging consider setting the 'logging.level.web' property to 'DEBUG'
+[2025-07-15 23:04:45:898] INFO  45414 --- [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
+[2025-07-15 23:04:45:898] INFO  45414 --- [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+[2025-07-15 23:04:45:985] INFO  45414 --- [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 83 ms. Found 24 JPA repository interfaces.
+[2025-07-15 23:04:45:1210] INFO  45414 --- [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
+[2025-07-15 23:04:45:1211] INFO  45414 --- [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+[2025-07-15 23:04:45:1219] INFO  45414 --- [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 4 ms. Found 0 Redis repository interfaces.
+[2025-07-15 23:04:46:1635] INFO  45414 --- [  restartedMain] o.s.b.w.e.tomcat.TomcatWebServer         : Tomcat initialized with port 8080 (http)
+[2025-07-15 23:04:46:1642] INFO  45414 --- [  restartedMain] o.a.catalina.core.StandardService        : Starting service [Tomcat]
+[2025-07-15 23:04:46:1642] INFO  45414 --- [  restartedMain] o.a.catalina.core.StandardEngine         : Starting Servlet engine: [Apache Tomcat/10.1.39]
+[2025-07-15 23:04:46:1662] INFO  45414 --- [  restartedMain] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+[2025-07-15 23:04:46:1662] INFO  45414 --- [  restartedMain] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 1322 ms
+[2025-07-15 23:04:46:1757] INFO  45414 --- [  restartedMain] l.g.security.jwt.JwtTokenProvider        : JWT 토큰 제공자 초기화 완료 - 액세스 토큰 만료: 3600000ms, 리프레시 토큰 만료: 604800000ms
+[2025-07-15 23:04:46:1829] INFO  45414 --- [  restartedMain] o.h.jpa.internal.util.LogHelper          : HHH000204: Processing PersistenceUnitInfo [name: default]
+[2025-07-15 23:04:46:1860] INFO  45414 --- [  restartedMain] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.5.3.Final
+[2025-07-15 23:04:46:1879] INFO  45414 --- [  restartedMain] o.h.c.i.RegionFactoryInitiator           : HHH000026: Second-level cache disabled
+[2025-07-15 23:04:46:2053] INFO  45414 --- [  restartedMain] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+[2025-07-15 23:04:46:2070] INFO  45414 --- [  restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+[2025-07-15 23:04:46:2136] INFO  45414 --- [  restartedMain] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@449e4a0a
+[2025-07-15 23:04:46:2137] INFO  45414 --- [  restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+[2025-07-15 23:04:46:2160] WARN  45414 --- [  restartedMain] org.hibernate.orm.deprecation            : HHH90000025: MySQL8Dialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+[2025-07-15 23:04:46:2160] WARN  45414 --- [  restartedMain] org.hibernate.orm.deprecation            : HHH90000026: MySQL8Dialect has been deprecated; use org.hibernate.dialect.MySQLDialect instead
+[2025-07-15 23:04:47:2873] INFO  45414 --- [  restartedMain] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+[2025-07-15 23:04:48:3946] INFO  45414 --- [  restartedMain] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+[2025-07-15 23:04:48:4275] DEBUG 45414 --- [  restartedMain] l.g.s.jwt.JwtAuthenticationFilter        : Filter 'jwtAuthenticationFilter' configured for use
+[2025-07-15 23:04:48:4276] DEBUG 45414 --- [  restartedMain] o.s.w.f.ServerHttpObservationFilter      : Filter 'webMvcObservationFilter' configured for use
+[2025-07-15 23:04:48:4276] DEBUG 45414 --- [  restartedMain] o.s.web.filter.ForwardedHeaderFilter     : Filter 'forwardedHeaderFilter' configured for use
+[2025-07-15 23:04:48:4345] INFO  45414 --- [  restartedMain] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
+[2025-07-15 23:04:49:5183] DEBUG 45414 --- [  restartedMain] l.groble.external.config.S3Config        : ▶ S3Config loaded with accessKeyId='AKIAX25EZZBU36BV5JNJ', region='ap-northeast-2'
+[2025-07-15 23:04:50:5698] DEBUG 45414 --- [nnection-reaper] h.i.c.PoolingHttpClientConnectionManager : Closing connections idle longer than 60000 MILLISECONDS
+[2025-07-15 23:04:50:5819] INFO  45414 --- [  restartedMain] l.g.external.s3.S3FileStorageService     : ▶ S3FileStorageService initialized for bucket=image.dev.groble.im
+[2025-07-15 23:04:50:6377] INFO  45414 --- [  restartedMain] l.g.s.config.SecurityContextConfig       : SecurityContextHolder 전략 설정 완료: MODE_THREADLOCAL
+[2025-07-15 23:04:51:6588] WARN  45414 --- [  restartedMain] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+[2025-07-15 23:04:51:6627] INFO  45414 --- [  restartedMain] eAuthenticationProviderManagerConfigurer : Global AuthenticationManager configured with AuthenticationProvider bean with name authenticationProvider
+[2025-07-15 23:04:51:6628] WARN  45414 --- [  restartedMain] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with an AuthenticationProvider bean. UserDetailsService beans will not be used for username/password login. Consider removing the AuthenticationProvider bean. Alternatively, consider using the UserDetailsService in a manually instantiated DaoAuthenticationProvider.
+[2025-07-15 23:04:51:6785] DEBUG 45414 --- [  restartedMain] s.w.s.m.m.a.RequestMappingHandlerMapping : 103 mappings in 'requestMappingHandlerMapping'
+[2025-07-15 23:04:51:6892] DEBUG 45414 --- [  restartedMain] o.s.w.s.h.SimpleUrlHandlerMapping        : Patterns [/webjars/**, /**, /swagger-ui*/*swagger-initializer.js, /swagger-ui*/**] in 'resourceHandlerMapping'
+[2025-07-15 23:04:51:7044] INFO  45414 --- [  restartedMain] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 4 endpoints beneath base path '/actuator'
+[2025-07-15 23:04:51:7100] INFO  45414 --- [  restartedMain] l.g.security.config.SecurityConfig       : Security 설정 완료
+[2025-07-15 23:04:51:7310] DEBUG 45414 --- [  restartedMain] s.w.s.m.m.a.RequestMappingHandlerAdapter : ControllerAdvice beans: 0 @ModelAttribute, 0 @InitBinder, 1 RequestBodyAdvice, 1 ResponseBodyAdvice
+[2025-07-15 23:04:51:7339] DEBUG 45414 --- [  restartedMain] .m.m.a.ExceptionHandlerExceptionResolver : ControllerAdvice beans: 2 @ExceptionHandler, 1 ResponseBodyAdvice
+[2025-07-15 23:04:52:7783] INFO  45414 --- [  restartedMain] o.s.b.d.a.OptionalLiveReloadServer       : LiveReload server is running on port 35729
+[2025-07-15 23:04:52:7838] INFO  45414 --- [  restartedMain] o.s.b.w.e.tomcat.TomcatWebServer         : Tomcat started on port 8080 (http) with context path '/'
+[2025-07-15 23:04:52:7848] INFO  45414 --- [  restartedMain] l.g.a.s.GrobleApiServerApplication       : Started GrobleApiServerApplication in 7.762 seconds (process running for 8.041)
+[2025-07-15 23:04:52:7856] INFO  45414 --- [  restartedMain] l.g.p.t.i.TermsDataInitializer           : Initializing terms data...
+[2025-07-15 23:04:52:7933] INFO  45414 --- [  restartedMain] l.g.p.t.i.TermsDataInitializer           : Added 5 new terms
+[2025-07-15 23:04:52:7934] INFO  45414 --- [  restartedMain] l.g.p.t.i.TermsDataInitializer           : Terms data initialization completed
+[2025-07-15 23:04:52:7952] INFO  45414 --- [  restartedMain] l.g.p.c.i.CategoryDataInitializer        : Initializing categories data...
+[2025-07-15 23:04:52:7975] INFO  45414 --- [  restartedMain] l.g.p.c.i.CategoryDataInitializer        : Added 6 new categories
+[2025-07-15 23:04:52:7975] INFO  45414 --- [  restartedMain] l.g.p.c.i.CategoryDataInitializer        : Categories data initialization completed
+[2025-07-15 23:04:52:7978] INFO  45414 --- [  restartedMain] l.g.p.t.i.OrderTermsDataInitializer      : Initializing order_terms data...
+[2025-07-15 23:04:52:7985] INFO  45414 --- [  restartedMain] l.g.p.t.i.OrderTermsDataInitializer      : Added 3 new terms
+[2025-07-15 23:04:52:7985] INFO  45414 --- [  restartedMain] l.g.p.t.i.OrderTermsDataInitializer      : Order Terms data initialization completed
+[2025-07-15 23:04:52:7986] INFO  45414 --- [  restartedMain] l.g.p.r.i.RoleDataInitializer            : Initializing role data...
+[2025-07-15 23:04:52:7990] INFO  45414 --- [  restartedMain] l.g.p.r.i.RoleDataInitializer            : Added 3 new roles
+[2025-07-15 23:04:52:7990] INFO  45414 --- [  restartedMain] l.g.p.r.i.RoleDataInitializer            : Role data initialization completed
+[2025-07-15 23:04:52:8120] INFO  45414 --- [on(2)-127.0.0.1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+[2025-07-15 23:04:52:8120] INFO  45414 --- [on(2)-127.0.0.1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+[2025-07-15 23:04:52:8121] DEBUG 45414 --- [on(2)-127.0.0.1] o.s.web.servlet.DispatcherServlet        : Detected StandardServletMultipartResolver
+[2025-07-15 23:04:52:8121] DEBUG 45414 --- [on(2)-127.0.0.1] o.s.web.servlet.DispatcherServlet        : Detected AcceptHeaderLocaleResolver
+[2025-07-15 23:04:52:8121] DEBUG 45414 --- [on(2)-127.0.0.1] o.s.web.servlet.DispatcherServlet        : Detected FixedThemeResolver
+[2025-07-15 23:04:52:8122] DEBUG 45414 --- [on(2)-127.0.0.1] o.s.web.servlet.DispatcherServlet        : Detected org.springframework.web.servlet.view.DefaultRequestToViewNameTranslator@71d69b9a
+[2025-07-15 23:04:52:8123] DEBUG 45414 --- [on(2)-127.0.0.1] o.s.web.servlet.DispatcherServlet        : Detected org.springframework.web.servlet.support.SessionFlashMapManager@2778f929
+[2025-07-15 23:04:52:8124] DEBUG 45414 --- [on(2)-127.0.0.1] o.s.web.servlet.DispatcherServlet        : enableLoggingRequestDetails='false': request parameters and headers will be masked to prevent unsafe logging of potentially sensitive data
+[2025-07-15 23:04:52:8124] INFO  45414 --- [on(2)-127.0.0.1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 4 ms
+[2025-07-15 23:05:34:49958] DEBUG 45414 --- [nio-8080-exec-3] l.g.security.jwt.JwtTokenProvider        : 토큰 생성 완료 - 유형: ACCESS, 사용자 ID: 4, 이메일: kwondm7@gmail.com, 토큰 ID: 08892180-14be-4bb1-8298-827a17b7a089, 만료: 2025-07-15T15:05:34.527543Z
+[2025-07-15 23:05:34:49959] DEBUG 45414 --- [nio-8080-exec-1] l.g.security.jwt.JwtTokenProvider        : 토큰 생성 완료 - 유형: ACCESS, 사용자 ID: 4, 이메일: kwondm7@gmail.com, 토큰 ID: 25bebdfb-64b2-4058-b933-93f1df24ca90, 만료: 2025-07-15T15:05:34.527759Z
+[2025-07-15 23:05:34:49960] INFO  45414 --- [nio-8080-exec-1] l.g.s.jwt.JwtAuthenticationFilter        : 액세스 토큰 재발급 성공 - userId: 4
+[2025-07-15 23:05:34:49960] INFO  45414 --- [nio-8080-exec-3] l.g.s.jwt.JwtAuthenticationFilter        : 액세스 토큰 재발급 성공 - userId: 4
+[2025-07-15 23:05:34:49982] ERROR 45414 --- [nio-8080-exec-3] l.g.s.jwt.JwtAuthenticationFilter        : 새 토큰으로 인증 설정 중 오류
+org.springframework.security.core.userdetails.UsernameNotFoundException: ID '4'의 사용자를 찾을 수 없습니다.
+	at liaison.groble.security.jwt.UserDetailsServiceImpl.lambda$loadUserByUsername$0(UserDetailsServiceImpl.java:30)
+	at java.base/java.util.Optional.orElseThrow(Optional.java:403)
+	at liaison.groble.security.jwt.UserDetailsServiceImpl.loadUserByUsername(UserDetailsServiceImpl.java:29)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:568)
+	at org.springframework.aop.support.AopUtils.invokeJoinpointUsingReflection(AopUtils.java:355)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.invokeJoinpoint(ReflectiveMethodInvocation.java:196)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:163)
+	at org.springframework.aop.framework.CglibAopProxy$CglibMethodInvocation.proceed(CglibAopProxy.java:768)
+	at org.springframework.transaction.interceptor.TransactionAspectSupport.invokeWithinTransaction(TransactionAspectSupport.java:379)
+	at org.springframework.transaction.interceptor.TransactionInterceptor.invoke(TransactionInterceptor.java:119)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184)
+	at org.springframework.aop.framework.CglibAopProxy$CglibMethodInvocation.proceed(CglibAopProxy.java:768)
+	at org.springframework.aop.framework.CglibAopProxy$DynamicAdvisedInterceptor.intercept(CglibAopProxy.java:720)
+	at liaison.groble.security.jwt.UserDetailsServiceImpl$$SpringCGLIB$$0.loadUserByUsername(<generated>)
+	at liaison.groble.security.jwt.JwtAuthenticationFilter.setAuthentication(JwtAuthenticationFilter.java:351)
+	at liaison.groble.security.jwt.JwtAuthenticationFilter.handleTokenRefresh(JwtAuthenticationFilter.java:218)
+	at liaison.groble.security.jwt.JwtAuthenticationFilter.doFilterInternal(JwtAuthenticationFilter.java:164)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter.doFilter(AbstractAuthenticationProcessingFilter.java:227)
+	at org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter.doFilter(AbstractAuthenticationProcessingFilter.java:221)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestRedirectFilter.doFilterInternal(OAuth2AuthorizationRequestRedirectFilter.java:198)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.authentication.logout.LogoutFilter.doFilter(LogoutFilter.java:107)
+	at org.springframework.security.web.authentication.logout.LogoutFilter.doFilter(LogoutFilter.java:93)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.web.filter.CorsFilter.doFilterInternal(CorsFilter.java:91)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.header.HeaderWriterFilter.doHeadersAfter(HeaderWriterFilter.java:90)
+	at org.springframework.security.web.header.HeaderWriterFilter.doFilterInternal(HeaderWriterFilter.java:75)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.context.SecurityContextHolderFilter.doFilter(SecurityContextHolderFilter.java:82)
+	at org.springframework.security.web.context.SecurityContextHolderFilter.doFilter(SecurityContextHolderFilter.java:69)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter.doFilterInternal(WebAsyncManagerIntegrationFilter.java:62)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.session.DisableEncodeUrlFilter.doFilterInternal(DisableEncodeUrlFilter.java:42)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$AroundFilterObservation$SimpleAroundFilterObservation.lambda$wrap$0(ObservationFilterChainDecorator.java:323)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:224)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.FilterChainProxy.doFilterInternal(FilterChainProxy.java:233)
+	at org.springframework.security.web.FilterChainProxy.doFilter(FilterChainProxy.java:191)
+	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:113)
+	at org.springframework.web.servlet.handler.HandlerMappingIntrospector.lambda$createCacheFilter$3(HandlerMappingIntrospector.java:195)
+	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:113)
+	at org.springframework.web.filter.CompositeFilter.doFilter(CompositeFilter.java:74)
+	at org.springframework.security.config.annotation.web.configuration.WebMvcSecurityConfiguration$CompositeFilterChainProxy.doFilter(WebMvcSecurityConfiguration.java:230)
+	at org.springframework.web.filter.DelegatingFilterProxy.invokeDelegate(DelegatingFilterProxy.java:362)
+	at org.springframework.web.filter.DelegatingFilterProxy.doFilter(DelegatingFilterProxy.java:278)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.RequestContextFilter.doFilterInternal(RequestContextFilter.java:100)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.FormContentFilter.doFilterInternal(FormContentFilter.java:93)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.ServerHttpObservationFilter.doFilterInternal(ServerHttpObservationFilter.java:113)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.CharacterEncodingFilter.doFilterInternal(CharacterEncodingFilter.java:201)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:167)
+	at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:90)
+	at org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:483)
+	at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:115)
+	at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:93)
+	at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:74)
+	at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:344)
+	at org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:397)
+	at org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:63)
+	at org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:905)
+	at org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1743)
+	at org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:52)
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1190)
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:659)
+	at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:63)
+	at java.base/java.lang.Thread.run(Thread.java:840)
+[2025-07-15 23:05:34:49982] ERROR 45414 --- [nio-8080-exec-1] l.g.s.jwt.JwtAuthenticationFilter        : 새 토큰으로 인증 설정 중 오류
+org.springframework.security.core.userdetails.UsernameNotFoundException: ID '4'의 사용자를 찾을 수 없습니다.
+	at liaison.groble.security.jwt.UserDetailsServiceImpl.lambda$loadUserByUsername$0(UserDetailsServiceImpl.java:30)
+	at java.base/java.util.Optional.orElseThrow(Optional.java:403)
+	at liaison.groble.security.jwt.UserDetailsServiceImpl.loadUserByUsername(UserDetailsServiceImpl.java:29)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:568)
+	at org.springframework.aop.support.AopUtils.invokeJoinpointUsingReflection(AopUtils.java:355)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.invokeJoinpoint(ReflectiveMethodInvocation.java:196)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:163)
+	at org.springframework.aop.framework.CglibAopProxy$CglibMethodInvocation.proceed(CglibAopProxy.java:768)
+	at org.springframework.transaction.interceptor.TransactionAspectSupport.invokeWithinTransaction(TransactionAspectSupport.java:379)
+	at org.springframework.transaction.interceptor.TransactionInterceptor.invoke(TransactionInterceptor.java:119)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184)
+	at org.springframework.aop.framework.CglibAopProxy$CglibMethodInvocation.proceed(CglibAopProxy.java:768)
+	at org.springframework.aop.framework.CglibAopProxy$DynamicAdvisedInterceptor.intercept(CglibAopProxy.java:720)
+	at liaison.groble.security.jwt.UserDetailsServiceImpl$$SpringCGLIB$$0.loadUserByUsername(<generated>)
+	at liaison.groble.security.jwt.JwtAuthenticationFilter.setAuthentication(JwtAuthenticationFilter.java:351)
+	at liaison.groble.security.jwt.JwtAuthenticationFilter.handleTokenRefresh(JwtAuthenticationFilter.java:218)
+	at liaison.groble.security.jwt.JwtAuthenticationFilter.doFilterInternal(JwtAuthenticationFilter.java:164)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter.doFilter(AbstractAuthenticationProcessingFilter.java:227)
+	at org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter.doFilter(AbstractAuthenticationProcessingFilter.java:221)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestRedirectFilter.doFilterInternal(OAuth2AuthorizationRequestRedirectFilter.java:198)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.authentication.logout.LogoutFilter.doFilter(LogoutFilter.java:107)
+	at org.springframework.security.web.authentication.logout.LogoutFilter.doFilter(LogoutFilter.java:93)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.web.filter.CorsFilter.doFilterInternal(CorsFilter.java:91)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.header.HeaderWriterFilter.doHeadersAfter(HeaderWriterFilter.java:90)
+	at org.springframework.security.web.header.HeaderWriterFilter.doFilterInternal(HeaderWriterFilter.java:75)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.context.SecurityContextHolderFilter.doFilter(SecurityContextHolderFilter.java:82)
+	at org.springframework.security.web.context.SecurityContextHolderFilter.doFilter(SecurityContextHolderFilter.java:69)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter.doFilterInternal(WebAsyncManagerIntegrationFilter.java:62)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.session.DisableEncodeUrlFilter.doFilterInternal(DisableEncodeUrlFilter.java:42)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$AroundFilterObservation$SimpleAroundFilterObservation.lambda$wrap$0(ObservationFilterChainDecorator.java:323)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:224)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.FilterChainProxy.doFilterInternal(FilterChainProxy.java:233)
+	at org.springframework.security.web.FilterChainProxy.doFilter(FilterChainProxy.java:191)
+	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:113)
+	at org.springframework.web.servlet.handler.HandlerMappingIntrospector.lambda$createCacheFilter$3(HandlerMappingIntrospector.java:195)
+	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:113)
+	at org.springframework.web.filter.CompositeFilter.doFilter(CompositeFilter.java:74)
+	at org.springframework.security.config.annotation.web.configuration.WebMvcSecurityConfiguration$CompositeFilterChainProxy.doFilter(WebMvcSecurityConfiguration.java:230)
+	at org.springframework.web.filter.DelegatingFilterProxy.invokeDelegate(DelegatingFilterProxy.java:362)
+	at org.springframework.web.filter.DelegatingFilterProxy.doFilter(DelegatingFilterProxy.java:278)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.RequestContextFilter.doFilterInternal(RequestContextFilter.java:100)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.FormContentFilter.doFilterInternal(FormContentFilter.java:93)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.ServerHttpObservationFilter.doFilterInternal(ServerHttpObservationFilter.java:113)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.CharacterEncodingFilter.doFilterInternal(CharacterEncodingFilter.java:201)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:167)
+	at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:90)
+	at org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:483)
+	at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:115)
+	at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:93)
+	at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:74)
+	at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:344)
+	at org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:397)
+	at org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:63)
+	at org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:905)
+	at org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1743)
+	at org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:52)
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1190)
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:659)
+	at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:63)
+	at java.base/java.lang.Thread.run(Thread.java:840)
+[2025-07-15 23:05:34:49991] DEBUG 45414 --- [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : GET "/api/v1/me", parameters={}
+[2025-07-15 23:05:34:49991] DEBUG 45414 --- [nio-8080-exec-1] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to liaison.groble.api.server.user.UserController#getUserHeaderInform(Accessor, HttpServletResponse)
+[2025-07-15 23:05:34:50000] DEBUG 45414 --- [nio-8080-exec-1] o.s.web.method.HandlerMethod             : Could not resolve parameter [0] in public org.springframework.http.ResponseEntity<liaison.groble.common.response.GrobleResponse<liaison.groble.api.model.user.response.UserHeaderResponse>> liaison.groble.api.server.user.UserController.getUserHeaderInform(liaison.groble.common.model.Accessor,jakarta.servlet.http.HttpServletResponse): 인증 정보가 유효하지 않습니다.
+[2025-07-15 23:05:34:50001] WARN  45414 --- [nio-8080-exec-1] .w.s.m.a.ResponseStatusExceptionResolver : Resolved [liaison.groble.security.exception.UnauthorizedException: 인증 정보가 유효하지 않습니다.]
+[2025-07-15 23:05:34:50002] DEBUG 45414 --- [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed 401 UNAUTHORIZED
+[2025-07-15 23:05:34:50008] DEBUG 45414 --- [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : "ERROR" dispatch for GET "/error", parameters={}
+[2025-07-15 23:05:34:50008] DEBUG 45414 --- [nio-8080-exec-1] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to org.springframework.boot.autoconfigure.web.servlet.error.BasicErrorController#error(HttpServletRequest)
+[2025-07-15 23:05:34:50017] DEBUG 45414 --- [nio-8080-exec-1] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json, application/cbor]
+[2025-07-15 23:05:34:50019] DEBUG 45414 --- [nio-8080-exec-1] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [{timestamp=Tue Jul 15 23:05:34 KST 2025, status=401, error=Unauthorized, trace=liaison.groble.securi (truncated)...]
+[2025-07-15 23:05:34:50030] DEBUG 45414 --- [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Exiting from "ERROR" dispatch, status 401
+[2025-07-15 23:05:50:65703] DEBUG 45414 --- [nnection-reaper] h.i.c.PoolingHttpClientConnectionManager : Closing connections idle longer than 60000 MILLISECONDS
+[2025-07-15 23:05:54:70057] DEBUG 45414 --- [nio-8080-exec-8] o.s.web.servlet.DispatcherServlet        : POST "/api/v1/verification/email/code/sign-up", parameters={}
+[2025-07-15 23:05:54:70058] DEBUG 45414 --- [nio-8080-exec-8] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to liaison.groble.api.server.verification.EmailVerificationController#sendCodeForSignUp(EmailVerificationRequest)
+[2025-07-15 23:05:54:70067] DEBUG 45414 --- [nio-8080-exec-8] m.m.a.RequestResponseBodyMethodProcessor : Read "application/json;charset=UTF-8" to [liaison.groble.api.model.auth.request.EmailVerificationRequest@10c49031]
+[2025-07-15 23:05:54:70170] INFO  45414 --- [nio-8080-exec-8] l.g.a.v.VerificationService              : 이메일 인증 코드 발송 완료: kwondm7@gmail.com
+[2025-07-15 23:05:54:70174] DEBUG 45414 --- [nio-8080-exec-8] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json, application/cbor]
+[2025-07-15 23:05:54:70174] DEBUG 45414 --- [nio-8080-exec-8] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [liaison.groble.common.response.GrobleResponse@8cba7af]
+[2025-07-15 23:05:54:70175] DEBUG 45414 --- [nio-8080-exec-8] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+[2025-07-15 23:05:59:75033] INFO  45414 --- [   mail-async-1] l.g.e.adapter.SmtpEmailAdapter           : 인증 이메일 발송 완료: kwondm7@gmail.com
+[2025-07-15 23:06:05:80920] DEBUG 45414 --- [nio-8080-exec-3] o.s.web.servlet.DispatcherServlet        : POST "/api/v1/verification/email/code/verify/sign-up", parameters={}
+[2025-07-15 23:06:05:80920] DEBUG 45414 --- [nio-8080-exec-3] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to liaison.groble.api.server.verification.EmailVerificationController#verifyCodeForSignUp(VerifyEmailCodeRequest)
+[2025-07-15 23:06:05:80939] DEBUG 45414 --- [nio-8080-exec-3] m.m.a.RequestResponseBodyMethodProcessor : Read "application/json;charset=UTF-8" to [liaison.groble.api.model.auth.request.VerifyEmailCodeRequest@3289a67e]
+[2025-07-15 23:06:05:80947] DEBUG 45414 --- [nio-8080-exec-3] o.s.web.servlet.DispatcherServlet        : Failed to complete request: liaison.groble.application.auth.exception.AuthenticationFailedException: 인증 코드가 일치하지 않습니다.
+[2025-07-15 23:06:05:80949] ERROR 45414 --- [nio-8080-exec-3] o.a.c.c.C.[.[.[.[dispatcherServlet]      : Servlet.service() for servlet [dispatcherServlet] in context with path [] threw exception [Request processing failed: liaison.groble.application.auth.exception.AuthenticationFailedException: 인증 코드가 일치하지 않습니다.] with root cause
+liaison.groble.application.auth.exception.AuthenticationFailedException: 인증 코드가 일치하지 않습니다.
+	at liaison.groble.application.verification.VerificationService.validateVerificationCode(VerificationService.java:137)
+	at liaison.groble.application.verification.VerificationService.verifyEmailCode(VerificationService.java:82)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:568)
+	at org.springframework.aop.support.AopUtils.invokeJoinpointUsingReflection(AopUtils.java:355)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.invokeJoinpoint(ReflectiveMethodInvocation.java:196)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:163)
+	at org.springframework.aop.framework.CglibAopProxy$CglibMethodInvocation.proceed(CglibAopProxy.java:768)
+	at org.springframework.transaction.interceptor.TransactionAspectSupport.invokeWithinTransaction(TransactionAspectSupport.java:379)
+	at org.springframework.transaction.interceptor.TransactionInterceptor.invoke(TransactionInterceptor.java:119)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184)
+	at org.springframework.aop.framework.CglibAopProxy$CglibMethodInvocation.proceed(CglibAopProxy.java:768)
+	at org.springframework.aop.framework.CglibAopProxy$DynamicAdvisedInterceptor.intercept(CglibAopProxy.java:720)
+	at liaison.groble.application.verification.VerificationService$$SpringCGLIB$$0.verifyEmailCode(<generated>)
+	at liaison.groble.api.server.verification.EmailVerificationController.verifyCodeForSignUp(EmailVerificationController.java:67)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:568)
+	at org.springframework.web.method.support.InvocableHandlerMethod.doInvoke(InvocableHandlerMethod.java:255)
+	at org.springframework.web.method.support.InvocableHandlerMethod.invokeForRequest(InvocableHandlerMethod.java:188)
+	at org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod.invokeAndHandle(ServletInvocableHandlerMethod.java:118)
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.invokeHandlerMethod(RequestMappingHandlerAdapter.java:926)
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.handleInternal(RequestMappingHandlerAdapter.java:831)
+	at org.springframework.web.servlet.mvc.method.AbstractHandlerMethodAdapter.handle(AbstractHandlerMethodAdapter.java:87)
+	at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:1089)
+	at org.springframework.web.servlet.DispatcherServlet.doService(DispatcherServlet.java:979)
+	at org.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:1014)
+	at org.springframework.web.servlet.FrameworkServlet.doPost(FrameworkServlet.java:914)
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:590)
+	at org.springframework.web.servlet.FrameworkServlet.service(FrameworkServlet.java:885)
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:658)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:195)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:51)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:101)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:101)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:108)
+	at org.springframework.security.web.FilterChainProxy.lambda$doFilterInternal$3(FilterChainProxy.java:231)
+	at org.springframework.security.web.ObservationFilterChainDecorator$FilterObservation$SimpleFilterObservation.lambda$wrap$1(ObservationFilterChainDecorator.java:479)
+	at org.springframework.security.web.ObservationFilterChainDecorator$AroundFilterObservation$SimpleAroundFilterObservation.lambda$wrap$1(ObservationFilterChainDecorator.java:340)
+	at org.springframework.security.web.ObservationFilterChainDecorator.lambda$wrapSecured$0(ObservationFilterChainDecorator.java:82)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:128)
+	at org.springframework.security.web.access.intercept.AuthorizationFilter.doFilter(AuthorizationFilter.java:100)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.access.ExceptionTranslationFilter.doFilter(ExceptionTranslationFilter.java:126)
+	at org.springframework.security.web.access.ExceptionTranslationFilter.doFilter(ExceptionTranslationFilter.java:120)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.session.SessionManagementFilter.doFilter(SessionManagementFilter.java:131)
+	at org.springframework.security.web.session.SessionManagementFilter.doFilter(SessionManagementFilter.java:85)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.authentication.AnonymousAuthenticationFilter.doFilter(AnonymousAuthenticationFilter.java:100)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter.doFilter(SecurityContextHolderAwareRequestFilter.java:179)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.savedrequest.RequestCacheAwareFilter.doFilter(RequestCacheAwareFilter.java:63)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:101)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter.doFilter(AbstractAuthenticationProcessingFilter.java:227)
+	at org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter.doFilter(AbstractAuthenticationProcessingFilter.java:221)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestRedirectFilter.doFilterInternal(OAuth2AuthorizationRequestRedirectFilter.java:198)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.authentication.logout.LogoutFilter.doFilter(LogoutFilter.java:107)
+	at org.springframework.security.web.authentication.logout.LogoutFilter.doFilter(LogoutFilter.java:93)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.web.filter.CorsFilter.doFilterInternal(CorsFilter.java:91)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.header.HeaderWriterFilter.doHeadersAfter(HeaderWriterFilter.java:90)
+	at org.springframework.security.web.header.HeaderWriterFilter.doFilterInternal(HeaderWriterFilter.java:75)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.context.SecurityContextHolderFilter.doFilter(SecurityContextHolderFilter.java:82)
+	at org.springframework.security.web.context.SecurityContextHolderFilter.doFilter(SecurityContextHolderFilter.java:69)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter.doFilterInternal(WebAsyncManagerIntegrationFilter.java:62)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.session.DisableEncodeUrlFilter.doFilterInternal(DisableEncodeUrlFilter.java:42)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$AroundFilterObservation$SimpleAroundFilterObservation.lambda$wrap$0(ObservationFilterChainDecorator.java:323)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:224)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.FilterChainProxy.doFilterInternal(FilterChainProxy.java:233)
+	at org.springframework.security.web.FilterChainProxy.doFilter(FilterChainProxy.java:191)
+	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:113)
+	at org.springframework.web.servlet.handler.HandlerMappingIntrospector.lambda$createCacheFilter$3(HandlerMappingIntrospector.java:195)
+	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:113)
+	at org.springframework.web.filter.CompositeFilter.doFilter(CompositeFilter.java:74)
+	at org.springframework.security.config.annotation.web.configuration.WebMvcSecurityConfiguration$CompositeFilterChainProxy.doFilter(WebMvcSecurityConfiguration.java:230)
+	at org.springframework.web.filter.DelegatingFilterProxy.invokeDelegate(DelegatingFilterProxy.java:362)
+	at org.springframework.web.filter.DelegatingFilterProxy.doFilter(DelegatingFilterProxy.java:278)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.RequestContextFilter.doFilterInternal(RequestContextFilter.java:100)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.FormContentFilter.doFilterInternal(FormContentFilter.java:93)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.ServerHttpObservationFilter.doFilterInternal(ServerHttpObservationFilter.java:113)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.CharacterEncodingFilter.doFilterInternal(CharacterEncodingFilter.java:201)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:167)
+	at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:90)
+	at org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:483)
+	at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:115)
+	at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:93)
+	at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:74)
+	at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:344)
+	at org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:397)
+	at org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:63)
+	at org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:905)
+	at org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1743)
+	at org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:52)
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1190)
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:659)
+	at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:63)
+	at java.base/java.lang.Thread.run(Thread.java:840)
+[2025-07-15 23:06:05:80951] DEBUG 45414 --- [nio-8080-exec-3] o.s.web.servlet.DispatcherServlet        : "ERROR" dispatch for POST "/error", parameters={}
+[2025-07-15 23:06:05:80952] DEBUG 45414 --- [nio-8080-exec-3] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to org.springframework.boot.autoconfigure.web.servlet.error.BasicErrorController#error(HttpServletRequest)
+[2025-07-15 23:06:05:80953] DEBUG 45414 --- [nio-8080-exec-3] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json, application/cbor]
+[2025-07-15 23:06:05:80954] DEBUG 45414 --- [nio-8080-exec-3] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [{timestamp=Tue Jul 15 23:06:05 KST 2025, status=500, error=Internal Server Error, trace=liaison.grob (truncated)...]
+[2025-07-15 23:06:05:80955] DEBUG 45414 --- [nio-8080-exec-3] o.s.web.servlet.DispatcherServlet        : Exiting from "ERROR" dispatch, status 500
+[2025-07-15 23:06:20:95574] DEBUG 45414 --- [nio-8080-exec-5] o.s.web.servlet.DispatcherServlet        : POST "/api/v1/verification/email/code/verify/sign-up", parameters={}
+[2025-07-15 23:06:20:95577] DEBUG 45414 --- [nio-8080-exec-5] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to liaison.groble.api.server.verification.EmailVerificationController#verifyCodeForSignUp(VerifyEmailCodeRequest)
+[2025-07-15 23:06:20:95597] DEBUG 45414 --- [nio-8080-exec-5] m.m.a.RequestResponseBodyMethodProcessor : Read "application/json;charset=UTF-8" to [liaison.groble.api.model.auth.request.VerifyEmailCodeRequest@295637e4]
+[2025-07-15 23:06:20:95608] DEBUG 45414 --- [nio-8080-exec-5] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json, application/cbor]
+[2025-07-15 23:06:20:95608] DEBUG 45414 --- [nio-8080-exec-5] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [liaison.groble.common.response.GrobleResponse@844c290]
+[2025-07-15 23:06:20:95609] DEBUG 45414 --- [nio-8080-exec-5] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+[2025-07-15 23:06:26:102364] DEBUG 45414 --- [nio-8080-exec-7] o.s.web.servlet.DispatcherServlet        : POST "/api/v1/auth/integrated/sign-up", parameters={}
+[2025-07-15 23:06:26:102365] DEBUG 45414 --- [nio-8080-exec-7] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to liaison.groble.api.server.auth.IntegratedAccountAuthController#signUp(SignUpRequest, HttpServletResponse)
+[2025-07-15 23:06:26:102380] DEBUG 45414 --- [nio-8080-exec-7] m.m.a.RequestResponseBodyMethodProcessor : Read "application/json;charset=UTF-8" to [liaison.groble.api.model.auth.request.SignUpRequest@50f770f4]
+[2025-07-15 23:06:27:102496] INFO  45414 --- [nio-8080-exec-7] l.g.a.auth.helper.TermsHelper            : 약관 동의 처리 시작 - 사용자 ID: null, 동의한 약관 수: 5
+[2025-07-15 23:06:27:102496] DEBUG 45414 --- [nio-8080-exec-7] l.g.a.auth.helper.TermsHelper            : 클라이언트 정보 - IP: 0:0:0:0:0:0:0:1, UserAgent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36
+[2025-07-15 23:06:27:102510] INFO  45414 --- [nio-8080-exec-7] l.g.a.auth.helper.TermsHelper            : 최신 약관 조회 완료 - 약관 수: 5
+[2025-07-15 23:06:27:102510] DEBUG 45414 --- [nio-8080-exec-7] l.g.a.auth.helper.TermsHelper            : 약관 유형별 매핑 완료: SERVICE_TERMS_POLICY, MARKETING_POLICY, AGE_POLICY, PRIVACY_POLICY, SELLER_TERMS_POLICY
+[2025-07-15 23:06:27:102510] DEBUG 45414 --- [nio-8080-exec-7] l.g.a.auth.helper.TermsHelper            : 약관 처리 - 유형: AGE_POLICY, 동의 여부: true, 약관ID: 1
+[2025-07-15 23:06:27:102510] INFO  45414 --- [nio-8080-exec-7] l.g.d.user.service.UserTermsService      : 약관 동의 처리 시작 - 사용자: null, 약관 유형: AGE_POLICY
+[2025-07-15 23:06:27:102511] INFO  45414 --- [nio-8080-exec-7] l.g.d.user.service.UserTermsService      : 약관 동의 정보 생성 완료 - 사용자: null, 약관 ID: 1
+[2025-07-15 23:06:27:102511] DEBUG 45414 --- [nio-8080-exec-7] l.g.a.auth.helper.TermsHelper            : 약관 AGE_POLICY 동의 정보 추가 완료
+[2025-07-15 23:06:27:102511] DEBUG 45414 --- [nio-8080-exec-7] l.g.a.auth.helper.TermsHelper            : 약관 처리 - 유형: PRIVACY_POLICY, 동의 여부: true, 약관ID: 2
+[2025-07-15 23:06:27:102511] INFO  45414 --- [nio-8080-exec-7] l.g.d.user.service.UserTermsService      : 약관 동의 처리 시작 - 사용자: null, 약관 유형: PRIVACY_POLICY
+[2025-07-15 23:06:27:102511] INFO  45414 --- [nio-8080-exec-7] l.g.d.user.service.UserTermsService      : 약관 동의 정보 생성 완료 - 사용자: null, 약관 ID: 2
+[2025-07-15 23:06:27:102511] DEBUG 45414 --- [nio-8080-exec-7] l.g.a.auth.helper.TermsHelper            : 약관 PRIVACY_POLICY 동의 정보 추가 완료
+[2025-07-15 23:06:27:102511] DEBUG 45414 --- [nio-8080-exec-7] l.g.a.auth.helper.TermsHelper            : 약관 처리 - 유형: SERVICE_TERMS_POLICY, 동의 여부: true, 약관ID: 3
+[2025-07-15 23:06:27:102511] INFO  45414 --- [nio-8080-exec-7] l.g.d.user.service.UserTermsService      : 약관 동의 처리 시작 - 사용자: null, 약관 유형: SERVICE_TERMS_POLICY
+[2025-07-15 23:06:27:102511] INFO  45414 --- [nio-8080-exec-7] l.g.d.user.service.UserTermsService      : 약관 동의 정보 생성 완료 - 사용자: null, 약관 ID: 3
+[2025-07-15 23:06:27:102511] DEBUG 45414 --- [nio-8080-exec-7] l.g.a.auth.helper.TermsHelper            : 약관 SERVICE_TERMS_POLICY 동의 정보 추가 완료
+[2025-07-15 23:06:27:102511] DEBUG 45414 --- [nio-8080-exec-7] l.g.a.auth.helper.TermsHelper            : 약관 처리 - 유형: SELLER_TERMS_POLICY, 동의 여부: true, 약관ID: 5
+[2025-07-15 23:06:27:102511] INFO  45414 --- [nio-8080-exec-7] l.g.d.user.service.UserTermsService      : 약관 동의 처리 시작 - 사용자: null, 약관 유형: SELLER_TERMS_POLICY
+[2025-07-15 23:06:27:102511] INFO  45414 --- [nio-8080-exec-7] l.g.d.user.service.UserTermsService      : 약관 동의 정보 생성 완료 - 사용자: null, 약관 ID: 5
+[2025-07-15 23:06:27:102511] DEBUG 45414 --- [nio-8080-exec-7] l.g.a.auth.helper.TermsHelper            : 약관 SELLER_TERMS_POLICY 동의 정보 추가 완료
+[2025-07-15 23:06:27:102511] DEBUG 45414 --- [nio-8080-exec-7] l.g.a.auth.helper.TermsHelper            : 약관 처리 - 유형: MARKETING_POLICY, 동의 여부: true, 약관ID: 4
+[2025-07-15 23:06:27:102511] INFO  45414 --- [nio-8080-exec-7] l.g.d.user.service.UserTermsService      : 약관 동의 처리 시작 - 사용자: null, 약관 유형: MARKETING_POLICY
+[2025-07-15 23:06:27:102511] INFO  45414 --- [nio-8080-exec-7] l.g.d.user.service.UserTermsService      : 약관 동의 정보 생성 완료 - 사용자: null, 약관 ID: 4
+[2025-07-15 23:06:27:102511] DEBUG 45414 --- [nio-8080-exec-7] l.g.a.auth.helper.TermsHelper            : 약관 MARKETING_POLICY 동의 정보 추가 완료
+[2025-07-15 23:06:27:102511] INFO  45414 --- [nio-8080-exec-7] l.g.a.auth.helper.TermsHelper            : 사용자의 약관 동의 정보 수: 5
+[2025-07-15 23:06:27:102511] INFO  45414 --- [nio-8080-exec-7] l.g.a.auth.helper.TermsHelper            : 약관 동의 처리 완료
+[2025-07-15 23:06:27:102548] INFO  45414 --- [nio-8080-exec-7] l.g.a.auth.helper.TokenHelper            : 토큰 발급 시작: userId=1, email=kwondm7@gmail.com
+[2025-07-15 23:06:27:102551] DEBUG 45414 --- [nio-8080-exec-7] l.g.security.jwt.JwtTokenProvider        : 토큰 생성 완료 - 유형: ACCESS, 사용자 ID: 1, 이메일: kwondm7@gmail.com, 토큰 ID: a64edff6-9a62-4afb-a40d-0b21326ccfa1, 만료: 2025-07-15T15:06:27.126979Z
+[2025-07-15 23:06:27:102551] DEBUG 45414 --- [nio-8080-exec-7] l.g.security.jwt.JwtTokenProvider        : 토큰 생성 완료 - 유형: REFRESH, 사용자 ID: 1, 이메일: kwondm7@gmail.com, 토큰 ID: 726ef41a-448f-4f62-85a5-f3e4f1a4cdb7, 만료: 2025-07-22T14:06:27.129523Z
+[2025-07-15 23:06:27:102551] INFO  45414 --- [nio-8080-exec-7] l.g.a.auth.helper.TokenHelper            : 토큰 발급 완료: userId=1
+[2025-07-15 23:06:27:102559] INFO  45414 --- [nio-8080-exec-7] l.g.a.n.service.NotificationService      : 환영 알림 발송: userId=1
+[2025-07-15 23:06:27:102572] DEBUG 45414 --- [nio-8080-exec-7] o.s.web.client.RestTemplate              : HTTP POST https://discord.com/api/webhooks/1379003674382303272/JAIwS-6FS_aCsBEvHJgbH3EytAQrPjiz-AIxPPMA92daoOfXAcLlokTlcyB9H4Qod7UI
+[2025-07-15 23:06:27:102574] DEBUG 45414 --- [nio-8080-exec-7] o.s.web.client.RestTemplate              : Accept=[application/json, application/cbor, application/*+json]
+[2025-07-15 23:06:27:102576] DEBUG 45414 --- [nio-8080-exec-7] o.s.web.client.RestTemplate              : Writing [DiscordWebhookPayload[content=## 회원 생성 알림
+
+**회원 생성 ID:** 1
+**회원 생성 시간:** 2025-07-15T23:06:27.138681
+**회원 닉네임:** null님이 회원가입하셨습니다.]] with org.springframework.http.converter.json.MappingJackson2HttpMessageConverter
+[2025-07-15 23:06:27:103017] DEBUG 45414 --- [nio-8080-exec-7] o.s.web.client.RestTemplate              : Response 204 NO_CONTENT
+[2025-07-15 23:06:27:103043] DEBUG 45414 --- [nio-8080-exec-7] l.g.common.utils.TokenCookieService      : [User] 쿠키 제거: domain=(host-only), fromLocalhost=true
+[2025-07-15 23:06:27:103044] INFO  45414 --- [nio-8080-exec-7] l.g.common.utils.TokenCookieService      : [User] 쿠키 설정: env=local,common,secret, domain=(host-only), secure=false, sameSite=Lax, fromLocalhost=true
+[2025-07-15 23:06:27:103045] DEBUG 45414 --- [nio-8080-exec-7] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json, application/cbor]
+[2025-07-15 23:06:27:103045] DEBUG 45414 --- [nio-8080-exec-7] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [liaison.groble.common.response.GrobleResponse@772264c0]
+[2025-07-15 23:06:27:103047] DEBUG 45414 --- [nio-8080-exec-7] o.s.web.servlet.DispatcherServlet        : Completed 201 CREATED
+[2025-07-15 23:06:40:115564] DEBUG 45414 --- [nio-8080-exec-2] l.g.s.jwt.UserDetailsServiceImpl         : 사용자 로드 완료 - userId: 1
+[2025-07-15 23:06:40:115571] DEBUG 45414 --- [nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : POST "/api/v1/user/info/set-nickname?nickname=%EA%B6%8C%EB%8F%99%EB%AF%BC(%ED%86%B5%ED%95%A9)gmail", parameters={masked}
+[2025-07-15 23:06:40:115572] DEBUG 45414 --- [nio-8080-exec-2] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to liaison.groble.api.server.user.UserInfoController#setNickname(Accessor, String)
+[2025-07-15 23:06:40:115580] INFO  45414 --- [nio-8080-exec-2] l.g.a.server.user.UserInfoController     : 닉네임 설정 요청: 권동민(통합)gmail
+[2025-07-15 23:06:40:115589] DEBUG 45414 --- [nio-8080-exec-2] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json, application/cbor]
+[2025-07-15 23:06:40:115589] DEBUG 45414 --- [nio-8080-exec-2] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [liaison.groble.common.response.GrobleResponse@2769407b]
+[2025-07-15 23:06:40:115590] DEBUG 45414 --- [nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+[2025-07-15 23:06:46:122390] DEBUG 45414 --- [nio-8080-exec-4] l.g.s.jwt.UserDetailsServiceImpl         : 사용자 로드 완료 - userId: 1
+[2025-07-15 23:06:46:122396] DEBUG 45414 --- [nio-8080-exec-4] o.s.web.servlet.DispatcherServlet        : POST "/api/v1/verification/phone-number/verify-request", parameters={}
+[2025-07-15 23:06:46:122396] DEBUG 45414 --- [nio-8080-exec-4] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to liaison.groble.api.server.verification.PhoneVerificationController#authPhoneNumber(Accessor, PhoneNumberVerifyRequest)
+[2025-07-15 23:06:46:122399] DEBUG 45414 --- [nio-8080-exec-4] m.m.a.RequestResponseBodyMethodProcessor : Read "application/json;charset=UTF-8" to [liaison.groble.api.model.auth.request.PhoneNumberVerifyRequest@7d5d229]
+[2025-07-15 23:06:46:122401] INFO  45414 --- [nio-8080-exec-4] l.g.a.auth.service.PhoneAuthService      : ▶ 로그인 사용자 전화번호 인증 시작: userId=1, phoneNumber=010-3661-4067
+[2025-07-15 23:06:46:122406] DEBUG 45414 --- [nio-8080-exec-4] l.g.e.a.RedisVerificationCodeAdapter     : 로그인 사용자 전화번호 인증 코드 저장: key=phone:auth:user:1:01036614067
+[2025-07-15 23:06:46:122407] INFO  45414 --- [nio-8080-exec-4] l.g.a.auth.service.PhoneAuthService      : SMS 전송 시도: to=01036614067
+[2025-07-15 23:06:46:122407] DEBUG 45414 --- [nio-8080-exec-4] l.groble.external.sms.SmsSender          : ▶ sendSms 시작: configuredFrom=01046415411, to=01036614067
+[2025-07-15 23:06:46:122411] DEBUG 45414 --- [nio-8080-exec-4] l.groble.external.sms.SmsSender          : 생성된 Signature: mIqdio4U2knI/8TTjWEBNbzHBE5x1JPWvbmBwhFk3Bk=
+[2025-07-15 23:06:46:122413] DEBUG 45414 --- [nio-8080-exec-4] l.groble.external.sms.SmsSender          : 생성된 SMS 요청 바디: {"type":"SMS","contentType":"COMM","countryCode":"82","from":"01046415411","content":"[Groble] 인증코드 [8498]를 입력해주세요.","messages":[{"to":"01036614067","content":null}]}
+[2025-07-15 23:06:46:122414] DEBUG 45414 --- [nio-8080-exec-4] o.s.web.client.RestTemplate              : HTTP POST https://sens.apigw.ntruss.com/sms/v2/services/ncp:sms:kr:353543594810:groble/messages
+[2025-07-15 23:06:46:122415] DEBUG 45414 --- [nio-8080-exec-4] o.s.web.client.RestTemplate              : Accept=[application/json, application/cbor, application/*+json]
+[2025-07-15 23:06:46:122416] DEBUG 45414 --- [nio-8080-exec-4] o.s.web.client.RestTemplate              : Writing [{"type":"SMS","contentType":"COMM","countryCode":"82","from":"01046415411","content":"[Groble] 인증코드 [8498]를 입력해주세요.","messages":[{"to":"01036614067","content":null}]}] as "application/json"
+[2025-07-15 23:06:47:122539] DEBUG 45414 --- [nio-8080-exec-4] o.s.web.client.RestTemplate              : Response 202 ACCEPTED
+[2025-07-15 23:06:47:122541] DEBUG 45414 --- [nio-8080-exec-4] o.s.w.c.HttpMessageConverterExtractor    : Reading to [liaison.groble.external.sms.SmsResponse]
+[2025-07-15 23:06:47:122541] INFO  45414 --- [nio-8080-exec-4] l.g.a.auth.service.PhoneAuthService      : SMS 전송 성공: phoneNumber=01036614067
+[2025-07-15 23:06:47:122542] INFO  45414 --- [nio-8080-exec-4] l.g.a.auth.service.PhoneAuthService      : 로그인 사용자 전화번호 인증 코드 발송 완료: userId=1
+[2025-07-15 23:06:47:122542] DEBUG 45414 --- [nio-8080-exec-4] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json, application/cbor]
+[2025-07-15 23:06:47:122542] DEBUG 45414 --- [nio-8080-exec-4] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [liaison.groble.common.response.GrobleResponse@530bc317]
+[2025-07-15 23:06:47:122543] DEBUG 45414 --- [nio-8080-exec-4] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+[2025-07-15 23:06:50:125708] DEBUG 45414 --- [nnection-reaper] h.i.c.PoolingHttpClientConnectionManager : Closing connections idle longer than 60000 MILLISECONDS
+[2025-07-15 23:06:57:132786] DEBUG 45414 --- [nio-8080-exec-8] l.g.s.jwt.UserDetailsServiceImpl         : 사용자 로드 완료 - userId: 1
+[2025-07-15 23:06:57:132789] DEBUG 45414 --- [nio-8080-exec-8] o.s.web.servlet.DispatcherServlet        : POST "/api/v1/verification/phone-number/verify-code", parameters={}
+[2025-07-15 23:06:57:132789] DEBUG 45414 --- [nio-8080-exec-8] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to liaison.groble.api.server.verification.PhoneVerificationController#verifyPhoneNumber(Accessor, PhoneNumberVerifyCodeRequest)
+[2025-07-15 23:06:57:132792] DEBUG 45414 --- [nio-8080-exec-8] m.m.a.RequestResponseBodyMethodProcessor : Read "application/json;charset=UTF-8" to [liaison.groble.api.model.auth.request.PhoneNumberVerifyCodeRequest@122c148f]
+[2025-07-15 23:06:57:132794] INFO  45414 --- [nio-8080-exec-8] l.g.a.auth.service.PhoneAuthService      : ▶ 로그인 사용자 전화번호 인증 검증: userId=1, phoneNumber=010-3661-4067
+[2025-07-15 23:06:57:132795] DEBUG 45414 --- [nio-8080-exec-8] l.g.e.a.RedisVerificationCodeAdapter     : 로그인 사용자 전화번호 인증 코드 검증: key=phone:auth:user:1:01036614067, valid=true
+[2025-07-15 23:06:57:132828] DEBUG 45414 --- [nio-8080-exec-8] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json, application/cbor]
+[2025-07-15 23:06:57:132828] DEBUG 45414 --- [nio-8080-exec-8] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [liaison.groble.common.response.GrobleResponse@5df84f69]
+[2025-07-15 23:06:57:132829] DEBUG 45414 --- [nio-8080-exec-8] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+[2025-07-15 23:06:59:134925] DEBUG 45414 --- [nio-8080-exec-9] l.g.s.jwt.UserDetailsServiceImpl         : 사용자 로드 완료 - userId: 1
+[2025-07-15 23:06:59:134928] DEBUG 45414 --- [nio-8080-exec-9] o.s.web.servlet.DispatcherServlet        : GET "/api/v1/me", parameters={}
+[2025-07-15 23:06:59:134929] DEBUG 45414 --- [nio-8080-exec-9] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to liaison.groble.api.server.user.UserController#getUserHeaderInform(Accessor, HttpServletResponse)
+[2025-07-15 23:06:59:134936] DEBUG 45414 --- [nio-8080-exec-9] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json, application/cbor]
+[2025-07-15 23:06:59:134936] DEBUG 45414 --- [nio-8080-exec-9] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [liaison.groble.common.response.GrobleResponse@38fe83d4]
+[2025-07-15 23:06:59:134938] DEBUG 45414 --- [nio-8080-exec-9] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+[2025-07-15 23:06:59:135010] DEBUG 45414 --- [nio-8080-exec-2] l.g.s.jwt.UserDetailsServiceImpl         : 사용자 로드 완료 - userId: 1
+[2025-07-15 23:06:59:135012] DEBUG 45414 --- [nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : GET "/api/v1/notifications", parameters={}
+[2025-07-15 23:06:59:135012] DEBUG 45414 --- [nio-8080-exec-2] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to liaison.groble.api.server.notification.NotificationApiController#getNotifications(Accessor)
+[2025-07-15 23:06:59:135023] DEBUG 45414 --- [nio-8080-exec-2] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json, application/cbor]
+[2025-07-15 23:06:59:135023] DEBUG 45414 --- [nio-8080-exec-2] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [liaison.groble.common.response.GrobleResponse@38018fc6]
+[2025-07-15 23:06:59:135025] DEBUG 45414 --- [nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+[2025-07-15 23:07:50:185712] DEBUG 45414 --- [nnection-reaper] h.i.c.PoolingHttpClientConnectionManager : Closing connections idle longer than 60000 MILLISECONDS
+[2025-07-15 23:07:59:195053] DEBUG 45414 --- [nio-8080-exec-5] l.g.s.jwt.UserDetailsServiceImpl         : 사용자 로드 완료 - userId: 1
+[2025-07-15 23:07:59:195080] DEBUG 45414 --- [nio-8080-exec-5] o.s.web.servlet.DispatcherServlet        : GET "/api/v1/me", parameters={}
+[2025-07-15 23:07:59:195081] DEBUG 45414 --- [nio-8080-exec-5] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to liaison.groble.api.server.user.UserController#getUserHeaderInform(Accessor, HttpServletResponse)
+[2025-07-15 23:07:59:195094] DEBUG 45414 --- [nio-8080-exec-5] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json, application/cbor]
+[2025-07-15 23:07:59:195094] DEBUG 45414 --- [nio-8080-exec-5] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [liaison.groble.common.response.GrobleResponse@16108cbd]
+[2025-07-15 23:07:59:195095] DEBUG 45414 --- [nio-8080-exec-5] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+[2025-07-15 23:08:50:245717] DEBUG 45414 --- [nnection-reaper] h.i.c.PoolingHttpClientConnectionManager : Closing connections idle longer than 60000 MILLISECONDS
+[2025-07-15 23:08:59:255014] DEBUG 45414 --- [nio-8080-exec-6] l.g.s.jwt.UserDetailsServiceImpl         : 사용자 로드 완료 - userId: 1
+[2025-07-15 23:08:59:255017] DEBUG 45414 --- [nio-8080-exec-6] o.s.web.servlet.DispatcherServlet        : GET "/api/v1/me", parameters={}
+[2025-07-15 23:08:59:255017] DEBUG 45414 --- [nio-8080-exec-6] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to liaison.groble.api.server.user.UserController#getUserHeaderInform(Accessor, HttpServletResponse)
+[2025-07-15 23:08:59:255021] DEBUG 45414 --- [nio-8080-exec-6] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json, application/cbor]
+[2025-07-15 23:08:59:255021] DEBUG 45414 --- [nio-8080-exec-6] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [liaison.groble.common.response.GrobleResponse@1897546e]
+[2025-07-15 23:08:59:255022] DEBUG 45414 --- [nio-8080-exec-6] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+[2025-07-15 23:09:47:302623] DEBUG 45414 --- [ionShutdownHook] h.i.c.PoolingHttpClientConnectionManager : Connection manager is shutting down
+[2025-07-15 23:09:47:302624] DEBUG 45414 --- [ionShutdownHook] h.i.c.PoolingHttpClientConnectionManager : Connection manager shut down
+[2025-07-15 23:09:47:302628] INFO  45414 --- [ionShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+[2025-07-15 23:09:47:302631] INFO  45414 --- [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+[2025-07-15 23:09:47:302636] INFO  45414 --- [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.

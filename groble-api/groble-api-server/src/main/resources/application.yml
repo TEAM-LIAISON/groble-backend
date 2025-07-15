@@ -128,10 +128,6 @@ logging:
     software.amazon.awssdk: DEBUG
     org.apache.http: DEBUG
 
-async:
-  core-size: 4
-  max-size: 10
-
 management:
   endpoints:
     web:

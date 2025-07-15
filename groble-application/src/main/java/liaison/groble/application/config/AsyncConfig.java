@@ -5,22 +5,22 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadPoolExecutor;
 
 import org.springframework.aop.interceptor.AsyncUncaughtExceptionHandler;
-import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.AsyncConfigurer;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @EnableAsync
 @Configuration
-@ConfigurationProperties(prefix = "async")
 @RequiredArgsConstructor
 public class AsyncConfig implements AsyncConfigurer {
+  private final MeterRegistry meterRegistry;
 
   private int coreSize = 4;
   private int maxSize = 10;
@@ -78,11 +78,10 @@ public class AsyncConfig implements AsyncConfigurer {
     return (ex, method, params) -> {
       log.error("비동기 처리 실패: method={}, params={}", method.getName(), Arrays.toString(params), ex);
 
-      // 알림/모니터링 시스템 연동
-      //            meterRegistry.counter("async.error",
-      //                    "method", method.getName(),
-      //                    "exception", ex.getClass().getSimpleName()
-      //            ).increment();
+      meterRegistry
+          .counter(
+              "async.error", "method", method.getName(), "exception", ex.getClass().getSimpleName())
+          .increment();
     };
   }
 }

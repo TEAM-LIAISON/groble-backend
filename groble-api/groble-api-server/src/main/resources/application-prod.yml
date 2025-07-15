@@ -133,10 +133,6 @@ logging:
     org.apache.http.wire: WARN    # Specifically disable wire logging
     com.amazonaws: INFO           # Control AWS SDK logging
 
-async:
-  core-size: 4
-  max-size: 10
-
 management:
   endpoints:
     web:

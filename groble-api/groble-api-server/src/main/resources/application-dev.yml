@@ -141,10 +141,6 @@ logging:
   file:
     name: /dev/null  # 로그 파일 쓰기를 막음 (또는 경로를 로그 수집 서버로 지정)
 
-async:
-  core-size: 4
-  max-size: 10
-
 management:
   endpoints:
     web:
