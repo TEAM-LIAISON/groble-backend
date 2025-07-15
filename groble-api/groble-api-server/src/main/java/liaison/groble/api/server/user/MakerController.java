@@ -3,6 +3,7 @@ package liaison.groble.api.server.user;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -17,6 +18,7 @@ import liaison.groble.application.terms.service.TermsService;
 import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.model.Accessor;
 import liaison.groble.common.response.GrobleResponse;
+import liaison.groble.common.response.ResponseHelper;
 import liaison.groble.common.service.ClientInfoService;
 import liaison.groble.mapping.terms.TermsMapper;
 
@@ -30,7 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/maker")
-@Tag(name = "[👨‍💻 ] 메이커 이용 약관 동의", description = "구매자에서 메이커로 전환하기 위한 약관 동의 API입니다.")
+@Tag(name = "[👨‍💻 마이페이지] 메이커 이용 약관 동의", description = "구매자에서 메이커로 전환하기 위한 약관 동의 API입니다.")
 public class MakerController {
 
   // API 경로 상수화
@@ -42,6 +44,9 @@ public class MakerController {
   private final TermsMapper termsMapper;
   private final TermsService termsService;
   private final ClientInfoService clientInfoService; // 클라이언트 정보 서비스 주입
+  private final ResponseHelper responseHelper;
+
+  // Helper
 
   /** 메이커 이용약관 동의 API */
   @Operation(summary = "메이커 이용약관 동의", description = "메이커(판매자)로 활동하기 위한 이용약관에 동의합니다.")
@@ -52,9 +57,6 @@ public class MakerController {
           MakerTermsAgreementRequest request,
       @RequestHeader("User-Agent") String userAgent, // User-Agent 직접 받기
       HttpServletRequest httpRequest) { // IP 주소 추출을 위해 유지
-
-    log.info(
-        "메이커 이용약관 동의 요청: userId={}, agreed={}", accessor.getId(), request.getMakerTermsAgreement());
 
     // 클라이언트 IP 추출 로직을 서비스로 위임
     String clientIp = clientInfoService.getClientIpAddress(httpRequest);
@@ -68,6 +70,6 @@ public class MakerController {
     MakerTermsAgreementResponse response =
         MakerTermsAgreementResponse.of(accessor.getUserId(), result.getMakerTermsAgreement());
 
-    return ResponseEntity.ok(GrobleResponse.success(response, "메이커 이용약관 동의가 완료되었습니다.", 200));
+    return responseHelper.success(response, TERMS_AGREE_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 }
