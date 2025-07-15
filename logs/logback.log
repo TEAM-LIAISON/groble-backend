@@ -67,3 +67,4 @@
 [2025-07-16 00:06:36:7696] DEBUG 57972 --- [on(2)-127.0.0.1] o.s.web.servlet.DispatcherServlet        : Detected org.springframework.web.servlet.support.SessionFlashMapManager@76ddf4df
 [2025-07-16 00:06:36:7698] DEBUG 57972 --- [on(2)-127.0.0.1] o.s.web.servlet.DispatcherServlet        : enableLoggingRequestDetails='false': request parameters and headers will be masked to prevent unsafe logging of potentially sensitive data
 [2025-07-16 00:06:36:7698] INFO  57972 --- [on(2)-127.0.0.1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 10 ms
+[2025-07-16 00:07:33:65408] DEBUG 57972 --- [nnection-reaper] h.i.c.PoolingHttpClientConnectionManager : Closing connections idle longer than 60000 MILLISECONDS
