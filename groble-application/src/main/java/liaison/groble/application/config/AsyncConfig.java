@@ -25,7 +25,11 @@ public class AsyncConfig implements AsyncConfigurer {
   private int coreSize = 4;
   private int maxSize = 10;
 
-  /** 1) 앱 내 일반 비동기 작업용 Executor - DAU 1,000 기준으로 가벼운 백그라운드 작업(로그 처리, 통계 집계 등) */
+  /**
+   * 1) 앱 내 일반 비동기 작업용 Executor
+   *
+   * <p>- DAU 1,000 기준으로 가벼운 백그라운드 작업(로그 처리, 통계 집계 등)
+   */
   @Bean
   public ThreadPoolTaskExecutor defaultAsyncExecutor() {
     ThreadPoolTaskExecutor exec = new ThreadPoolTaskExecutor();
@@ -41,8 +45,11 @@ public class AsyncConfig implements AsyncConfigurer {
   }
 
   /**
-   * 2) 이메일 전송 전용 Executor - SMTP 왕복 200~300ms + 렌더링 오버헤드 ~50ms 가정 - core 2 스레드로 약 5TPS, max 5 스레드로
-   * 약 12TPS 처리 가능
+   * 2) 이메일 전송 전용 Executor
+   *
+   * <p>- SMTP 왕복 200~300ms + 렌더링 오버헤드 ~50ms 가정
+   *
+   * <p>- core 2 스레드로 약 5TPS, max 5 스레드로 약 12TPS 처리 가능
    */
   @Bean(name = "mailExecutor")
   public ThreadPoolTaskExecutor mailExecutor() {
