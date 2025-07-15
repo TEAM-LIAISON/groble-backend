@@ -131,3 +131,71 @@
 [2025-07-15 22:55:10:80675] INFO  40578 --- [  restartedMain] l.g.p.r.i.RoleDataInitializer            : Added 3 new roles
 [2025-07-15 22:55:10:80675] INFO  40578 --- [  restartedMain] l.g.p.r.i.RoleDataInitializer            : Role data initialization completed
 [2025-07-15 22:55:10:80677] INFO  40578 --- [  restartedMain] .ConditionEvaluationDeltaLoggingListener : Condition evaluation unchanged
+[2025-07-15 22:56:09:139210] DEBUG 40578 --- [nnection-reaper] h.i.c.PoolingHttpClientConnectionManager : Closing connections idle longer than 60000 MILLISECONDS
+[2025-07-15 22:56:56:186112] INFO  40578 --- [   File Watcher] rtingClassPathChangeChangedEventListener : Restarting due to 3 class path changes (0 additions, 0 deletions, 3 modifications)
+[2025-07-15 22:56:56:186235] DEBUG 40578 --- [       Thread-8] h.i.c.PoolingHttpClientConnectionManager : Connection manager is shutting down
+[2025-07-15 22:56:56:186235] DEBUG 40578 --- [       Thread-8] h.i.c.PoolingHttpClientConnectionManager : Connection manager shut down
+[2025-07-15 22:56:56:186242] INFO  40578 --- [       Thread-8] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+[2025-07-15 22:56:56:186244] INFO  40578 --- [       Thread-8] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Shutdown initiated...
+[2025-07-15 22:56:56:186247] INFO  40578 --- [       Thread-8] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Shutdown completed.
+[2025-07-15 22:56:56:186340] INFO  40578 --- [  restartedMain] l.g.a.s.GrobleApiServerApplication       : Starting GrobleApiServerApplication using Java 17.0.10 with PID 40578 (/Users/gwondongmin/Desktop/groble_dev/groble/groble-api/groble-api-server/out/production/classes started by gwondongmin in /Users/gwondongmin/Desktop/groble_dev/groble)
+[2025-07-15 22:56:56:186340] DEBUG 40578 --- [  restartedMain] l.g.a.s.GrobleApiServerApplication       : Running with Spring Boot v3.3.10, Spring v6.1.18
+[2025-07-15 22:56:56:186340] INFO  40578 --- [  restartedMain] l.g.a.s.GrobleApiServerApplication       : The following 3 profiles are active: "local", "common", "secret"
+[2025-07-15 22:56:56:186632] INFO  40578 --- [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
+[2025-07-15 22:56:56:186632] INFO  40578 --- [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+[2025-07-15 22:56:56:186656] INFO  40578 --- [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 23 ms. Found 24 JPA repository interfaces.
+[2025-07-15 22:56:56:186751] INFO  40578 --- [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
+[2025-07-15 22:56:56:186751] INFO  40578 --- [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+[2025-07-15 22:56:56:186752] INFO  40578 --- [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 1 ms. Found 0 Redis repository interfaces.
+[2025-07-15 22:56:56:186876] INFO  40578 --- [  restartedMain] o.s.b.w.e.tomcat.TomcatWebServer         : Tomcat initialized with port 8080 (http)
+[2025-07-15 22:56:56:186876] INFO  40578 --- [  restartedMain] o.a.catalina.core.StandardService        : Starting service [Tomcat]
+[2025-07-15 22:56:56:186876] INFO  40578 --- [  restartedMain] o.a.catalina.core.StandardEngine         : Starting Servlet engine: [Apache Tomcat/10.1.39]
+[2025-07-15 22:56:56:186882] INFO  40578 --- [  restartedMain] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+[2025-07-15 22:56:56:186882] INFO  40578 --- [  restartedMain] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 541 ms
+[2025-07-15 22:56:56:186933] INFO  40578 --- [  restartedMain] l.g.security.jwt.JwtTokenProvider        : JWT 토큰 제공자 초기화 완료 - 액세스 토큰 만료: 3600000ms, 리프레시 토큰 만료: 604800000ms
+[2025-07-15 22:56:56:186977] INFO  40578 --- [  restartedMain] o.h.jpa.internal.util.LogHelper          : HHH000204: Processing PersistenceUnitInfo [name: default]
+[2025-07-15 22:56:56:186979] INFO  40578 --- [  restartedMain] o.h.c.i.RegionFactoryInitiator           : HHH000026: Second-level cache disabled
+[2025-07-15 22:56:56:186986] INFO  40578 --- [  restartedMain] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+[2025-07-15 22:56:56:186986] INFO  40578 --- [  restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-3 - Starting...
+[2025-07-15 22:56:56:186990] INFO  40578 --- [  restartedMain] com.zaxxer.hikari.pool.HikariPool        : HikariPool-3 - Added connection com.mysql.cj.jdbc.ConnectionImpl@307b081b
+[2025-07-15 22:56:56:186990] INFO  40578 --- [  restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-3 - Start completed.
+[2025-07-15 22:56:56:186990] WARN  40578 --- [  restartedMain] org.hibernate.orm.deprecation            : HHH90000025: MySQL8Dialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+[2025-07-15 22:56:56:186990] WARN  40578 --- [  restartedMain] org.hibernate.orm.deprecation            : HHH90000026: MySQL8Dialect has been deprecated; use org.hibernate.dialect.MySQLDialect instead
+[2025-07-15 22:56:57:187160] INFO  40578 --- [  restartedMain] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+[2025-07-15 22:56:57:187772] INFO  40578 --- [  restartedMain] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+[2025-07-15 22:56:57:187889] DEBUG 40578 --- [  restartedMain] l.g.s.jwt.JwtAuthenticationFilter        : Filter 'jwtAuthenticationFilter' configured for use
+[2025-07-15 22:56:57:187890] DEBUG 40578 --- [  restartedMain] o.s.w.f.ServerHttpObservationFilter      : Filter 'webMvcObservationFilter' configured for use
+[2025-07-15 22:56:57:187890] DEBUG 40578 --- [  restartedMain] o.s.web.filter.ForwardedHeaderFilter     : Filter 'forwardedHeaderFilter' configured for use
+[2025-07-15 22:56:58:188165] DEBUG 40578 --- [  restartedMain] l.groble.external.config.S3Config        : ▶ S3Config loaded with accessKeyId='AKIAX25EZZBU36BV5JNJ', region='ap-northeast-2'
+[2025-07-15 22:56:58:188168] DEBUG 40578 --- [nnection-reaper] h.i.c.PoolingHttpClientConnectionManager : Closing connections idle longer than 60000 MILLISECONDS
+[2025-07-15 22:56:58:188196] INFO  40578 --- [  restartedMain] l.g.external.s3.S3FileStorageService     : ▶ S3FileStorageService initialized for bucket=image.dev.groble.im
+[2025-07-15 22:56:58:188484] INFO  40578 --- [  restartedMain] l.g.s.config.SecurityContextConfig       : SecurityContextHolder 전략 설정 완료: MODE_THREADLOCAL
+[2025-07-15 22:56:58:188614] WARN  40578 --- [  restartedMain] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+[2025-07-15 22:56:58:188637] INFO  40578 --- [  restartedMain] eAuthenticationProviderManagerConfigurer : Global AuthenticationManager configured with AuthenticationProvider bean with name authenticationProvider
+[2025-07-15 22:56:58:188638] WARN  40578 --- [  restartedMain] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with an AuthenticationProvider bean. UserDetailsService beans will not be used for username/password login. Consider removing the AuthenticationProvider bean. Alternatively, consider using the UserDetailsService in a manually instantiated DaoAuthenticationProvider.
+[2025-07-15 22:56:58:188684] DEBUG 40578 --- [  restartedMain] s.w.s.m.m.a.RequestMappingHandlerMapping : 103 mappings in 'requestMappingHandlerMapping'
+[2025-07-15 22:56:58:188717] DEBUG 40578 --- [  restartedMain] o.s.w.s.h.SimpleUrlHandlerMapping        : Patterns [/webjars/**, /**, /swagger-ui*/*swagger-initializer.js, /swagger-ui*/**] in 'resourceHandlerMapping'
+[2025-07-15 22:56:58:188798] INFO  40578 --- [  restartedMain] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 4 endpoints beneath base path '/actuator'
+[2025-07-15 22:56:58:188842] INFO  40578 --- [  restartedMain] l.g.security.config.SecurityConfig       : Security 설정 완료
+[2025-07-15 22:56:58:188936] DEBUG 40578 --- [  restartedMain] s.w.s.m.m.a.RequestMappingHandlerAdapter : ControllerAdvice beans: 0 @ModelAttribute, 0 @InitBinder, 1 RequestBodyAdvice, 1 ResponseBodyAdvice
+[2025-07-15 22:56:58:188949] DEBUG 40578 --- [  restartedMain] .m.m.a.ExceptionHandlerExceptionResolver : ControllerAdvice beans: 2 @ExceptionHandler, 1 ResponseBodyAdvice
+[2025-07-15 22:56:59:189230] INFO  40578 --- [  restartedMain] o.s.b.d.a.OptionalLiveReloadServer       : LiveReload server is running on port 35729
+[2025-07-15 22:56:59:189248] INFO  40578 --- [  restartedMain] o.s.b.w.e.tomcat.TomcatWebServer         : Tomcat started on port 8080 (http) with context path '/'
+[2025-07-15 22:56:59:189254] INFO  40578 --- [  restartedMain] l.g.a.s.GrobleApiServerApplication       : Started GrobleApiServerApplication in 2.935 seconds (process running for 189.442)
+[2025-07-15 22:56:59:189255] INFO  40578 --- [  restartedMain] l.g.p.c.i.CategoryDataInitializer        : Initializing categories data...
+[2025-07-15 22:56:59:189262] INFO  40578 --- [  restartedMain] l.g.p.c.i.CategoryDataInitializer        : Added 6 new categories
+[2025-07-15 22:56:59:189262] INFO  40578 --- [  restartedMain] l.g.p.c.i.CategoryDataInitializer        : Categories data initialization completed
+[2025-07-15 22:56:59:189263] INFO  40578 --- [  restartedMain] l.g.p.t.i.OrderTermsDataInitializer      : Initializing order_terms data...
+[2025-07-15 22:56:59:189267] INFO  40578 --- [  restartedMain] l.g.p.t.i.OrderTermsDataInitializer      : Added 3 new terms
+[2025-07-15 22:56:59:189267] INFO  40578 --- [  restartedMain] l.g.p.t.i.OrderTermsDataInitializer      : Order Terms data initialization completed
+[2025-07-15 22:56:59:189268] INFO  40578 --- [  restartedMain] l.g.p.t.i.TermsDataInitializer           : Initializing terms data...
+[2025-07-15 22:56:59:189273] INFO  40578 --- [  restartedMain] l.g.p.t.i.TermsDataInitializer           : Added 5 new terms
+[2025-07-15 22:56:59:189273] INFO  40578 --- [  restartedMain] l.g.p.t.i.TermsDataInitializer           : Terms data initialization completed
+[2025-07-15 22:56:59:189274] INFO  40578 --- [  restartedMain] l.g.p.r.i.RoleDataInitializer            : Initializing role data...
+[2025-07-15 22:56:59:189277] INFO  40578 --- [  restartedMain] l.g.p.r.i.RoleDataInitializer            : Added 3 new roles
+[2025-07-15 22:56:59:189277] INFO  40578 --- [  restartedMain] l.g.p.r.i.RoleDataInitializer            : Role data initialization completed
+[2025-07-15 22:56:59:189279] INFO  40578 --- [  restartedMain] .ConditionEvaluationDeltaLoggingListener : Condition evaluation unchanged
+[2025-07-15 22:57:58:248171] DEBUG 40578 --- [nnection-reaper] h.i.c.PoolingHttpClientConnectionManager : Closing connections idle longer than 60000 MILLISECONDS
+[2025-07-15 22:58:58:308173] DEBUG 40578 --- [nnection-reaper] h.i.c.PoolingHttpClientConnectionManager : Closing connections idle longer than 60000 MILLISECONDS
+[2025-07-15 22:59:58:368178] DEBUG 40578 --- [nnection-reaper] h.i.c.PoolingHttpClientConnectionManager : Closing connections idle longer than 60000 MILLISECONDS
+[2025-07-15 23:00:58:428185] DEBUG 40578 --- [nnection-reaper] h.i.c.PoolingHttpClientConnectionManager : Closing connections idle longer than 60000 MILLISECONDS
