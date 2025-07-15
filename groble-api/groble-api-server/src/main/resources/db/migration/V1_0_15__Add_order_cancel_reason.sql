@@ -1,4 +1,0 @@
-ALTER TABLE orders
-  ADD COLUMN cancel_reason
-    enum ('OTHER_PAYMENT_METHOD', 'CHANGED_MIND', 'FOUND_CHEAPER_CONTENT', 'ETC')
-    NULL;

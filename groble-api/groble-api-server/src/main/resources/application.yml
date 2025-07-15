@@ -53,7 +53,7 @@ spring:
         order_inserts: true
         order_updates: true
     hibernate:
-        ddl-auto: validate
+        ddl-auto: create
   sql:
     init:
       mode: always
@@ -127,3 +127,7 @@ logging:
     io.swagger.v3: DEBUG
     software.amazon.awssdk: DEBUG
     org.apache.http: DEBUG
+
+async:
+  core-size: 4
+  max-size: 10
