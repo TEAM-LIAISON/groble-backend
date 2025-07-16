@@ -11,8 +11,6 @@ import liaison.groble.mapping.config.GrobleMapperConfig;
 public interface UserMapper {
 
   // ====== 📥 Request → DTO 변환 ======
-
-  /** [소셜 회원가입] SetSocialBasicInfoRequest → SocialBasicInfoDTO */
   @Mapping(
       target = "termsTypeStrings",
       expression = "java(request.getTermsTypes().stream().map(Enum::name).toList())")

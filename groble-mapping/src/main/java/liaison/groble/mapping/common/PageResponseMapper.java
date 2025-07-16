@@ -1,0 +1,28 @@
+package liaison.groble.mapping.common;
+
+import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import org.mapstruct.MapperConfig;
+
+import liaison.groble.common.response.PageResponse;
+
+@MapperConfig
+public interface PageResponseMapper {
+  default <S, T> PageResponse<T> toPageResponse(
+      PageResponse<S> sourcePage, Function<S, T> converter) {
+    if (sourcePage == null) {
+      return null;
+    }
+
+    List<T> convertedItems =
+        sourcePage.getItems().stream().map(converter).collect(Collectors.toList());
+
+    return PageResponse.<T>builder()
+        .items(convertedItems)
+        .pageInfo(sourcePage.getPageInfo())
+        .meta(sourcePage.getMeta())
+        .build();
+  }
+}

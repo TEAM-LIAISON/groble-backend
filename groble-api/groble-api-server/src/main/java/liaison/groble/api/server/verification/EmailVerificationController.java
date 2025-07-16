@@ -30,7 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/verification")
 @Tag(
-    name = "[이메일 인증] 이메일을 활용한 코드 전송, 코드 검증, 비밀번호 재설정 등 API",
+    name = "[📨 이메일 인증] 이메일을 활용한 코드 전송, 코드 검증, 비밀번호 재설정 등 API",
     description = "이메일을 활용하여 회원가입 과정에서 이메일을 검증, 이메일 변경, 비밀번호 재설정 등의 기능을 제공합니다.")
 public class EmailVerificationController {
 

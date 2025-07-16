@@ -37,7 +37,7 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/auth/integrated")
-@Tag(name = "[통합 계정] 통합 계정의 회원가입 및 로그인 API", description = "통합 계정 회원가입, 로그인을 통해 토큰을 발급받습니다.")
+@Tag(name = "[🔑 통합 계정] 통합 계정의 회원가입 및 로그인 API", description = "통합 계정 회원가입, 로그인을 통해 토큰을 발급받습니다.")
 public class IntegratedAccountAuthController {
 
   // API 경로 상수화
@@ -48,9 +48,14 @@ public class IntegratedAccountAuthController {
   private static final String SIGN_IN_SUCCESS_MESSAGE = "통합 계정으로 로그인이 성공적으로 완료되었습니다.";
   private static final String SIGN_UP_SUCCESS_MESSAGE = "회원가입이 성공적으로 완료되었습니다.";
 
+  // Mapper
   private final AuthMapper authMapper;
+
+  // Service
   private final IntegratedAccountAuthService integratedAccountAuthService;
   private final TokenCookieService tokenCookieService;
+
+  // Helper
   private final ResponseHelper responseHelper;
 
   @Operation(

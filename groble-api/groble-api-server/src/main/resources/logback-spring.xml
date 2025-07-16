@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!--
+        Spring Boot 기본 로그 설정(defaults.xml)을 포함합니다.
+        이 파일에는 Spring Boot가 기본적으로 사용하는 로그 설정(예: 색상, 기본 패턴 등)이 정의되어 있습니다.
+    -->
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+    <property name="LOGS_ABSOLUTE_PATH" value="./logs"/>
+    <property name="CONSOLE_LOG_PATTERN"
+              value="[%d{yyyy-MM-dd HH:mm:ss}:%-3relative]  %clr(%-5level) %clr(${PID:-}){magenta} %clr(---){faint} %clr([%15.15thread]){faint} %clr(%-40.40logger{36}){cyan} %clr(:){faint} %msg%n"/>
+    <property name="FILE_LOG_PATTERN"
+              value="[%d{yyyy-MM-dd HH:mm:ss}:%-3relative] %-5level ${PID:-} --- [%15.15thread] %-40.40logger{36} : %msg%n"/>
+
+    <!--
+         콘솔(Appender STDOUT) 설정
+         STDOUT Appender는 로그 메시지를 콘솔(터미널)로 출력합니다.
+    -->
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <!-- PatternLayout을 사용하여 로그 메시지를 CONSOLE_LOG_PATTERN에 맞춰 포맷합니다. -->
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <Pattern>${CONSOLE_LOG_PATTERN}</Pattern>
+        </layout>
+    </appender>
+
+    <!--
+         비동기 파일(Appender QUERY_FILE_ASYNC) 설정
+         AsyncAppender는 로그 기록 작업을 별도의 쓰레드에서 비동기적으로 처리하여
+         애플리케이션의 성능 저하를 최소화합니다.
+
+         설정 내용:
+         - <appender-ref ref="FILE"/>:
+              실제 로그 기록은 FILE Appender에 위임합니다.
+         - <queueSize>512</queueSize>:
+              내부 큐의 크기를 512로 설정합니다.
+         - <discardingThreshold>0</discardingThreshold>:
+              큐가 가득 찼을 때, 로그 이벤트를 버릴 기준을 0으로 설정(가능하면 버리지 않음).
+         - <includeCallerData>false</includeCallerData>:
+              호출자 정보를 포함하지 않습니다(성능 최적화).
+         - <neverBlock>true</neverBlock>:
+              큐가 꽉 찼을 경우 블로킹하지 않고 로그 이벤트를 버리도록 합니다.
+         - <maxFlushTime>1000</maxFlushTime>:
+              앱ender 종료 시 최대 1000ms 동안 플러시를 기다립니다.
+    -->
+    <appender name="QUERY_FILE_ASYNC" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="FILE"/>
+        <queueSize>512</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <includeCallerData>false</includeCallerData>
+        <neverBlock>true</neverBlock>
+        <maxFlushTime>1000</maxFlushTime>
+    </appender>
+
+    <!--
+         파일(Appender FILE) 설정
+         FILE Appender는 로그 메시지를 파일에 기록하며, 파일 롤링 정책을 사용해
+         일정 기간(예: 매일)마다 새로운 로그 파일로 교체됩니다.
+    -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <!-- 현재 활성 로그 파일의 경로 및 파일명을 설정합니다.
+             여기서는 LOGS_ABSOLUTE_PATH 속성을 사용하여 "./logs/logback.log"로 지정합니다. -->
+        <file>${LOGS_ABSOLUTE_PATH}/logback.log</file>
+        <encoder>
+            <!-- 파일에 기록될 로그 메시지를 FILE_LOG_PATTERN 포맷으로 인코딩합니다. -->
+            <pattern>${FILE_LOG_PATTERN}</pattern>
+        </encoder>
+        <!--
+             롤링 정책(TimeBasedRollingPolicy)을 설정하여, 일정 시간 간격마다(여기서는 일별)
+             로그 파일을 새 파일로 교체합니다.
+        -->
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- 새 로그 파일의 이름 패턴을 지정합니다.
+                 %d{yyyy-MM-dd}는 파일 이름에 날짜를 포함시킵니다. -->
+            <fileNamePattern>logFile.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <!-- 최대 30일치 로그 파일을 보관합니다. -->
+            <maxHistory>30</maxHistory>
+            <!-- 보관되는 모든 로그 파일의 총 크기가 3GB를 초과하지 않도록 제한합니다. -->
+            <totalSizeCap>3GB</totalSizeCap>
+        </rollingPolicy>
+    </appender>
+
+    <!--
+         루트 로거(root logger) 설정
+         루트 로거는 애플리케이션의 기본 로그 레벨과, 로그 메시지를 전달할 Appender들을 지정합니다.
+    -->
+    <root level="info">
+        <!-- 콘솔(Appender STDOUT)과 파일(Appender FILE) 모두에 로그를 출력합니다. -->
+        <appender-ref ref="STDOUT"/>
+        <appender-ref ref="FILE"/>
+    </root>
+
+    <!--
+         특정 패키지의 로그 레벨을 별도로 설정합니다.
+         여기서는 org.springframework.web 패키지의 로그 레벨을 DEBUG로 설정합니다.
+         이 패키지의 로그는 FILE Appender를 통해 파일에만 기록됩니다.
+    -->
+    <logger name="org.springframework.web" level="debug" additivity="false">
+        <appender-ref ref="STDOUT"/>
+        <appender-ref ref="FILE"/>
+    </logger>
+</configuration>

@@ -20,7 +20,7 @@ import liaison.groble.domain.content.dto.FlatContentPreviewDTO;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-07-12T17:14:39+0900",
+    date = "2025-07-15T23:24:25+0900",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.10 (Amazon.com Inc.)")
 @Component
 public class MarketMapperImpl implements MarketMapper {
@@ -169,6 +169,9 @@ public class MarketMapperImpl implements MarketMapper {
       contentPreviewCardResponse.lowestPrice(contentCardDTO.getLowestPrice());
     }
     contentPreviewCardResponse.priceOptionLength(contentCardDTO.getPriceOptionLength());
+    if (contentCardDTO.getIsAvailableForSale() != null) {
+      contentPreviewCardResponse.isAvailableForSale(contentCardDTO.getIsAvailableForSale());
+    }
     if (contentCardDTO.getStatus() != null) {
       contentPreviewCardResponse.status(contentCardDTO.getStatus());
     }
@@ -220,6 +223,9 @@ public class MarketMapperImpl implements MarketMapper {
       contentPreviewCardResponse.lowestPrice(flatContentPreviewDTO.getLowestPrice());
     }
     contentPreviewCardResponse.priceOptionLength(flatContentPreviewDTO.getPriceOptionLength());
+    if (flatContentPreviewDTO.getIsAvailableForSale() != null) {
+      contentPreviewCardResponse.isAvailableForSale(flatContentPreviewDTO.getIsAvailableForSale());
+    }
     if (flatContentPreviewDTO.getStatus() != null) {
       contentPreviewCardResponse.status(flatContentPreviewDTO.getStatus());
     }

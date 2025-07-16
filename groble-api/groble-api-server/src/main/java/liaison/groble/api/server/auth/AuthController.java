@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import liaison.groble.api.model.auth.request.SignInRequest;
 import liaison.groble.api.model.auth.request.UserWithdrawalRequest;
-import liaison.groble.api.model.auth.response.SignInResponse;
 import liaison.groble.api.model.auth.response.SignInTestResponse;
 import liaison.groble.application.auth.dto.SignInAuthResultDTO;
 import liaison.groble.application.auth.dto.SignInDTO;
@@ -41,45 +40,25 @@ import lombok.extern.slf4j.Slf4j;
 public class AuthController {
 
   // API 경로 상수화
-  private static final String DEPRECATED_SIGN_IN_PATH = "/sign-in";
   private static final String DEPRECATED_SIGN_IN_TEST_PATH = "/sign-in/local/test";
   private static final String LOGOUT = "/logout";
   private static final String WITHDRAWAL = "/withdrawal";
 
   // 응답 메시지 상수화
-  private static final String DEPRECATED_SIGN_IN_SUCCESS_MESSAGE =
-      "[Deprecated 예정] 통합 계정으로 로그인이 성공적으로 완료되었습니다.";
   private static final String DEPRECATED_SIGN_IN_TEST_SUCCESS_MESSAGE =
       "[Deprecated 예정] 테스트용 통합 계정 로그인이 성공적으로 완료되었습니다.";
   private static final String LOGOUT_SUCCESS_MESSAGE = "로그아웃이 성공적으로 처리되었습니다.";
   private static final String WITHDRAWAL_SUCCESS_MESSAGE = "회원탈퇴가 성공적으로 처리되었습니다.";
 
+  // Service
   private final AuthService authService;
-  private final AuthMapper authMapper;
   private final TokenCookieService tokenCookieService;
+
+  // Mapper
+  private final AuthMapper authMapper;
+
+  // Helper
   private final ResponseHelper responseHelper;
-
-  @Operation(
-      summary = "[🛠️ Deprecated 예정] 통합 계정 로그인",
-      description = "이메일과 비밀번호로 로그인하고 인증 토큰을 발급합니다.")
-  @PostMapping(DEPRECATED_SIGN_IN_PATH)
-  public ResponseEntity<GrobleResponse<SignInResponse>> signIn(
-      @Parameter(description = "로그인 정보", required = true) @Valid @RequestBody
-          SignInRequest signInRequest,
-      HttpServletResponse response) {
-    SignInDTO signInDto = authMapper.toSignInDto(signInRequest);
-
-    SignInAuthResultDTO signInAuthResultDTO = authService.signIn(signInDto);
-
-    tokenCookieService.addTokenCookies(
-        response, signInAuthResultDTO.getAccessToken(), signInAuthResultDTO.getRefreshToken());
-
-    SignInResponse signInResponse =
-        authMapper.toSignInResponse(signInRequest.getEmail(), signInAuthResultDTO);
-
-    return responseHelper.success(
-        signInResponse, DEPRECATED_SIGN_IN_SUCCESS_MESSAGE, HttpStatus.OK);
-  }
 
   @Operation(
       summary = "[🛠 Deprecated 예정] 테스트용 통합 계정 로그인",

@@ -9,9 +9,9 @@ import lombok.Getter;
 @Getter
 @Builder
 public class DynamicContentsDto {
-  @Builder.Default private List<DynamicContentDto> dynamicContentDtos = new ArrayList<>();
+  @Builder.Default private List<DynamicContentDTO> dynamicContentDTOS = new ArrayList<>();
 
-  public static DynamicContentsDto of(List<DynamicContentDto> dynamicContentDtos) {
-    return DynamicContentsDto.builder().dynamicContentDtos(dynamicContentDtos).build();
+  public static DynamicContentsDto of(List<DynamicContentDTO> dynamicContentDTOS) {
+    return DynamicContentsDto.builder().dynamicContentDTOS(dynamicContentDTOS).build();
   }
 }
