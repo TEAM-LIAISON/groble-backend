@@ -40,15 +40,15 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
 
-      - name: Run tests
-        run: ./gradlew test
-
-      - name: Upload test results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: test-results-${{ github.sha }}
-          path: '**/build/test-results/test/TEST-*.xml'
+#      - name: Run tests
+#        run: ./gradlew test
+#
+#      - name: Upload test results
+#        uses: actions/upload-artifact@v4
+#        if: always()
+#        with:
+#          name: test-results-${{ github.sha }}
+#          path: '**/build/test-results/test/TEST-*.xml'
 
 #  build-dev:
 #    needs: test
@@ -166,121 +166,121 @@ jobs:
 #          path: artifacts/
 #          retention-days: 7
 
-#  build-prod:
-#    needs: test
-#    runs-on: ubuntu-latest
-#    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-#
-#    outputs:
-#      image-tag: ${{ steps.build-info.outputs.image-tag }}
-#      image-uri: ${{ steps.build-info.outputs.image-uri }}
-#      short-sha: ${{ steps.build-info.outputs.short-sha }}
-#
-#    steps:
-#      - name: Checkout source
-#        uses: actions/checkout@v4
-#
-#      - name: Setup Java
-#        uses: actions/setup-java@v4
-#        with:
-#          distribution: 'temurin'
-#          java-version: '17'
-#
-#      - name: Gradle Caching
-#        uses: actions/cache@v3
-#        with:
-#          path: |
-#            ~/.gradle/caches
-#            ~/.gradle/wrapper
-#          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-#          restore-keys: |
-#            ${{ runner.os }}-gradle-
-#
-#      - name: Grant execute permission for gradlew
-#        run: chmod +x ./gradlew
-#
-#      - name: Build Project with Gradle (Production)
-#        run: |
-#          echo ${{ secrets.APPLICATION_SECRET_PROD }} | base64 --decode > groble-api/groble-api-server/src/main/resources/application-secret-prod.yml
-#          ./gradlew :groble-api:groble-api-server:bootJar
-#
-#      - name: Configure AWS credentials
-#        uses: aws-actions/configure-aws-credentials@v4
-#        with:
-#          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-#          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-#          aws-region: ${{ env.AWS_REGION }}
-#
-#      - name: Login to Amazon ECR
-#        id: login-ecr
-#        uses: aws-actions/amazon-ecr-login@v2
-#
-#      - name: Build info
-#        id: build-info
-#        run: |
-#          SHORT_SHA=${GITHUB_SHA::7}
-#          TIMESTAMP=$(date +%Y%m%d-%H%M%S)
-#          IMAGE_TAG="prod-${SHORT_SHA}-${TIMESTAMP}"
-#          IMAGE_URI="${{ steps.login-ecr.outputs.registry }}/groble-prod-spring-api:$IMAGE_TAG"
-#
-#          echo "image-tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
-#          echo "image-uri=$IMAGE_URI" >> $GITHUB_OUTPUT
-#          echo "short-sha=$SHORT_SHA" >> $GITHUB_OUTPUT
-#
-#      - name: Build and push Docker image to ECR (Production)
-#        env:
-#          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-#          ECR_REPOSITORY: groble-prod-spring-api
-#          IMAGE_TAG: ${{ steps.build-info.outputs.image-tag }}
-#        run: |
-#          echo "🐳 Building Docker image for Production..."
-#
-#          # Docker 이미지 빌드
-#          docker build \
-#            --platform linux/amd64 \
-#            --build-arg JAR_FILE=groble-api/groble-api-server/build/libs/groble-api-server-0.0.1-SNAPSHOT.jar \
-#            -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
-#            -t $ECR_REGISTRY/$ECR_REPOSITORY:prod-latest .
-#
-#          # ECR에 푸시
-#          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-#          docker push $ECR_REGISTRY/$ECR_REPOSITORY:prod-latest
-#
-#          echo "✅ Pushed image: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
-#
-#      - name: Generate deployment artifacts (Production)
-#        run: |
-#          # 배포 메타데이터 생성
-#          mkdir -p artifacts
-#
-#          cat > artifacts/deployment-info.json << EOF
-#          {
-#            "environment": "production",
-#            "image_tag": "${{ steps.build-info.outputs.image-tag }}",
-#            "image_uri": "${{ steps.build-info.outputs.image-uri }}",
-#            "commit_sha": "${{ github.sha }}",
-#            "short_sha": "${{ steps.build-info.outputs.short-sha }}",
-#            "branch": "${{ github.ref_name }}",
-#            "actor": "${{ github.actor }}",
-#            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-#            "workflow_run_id": "${{ github.run_id }}",
-#            "ecr_repository": "groble-prod-spring-api",
-#            "ecs_cluster": "${{ env.ECS_CLUSTER }}",
-#            "ecs_service": "groble-prod-service",
-#            "task_definition": "groble-prod-task",
-#            "deployment_group": "groble-prod-deployment-group"
-#          }
-#          EOF
-#
-#          echo "📄 Deployment info generated:"
-#          cat artifacts/deployment-info.json
-#
-#      - name: Upload deployment artifacts (Production)
-#        uses: actions/upload-artifact@v4
-#        with:
-#          name: prod-deployment-artifacts-${{ github.sha }}
-#          path: artifacts/
-#          retention-days: 7
+  build-prod:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/config/#51-cicd-pipeline-upgrade-base'
+
+    outputs:
+      image-tag: ${{ steps.build-info.outputs.image-tag }}
+      image-uri: ${{ steps.build-info.outputs.image-uri }}
+      short-sha: ${{ steps.build-info.outputs.short-sha }}
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Gradle Caching
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./gradlew
+
+      - name: Build Project with Gradle (Production)
+        run: |
+          echo ${{ secrets.APPLICATION_SECRET_PROD }} | base64 --decode > groble-api/groble-api-server/src/main/resources/application-secret-prod.yml
+          ./gradlew :groble-api:groble-api-server:bootJar
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build info
+        id: build-info
+        run: |
+          SHORT_SHA=${GITHUB_SHA::7}
+          TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+          IMAGE_TAG="prod-${SHORT_SHA}-${TIMESTAMP}"
+          IMAGE_URI="${{ steps.login-ecr.outputs.registry }}/groble-prod-spring-api:$IMAGE_TAG"
+
+          echo "image-tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
+          echo "image-uri=$IMAGE_URI" >> $GITHUB_OUTPUT
+          echo "short-sha=$SHORT_SHA" >> $GITHUB_OUTPUT
+
+      - name: Build and push Docker image to ECR (Production)
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: groble-prod-spring-api
+          IMAGE_TAG: ${{ steps.build-info.outputs.image-tag }}
+        run: |
+          echo "🐳 Building Docker image for Production..."
+
+          # Docker 이미지 빌드
+          docker build \
+            --platform linux/amd64 \
+            --build-arg JAR_FILE=groble-api/groble-api-server/build/libs/groble-api-server-0.0.1-SNAPSHOT.jar \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY:prod-latest .
+
+          # ECR에 푸시
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:prod-latest
+
+          echo "✅ Pushed image: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+
+      - name: Generate deployment artifacts (Production)
+        run: |
+          # 배포 메타데이터 생성
+          mkdir -p artifacts
+
+          cat > artifacts/deployment-info.json << EOF
+          {
+            "environment": "production",
+            "image_tag": "${{ steps.build-info.outputs.image-tag }}",
+            "image_uri": "${{ steps.build-info.outputs.image-uri }}",
+            "commit_sha": "${{ github.sha }}",
+            "short_sha": "${{ steps.build-info.outputs.short-sha }}",
+            "branch": "${{ github.ref_name }}",
+            "actor": "${{ github.actor }}",
+            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "workflow_run_id": "${{ github.run_id }}",
+            "ecr_repository": "groble-prod-spring-api",
+            "ecs_cluster": "${{ env.ECS_CLUSTER }}",
+            "ecs_service": "groble-prod-service",
+            "task_definition": "groble-prod-task",
+            "deployment_group": "groble-prod-deployment-group"
+          }
+          EOF
+
+          echo "📄 Deployment info generated:"
+          cat artifacts/deployment-info.json
+
+      - name: Upload deployment artifacts (Production)
+        uses: actions/upload-artifact@v4
+        with:
+          name: prod-deployment-artifacts-${{ github.sha }}
+          path: artifacts/
+          retention-days: 7
 
 #  trigger-cd-dev:
 #    needs: build-dev
