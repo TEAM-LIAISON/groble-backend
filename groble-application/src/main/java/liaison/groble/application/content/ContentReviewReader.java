@@ -25,18 +25,13 @@ public class ContentReviewReader {
   private final ContentReviewCustomRepository contentReviewCustomRepository;
   private final ContentReviewRepository contentReviewRepository;
 
-  public ContentReview getContentReview(Long userId, Long contentId, Long reviewId) {
+  public ContentReview getContentReview(Long userId, Long reviewId) {
     return contentReviewCustomRepository
-        .getContentReview(userId, contentId, reviewId)
+        .getContentReview(userId, reviewId)
         .orElseThrow(
             () ->
                 new IllegalArgumentException(
-                    "리뷰를 찾을 수 없습니다. User ID: "
-                        + userId
-                        + ", Content ID: "
-                        + contentId
-                        + ", Review ID: "
-                        + reviewId));
+                    "리뷰를 찾을 수 없습니다. User ID: " + userId + ", Review ID: " + reviewId));
   }
 
   public FlatContentReviewDetailDTO getContentReviewDetail(
