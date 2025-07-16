@@ -209,6 +209,7 @@ public class SellContentService {
         .contentTitle(flat.getContentTitle())
         .createdAt(flat.getCreatedAt())
         .reviewerNickname(flat.getReviewerNickname())
+        .reviewContent(flat.getReviewContent())
         .selectedOptionName(flat.getSelectedOptionName())
         .rating(flat.getRating())
         .build();
