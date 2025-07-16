@@ -378,16 +378,25 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
             .select(
                 Projections.constructor(
                     FlatSellManageDetailDTO.class,
-                    qPurchase.finalPrice.sum().coalesce(BigDecimal.ZERO).longValue(),
-                    qPurchase.user.id.countDistinct(),
-                    JPAExpressions.select(qContentReview.count())
+                    // BigDecimal 그대로 전달 (데이터 없으면 0)
+                    qPurchase.finalPrice.sum().coalesce(BigDecimal.ZERO),
+                    // Long으로, 데이터 없으면 0
+                    qPurchase.user.id.countDistinct().coalesce(0L),
+                    // 서브쿼리 count() 결과도 Long, 데이터 없으면 0
+                    JPAExpressions.select(qContentReview.count().coalesce(0L))
                         .from(qContentReview)
                         .where(qContentReview.content.id.eq(contentId))))
             .from(qPurchase)
             .leftJoin(qPurchase.content, qContent)
             .leftJoin(qPurchase.user, qUser)
             .leftJoin(qPurchase.order, qOrder)
-            .where(conditions)
+            .where(
+                qPurchase
+                    .content
+                    .id
+                    .eq(contentId)
+                    .and(qPurchase.content.user.id.eq(userId))
+                    .and(qOrder.status.eq(Order.OrderStatus.PAID)))
             .fetchOne();
 
     return Optional.ofNullable(result);
