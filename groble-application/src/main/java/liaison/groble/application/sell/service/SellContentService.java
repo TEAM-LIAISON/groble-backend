@@ -1,6 +1,8 @@
 package liaison.groble.application.sell.service;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -138,6 +140,8 @@ public class SellContentService {
                         .build())
             .toList();
 
+    log.info(reviewReplyDTOs.toString());
+
     return buildContentReviewDetail(contentReviewDetailDTO, reviewReplyDTOs);
   }
 
@@ -147,14 +151,19 @@ public class SellContentService {
     Order order = orderReader.getOrderByMerchantUid(merchantUid);
     Purchase purchase = purchaseReader.getPurchaseByOrderId(order.getId());
 
+    Long contentId = purchase.getContent().getId();
+
+    Optional<FlatContentReviewDetailDTO> reviewOpt =
+        contentReviewReader.getContentReviewDetail(userId, contentId);
+
     // 2) 리뷰 + 리플리 조회 후 DTO 조합
-    return contentReviewReader
-        .getContentReviewDetail(userId, purchase.getContent().getId())
+    return reviewOpt
         .map(
             flat -> {
               // flat.getReviewId() 기준으로 답글들 불러오기
               List<FlatReviewReplyDTO> replies =
                   contentReplyReader.findRepliesByReviewId(flat.getReviewId());
+              // (2) Collectors.toList() 사용
               List<ReviewReplyDTO> replyDTOs =
                   replies.stream()
                       .map(
@@ -162,9 +171,10 @@ public class SellContentService {
                               ReviewReplyDTO.builder()
                                   .replyId(reply.getReplyId())
                                   .replyContent(reply.getReplyContent())
+                                  .replierNickname(reply.getReplierNickname())
                                   .createdAt(reply.getCreatedAt())
                                   .build())
-                      .toList();
+                      .collect(Collectors.toList());
               return buildContentReviewDetail(flat, replyDTOs);
             })
         .orElse(null); // 리뷰가 없으면 null 반환
@@ -222,7 +232,6 @@ public class SellContentService {
 
   private ContentReviewDetailDTO buildContentReviewDetail(
       FlatContentReviewDetailDTO flatContentReviewDetailDTO, List<ReviewReplyDTO> reviewReplyDTOs) {
-    log.info(flatContentReviewDetailDTO.toString());
     return ContentReviewDetailDTO.builder()
         .reviewId(flatContentReviewDetailDTO.getReviewId())
         .contentTitle(flatContentReviewDetailDTO.getContentTitle())

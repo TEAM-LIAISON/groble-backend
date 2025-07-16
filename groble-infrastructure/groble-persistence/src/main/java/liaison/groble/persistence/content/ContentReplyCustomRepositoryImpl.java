@@ -10,6 +10,7 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import liaison.groble.domain.content.dto.FlatReviewReplyDTO;
 import liaison.groble.domain.content.entity.QContentReply;
 import liaison.groble.domain.content.repository.ContentReplyCustomRepository;
+import liaison.groble.domain.user.entity.QUser;
 
 import lombok.RequiredArgsConstructor;
 
@@ -64,7 +65,7 @@ public class ContentReplyCustomRepositoryImpl implements ContentReplyCustomRepos
   @Override
   public List<FlatReviewReplyDTO> findRepliesByReviewId(Long reviewId) {
     QContentReply qContentReply = QContentReply.contentReply;
-
+    QUser user = QUser.user;
     return jpaQueryFactory
         .select(
             Projections.fields(
@@ -74,6 +75,7 @@ public class ContentReplyCustomRepositoryImpl implements ContentReplyCustomRepos
                 qContentReply.seller.userProfile.nickname.as("replierNickname"),
                 qContentReply.replyContent.as("replyContent")))
         .from(qContentReply)
+        .leftJoin(qContentReply.seller, user)
         .where(qContentReply.contentReview.id.eq(reviewId).and(qContentReply.isDeleted.isFalse()))
         .fetch();
   }
