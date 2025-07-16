@@ -2,6 +2,9 @@ package liaison.groble.application.sell.dto;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
+
+import liaison.groble.application.content.dto.review.ReviewReplyDTO;
 
 import lombok.Builder;
 import lombok.Getter;
@@ -16,4 +19,5 @@ public class ContentReviewDetailDTO {
   private String reviewContent;
   private String selectedOptionName;
   private BigDecimal rating;
+  private List<ReviewReplyDTO> reviewReplies;
 }

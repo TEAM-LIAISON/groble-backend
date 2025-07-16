@@ -10,9 +10,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import liaison.groble.application.content.ContentReader;
+import liaison.groble.application.content.ContentReplyReader;
 import liaison.groble.application.content.ContentReplyWriter;
 import liaison.groble.application.content.ContentReviewReader;
 import liaison.groble.application.content.ContentReviewWriter;
+import liaison.groble.application.content.dto.review.ReviewReplyDTO;
 import liaison.groble.application.order.service.OrderReader;
 import liaison.groble.application.purchase.service.PurchaseReader;
 import liaison.groble.application.sell.dto.ContentReviewDetailDTO;
@@ -22,6 +24,7 @@ import liaison.groble.application.sell.dto.SellManageDetailDTO;
 import liaison.groble.application.sell.dto.SellManagePageDTO;
 import liaison.groble.common.response.PageResponse;
 import liaison.groble.domain.content.dto.FlatContentReviewDetailDTO;
+import liaison.groble.domain.content.dto.FlatReviewReplyDTO;
 import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.purchase.dto.FlatContentSellDetailDTO;
@@ -49,6 +52,7 @@ public class SellContentService {
   private final DiscordDeleteReviewRequestReportService discordDeleteReviewRequestReportService;
   private final OrderReader orderReader;
   private final ContentReader contentReader;
+  private final ContentReplyReader contentReplyReader;
 
   @Transactional(readOnly = true)
   public SellManagePageDTO getSellManagePage(Long userId, Long contentId) {
@@ -118,7 +122,22 @@ public class SellContentService {
   public ContentReviewDetailDTO getContentReviewDetail(Long userId, Long contentId, Long reviewId) {
     FlatContentReviewDetailDTO contentReviewDetailDTO =
         contentReviewReader.getContentReviewDetail(userId, contentId, reviewId);
-    return buildContentReviewDetail(contentReviewDetailDTO);
+
+    List<FlatReviewReplyDTO> flatReviewReplyDTOs =
+        contentReplyReader.findRepliesByReviewId(reviewId);
+
+    List<ReviewReplyDTO> reviewReplyDTOs =
+        flatReviewReplyDTOs.stream()
+            .map(
+                reply ->
+                    ReviewReplyDTO.builder()
+                        .replyId(reply.getReplyId())
+                        .replyContent(reply.getReplyContent())
+                        .createdAt(reply.getCreatedAt())
+                        .build())
+            .toList();
+
+    return buildContentReviewDetail(contentReviewDetailDTO, reviewReplyDTOs);
   }
 
   @Transactional(readOnly = true)
@@ -127,10 +146,27 @@ public class SellContentService {
     Order order = orderReader.getOrderByMerchantUid(merchantUid);
     Purchase purchase = purchaseReader.getPurchaseByOrderId(order.getId());
 
+    // 2) 리뷰 + 리플리 조회 후 DTO 조합
     return contentReviewReader
         .getContentReviewDetail(userId, purchase.getContent().getId())
-        .map(this::buildContentReviewDetail) // 값이 있을 때만 DTO 변환
-        .orElse(null); // 없으면 null 반환 (필요하면 Optional 그대로 넘겨도 OK)
+        .map(
+            flat -> {
+              // flat.getReviewId() 기준으로 답글들 불러오기
+              List<FlatReviewReplyDTO> replies =
+                  contentReplyReader.findRepliesByReviewId(flat.getReviewId());
+              List<ReviewReplyDTO> replyDTOs =
+                  replies.stream()
+                      .map(
+                          reply ->
+                              ReviewReplyDTO.builder()
+                                  .replyId(reply.getReplyId())
+                                  .replyContent(reply.getReplyContent())
+                                  .createdAt(reply.getCreatedAt())
+                                  .build())
+                      .toList();
+              return buildContentReviewDetail(flat, replyDTOs);
+            })
+        .orElse(null); // 리뷰가 없으면 null 반환
   }
 
   @Transactional
@@ -184,7 +220,7 @@ public class SellContentService {
   }
 
   private ContentReviewDetailDTO buildContentReviewDetail(
-      FlatContentReviewDetailDTO flatContentReviewDetailDTO) {
+      FlatContentReviewDetailDTO flatContentReviewDetailDTO, List<ReviewReplyDTO> reviewReplyDTOs) {
     log.info(flatContentReviewDetailDTO.toString());
     return ContentReviewDetailDTO.builder()
         .reviewId(flatContentReviewDetailDTO.getReviewId())
@@ -194,6 +230,7 @@ public class SellContentService {
         .reviewContent(flatContentReviewDetailDTO.getReviewContent())
         .selectedOptionName(flatContentReviewDetailDTO.getSelectedOptionName())
         .rating(flatContentReviewDetailDTO.getRating())
+        .reviewReplies(reviewReplyDTOs)
         .build();
   }
 

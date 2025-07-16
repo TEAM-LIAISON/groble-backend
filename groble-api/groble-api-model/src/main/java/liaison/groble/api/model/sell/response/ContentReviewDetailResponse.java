@@ -2,6 +2,7 @@ package liaison.groble.api.model.sell.response;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 
@@ -60,5 +61,9 @@ public class ContentReviewDetailResponse {
       requiredMode = Schema.RequiredMode.REQUIRED)
   private BigDecimal rating;
 
-  // TODO : 리뷰에 대한 답글 응답
+  @Schema(
+      description = "리뷰에 대한 판매자 답글",
+      implementation = ReviewReplyResponse.class,
+      requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  private List<ReviewReplyResponse> reviewReplies;
 }
