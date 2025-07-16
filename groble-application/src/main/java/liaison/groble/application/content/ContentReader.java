@@ -76,8 +76,8 @@ public class ContentReader {
   }
 
   public Page<FlatContentPreviewDTO> findMyContentsWithStatus(
-      Pageable pageable, Long userId, ContentStatus contentStatus) {
-    return contentCustomRepository.findMyContentsWithStatus(pageable, userId, contentStatus);
+      Pageable pageable, Long userId, List<ContentStatus> contentStatuses) {
+    return contentCustomRepository.findMyContentsWithStatus(pageable, userId, contentStatuses);
   }
 
   public boolean existsSellingContentByUser(Long userId) {

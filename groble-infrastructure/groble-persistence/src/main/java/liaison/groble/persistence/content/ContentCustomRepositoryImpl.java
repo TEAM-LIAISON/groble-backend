@@ -21,6 +21,7 @@ import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.ComparableExpressionBase;
 import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.core.types.dsl.PathBuilder;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
@@ -716,14 +717,25 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
 
   @Override
   public Page<FlatContentPreviewDTO> findMyContentsWithStatus(
-      Pageable pageable, Long userId, ContentStatus status) {
+      Pageable pageable, Long userId, List<ContentStatus> statuses) {
 
     QContent qContent = QContent.content;
     QUser qUser = QUser.user;
     QContentOption qContentOption = QContentOption.contentOption;
 
-    BooleanExpression cond = qContent.status.eq(status).and(qContent.user.id.eq(userId));
+    // 1) 상태 필터
+    BooleanExpression statusPredicate = null;
+    if (statuses != null && !statuses.isEmpty()) {
+      statusPredicate = qContent.status.in(statuses);
+    }
 
+    // 2) 사용자 필터
+    BooleanExpression userPredicate = qContent.user.id.eq(userId);
+
+    // 3) 최종 WHERE 절
+    BooleanExpression whereClause =
+        (statusPredicate != null) ? userPredicate.and(statusPredicate) : userPredicate;
+    // 4) 메인 쿼리
     JPAQuery<FlatContentPreviewDTO> query =
         queryFactory
             .select(
@@ -735,47 +747,39 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     qContent.thumbnailUrl.as("thumbnailUrl"),
                     qUser.userProfile.nickname.as("sellerName"),
                     qContent.lowestPrice.as("lowestPrice"),
+                    // 옵션 개수 서브쿼리
                     ExpressionUtils.as(
-                        select(qContentOption.count().intValue())
+                        JPAExpressions.select(qContentOption.count().intValue())
                             .from(qContentOption)
                             .where(qContentOption.content.eq(qContent)),
                         "priceOptionLength"),
                     qContent.status.stringValue().as("status")))
             .from(qContent)
-            .leftJoin(qContent.user, qUser) // 사용자 정보는 반드시 필요하니까 남겨두고
-            .where(cond);
-
-    // 3) Pageable의 Sort 적용 (여기서는 예시로 createdAt 기준)
+            .leftJoin(qContent.user, qUser)
+            .where(whereClause);
+    // 5) 정렬 적용
     if (pageable.getSort().isUnsorted()) {
       query.orderBy(qContent.createdAt.desc());
     } else {
-      // qContent 는 QContent.content
       PathBuilder<Content> path = new PathBuilder<>(Content.class, qContent.getMetadata());
-
-      // Sort.Order 순회
       for (Sort.Order order : pageable.getSort()) {
-        // ASC / DESC
         Order direction = order.isAscending() ? Order.ASC : Order.DESC;
-
-        // ComparableExpression 으로 꺼내오기
-        // (모든 필드를 Comparable 으로 가정)
         ComparableExpressionBase<?> expr =
             path.getComparable(order.getProperty(), Comparable.class);
-
-        // 이제 Expression 타입이 맞아서 컴파일 OK
         query.orderBy(new OrderSpecifier<>(direction, expr));
       }
     }
 
-    // 4) 페이징(Offset + Limit)
+    // 6) 페이징
     List<FlatContentPreviewDTO> items =
         query.offset(pageable.getOffset()).limit(pageable.getPageSize()).fetch();
 
-    // 5) 전체 카운트
+    // 7) 전체 카운트
     long total =
         Optional.ofNullable(
-                queryFactory.select(qContent.count()).from(qContent).where(cond).fetchOne())
+                queryFactory.select(qContent.count()).from(qContent).where(whereClause).fetchOne())
             .orElse(0L);
+
     return new PageImpl<>(items, pageable, total);
   }
 }

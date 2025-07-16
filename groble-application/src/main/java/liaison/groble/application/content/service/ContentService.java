@@ -433,9 +433,9 @@ public class ContentService {
   @Transactional(readOnly = true)
   public PageResponse<ContentCardDTO> getMySellingContents(
       Long userId, Pageable pageable, String state) {
-    ContentStatus contentStatus = parseContentStatus(state);
+    List<ContentStatus> contentStatuses = parseContentStatuses(state);
     Page<FlatContentPreviewDTO> page =
-        contentReader.findMyContentsWithStatus(pageable, userId, contentStatus);
+        contentReader.findMyContentsWithStatus(pageable, userId, contentStatuses);
     List<ContentCardDTO> items =
         page.getContent().stream().map(this::convertFlatDtoToCardDto).toList();
 
@@ -1037,16 +1037,21 @@ public class ContentService {
     return e != null ? e.name() : null;
   }
 
-  // 콘텐츠 상태 파싱 메서드 (DRAFT, ACTIVE)
-  private ContentStatus parseContentStatus(String state) {
+  // 콘텐츠 상태 파싱 메서드 (DRAFT, ACTIVE → ACTIVE+DISCONTINUED)
+  private List<ContentStatus> parseContentStatuses(String state) {
     if (state == null || state.isBlank()) {
-      return null;
+      return Collections.emptyList();
     }
 
     try {
-      return ContentStatus.valueOf(state.toUpperCase());
+      ContentStatus contentStatus = ContentStatus.valueOf(state.toUpperCase());
+      if (contentStatus == ContentStatus.ACTIVE) {
+        // ACTIVE 검색 시에는 ACTIVE + DISCONTINUED 둘 다 조회
+        return List.of(ContentStatus.ACTIVE, ContentStatus.DISCONTINUED);
+      }
+      return List.of(contentStatus);
     } catch (IllegalArgumentException e) {
-      return null;
+      return Collections.emptyList();
     }
   }
 }
