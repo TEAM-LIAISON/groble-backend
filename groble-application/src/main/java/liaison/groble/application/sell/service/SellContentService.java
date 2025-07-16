@@ -133,6 +133,7 @@ public class SellContentService {
                     ReviewReplyDTO.builder()
                         .replyId(reply.getReplyId())
                         .replyContent(reply.getReplyContent())
+                        .replierNickname(reply.getReplierNickname())
                         .createdAt(reply.getCreatedAt())
                         .build())
             .toList();
