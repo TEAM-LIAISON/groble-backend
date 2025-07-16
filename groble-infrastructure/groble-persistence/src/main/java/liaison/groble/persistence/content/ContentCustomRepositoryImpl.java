@@ -13,11 +13,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 
+import com.querydsl.core.types.Expression;
 import com.querydsl.core.types.ExpressionUtils;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.ComparableExpressionBase;
 import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.core.types.dsl.PathBuilder;
@@ -30,8 +32,10 @@ import liaison.groble.domain.content.dto.FlatAdminContentSummaryInfoDTO;
 import liaison.groble.domain.content.dto.FlatContentPreviewDTO;
 import liaison.groble.domain.content.dto.FlatDynamicContentDTO;
 import liaison.groble.domain.content.entity.Content;
+import liaison.groble.domain.content.entity.QCoachingOption;
 import liaison.groble.domain.content.entity.QContent;
 import liaison.groble.domain.content.entity.QContentOption;
+import liaison.groble.domain.content.entity.QDocumentOption;
 import liaison.groble.domain.content.enums.ContentStatus;
 import liaison.groble.domain.content.enums.ContentType;
 import liaison.groble.domain.content.repository.ContentCustomRepository;
@@ -720,22 +724,51 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
       Pageable pageable, Long userId, List<ContentStatus> statuses) {
 
     QContent qContent = QContent.content;
+    QContentOption qOption = QContentOption.contentOption;
+    QDocumentOption qDocOpt = QDocumentOption.documentOption;
+    QCoachingOption qCoachOpt = QCoachingOption.coachingOption;
     QUser qUser = QUser.user;
-    QContentOption qContentOption = QContentOption.contentOption;
 
-    // 1) 상태 필터
-    BooleanExpression statusPredicate = null;
-    if (statuses != null && !statuses.isEmpty()) {
-      statusPredicate = qContent.status.in(statuses);
-    }
-
-    // 2) 사용자 필터
-    BooleanExpression userPredicate = qContent.user.id.eq(userId);
-
-    // 3) 최종 WHERE 절
+    // 1) 상태 + 사용자 필터
+    BooleanExpression statusFilter =
+        (statuses != null && !statuses.isEmpty()) ? qContent.status.in(statuses) : null;
+    BooleanExpression userFilter = qContent.user.id.eq(userId);
     BooleanExpression whereClause =
-        (statusPredicate != null) ? userPredicate.and(statusPredicate) : userPredicate;
-    // 4) 메인 쿼리
+        statusFilter != null ? userFilter.and(statusFilter) : userFilter;
+
+    // 2) 콘텐츠 필드 유효 검사
+    BooleanExpression contentValid =
+        qContent
+            .title
+            .isNotNull()
+            .and(qContent.thumbnailUrl.isNotNull())
+            .and(qContent.lowestPrice.isNotNull());
+
+    // 3) 문서 옵션 존재 여부
+    BooleanExpression hasValidDocOpt =
+        JPAExpressions.selectOne()
+            .from(qDocOpt)
+            .where(qDocOpt.content.eq(qContent), qDocOpt.documentFileUrl.isNotNull())
+            .exists();
+
+    // 4) 코칭 옵션 존재 여부
+    BooleanExpression hasValidCoachOpt =
+        JPAExpressions.selectOne()
+            .from(qCoachOpt)
+            .where(
+                qCoachOpt.content.eq(qContent),
+                qCoachOpt.coachingPeriod.isNotNull(),
+                qCoachOpt.coachingType.isNotNull())
+            .exists();
+
+    // 5) 판매 가능 여부 식
+    Expression<Boolean> availableForSale =
+        new CaseBuilder()
+            .when(contentValid.and(hasValidDocOpt.or(hasValidCoachOpt)))
+            .then(true)
+            .otherwise(false);
+
+    // 6) 메인 쿼리 빌드
     JPAQuery<FlatContentPreviewDTO> query =
         queryFactory
             .select(
@@ -747,34 +780,40 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     qContent.thumbnailUrl.as("thumbnailUrl"),
                     qUser.userProfile.nickname.as("sellerName"),
                     qContent.lowestPrice.as("lowestPrice"),
-                    // 옵션 개수 서브쿼리
+
+                    // 옵션 개수
                     ExpressionUtils.as(
-                        JPAExpressions.select(qContentOption.count().intValue())
-                            .from(qContentOption)
-                            .where(qContentOption.content.eq(qContent)),
+                        JPAExpressions.select(qOption.count().intValue())
+                            .from(qOption)
+                            .where(qOption.content.eq(qContent)),
                         "priceOptionLength"),
+
+                    // 판매 가능 여부
+                    ExpressionUtils.as(availableForSale, "isAvailableForSale"),
+
+                    // 상태
                     qContent.status.stringValue().as("status")))
             .from(qContent)
             .leftJoin(qContent.user, qUser)
             .where(whereClause);
-    // 5) 정렬 적용
+
+    // 7) 정렬 적용
     if (pageable.getSort().isUnsorted()) {
       query.orderBy(qContent.createdAt.desc());
     } else {
       PathBuilder<Content> path = new PathBuilder<>(Content.class, qContent.getMetadata());
-      for (Sort.Order order : pageable.getSort()) {
-        Order direction = order.isAscending() ? Order.ASC : Order.DESC;
-        ComparableExpressionBase<?> expr =
-            path.getComparable(order.getProperty(), Comparable.class);
-        query.orderBy(new OrderSpecifier<>(direction, expr));
+      for (Sort.Order o : pageable.getSort()) {
+        Order dir = o.isAscending() ? Order.ASC : Order.DESC;
+        query.orderBy(
+            new OrderSpecifier<>(dir, path.getComparable(o.getProperty(), Comparable.class)));
       }
     }
 
-    // 6) 페이징
+    // 8) 페이징 & 결과 fetch
     List<FlatContentPreviewDTO> items =
         query.offset(pageable.getOffset()).limit(pageable.getPageSize()).fetch();
 
-    // 7) 전체 카운트
+    // 9) 전체 카운트
     long total =
         Optional.ofNullable(
                 queryFactory.select(qContent.count()).from(qContent).where(whereClause).fetchOne())

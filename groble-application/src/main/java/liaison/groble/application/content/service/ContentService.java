@@ -437,7 +437,7 @@ public class ContentService {
     Page<FlatContentPreviewDTO> page =
         contentReader.findMyContentsWithStatus(pageable, userId, contentStatuses);
     List<ContentCardDTO> items =
-        page.getContent().stream().map(this::convertFlatDtoToCardDto).toList();
+        page.getContent().stream().map(this::convertFlatDTOToCardDTO).toList();
 
     PageResponse.MetaData meta =
         PageResponse.MetaData.builder()
@@ -463,7 +463,7 @@ public class ContentService {
     List<FlatContentPreviewDTO> flatDtos = contentCustomRepository.findHomeContents(contentType);
 
     // DTO 변환
-    return flatDtos.stream().map(this::convertFlatDtoToCardDto).collect(Collectors.toList());
+    return flatDtos.stream().map(this::convertFlatDTOToCardDTO).collect(Collectors.toList());
   }
 
   @Transactional(readOnly = true)
@@ -476,7 +476,7 @@ public class ContentService {
 
     List<ContentCardDTO> cardDtos =
         flatDtos.getItems().stream()
-            .map(this::convertFlatDtoToCardDto)
+            .map(this::convertFlatDTOToCardDTO)
             .collect(Collectors.toList());
 
     return CursorResponse.<ContentCardDTO>builder()
@@ -719,7 +719,7 @@ public class ContentService {
   }
 
   /** FlatPreviewContentDTO를 ContentCardDto로 변환합니다. */
-  private ContentCardDTO convertFlatDtoToCardDto(FlatContentPreviewDTO flat) {
+  private ContentCardDTO convertFlatDTOToCardDTO(FlatContentPreviewDTO flat) {
     return ContentCardDTO.builder()
         .contentId(flat.getContentId())
         .createdAt(flat.getCreatedAt())
@@ -728,6 +728,7 @@ public class ContentService {
         .sellerName(flat.getSellerName())
         .lowestPrice(flat.getLowestPrice())
         .priceOptionLength(flat.getPriceOptionLength())
+        .isAvailableForSale(flat.getIsAvailableForSale())
         .status(flat.getStatus())
         .build();
   }
@@ -986,7 +987,7 @@ public class ContentService {
   private PageResponse<ContentCardDTO> getContentsByType(ContentType type, Pageable pageable) {
     Page<FlatContentPreviewDTO> page = contentCustomRepository.findContentsByType(type, pageable);
     List<ContentCardDTO> items =
-        page.getContent().stream().map(this::convertFlatDtoToCardDto).toList();
+        page.getContent().stream().map(this::convertFlatDTOToCardDTO).toList();
 
     PageResponse.MetaData meta =
         PageResponse.MetaData.builder()
@@ -1004,7 +1005,7 @@ public class ContentService {
         contentCustomRepository.findContentsByCategoriesAndType(categoryIds, type, pageable);
 
     List<ContentCardDTO> items =
-        page.getContent().stream().map(this::convertFlatDtoToCardDto).toList();
+        page.getContent().stream().map(this::convertFlatDTOToCardDTO).toList();
 
     PageResponse.MetaData meta =
         PageResponse.MetaData.builder()
