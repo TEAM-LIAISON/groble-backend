@@ -11,7 +11,7 @@ import liaison.groble.domain.content.dto.FlatContentReviewReplyDTO;
 import liaison.groble.domain.content.entity.ContentReview;
 
 public interface ContentReviewCustomRepository {
-  Optional<ContentReview> getContentReview(Long userId, Long contentId, Long reviewId);
+  Optional<ContentReview> getContentReview(Long userId, Long reviewId);
 
   Optional<FlatContentReviewDetailDTO> getContentReviewDetailDTO(
       Long userId, Long contentId, Long reviewId);

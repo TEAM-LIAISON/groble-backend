@@ -21,7 +21,7 @@ import liaison.groble.application.sell.dto.SellManagePageDTO;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-07-15T23:24:25+0900",
+    date = "2025-07-16T15:55:59+0900",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.10 (Amazon.com Inc.)")
 @Component
 public class SellMapperImpl implements SellMapper {
@@ -50,6 +50,9 @@ public class SellMapperImpl implements SellMapper {
     SellManagePageResponse.SellManagePageResponseBuilder sellManagePageResponse =
         SellManagePageResponse.builder();
 
+    if (sellManagePageDTO.getTitle() != null) {
+      sellManagePageResponse.title(sellManagePageDTO.getTitle());
+    }
     if (sellManagePageDTO.getSellManageDetail() != null) {
       sellManagePageResponse.contentSellDetail(
           toSellManageDetailResponse(sellManagePageDTO.getSellManageDetail()));

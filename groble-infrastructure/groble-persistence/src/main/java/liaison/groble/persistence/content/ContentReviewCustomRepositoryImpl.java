@@ -43,7 +43,7 @@ public class ContentReviewCustomRepositoryImpl implements ContentReviewCustomRep
   private final JPAQueryFactory jpaQueryFactory;
 
   @Override
-  public Optional<ContentReview> getContentReview(Long userId, Long contentId, Long reviewId) {
+  public Optional<ContentReview> getContentReview(Long userId, Long reviewId) {
     QContentReview qContentReview = QContentReview.contentReview;
     QContent qContent = QContent.content;
     QUser qUser = QUser.user;
@@ -52,7 +52,6 @@ public class ContentReviewCustomRepositoryImpl implements ContentReviewCustomRep
         qContentReview
             .id
             .eq(reviewId)
-            .and(qContentReview.content.id.eq(contentId))
             .and(qContent.user.id.eq(userId))
             .and(qContentReview.user.id.eq(qUser.id))
             .and(qContentReview.reviewStatus.eq(ReviewStatus.ACTIVE));
@@ -83,17 +82,6 @@ public class ContentReviewCustomRepositoryImpl implements ContentReviewCustomRep
             .and(qContent.user.id.eq(userId))
             .and(qContentReview.reviewStatus.eq(ReviewStatus.ACTIVE));
 
-    // selectedOptionName 서브쿼리
-    Expression<String> selectedOptionNameExpression =
-        ExpressionUtils.as(
-            select(qPurchase.selectedOptionName)
-                .from(qPurchase)
-                .where(
-                    qPurchase.user.id.eq(qContentReview.user.id),
-                    qPurchase.content.id.eq(contentId))
-                .limit(1),
-            "selectedOptionName");
-
     // QueryDSL PathBuilder for dynamic sort
     PathBuilder<?> entityPath =
         new PathBuilder<>(QContentReview.class, qContentReview.getMetadata());
@@ -109,11 +97,12 @@ public class ContentReviewCustomRepositoryImpl implements ContentReviewCustomRep
                     qContentReview.createdAt.as("createdAt"),
                     qUser.userProfile.nickname.as("reviewerNickname"),
                     qContentReview.reviewContent.as("reviewContent"),
-                    selectedOptionNameExpression,
+                    qPurchase.selectedOptionName.as("selectedOptionName"),
                     qContentReview.rating.as("rating")))
             .from(qContentReview)
             .leftJoin(qContentReview.content, qContent)
             .leftJoin(qContentReview.user, qUser)
+            .leftJoin(qContentReview.purchase, qPurchase)
             .where(cond);
     // 정렬 적용
     if (pageable.getSort().isUnsorted()) {

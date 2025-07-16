@@ -9,6 +9,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import liaison.groble.application.content.ContentReader;
 import liaison.groble.application.content.ContentReplyWriter;
 import liaison.groble.application.content.ContentReviewReader;
 import liaison.groble.application.content.ContentReviewWriter;
@@ -21,6 +22,7 @@ import liaison.groble.application.sell.dto.SellManageDetailDTO;
 import liaison.groble.application.sell.dto.SellManagePageDTO;
 import liaison.groble.common.response.PageResponse;
 import liaison.groble.domain.content.dto.FlatContentReviewDetailDTO;
+import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.purchase.dto.FlatContentSellDetailDTO;
 import liaison.groble.domain.purchase.dto.FlatSellManageDetailDTO;
@@ -46,9 +48,11 @@ public class SellContentService {
 
   private final DiscordDeleteReviewRequestReportService discordDeleteReviewRequestReportService;
   private final OrderReader orderReader;
+  private final ContentReader contentReader;
 
   @Transactional(readOnly = true)
   public SellManagePageDTO getSellManagePage(Long userId, Long contentId) {
+    Content content = contentReader.getContentById(contentId);
     FlatSellManageDetailDTO flatSellManageDetailDTO =
         purchaseReader.getSellManageDetail(userId, contentId);
     // 상위 5개 판매 내역 조회
@@ -66,6 +70,7 @@ public class SellContentService {
         reviewPage.getContent().stream().map(this::convertFlatDTOToDetailDTO).toList();
 
     return SellManagePageDTO.builder()
+        .title(content.getTitle())
         .sellManageDetail(buildSellManageDetailDTO(flatSellManageDetailDTO))
         .contentSellDetailList(contentSellList)
         .contentReviewDetailList(contentReviewList)
@@ -204,6 +209,7 @@ public class SellContentService {
         .contentTitle(flat.getContentTitle())
         .createdAt(flat.getCreatedAt())
         .reviewerNickname(flat.getReviewerNickname())
+        .reviewContent(flat.getReviewContent())
         .selectedOptionName(flat.getSelectedOptionName())
         .rating(flat.getRating())
         .build();

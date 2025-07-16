@@ -204,13 +204,16 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
   @Override
   public Page<FlatContentSellDetailDTO> getContentSellPageDTOs(
       Long userId, Long contentId, Pageable pageable) {
+
     QPurchase qPurchase = QPurchase.purchase;
     QContent qContent = QContent.content;
     QUser qUser = QUser.user;
-    QIntegratedAccount qIntegratedAccount = QIntegratedAccount.integratedAccount;
-    QSocialAccount qSocialAccount = QSocialAccount.socialAccount;
+    QIntegratedAccount qIntegratedAcc = QIntegratedAccount.integratedAccount;
+    QSocialAccount qSocialAcc = QSocialAccount.socialAccount;
 
-    BooleanExpression conditions = qContent.id.eq(contentId).and(qContent.user.id.eq(userId));
+    // 조건: contentId + 소유자
+    BooleanExpression conditions =
+        qPurchase.content.id.eq(contentId).and(qPurchase.content.user.id.eq(userId));
 
     JPAQuery<FlatContentSellDetailDTO> query =
         queryFactory
@@ -218,15 +221,15 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
                 Projections.fields(
                     FlatContentSellDetailDTO.class,
                     qPurchase.id.as("purchaseId"),
-                    qContent.title.as("title"),
+                    qContent.title.as("contentTitle"),
                     qPurchase.purchasedAt.as("purchasedAt"),
                     qUser.userProfile.nickname.as("purchaserNickname"),
-                    // 조건부 이메일 처리
+                    // 이메일
                     Expressions.cases()
                         .when(qUser.accountType.eq(AccountType.INTEGRATED))
-                        .then(qIntegratedAccount.integratedAccountEmail)
+                        .then(qIntegratedAcc.integratedAccountEmail)
                         .when(qUser.accountType.eq(AccountType.SOCIAL))
-                        .then(qSocialAccount.socialAccountEmail)
+                        .then(qSocialAcc.socialAccountEmail)
                         .otherwise(Expressions.nullExpression(String.class))
                         .as("purchaserEmail"),
                     qUser.userProfile.phoneNumber.as("purchaserPhoneNumber"),
@@ -234,45 +237,44 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
                     qPurchase.finalPrice.as("finalPrice")))
             .from(qPurchase)
             .leftJoin(qPurchase.user, qUser)
-            .leftJoin(qUser.integratedAccount, qIntegratedAccount)
-            .leftJoin(qUser.socialAccount, qSocialAccount)
+            .leftJoin(qUser.integratedAccount, qIntegratedAcc)
+            .leftJoin(qUser.socialAccount, qSocialAcc)
             .leftJoin(qPurchase.content, qContent)
             .where(conditions);
 
-    // 3) Pageable의 Sort 적용 (여기서는 예시로 createdAt 기준)
+    // ─── 1) 기본 정렬 ─────────────────────────────
     if (pageable.getSort().isUnsorted()) {
-      query.orderBy(qContent.createdAt.desc());
+      query.orderBy(qPurchase.purchasedAt.desc());
     } else {
-      // qContent 는 QContent.content
-      PathBuilder<Content> path = new PathBuilder<>(Content.class, qContent.getMetadata());
-
-      // Sort.Order 순회
-      for (Sort.Order order : pageable.getSort()) {
-        // ASC / DESC
+      // ─── 2) dynamic sort ──────────────────────────
+      for (Sort.Order sortOrder : pageable.getSort()) {
         com.querydsl.core.types.Order direction =
-            order.isAscending()
+            sortOrder.isAscending()
                 ? com.querydsl.core.types.Order.ASC
                 : com.querydsl.core.types.Order.DESC;
 
-        // ComparableExpression 으로 꺼내오기
-        // (모든 필드를 Comparable 으로 가정)
-        ComparableExpressionBase<?> expr =
-            path.getComparable(order.getProperty(), Comparable.class);
-
-        // 이제 Expression 타입이 맞아서 컴파일 OK
-        query.orderBy(new OrderSpecifier<>(direction, expr));
+        String property = sortOrder.getProperty();
+        if ("purchasedAt".equals(property)) {
+          // Purchase.purchasedAt 으로 직접 참조
+          query.orderBy(new OrderSpecifier<>(direction, qPurchase.purchasedAt));
+        } else {
+          PathBuilder<Content> contentPath =
+              new PathBuilder<>(Content.class, qContent.getMetadata());
+          ComparableExpressionBase<?> expr = contentPath.getComparable(property, Comparable.class);
+          query.orderBy(new OrderSpecifier<>(direction, expr));
+        }
       }
     }
 
-    // 4) 페이징(Offset + Limit)
+    // ─── 페이징, 조회, count ───────────────────────
     List<FlatContentSellDetailDTO> items =
         query.offset(pageable.getOffset()).limit(pageable.getPageSize()).fetch();
 
-    // 5) 전체 카운트
     long total =
         Optional.ofNullable(
                 queryFactory.select(qPurchase.count()).from(qPurchase).where(conditions).fetchOne())
             .orElse(0L);
+
     return new PageImpl<>(items, pageable, total);
   }
 
@@ -378,16 +380,25 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
             .select(
                 Projections.constructor(
                     FlatSellManageDetailDTO.class,
-                    qPurchase.finalPrice.sum().coalesce(BigDecimal.ZERO).longValue(),
-                    qPurchase.user.id.countDistinct(),
-                    JPAExpressions.select(qContentReview.count())
+                    // BigDecimal 그대로 전달 (데이터 없으면 0)
+                    qPurchase.finalPrice.sum().coalesce(BigDecimal.ZERO),
+                    // Long으로, 데이터 없으면 0
+                    qPurchase.user.id.countDistinct().coalesce(0L),
+                    // 서브쿼리 count() 결과도 Long, 데이터 없으면 0
+                    JPAExpressions.select(qContentReview.count().coalesce(0L))
                         .from(qContentReview)
                         .where(qContentReview.content.id.eq(contentId))))
             .from(qPurchase)
             .leftJoin(qPurchase.content, qContent)
             .leftJoin(qPurchase.user, qUser)
             .leftJoin(qPurchase.order, qOrder)
-            .where(conditions)
+            .where(
+                qPurchase
+                    .content
+                    .id
+                    .eq(contentId)
+                    .and(qPurchase.content.user.id.eq(userId))
+                    .and(qOrder.status.eq(Order.OrderStatus.PAID)))
             .fetchOne();
 
     return Optional.ofNullable(result);
