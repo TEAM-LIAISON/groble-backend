@@ -1,0 +1,59 @@
+[2025-07-16 15:22:39:296] INFO  96401 --- [    Test worker] l.g.a.s.GrobleApiServerApplicationTests  : Starting GrobleApiServerApplicationTests using Java 17.0.10 with PID 96401 (started by gwondongmin in /Users/gwondongmin/Desktop/groble_dev/groble/groble-api/groble-api-server)
+[2025-07-16 15:22:39:296] DEBUG 96401 --- [    Test worker] l.g.a.s.GrobleApiServerApplicationTests  : Running with Spring Boot v3.3.10, Spring v6.1.18
+[2025-07-16 15:22:39:297] INFO  96401 --- [    Test worker] l.g.a.s.GrobleApiServerApplicationTests  : The following 3 profiles are active: "local", "common", "secret"
+[2025-07-16 15:22:39:314] DEBUG 96401 --- [    Test worker] o.s.w.c.s.GenericWebApplicationContext   : Refreshing org.springframework.web.context.support.GenericWebApplicationContext@3ce53f6a
+[2025-07-16 15:22:40:673] INFO  96401 --- [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
+[2025-07-16 15:22:40:673] INFO  96401 --- [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+[2025-07-16 15:22:40:742] INFO  96401 --- [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 67 ms. Found 23 JPA repository interfaces.
+[2025-07-16 15:22:40:923] INFO  96401 --- [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
+[2025-07-16 15:22:40:924] INFO  96401 --- [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+[2025-07-16 15:22:40:932] INFO  96401 --- [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 5 ms. Found 0 Redis repository interfaces.
+[2025-07-16 15:22:41:1340] INFO  96401 --- [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+[2025-07-16 15:22:41:1429] INFO  96401 --- [    Test worker] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@1e1d813a
+[2025-07-16 15:22:41:1430] INFO  96401 --- [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+[2025-07-16 15:22:41:1461] INFO  96401 --- [    Test worker] org.flywaydb.core.FlywayExecutor         : Database: jdbc:mysql://localhost:3306/groble_dev_db (MySQL 8.0)
+[2025-07-16 15:22:41:1523] INFO  96401 --- [    Test worker] o.f.core.internal.command.DbValidate     : Successfully validated 1 migration (execution time 00:00.034s)
+[2025-07-16 15:22:41:1537] INFO  96401 --- [    Test worker] o.f.core.internal.command.DbMigrate      : Current version of schema `groble_dev_db`: 0
+[2025-07-16 15:22:41:1541] INFO  96401 --- [    Test worker] o.f.core.internal.command.DbMigrate      : Schema `groble_dev_db` is up to date. No migration necessary.
+[2025-07-16 15:22:41:1651] INFO  96401 --- [    Test worker] o.h.jpa.internal.util.LogHelper          : HHH000204: Processing PersistenceUnitInfo [name: default]
+[2025-07-16 15:22:41:1682] INFO  96401 --- [    Test worker] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.5.3.Final
+[2025-07-16 15:22:41:1714] INFO  96401 --- [    Test worker] o.h.c.i.RegionFactoryInitiator           : HHH000026: Second-level cache disabled
+[2025-07-16 15:22:41:1873] INFO  96401 --- [    Test worker] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+[2025-07-16 15:22:41:1902] WARN  96401 --- [    Test worker] org.hibernate.orm.deprecation            : HHH90000025: MySQL8Dialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+[2025-07-16 15:22:41:1902] WARN  96401 --- [    Test worker] org.hibernate.orm.deprecation            : HHH90000026: MySQL8Dialect has been deprecated; use org.hibernate.dialect.MySQLDialect instead
+[2025-07-16 15:22:42:2589] INFO  96401 --- [    Test worker] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+[2025-07-16 15:22:42:2625] INFO  96401 --- [    Test worker] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+[2025-07-16 15:22:42:2847] INFO  96401 --- [    Test worker] l.g.security.jwt.JwtTokenProvider        : JWT 토큰 제공자 초기화 완료 - 액세스 토큰 만료: 3600000ms, 리프레시 토큰 만료: 604800000ms
+[2025-07-16 15:22:42:2863] INFO  96401 --- [    Test worker] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
+[2025-07-16 15:22:42:3224] DEBUG 96401 --- [    Test worker] l.groble.external.config.S3Config        : ▶ S3Config loaded with accessKeyId='AKIAX25EZZBU36BV5JNJ', region='ap-northeast-2'
+[2025-07-16 15:22:43:3420] DEBUG 96401 --- [nnection-reaper] h.i.c.PoolingHttpClientConnectionManager : Closing connections idle longer than 60000 MILLISECONDS
+[2025-07-16 15:22:43:3460] INFO  96401 --- [    Test worker] l.g.external.s3.S3FileStorageService     : ▶ S3FileStorageService initialized for bucket=image.dev.groble.im
+[2025-07-16 15:22:43:4127] INFO  96401 --- [    Test worker] l.g.s.config.SecurityContextConfig       : SecurityContextHolder 전략 설정 완료: MODE_THREADLOCAL
+[2025-07-16 15:22:43:4270] WARN  96401 --- [    Test worker] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+[2025-07-16 15:22:43:4292] INFO  96401 --- [    Test worker] eAuthenticationProviderManagerConfigurer : Global AuthenticationManager configured with AuthenticationProvider bean with name authenticationProvider
+[2025-07-16 15:22:43:4292] WARN  96401 --- [    Test worker] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with an AuthenticationProvider bean. UserDetailsService beans will not be used for username/password login. Consider removing the AuthenticationProvider bean. Alternatively, consider using the UserDetailsService in a manually instantiated DaoAuthenticationProvider.
+[2025-07-16 15:22:44:4391] DEBUG 96401 --- [    Test worker] s.w.s.m.m.a.RequestMappingHandlerMapping : 100 mappings in 'requestMappingHandlerMapping'
+[2025-07-16 15:22:44:4430] DEBUG 96401 --- [    Test worker] o.s.w.s.h.SimpleUrlHandlerMapping        : Patterns [/webjars/**, /**, /swagger-ui*/*swagger-initializer.js, /swagger-ui*/**] in 'resourceHandlerMapping'
+[2025-07-16 15:22:44:4504] INFO  96401 --- [    Test worker] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 3 endpoints beneath base path '/actuator'
+[2025-07-16 15:22:44:4540] INFO  96401 --- [    Test worker] l.g.security.config.SecurityConfig       : Security 설정 완료
+[2025-07-16 15:22:44:4684] DEBUG 96401 --- [    Test worker] s.w.s.m.m.a.RequestMappingHandlerAdapter : ControllerAdvice beans: 0 @ModelAttribute, 0 @InitBinder, 1 RequestBodyAdvice, 1 ResponseBodyAdvice
+[2025-07-16 15:22:44:4707] DEBUG 96401 --- [    Test worker] .m.m.a.ExceptionHandlerExceptionResolver : ControllerAdvice beans: 2 @ExceptionHandler, 1 ResponseBodyAdvice
+[2025-07-16 15:22:44:4977] INFO  96401 --- [    Test worker] l.g.a.s.GrobleApiServerApplicationTests  : Started GrobleApiServerApplicationTests in 4.852 seconds (process running for 5.268)
+[2025-07-16 15:22:44:4983] INFO  96401 --- [    Test worker] l.g.p.r.i.RoleDataInitializer            : Initializing role data...
+[2025-07-16 15:22:44:5023] INFO  96401 --- [    Test worker] l.g.p.r.i.RoleDataInitializer            : Role data is already up to date
+[2025-07-16 15:22:44:5023] INFO  96401 --- [    Test worker] l.g.p.r.i.RoleDataInitializer            : Role data initialization completed
+[2025-07-16 15:22:44:5027] INFO  96401 --- [    Test worker] l.g.p.t.i.OrderTermsDataInitializer      : Initializing order_terms data...
+[2025-07-16 15:22:44:5033] INFO  96401 --- [    Test worker] l.g.p.t.i.OrderTermsDataInitializer      : Order Terms data is already up to date
+[2025-07-16 15:22:44:5037] INFO  96401 --- [    Test worker] l.g.p.t.i.OrderTermsDataInitializer      : Order Terms data initialization completed
+[2025-07-16 15:22:44:5039] INFO  96401 --- [    Test worker] l.g.p.c.i.CategoryDataInitializer        : Initializing categories data...
+[2025-07-16 15:22:44:5042] INFO  96401 --- [    Test worker] l.g.p.c.i.CategoryDataInitializer        : Category data is already up to date
+[2025-07-16 15:22:44:5042] INFO  96401 --- [    Test worker] l.g.p.c.i.CategoryDataInitializer        : Categories data initialization completed
+[2025-07-16 15:22:44:5043] INFO  96401 --- [    Test worker] l.g.p.t.i.TermsDataInitializer           : Initializing terms data...
+[2025-07-16 15:22:44:5045] INFO  96401 --- [    Test worker] l.g.p.t.i.TermsDataInitializer           : Terms data is already up to date
+[2025-07-16 15:22:44:5045] INFO  96401 --- [    Test worker] l.g.p.t.i.TermsDataInitializer           : Terms data initialization completed
+[2025-07-16 15:22:44:5315] DEBUG 96401 --- [ionShutdownHook] o.s.w.c.s.GenericWebApplicationContext   : Closing org.springframework.web.context.support.GenericWebApplicationContext@3ce53f6a, started on Wed Jul 16 15:22:39 KST 2025
+[2025-07-16 15:22:45:5432] DEBUG 96401 --- [ionShutdownHook] h.i.c.PoolingHttpClientConnectionManager : Connection manager is shutting down
+[2025-07-16 15:22:45:5432] DEBUG 96401 --- [ionShutdownHook] h.i.c.PoolingHttpClientConnectionManager : Connection manager shut down
+[2025-07-16 15:22:45:5436] INFO  96401 --- [ionShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+[2025-07-16 15:22:45:5436] INFO  96401 --- [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+[2025-07-16 15:22:45:5439] INFO  96401 --- [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
