@@ -258,9 +258,6 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
           // Purchase.purchasedAt 으로 직접 참조
           query.orderBy(new OrderSpecifier<>(direction, qPurchase.purchasedAt));
         } else {
-          // 나머지 필드들은 Content 또는 UserProfile 등 다른 엔티티에 있을 수 있으니
-          // 기존 PathBuilder 로 꺼내되, root 를 Content 로 유지할 수도 있고
-          // 필요하면 purchasePath 로 바꿔서 써도 됩니다.
           PathBuilder<Content> contentPath =
               new PathBuilder<>(Content.class, qContent.getMetadata());
           ComparableExpressionBase<?> expr = contentPath.getComparable(property, Comparable.class);

@@ -10,7 +10,18 @@ import lombok.Getter;
 @Builder
 @Schema(description = "[내 스토어 - 상품 관리 - 판매 관리] 판매 관리 페이지 정보 응답")
 public class SellManagePageResponse {
+  @Schema(description = "판매 관리 상세 정보", implementation = SellManageDetailResponse.class)
   private SellManageDetailResponse contentSellDetail;
+
+  @Schema(
+      description = "판매 관리 - 판매 목록",
+      implementation = ContentSellDetailResponse.class,
+      type = "array")
   private List<ContentSellDetailResponse> contentSellList;
+
+  @Schema(
+      description = "판매 관리 - 판매 문의 목록",
+      implementation = ContentReviewDetailResponse.class,
+      type = "array")
   private List<ContentReviewDetailResponse> contentReviewList;
 }

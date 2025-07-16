@@ -84,6 +84,13 @@ public class SellContentController {
   @Operation(
       summary = "[❌ 내 스토어 - 상품 관리 - 판매 관리] 판매 관리 페이지 조회",
       description = "특정 상품의 판매 관리, 상위 판매 리스트, 상위 리뷰 내역을 모두 조회합니다.")
+  @ApiResponse(
+      responseCode = "200",
+      description = "판매 관리 페이지 조회 성공",
+      content =
+          @Content(
+              mediaType = "application/json",
+              schema = @Schema(implementation = SellManagePageResponse.class)))
   @RequireRole("ROLE_SELLER")
   @GetMapping(CONTENT_HOME_PATH)
   public ResponseEntity<GrobleResponse<SellManagePageResponse>> getContentHome(
