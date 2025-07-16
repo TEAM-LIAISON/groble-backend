@@ -82,7 +82,7 @@ public class SellContentController {
   private final ResponseHelper responseHelper;
 
   @Operation(
-      summary = "[❌ 내 스토어 - 상품 관리 - 판매 관리] 판매 관리 페이지 조회",
+      summary = "[✅ 내 스토어 - 상품 관리 - 판매 관리] 판매 관리 페이지 조회",
       description = "특정 상품의 판매 관리, 상위 판매 리스트, 상위 리뷰 내역을 모두 조회합니다.")
   @ApiResponse(
       responseCode = "200",
@@ -105,7 +105,7 @@ public class SellContentController {
 
   // 내 스토어 - 상품 관리 - 리뷰 내역 전체보기
   @Operation(
-      summary = "[❌ 내 스토어 - 상품 관리 - 리뷰 내역 전체보기] 리뷰 내역 전체보기 조회",
+      summary = "[✅ 내 스토어 - 상품 관리 - 리뷰 내역 전체보기] 리뷰 내역 전체보기 조회",
       description = "특정 상품에 남겨진 리뷰의 전체 정보를 조회합니다.")
   @ApiResponse(
       responseCode = "200",
@@ -135,7 +135,7 @@ public class SellContentController {
 
   // 내 스토어 - 상품 관리 - 리뷰 내역 상세
   @Operation(
-      summary = "[❌ 내 스토어 - 상품 관리 - 리뷰 내역 상세] 리뷰 내역 상세보기 조회",
+      summary = "[✅ 내 스토어 - 상품 관리 - 리뷰 내역 상세] 리뷰 내역 상세보기 조회",
       description = "특정 상품에 남겨진 리뷰의  상세 정보를 조회합니다.")
   @ApiResponse(
       responseCode = "200",
@@ -236,7 +236,7 @@ public class SellContentController {
 
   // TODO : 내 스토어 - 상품 관리 - 판매 리스트 전체보기
   @Operation(
-      summary = "[❌ 내 스토어 - 상품 관리 - 판매 내역 전체보기] 판매 내역 전체보기 조회",
+      summary = "[✅ 내 스토어 - 상품 관리 - 판매 내역 전체보기] 판매 내역 전체보기 조회",
       description = "특정 상품의 판매 내역 전체 정보를 조회합니다.")
   @ApiResponse(
       responseCode = "200",
@@ -264,7 +264,7 @@ public class SellContentController {
 
   // 내 스토어 - 상품 관리 - 판매 관리 - 판매 리스트 상세
   @Operation(
-      summary = "[❌ 내 스토어 - 상품 관리 - 판매 관리 - 판매 리스트 상세보기] 판매 리스트 상세보기 조회",
+      summary = "[✅ 내 스토어 - 상품 관리 - 판매 관리 - 판매 리스트 상세보기] 판매 리스트 상세보기 조회",
       description = "특정 상품의 판매 상세 정보를 조회합니다.")
   @ApiResponse(
       responseCode = "200",
