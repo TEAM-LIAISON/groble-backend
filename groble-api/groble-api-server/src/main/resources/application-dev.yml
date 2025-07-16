@@ -69,7 +69,7 @@ spring:
         order_inserts: true
         order_updates: true
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
   mvc:
     path match:
       matching-strategy: ant_path_matcher
@@ -140,3 +140,28 @@ logging:
 
   file:
     name: /dev/null  # 로그 파일 쓰기를 막음 (또는 경로를 로그 수집 서버로 지정)
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+    prometheus:
+      enabled: true
+    metrics:
+      export:
+        prometheus:
+          enabled: true
+      distribution:
+        percentiles-histogram:
+          http.server.requests: true
+      tags:
+        application: ${spring.application.name}
+        environment: ${server.env}
+    observations:
+      key-values:
+        application: ${spring.application.name}

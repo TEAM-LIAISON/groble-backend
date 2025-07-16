@@ -80,9 +80,10 @@ public class MarketService {
   public PageResponse<ContentCardDTO> getMarketContents(String marketLinkUrl, Pageable pageable) {
     // 마켓 이름으로 메이커 조회
     User user = makerReader.getUserByMarketLinkUrl(marketLinkUrl);
-    log.info("userId: {}, marketLinkUrl: {}", user.getId(), marketLinkUrl);
+
     Page<FlatContentPreviewDTO> page =
         contentReader.findAllMarketContentsByUserIdWithPaging(user.getId(), pageable);
+
     List<ContentCardDTO> items =
         page.getContent().stream().map(this::convertFlatDtoToCardDto).toList();
 

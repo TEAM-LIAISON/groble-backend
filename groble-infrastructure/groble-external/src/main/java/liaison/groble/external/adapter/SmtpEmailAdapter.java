@@ -6,6 +6,7 @@ import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import liaison.groble.domain.port.EmailSenderPort;
@@ -27,6 +28,7 @@ public class SmtpEmailAdapter implements EmailSenderPort {
   private String fromEmail;
 
   @Override
+  @Async("mailExecutor")
   public void sendVerificationEmail(String to, String verificationCode) {
     try {
       MimeMessage message = emailSender.createMimeMessage();
@@ -99,6 +101,7 @@ public class SmtpEmailAdapter implements EmailSenderPort {
   }
 
   @Override
+  @Async("mailExecutor")
   public void sendPasswordResetEmail(String to, String resetToken) {
     try {
       MimeMessage message = emailSender.createMimeMessage();

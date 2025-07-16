@@ -23,7 +23,7 @@ import liaison.groble.application.content.dto.ContentCardDTO;
 import liaison.groble.application.content.dto.ContentDTO;
 import liaison.groble.application.content.dto.ContentDetailDTO;
 import liaison.groble.application.content.dto.ContentOptionDTO;
-import liaison.groble.application.content.dto.DynamicContentDto;
+import liaison.groble.application.content.dto.DynamicContentDTO;
 import liaison.groble.application.content.dto.review.ContentDetailReviewDTO;
 import liaison.groble.application.content.dto.review.ContentReviewDTO;
 import liaison.groble.application.content.dto.review.ReviewReplyDTO;
@@ -1016,15 +1016,15 @@ public class ContentService {
     return PageResponse.from(page, items, meta);
   }
 
-  public List<DynamicContentDto> getDynamicContents() {
+  public List<DynamicContentDTO> getDynamicContents() {
     List<FlatDynamicContentDTO> flatDynamicContentDTOS =
         contentCustomRepository.findAllDynamicContents();
     return flatDynamicContentDTOS.stream().map(this::convertFlatDtoToDynamicDto).toList();
   }
 
   /** FlatPreviewContentDTO를 ContentCardDto로 변환합니다. */
-  private DynamicContentDto convertFlatDtoToDynamicDto(FlatDynamicContentDTO flat) {
-    return DynamicContentDto.builder()
+  private DynamicContentDTO convertFlatDtoToDynamicDto(FlatDynamicContentDTO flat) {
+    return DynamicContentDTO.builder()
         .contentId(flat.getContentId())
         .title(flat.getTitle())
         .contentType(flat.getContentType())

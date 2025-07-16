@@ -8,11 +8,12 @@ import javax.annotation.processing.Generated;
 import org.springframework.stereotype.Component;
 
 import liaison.groble.api.model.coupon.response.UserCouponResponse;
+import liaison.groble.application.content.dto.ContentPayPageDTO;
 import liaison.groble.application.coupon.dto.UserCouponResponseDTO;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-07-12T17:14:39+0900",
+    date = "2025-07-16T15:23:15+0900",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.10 (Amazon.com Inc.)")
 @Component
 public class CouponMapperImpl implements CouponMapper {
@@ -31,6 +32,36 @@ public class CouponMapperImpl implements CouponMapper {
     }
 
     return list;
+  }
+
+  @Override
+  public UserCouponResponse toUserCouponResponse(ContentPayPageDTO.UserCouponDTO userCouponDTO) {
+    if (userCouponDTO == null) {
+      return null;
+    }
+
+    UserCouponResponse.UserCouponResponseBuilder userCouponResponse = UserCouponResponse.builder();
+
+    if (userCouponDTO.getCouponCode() != null) {
+      userCouponResponse.couponCode(userCouponDTO.getCouponCode());
+    }
+    if (userCouponDTO.getName() != null) {
+      userCouponResponse.name(userCouponDTO.getName());
+    }
+    if (userCouponDTO.getCouponType() != null) {
+      userCouponResponse.couponType(userCouponDTO.getCouponType());
+    }
+    if (userCouponDTO.getDiscountValue() != null) {
+      userCouponResponse.discountValue(userCouponDTO.getDiscountValue());
+    }
+    if (userCouponDTO.getValidUntil() != null) {
+      userCouponResponse.validUntil(userCouponDTO.getValidUntil());
+    }
+    if (userCouponDTO.getMinOrderPrice() != null) {
+      userCouponResponse.minOrderPrice(userCouponDTO.getMinOrderPrice());
+    }
+
+    return userCouponResponse.build();
   }
 
   protected UserCouponResponse userCouponResponseDTOToUserCouponResponse(

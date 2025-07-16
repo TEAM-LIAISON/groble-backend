@@ -20,5 +20,6 @@ public class FlatContentPreviewDTO {
   private String sellerName;
   private BigDecimal lowestPrice;
   private int priceOptionLength;
+  private Boolean isAvailableForSale;
   private String status;
 }

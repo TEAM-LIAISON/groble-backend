@@ -6,11 +6,14 @@ import org.springframework.transaction.annotation.Transactional;
 import liaison.groble.application.content.ContentReader;
 import liaison.groble.application.content.ContentReviewReader;
 import liaison.groble.application.content.ContentReviewWriter;
+import liaison.groble.application.order.service.OrderReader;
 import liaison.groble.application.purchase.dto.PurchaserContentReviewDTO;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.content.entity.ContentReview;
 import liaison.groble.domain.content.enums.ReviewStatus;
+import liaison.groble.domain.order.entity.Order;
+import liaison.groble.domain.purchase.entity.Purchase;
 import liaison.groble.domain.user.entity.User;
 
 import lombok.RequiredArgsConstructor;
@@ -29,19 +32,22 @@ public class PurchaserReviewService {
 
   // Writer
   private final ContentReviewWriter contentReviewWriter;
+  private final OrderReader orderReader;
 
   @Transactional
   public PurchaserContentReviewDTO addReview(
-      Long userId, Long contentId, PurchaserContentReviewDTO purchaserContentReviewDTO) {
+      Long userId, String merchantUid, PurchaserContentReviewDTO purchaserContentReviewDTO) {
 
+    Order order = orderReader.getOrderByMerchantUid(merchantUid);
     User user = userReader.getUserById(userId);
-    Content content = contentReader.getContentById(contentId);
+    Purchase purchase = purchaseReader.getPurchaseByOrderId(order.getId());
+    Content content = purchase.getContent();
 
-    if (!purchaseReader.isContentPurchasedByUser(userId, contentId)) {
+    if (!purchaseReader.isContentPurchasedByUser(userId, content.getId())) {
       throw new IllegalArgumentException("사용자가 해당 콘텐츠를 구매하지 않았습니다.");
     }
 
-    if (contentReviewReader.existsContentReview(userId, contentId)) {
+    if (contentReviewReader.existsContentReview(userId, content.getId())) {
       throw new IllegalArgumentException("이미 해당 콘텐츠에 대한 리뷰가 존재합니다.");
     }
 
@@ -49,6 +55,7 @@ public class PurchaserReviewService {
         ContentReview.builder()
             .user(user)
             .content(content)
+            .purchase(purchase)
             .rating(purchaserContentReviewDTO.getRating())
             .reviewContent(purchaserContentReviewDTO.getReviewContent())
             .reviewStatus(ReviewStatus.ACTIVE)
@@ -64,11 +71,9 @@ public class PurchaserReviewService {
 
   @Transactional
   public PurchaserContentReviewDTO updateReview(
-      Long userId,
-      Long contentId,
-      Long reviewId,
-      PurchaserContentReviewDTO purchaserContentReviewDTO) {
-    ContentReview contentReview = contentReviewReader.getContentReview(userId, contentId, reviewId);
+      Long userId, Long reviewId, PurchaserContentReviewDTO purchaserContentReviewDTO) {
+
+    ContentReview contentReview = contentReviewReader.getContentReview(userId, reviewId);
     contentReview.updateReview(
         purchaserContentReviewDTO.getRating(), purchaserContentReviewDTO.getReviewContent());
 
@@ -79,8 +84,8 @@ public class PurchaserReviewService {
   }
 
   @Transactional
-  public void deleteReview(Long userId, Long contentId, Long reviewId) {
-    ContentReview contentReview = contentReviewReader.getContentReview(userId, contentId, reviewId);
+  public void deleteReview(Long userId, Long reviewId) {
+    ContentReview contentReview = contentReviewReader.getContentReview(userId, reviewId);
     contentReviewWriter.deleteContentReview(userId, contentReview.getId());
   }
 }

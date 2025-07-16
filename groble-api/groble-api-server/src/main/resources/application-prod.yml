@@ -67,7 +67,7 @@ spring:
         order_inserts: true
         order_updates: true
     hibernate:
-      ddl-auto: update
+      ddl-auto: create
   mvc:
     path match:
       matching-strategy: ant_path_matcher
@@ -132,3 +132,28 @@ logging:
     org.apache.http: WARN         # Set HTTP client to WARN level
     org.apache.http.wire: WARN    # Specifically disable wire logging
     com.amazonaws: INFO           # Control AWS SDK logging
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+    prometheus:
+      enabled: true
+    metrics:
+      export:
+        prometheus:
+          enabled: true
+      distribution:
+        percentiles-histogram:
+          http.server.requests: true
+      tags:
+        application: ${spring.application.name}
+        environment: ${server.env}
+    observations:
+      key-values:
+        application: ${spring.application.name}
