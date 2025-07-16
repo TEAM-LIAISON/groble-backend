@@ -24,6 +24,7 @@ public interface SellMapper extends PageResponseMapper {
   ReplyContentDTO toReplyContentDTO(ReplyContentRequest replyContentRequest);
 
   // ====== 📤 DTO → Response 변환 ======
+  @Mapping(source = "title", target = "title")
   @Mapping(source = "sellManageDetail", target = "contentSellDetail")
   @Mapping(source = "contentSellDetailList", target = "contentSellList")
   @Mapping(source = "contentReviewDetailList", target = "contentReviewList")
