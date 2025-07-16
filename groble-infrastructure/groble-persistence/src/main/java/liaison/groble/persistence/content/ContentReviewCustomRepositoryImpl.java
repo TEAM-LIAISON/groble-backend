@@ -142,14 +142,6 @@ public class ContentReviewCustomRepositoryImpl implements ContentReviewCustomRep
     QPurchase qPurchase = QPurchase.purchase;
     QContentReview qContentReview = QContentReview.contentReview;
 
-    Expression<String> selectedOptionNameExpression =
-        ExpressionUtils.as(
-            select(qPurchase.selectedOptionName)
-                .from(qPurchase)
-                .where(qPurchase.user.id.eq(userId), qPurchase.content.id.eq(contentId))
-                .limit(1),
-            "selectedOptionName");
-
     // 기본 조건 설정 (특정 reviewId를 가진 리뷰를 찾고, 해당 리뷰가 특정 contentId에 속하고 판매자가 이를 조회했는지 확인)
     BooleanExpression conditions =
         qContentReview
@@ -169,11 +161,12 @@ public class ContentReviewCustomRepositoryImpl implements ContentReviewCustomRep
                     qContentReview.createdAt.as("createdAt"),
                     qUser.userProfile.nickname.as("reviewerNickname"),
                     qContentReview.reviewContent.as("reviewContent"),
-                    selectedOptionNameExpression,
+                    qPurchase.selectedOptionName.as("selectedOptionName"),
                     qContentReview.rating.as("rating")))
             .from(qContentReview)
             .leftJoin(qContentReview.content, qContent)
             .leftJoin(qContentReview.user, qUser)
+            .leftJoin(qContentReview.purchase, qPurchase)
             .where(conditions)
             .fetchOne();
 

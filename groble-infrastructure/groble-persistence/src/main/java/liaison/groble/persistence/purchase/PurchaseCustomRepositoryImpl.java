@@ -176,7 +176,7 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
                 Projections.fields(
                     FlatContentSellDetailDTO.class,
                     qPurchase.id.as("purchaseId"),
-                    qContent.title.as("title"),
+                    qContent.title.as("contentTitle"),
                     qPurchase.purchasedAt.as("purchasedAt"),
                     qUser.userProfile.nickname.as("purchaserNickname"),
                     // 조건부 이메일 처리
