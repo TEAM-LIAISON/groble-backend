@@ -12,7 +12,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class DiscordDeleteReviewRequestReportService implements DeleteReviewRequestReportService {
 
-  @Value("${discord.webhook.alert.content-register.url}")
+  @Value("${discord.webhook.alert.delete-review-request.url}")
   private String url;
 
   private final DiscordService discordService;
