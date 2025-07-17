@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-import liaison.groble.api.model.notification.response.NotificationItems;
+import liaison.groble.api.model.notification.response.NotificationItemsResponse;
 import liaison.groble.api.model.notification.response.swagger.NotificationExamples;
 import liaison.groble.api.model.notification.response.swagger.NotificationItemsApiResponse;
 import liaison.groble.common.annotation.Auth;
@@ -110,6 +110,6 @@ public interface NotificationApi {
     @ApiResponse(responseCode = "404", description = "알림 목록 정보를 찾을 수 없음")
   })
   @GetMapping
-  ResponseEntity<GrobleResponse<NotificationItems>> getNotifications(
+  ResponseEntity<GrobleResponse<NotificationItemsResponse>> getNotifications(
       @Parameter(hidden = true) @Auth Accessor accessor);
 }

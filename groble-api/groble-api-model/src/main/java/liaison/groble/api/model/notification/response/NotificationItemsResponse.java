@@ -14,9 +14,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Schema(description = "알림 목록 응답")
-public class NotificationItems {
+public class NotificationItemsResponse {
 
   @Schema(description = "알림 목록 리스트")
   @Builder.Default
-  private List<NotificationItem> notificationItems = new ArrayList<>();
+  private List<NotificationItemResponse> notificationItems = new ArrayList<>();
 }

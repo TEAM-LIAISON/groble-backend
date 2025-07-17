@@ -8,6 +8,6 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public class NotificationItemsDto {
-  @Builder.Default private List<NotificationItemDto> notificationItems = new ArrayList<>();
+public class NotificationItemsDTO {
+  @Builder.Default private List<NotificationItemDTO> notificationItems = new ArrayList<>();
 }

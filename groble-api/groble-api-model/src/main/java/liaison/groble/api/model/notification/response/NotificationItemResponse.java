@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Schema(description = "알림 아이템")
-public class NotificationItem {
+public class NotificationItemResponse {
   @Schema(description = "알림 ID")
   private Long notificationId;
 
@@ -45,5 +45,5 @@ public class NotificationItem {
   private LocalDateTime notificationOccurTime;
 
   @Schema(description = "알림 상세 정보")
-  private NotificationDetails notificationDetails;
+  private NotificationDetailsResponse notificationDetails;
 }
