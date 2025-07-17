@@ -9,10 +9,11 @@ import org.mapstruct.Mapper;
 import liaison.groble.common.response.PageResponse;
 import liaison.groble.mapping.config.GrobleMapperConfig;
 import liaison.groble.mapping.content.ContentReplyMapper;
+import liaison.groble.mapping.sell.SellMapper;
 
 @Mapper(
     config = GrobleMapperConfig.class,
-    uses = {ContentReplyMapper.class})
+    uses = {ContentReplyMapper.class, SellMapper.class})
 public interface PageResponseMapper {
   default <S, T> PageResponse<T> toPageResponse(
       PageResponse<S> sourcePage, Function<S, T> converter) {

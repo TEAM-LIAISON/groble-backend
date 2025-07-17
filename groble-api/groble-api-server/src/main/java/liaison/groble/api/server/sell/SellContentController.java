@@ -161,7 +161,7 @@ public class SellContentController {
 
   // 내 스토어 - 상품 관리 - 리뷰 내역 상세 - 리뷰 삭제 요청
   @Operation(
-      summary = "[❌ 내 스토어 - 상품 관리 - 리뷰 내역 상세 - 리뷰 삭제 요청] 리뷰 삭제 요청",
+      summary = "[✅ 내 스토어 - 상품 관리 - 리뷰 내역 상세 - 리뷰 삭제 요청] 리뷰 삭제 요청",
       description = "특정 상품에 달린 리뷰를 삭제 요청합니다.")
   @ApiResponse(responseCode = "200", description = "리뷰 삭제 요청에 성공하였습니다.")
   @RequireRole("ROLE_SELLER")
@@ -175,7 +175,7 @@ public class SellContentController {
 
   // 내 스토어 - 상품 관리 - 리뷰 내역 상세 - 리뷰 답글 달기 [해당 콘텐츠의 게시자만 가능]
   @Operation(
-      summary = "[❌ 내 스토어 - 상품 관리 - 리뷰 내역 상세 - 리뷰 답글 달기] 리뷰 답글 달기",
+      summary = "[✅ 내 스토어 - 상품 관리 - 리뷰 내역 상세 - 리뷰 답글 달기] 리뷰 답글 달기",
       description = "특정 콘텐츠에 달린 리뷰에 답글을 작성합니다.")
   @ApiResponse(
       responseCode = "200",
@@ -202,10 +202,10 @@ public class SellContentController {
 
   // 내 스토어 - 상품 관리 - 리뷰 내역 상세 - 리뷰 댓글 수정
   @Operation(
-      summary = "[❌ 내 스토어 - 상품 관리 - 리뷰 내역 상세 - 리뷰 답글 수정] 리뷰 답글 수정",
+      summary = "[✅ 내 스토어 - 상품 관리 - 리뷰 내역 상세 - 리뷰 답글 수정] 리뷰 답글 수정",
       description = "특정 콘텐츠에 달린 리뷰에 답글을 수정합니다.")
   @RequireRole("ROLE_SELLER")
-  @GetMapping(UPDATE_REVIEW_REPLY_PATH)
+  @PostMapping(UPDATE_REVIEW_REPLY_PATH)
   public ResponseEntity<GrobleResponse<ReplyContentResponse>> updateReviewReply(
       @Auth Accessor accessor,
       @PathVariable("reviewId") Long reviewId,
@@ -222,10 +222,10 @@ public class SellContentController {
 
   // 내 스토어 - 상품 관리 - 리뷰 내역 상세 - 리뷰 댓글 삭제
   @Operation(
-      summary = "[❌ 내 스토어 - 상품 관리 - 리뷰 내역 상세 - 리뷰 답글 수정] 리뷰 답글 삭제",
+      summary = "[✅ 내 스토어 - 상품 관리 - 리뷰 내역 상세 - 리뷰 답글 삭제] 리뷰 답글 삭제",
       description = "특정 콘텐츠에 달린 리뷰에 답글을 삭제합니다.")
   @RequireRole("ROLE_SELLER")
-  @GetMapping(DELETE_REVIEW_REPLY_PATH)
+  @PostMapping(DELETE_REVIEW_REPLY_PATH)
   public ResponseEntity<GrobleResponse<Void>> deleteReviewReply(
       @Auth Accessor accessor,
       @PathVariable("reviewId") Long reviewId,

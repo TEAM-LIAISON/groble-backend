@@ -92,6 +92,7 @@ public class ContentReviewCustomRepositoryImpl implements ContentReviewCustomRep
                 Projections.fields(
                     FlatContentReviewDetailDTO.class,
                     qContentReview.id.as("reviewId"),
+                    qContentReview.reviewStatus.stringValue().as("reviewStatus"),
                     qContent.title.as("contentTitle"),
                     qContentReview.createdAt.as("createdAt"),
                     qUser.userProfile.nickname.as("reviewerNickname"),
@@ -141,14 +142,19 @@ public class ContentReviewCustomRepositoryImpl implements ContentReviewCustomRep
     QPurchase qPurchase = QPurchase.purchase;
     QContentReview qContentReview = QContentReview.contentReview;
 
-    // 기본 조건 설정 (특정 reviewId를 가진 리뷰를 찾고, 해당 리뷰가 특정 contentId에 속하고 판매자가 이를 조회했는지 확인)
+    BooleanExpression statusOk =
+        qContentReview
+            .reviewStatus
+            .eq(ReviewStatus.ACTIVE)
+            .or(qContentReview.reviewStatus.eq(ReviewStatus.PENDING_DELETE));
+
     BooleanExpression conditions =
         qContentReview
             .id
             .eq(reviewId)
             .and(qContentReview.content.id.eq(contentId))
             .and(qContent.user.id.eq(userId))
-            .and(qContentReview.reviewStatus.eq(ReviewStatus.ACTIVE));
+            .and(statusOk);
 
     FlatContentReviewDetailDTO result =
         jpaQueryFactory
@@ -281,7 +287,7 @@ public class ContentReviewCustomRepositoryImpl implements ContentReviewCustomRep
         .update(qContentReview)
         .set(qContentReview.reviewStatus, ReviewStatus.PENDING_DELETE)
         .set(qContentReview.deletionRequestedAt, LocalDateTime.now())
-        .where(qContentReview.id.eq(reviewId).and(qContentReview.user.id.eq(userId)))
+        .where(qContentReview.id.eq(reviewId).and(qContentReview.content.user.id.eq(userId)))
         .execute();
   }
 

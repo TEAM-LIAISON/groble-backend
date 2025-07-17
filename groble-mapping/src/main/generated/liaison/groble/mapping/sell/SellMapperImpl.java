@@ -25,7 +25,7 @@ import liaison.groble.mapping.content.ContentReplyMapper;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-07-17T03:54:09+0900",
+    date = "2025-07-17T15:52:22+0900",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.10 (Amazon.com Inc.)")
 @Component
 public class SellMapperImpl implements SellMapper {
@@ -160,6 +160,9 @@ public class SellMapperImpl implements SellMapper {
 
     if (contentReviewDetailDTO.getReviewId() != null) {
       contentReviewDetailResponse.reviewId(contentReviewDetailDTO.getReviewId());
+    }
+    if (contentReviewDetailDTO.getReviewStatus() != null) {
+      contentReviewDetailResponse.reviewStatus(contentReviewDetailDTO.getReviewStatus());
     }
     if (contentReviewDetailDTO.getContentTitle() != null) {
       contentReviewDetailResponse.contentTitle(contentReviewDetailDTO.getContentTitle());

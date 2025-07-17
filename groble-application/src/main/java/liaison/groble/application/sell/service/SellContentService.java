@@ -24,14 +24,18 @@ import liaison.groble.application.sell.dto.ContentSellDetailDTO;
 import liaison.groble.application.sell.dto.ReplyContentDTO;
 import liaison.groble.application.sell.dto.SellManageDetailDTO;
 import liaison.groble.application.sell.dto.SellManagePageDTO;
+import liaison.groble.application.user.service.UserReader;
 import liaison.groble.common.response.PageResponse;
 import liaison.groble.domain.content.dto.FlatContentReviewDetailDTO;
 import liaison.groble.domain.content.dto.FlatReviewReplyDTO;
 import liaison.groble.domain.content.entity.Content;
+import liaison.groble.domain.content.entity.ContentReply;
+import liaison.groble.domain.content.entity.ContentReview;
 import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.purchase.dto.FlatContentSellDetailDTO;
 import liaison.groble.domain.purchase.dto.FlatSellManageDetailDTO;
 import liaison.groble.domain.purchase.entity.Purchase;
+import liaison.groble.domain.user.entity.User;
 import liaison.groble.external.discord.dto.DeleteReviewRequestReportDTO;
 import liaison.groble.external.discord.service.content.DiscordDeleteReviewRequestReportService;
 
@@ -46,15 +50,16 @@ public class SellContentService {
   // Reader
   private final ContentReviewReader contentReviewReader;
   private final PurchaseReader purchaseReader;
+  private final OrderReader orderReader;
+  private final ContentReader contentReader;
+  private final ContentReplyReader contentReplyReader;
+  private final UserReader userReader;
 
   // Writer
   private final ContentReviewWriter contentReviewWriter;
   private final ContentReplyWriter contentReplyWriter;
 
   private final DiscordDeleteReviewRequestReportService discordDeleteReviewRequestReportService;
-  private final OrderReader orderReader;
-  private final ContentReader contentReader;
-  private final ContentReplyReader contentReplyReader;
 
   @Transactional(readOnly = true)
   public SellManagePageDTO getSellManagePage(Long userId, Long contentId) {
@@ -140,8 +145,6 @@ public class SellContentService {
                         .build())
             .toList();
 
-    log.info(reviewReplyDTOs.toString());
-
     return buildContentReviewDetail(contentReviewDetailDTO, reviewReplyDTOs);
   }
 
@@ -192,7 +195,18 @@ public class SellContentService {
   @Transactional
   public ReplyContentDTO addReviewReply(
       Long userId, Long reviewId, ReplyContentDTO replyContentDTO) {
-    contentReplyWriter.addReply(userId, reviewId, replyContentDTO.getReplyContent());
+
+    User seller = userReader.getUserById(userId);
+    ContentReview contentReview = contentReviewReader.getContentReviewById(reviewId);
+    ContentReply contentReply =
+        ContentReply.builder()
+            .contentReview(contentReview)
+            .seller(seller)
+            .replyContent(replyContentDTO.getReplyContent())
+            .isDeleted(false)
+            .build();
+
+    contentReplyWriter.save(contentReply);
     return ReplyContentDTO.builder().replyContent(replyContentDTO.getReplyContent()).build();
   }
 
@@ -254,6 +268,7 @@ public class SellContentService {
   private ContentReviewDetailDTO convertFlatDTOToDetailDTO(FlatContentReviewDetailDTO flat) {
     return ContentReviewDetailDTO.builder()
         .reviewId(flat.getReviewId())
+        .reviewStatus(flat.getReviewStatus())
         .contentTitle(flat.getContentTitle())
         .createdAt(flat.getCreatedAt())
         .reviewerNickname(flat.getReviewerNickname())

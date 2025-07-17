@@ -20,19 +20,6 @@ public class ContentReplyCustomRepositoryImpl implements ContentReplyCustomRepos
   private final JPAQueryFactory jpaQueryFactory;
 
   @Override
-  public void addReply(Long userId, Long reviewId, String replyContent) {
-    QContentReply qContentReply = QContentReply.contentReply;
-
-    jpaQueryFactory
-        .insert(qContentReply)
-        .set(qContentReply.contentReview.id, reviewId)
-        .set(qContentReply.seller.id, userId)
-        .set(qContentReply.replyContent, replyContent)
-        .set(qContentReply.isDeleted, false)
-        .execute();
-  }
-
-  @Override
   public void updateReply(Long userId, Long reviewId, Long replyId, String replyContent) {
     QContentReply qContentReply = QContentReply.contentReply;
     jpaQueryFactory
