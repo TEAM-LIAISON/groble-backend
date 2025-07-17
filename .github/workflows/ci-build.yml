@@ -169,7 +169,7 @@ jobs:
   build-prod:
     needs: test
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request' && github.base_ref == 'config/#51-cicd-pipeline-upgrade-base'
+    if: github.event_name == 'pull_request' && github.base_ref == 'config/#51-cicd-pipeline-upgrade-base'    # TODO: 브랜치명 변경
 
     outputs:
       image-tag: ${{ steps.build-info.outputs.image-tag }}
@@ -307,7 +307,7 @@ jobs:
   trigger-cd-prod:
     needs: build-prod
     runs-on: ubuntu-latest
-    if: success() && github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: github.event_name == 'pull_request' && github.base_ref == 'config/#51-cicd-pipeline-upgrade-base'    # TODO: 브랜치명 변경
 
     steps:
       - name: Trigger Production Deployment
