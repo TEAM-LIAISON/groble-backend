@@ -821,4 +821,51 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
 
     return new PageImpl<>(items, pageable, total);
   }
+
+  @Override
+  public boolean isAvailableForSale(Long contentId) {
+    QContent qContent = QContent.content;
+    QDocumentOption qDocumentOption = QDocumentOption.documentOption;
+    QCoachingOption qCoachingOption = QCoachingOption.coachingOption;
+
+    // 1) 콘텐츠 필수 필드 검사
+    BooleanExpression contentValid =
+        qContent
+            .title
+            .isNotNull()
+            .and(qContent.thumbnailUrl.isNotNull())
+            .and(qContent.lowestPrice.isNotNull());
+
+    // 2) 문서 옵션이 하나라도 있는지
+    BooleanExpression hasValidDocOpt =
+        JPAExpressions.selectOne()
+            .from(qDocumentOption)
+            .where(
+                qDocumentOption.content.id.eq(contentId),
+                qDocumentOption.documentFileUrl.isNotNull())
+            .exists();
+
+    // 3) 코칭 옵션이 하나라도 있는지
+    BooleanExpression hasValidCoachOpt =
+        JPAExpressions.selectOne()
+            .from(qCoachingOption)
+            .where(
+                qCoachingOption.content.id.eq(contentId),
+                qCoachingOption.coachingPeriod.isNotNull(),
+                qCoachingOption.coachingType.isNotNull())
+            .exists();
+
+    // 4) 최종 판매 가능 조건
+    BooleanExpression saleCondition = contentValid.and(hasValidDocOpt.or(hasValidCoachOpt));
+
+    // 5) 쿼리 실행 (null 안전하게 false 반환)
+    Boolean result =
+        queryFactory
+            .select(new CaseBuilder().when(saleCondition).then(true).otherwise(false))
+            .from(qContent)
+            .where(qContent.id.eq(contentId))
+            .fetchOne();
+
+    return Boolean.TRUE.equals(result);
+  }
 }

@@ -83,4 +83,8 @@ public class ContentReader {
   public boolean existsSellingContentByUser(Long userId) {
     return contentCustomRepository.existsSellingContentByUser(userId);
   }
+
+  public boolean isAvailableForSale(Long contentId) {
+    return contentCustomRepository.isAvailableForSale(contentId);
+  }
 }

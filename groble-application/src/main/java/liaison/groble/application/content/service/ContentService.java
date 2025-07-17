@@ -986,11 +986,16 @@ public class ContentService {
   public void convertToSale(Long userId, Long contentId) {
     // 1. Content 조회 및 권한 검증
     Content content = findAndValidateUserContent(userId, contentId);
-    // 2. 상태 업데이트
-    if (content.getStatus() != ContentStatus.DRAFT) {
-      throw new IllegalArgumentException("콘텐츠는 DRAFT 상태여야 판매 가능 상태로 전환할 수 있습니다.");
+    if (contentReader.isAvailableForSale(contentId)) {
+      // 2. 상태 업데이트
+      if (content.getStatus() != ContentStatus.DRAFT) {
+        throw new IllegalArgumentException("콘텐츠는 DRAFT 상태여야 판매 가능 상태로 전환할 수 있습니다.");
+      }
+
+      content.setStatus(ContentStatus.ACTIVE);
+    } else {
+      throw new IllegalArgumentException("콘텐츠는 판매 가능한 상태가 아닙니다.");
     }
-    content.setStatus(ContentStatus.ACTIVE);
   }
 
   // 타입만 조회

@@ -56,4 +56,6 @@ public interface ContentCustomRepository {
       Pageable pageable, Long userId, List<ContentStatus> contentStatuses);
 
   boolean existsSellingContentByUser(Long userId);
+
+  boolean isAvailableForSale(Long contentId);
 }
