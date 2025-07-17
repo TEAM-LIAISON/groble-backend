@@ -170,4 +170,8 @@ public class Purchase extends BaseTimeEntity {
     this.cancelRequestedAt = LocalDateTime.now();
     this.cancelReason = reason;
   }
+
+  public void cancelPayment() {
+    this.cancelledAt = LocalDateTime.now();
+  }
 }

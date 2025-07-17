@@ -695,6 +695,7 @@ public class PayplePaymentService {
     }
 
     order.cancelOrder(reason);
+    purchase.cancelPayment();
 
     log.info(
         "결제 취소 완료 - orderId: {}, paymentId: {}, purchaseId: {}, " + "환불금액: {}원, 사유: {}",
