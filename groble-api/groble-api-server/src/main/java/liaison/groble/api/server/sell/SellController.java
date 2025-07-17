@@ -25,6 +25,7 @@ import liaison.groble.application.content.dto.ContentCardDTO;
 import liaison.groble.application.content.dto.ContentDTO;
 import liaison.groble.application.content.service.ContentService;
 import liaison.groble.common.annotation.Auth;
+import liaison.groble.common.annotation.Logging;
 import liaison.groble.common.annotation.RequireRole;
 import liaison.groble.common.model.Accessor;
 import liaison.groble.common.response.GrobleResponse;
@@ -172,6 +173,7 @@ public class SellController {
   @Operation(
       summary = "[✅ 상품 관리] 콘텐츠 판매하기 전환",
       description = "작성중인 콘텐츠를 판매하기로 전환합니다. (판매중인 콘텐츠로 이동합니다.)")
+  @Logging(item = "Content", action = "convertToSale", includeParam = true)
   @PostMapping(CONVERT_TO_SALE_PATH)
   public ResponseEntity<GrobleResponse<Void>> convertToSale(
       @Auth Accessor accessor, @PathVariable("contentId") Long contentId) {

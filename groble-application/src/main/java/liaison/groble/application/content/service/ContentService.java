@@ -983,6 +983,7 @@ public class ContentService {
     }
   }
 
+  @Transactional
   public void convertToSale(Long userId, Long contentId) {
     // 1. Content 조회 및 권한 검증
     Content content = findAndValidateUserContent(userId, contentId);
