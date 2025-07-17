@@ -1,18 +1,22 @@
 name: CD - Deploy to Production
 
 on:
-  repository_dispatch:
-    types: [deploy-production]
-  workflow_dispatch:
-    inputs:
-      image_tag:
-        description: 'Docker image tag to deploy'
-        required: true
-        type: string
-      confirm:
-        description: 'Type "DEPLOY" to confirm production deployment'
-        required: true
-        type: string
+#  repository_dispatch:
+#    types: [deploy-production]
+#  workflow_dispatch:
+#    inputs:
+#      image_tag:
+#        description: 'Docker image tag to deploy'
+#        required: true
+#        type: string
+#      confirm:
+#        description: 'Type "DEPLOY" to confirm production deployment'
+#        required: true
+#        type: string
+  push:
+    branches: [ "config/#51-cicd-pipeline-upgrade-base", "main", "develop" ]
+  pull_request:
+    branches: [ "config/#51-cicd-pipeline-upgrade-base", "main", "develop" ]
 
 permissions:
   contents: read
