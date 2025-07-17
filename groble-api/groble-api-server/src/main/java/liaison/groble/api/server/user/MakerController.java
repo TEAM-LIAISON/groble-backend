@@ -49,7 +49,7 @@ public class MakerController {
   // Helper
 
   /** 메이커 이용약관 동의 API */
-  @Operation(summary = "메이커 이용약관 동의", description = "메이커(판매자)로 활동하기 위한 이용약관에 동의합니다.")
+  @Operation(summary = "[✅ 메이커 이용약관 동의]", description = "메이커(판매자)로 활동하기 위한 이용약관에 동의합니다.")
   @PostMapping(TERMS_AGREE_PATH)
   public ResponseEntity<GrobleResponse<MakerTermsAgreementResponse>> agreeMakerTerms(
       @Auth Accessor accessor,

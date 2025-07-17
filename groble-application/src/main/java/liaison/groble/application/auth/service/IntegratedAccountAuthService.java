@@ -11,8 +11,8 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import liaison.groble.application.auth.dto.SignInAuthResultDTO;
 import liaison.groble.application.auth.dto.SignInDTO;
 import liaison.groble.application.auth.dto.SignUpAuthResultDTO;
-import liaison.groble.application.auth.dto.SignUpDto;
-import liaison.groble.application.auth.dto.TokenDto;
+import liaison.groble.application.auth.dto.SignUpDTO;
+import liaison.groble.application.auth.dto.TokenDTO;
 import liaison.groble.application.auth.helper.AuthValidationHelper;
 import liaison.groble.application.auth.helper.TermsHelper;
 import liaison.groble.application.auth.helper.TokenHelper;
@@ -59,7 +59,7 @@ public class IntegratedAccountAuthService {
   private final UserHelper userHelper;
 
   @Transactional
-  public SignUpAuthResultDTO integratedAccountSignUp(SignUpDto signUpDto) {
+  public SignUpAuthResultDTO integratedAccountSignUp(SignUpDTO signUpDto) {
     // 1. 사전 검증
     UserType userType = validateSignUpRequest(signUpDto);
     List<TermsType> agreedTermsTypes = validateAndProcessTerms(signUpDto, userType);
@@ -73,7 +73,7 @@ public class IntegratedAccountAuthService {
       User savedUser = userRepository.save(user);
 
       // 4. 토큰 발급 및 저장
-      TokenDto tokenDto = issueAndSaveTokens(savedUser);
+      TokenDTO tokenDto = issueAndSaveTokens(savedUser);
 
       // 5. 비동기 후처리 작업
       processPostSignUpTasks(signUpDto.getEmail(), savedUser);
@@ -91,7 +91,7 @@ public class IntegratedAccountAuthService {
       termsHelper.processTermsAgreements(existingUser, agreedTermsTypes);
 
       User savedUser = userRepository.save(existingUser);
-      TokenDto tokenDto = tokenHelper.issueTokens(savedUser);
+      TokenDTO tokenDto = tokenHelper.issueTokens(savedUser);
       processPostSignUpTasks(signUpDto.getEmail(), savedUser);
       return buildSignUpResult(signUpDto.getEmail(), tokenDto);
     }
@@ -118,14 +118,14 @@ public class IntegratedAccountAuthService {
   // Private helper methods - 회원가입 관련
 
   /** 회원가입 요청 사전 검증 */
-  private UserType validateSignUpRequest(SignUpDto signUpDto) {
+  private UserType validateSignUpRequest(SignUpDTO signUpDto) {
     UserType userType = authValidationHelper.validateAndParseUserType(signUpDto.getUserType());
     authValidationHelper.validateEmailVerification(signUpDto.getEmail());
     return userType;
   }
 
   /** 약관 검증 및 처리 */
-  private List<TermsType> validateAndProcessTerms(SignUpDto signUpDto, UserType userType) {
+  private List<TermsType> validateAndProcessTerms(SignUpDTO signUpDto, UserType userType) {
     List<TermsType> agreedTermsTypes =
         termsHelper.convertToTermsTypes(signUpDto.getTermsTypeStrings());
     termsHelper.validateRequiredTermsAgreement(agreedTermsTypes, userType);
@@ -134,7 +134,7 @@ public class IntegratedAccountAuthService {
 
   /** 사용자 생성 및 기본 설정 */
   private User createAndSetupUser(
-      SignUpDto signUpDto, UserType userType, List<TermsType> agreedTermsTypes) {
+      SignUpDTO signUpDto, UserType userType, List<TermsType> agreedTermsTypes) {
     String encodedPassword = securityPort.encodePassword(signUpDto.getPassword());
 
     User user = createUserByType(signUpDto.getEmail(), encodedPassword, userType);
@@ -163,8 +163,8 @@ public class IntegratedAccountAuthService {
   }
 
   /** 토큰 발급 및 저장 */
-  private TokenDto issueAndSaveTokens(User user) {
-    TokenDto tokenDto = tokenHelper.issueTokens(user);
+  private TokenDTO issueAndSaveTokens(User user) {
+    TokenDTO tokenDto = tokenHelper.issueTokens(user);
 
     user.updateRefreshToken(
         tokenDto.getRefreshToken(),
@@ -197,7 +197,7 @@ public class IntegratedAccountAuthService {
   }
 
   /** 회원가입 결과 DTO 생성 */
-  private SignUpAuthResultDTO buildSignUpResult(String email, TokenDto tokenDto) {
+  private SignUpAuthResultDTO buildSignUpResult(String email, TokenDTO tokenDto) {
     return SignUpAuthResultDTO.builder()
         .email(email)
         .accessToken(tokenDto.getAccessToken())

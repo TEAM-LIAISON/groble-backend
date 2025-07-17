@@ -7,7 +7,7 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public class SignUpDto {
+public class SignUpDTO {
   private String userType;
   private List<String> termsTypeStrings;
   private String email;

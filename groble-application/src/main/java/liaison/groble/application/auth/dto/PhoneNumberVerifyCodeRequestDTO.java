@@ -5,7 +5,7 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public class PhoneNumberVerifyCodeRequestDto {
+public class PhoneNumberVerifyCodeRequestDTO {
   private String phoneNumber;
   private String verifyCode; // 인증 코드
 }

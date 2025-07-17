@@ -17,7 +17,7 @@ import liaison.groble.api.model.auth.response.SignUpResponse;
 import liaison.groble.application.auth.dto.SignInAuthResultDTO;
 import liaison.groble.application.auth.dto.SignInDTO;
 import liaison.groble.application.auth.dto.SignUpAuthResultDTO;
-import liaison.groble.application.auth.dto.SignUpDto;
+import liaison.groble.application.auth.dto.SignUpDTO;
 import liaison.groble.application.auth.service.IntegratedAccountAuthService;
 import liaison.groble.common.response.GrobleResponse;
 import liaison.groble.common.response.ResponseHelper;
@@ -112,7 +112,7 @@ public class IntegratedAccountAuthController {
       HttpServletResponse response) {
 
     // 회원가입 처리
-    SignUpDto signUpDto = authMapper.toSignUpDto(request);
+    SignUpDTO signUpDto = authMapper.toSignUpDto(request);
     SignUpAuthResultDTO authResult =
         integratedAccountAuthService.integratedAccountSignUp(signUpDto);
 

@@ -12,17 +12,17 @@ import liaison.groble.api.model.auth.request.UserWithdrawalRequest;
 import liaison.groble.api.model.auth.request.VerifyEmailCodeRequest;
 import liaison.groble.api.model.auth.response.SignInResponse;
 import liaison.groble.api.model.auth.response.SignInTestResponse;
-import liaison.groble.application.auth.dto.PhoneNumberVerifyCodeRequestDto;
-import liaison.groble.application.auth.dto.PhoneNumberVerifyRequestDto;
+import liaison.groble.application.auth.dto.PhoneNumberVerifyCodeRequestDTO;
+import liaison.groble.application.auth.dto.PhoneNumberVerifyRequestDTO;
 import liaison.groble.application.auth.dto.SignInAuthResultDTO;
 import liaison.groble.application.auth.dto.SignInDTO;
-import liaison.groble.application.auth.dto.SignUpDto;
+import liaison.groble.application.auth.dto.SignUpDTO;
 import liaison.groble.application.auth.dto.UserWithdrawalDTO;
 import liaison.groble.application.auth.dto.VerifyEmailCodeDTO;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-07-17T20:47:44+0900",
+    date = "2025-07-17T21:21:43+0900",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.10 (Amazon.com Inc.)")
 @Component
 public class AuthMapperImpl implements AuthMapper {
@@ -46,26 +46,26 @@ public class AuthMapperImpl implements AuthMapper {
   }
 
   @Override
-  public SignUpDto toSignUpDto(SignUpRequest request) {
+  public SignUpDTO toSignUpDto(SignUpRequest request) {
     if (request == null) {
       return null;
     }
 
-    SignUpDto.SignUpDtoBuilder signUpDto = SignUpDto.builder();
+    SignUpDTO.SignUpDTOBuilder signUpDTO = SignUpDTO.builder();
 
     if (request.getUserType() != null) {
-      signUpDto.userType(request.getUserType());
+      signUpDTO.userType(request.getUserType());
     }
     if (request.getEmail() != null) {
-      signUpDto.email(request.getEmail());
+      signUpDTO.email(request.getEmail());
     }
     if (request.getPassword() != null) {
-      signUpDto.password(request.getPassword());
+      signUpDTO.password(request.getPassword());
     }
 
-    signUpDto.termsTypeStrings(request.getTermsTypes().stream().map(Enum::name).toList());
+    signUpDTO.termsTypeStrings(request.getTermsTypes().stream().map(Enum::name).toList());
 
-    return signUpDto.build();
+    return signUpDTO.build();
   }
 
   @Override
@@ -151,39 +151,39 @@ public class AuthMapperImpl implements AuthMapper {
   }
 
   @Override
-  public PhoneNumberVerifyRequestDto toPhoneNumberVerifyRequestDto(
+  public PhoneNumberVerifyRequestDTO toPhoneNumberVerifyRequestDto(
       PhoneNumberVerifyRequest request) {
     if (request == null) {
       return null;
     }
 
-    PhoneNumberVerifyRequestDto.PhoneNumberVerifyRequestDtoBuilder phoneNumberVerifyRequestDto =
-        PhoneNumberVerifyRequestDto.builder();
+    PhoneNumberVerifyRequestDTO.PhoneNumberVerifyRequestDTOBuilder phoneNumberVerifyRequestDTO =
+        PhoneNumberVerifyRequestDTO.builder();
 
     if (request.getPhoneNumber() != null) {
-      phoneNumberVerifyRequestDto.phoneNumber(request.getPhoneNumber());
+      phoneNumberVerifyRequestDTO.phoneNumber(request.getPhoneNumber());
     }
 
-    return phoneNumberVerifyRequestDto.build();
+    return phoneNumberVerifyRequestDTO.build();
   }
 
   @Override
-  public PhoneNumberVerifyCodeRequestDto toPhoneNumberVerifyCodeRequestDto(
+  public PhoneNumberVerifyCodeRequestDTO toPhoneNumberVerifyCodeRequestDto(
       PhoneNumberVerifyCodeRequest request) {
     if (request == null) {
       return null;
     }
 
-    PhoneNumberVerifyCodeRequestDto.PhoneNumberVerifyCodeRequestDtoBuilder
-        phoneNumberVerifyCodeRequestDto = PhoneNumberVerifyCodeRequestDto.builder();
+    PhoneNumberVerifyCodeRequestDTO.PhoneNumberVerifyCodeRequestDTOBuilder
+        phoneNumberVerifyCodeRequestDTO = PhoneNumberVerifyCodeRequestDTO.builder();
 
     if (request.getVerificationCode() != null) {
-      phoneNumberVerifyCodeRequestDto.verifyCode(request.getVerificationCode());
+      phoneNumberVerifyCodeRequestDTO.verifyCode(request.getVerificationCode());
     }
     if (request.getPhoneNumber() != null) {
-      phoneNumberVerifyCodeRequestDto.phoneNumber(request.getPhoneNumber());
+      phoneNumberVerifyCodeRequestDTO.phoneNumber(request.getPhoneNumber());
     }
 
-    return phoneNumberVerifyCodeRequestDto.build();
+    return phoneNumberVerifyCodeRequestDTO.build();
   }
 }
