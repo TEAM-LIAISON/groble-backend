@@ -1,0 +1,368 @@
+name: CI - Build, Test & Push to ECR
+
+on:
+  push:
+    branches: [ "config/#51-cicd-pipeline-upgrade-base", "main", "develop" ]
+  pull_request:
+    branches: [ "config/#51-cicd-pipeline-upgrade-base", "main", "develop" ]
+
+permissions:
+  contents: read
+
+env:
+  AWS_REGION: ap-northeast-2
+  AWS_ACCOUNT_ID: 538827147369
+  ECS_CLUSTER: groble-cluster
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Gradle Caching
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./gradlew
+
+#      - name: Run tests
+#        run: ./gradlew test
+#
+#      - name: Upload test results
+#        uses: actions/upload-artifact@v4
+#        if: always()
+#        with:
+#          name: test-results-${{ github.sha }}
+#          path: '**/build/test-results/test/TEST-*.xml'
+
+#  build-dev:
+#    needs: test
+#    runs-on: ubuntu-latest
+#    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+#
+#    outputs:
+#      image-tag: ${{ steps.build-info.outputs.image-tag }}
+#      image-uri: ${{ steps.build-info.outputs.image-uri }}
+#      short-sha: ${{ steps.build-info.outputs.short-sha }}
+#
+#    steps:
+#      - name: Checkout source
+#        uses: actions/checkout@v4
+#
+#      - name: Setup Java
+#        uses: actions/setup-java@v4
+#        with:
+#          distribution: 'temurin'
+#          java-version: '17'
+#
+#      - name: Gradle Caching
+#        uses: actions/cache@v3
+#        with:
+#          path: |
+#            ~/.gradle/caches
+#            ~/.gradle/wrapper
+#          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+#          restore-keys: |
+#            ${{ runner.os }}-gradle-
+#
+#      - name: Grant execute permission for gradlew
+#        run: chmod +x ./gradlew
+#
+#      - name: Build Project with Gradle (Development)
+#        run: |
+#          echo ${{ secrets.APPLICATION_SECRET_DEV }} | base64 --decode > groble-api/groble-api-server/src/main/resources/application-secret-dev.yml
+#          ./gradlew :groble-api:groble-api-server:bootJar
+#
+#      - name: Configure AWS credentials
+#        uses: aws-actions/configure-aws-credentials@v4
+#        with:
+#          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+#          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+#          aws-region: ${{ env.AWS_REGION }}
+#
+#      - name: Login to Amazon ECR
+#        id: login-ecr
+#        uses: aws-actions/amazon-ecr-login@v2
+#
+#      - name: Build info
+#        id: build-info
+#        run: |
+#          SHORT_SHA=${GITHUB_SHA::7}
+#          TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+#          IMAGE_TAG="dev-${SHORT_SHA}-${TIMESTAMP}"
+#          IMAGE_URI="${{ steps.login-ecr.outputs.registry }}/groble-dev-spring-api:$IMAGE_TAG"
+#
+#          echo "image-tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
+#          echo "image-uri=$IMAGE_URI" >> $GITHUB_OUTPUT
+#          echo "short-sha=$SHORT_SHA" >> $GITHUB_OUTPUT
+#
+#      - name: Build and push Docker image to ECR (Development)
+#        env:
+#          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+#          ECR_REPOSITORY: groble-dev-spring-api
+#          IMAGE_TAG: ${{ steps.build-info.outputs.image-tag }}
+#        run: |
+#          echo "🐳 Building Docker image for Development..."
+#
+#          # Docker 이미지 빌드
+#          docker build \
+#            --platform linux/amd64 \
+#            --build-arg JAR_FILE=groble-api/groble-api-server/build/libs/groble-api-server-0.0.1-SNAPSHOT.jar \
+#            -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
+#            -t $ECR_REGISTRY/$ECR_REPOSITORY:dev-latest .
+#
+#          # ECR에 푸시
+#          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+#          docker push $ECR_REGISTRY/$ECR_REPOSITORY:dev-latest
+#
+#          echo "✅ Pushed image: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+#
+#      - name: Generate deployment artifacts (Development)
+#        run: |
+#          # 배포 메타데이터 생성
+#          mkdir -p artifacts
+#
+#          cat > artifacts/deployment-info.json << EOF
+#          {
+#            "environment": "development",
+#            "image_tag": "${{ steps.build-info.outputs.image-tag }}",
+#            "image_uri": "${{ steps.build-info.outputs.image-uri }}",
+#            "commit_sha": "${{ github.sha }}",
+#            "short_sha": "${{ steps.build-info.outputs.short-sha }}",
+#            "branch": "${{ github.ref_name }}",
+#            "actor": "${{ github.actor }}",
+#            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+#            "workflow_run_id": "${{ github.run_id }}",
+#            "ecr_repository": "groble-dev-spring-api",
+#            "ecs_cluster": "${{ env.ECS_CLUSTER }}",
+#            "ecs_service": "groble-dev-service",
+#            "task_definition": "groble-dev-task",
+#            "deployment_group": "groble-dev-deployment-group"
+#          }
+#          EOF
+#
+#          echo "📄 Deployment info generated:"
+#          cat artifacts/deployment-info.json
+#
+#      - name: Upload deployment artifacts (Development)
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: dev-deployment-artifacts-${{ github.sha }}
+#          path: artifacts/
+#          retention-days: 7
+
+  build-prod:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && github.base_ref == 'config/#51-cicd-pipeline-upgrade-base'    # TODO: 브랜치명 변경
+
+    outputs:
+      image-tag: ${{ steps.build-info.outputs.image-tag }}
+      image-uri: ${{ steps.build-info.outputs.image-uri }}
+      short-sha: ${{ steps.build-info.outputs.short-sha }}
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Gradle Caching
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./gradlew
+
+      - name: Build Project with Gradle (Production)
+        run: |
+          echo ${{ secrets.APPLICATION_SECRET_PROD }} | base64 --decode > groble-api/groble-api-server/src/main/resources/application-secret-prod.yml
+          ./gradlew :groble-api:groble-api-server:bootJar
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build info
+        id: build-info
+        run: |
+          SHORT_SHA=${GITHUB_SHA::7}
+          TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+          IMAGE_TAG="prod-${SHORT_SHA}-${TIMESTAMP}"
+          IMAGE_URI="${{ steps.login-ecr.outputs.registry }}/groble-prod-spring-api:$IMAGE_TAG"
+
+          echo "image-tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
+          echo "image-uri=$IMAGE_URI" >> $GITHUB_OUTPUT
+          echo "short-sha=$SHORT_SHA" >> $GITHUB_OUTPUT
+
+      - name: Build and push Docker image to ECR (Production)
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: groble-prod-spring-api
+          IMAGE_TAG: ${{ steps.build-info.outputs.image-tag }}
+        run: |
+          echo "🐳 Building Docker image for Production..."
+
+          # Docker 이미지 빌드
+          docker build \
+            --platform linux/amd64 \
+            --build-arg JAR_FILE=groble-api/groble-api-server/build/libs/groble-api-server-0.0.1-SNAPSHOT.jar \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY:prod-latest .
+
+          # ECR에 푸시
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:prod-latest
+
+          echo "✅ Pushed image: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+
+      - name: Generate deployment artifacts (Production)
+        run: |
+          # 배포 메타데이터 생성
+          mkdir -p artifacts
+
+          cat > artifacts/deployment-info.json << EOF
+          {
+            "environment": "production",
+            "image_tag": "${{ steps.build-info.outputs.image-tag }}",
+            "image_uri": "${{ steps.build-info.outputs.image-uri }}",
+            "commit_sha": "${{ github.sha }}",
+            "short_sha": "${{ steps.build-info.outputs.short-sha }}",
+            "branch": "${{ github.ref_name }}",
+            "actor": "${{ github.actor }}",
+            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "workflow_run_id": "${{ github.run_id }}",
+            "ecr_repository": "groble-prod-spring-api",
+            "ecs_cluster": "${{ env.ECS_CLUSTER }}",
+            "ecs_service": "groble-prod-service",
+            "task_definition": "groble-prod-task",
+            "deployment_group": "groble-prod-deployment-group"
+          }
+          EOF
+
+          echo "📄 Deployment info generated:"
+          cat artifacts/deployment-info.json
+
+      - name: Upload deployment artifacts (Production)
+        uses: actions/upload-artifact@v4
+        with:
+          name: prod-deployment-artifacts-${{ github.sha }}
+          path: artifacts/
+          retention-days: 7
+
+#  trigger-cd-dev:
+#    needs: build-dev
+#    runs-on: ubuntu-latest
+#    if: success() && github.ref == 'refs/heads/develop' && github.event_name == 'push'
+#
+#    steps:
+#      - name: Trigger Development Deployment
+#        uses: peter-evans/repository-dispatch@v3
+#        with:
+#          token: ${{ secrets.GITHUB_TOKEN }}
+#          event-type: deploy-development
+#          client-payload: |
+#            {
+#              "image_tag": "${{ needs.build-dev.outputs.image-tag }}",
+#              "image_uri": "${{ needs.build-dev.outputs.image-uri }}",
+#              "commit_sha": "${{ github.sha }}",
+#              "short_sha": "${{ needs.build-dev.outputs.short-sha }}",
+#              "actor": "${{ github.actor }}",
+#              "run_id": "${{ github.run_id }}",
+#              "environment": "development"
+#            }
+
+  trigger-cd-prod:
+    needs: build-prod
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && github.base_ref == 'config/#51-cicd-pipeline-upgrade-base'    # TODO: 브랜치명 변경
+
+    steps:
+      - name: Trigger Production Deployment
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          event-type: deploy-production
+          client-payload: |
+            {
+              "image_tag": "${{ needs.build-prod.outputs.image-tag }}",
+              "image_uri": "${{ needs.build-prod.outputs.image-uri }}",
+              "commit_sha": "${{ github.sha }}",
+              "short_sha": "${{ needs.build-prod.outputs.short-sha }}",
+              "actor": "${{ github.actor }}",
+              "run_id": "${{ github.run_id }}",
+              "environment": "production"
+            }
+
+#  notify-ci-status:
+#    needs: [test, build-dev, build-prod, trigger-cd-dev, trigger-cd-prod]
+#    runs-on: ubuntu-latest
+#    if: always()
+#
+#    steps:
+#      - name: Set notification variables
+#        id: notification
+#        run: |
+#          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+#            echo "environment=Production" >> $GITHUB_OUTPUT
+#            echo "image_tag=${{ needs.build-prod.outputs.image-tag }}" >> $GITHUB_OUTPUT
+#          elif [ "${{ github.ref }}" = "refs/heads/develop" ]; then
+#            echo "environment=Development" >> $GITHUB_OUTPUT
+#            echo "image_tag=${{ needs.build-dev.outputs.image-tag }}" >> $GITHUB_OUTPUT
+#          else
+#            echo "environment=Test Only" >> $GITHUB_OUTPUT
+#            echo "image_tag=N/A" >> $GITHUB_OUTPUT
+#          fi
+#
+#      - name: Notify CI Status
+#        uses: 8398a7/action-slack@v3
+#        if: always()
+#        with:
+#          status: ${{ job.status }}
+#          fields: repo,message,commit,author,action,eventName,ref,workflow
+#          text: |
+#            🔧 CI Pipeline ${{ job.status }}!
+#
+#            📊 Build Summary:
+#            • Environment: ${{ steps.notification.outputs.environment }}
+#            • Image Tag: ${{ steps.notification.outputs.image_tag }}
+#            • Commit: ${{ github.sha }}
+#            • Author: ${{ github.actor }}
+#            • Branch: ${{ github.ref_name }}
+#            • Event: ${{ github.event_name }}
+#
+#            ${{ github.event_name == 'push' && '🚀 Deployment triggered automatically' || '✅ Test completed for PR' }}
+#        env:
+#          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
