@@ -42,7 +42,9 @@ import liaison.groble.domain.content.repository.ContentCustomRepository;
 import liaison.groble.domain.user.entity.QUser;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Repository
 @RequiredArgsConstructor
 public class ContentCustomRepositoryImpl implements ContentCustomRepository {
@@ -176,6 +178,8 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
     QContent qContent = QContent.content;
     QUser qUser = QUser.user;
     QContentOption qContentOption = QContentOption.contentOption;
+    QDocumentOption qDocOpt = QDocumentOption.documentOption;
+    QCoachingOption qCoachOpt = QCoachingOption.coachingOption;
 
     BooleanExpression condition =
         qContent
@@ -183,6 +187,49 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
             .eq(ContentStatus.ACTIVE)
             .and(qContent.isRepresentative.isFalse())
             .and(qContent.user.id.eq(userId));
+
+    // 2) 콘텐츠 필드 유효 검사
+    BooleanExpression contentValid =
+        qContent
+            .title
+            .isNotNull()
+            .and(qContent.thumbnailUrl.isNotNull())
+            .and(qContent.lowestPrice.isNotNull());
+
+    log.info("Content Validity Check: {}", contentValid);
+
+    // 3) 문서 옵션 존재 여부 (file OR link 중 하나라도 있으면 true)
+    BooleanExpression hasValidDocOpt =
+        JPAExpressions.selectOne()
+            .from(qDocOpt)
+            .where(
+                qDocOpt.content.eq(qContent),
+                // fileUrl 이 NOT NULL 이거나 linkUrl 이 NOT NULL 이면
+                qDocOpt.documentFileUrl.isNotNull().or(qDocOpt.documentLinkUrl.isNotNull()))
+            .exists();
+
+    log.info("Has Valid DocOpt Check: {}", hasValidDocOpt);
+
+    // 4) 코칭 옵션 존재 여부
+    BooleanExpression hasValidCoachOpt =
+        JPAExpressions.selectOne()
+            .from(qCoachOpt)
+            .where(
+                qCoachOpt.content.eq(qContent),
+                qCoachOpt.coachingPeriod.isNotNull(),
+                qCoachOpt.coachingType.isNotNull())
+            .exists();
+
+    log.info("Has Valid CoachOpt Check: {}", hasValidCoachOpt);
+
+    // 5) 판매 가능 여부 식
+    Expression<Boolean> availableForSale =
+        new CaseBuilder()
+            .when(contentValid.and(hasValidDocOpt.or(hasValidCoachOpt)))
+            .then(true)
+            .otherwise(false);
+
+    log.info("Available For Sale Check: {}", availableForSale);
 
     return queryFactory
         .select(
@@ -193,11 +240,13 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                 qContent.title.as("title"),
                 qContent.thumbnailUrl.as("thumbnailUrl"),
                 qUser.userProfile.nickname.as("sellerName"),
+                qContent.lowestPrice.as("lowestPrice"),
                 ExpressionUtils.as(
                     select(qContentOption.count().intValue())
                         .from(qContentOption)
                         .where(qContentOption.content.eq(qContent)),
                     "priceOptionLength"),
+                ExpressionUtils.as(availableForSale, "isAvailableForSale"),
                 qContent.status.stringValue().as("status")))
         .from(qContent)
         .leftJoin(qContent.user, qUser)
@@ -745,10 +794,14 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
             .and(qContent.lowestPrice.isNotNull());
 
     // 3) 문서 옵션 존재 여부
+    // 3) 문서 옵션 존재 여부 (file OR link 중 하나라도 있으면 true)
     BooleanExpression hasValidDocOpt =
         JPAExpressions.selectOne()
             .from(qDocOpt)
-            .where(qDocOpt.content.eq(qContent), qDocOpt.documentFileUrl.isNotNull())
+            .where(
+                qDocOpt.content.eq(qContent),
+                // fileUrl 이 NOT NULL 이거나 linkUrl 이 NOT NULL 이면
+                qDocOpt.documentFileUrl.isNotNull().or(qDocOpt.documentLinkUrl.isNotNull()))
             .exists();
 
     // 4) 코칭 옵션 존재 여부
@@ -837,12 +890,17 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
             .and(qContent.lowestPrice.isNotNull());
 
     // 2) 문서 옵션이 하나라도 있는지
+    // 3) 문서 옵션 존재 여부 (file OR link 중 하나라도 있으면 true)
     BooleanExpression hasValidDocOpt =
         JPAExpressions.selectOne()
             .from(qDocumentOption)
             .where(
-                qDocumentOption.content.id.eq(contentId),
-                qDocumentOption.documentFileUrl.isNotNull())
+                qDocumentOption.content.eq(qContent),
+                // fileUrl 이 NOT NULL 이거나 linkUrl 이 NOT NULL 이면
+                qDocumentOption
+                    .documentFileUrl
+                    .isNotNull()
+                    .or(qDocumentOption.documentLinkUrl.isNotNull()))
             .exists();
 
     // 3) 코칭 옵션이 하나라도 있는지
