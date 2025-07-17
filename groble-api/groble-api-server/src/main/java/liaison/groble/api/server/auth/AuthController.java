@@ -68,7 +68,7 @@ public class AuthController {
       @Parameter(description = "로그인 정보", required = true) @Valid @RequestBody SignInRequest request,
       HttpServletResponse response) {
 
-    SignInDTO signInDto = authMapper.toSignInDto(request);
+    SignInDTO signInDto = authMapper.toSignInDTO(request);
     SignInAuthResultDTO signInAuthResultDTO = authService.signIn(signInDto);
 
     tokenCookieService.addTokenCookies(

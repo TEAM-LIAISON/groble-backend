@@ -77,12 +77,12 @@ public class IntegratedAccountAuthController {
       HttpServletResponse response) {
 
     // 로그인 처리
-    SignInDTO signInDto = authMapper.toSignInDto(request);
+    SignInDTO signInDTO = authMapper.toSignInDTO(request);
     SignInAuthResultDTO authResult =
-        integratedAccountAuthService.integratedAccountSignIn(signInDto);
+        integratedAccountAuthService.integratedAccountSignIn(signInDTO);
 
     // 응답 생성
-    SignInResponse signInResponse = authMapper.toSignInResponse(signInDto.getEmail(), authResult);
+    SignInResponse signInResponse = authMapper.toSignInResponse(signInDTO.getEmail(), authResult);
 
     // 토큰 쿠키 설정
     tokenCookieService.addTokenCookies(

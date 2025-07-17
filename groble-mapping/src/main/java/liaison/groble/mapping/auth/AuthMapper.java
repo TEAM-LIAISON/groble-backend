@@ -25,7 +25,7 @@ public interface AuthMapper {
 
   // ====== 📥 Request → DTO 변환 ======
   /** [통합 로그인] SignInRequest → SignInDTO */
-  SignInDTO toSignInDto(SignInRequest request);
+  SignInDTO toSignInDTO(SignInRequest request);
 
   /** [통합 회원가입] SignUpRequest → SignUpDto */
   @Mapping(

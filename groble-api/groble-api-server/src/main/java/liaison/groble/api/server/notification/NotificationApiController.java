@@ -24,7 +24,7 @@ public class NotificationApiController implements NotificationApi {
   private static final String DELETE_SUCCESS_MESSAGE = "알림이 삭제되었습니다.";
   private static final String GET_SUCCESS_MESSAGE = "알림 조회 성공";
 
-  // Serivce
+  // Service
   private final NotificationService notificationService;
 
   // Mapper

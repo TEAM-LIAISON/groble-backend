@@ -1,8 +1,6 @@
 package liaison.groble.application.auth.service;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -19,7 +17,6 @@ import liaison.groble.application.auth.helper.AuthValidationHelper;
 import liaison.groble.application.auth.helper.TermsHelper;
 import liaison.groble.application.auth.helper.TokenHelper;
 import liaison.groble.application.auth.helper.UserHelper;
-import liaison.groble.application.notification.service.NotificationService;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.common.port.security.SecurityPort;
 import liaison.groble.domain.port.VerificationCodePort;
@@ -30,8 +27,6 @@ import liaison.groble.domain.user.enums.UserType;
 import liaison.groble.domain.user.factory.UserFactory;
 import liaison.groble.domain.user.repository.UserRepository;
 import liaison.groble.domain.user.service.UserStatusService;
-import liaison.groble.external.discord.dto.MemberCreateReportDto;
-import liaison.groble.external.discord.service.DiscordMemberReportService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,9 +35,6 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 public class IntegratedAccountAuthService {
-
-  // 상수 정의
-  private static final String ASIA_SEOUL_TIMEZONE = "Asia/Seoul";
 
   // 에러 메시지 상수화
   private static final String PASSWORD_MISMATCH = "비밀번호가 일치하지 않습니다.";
@@ -65,10 +57,6 @@ public class IntegratedAccountAuthService {
   private final TermsHelper termsHelper;
   private final TokenHelper tokenHelper;
   private final UserHelper userHelper;
-
-  // Service
-  private final NotificationService notificationService;
-  private final DiscordMemberReportService discordMemberReportService;
 
   @Transactional
   public SignUpAuthResultDTO integratedAccountSignUp(SignUpDto signUpDto) {
@@ -189,13 +177,12 @@ public class IntegratedAccountAuthService {
   /** 회원가입 후 비동기 작업 처리 */
   private void processPostSignUpTasks(String email, User user) {
     // 웰컴 알림 발송
-    notificationService.sendWelcomeNotification(user);
+    //
 
     // 인증 플래그 제거 (트랜잭션 커밋 후)
     registerVerificationFlagRemoval(email);
 
     // Discord 신규 멤버 리포트
-    sendDiscordMemberReport(user);
   }
 
   /** 인증 플래그 제거 등록 */
@@ -207,20 +194,6 @@ public class IntegratedAccountAuthService {
             verificationCodePort.removeVerifiedEmailFlag(email);
           }
         });
-  }
-
-  /** Discord 신규 멤버 리포트 발송 */
-  private void sendDiscordMemberReport(User user) {
-    LocalDateTime nowInSeoul = LocalDateTime.now(ZoneId.of(ASIA_SEOUL_TIMEZONE));
-
-    MemberCreateReportDto reportDto =
-        MemberCreateReportDto.builder()
-            .userId(user.getId())
-            .nickname(user.getNickname())
-            .createdAt(nowInSeoul)
-            .build();
-
-    discordMemberReportService.sendCreateMemberReport(reportDto);
   }
 
   /** 회원가입 결과 DTO 생성 */
