@@ -5,7 +5,7 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public class VerifyPersonalMakerAccountDto {
+public class VerifyPersonalMakerAccountDTO {
   private final String bankAccountOwner;
   private final String bankName;
   private final String bankAccountNumber;

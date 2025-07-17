@@ -3,8 +3,8 @@ package liaison.groble.application.auth.service;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import liaison.groble.application.auth.dto.VerifyBusinessMakerAccountDto;
-import liaison.groble.application.auth.dto.VerifyPersonalMakerAccountDto;
+import liaison.groble.application.auth.dto.VerifyBusinessMakerAccountDTO;
+import liaison.groble.application.auth.dto.VerifyPersonalMakerAccountDTO;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.domain.role.Role;
 import liaison.groble.domain.role.repository.RoleRepository;
@@ -33,7 +33,7 @@ public class AccountVerificationService {
       discordBusinessMakerVerificationReportService;
 
   @Transactional
-  public void verifyPersonalMakerAccount(Long userId, VerifyPersonalMakerAccountDto dto) {
+  public void verifyPersonalMakerAccount(Long userId, VerifyPersonalMakerAccountDTO dto) {
     User user = userReader.getUserById(userId);
 
     // 직접 업데이트
@@ -60,7 +60,7 @@ public class AccountVerificationService {
   }
 
   @Transactional
-  public void verifyBusinessBankbook(Long userId, VerifyBusinessMakerAccountDto dto) {
+  public void verifyBusinessBankbook(Long userId, VerifyBusinessMakerAccountDTO dto) {
     User user = userReader.getUserById(userId);
 
     // 직접 업데이트
@@ -73,7 +73,7 @@ public class AccountVerificationService {
   }
 
   @Transactional
-  public void verifyBusinessAccount(Long userId, VerifyBusinessMakerAccountDto dto) {
+  public void verifyBusinessAccount(Long userId, VerifyBusinessMakerAccountDTO dto) {
     User user = userReader.getUserById(userId);
     // 직접 업데이트
     user.getSellerInfo()

@@ -25,7 +25,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 /** NotificationApi 인터페이스 OpenAPI Generator가 활성화되면 이 인터페이스는 자동 생성됩니다. 현재는 마이그레이션을 위한 임시 인터페이스입니다. */
 @RequestMapping("/api/v1/notifications")
-@Tag(name = "알림 관련 API", description = "알림 관련 API")
+@Tag(name = "[🔔 알림] 알림 삭제/조회", description = "알림 삭제 및 조회 API")
 @SecurityRequirement(name = "bearerAuth")
 public interface NotificationApi {
 

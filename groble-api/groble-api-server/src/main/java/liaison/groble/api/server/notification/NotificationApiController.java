@@ -14,7 +14,6 @@ import liaison.groble.mapping.notification.NotificationMapper;
 
 import lombok.RequiredArgsConstructor;
 
-/** NotificationApi의 구현체 OpenAPI Generator를 활성화하면 NotificationApiDelegate를 구현하게 변경 */
 @RestController
 @RequiredArgsConstructor
 public class NotificationApiController implements NotificationApi {
