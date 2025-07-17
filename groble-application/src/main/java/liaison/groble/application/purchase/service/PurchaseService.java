@@ -1,7 +1,6 @@
 package liaison.groble.application.purchase.service;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -17,8 +16,8 @@ import liaison.groble.common.exception.ContactNotFoundException;
 import liaison.groble.common.response.PageResponse;
 import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.order.entity.OrderItem;
+import liaison.groble.domain.purchase.dto.FlatPurchaseContentDetailDTO;
 import liaison.groble.domain.purchase.dto.FlatPurchaseContentPreviewDTO;
-import liaison.groble.domain.purchase.entity.Purchase;
 import liaison.groble.domain.user.entity.SellerContact;
 import liaison.groble.domain.user.entity.User;
 
@@ -34,6 +33,7 @@ public class PurchaseService {
   private final PurchaseReader purchaseReader;
   private final SellerContactReader sellerContactReader;
 
+  // 내가 구매한 콘텐츠 목록 조회
   @Transactional(readOnly = true)
   public PageResponse<PurchaseContentCardDTO> getMyPurchasedContents(
       Long userId, String state, Pageable pageable) {
@@ -54,15 +54,14 @@ public class PurchaseService {
     return PageResponse.from(page, items, meta);
   }
 
+  // 내가 구매한 콘텐츠 상세 조회
   @Transactional(readOnly = true)
   public PurchasedContentDetailDTO getMyPurchasedContent(Long userId, String merchantUid) {
-    // 주문 정보 조회
-    Order order = orderReader.getOrderByMerchantUidAndUserId(merchantUid, userId);
 
-    // 구매 정보 조회
-    Purchase purchase = purchaseReader.getPurchaseByOrderId(order.getId());
+    FlatPurchaseContentDetailDTO flatPurchaseContentDetailDTO =
+        purchaseReader.getPurchaseContentDetail(userId, merchantUid);
 
-    return toPurchasedContentDetailDTO(purchase);
+    return toPurchasedContentDetailDTO(flatPurchaseContentDetailDTO);
   }
 
   /** FlatPreviewContentDTO를 ContentCardDto로 변환합니다. */
@@ -80,46 +79,6 @@ public class PurchaseService {
         .priceOptionLength(flat.getPriceOptionLength())
         .orderStatus(flat.getOrderStatus())
         .build();
-  }
-
-  private PurchasedContentDetailDTO toPurchasedContentDetailDTO(Purchase purchase) {
-    var order = purchase.getOrder();
-    var content = purchase.getContent();
-    var seller = content.getUser();
-
-    boolean isRefundable = order.getStatus() == Order.OrderStatus.PAID;
-
-    // 1) 빌더 인스턴스 생성 ― 필수·null-불가 필드만 먼저 세팅
-    var builder =
-        PurchasedContentDetailDTO.builder()
-            .orderStatus(order.getStatus().name())
-            // 주문 정보
-            .merchantUid(order.getMerchantUid())
-            .purchasedAt(purchase.getPurchasedAt())
-            // 콘텐츠 정보
-            .contentId(content.getId())
-            .sellerName(seller.getNickname())
-            .contentTitle(content.getTitle())
-            .selectedOptionName(purchase.getSelectedOptionName())
-            .selectedOptionQuantity(1)
-            .isFreePurchase(purchase.getFinalPrice().signum() == 0)
-            .originalPrice(purchase.getOriginalPrice())
-            .discountPrice(purchase.getDiscountPrice())
-            .finalPrice(purchase.getFinalPrice())
-            .thumbnailUrl(content.getThumbnailUrl())
-            .isRefundable(isRefundable)
-            .cancelReason(getCancelReasonSafely(purchase));
-
-    // 2) null 가능 필드는 조건부로 세팅
-    if (purchase.getCancelRequestedAt() != null) {
-      builder.cancelRequestedAt(purchase.getCancelRequestedAt());
-    }
-    if (purchase.getCancelledAt() != null) {
-      builder.cancelledAt(purchase.getCancelledAt());
-    }
-
-    // 3) 최종 객체 반환
-    return builder.build();
   }
 
   @Transactional(readOnly = true)
@@ -171,7 +130,30 @@ public class PurchaseService {
     }
   }
 
-  private String getCancelReasonSafely(Purchase purchase) {
-    return Optional.ofNullable(purchase.getCancelReason()).map(Enum::name).orElse(null);
+  private PurchasedContentDetailDTO toPurchasedContentDetailDTO(FlatPurchaseContentDetailDTO flat) {
+    return PurchasedContentDetailDTO.builder()
+        .orderStatus(flat.getOrderStatus())
+        .merchantUid(flat.getMerchantUid())
+        .purchasedAt(flat.getPurchasedAt())
+        .cancelRequestedAt(flat.getCancelRequestedAt())
+        .cancelledAt(flat.getCancelledAt())
+        .contentId(flat.getContentId())
+        .sellerName(flat.getSellerName())
+        .contentTitle(flat.getContentTitle())
+        .selectedOptionName(flat.getSelectedOptionName())
+        .selectedOptionQuantity(flat.getSelectedOptionQuantity())
+        .selectedOptionType(flat.getSelectedOptionType())
+        .documentOptionActionUrl(flat.getDocumentOptionActionUrl())
+        .isFreePurchase(flat.getIsFreePurchase())
+        .originalPrice(flat.getOriginalPrice())
+        .discountPrice(flat.getDiscountPrice())
+        .finalPrice(flat.getFinalPrice())
+        .payType(flat.getPayType())
+        .payCardName(flat.getPayCardName())
+        .payCardNum(flat.getPayCardNum())
+        .thumbnailUrl(flat.getThumbnailUrl())
+        .isRefundable(flat.getIsRefundable())
+        .cancelReason(flat.getCancelReason())
+        .build();
   }
 }

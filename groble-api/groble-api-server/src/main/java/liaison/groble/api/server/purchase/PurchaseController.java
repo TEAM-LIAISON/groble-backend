@@ -110,13 +110,16 @@ public class PurchaseController {
       includeResult = true)
   public ResponseEntity<GrobleResponse<PurchasedContentDetailResponse>> getMyPurchasedContent(
       @Auth Accessor accessor, @Valid @PathVariable("merchantUid") String merchantUid) {
+    // 구매 콘텐츠 정보 조회
     PurchasedContentDetailDTO purchasedContentDetailDTO =
         purchaseService.getMyPurchasedContent(accessor.getUserId(), merchantUid);
 
+    // 문의하기 정보 조회
     ContactInfoDTO contactInfoDTO =
         purchaseService.getContactInfo(accessor.getUserId(), merchantUid);
     ContactInfoResponse contactInfoResponse = marketMapper.toContactInfoResponse(contactInfoDTO);
 
+    // 리뷰 상세 정보 조회
     ContentReviewDetailDTO contentReviewDetailDTO =
         sellContentService.getContentReviewDetail(accessor.getUserId(), merchantUid);
 
