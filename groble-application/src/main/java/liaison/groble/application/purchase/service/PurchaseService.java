@@ -43,7 +43,7 @@ public class PurchaseService {
         purchaseReader.findMyPurchasedContents(userId, orderStatuses, pageable);
 
     List<PurchaseContentCardDTO> items =
-        page.getContent().stream().map(this::convertFlatDtoToCardDto).toList();
+        page.getContent().stream().map(this::convertFlatDTOToCardDTO).toList();
 
     PageResponse.MetaData meta =
         PageResponse.MetaData.builder()
@@ -66,7 +66,7 @@ public class PurchaseService {
   }
 
   /** FlatPreviewContentDTO를 ContentCardDto로 변환합니다. */
-  private PurchaseContentCardDTO convertFlatDtoToCardDto(FlatPurchaseContentPreviewDTO flat) {
+  private PurchaseContentCardDTO convertFlatDTOToCardDTO(FlatPurchaseContentPreviewDTO flat) {
     return PurchaseContentCardDTO.builder()
         .merchantUid(flat.getMerchantUid())
         .contentId(flat.getContentId())

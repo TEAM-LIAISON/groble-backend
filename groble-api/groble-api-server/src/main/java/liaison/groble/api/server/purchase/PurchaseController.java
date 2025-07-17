@@ -95,6 +95,13 @@ public class PurchaseController {
   @Operation(
       summary = "[❌ 내 콘텐츠 - 구매 관리] 내가 구매한 콘텐츠 상세 조회 (결제완료/결제취소요청/환불완료)",
       description = "내가 구매한 콘텐츠의 상세 정보를 조회합니다. 구매 상태에 따라 콘텐츠 접근 권한이 다를 수 있습니다.")
+  @ApiResponse(
+      responseCode = "200",
+      description = My_PURCHASED_CONTENT_SUCCESS_MESSAGE,
+      content =
+          @Content(
+              mediaType = "application/json",
+              schema = @Schema(implementation = PurchasedContentDetailResponse.class)))
   @GetMapping(MY_PURCHASED_CONTENT_PATH)
   @Logging(
       item = "Purchase",

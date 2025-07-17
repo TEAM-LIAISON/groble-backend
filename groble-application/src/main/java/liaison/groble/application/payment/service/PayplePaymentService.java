@@ -233,15 +233,9 @@ public class PayplePaymentService {
     }
   }
 
-  /**
-   * 취소 가능 상태 검증
-   *
-   * @param order 주문
-   * @throws IllegalStateException 취소할 수 없는 상태인 경우
-   */
   private void validateCancellableStatus(Order order) {
     // 주문 상태 검증
-    if (order.getStatus() != Order.OrderStatus.PAID) {
+    if (order.getStatus() != Order.OrderStatus.CANCEL_REQUEST) {
       throw new IllegalStateException(
           String.format(
               "결제 완료된 주문만 취소할 수 있습니다. orderId: %d, status: %s", order.getId(), order.getStatus()));
