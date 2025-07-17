@@ -315,6 +315,7 @@ jobs:
         with:
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           event-type: deploy-production
+          ref: config/#52-cicd-pipeline-upgrade-local
           client-payload: |
             {
               "image_tag": "${{ needs.build-prod.outputs.image-tag }}",
