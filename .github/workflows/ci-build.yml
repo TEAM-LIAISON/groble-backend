@@ -304,27 +304,27 @@ jobs:
 #              "environment": "development"
 #            }
 
-#  trigger-cd-prod:
-#    needs: build-prod
-#    runs-on: ubuntu-latest
-#    if: success() && github.ref == 'refs/heads/main' && github.event_name == 'push'
-#
-#    steps:
-#      - name: Trigger Production Deployment
-#        uses: peter-evans/repository-dispatch@v3
-#        with:
-#          token: ${{ secrets.GITHUB_TOKEN }}
-#          event-type: deploy-production
-#          client-payload: |
-#            {
-#              "image_tag": "${{ needs.build-prod.outputs.image-tag }}",
-#              "image_uri": "${{ needs.build-prod.outputs.image-uri }}",
-#              "commit_sha": "${{ github.sha }}",
-#              "short_sha": "${{ needs.build-prod.outputs.short-sha }}",
-#              "actor": "${{ github.actor }}",
-#              "run_id": "${{ github.run_id }}",
-#              "environment": "production"
-#            }
+  trigger-cd-prod:
+    needs: build-prod
+    runs-on: ubuntu-latest
+    if: success() && github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Trigger Production Deployment
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          event-type: deploy-production
+          client-payload: |
+            {
+              "image_tag": "${{ needs.build-prod.outputs.image-tag }}",
+              "image_uri": "${{ needs.build-prod.outputs.image-uri }}",
+              "commit_sha": "${{ github.sha }}",
+              "short_sha": "${{ needs.build-prod.outputs.short-sha }}",
+              "actor": "${{ github.actor }}",
+              "run_id": "${{ github.run_id }}",
+              "environment": "production"
+            }
 
 #  notify-ci-status:
 #    needs: [test, build-dev, build-prod, trigger-cd-dev, trigger-cd-prod]
