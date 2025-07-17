@@ -234,6 +234,7 @@ public class SellContentService {
       FlatContentReviewDetailDTO flatContentReviewDetailDTO, List<ReviewReplyDTO> reviewReplyDTOs) {
     return ContentReviewDetailDTO.builder()
         .reviewId(flatContentReviewDetailDTO.getReviewId())
+        .reviewStatus(flatContentReviewDetailDTO.getReviewStatus())
         .contentTitle(flatContentReviewDetailDTO.getContentTitle())
         .createdAt(flatContentReviewDetailDTO.getCreatedAt())
         .reviewerNickname(flatContentReviewDetailDTO.getReviewerNickname())

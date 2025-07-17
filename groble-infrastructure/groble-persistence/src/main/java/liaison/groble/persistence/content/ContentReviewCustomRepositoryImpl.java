@@ -157,6 +157,7 @@ public class ContentReviewCustomRepositoryImpl implements ContentReviewCustomRep
                 Projections.fields(
                     FlatContentReviewDetailDTO.class,
                     qContentReview.id.as("reviewId"),
+                    qContentReview.reviewStatus.stringValue().as("reviewStatus"),
                     qContent.title.as("contentTitle"),
                     qContentReview.createdAt.as("createdAt"),
                     qUser.userProfile.nickname.as("reviewerNickname"),

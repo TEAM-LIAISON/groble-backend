@@ -13,6 +13,7 @@ import lombok.Getter;
 @Builder
 public class ContentReviewDetailDTO {
   private Long reviewId;
+  private String reviewStatus;
   private String contentTitle;
   private LocalDateTime createdAt;
   private String reviewerNickname;

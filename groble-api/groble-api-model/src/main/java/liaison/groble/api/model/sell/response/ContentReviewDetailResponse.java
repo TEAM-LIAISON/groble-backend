@@ -22,6 +22,13 @@ public class ContentReviewDetailResponse {
   private Long reviewId;
 
   @Schema(
+      description = "콘텐츠 리뷰 상태 (ACTIVE - 삭제 요청 가능, PENDING_DELETE - 삭제 요청됨)",
+      example = "ACTIVE",
+      type = "string",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private String reviewStatus;
+
+  @Schema(
       description = "콘텐츠 제목",
       example = "자바 프로그래밍 코칭",
       type = "string",
