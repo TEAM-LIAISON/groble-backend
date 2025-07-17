@@ -60,7 +60,7 @@ public class ContentReview extends BaseTimeEntity {
   private User user;
 
   @OneToOne
-  @JoinColumn(name = "purchase_id", unique = true, nullable = false)
+  @JoinColumn(name = "purchase_id", nullable = false)
   private Purchase purchase;
 
   @Column(precision = 2, scale = 1) // DECIMAL(2,1) 별점

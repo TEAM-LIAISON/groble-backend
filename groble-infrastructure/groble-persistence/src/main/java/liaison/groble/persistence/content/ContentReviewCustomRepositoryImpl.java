@@ -52,7 +52,6 @@ public class ContentReviewCustomRepositoryImpl implements ContentReviewCustomRep
         qContentReview
             .id
             .eq(reviewId)
-            .and(qContent.user.id.eq(userId))
             .and(qContentReview.user.id.eq(qUser.id))
             .and(qContentReview.reviewStatus.eq(ReviewStatus.ACTIVE));
 
