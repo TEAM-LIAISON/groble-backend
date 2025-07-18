@@ -29,7 +29,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @SecurityRequirement(name = "bearerAuth")
 public interface NotificationApi {
 
-  @Operation(summary = "알림 전체 삭제", description = "사용자의 모든 알림을 삭제합니다.")
+  @Operation(summary = "[✅ 알림 전체 삭제]", description = "사용자의 모든 알림을 삭제합니다.")
   @ApiResponses(
       value = {
         @ApiResponse(
@@ -46,7 +46,7 @@ public interface NotificationApi {
   ResponseEntity<GrobleResponse<Void>> deleteAllNotifications(
       @Parameter(hidden = true) @Auth Accessor accessor);
 
-  @Operation(summary = "알림 단일 삭제", description = "특정 알림을 삭제합니다.")
+  @Operation(summary = "[✅ 알림 단일 삭제]", description = "특정 알림을 삭제합니다.")
   @ApiResponses(
       value = {
         @ApiResponse(
@@ -65,7 +65,7 @@ public interface NotificationApi {
       @Parameter(hidden = true) @Auth Accessor accessor,
       @Parameter(description = "삭제할 알림 ID", required = true) @PathVariable Long notificationId);
 
-  @Operation(summary = "알림 전체 조회", description = "사용자의 모든 알림을 조회합니다.")
+  @Operation(summary = "[✅ 알림 전체 조회]", description = "사용자의 모든 알림을 조회합니다.")
   @ApiResponses({
     @ApiResponse(
         responseCode = "200",

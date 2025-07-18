@@ -14,7 +14,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
-@Operation(summary = "전체 사용자 조회")
+@Operation(summary = "[✅ 관리자 사용자] 전체 사용자 조회")
 @ApiResponses({
   @ApiResponse(
       responseCode = "200",
