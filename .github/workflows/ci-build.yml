@@ -135,7 +135,9 @@ jobs:
   build-prod:
     needs: test
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request' && github.base_ref == 'config/#51-cicd-pipeline-upgrade-base'    # TODO: 브랜치명 변경
+    if: >   # TODO: main 브랜치에 PR이 발생했을 때로 수정 (push는 임시 테스트 목적)
+      (github.event_name == 'pull_request' && github.base_ref == 'config/#51-cicd-pipeline-upgrade-base')
+      || (github.event_name == 'push' && github.ref == 'refs/heads/config/#51-cicd-pipeline-upgrade-base')
 
     outputs:
       image-tag: ${{ steps.build-info.outputs.image-tag }}
@@ -243,7 +245,9 @@ jobs:
   trigger-cd-prod:
     needs: build-prod
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request' && github.base_ref == 'config/#51-cicd-pipeline-upgrade-base'    # TODO: 브랜치명 변경
+    if: >   # TODO: main 브랜치에 PR이 발생했을 때로 수정 (push는 임시 테스트 목적)
+      (github.event_name == 'pull_request' && github.base_ref == 'config/#51-cicd-pipeline-upgrade-base')
+      || (github.event_name == 'push' && github.ref == 'refs/heads/config/#51-cicd-pipeline-upgrade-base')
 
     steps:
       - name: Trigger Production Deployment
@@ -263,6 +267,7 @@ jobs:
               "branch": "${{ github.ref_name }}",
               "workflow_run_id": "${{ github.run_id }}"
             }
+
 
 #  notify-ci-status:
 #    needs: [test, build-dev, build-prod, trigger-cd-dev, trigger-cd-prod]
