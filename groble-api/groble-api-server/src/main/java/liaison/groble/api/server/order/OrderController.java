@@ -1,5 +1,7 @@
 package liaison.groble.api.server.order;
 
+import java.util.List;
+
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
@@ -15,7 +17,6 @@ import org.springframework.web.bind.annotation.RestController;
 import liaison.groble.api.model.order.request.CreateOrderRequest;
 import liaison.groble.api.model.order.response.CreateOrderResponse;
 import liaison.groble.api.model.order.response.OrderSuccessResponse;
-import liaison.groble.api.server.terms.mapper.TermsDTOMapper;
 import liaison.groble.application.order.dto.CreateOrderRequestDTO;
 import liaison.groble.application.order.dto.CreateOrderSuccessDTO;
 import liaison.groble.application.order.dto.OrderSuccessDTO;
@@ -57,7 +58,6 @@ public class OrderController {
   // Service
   private final OrderService orderService;
   private final OrderTermsService orderTermsService;
-  private final TermsDTOMapper termsDTOMapper;
 
   // Mapper
   private final OrderMapper orderMapper;
@@ -128,7 +128,7 @@ public class OrderController {
    */
   private void processOrderTermsAgreement(Long userId, HttpServletRequest httpRequest) {
     try {
-      TermsAgreementDTO termsAgreementDTO = termsDTOMapper.toServiceOrderTermsAgreementDTO();
+      TermsAgreementDTO termsAgreementDTO = toServiceOrderTermsAgreementDTO();
       termsAgreementDTO.setUserId(userId);
       // IP 및 User-Agent 설정
       termsAgreementDTO.setIpAddress(httpRequest.getRemoteAddr());
@@ -141,5 +141,14 @@ public class OrderController {
       log.error("주문 약관 동의 처리 실패 - userId: {}", userId, e);
       // 약관 동의 실패는 주문을 중단시키지 않음 (별도 처리 필요할 수 있음)
     }
+  }
+
+  private TermsAgreementDTO toServiceOrderTermsAgreementDTO() {
+    List<String> termTypeStrs =
+        List.of("ELECTRONIC_FINANCIAL", "PURCHASE_POLICY", "PERSONAL_INFORMATION");
+
+    return TermsAgreementDTO.builder()
+        .termsTypeStrings(termTypeStrs) // 문자열 리스트로 전달
+        .build();
   }
 }

@@ -1,4 +1,4 @@
-package liaison.groble.api.server.file.mapper;
+package liaison.groble.api.server.util;
 
 import java.io.IOException;
 import java.util.UUID;
@@ -9,8 +9,7 @@ import org.springframework.web.multipart.MultipartFile;
 import liaison.groble.application.file.dto.FileUploadDTO;
 
 @Component
-public class FileCustomMapper {
-
+public class FileUtils {
   public FileUploadDTO toServiceFileUploadDTO(MultipartFile file, String directory)
       throws IOException {
     return FileUploadDTO.builder()
