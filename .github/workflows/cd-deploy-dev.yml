@@ -1,8 +1,8 @@
-name: CD - Deploy to Production
+name: CD - Deploy to Development
 
 on:
   repository_dispatch:
-    types: [deploy-production]
+    types: [deploy-development]
   workflow_dispatch:
     inputs:
       image_tag:
@@ -10,7 +10,7 @@ on:
         required: true
         type: string
       confirm:
-        description: 'Type "DEPLOY" to confirm production deployment'
+        description: 'Type "DEPLOY" to confirm development deployment'
         required: true
         type: string
 
@@ -19,16 +19,16 @@ permissions:
 
 env:
   AWS_REGION: ap-northeast-2
-  ECR_REPOSITORY: groble-prod-spring-api
-  CODEDEPLOY_APPLICATION: groble-app
-  CODEDEPLOY_DEPLOYMENT_GROUP: groble-prod-deployment-group
+  ECR_REPOSITORY: groble-dev-spring-api
+  CODEDEPLOY_APPLICATION: groble-dev-app
+  CODEDEPLOY_DEPLOYMENT_GROUP: groble-dev-deployment-group
   ECS_CLUSTER: groble-cluster
-  ECS_SERVICE: groble-prod-service
+  ECS_SERVICE: groble-dev-service
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: production  # 수동 승인 필요
+    environment: development  # 개발 환경
 
     # 수동 실행 시 확인 단계
     if: |
@@ -57,7 +57,7 @@ jobs:
             echo "commit-sha=${{ github.sha }}" >> $GITHUB_OUTPUT
             echo "actor=${{ github.actor }}" >> $GITHUB_OUTPUT
             echo "run-id=${{ github.run_id }}" >> $GITHUB_OUTPUT
-            echo "environment=production" >> $GITHUB_OUTPUT
+            echo "environment=development" >> $GITHUB_OUTPUT
             echo "branch=${{ github.ref_name }}" >> $GITHUB_OUTPUT
             echo "workflow-run-id=${{ github.run_id }}" >> $GITHUB_OUTPUT
           fi
@@ -87,7 +87,7 @@ jobs:
 
           # 현재 태스크 정의 가져오기
           aws ecs describe-task-definition \
-            --task-definition groble-prod-task \
+            --task-definition groble-dev-task \
             --query taskDefinition > task-definition.json
 
           # 새 이미지 URI로 업데이트
@@ -107,7 +107,7 @@ jobs:
           echo "🚀 Starting CodeDeploy deployment..."
 
           # CodeDeploy용 배포 패키지 생성
-          DEPLOYMENT_ARCHIVE="groble-prod-$(date +%Y%m%d-%H%M%S).zip"
+          DEPLOYMENT_ARCHIVE="groble-dev-$(date +%Y%m%d-%H%M%S).zip"
           zip -r $DEPLOYMENT_ARCHIVE appspec.yml scripts/ final-task-definition.json
 
           # S3 버킷 이름 가져오기
@@ -130,7 +130,7 @@ jobs:
             --application-name $CODEDEPLOY_APPLICATION \
             --deployment-group-name $CODEDEPLOY_DEPLOYMENT_GROUP \
             --s3-location bucket=$S3_BUCKET,key=$DEPLOYMENT_ARCHIVE,bundleType=zip \
-            --description "Production deployment - ${{ steps.deploy-info.outputs.image-tag }}" \
+            --description "Development deployment - ${{ steps.deploy-info.outputs.image-tag }}" \
             --query deploymentId \
             --output text)
 
@@ -170,7 +170,7 @@ jobs:
 
           # 로드밸런서 헬스체크 확인
           LB_DNS=$(aws elbv2 describe-load-balancers \
-            --names groble-load-balancer \
+            --names groble-dev-load-balancer \
             --query 'LoadBalancers[0].DNSName' \
             --output text)
 
@@ -196,7 +196,7 @@ jobs:
 #        with:
 #          status: ${{ job.status }}
 #          text: |
-#            🚀 Production Deployment ${{ job.status }}!
+#            🚀 Development Deployment ${{ job.status }}!
 #            Image: ${{ steps.deploy-info.outputs.image-tag }}
 #            Commit: ${{ steps.deploy-info.outputs.commit-sha }}
 #            Actor: ${{ steps.deploy-info.outputs.actor }}
