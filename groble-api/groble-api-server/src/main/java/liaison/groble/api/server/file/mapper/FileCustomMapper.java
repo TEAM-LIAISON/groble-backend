@@ -6,14 +6,14 @@ import java.util.UUID;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
-import liaison.groble.application.file.dto.FileUploadDto;
+import liaison.groble.application.file.dto.FileUploadDTO;
 
 @Component
 public class FileCustomMapper {
 
-  public FileUploadDto toServiceFileUploadDto(MultipartFile file, String directory)
+  public FileUploadDTO toServiceFileUploadDTO(MultipartFile file, String directory)
       throws IOException {
-    return FileUploadDto.builder()
+    return FileUploadDTO.builder()
         .inputStream(file.getInputStream())
         .fileName(UUID.randomUUID() + "_" + file.getOriginalFilename())
         .originalFilename(file.getOriginalFilename())

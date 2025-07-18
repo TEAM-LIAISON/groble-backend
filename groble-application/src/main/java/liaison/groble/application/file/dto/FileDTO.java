@@ -5,7 +5,7 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public class FileDto {
+public class FileDTO {
   private String originalFilename;
   private String contentType;
   private String fileUrl;

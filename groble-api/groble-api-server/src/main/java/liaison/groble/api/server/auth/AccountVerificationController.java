@@ -24,8 +24,8 @@ import liaison.groble.application.auth.dto.VerifyBusinessMakerAccountDTO;
 import liaison.groble.application.auth.dto.VerifyPersonalMakerAccountDTO;
 import liaison.groble.application.auth.service.AccountVerificationService;
 import liaison.groble.application.file.FileService;
-import liaison.groble.application.file.dto.FileDto;
-import liaison.groble.application.file.dto.FileUploadDto;
+import liaison.groble.application.file.dto.FileDTO;
+import liaison.groble.application.file.dto.FileUploadDTO;
 import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.model.Accessor;
 import liaison.groble.common.response.GrobleResponse;
@@ -74,7 +74,7 @@ public class AccountVerificationController {
 
   /** 개인 메이커 계좌 인증 요청 처리 */
   @PersonalMaker
-  @PostMapping("/personal-maker")
+  @PostMapping(PERSONAL_MAKER_VERIFICATION_PATH)
   public ResponseEntity<GrobleResponse<Void>> verifyPersonalMakerAccount(
       @Auth Accessor accessor, @Valid @RequestBody VerifyPersonalMakerAccountRequest request) {
 
@@ -86,7 +86,7 @@ public class AccountVerificationController {
   }
 
   @BusinessMaker
-  @PostMapping("/business-maker")
+  @PostMapping(BUSINESS_MAKER_VERIFICATION_PATH)
   public ResponseEntity<GrobleResponse<Void>> verifyBusinessBankbook(
       @Auth Accessor accessor,
       @Valid @RequestBody VerificationBusinessMakerAccountRequest request) {
@@ -101,7 +101,7 @@ public class AccountVerificationController {
 
   /** 개인 • 법인 사업자 계좌 인증 요청 처리 */
   @BusinessVerification
-  @PostMapping("/business")
+  @PostMapping(BUSINESS_VERIFICATION_PATH)
   public ResponseEntity<GrobleResponse<Void>> verifyBusinessAccount(
       @Auth Accessor accessor,
       @Valid @RequestBody VerificationBusinessMakerAccountRequest request) {
@@ -115,7 +115,7 @@ public class AccountVerificationController {
   }
 
   /** 통장 사본 첨부 파일 업로드 */
-  @PostMapping("/upload-bankbook-copy")
+  @PostMapping(UPLOAD_BANKBOOK_COPY_PATH)
   public ResponseEntity<GrobleResponse<?>> uploadBankbookCopyImage(
       @Auth final Accessor accessor,
       @RequestPart("bankbookCopyImage")
@@ -139,14 +139,14 @@ public class AccountVerificationController {
     }
 
     try {
-      FileUploadDto fileUploadDto =
-          fileCustomMapper.toServiceFileUploadDto(bankbookCopyImage, "bankbook");
-      FileDto fileDto = fileService.uploadFile(accessor.getUserId(), fileUploadDto);
+      FileUploadDTO fileUploadDTO =
+          fileCustomMapper.toServiceFileUploadDTO(bankbookCopyImage, "bankbook");
+      FileDTO fileDTO = fileService.uploadFile(accessor.getUserId(), fileUploadDTO);
       FileUploadResponse response =
           FileUploadResponse.of(
-              fileDto.getOriginalFilename(),
-              fileDto.getFileUrl(),
-              fileDto.getContentType(),
+              fileDTO.getOriginalFilename(),
+              fileDTO.getFileUrl(),
+              fileDTO.getContentType(),
               "bankbook");
       return ResponseEntity.status(HttpStatus.CREATED)
           .body(
@@ -161,7 +161,7 @@ public class AccountVerificationController {
   }
 
   /** 통장 사본 첨부 파일 업로드 */
-  @PostMapping("/upload-business-license")
+  @PostMapping(UPLOAD_BUSINESS_LICENSE_PATH)
   public ResponseEntity<GrobleResponse<?>> uploadBusinessLicenseImage(
       @Auth final Accessor accessor,
       @RequestPart("businessLicenseImage")
@@ -185,14 +185,14 @@ public class AccountVerificationController {
     }
 
     try {
-      FileUploadDto fileUploadDto =
-          fileCustomMapper.toServiceFileUploadDto(businessLicenseImage, "business/license");
-      FileDto fileDto = fileService.uploadFile(accessor.getUserId(), fileUploadDto);
+      FileUploadDTO fileUploadDTO =
+          fileCustomMapper.toServiceFileUploadDTO(businessLicenseImage, "business/license");
+      FileDTO fileDTO = fileService.uploadFile(accessor.getUserId(), fileUploadDTO);
       FileUploadResponse response =
           FileUploadResponse.of(
-              fileDto.getOriginalFilename(),
-              fileDto.getFileUrl(),
-              fileDto.getContentType(),
+              fileDTO.getOriginalFilename(),
+              fileDTO.getFileUrl(),
+              fileDTO.getContentType(),
               "business/license");
       return ResponseEntity.status(HttpStatus.CREATED)
           .body(

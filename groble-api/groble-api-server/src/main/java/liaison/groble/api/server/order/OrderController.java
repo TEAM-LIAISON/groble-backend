@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import liaison.groble.api.model.order.request.CreateOrderRequest;
 import liaison.groble.api.model.order.response.CreateOrderResponse;
 import liaison.groble.api.model.order.response.OrderSuccessResponse;
-import liaison.groble.api.server.terms.mapper.TermsDtoMapper;
+import liaison.groble.api.server.terms.mapper.TermsDTOMapper;
 import liaison.groble.application.order.dto.CreateOrderRequestDTO;
 import liaison.groble.application.order.dto.CreateOrderSuccessDTO;
 import liaison.groble.application.order.dto.OrderSuccessDTO;
@@ -57,7 +57,7 @@ public class OrderController {
   // Service
   private final OrderService orderService;
   private final OrderTermsService orderTermsService;
-  private final TermsDtoMapper termsDtoMapper;
+  private final TermsDTOMapper termsDTOMapper;
 
   // Mapper
   private final OrderMapper orderMapper;
@@ -128,13 +128,13 @@ public class OrderController {
    */
   private void processOrderTermsAgreement(Long userId, HttpServletRequest httpRequest) {
     try {
-      TermsAgreementDTO termsAgreementDto = termsDtoMapper.toServiceOrderTermsAgreementDto();
-      termsAgreementDto.setUserId(userId);
+      TermsAgreementDTO termsAgreementDTO = termsDTOMapper.toServiceOrderTermsAgreementDTO();
+      termsAgreementDTO.setUserId(userId);
       // IP 및 User-Agent 설정
-      termsAgreementDto.setIpAddress(httpRequest.getRemoteAddr());
-      termsAgreementDto.setUserAgent(httpRequest.getHeader("User-Agent"));
+      termsAgreementDTO.setIpAddress(httpRequest.getRemoteAddr());
+      termsAgreementDTO.setUserAgent(httpRequest.getHeader("User-Agent"));
 
-      orderTermsService.agreeToOrderTerms(termsAgreementDto);
+      orderTermsService.agreeToOrderTerms(termsAgreementDTO);
 
       log.info("주문 약관 동의 처리 완료 - userId: {}", userId);
     } catch (Exception e) {

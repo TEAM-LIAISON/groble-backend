@@ -11,8 +11,8 @@ import liaison.groble.domain.role.repository.RoleRepository;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.enums.BusinessType;
 import liaison.groble.domain.user.enums.SellerVerificationStatus;
-import liaison.groble.external.discord.dto.BusinessMakerVerificationCreateReportDto;
-import liaison.groble.external.discord.dto.PersonalMakerVerificationCreateReportDto;
+import liaison.groble.external.discord.dto.BusinessMakerVerificationCreateReportDTO;
+import liaison.groble.external.discord.dto.PersonalMakerVerificationCreateReportDTO;
 import liaison.groble.external.discord.service.maker.DiscordBusinessMakerVerificationReportService;
 import liaison.groble.external.discord.service.maker.DiscordPersonalMakerVerificationReportService;
 
@@ -44,8 +44,8 @@ public class AccountVerificationService {
             dto.getBankAccountNumber(),
             dto.getCopyOfBankbookUrl());
 
-    final PersonalMakerVerificationCreateReportDto personalMakerVerificationCreateReportDto =
-        PersonalMakerVerificationCreateReportDto.builder()
+    final PersonalMakerVerificationCreateReportDTO personalMakerVerificationCreateReportDTO =
+        PersonalMakerVerificationCreateReportDTO.builder()
             .userId(user.getId())
             .nickname(user.getNickname())
             .bankAccountOwner(dto.getBankAccountOwner())
@@ -55,7 +55,7 @@ public class AccountVerificationService {
             .build();
 
     discordPersonalMakerVerificationReportService.sendCreatePersonalMakerVerificationReport(
-        personalMakerVerificationCreateReportDto);
+        personalMakerVerificationCreateReportDTO);
     updateSellerVerificationStatus(user);
   }
 
@@ -87,8 +87,8 @@ public class AccountVerificationService {
             dto.getBusinessLicenseFileUrl(),
             dto.getTaxInvoiceEmail());
 
-    final BusinessMakerVerificationCreateReportDto businessMakerVerificationCreateReportDto =
-        BusinessMakerVerificationCreateReportDto.builder()
+    final BusinessMakerVerificationCreateReportDTO businessMakerVerificationCreateReportDTO =
+        BusinessMakerVerificationCreateReportDTO.builder()
             .userId(user.getId())
             .nickname(user.getNickname())
             .bankAccountOwner(user.getSellerInfo().getBankAccountOwner())
@@ -106,7 +106,7 @@ public class AccountVerificationService {
             .build();
 
     discordBusinessMakerVerificationReportService.sendCreateBusinessMakerVerificationReport(
-        businessMakerVerificationCreateReportDto);
+        businessMakerVerificationCreateReportDTO);
     updateSellerVerificationStatus(user);
   }
 

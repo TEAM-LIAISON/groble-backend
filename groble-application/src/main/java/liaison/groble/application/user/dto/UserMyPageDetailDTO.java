@@ -11,7 +11,7 @@ import lombok.Setter;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserMyPageDetailDto {
+public class UserMyPageDetailDTO {
   private String nickname;
   private String userTypeName;
   private String accountTypeName;

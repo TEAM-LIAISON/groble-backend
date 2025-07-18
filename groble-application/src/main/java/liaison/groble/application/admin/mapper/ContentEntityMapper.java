@@ -16,8 +16,7 @@ import liaison.groble.domain.content.enums.ContentStatus;
 @Component
 public class ContentEntityMapper {
 
-  /** Content Entity를 ContentDto로 변환합니다. */
-  public ContentDTO toDto(Content content) {
+  public ContentDTO toDTO(Content content) {
     if (content == null) {
       return null;
     }
@@ -54,14 +53,14 @@ public class ContentEntityMapper {
       return null;
     }
 
-    List<ContentOptionDTO> optionDtos = new ArrayList<>();
+    List<ContentOptionDTO> optionDTOs = new ArrayList<>();
     for (ContentOption option : options) {
       if (option != null) {
-        optionDtos.add(convertSingleOption(option));
+        optionDTOs.add(convertSingleOption(option));
       }
     }
 
-    return optionDtos.isEmpty() ? null : optionDtos;
+    return optionDTOs.isEmpty() ? null : optionDTOs;
   }
 
   private ContentOptionDTO convertSingleOption(ContentOption option) {

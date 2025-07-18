@@ -86,9 +86,9 @@ public class AdminOrderController {
           @RequestParam(value = "sort", defaultValue = "createdAt")
           String sort) {
     Pageable pageable = PageUtils.createPageable(page, size, sort);
-    PageResponse<AdminOrderSummaryInfoDTO> infoDtoPage = adminOrderService.getAllOrders(pageable);
+    PageResponse<AdminOrderSummaryInfoDTO> infoDTOPage = adminOrderService.getAllOrders(pageable);
     PageResponse<AdminOrderSummaryInfoResponse> responsePage =
-        adminOrderMapper.toAdminOrderSummaryInfoResponsePage(infoDtoPage);
+        adminOrderMapper.toAdminOrderSummaryInfoResponsePage(infoDTOPage);
 
     return responseHelper.success(responsePage, ADMIN_ORDERS_RESPONSE_MESSAGE, HttpStatus.OK);
   }

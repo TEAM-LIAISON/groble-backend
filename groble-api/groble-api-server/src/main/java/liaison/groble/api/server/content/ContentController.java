@@ -38,8 +38,8 @@ import liaison.groble.application.content.dto.ContentDetailDTO;
 import liaison.groble.application.content.dto.review.ContentReviewDTO;
 import liaison.groble.application.content.service.ContentService;
 import liaison.groble.application.file.FileService;
-import liaison.groble.application.file.dto.FileDto;
-import liaison.groble.application.file.dto.FileUploadDto;
+import liaison.groble.application.file.dto.FileDTO;
+import liaison.groble.application.file.dto.FileUploadDTO;
 import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.model.Accessor;
 import liaison.groble.common.response.GrobleResponse;
@@ -233,14 +233,14 @@ public class ContentController {
           .body(GrobleResponse.error("이미지 파일만 업로드 가능합니다.", HttpStatus.BAD_REQUEST.value()));
     }
     try {
-      FileUploadDto fileUploadDto =
-          fileCustomMapper.toServiceFileUploadDto(contentThumbnailImage, "contents/thumbnail");
-      FileDto fileDto = fileService.uploadFile(accessor.getUserId(), fileUploadDto);
+      FileUploadDTO fileUploadDTO =
+          fileCustomMapper.toServiceFileUploadDTO(contentThumbnailImage, "contents/thumbnail");
+      FileDTO fileDTO = fileService.uploadFile(accessor.getUserId(), fileUploadDTO);
       FileUploadResponse response =
           FileUploadResponse.of(
-              fileDto.getOriginalFilename(),
-              fileDto.getFileUrl(),
-              fileDto.getContentType(),
+              fileDTO.getOriginalFilename(),
+              fileDTO.getFileUrl(),
+              fileDTO.getContentType(),
               "contents/thumbnail");
       return ResponseEntity.status(HttpStatus.CREATED)
           .body(
@@ -280,8 +280,8 @@ public class ContentController {
             .body(GrobleResponse.error("모든 파일이 유효한 이미지여야 합니다.", HttpStatus.BAD_REQUEST.value()));
       }
       try {
-        FileUploadDto dto = fileCustomMapper.toServiceFileUploadDto(file, "contents/detail");
-        FileDto uploaded = fileService.uploadFile(accessor.getUserId(), dto);
+        FileUploadDTO dto = fileCustomMapper.toServiceFileUploadDTO(file, "contents/detail");
+        FileDTO uploaded = fileService.uploadFile(accessor.getUserId(), dto);
         responses.add(
             FileUploadResponse.of(
                 uploaded.getOriginalFilename(),
@@ -324,14 +324,14 @@ public class ContentController {
           .body(GrobleResponse.error("pdf/zip 파일만 업로드 가능합니다.", HttpStatus.BAD_REQUEST.value()));
     }
     try {
-      FileUploadDto fileUploadDto =
-          fileCustomMapper.toServiceFileUploadDto(contentDocumentFile, "contents/document");
-      FileDto fileDto = fileService.uploadFile(accessor.getUserId(), fileUploadDto);
+      FileUploadDTO fileUploadDTO =
+          fileCustomMapper.toServiceFileUploadDTO(contentDocumentFile, "contents/document");
+      FileDTO fileDTO = fileService.uploadFile(accessor.getUserId(), fileUploadDTO);
       FileUploadResponse response =
           FileUploadResponse.of(
-              fileDto.getOriginalFilename(),
-              fileDto.getFileUrl(),
-              fileDto.getContentType(),
+              fileDTO.getOriginalFilename(),
+              fileDTO.getFileUrl(),
+              fileDTO.getContentType(),
               "contents/document");
       return ResponseEntity.status(HttpStatus.CREATED)
           .body(

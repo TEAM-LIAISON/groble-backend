@@ -54,7 +54,7 @@ public class TermsServiceImpl implements TermsService {
   @Override
   @Transactional
   public MakerTermsAgreementDTO agreeMakerTerms(
-      Long userId, MakerTermsAgreementDTO agreementDto, String clientIp, String userAgent) {
+      Long userId, MakerTermsAgreementDTO agreementDTO, String clientIp, String userAgent) {
     log.info("메이커 이용약관 동의 처리: userId={}", userId);
 
     // 1. 사용자 조회

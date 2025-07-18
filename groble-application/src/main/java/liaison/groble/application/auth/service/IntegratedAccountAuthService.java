@@ -59,48 +59,48 @@ public class IntegratedAccountAuthService {
   private final UserHelper userHelper;
 
   @Transactional
-  public SignUpAuthResultDTO integratedAccountSignUp(SignUpDTO signUpDto) {
+  public SignUpAuthResultDTO integratedAccountSignUp(SignUpDTO signUpDTO) {
     // 1. 사전 검증
-    UserType userType = validateSignUpRequest(signUpDto);
-    List<TermsType> agreedTermsTypes = validateAndProcessTerms(signUpDto, userType);
+    UserType userType = validateSignUpRequest(signUpDTO);
+    List<TermsType> agreedTermsTypes = validateAndProcessTerms(signUpDTO, userType);
     // 1. 해당 이메일로 가입한 사람이 있고 전화번호도 기입한 사람 -> EmailAlreadyExistsException 발생
-    authValidationHelper.validateEmailNotRegistered(signUpDto.getEmail());
-    if (!userReader.existsByIntegratedAccountEmail(signUpDto.getEmail())) {
+    authValidationHelper.validateEmailNotRegistered(signUpDTO.getEmail());
+    if (!userReader.existsByIntegratedAccountEmail(signUpDTO.getEmail())) {
       // 2. 사용자 생성 및 설정
-      User user = createAndSetupUser(signUpDto, userType, agreedTermsTypes);
+      User user = createAndSetupUser(signUpDTO, userType, agreedTermsTypes);
 
       // 3. 사용자 저장 및 후처리
       User savedUser = userRepository.save(user);
 
       // 4. 토큰 발급 및 저장
-      TokenDTO tokenDto = issueAndSaveTokens(savedUser);
+      TokenDTO tokenDTO = issueAndSaveTokens(savedUser);
 
       // 5. 비동기 후처리 작업
-      processPostSignUpTasks(signUpDto.getEmail(), savedUser);
+      processPostSignUpTasks(signUpDTO.getEmail(), savedUser);
 
-      return buildSignUpResult(signUpDto.getEmail(), tokenDto);
+      return buildSignUpResult(signUpDTO.getEmail(), tokenDTO);
     } else {
       IntegratedAccount integratedAccount =
-          userReader.getUserByIntegratedAccountEmail(signUpDto.getEmail());
+          userReader.getUserByIntegratedAccountEmail(signUpDTO.getEmail());
       User existingUser = integratedAccount.getUser();
 
-      integratedAccount.updateEmail(signUpDto.getEmail());
-      integratedAccount.updatePassword(securityPort.encodePassword(signUpDto.getPassword()));
+      integratedAccount.updateEmail(signUpDTO.getEmail());
+      integratedAccount.updatePassword(securityPort.encodePassword(signUpDTO.getPassword()));
 
       existingUser.updateLastUserType(userType);
       termsHelper.processTermsAgreements(existingUser, agreedTermsTypes);
 
       User savedUser = userRepository.save(existingUser);
-      TokenDTO tokenDto = tokenHelper.issueTokens(savedUser);
-      processPostSignUpTasks(signUpDto.getEmail(), savedUser);
-      return buildSignUpResult(signUpDto.getEmail(), tokenDto);
+      TokenDTO tokenDTO = tokenHelper.issueTokens(savedUser);
+      processPostSignUpTasks(signUpDTO.getEmail(), savedUser);
+      return buildSignUpResult(signUpDTO.getEmail(), tokenDTO);
     }
   }
 
   @Transactional
-  public SignInAuthResultDTO integratedAccountSignIn(SignInDTO signInDto) {
+  public SignInAuthResultDTO integratedAccountSignIn(SignInDTO signInDTO) {
     // 1. 사용자 인증
-    IntegratedAccount integratedAccount = authenticateUser(signInDto);
+    IntegratedAccount integratedAccount = authenticateUser(signInDTO);
     User user = integratedAccount.getUser();
 
     // 2. 로그인 상태 검증
@@ -118,26 +118,26 @@ public class IntegratedAccountAuthService {
   // Private helper methods - 회원가입 관련
 
   /** 회원가입 요청 사전 검증 */
-  private UserType validateSignUpRequest(SignUpDTO signUpDto) {
-    UserType userType = authValidationHelper.validateAndParseUserType(signUpDto.getUserType());
-    authValidationHelper.validateEmailVerification(signUpDto.getEmail());
+  private UserType validateSignUpRequest(SignUpDTO signUpDTO) {
+    UserType userType = authValidationHelper.validateAndParseUserType(signUpDTO.getUserType());
+    authValidationHelper.validateEmailVerification(signUpDTO.getEmail());
     return userType;
   }
 
   /** 약관 검증 및 처리 */
-  private List<TermsType> validateAndProcessTerms(SignUpDTO signUpDto, UserType userType) {
+  private List<TermsType> validateAndProcessTerms(SignUpDTO signUpDTO, UserType userType) {
     List<TermsType> agreedTermsTypes =
-        termsHelper.convertToTermsTypes(signUpDto.getTermsTypeStrings());
+        termsHelper.convertToTermsTypes(signUpDTO.getTermsTypeStrings());
     termsHelper.validateRequiredTermsAgreement(agreedTermsTypes, userType);
     return agreedTermsTypes;
   }
 
   /** 사용자 생성 및 기본 설정 */
   private User createAndSetupUser(
-      SignUpDTO signUpDto, UserType userType, List<TermsType> agreedTermsTypes) {
-    String encodedPassword = securityPort.encodePassword(signUpDto.getPassword());
+      SignUpDTO signUpDTO, UserType userType, List<TermsType> agreedTermsTypes) {
+    String encodedPassword = securityPort.encodePassword(signUpDTO.getPassword());
 
-    User user = createUserByType(signUpDto.getEmail(), encodedPassword, userType);
+    User user = createUserByType(signUpDTO.getEmail(), encodedPassword, userType);
 
     // 기본 설정 적용
     userHelper.addDefaultRole(user);
@@ -164,14 +164,14 @@ public class IntegratedAccountAuthService {
 
   /** 토큰 발급 및 저장 */
   private TokenDTO issueAndSaveTokens(User user) {
-    TokenDTO tokenDto = tokenHelper.issueTokens(user);
+    TokenDTO tokenDTO = tokenHelper.issueTokens(user);
 
     user.updateRefreshToken(
-        tokenDto.getRefreshToken(),
-        securityPort.getRefreshTokenExpirationTime(tokenDto.getRefreshToken()));
+        tokenDTO.getRefreshToken(),
+        securityPort.getRefreshTokenExpirationTime(tokenDTO.getRefreshToken()));
     userRepository.save(user);
 
-    return tokenDto;
+    return tokenDTO;
   }
 
   /** 회원가입 후 비동기 작업 처리 */
@@ -197,22 +197,22 @@ public class IntegratedAccountAuthService {
   }
 
   /** 회원가입 결과 DTO 생성 */
-  private SignUpAuthResultDTO buildSignUpResult(String email, TokenDTO tokenDto) {
+  private SignUpAuthResultDTO buildSignUpResult(String email, TokenDTO tokenDTO) {
     return SignUpAuthResultDTO.builder()
         .email(email)
-        .accessToken(tokenDto.getAccessToken())
-        .refreshToken(tokenDto.getRefreshToken())
+        .accessToken(tokenDTO.getAccessToken())
+        .refreshToken(tokenDTO.getRefreshToken())
         .build();
   }
 
   // Private helper methods - 로그인 관련
 
   /** 사용자 인증 (이메일/비밀번호 검증) */
-  private IntegratedAccount authenticateUser(SignInDTO signInDto) {
+  private IntegratedAccount authenticateUser(SignInDTO signInDTO) {
     IntegratedAccount integratedAccount =
-        userReader.getUserByIntegratedAccountEmail(signInDto.getEmail());
+        userReader.getUserByIntegratedAccountEmail(signInDTO.getEmail());
 
-    if (!securityPort.matches(signInDto.getPassword(), integratedAccount.getPassword())) {
+    if (!securityPort.matches(signInDTO.getPassword(), integratedAccount.getPassword())) {
       throw new IllegalArgumentException(PASSWORD_MISMATCH);
     }
 

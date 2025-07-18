@@ -237,7 +237,6 @@ public class MarketService {
         .orElse("UNVERIFIED");
   }
 
-  /** FlatPreviewContentDTO를 ContentCardDto로 변환합니다. */
   private ContentCardDTO convertFlatDTOToCardDTO(FlatContentPreviewDTO flat) {
     return ContentCardDTO.builder()
         .contentId(flat.getContentId())

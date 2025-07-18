@@ -5,7 +5,7 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public class UserMyPageSummaryDto {
+public class UserMyPageSummaryDTO {
   private String nickname;
   private String profileImageUrl;
   private String userTypeName;

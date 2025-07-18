@@ -112,9 +112,9 @@ public class IntegratedAccountAuthController {
       HttpServletResponse response) {
 
     // 회원가입 처리
-    SignUpDTO signUpDto = authMapper.toSignUpDto(request);
+    SignUpDTO signUpDTO = authMapper.toSignUpDTO(request);
     SignUpAuthResultDTO authResult =
-        integratedAccountAuthService.integratedAccountSignUp(signUpDto);
+        integratedAccountAuthService.integratedAccountSignUp(signUpDTO);
 
     // 응답 생성
     SignUpResponse signUpResponse = SignUpResponse.of(request.getEmail());

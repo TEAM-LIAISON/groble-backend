@@ -62,9 +62,9 @@ public class MakerController {
     String clientIp = clientInfoService.getClientIpAddress(httpRequest);
 
     // DTO 변환 및 서비스 호출
-    MakerTermsAgreementDTO agreementDto = termsMapper.toMakerTermsAgreementDTO(request);
+    MakerTermsAgreementDTO agreementDTO = termsMapper.toMakerTermsAgreementDTO(request);
     MakerTermsAgreementDTO result =
-        termsService.agreeMakerTerms(accessor.getUserId(), agreementDto, clientIp, userAgent);
+        termsService.agreeMakerTerms(accessor.getUserId(), agreementDTO, clientIp, userAgent);
 
     // 응답 생성
     MakerTermsAgreementResponse response =

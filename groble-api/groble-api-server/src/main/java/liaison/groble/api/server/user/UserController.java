@@ -27,12 +27,12 @@ import liaison.groble.api.model.user.response.swagger.SwitchRole;
 import liaison.groble.api.model.user.response.swagger.UploadUserProfileImage;
 import liaison.groble.api.model.user.response.swagger.UserHeader;
 import liaison.groble.api.server.file.mapper.FileCustomMapper;
-import liaison.groble.api.server.user.mapper.UserDtoMapper;
+import liaison.groble.api.server.user.mapper.UserDTOMapper;
 import liaison.groble.application.file.FileService;
-import liaison.groble.application.file.dto.FileUploadDto;
-import liaison.groble.application.user.dto.UserHeaderDto;
-import liaison.groble.application.user.dto.UserMyPageDetailDto;
-import liaison.groble.application.user.dto.UserMyPageSummaryDto;
+import liaison.groble.application.file.dto.FileUploadDTO;
+import liaison.groble.application.user.dto.UserHeaderDTO;
+import liaison.groble.application.user.dto.UserMyPageDetailDTO;
+import liaison.groble.application.user.dto.UserMyPageSummaryDTO;
 import liaison.groble.application.user.service.UserService;
 import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.model.Accessor;
@@ -54,7 +54,7 @@ import lombok.RequiredArgsConstructor;
 public class UserController {
 
   private final UserService userService;
-  private final UserDtoMapper userDtoMapper;
+  private final UserDTOMapper userDTOMapper;
   private final FileService fileService;
   private final FileCustomMapper fileCustomMapper;
   private final TokenCookieService tokenCookieService;
@@ -91,9 +91,9 @@ public class UserController {
   @GetMapping("/users/me/summary")
   public ResponseEntity<GrobleResponse<MyPageSummaryResponseBase>> getUserMyPageSummary(
       @Auth Accessor accessor) {
-    UserMyPageSummaryDto summaryDto = userService.getUserMyPageSummary(accessor.getUserId());
+    UserMyPageSummaryDTO summaryDTO = userService.getUserMyPageSummary(accessor.getUserId());
     return ResponseEntity.ok(
-        GrobleResponse.success(userDtoMapper.toApiMyPageSummaryResponse(summaryDto)));
+        GrobleResponse.success(userDTOMapper.toApiMyPageSummaryResponse(summaryDTO)));
   }
 
   /** 마이페이지 상세 정보 조회 */
@@ -101,9 +101,9 @@ public class UserController {
   @GetMapping("/users/me/detail")
   public ResponseEntity<GrobleResponse<UserMyPageDetailResponse>> getUserMyPageDetail(
       @Auth Accessor accessor) {
-    UserMyPageDetailDto detailDto = userService.getUserMyPageDetail(accessor.getUserId());
+    UserMyPageDetailDTO detailDTO = userService.getUserMyPageDetail(accessor.getUserId());
     return ResponseEntity.ok(
-        GrobleResponse.success(userDtoMapper.toApiMyPageDetailResponse(detailDto)));
+        GrobleResponse.success(userDTOMapper.toApiMyPageDetailResponse(detailDTO)));
   }
 
   @UserHeader
@@ -115,8 +115,8 @@ public class UserController {
     boolean isLogin = userService.isLoginAble(accessor.getUserId());
 
     if (isLogin) {
-      UserHeaderDto userHeaderDto = userService.getUserHeaderInform(accessor.getUserId());
-      UserHeaderResponse userHeaderResponse = userDtoMapper.toApiUserHeaderResponse(userHeaderDto);
+      UserHeaderDTO userHeaderDTO = userService.getUserHeaderInform(accessor.getUserId());
+      UserHeaderResponse userHeaderResponse = userDTOMapper.toApiUserHeaderResponse(userHeaderDTO);
 
       return ResponseEntity.ok(GrobleResponse.success(userHeaderResponse, "사용자 헤더 정보 조회 성공"));
 
@@ -166,19 +166,19 @@ public class UserController {
 
     try {
       // 3) DTO 변환
-      FileUploadDto dto =
-          fileCustomMapper.toServiceFileUploadDto(profileImage, "profiles/" + accessor.getUserId());
+      FileUploadDTO dto =
+          fileCustomMapper.toServiceFileUploadDTO(profileImage, "profiles/" + accessor.getUserId());
       // 4) 업로드
-      var fileDto = fileService.uploadFile(accessor.getUserId(), dto);
+      var fileDTO = fileService.uploadFile(accessor.getUserId(), dto);
       // 5) 사용자 프로필에 URL 업데이트
-      userService.updateProfileImageUrl(accessor.getUserId(), fileDto.getFileUrl());
+      userService.updateProfileImageUrl(accessor.getUserId(), fileDTO.getFileUrl());
 
       // 6) 응답 생성
       FileUploadResponse response =
           FileUploadResponse.of(
-              fileDto.getOriginalFilename(),
-              fileDto.getFileUrl(),
-              fileDto.getContentType(),
+              fileDTO.getOriginalFilename(),
+              fileDTO.getFileUrl(),
+              fileDTO.getContentType(),
               dto.getDirectory());
       return ResponseEntity.status(HttpStatus.CREATED)
           .body(

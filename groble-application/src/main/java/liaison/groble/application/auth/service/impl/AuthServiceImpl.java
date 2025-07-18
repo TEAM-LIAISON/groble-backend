@@ -35,13 +35,13 @@ public class AuthServiceImpl implements AuthService {
 
   @Override
   @Transactional
-  public SignInAuthResultDTO signIn(SignInDTO signInDto) {
+  public SignInAuthResultDTO signIn(SignInDTO signInDTO) {
     // 이메일로 IntegratedAccount 찾기
     IntegratedAccount integratedAccount =
-        userReader.getUserByIntegratedAccountEmail(signInDto.getEmail());
+        userReader.getUserByIntegratedAccountEmail(signInDTO.getEmail());
 
     // 비밀번호 일치 여부 확인
-    if (!securityPort.matches(signInDto.getPassword(), integratedAccount.getPassword())) {
+    if (!securityPort.matches(signInDTO.getPassword(), integratedAccount.getPassword())) {
       throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
     }
 
@@ -79,20 +79,20 @@ public class AuthServiceImpl implements AuthService {
 
   @Override
   @Transactional
-  public void withdrawUser(Long userId, UserWithdrawalDTO dto) {
+  public void withdrawUser(Long userId, UserWithdrawalDTO userWithdrawalDTO) {
     // 1. 사용자 조회 및 검증
     User user = userReader.getUserById(userId);
 
     validateWithdrawalEligibility(user);
     // 2. 탈퇴 사유 처리
-    WithdrawalReason reason = parseWithdrawalReason(dto.getReason());
+    WithdrawalReason reason = parseWithdrawalReason(userWithdrawalDTO.getReason());
 
     // 3. 회원 탈퇴 처리 (User 엔티티에 캡슐화)
     user.withdraw();
     user.anonymize();
 
     // 4. 탈퇴 이력 저장
-    saveWithdrawalHistory(user, reason, dto.getAdditionalComment());
+    saveWithdrawalHistory(user, reason, userWithdrawalDTO.getAdditionalComment());
   }
 
   private void validateWithdrawalEligibility(User user) {

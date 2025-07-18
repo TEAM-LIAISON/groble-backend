@@ -13,7 +13,7 @@ import lombok.Setter;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class FileUploadDto {
+public class FileUploadDTO {
   private InputStream inputStream;
   private String fileName;
   private String originalFilename;

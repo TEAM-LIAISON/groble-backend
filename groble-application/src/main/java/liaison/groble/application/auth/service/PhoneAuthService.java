@@ -12,7 +12,7 @@ import liaison.groble.common.utils.CodeGenerator;
 import liaison.groble.domain.port.VerificationCodePort;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.repository.UserRepository;
-import liaison.groble.external.discord.dto.MemberCreateReportDto;
+import liaison.groble.external.discord.dto.MemberCreateReportDTO;
 import liaison.groble.external.discord.service.DiscordMemberReportService;
 import liaison.groble.external.sms.Message;
 import liaison.groble.external.sms.SmsSender;
@@ -125,13 +125,13 @@ public class PhoneAuthService {
   private void sendDiscordMemberReport(User user) {
     LocalDateTime nowInSeoul = LocalDateTime.now(ZoneId.of(ASIA_SEOUL_TIMEZONE));
 
-    MemberCreateReportDto reportDto =
-        MemberCreateReportDto.builder()
+    MemberCreateReportDTO reportDTO =
+        MemberCreateReportDTO.builder()
             .userId(user.getId())
             .nickname(user.getNickname())
             .createdAt(nowInSeoul)
             .build();
 
-    discordMemberReportService.sendCreateMemberReport(reportDto);
+    discordMemberReportService.sendCreateMemberReport(reportDTO);
   }
 }

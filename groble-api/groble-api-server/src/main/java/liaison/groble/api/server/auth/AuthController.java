@@ -68,8 +68,8 @@ public class AuthController {
       @Parameter(description = "로그인 정보", required = true) @Valid @RequestBody SignInRequest request,
       HttpServletResponse response) {
 
-    SignInDTO signInDto = authMapper.toSignInDTO(request);
-    SignInAuthResultDTO signInAuthResultDTO = authService.signIn(signInDto);
+    SignInDTO signInDTO = authMapper.toSignInDTO(request);
+    SignInAuthResultDTO signInAuthResultDTO = authService.signIn(signInDTO);
 
     tokenCookieService.addTokenCookies(
         response, signInAuthResultDTO.getAccessToken(), signInAuthResultDTO.getRefreshToken());
@@ -95,7 +95,7 @@ public class AuthController {
       @Valid @RequestBody UserWithdrawalRequest request,
       HttpServletResponse response) {
 
-    UserWithdrawalDTO dto = authMapper.toUserWithdrawalDto(request);
+    UserWithdrawalDTO dto = authMapper.toUserWithdrawalDTO(request);
     authService.withdrawUser(accessor.getUserId(), dto);
 
     tokenCookieService.removeTokenCookies(response);

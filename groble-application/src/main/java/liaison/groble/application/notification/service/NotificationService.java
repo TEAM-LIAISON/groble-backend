@@ -35,7 +35,7 @@ public class NotificationService {
 
     // Convert notifications to NotificationItemDTO list
     List<NotificationItemDTO> notificationItemDTOS =
-        notifications.stream().map(this::toNotificationItemDto).toList();
+        notifications.stream().map(this::toNotificationItemDTO).toList();
 
     // Build and return NotificationItemsDTO
     return NotificationItemsDTO.builder().notificationItems(notificationItemDTOS).build();
@@ -56,7 +56,7 @@ public class NotificationService {
   }
 
   /** Converts a Notification entity to a NotificationItemDTO */
-  private NotificationItemDTO toNotificationItemDto(final Notification notification) {
+  private NotificationItemDTO toNotificationItemDTO(final Notification notification) {
     // 도메인 enum을 String으로 변환
     return NotificationItemDTO.builder()
         .notificationId(notification.getId())

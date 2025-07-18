@@ -31,7 +31,6 @@ import liaison.groble.application.content.exception.InActiveContentException;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.common.exception.EntityNotFoundException;
 import liaison.groble.common.exception.ForbiddenException;
-import liaison.groble.common.response.CursorResponse;
 import liaison.groble.common.response.PageResponse;
 import liaison.groble.domain.content.dto.FlatContentPreviewDTO;
 import liaison.groble.domain.content.dto.FlatContentReviewReplyDTO;
@@ -145,7 +144,7 @@ public class ContentService {
   }
 
   @Transactional
-  public ContentDTO saveDraftAndReturn(Long userId, ContentDTO contentDto) {
+  public ContentDTO saveDraftAndReturn(Long userId, ContentDTO contentDTO) {
     // 1. 사용자 조회
     User user = userReader.getUserById(userId);
 
@@ -153,10 +152,10 @@ public class ContentService {
     Content content;
 
     // 2.1 기존 Content 업데이트 또는 새 Content 생성
-    if (contentDto.getContentId() != null) {
+    if (contentDTO.getContentId() != null) {
       // 기존 Content 업데이트
-      content = findAndValidateUserContent(userId, contentDto.getContentId());
-      updateContentFromDto(content, contentDto);
+      content = findAndValidateUserContent(userId, contentDTO.getContentId());
+      updateContentFromDTO(content, contentDTO);
 
       // 기존 옵션 제거
       if (content.getOptions() != null) {
@@ -165,30 +164,30 @@ public class ContentService {
     } else {
       // 새 Content 생성
       content = new Content(user);
-      updateContentFromDto(content, contentDto);
+      updateContentFromDTO(content, contentDTO);
     }
 
     // 3. 옵션 추가
-    if (contentDto.getOptions() != null && !contentDto.getOptions().isEmpty()) {
-      addOptionsToContent(content, contentDto);
+    if (contentDTO.getOptions() != null && !contentDTO.getOptions().isEmpty()) {
+      addOptionsToContent(content, contentDTO);
     }
 
     // 4. 저장 및 변환
-    return saveAndConvertToDto(content);
+    return saveAndConvertToDTO(content);
   }
 
   @Transactional
-  public ContentDTO registerContent(Long userId, ContentDTO contentDto) {
-    validateContentForSubmission(contentDto);
+  public ContentDTO registerContent(Long userId, ContentDTO contentDTO) {
+    validateContentForSubmission(contentDTO);
 
     // 2. 사용자 조회
     User user = userReader.getUserById(userId);
 
     // 3. Content 준비 (기존 업데이트 또는 새로 생성)
     Content content;
-    if (contentDto.getContentId() != null) {
+    if (contentDTO.getContentId() != null) {
       // 1) 기존 콘텐츠 로드 (영속 상태 보장)
-      content = findAndValidateUserContent(userId, contentDto.getContentId());
+      content = findAndValidateUserContent(userId, contentDTO.getContentId());
 
       // 2) 옵션 컬렉션을 처음부터 로딩
       //    (lazy 로딩일 경우, 강제로 컬렉션을 초기화해서
@@ -205,16 +204,16 @@ public class ContentService {
     }
 
     // 4. 카테고리 조회 및 설정 (심사 요청 시 필수)
-    Category category = findCategoryByCode(contentDto.getCategoryId());
+    Category category = findCategoryByCode(contentDTO.getCategoryId());
 
     // 5. Content 필드 업데이트
-    updateContentFromDto(content, contentDto);
+    updateContentFromDTO(content, contentDTO);
     content.setCategory(category); // 카테고리 설정
     content.setStatus(ContentStatus.ACTIVE); // 심사중으로 설정
 
     // 4) 새 옵션 추가
-    if (contentDto.getOptions() != null && !contentDto.getOptions().isEmpty()) {
-      addOptionsToContent(content, contentDto);
+    if (contentDTO.getOptions() != null && !contentDTO.getOptions().isEmpty()) {
+      addOptionsToContent(content, contentDTO);
     }
 
     // 7. 저장 및 변환
@@ -222,7 +221,7 @@ public class ContentService {
 
     final LocalDateTime nowInSeoul = LocalDateTime.now(ZoneId.of("Asia/Seoul"));
 
-    final ContentRegisterCreateReportDTO contentRegisterCreateReportDto =
+    final ContentRegisterCreateReportDTO contentRegisterCreateReportDTO =
         ContentRegisterCreateReportDTO.builder()
             .nickname(content.getUser().getNickname())
             .contentId(content.getId())
@@ -232,9 +231,9 @@ public class ContentService {
             .build();
 
     discordContentRegisterReportService.sendCreateContentRegisterReport(
-        contentRegisterCreateReportDto);
+        contentRegisterCreateReportDTO);
 
-    return saveAndConvertToDto(content);
+    return saveAndConvertToDTO(content);
   }
 
   @Transactional
@@ -276,7 +275,7 @@ public class ContentService {
     }
 
     // 옵션 목록 변환 - ContentOptionDTO 사용
-    List<ContentOptionDTO> optionDtos =
+    List<ContentOptionDTO> optionDTOs =
         content.getOptions().stream()
             .map(
                 option -> {
@@ -331,7 +330,7 @@ public class ContentService {
         .sellerProfileImageUrl(sellerProfileImageUrl)
         .sellerName(sellerName)
         .lowestPrice(content.getLowestPrice())
-        .options(optionDtos)
+        .options(optionDTOs)
         .contentIntroduction(content.getContentIntroduction())
         .serviceTarget(content.getServiceTarget())
         .serviceProcess(content.getServiceProcess())
@@ -368,7 +367,7 @@ public class ContentService {
     }
 
     // 옵션 목록 변환 - ContentOptionDTO 사용
-    List<ContentOptionDTO> optionDtos =
+    List<ContentOptionDTO> optionDTOs =
         content.getOptions().stream()
             .map(
                 option -> {
@@ -422,7 +421,7 @@ public class ContentService {
         .sellerProfileImageUrl(sellerProfileImageUrl)
         .sellerName(sellerName)
         .lowestPrice(content.getLowestPrice())
-        .options(optionDtos)
+        .options(optionDTOs)
         .contentIntroduction(content.getContentIntroduction())
         .serviceTarget(content.getServiceTarget())
         .serviceProcess(content.getServiceProcess())
@@ -460,30 +459,10 @@ public class ContentService {
     ContentType contentType = parseContentType(type);
 
     // contentCustomRepository를 통해 데이터 조회 (커서 없이)
-    List<FlatContentPreviewDTO> flatDtos = contentCustomRepository.findHomeContents(contentType);
+    List<FlatContentPreviewDTO> flatDTOs = contentCustomRepository.findHomeContents(contentType);
 
     // DTO 변환
-    return flatDtos.stream().map(this::convertFlatDTOToCardDTO).collect(Collectors.toList());
-  }
-
-  @Transactional(readOnly = true)
-  public CursorResponse<ContentCardDTO> getHomeContents(String cursor, int size, String type) {
-    Long lastContentId = parseContentIdFromCursor(cursor);
-    ContentType contentType = parseContentType(type);
-
-    CursorResponse<FlatContentPreviewDTO> flatDtos =
-        contentCustomRepository.findHomeContentsWithCursor(lastContentId, size, contentType);
-
-    List<ContentCardDTO> cardDtos =
-        flatDtos.getItems().stream()
-            .map(this::convertFlatDTOToCardDTO)
-            .collect(Collectors.toList());
-
-    return CursorResponse.<ContentCardDTO>builder()
-        .items(cardDtos)
-        .nextCursor(flatDtos.getNextCursor())
-        .hasNext(flatDtos.isHasNext())
-        .build();
+    return flatDTOs.stream().map(this::convertFlatDTOToCardDTO).collect(Collectors.toList());
   }
 
   @Transactional(readOnly = true)
@@ -495,10 +474,10 @@ public class ContentService {
   // --- 유틸리티 메서드 ---
 
   /** Content를 저장하고 DTO로 변환합니다. */
-  private ContentDTO saveAndConvertToDto(Content content) {
+  private ContentDTO saveAndConvertToDTO(Content content) {
     content = contentRepository.save(content);
     log.info("콘텐츠 저장 완료. ID: {}, 유저 ID: {}", content.getId(), content.getUser().getId());
-    return convertToDto(content);
+    return convertToDTO(content);
   }
 
   /** 사용자의 Content를 찾고 접근 권한을 검증합니다. */
@@ -535,7 +514,7 @@ public class ContentService {
   }
 
   /** DTO에서 Content 엔티티로 데이터를 업데이트합니다. */
-  private void updateContentFromDto(Content content, ContentDTO dto) {
+  private void updateContentFromDTO(Content content, ContentDTO dto) {
     // 타이틀 업데이트
     if (dto.getTitle() != null) {
       content.setTitle(dto.getTitle());
@@ -597,9 +576,9 @@ public class ContentService {
     // 옵션 추가 전에 최저가 계산을 위한 리스트 생성
     List<BigDecimal> validPrices = new ArrayList<>();
 
-    for (ContentOptionDTO optionDto : options) {
+    for (ContentOptionDTO optionDTO : options) {
       // null 옵션 건너뛰기
-      if (optionDto == null) continue;
+      if (optionDTO == null) continue;
 
       // contentType이 null인 경우 기본값 설정
       if (content.getContentType() == null) {
@@ -608,7 +587,7 @@ public class ContentService {
       }
 
       // 옵션 생성 및 추가
-      ContentOption option = createOptionByContentType(content.getContentType(), optionDto);
+      ContentOption option = createOptionByContentType(content.getContentType(), optionDTO);
       if (option != null) {
         content.addOption(option);
 
@@ -633,66 +612,66 @@ public class ContentService {
 
   /** Content 유형에 맞는 옵션을 생성합니다. */
   private ContentOption createOptionByContentType(
-      ContentType contentType, ContentOptionDTO optionDto) {
+      ContentType contentType, ContentOptionDTO optionDTO) {
     ContentOption option;
 
     if (contentType == ContentType.COACHING) {
-      option = createCoachingOption(optionDto);
+      option = createCoachingOption(optionDTO);
     } else if (contentType == ContentType.DOCUMENT) {
-      option = createDocumentOption(optionDto);
+      option = createDocumentOption(optionDTO);
     } else {
       log.warn("지원하지 않는 콘텐츠 유형입니다: {}", contentType);
       return null;
     }
 
     // 공통 필드 설정
-    option.setName(optionDto.getName());
-    option.setDescription(optionDto.getDescription());
-    option.setPrice(optionDto.getPrice());
+    option.setName(optionDTO.getName());
+    option.setDescription(optionDTO.getDescription());
+    option.setPrice(optionDTO.getPrice());
 
     return option;
   }
 
   /** 코칭 옵션을 생성합니다. */
-  private CoachingOption createCoachingOption(ContentOptionDTO optionDto) {
+  private CoachingOption createCoachingOption(ContentOptionDTO optionDTO) {
     CoachingOption option = new CoachingOption();
 
     // 코칭 옵션 특화 필드 설정 - null 안전하게 처리
-    if (optionDto.getCoachingPeriod() != null) {
+    if (optionDTO.getCoachingPeriod() != null) {
       try {
-        option.setCoachingPeriod(CoachingPeriod.valueOf(optionDto.getCoachingPeriod()));
+        option.setCoachingPeriod(CoachingPeriod.valueOf(optionDTO.getCoachingPeriod()));
       } catch (IllegalArgumentException e) {
-        log.warn("유효하지 않은 코칭 기간: {}", optionDto.getCoachingPeriod());
+        log.warn("유효하지 않은 코칭 기간: {}", optionDTO.getCoachingPeriod());
       }
     }
 
-    if (optionDto.getDocumentProvision() != null) {
+    if (optionDTO.getDocumentProvision() != null) {
       try {
-        option.setDocumentProvision(DocumentProvision.valueOf(optionDto.getDocumentProvision()));
+        option.setDocumentProvision(DocumentProvision.valueOf(optionDTO.getDocumentProvision()));
       } catch (IllegalArgumentException e) {
-        log.warn("유효하지 않은 자료 제공 옵션: {}", optionDto.getDocumentProvision());
+        log.warn("유효하지 않은 자료 제공 옵션: {}", optionDTO.getDocumentProvision());
       }
     }
 
-    if (optionDto.getCoachingType() != null) {
+    if (optionDTO.getCoachingType() != null) {
       try {
-        option.setCoachingType(CoachingType.valueOf(optionDto.getCoachingType()));
+        option.setCoachingType(CoachingType.valueOf(optionDTO.getCoachingType()));
       } catch (IllegalArgumentException e) {
-        log.warn("유효하지 않은 코칭 방식: {}", optionDto.getCoachingType());
+        log.warn("유효하지 않은 코칭 방식: {}", optionDTO.getCoachingType());
       }
     }
 
-    option.setCoachingTypeDescription(optionDto.getCoachingTypeDescription());
+    option.setCoachingTypeDescription(optionDTO.getCoachingTypeDescription());
 
     return option;
   }
 
   /** 문서 옵션을 생성합니다. */
-  private DocumentOption createDocumentOption(ContentOptionDTO optionDto) {
+  private DocumentOption createDocumentOption(ContentOptionDTO optionDTO) {
     DocumentOption option = new DocumentOption();
 
     // 문서 파일 URL이 null이 아닌지 확인
-    String fileUrl = optionDto.getDocumentFileUrl();
+    String fileUrl = optionDTO.getDocumentFileUrl();
     String documentOriginalFileName = null;
     if (fileUrl != null) {
       // 3) 실제로 FileInfo가 있는지 조회
@@ -703,22 +682,21 @@ public class ContentService {
     }
 
     // 문서 옵션 특화 필드 설정 - null 안전하게 처리
-    if (optionDto.getContentDeliveryMethod() != null) {
+    if (optionDTO.getContentDeliveryMethod() != null) {
       try {
         option.setContentDeliveryMethod(
-            ContentDeliveryMethod.valueOf(optionDto.getContentDeliveryMethod()));
+            ContentDeliveryMethod.valueOf(optionDTO.getContentDeliveryMethod()));
         option.setDocumentOriginalFileName(documentOriginalFileName);
-        option.setDocumentFileUrl(optionDto.getDocumentFileUrl());
-        option.setDocumentLinkUrl(optionDto.getDocumentLinkUrl());
+        option.setDocumentFileUrl(optionDTO.getDocumentFileUrl());
+        option.setDocumentLinkUrl(optionDTO.getDocumentLinkUrl());
       } catch (IllegalArgumentException e) {
-        log.warn("유효하지 않은 콘텐츠 제공 방식: {}", optionDto.getContentDeliveryMethod());
+        log.warn("유효하지 않은 콘텐츠 제공 방식: {}", optionDTO.getContentDeliveryMethod());
       }
     }
 
     return option;
   }
 
-  /** FlatPreviewContentDTO를 ContentCardDto로 변환합니다. */
   private ContentCardDTO convertFlatDTOToCardDTO(FlatContentPreviewDTO flat) {
     return ContentCardDTO.builder()
         .contentId(flat.getContentId())
@@ -761,14 +739,14 @@ public class ContentService {
   }
 
   /** Content를 DTO로 변환합니다. */
-  private ContentDTO convertToDto(Content content) {
+  private ContentDTO convertToDTO(Content content) {
     // null 체크
     if (content == null) {
       return null;
     }
 
     // 옵션 변환
-    List<ContentOptionDTO> optionDtos = new ArrayList<>();
+    List<ContentOptionDTO> optionDTOs = new ArrayList<>();
     if (content.getOptions() != null) {
       for (ContentOption option : content.getOptions()) {
         if (option == null) continue;
@@ -811,7 +789,7 @@ public class ContentService {
                       : null);
         }
 
-        optionDtos.add(builder.build());
+        optionDTOs.add(builder.build());
       }
     }
 
@@ -821,7 +799,7 @@ public class ContentService {
             .contentId(content.getId())
             .title(content.getTitle())
             .thumbnailUrl(content.getThumbnailUrl())
-            .options(optionDtos.isEmpty() ? null : optionDtos);
+            .options(optionDTOs.isEmpty() ? null : optionDTOs);
 
     // Enum을 안전하게 문자열로 변환
     if (content.getContentType() != null) {
@@ -866,43 +844,43 @@ public class ContentService {
   }
 
   /** 심사 요청 시 필수 항목을 검증합니다. */
-  private void validateContentForSubmission(ContentDTO contentDto) {
+  private void validateContentForSubmission(ContentDTO contentDTO) {
     List<String> missingFields = new ArrayList<>();
 
     // 필수 필드 검증
-    if (contentDto.getTitle() == null || contentDto.getTitle().trim().isEmpty()) {
+    if (contentDTO.getTitle() == null || contentDTO.getTitle().trim().isEmpty()) {
       missingFields.add("제목");
     }
 
-    if (contentDto.getContentType() == null) {
+    if (contentDTO.getContentType() == null) {
       missingFields.add("콘텐츠 유형");
     }
 
-    if (contentDto.getCategoryId() == null) {
+    if (contentDTO.getCategoryId() == null) {
       missingFields.add("카테고리");
     }
 
-    if (contentDto.getThumbnailUrl() == null || contentDto.getThumbnailUrl().trim().isEmpty()) {
+    if (contentDTO.getThumbnailUrl() == null || contentDTO.getThumbnailUrl().trim().isEmpty()) {
       missingFields.add("썸네일 이미지");
     }
 
-    //    if (contentDto.getContentDetailImageUrls() == null
-    //        || contentDto.getContentDetailImageUrls().isEmpty()) {
+    //    if (contentDTO.getContentDetailImageUrls() == null
+    //        || contentDTO.getContentDetailImageUrls().isEmpty()) {
     //      missingFields.add("콘텐츠 상세 이미지");
     //    }
 
-    if (contentDto.getContentIntroduction() == null
-        || contentDto.getContentIntroduction().trim().isEmpty()) {
+    if (contentDTO.getContentIntroduction() == null
+        || contentDTO.getContentIntroduction().trim().isEmpty()) {
       missingFields.add("콘텐츠 소개");
     }
 
     // 옵션 검증
-    if (contentDto.getOptions() == null || contentDto.getOptions().isEmpty()) {
+    if (contentDTO.getOptions() == null || contentDTO.getOptions().isEmpty()) {
       missingFields.add("콘텐츠 옵션");
     } else {
       // 각 옵션별 필수 필드 검증
-      for (int i = 0; i < contentDto.getOptions().size(); i++) {
-        ContentOptionDTO option = contentDto.getOptions().get(i);
+      for (int i = 0; i < contentDTO.getOptions().size(); i++) {
+        ContentOptionDTO option = contentDTO.getOptions().get(i);
 
         if (option.getName() == null || option.getName().trim().isEmpty()) {
           missingFields.add("옵션" + (i + 1) + " 이름");
@@ -913,14 +891,14 @@ public class ContentService {
         }
 
         // 콘텐츠 유형별 옵션 필수 필드 검증
-        if (ContentType.COACHING.name().equals(contentDto.getContentType())) {
+        if (ContentType.COACHING.name().equals(contentDTO.getContentType())) {
           if (option.getCoachingPeriod() == null) {
             missingFields.add("옵션" + (i + 1) + " 코칭 기간");
           }
           if (option.getCoachingType() == null) {
             missingFields.add("옵션" + (i + 1) + " 코칭 방식");
           }
-        } else if (ContentType.DOCUMENT.name().equals(contentDto.getContentType())) {
+        } else if (ContentType.DOCUMENT.name().equals(contentDTO.getContentType())) {
           if (option.getContentDeliveryMethod() == null) {
             missingFields.add("옵션" + (i + 1) + " 콘텐츠 제공 방식");
           }
@@ -945,7 +923,7 @@ public class ContentService {
     content.setAdminContentCheckingStatus(AdminContentCheckingStatus.PENDING);
 
     // 3. 저장 및 변환
-    return saveAndConvertToDto(content);
+    return saveAndConvertToDTO(content);
   }
 
   @Transactional
@@ -1036,11 +1014,10 @@ public class ContentService {
   public List<DynamicContentDTO> getDynamicContents() {
     List<FlatDynamicContentDTO> flatDynamicContentDTOS =
         contentCustomRepository.findAllDynamicContents();
-    return flatDynamicContentDTOS.stream().map(this::convertFlatDtoToDynamicDto).toList();
+    return flatDynamicContentDTOS.stream().map(this::convertFlatDTOToDynamicDTO).toList();
   }
 
-  /** FlatPreviewContentDTO를 ContentCardDto로 변환합니다. */
-  private DynamicContentDTO convertFlatDtoToDynamicDto(FlatDynamicContentDTO flat) {
+  private DynamicContentDTO convertFlatDTOToDynamicDTO(FlatDynamicContentDTO flat) {
     return DynamicContentDTO.builder()
         .contentId(flat.getContentId())
         .title(flat.getTitle())

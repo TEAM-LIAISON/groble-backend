@@ -3,7 +3,7 @@ package liaison.groble.external.discord.service.maker;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import liaison.groble.external.discord.dto.PersonalMakerVerificationCreateReportDto;
+import liaison.groble.external.discord.dto.PersonalMakerVerificationCreateReportDTO;
 import liaison.groble.external.discord.service.DiscordService;
 
 import lombok.RequiredArgsConstructor;
@@ -20,21 +20,21 @@ public class DiscordPersonalMakerVerificationReportService
 
   @Override
   public void sendCreatePersonalMakerVerificationReport(
-      final PersonalMakerVerificationCreateReportDto personalMakerVerificationCreateReportDto) {
+      final PersonalMakerVerificationCreateReportDTO personalMakerVerificationCreateReportDTO) {
     var msg =
         "## 개인 메이커 인증 요청 알림"
             + "\n\n**회원 생성 ID:** "
-            + personalMakerVerificationCreateReportDto.userId()
+            + personalMakerVerificationCreateReportDTO.userId()
             + "\n**회원 닉네임:** "
-            + personalMakerVerificationCreateReportDto.nickname()
+            + personalMakerVerificationCreateReportDTO.nickname()
             + "\n**기입한 예금주명:** "
-            + personalMakerVerificationCreateReportDto.bankAccountOwner()
+            + personalMakerVerificationCreateReportDTO.bankAccountOwner()
             + "\n**기입한 정산 받을 은행:** "
-            + personalMakerVerificationCreateReportDto.bankName()
+            + personalMakerVerificationCreateReportDTO.bankName()
             + "\n**기입한 정산 받을 계좌:** "
-            + personalMakerVerificationCreateReportDto.bankAccountNumber()
+            + personalMakerVerificationCreateReportDTO.bankAccountNumber()
             + "\n**업로드한 통장 사본 첨부 URL:** "
-            + personalMakerVerificationCreateReportDto.copyOfBankbookUrl()
+            + personalMakerVerificationCreateReportDTO.copyOfBankbookUrl()
             + "\n님이 개인 메이커 인증 요청을 하셨습니다.";
 
     discordService.sendMessages(url, msg);

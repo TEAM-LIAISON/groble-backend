@@ -42,7 +42,7 @@ public class AdminContentService {
         contentReader.findContentsByPageable(pageable);
 
     List<AdminContentSummaryInfoDTO> items =
-        contentPage.getContent().stream().map(this::convertFlatDtoToInfoResponse).toList();
+        contentPage.getContent().stream().map(this::convertFlatDTOToInfoResponse).toList();
 
     PageResponse.MetaData meta =
         PageResponse.MetaData.builder()
@@ -57,7 +57,7 @@ public class AdminContentService {
   public void approveContent(Long contentId) {
     Content content = contentReader.getContentById(contentId);
     content.setAdminContentCheckingStatus(AdminContentCheckingStatus.VALIDATED);
-    saveAndConvertToDto(content);
+    saveAndConvertToDTO(content);
 
     sendContentReviewNotification(content, SubNotificationType.CONTENT_REVIEW_APPROVED);
   }
@@ -70,15 +70,15 @@ public class AdminContentService {
     content.setRejectReason(rejectReason);
 
     log.info("콘텐츠 심사 거절 완료. 콘텐츠 ID: {}", contentId);
-    saveAndConvertToDto(content);
+    saveAndConvertToDTO(content);
 
     sendContentReviewNotification(content, SubNotificationType.CONTENT_REVIEW_REJECTED);
   }
 
-  private ContentDTO saveAndConvertToDto(Content content) {
+  private ContentDTO saveAndConvertToDTO(Content content) {
     content = contentRepository.save(content);
     log.info("콘텐츠 저장 완료. ID: {}, 유저 ID: {}", content.getId(), content.getUser().getId());
-    return contentEntityMapper.toDto(content);
+    return contentEntityMapper.toDTO(content);
   }
 
   private void sendContentReviewNotification(Content content, SubNotificationType subType) {
@@ -93,7 +93,7 @@ public class AdminContentService {
             content.getUser().getId(), NotificationType.REVIEW, subType, reviewDetails));
   }
 
-  private AdminContentSummaryInfoDTO convertFlatDtoToInfoResponse(
+  private AdminContentSummaryInfoDTO convertFlatDTOToInfoResponse(
       FlatAdminContentSummaryInfoDTO flat) {
     return AdminContentSummaryInfoDTO.builder()
         .contentId(flat.getContentId())

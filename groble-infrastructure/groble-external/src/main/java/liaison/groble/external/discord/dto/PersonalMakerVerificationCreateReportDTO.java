@@ -3,7 +3,7 @@ package liaison.groble.external.discord.dto;
 import lombok.Builder;
 
 @Builder
-public record PersonalMakerVerificationCreateReportDto(
+public record PersonalMakerVerificationCreateReportDTO(
     Long userId,
     String nickname,
     String bankAccountOwner,

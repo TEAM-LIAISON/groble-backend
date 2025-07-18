@@ -11,7 +11,7 @@ import lombok.Setter;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserHeaderDto {
+public class UserHeaderDTO {
   private Boolean isLogin;
   private String nickname;
   private String profileImageUrl;

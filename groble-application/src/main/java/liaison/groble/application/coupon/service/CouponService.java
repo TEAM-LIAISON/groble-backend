@@ -34,15 +34,15 @@ public class CouponService {
         userCouponCustomRepository.findAllUsableCouponsByUserId(userId);
 
     return flatUserCouponCardDTOs.stream()
-        .map(this::convertFlatDtoToCouponDto)
+        .map(this::convertFlatDTOToUserCouponDTO)
         .collect(Collectors.toList());
   }
 
-  /** FlatPreviewContentDTO를 ContentCardDto로 변환합니다. */
-  private ContentPayPageDTO.UserCouponDTO convertFlatDtoToCouponDto(FlatUserCouponCardDTO flat) {
+  private ContentPayPageDTO.UserCouponDTO convertFlatDTOToUserCouponDTO(
+      FlatUserCouponCardDTO flat) {
     return ContentPayPageDTO.UserCouponDTO.builder()
         .couponCode(flat.getCouponCode())
-        .name(flat.getCouponCode())
+        .name(flat.getTitle())
         .couponType(flat.getCouponType())
         .discountValue(flat.getDiscountValue())
         .validUntil(flat.getValidUntil())
@@ -53,7 +53,7 @@ public class CouponService {
   private UserCouponResponseDTO convertFlatDTOToCouponDTO(FlatUserCouponCardDTO flat) {
     return UserCouponResponseDTO.builder()
         .couponCode(flat.getCouponCode())
-        .name(flat.getCouponCode())
+        .name(flat.getTitle())
         .couponType(flat.getCouponType())
         .discountValue(flat.getDiscountValue())
         .validUntil(flat.getValidUntil())

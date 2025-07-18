@@ -5,4 +5,4 @@ import java.time.LocalDateTime;
 import lombok.Builder;
 
 @Builder
-public record MemberCreateReportDto(Long userId, String nickname, LocalDateTime createdAt) {}
+public record MemberCreateReportDTO(Long userId, String nickname, LocalDateTime createdAt) {}

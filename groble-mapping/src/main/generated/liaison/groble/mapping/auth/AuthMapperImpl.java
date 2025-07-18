@@ -46,7 +46,7 @@ public class AuthMapperImpl implements AuthMapper {
   }
 
   @Override
-  public SignUpDTO toSignUpDto(SignUpRequest request) {
+  public SignUpDTO toSignUpDTO(SignUpRequest request) {
     if (request == null) {
       return null;
     }
@@ -69,7 +69,7 @@ public class AuthMapperImpl implements AuthMapper {
   }
 
   @Override
-  public UserWithdrawalDTO toUserWithdrawalDto(UserWithdrawalRequest request) {
+  public UserWithdrawalDTO toUserWithdrawalDTO(UserWithdrawalRequest request) {
     if (request == null) {
       return null;
     }
@@ -133,7 +133,7 @@ public class AuthMapperImpl implements AuthMapper {
   }
 
   @Override
-  public VerifyEmailCodeDTO toVerifyEmailCodeDto(VerifyEmailCodeRequest request) {
+  public VerifyEmailCodeDTO toVerifyEmailCodeDTO(VerifyEmailCodeRequest request) {
     if (request == null) {
       return null;
     }
@@ -151,7 +151,7 @@ public class AuthMapperImpl implements AuthMapper {
   }
 
   @Override
-  public PhoneNumberVerifyRequestDTO toPhoneNumberVerifyRequestDto(
+  public PhoneNumberVerifyRequestDTO toPhoneNumberVerifyRequestDTO(
       PhoneNumberVerifyRequest request) {
     if (request == null) {
       return null;
@@ -168,7 +168,7 @@ public class AuthMapperImpl implements AuthMapper {
   }
 
   @Override
-  public PhoneNumberVerifyCodeRequestDTO toPhoneNumberVerifyCodeRequestDto(
+  public PhoneNumberVerifyCodeRequestDTO toPhoneNumberVerifyCodeRequestDTO(
       PhoneNumberVerifyCodeRequest request) {
     if (request == null) {
       return null;

@@ -5,7 +5,7 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public class PaypleAuthResponseDto {
+public class PaypleAuthResponseDTO {
   private String result; // 인증 결과 (success/error)
   private String resultMsg; // 인증 메시지
   private String cstId; // 파트너 ID (매 인증 시 변동되는 값)

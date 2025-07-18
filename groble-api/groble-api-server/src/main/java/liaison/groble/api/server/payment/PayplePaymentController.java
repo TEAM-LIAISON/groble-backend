@@ -16,7 +16,7 @@ import liaison.groble.api.model.payment.request.PaymentCancelRequest;
 import liaison.groble.api.model.payment.request.PaypleAuthResultRequest;
 import liaison.groble.api.model.payment.response.PaymentCancelResponse;
 import liaison.groble.application.payment.dto.AppCardPayplePaymentResponse;
-import liaison.groble.application.payment.dto.PaypleAuthResponseDto;
+import liaison.groble.application.payment.dto.PaypleAuthResponseDTO;
 import liaison.groble.application.payment.dto.PaypleAuthResultDTO;
 import liaison.groble.application.payment.exception.PayplePaymentAuthException;
 import liaison.groble.application.payment.service.PayplePaymentService;
@@ -169,12 +169,12 @@ public class PayplePaymentController {
       @Valid @RequestBody PaymentCancelRequest request) {
 
     try {
-      PaypleAuthResponseDto paypleAuthResponseDto = payplePaymentService.getPaymentAuthForCancel();
+      PaypleAuthResponseDTO paypleAuthResponseDTO = payplePaymentService.getPaymentAuthForCancel();
 
       // 결제 취소 처리
       JSONObject approvalResult =
           payplePaymentService.cancelPayment(
-              paypleAuthResponseDto, merchantUid, request.getDetailReason());
+              paypleAuthResponseDTO, merchantUid, request.getDetailReason());
 
       // 취소 성공 응답 생성
       PaymentCancelResponse response =

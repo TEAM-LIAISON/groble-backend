@@ -64,7 +64,6 @@ public class PurchaseService {
     return toPurchasedContentDetailDTO(flatPurchaseContentDetailDTO);
   }
 
-  /** FlatPreviewContentDTO를 ContentCardDto로 변환합니다. */
   private PurchaseContentCardDTO convertFlatDTOToCardDTO(FlatPurchaseContentPreviewDTO flat) {
     return PurchaseContentCardDTO.builder()
         .merchantUid(flat.getMerchantUid())

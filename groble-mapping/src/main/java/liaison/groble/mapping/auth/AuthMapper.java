@@ -31,11 +31,11 @@ public interface AuthMapper {
   @Mapping(
       target = "termsTypeStrings",
       expression = "java(request.getTermsTypes().stream().map(Enum::name).toList())")
-  SignUpDTO toSignUpDto(SignUpRequest request);
+  SignUpDTO toSignUpDTO(SignUpRequest request);
 
   /** UserWithdrawalRequest → UserWithdrawalDTO */
   @Mapping(target = "reason", expression = "java(request.getReason().name())")
-  UserWithdrawalDTO toUserWithdrawalDto(UserWithdrawalRequest request);
+  UserWithdrawalDTO toUserWithdrawalDTO(UserWithdrawalRequest request);
 
   // ====== 📤 DTO → Response 변환 ======
 
@@ -48,13 +48,13 @@ public interface AuthMapper {
   SignInTestResponse toSignInTestResponse(String email, SignInAuthResultDTO dto);
 
   /** VerifyEmailCodeRequest → VerifyEmailCodeDTO */
-  VerifyEmailCodeDTO toVerifyEmailCodeDto(VerifyEmailCodeRequest request);
+  VerifyEmailCodeDTO toVerifyEmailCodeDTO(VerifyEmailCodeRequest request);
 
   /** PhoneNumberVerifyRequest → PhoneNumberVerifyRequestDTO */
-  PhoneNumberVerifyRequestDTO toPhoneNumberVerifyRequestDto(PhoneNumberVerifyRequest request);
+  PhoneNumberVerifyRequestDTO toPhoneNumberVerifyRequestDTO(PhoneNumberVerifyRequest request);
 
   /** PhoneNumberVerifyCodeRequest → PhoneNumberVerifyCodeRequestDTO */
   @Mapping(source = "verificationCode", target = "verifyCode")
-  PhoneNumberVerifyCodeRequestDTO toPhoneNumberVerifyCodeRequestDto(
+  PhoneNumberVerifyCodeRequestDTO toPhoneNumberVerifyCodeRequestDTO(
       PhoneNumberVerifyCodeRequest request);
 }
