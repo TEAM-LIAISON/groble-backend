@@ -19,7 +19,7 @@ permissions:
 
 env:
   AWS_REGION: ap-northeast-2
-  ECR_REPOSITORY: groble
+  ECR_REPOSITORY: groble-prod-spring-api
   CODEDEPLOY_APPLICATION: groble-app
   CODEDEPLOY_DEPLOYMENT_GROUP: groble-prod-deployment-group
   ECS_CLUSTER: groble-cluster
