@@ -248,39 +248,7 @@ jobs:
 
           echo "✅ Pushed image: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
 
-      - name: Generate deployment artifacts (Production)
-        run: |
-          # 배포 메타데이터 생성
-          mkdir -p artifacts
 
-          cat > artifacts/deployment-info.json << EOF
-          {
-            "environment": "production",
-            "image_tag": "${{ steps.build-info.outputs.image-tag }}",
-            "image_uri": "${{ steps.build-info.outputs.image-uri }}",
-            "commit_sha": "${{ github.sha }}",
-            "short_sha": "${{ steps.build-info.outputs.short-sha }}",
-            "branch": "${{ github.ref_name }}",
-            "actor": "${{ github.actor }}",
-            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-            "workflow_run_id": "${{ github.run_id }}",
-            "ecr_repository": "groble-prod-spring-api",
-            "ecs_cluster": "${{ env.ECS_CLUSTER }}",
-            "ecs_service": "groble-prod-service",
-            "task_definition": "groble-prod-task",
-            "deployment_group": "groble-prod-deployment-group"
-          }
-          EOF
-
-          echo "📄 Deployment info generated:"
-          cat artifacts/deployment-info.json
-
-      - name: Upload deployment artifacts (Production)
-        uses: actions/upload-artifact@v4
-        with:
-          name: prod-deployment-artifacts-${{ github.sha }}
-          path: artifacts/
-          retention-days: 7
 
 #  trigger-cd-dev:
 #    needs: build-dev
@@ -323,7 +291,9 @@ jobs:
               "short_sha": "${{ needs.build-prod.outputs.short-sha }}",
               "actor": "${{ github.actor }}",
               "run_id": "${{ github.run_id }}",
-              "environment": "production"
+              "environment": "production",
+              "branch": "${{ github.ref_name }}",
+              "workflow_run_id": "${{ github.run_id }}"
             }
 
 #  notify-ci-status:

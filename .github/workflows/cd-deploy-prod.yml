@@ -48,21 +48,19 @@ jobs:
             echo "commit-sha=${{ github.event.client_payload.commit_sha }}" >> $GITHUB_OUTPUT
             echo "actor=${{ github.event.client_payload.actor }}" >> $GITHUB_OUTPUT
             echo "run-id=${{ github.event.client_payload.run_id }}" >> $GITHUB_OUTPUT
+            echo "environment=${{ github.event.client_payload.environment }}" >> $GITHUB_OUTPUT
+            echo "branch=${{ github.event.client_payload.branch }}" >> $GITHUB_OUTPUT
+            echo "workflow-run-id=${{ github.event.client_payload.workflow_run_id }}" >> $GITHUB_OUTPUT
           else
             echo "image-tag=${{ github.event.inputs.image_tag }}" >> $GITHUB_OUTPUT
             echo "image-uri=${{ secrets.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ github.event.inputs.image_tag }}" >> $GITHUB_OUTPUT
             echo "commit-sha=${{ github.sha }}" >> $GITHUB_OUTPUT
             echo "actor=${{ github.actor }}" >> $GITHUB_OUTPUT
             echo "run-id=${{ github.run_id }}" >> $GITHUB_OUTPUT
+            echo "environment=production" >> $GITHUB_OUTPUT
+            echo "branch=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+            echo "workflow-run-id=${{ github.run_id }}" >> $GITHUB_OUTPUT
           fi
-
-      - name: Download deployment artifacts
-        if: github.event_name == 'repository_dispatch'
-        uses: actions/download-artifact@v4
-        with:
-          name: deployment-artifacts
-          run-id: ${{ steps.deploy-info.outputs.run-id }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
