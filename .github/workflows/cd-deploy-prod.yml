@@ -48,21 +48,19 @@ jobs:
             echo "commit-sha=${{ github.event.client_payload.commit_sha }}" >> $GITHUB_OUTPUT
             echo "actor=${{ github.event.client_payload.actor }}" >> $GITHUB_OUTPUT
             echo "run-id=${{ github.event.client_payload.run_id }}" >> $GITHUB_OUTPUT
+            echo "environment=${{ github.event.client_payload.environment }}" >> $GITHUB_OUTPUT
+            echo "branch=${{ github.event.client_payload.branch }}" >> $GITHUB_OUTPUT
+            echo "workflow-run-id=${{ github.event.client_payload.workflow_run_id }}" >> $GITHUB_OUTPUT
           else
             echo "image-tag=${{ github.event.inputs.image_tag }}" >> $GITHUB_OUTPUT
             echo "image-uri=${{ secrets.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ github.event.inputs.image_tag }}" >> $GITHUB_OUTPUT
             echo "commit-sha=${{ github.sha }}" >> $GITHUB_OUTPUT
             echo "actor=${{ github.actor }}" >> $GITHUB_OUTPUT
             echo "run-id=${{ github.run_id }}" >> $GITHUB_OUTPUT
+            echo "environment=production" >> $GITHUB_OUTPUT
+            echo "branch=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+            echo "workflow-run-id=${{ github.run_id }}" >> $GITHUB_OUTPUT
           fi
-
-      - name: Download deployment artifacts
-        if: github.event_name == 'repository_dispatch'
-        uses: actions/download-artifact@v4
-        with:
-          name: deployment-artifacts
-          run-id: ${{ steps.deploy-info.outputs.run-id }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -71,127 +69,127 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-#      - name: Verify image exists in ECR
-#        run: |
-#          IMAGE_TAG="${{ steps.deploy-info.outputs.image-tag }}"
-#          echo "🔍 Verifying image exists: $ECR_REPOSITORY:$IMAGE_TAG"
-#
-#          aws ecr describe-images \
-#            --repository-name $ECR_REPOSITORY \
-#            --image-ids imageTag=$IMAGE_TAG
-#
-#          echo "✅ Image verified in ECR"
-#
-#      - name: Prepare ECS task definition
-#        run: |
-#          IMAGE_URI="${{ steps.deploy-info.outputs.image-uri }}"
-#          echo "📋 Preparing task definition with image: $IMAGE_URI"
-#
-#          # 현재 태스크 정의 가져오기
-#          aws ecs describe-task-definition \
-#            --task-definition groble-prod-task \
-#            --query taskDefinition > task-definition.json
-#
-#          # 새 이미지 URI로 업데이트
-#          jq --arg IMAGE_URI "$IMAGE_URI" \
-#             '.containerDefinitions[0].image = $IMAGE_URI' \
-#             task-definition.json > updated-task-definition.json
-#
-#          # 불필요한 필드 제거
-#          jq 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .placementConstraints, .compatibilities, .registeredAt, .registeredBy)' \
-#             updated-task-definition.json > final-task-definition.json
-#
-#          echo "✅ Task definition prepared"
-#
-#      - name: Deploy with CodeDeploy
-#        id: deploy
-#        run: |
-#          echo "🚀 Starting CodeDeploy deployment..."
-#
-#          # CodeDeploy용 배포 패키지 생성
-#          DEPLOYMENT_ARCHIVE="groble-prod-$(date +%Y%m%d-%H%M%S).zip"
-#          zip -r $DEPLOYMENT_ARCHIVE appspec.yml scripts/ final-task-definition.json
-#
-#          # S3 버킷 이름 가져오기
-#          S3_BUCKET=$(aws s3api list-buckets \
-#            --query 'Buckets[?contains(Name, `groble-codedeploy-artifacts`)].Name' \
-#            --output text | head -1)
-#
-#          if [ -z "$S3_BUCKET" ]; then
-#            echo "❌ CodeDeploy S3 bucket not found!"
-#            exit 1
-#          fi
-#
-#          # S3에 배포 아티팩트 업로드
-#          aws s3 cp $DEPLOYMENT_ARCHIVE s3://$S3_BUCKET/
-#
-#          echo "📦 Deployment package uploaded: $DEPLOYMENT_ARCHIVE"
-#
-#          # CodeDeploy 배포 시작
-#          DEPLOYMENT_ID=$(aws deploy create-deployment \
-#            --application-name $CODEDEPLOY_APPLICATION \
-#            --deployment-group-name $CODEDEPLOY_DEPLOYMENT_GROUP \
-#            --s3-location bucket=$S3_BUCKET,key=$DEPLOYMENT_ARCHIVE,bundleType=zip \
-#            --description "Production deployment - ${{ steps.deploy-info.outputs.image-tag }}" \
-#            --query deploymentId \
-#            --output text)
-#
-#          echo "deployment-id=$DEPLOYMENT_ID" >> $GITHUB_OUTPUT
-#          echo "🎯 CodeDeploy deployment started: $DEPLOYMENT_ID"
-#
-#      - name: Wait for deployment completion
-#        run: |
-#          DEPLOYMENT_ID="${{ steps.deploy.outputs.deployment-id }}"
-#          echo "⏳ Waiting for deployment $DEPLOYMENT_ID to complete..."
-#
-#          # CodeDeploy 배포 완료 대기 (최대 30분)
-#          aws deploy wait deployment-successful \
-#            --deployment-id $DEPLOYMENT_ID \
-#            --cli-read-timeout 1800 \
-#            --cli-connect-timeout 60
-#
-#          # 배포 상태 확인
-#          DEPLOYMENT_STATUS=$(aws deploy get-deployment \
-#            --deployment-id $DEPLOYMENT_ID \
-#            --query 'deploymentInfo.status' \
-#            --output text)
-#
-#          echo "✅ Deployment completed with status: $DEPLOYMENT_STATUS"
-#
-#      - name: Verify deployment
-#        run: |
-#          echo "🔍 Verifying deployment..."
-#
-#          # ECS 서비스 상태 확인
-#          SERVICE_INFO=$(aws ecs describe-services \
-#            --cluster $ECS_CLUSTER \
-#            --services $ECS_SERVICE \
-#            --query 'services[0].{Status:status,Running:runningCount,Desired:desiredCount}')
-#
-#          echo "📊 ECS Service Status: $SERVICE_INFO"
-#
-#          # 로드밸런서 헬스체크 확인
-#          LB_DNS=$(aws elbv2 describe-load-balancers \
-#            --names groble-load-balancer \
-#            --query 'LoadBalancers[0].DNSName' \
-#            --output text)
-#
-#          echo "🔍 Testing application health..."
-#
-#          # 헬스체크 (최대 5분 대기)
-#          for i in {1..10}; do
-#            if curl -f -s "https://$LB_DNS/health" > /dev/null; then
-#              echo "✅ Application is healthy!"
-#              break
-#            elif [ $i -eq 10 ]; then
-#              echo "❌ Application health check failed after 5 minutes"
-#              exit 1
-#            else
-#              echo "⏳ Waiting for application to be ready... ($i/10)"
-#              sleep 30
-#            fi
-#          done
-#
+      - name: Verify image exists in ECR
+        run: |
+          IMAGE_TAG="${{ steps.deploy-info.outputs.image-tag }}"
+          echo "🔍 Verifying image exists: $ECR_REPOSITORY:$IMAGE_TAG"
+
+          aws ecr describe-images \
+            --repository-name $ECR_REPOSITORY \
+            --image-ids imageTag=$IMAGE_TAG
+
+          echo "✅ Image verified in ECR"
+
+      - name: Prepare ECS task definition
+        run: |
+          IMAGE_URI="${{ steps.deploy-info.outputs.image-uri }}"
+          echo "📋 Preparing task definition with image: $IMAGE_URI"
+
+          # 현재 태스크 정의 가져오기
+          aws ecs describe-task-definition \
+            --task-definition groble-prod-task \
+            --query taskDefinition > task-definition.json
+
+          # 새 이미지 URI로 업데이트
+          jq --arg IMAGE_URI "$IMAGE_URI" \
+             '.containerDefinitions[0].image = $IMAGE_URI' \
+             task-definition.json > updated-task-definition.json
+
+          # 불필요한 필드 제거
+          jq 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .placementConstraints, .compatibilities, .registeredAt, .registeredBy)' \
+             updated-task-definition.json > final-task-definition.json
+
+          echo "✅ Task definition prepared"
+
+      - name: Deploy with CodeDeploy
+        id: deploy
+        run: |
+          echo "🚀 Starting CodeDeploy deployment..."
+
+          # CodeDeploy용 배포 패키지 생성
+          DEPLOYMENT_ARCHIVE="groble-prod-$(date +%Y%m%d-%H%M%S).zip"
+          zip -r $DEPLOYMENT_ARCHIVE appspec.yml scripts/ final-task-definition.json
+
+          # S3 버킷 이름 가져오기
+          S3_BUCKET=$(aws s3api list-buckets \
+            --query 'Buckets[?contains(Name, `groble-codedeploy-artifacts`)].Name' \
+            --output text | head -1)
+
+          if [ -z "$S3_BUCKET" ]; then
+            echo "❌ CodeDeploy S3 bucket not found!"
+            exit 1
+          fi
+
+          # S3에 배포 아티팩트 업로드
+          aws s3 cp $DEPLOYMENT_ARCHIVE s3://$S3_BUCKET/
+
+          echo "📦 Deployment package uploaded: $DEPLOYMENT_ARCHIVE"
+
+          # CodeDeploy 배포 시작
+          DEPLOYMENT_ID=$(aws deploy create-deployment \
+            --application-name $CODEDEPLOY_APPLICATION \
+            --deployment-group-name $CODEDEPLOY_DEPLOYMENT_GROUP \
+            --s3-location bucket=$S3_BUCKET,key=$DEPLOYMENT_ARCHIVE,bundleType=zip \
+            --description "Production deployment - ${{ steps.deploy-info.outputs.image-tag }}" \
+            --query deploymentId \
+            --output text)
+
+          echo "deployment-id=$DEPLOYMENT_ID" >> $GITHUB_OUTPUT
+          echo "🎯 CodeDeploy deployment started: $DEPLOYMENT_ID"
+
+      - name: Wait for deployment completion
+        run: |
+          DEPLOYMENT_ID="${{ steps.deploy.outputs.deployment-id }}"
+          echo "⏳ Waiting for deployment $DEPLOYMENT_ID to complete..."
+
+          # CodeDeploy 배포 완료 대기 (최대 30분)
+          aws deploy wait deployment-successful \
+            --deployment-id $DEPLOYMENT_ID \
+            --cli-read-timeout 1800 \
+            --cli-connect-timeout 60
+
+          # 배포 상태 확인
+          DEPLOYMENT_STATUS=$(aws deploy get-deployment \
+            --deployment-id $DEPLOYMENT_ID \
+            --query 'deploymentInfo.status' \
+            --output text)
+
+          echo "✅ Deployment completed with status: $DEPLOYMENT_STATUS"
+
+      - name: Verify deployment
+        run: |
+          echo "🔍 Verifying deployment..."
+
+          # ECS 서비스 상태 확인
+          SERVICE_INFO=$(aws ecs describe-services \
+            --cluster $ECS_CLUSTER \
+            --services $ECS_SERVICE \
+            --query 'services[0].{Status:status,Running:runningCount,Desired:desiredCount}')
+
+          echo "📊 ECS Service Status: $SERVICE_INFO"
+
+          # 로드밸런서 헬스체크 확인
+          LB_DNS=$(aws elbv2 describe-load-balancers \
+            --names groble-load-balancer \
+            --query 'LoadBalancers[0].DNSName' \
+            --output text)
+
+          echo "🔍 Testing application health..."
+
+          # 헬스체크 (최대 5분 대기)
+          for i in {1..10}; do
+            if curl -f -s "https://$LB_DNS/health" > /dev/null; then
+              echo "✅ Application is healthy!"
+              break
+            elif [ $i -eq 10 ]; then
+              echo "❌ Application health check failed after 5 minutes"
+              exit 1
+            else
+              echo "⏳ Waiting for application to be ready... ($i/10)"
+              sleep 30
+            fi
+          done
+
 #      - name: Notify deployment status
 #        if: always()
 #        uses: 8398a7/action-slack@v3
