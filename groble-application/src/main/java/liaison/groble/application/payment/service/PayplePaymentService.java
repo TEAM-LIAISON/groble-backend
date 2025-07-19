@@ -418,7 +418,12 @@ public class PayplePaymentService {
       Purchase purchase = createAndCompletePurchase(order);
 
       // 6. 구매 알림 생성
+      // 상품이 판매됐어요
       notificationService.sendContentSoldNotification(
+          purchase.getContent().getUser(), purchase.getContent().getId());
+
+      // 상품을 구매했어요
+      notificationService.sendContentPurchasedNotification(
           purchase.getUser(), purchase.getContent().getId());
     } catch (Exception e) {
       log.error("결제 승인 성공 처리 중 오류 발생 - orderId: {}", order.getId(), e);

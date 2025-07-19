@@ -17,6 +17,7 @@ import liaison.groble.application.content.ContentReplyWriter;
 import liaison.groble.application.content.ContentReviewReader;
 import liaison.groble.application.content.ContentReviewWriter;
 import liaison.groble.application.content.dto.review.ReviewReplyDTO;
+import liaison.groble.application.notification.service.NotificationService;
 import liaison.groble.application.order.service.OrderReader;
 import liaison.groble.application.purchase.service.PurchaseReader;
 import liaison.groble.application.sell.dto.ContentReviewDetailDTO;
@@ -60,6 +61,7 @@ public class SellContentService {
   private final ContentReplyWriter contentReplyWriter;
 
   private final DiscordDeleteReviewRequestReportService discordDeleteReviewRequestReportService;
+  private final NotificationService notificationService;
 
   @Transactional(readOnly = true)
   public SellManagePageDTO getSellManagePage(Long userId, Long contentId) {
@@ -207,6 +209,12 @@ public class SellContentService {
             .build();
 
     contentReplyWriter.save(contentReply);
+    notificationService.sendContentReviewReplyNotification(
+        seller,
+        contentReview.getContent().getId(),
+        contentReview.getId(),
+        contentReply.getReplyContent());
+
     return ReplyContentDTO.builder().replyContent(replyContentDTO.getReplyContent()).build();
   }
 

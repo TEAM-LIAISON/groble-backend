@@ -2,11 +2,11 @@ package liaison.groble.domain.notification.enums;
 
 public enum SubNotificationType {
   // PURCHASE [구매 관련]
-  CONTENT_REVIEW_REPLY, // 콘텐츠 리뷰 답글  [리뷰에 답글이 달렸어요]
-  CONTENT_PURCHASED, // 콘텐츠 구매    [상품을 구매했어요]
+  CONTENT_REVIEW_REPLY, // 콘텐츠 리뷰 답글  [✅ 리뷰에 답글이 달렸어요]
+  CONTENT_PURCHASED, // 콘텐츠 구매 [✅ 상품을 구매했어요]
 
   // REVIEW [리뷰 관련]
-  CONTENT_REVIEWED, // 콘텐츠 리뷰 작성  [리뷰가 등록됐어요]
+  CONTENT_REVIEWED, // 콘텐츠 리뷰 작성  [✅ 리뷰가 등록됐어요]
 
   // SELL [판매 관련]
   CONTENT_SOLD, // 콘텐츠 판매 [✅ 상품이 판매됐어요]

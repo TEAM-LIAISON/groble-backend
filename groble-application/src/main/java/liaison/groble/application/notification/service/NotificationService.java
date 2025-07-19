@@ -11,6 +11,7 @@ import liaison.groble.application.notification.dto.NotificationItemsDTO;
 import liaison.groble.application.notification.mapper.NotificationMapper;
 import liaison.groble.domain.notification.entity.Notification;
 import liaison.groble.domain.notification.entity.detail.CertifyDetails;
+import liaison.groble.domain.notification.entity.detail.PurchaseDetails;
 import liaison.groble.domain.notification.entity.detail.ReviewDetails;
 import liaison.groble.domain.notification.entity.detail.SellDetails;
 import liaison.groble.domain.notification.entity.detail.SystemDetails;
@@ -174,6 +175,35 @@ public class NotificationService {
             user.getId(), NotificationType.SELL, SubNotificationType.CONTENT_SOLD, sellDetails);
     notificationRepository.save(notification);
     log.info("콘텐츠 판매 알림 발송: userId={}, contentId={}", user.getId(), contentId);
+  }
+
+  @Transactional
+  public void sendContentPurchasedNotification(User user, Long contentId) {
+    PurchaseDetails purchaseDetails = PurchaseDetails.builder().contentId(contentId).build();
+    Notification notification =
+        notificationMapper.toNotification(
+            user.getId(),
+            NotificationType.PURCHASE,
+            SubNotificationType.CONTENT_PURCHASED,
+            purchaseDetails);
+    notificationRepository.save(notification);
+  }
+
+  @Transactional
+  public void sendContentReviewReplyNotification(
+      User user, Long contentId, Long reviewId, String thumbnailUrl) {
+    PurchaseDetails purchaseDetails =
+        PurchaseDetails.builder().contentId(contentId).reviewId(reviewId).build();
+
+    Notification notification =
+        notificationMapper.toNotification(
+            user.getId(),
+            NotificationType.PURCHASE,
+            SubNotificationType.CONTENT_REVIEW_REPLY,
+            purchaseDetails);
+
+    notificationRepository.save(notification);
+    log.info("콘텐츠 리뷰 답글 알림 발송: userId={}, contentId={}", user.getId(), contentId);
   }
 
   @Transactional
