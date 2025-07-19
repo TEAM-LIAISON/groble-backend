@@ -11,4 +11,5 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class PurchaseDetails {
   private Long contentId;
+  private Long reviewId;
 }

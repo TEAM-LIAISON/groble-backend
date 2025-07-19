@@ -10,7 +10,6 @@ import org.springframework.transaction.annotation.Transactional;
 import liaison.groble.application.admin.dto.AdminContentSummaryInfoDTO;
 import liaison.groble.application.admin.mapper.ContentEntityMapper;
 import liaison.groble.application.content.ContentReader;
-import liaison.groble.application.content.dto.ContentDTO;
 import liaison.groble.application.notification.mapper.NotificationMapper;
 import liaison.groble.common.response.PageResponse;
 import liaison.groble.domain.content.dto.FlatAdminContentSummaryInfoDTO;
@@ -18,7 +17,7 @@ import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.content.enums.AdminContentCheckingStatus;
 import liaison.groble.domain.content.enums.ContentStatus;
 import liaison.groble.domain.content.repository.ContentRepository;
-import liaison.groble.domain.notification.entity.detail.ReviewDetails;
+import liaison.groble.domain.notification.entity.detail.SellDetails;
 import liaison.groble.domain.notification.enums.NotificationType;
 import liaison.groble.domain.notification.enums.SubNotificationType;
 import liaison.groble.domain.notification.repository.NotificationRepository;
@@ -57,7 +56,7 @@ public class AdminContentService {
   public void approveContent(Long contentId) {
     Content content = contentReader.getContentById(contentId);
     content.setAdminContentCheckingStatus(AdminContentCheckingStatus.VALIDATED);
-    saveAndConvertToDTO(content);
+    contentRepository.save(content);
 
     sendContentReviewNotification(content, SubNotificationType.CONTENT_REVIEWED);
   }
@@ -68,28 +67,17 @@ public class AdminContentService {
     content.setAdminContentCheckingStatus(AdminContentCheckingStatus.REJECTED);
     content.setStatus(ContentStatus.DISCONTINUED);
     content.setRejectReason(rejectReason);
+    contentRepository.save(content);
 
-    log.info("콘텐츠 심사 거절 완료. 콘텐츠 ID: {}", contentId);
-    saveAndConvertToDTO(content);
-
-    sendContentReviewNotification(content, SubNotificationType.CONTENT_REVIEWED);
-  }
-
-  private ContentDTO saveAndConvertToDTO(Content content) {
-    content = contentRepository.save(content);
-    return contentEntityMapper.toDTO(content);
+    sendContentReviewNotification(content, SubNotificationType.CONTENT_SOLD_STOPPED);
   }
 
   private void sendContentReviewNotification(Content content, SubNotificationType subType) {
-    ReviewDetails reviewDetails =
-        ReviewDetails.builder()
-            .contentId(content.getId())
-            .thumbnailUrl(content.getThumbnailUrl())
-            .build();
+    SellDetails sellDetails = SellDetails.builder().contentId(content.getId()).build();
 
     notificationRepository.save(
         notificationMapper.toNotification(
-            content.getUser().getId(), NotificationType.REVIEW, subType, reviewDetails));
+            content.getUser().getId(), NotificationType.SELL, subType, sellDetails));
   }
 
   private AdminContentSummaryInfoDTO convertFlatDTOToInfoResponse(
