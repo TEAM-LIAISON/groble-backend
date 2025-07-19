@@ -9,8 +9,8 @@ public enum SubNotificationType {
   CONTENT_REVIEWED, // 콘텐츠 리뷰 작성  [리뷰가 등록됐어요]
 
   // SELL [판매 관련]
-  CONTENT_SOLD, // 콘텐츠 판매 [상품이 판매됐어요]
-  CONTENT_SOLD_STOPPED, // 콘텐츠 판매 중단 [상품 판매가 중단됐어요]
+  CONTENT_SOLD, // 콘텐츠 판매 [✅ 상품이 판매됐어요]
+  CONTENT_SOLD_STOPPED, // 콘텐츠 판매 중단 [✅ 상품 판매가 중단됐어요]
 
   // CERTIFY [인증 관련]
   MAKER_CERTIFIED, // 메이커 인증 완료 [✅ 메이커 인증이 완료됐어요]

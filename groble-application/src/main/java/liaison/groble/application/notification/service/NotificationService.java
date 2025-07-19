@@ -11,6 +11,7 @@ import liaison.groble.application.notification.dto.NotificationItemsDTO;
 import liaison.groble.application.notification.mapper.NotificationMapper;
 import liaison.groble.domain.notification.entity.Notification;
 import liaison.groble.domain.notification.entity.detail.CertifyDetails;
+import liaison.groble.domain.notification.entity.detail.SellDetails;
 import liaison.groble.domain.notification.entity.detail.SystemDetails;
 import liaison.groble.domain.notification.enums.NotificationType;
 import liaison.groble.domain.notification.enums.SubNotificationType;
@@ -161,5 +162,16 @@ public class NotificationService {
 
     notificationRepository.save(notification);
     log.info("메이커 인증 거절 알림 발송: userId={}", user.getId());
+  }
+
+  @Transactional
+  public void sendContentSoldNotification(User user, Long contentId) {
+    SellDetails sellDetails = SellDetails.builder().contentId(contentId).build();
+
+    Notification notification =
+        notificationMapper.toNotification(
+            user.getId(), NotificationType.SELL, SubNotificationType.CONTENT_SOLD, sellDetails);
+    notificationRepository.save(notification);
+    log.info("콘텐츠 판매 알림 발송: userId={}, contentId={}", user.getId(), contentId);
   }
 }

@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import liaison.groble.application.notification.service.NotificationService;
 import liaison.groble.application.order.service.OrderReader;
 import liaison.groble.application.payment.dto.PaypleAuthResponseDTO;
 import liaison.groble.application.payment.dto.PaypleAuthResultDTO;
@@ -37,6 +38,7 @@ public class PayplePaymentService {
 
   private final PayplePaymentRepository payplePaymentRepository;
   private final PaypleService paypleService;
+  private final NotificationService notificationService;
   private final PaypleConfig paypleConfig;
   private final PurchaseReader purchaseReader;
   private final OrderReader orderReader;
@@ -415,18 +417,9 @@ public class PayplePaymentService {
       // 5. Purchase 생성 및 확정 처리
       Purchase purchase = createAndCompletePurchase(order);
 
-      log.info(
-          "페이플 결제 승인 성공 처리 완료 - orderId: {}, paymentId: {}, purchaseId: {}, "
-              + "userId: {}, contentId: {}, finalPrice: {}원",
-          order.getId(),
-          payment.getId(),
-          purchase.getId(),
-          order.getUser().getId(),
-          purchase.getContent().getId(),
-          order.getFinalPrice());
-
-      // 구매 알림 생성
-
+      // 6. 구매 알림 생성
+      notificationService.sendContentSoldNotification(
+          purchase.getUser(), purchase.getContent().getId());
     } catch (Exception e) {
       log.error("결제 승인 성공 처리 중 오류 발생 - orderId: {}", order.getId(), e);
 
