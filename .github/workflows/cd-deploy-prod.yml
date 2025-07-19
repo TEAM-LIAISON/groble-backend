@@ -108,7 +108,7 @@ jobs:
 
           # CodeDeploy용 배포 패키지 생성
           DEPLOYMENT_ARCHIVE="groble-prod-$(date +%Y%m%d-%H%M%S).zip"
-          zip -r $DEPLOYMENT_ARCHIVE appspec.yml scripts/ final-task-definition.json
+          zip -r $DEPLOYMENT_ARCHIVE appspec.yml final-task-definition.json
 
           # S3 버킷 이름 가져오기
           S3_BUCKET=$(aws s3api list-buckets \
