@@ -9,9 +9,9 @@ import liaison.groble.application.notification.dto.NotificationDetailsDTO;
 import liaison.groble.application.notification.dto.NotificationItemDTO;
 import liaison.groble.application.notification.dto.NotificationItemsDTO;
 import liaison.groble.application.notification.mapper.NotificationMapper;
-import liaison.groble.domain.notification.entity.CertifyDetails;
 import liaison.groble.domain.notification.entity.Notification;
-import liaison.groble.domain.notification.entity.SystemDetails;
+import liaison.groble.domain.notification.entity.detail.CertifyDetails;
+import liaison.groble.domain.notification.entity.detail.SystemDetails;
 import liaison.groble.domain.notification.enums.NotificationType;
 import liaison.groble.domain.notification.enums.SubNotificationType;
 import liaison.groble.domain.notification.repository.NotificationCustomRepository;
@@ -131,7 +131,6 @@ public class NotificationService {
             systemDetails);
 
     notificationRepository.save(notification);
-    log.info("환영 알림 발송: userId={}", user.getId());
   }
 
   @Transactional

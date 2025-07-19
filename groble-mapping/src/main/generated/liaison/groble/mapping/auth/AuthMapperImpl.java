@@ -22,7 +22,7 @@ import liaison.groble.application.auth.dto.VerifyEmailCodeDTO;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-07-19T00:56:56+0900",
+    date = "2025-07-19T17:18:10+0900",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.10 (Amazon.com Inc.)")
 @Component
 public class AuthMapperImpl implements AuthMapper {
@@ -86,17 +86,17 @@ public class AuthMapperImpl implements AuthMapper {
   }
 
   @Override
-  public SignInResponse toSignInResponse(String email, SignInAuthResultDTO dto) {
-    if (email == null && dto == null) {
+  public SignInResponse toSignInResponse(String email, SignInAuthResultDTO signInAuthResultDTO) {
+    if (email == null && signInAuthResultDTO == null) {
       return null;
     }
 
     SignInResponse.SignInResponseBuilder signInResponse = SignInResponse.builder();
 
-    if (dto != null) {
-      signInResponse.hasAgreedToTerms(dto.isHasAgreedToTerms());
-      signInResponse.hasNickname(dto.isHasNickname());
-      signInResponse.hasVerifiedPhoneNumber(dto.isHasVerifiedPhoneNumber());
+    if (signInAuthResultDTO != null) {
+      signInResponse.hasAgreedToTerms(signInAuthResultDTO.isHasAgreedToTerms());
+      signInResponse.hasNickname(signInAuthResultDTO.isHasNickname());
+      signInResponse.hasVerifiedPhoneNumber(signInAuthResultDTO.isHasVerifiedPhoneNumber());
     }
     if (email != null) {
       signInResponse.email(email);
@@ -107,21 +107,22 @@ public class AuthMapperImpl implements AuthMapper {
   }
 
   @Override
-  public SignInTestResponse toSignInTestResponse(String email, SignInAuthResultDTO dto) {
-    if (email == null && dto == null) {
+  public SignInTestResponse toSignInTestResponse(
+      String email, SignInAuthResultDTO signInAuthResultDTO) {
+    if (email == null && signInAuthResultDTO == null) {
       return null;
     }
 
     SignInTestResponse.SignInTestResponseBuilder signInTestResponse = SignInTestResponse.builder();
 
-    if (dto != null) {
-      signInTestResponse.hasAgreedToTerms(dto.isHasAgreedToTerms());
-      signInTestResponse.hasNickname(dto.isHasNickname());
-      if (dto.getAccessToken() != null) {
-        signInTestResponse.accessToken(dto.getAccessToken());
+    if (signInAuthResultDTO != null) {
+      signInTestResponse.hasAgreedToTerms(signInAuthResultDTO.isHasAgreedToTerms());
+      signInTestResponse.hasNickname(signInAuthResultDTO.isHasNickname());
+      if (signInAuthResultDTO.getAccessToken() != null) {
+        signInTestResponse.accessToken(signInAuthResultDTO.getAccessToken());
       }
-      if (dto.getRefreshToken() != null) {
-        signInTestResponse.refreshToken(dto.getRefreshToken());
+      if (signInAuthResultDTO.getRefreshToken() != null) {
+        signInTestResponse.refreshToken(signInAuthResultDTO.getRefreshToken());
       }
     }
     if (email != null) {

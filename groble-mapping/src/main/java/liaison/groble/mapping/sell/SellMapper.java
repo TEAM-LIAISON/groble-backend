@@ -44,12 +44,12 @@ public interface SellMapper extends PageResponseMapper {
   ReplyContentResponse toReplyContentResponse(ReplyContentDTO replyContentDTO);
 
   default PageResponse<ContentSellDetailResponse> toContentSellResponsePage(
-      PageResponse<ContentSellDetailDTO> dtoPageResponse) {
-    return toPageResponse(dtoPageResponse, this::toContentSellDetailResponse);
+      PageResponse<ContentSellDetailDTO> DTOPageResponse) {
+    return toPageResponse(DTOPageResponse, this::toContentSellDetailResponse);
   }
 
   default PageResponse<ContentReviewDetailResponse> toContentReviewResponsePage(
-      PageResponse<ContentReviewDetailDTO> dtoPageResponse) {
-    return toPageResponse(dtoPageResponse, this::toContentReviewDetailResponse);
+      PageResponse<ContentReviewDetailDTO> DTOPageResponse) {
+    return toPageResponse(DTOPageResponse, this::toContentReviewDetailResponse);
   }
 }

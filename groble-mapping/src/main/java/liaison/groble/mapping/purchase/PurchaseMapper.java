@@ -70,7 +70,7 @@ public interface PurchaseMapper extends PageResponseMapper {
 
   default PageResponse<PurchaserContentPreviewCardResponse>
       toPurchaserContentPreviewCardResponsePage(
-          PageResponse<PurchaseContentCardDTO> dtoPageResponse) {
-    return toPageResponse(dtoPageResponse, this::toPurchaserContentPreviewCardResponse);
+          PageResponse<PurchaseContentCardDTO> DTOPageResponse) {
+    return toPageResponse(DTOPageResponse, this::toPurchaserContentPreviewCardResponse);
   }
 }

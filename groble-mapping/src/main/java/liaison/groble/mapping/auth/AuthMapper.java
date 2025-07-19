@@ -41,11 +41,11 @@ public interface AuthMapper {
 
   /** (email + 인증 결과 DTO) → SignInResponse */
   @Mapping(target = "authenticated", constant = "true")
-  SignInResponse toSignInResponse(String email, SignInAuthResultDTO dto);
+  SignInResponse toSignInResponse(String email, SignInAuthResultDTO signInAuthResultDTO);
 
   @Mapping(target = "email", source = "email")
   @Mapping(target = "authenticated", constant = "true")
-  SignInTestResponse toSignInTestResponse(String email, SignInAuthResultDTO dto);
+  SignInTestResponse toSignInTestResponse(String email, SignInAuthResultDTO signInAuthResultDTO);
 
   /** VerifyEmailCodeRequest → VerifyEmailCodeDTO */
   VerifyEmailCodeDTO toVerifyEmailCodeDTO(VerifyEmailCodeRequest request);

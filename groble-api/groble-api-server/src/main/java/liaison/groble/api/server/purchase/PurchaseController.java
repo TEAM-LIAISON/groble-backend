@@ -164,11 +164,11 @@ public class PurchaseController {
               @RequestParam(value = "state", required = false)
               String state) {
     Pageable pageable = PageUtils.createPageable(page, size, sort);
-    PageResponse<PurchaseContentCardDTO> dtoPageResponse =
+    PageResponse<PurchaseContentCardDTO> DTOPageResponse =
         purchaseService.getMyPurchasedContents(accessor.getUserId(), state, pageable);
 
     PageResponse<PurchaserContentPreviewCardResponse> responsePage =
-        purchaseMapper.toPurchaserContentPreviewCardResponsePage(dtoPageResponse);
+        purchaseMapper.toPurchaserContentPreviewCardResponsePage(DTOPageResponse);
 
     return responseHelper.success(
         responsePage, MY_PURCHASING_CONTENT_SUCCESS_MESSAGE, HttpStatus.OK);

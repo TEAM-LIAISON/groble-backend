@@ -46,11 +46,11 @@ public class PayplePaymentService {
   private final ObjectMapper objectMapper;
 
   @Transactional
-  public void saveAppCardAuthResponse(Long userId, PaypleAuthResultDTO dto) {
-    log.info("앱카드 인증 정보 저장 시작 - 주문번호: {}, userId: {}", dto.getPayOid(), userId);
+  public void saveAppCardAuthResponse(Long userId, PaypleAuthResultDTO paypleAuthResultDTO) {
+    log.info("앱카드 인증 정보 저장 시작 - 주문번호: {}, userId: {}", paypleAuthResultDTO.getPayOid(), userId);
 
     // 1. 주문 조회 및 검증
-    Order order = orderReader.getOrderByMerchantUid(dto.getPayOid());
+    Order order = orderReader.getOrderByMerchantUid(paypleAuthResultDTO.getPayOid());
 
     // 2. 권한 검증
     validateOrderOwnership(order, userId);
@@ -59,14 +59,11 @@ public class PayplePaymentService {
     validateOrderPendingStatus(order);
 
     // 4. 금액 검증
-    validatePaymentPrice(order, dto.getPayTotal());
+    validatePaymentPrice(order, paypleAuthResultDTO.getPayTotal());
 
     // 5. PayplePayment 엔티티 생성 및 저장
-    PayplePayment payplePayment = createPayplePayment(order, dto);
+    PayplePayment payplePayment = createPayplePayment(order, paypleAuthResultDTO);
     payplePaymentRepository.save(payplePayment);
-
-    log.info(
-        "앱카드 인증 정보 저장 완료 - 주문번호: {}, payplePaymentId: {}", dto.getPayOid(), payplePayment.getId());
   }
 
   /**
@@ -427,6 +424,8 @@ public class PayplePaymentService {
           order.getUser().getId(),
           purchase.getContent().getId(),
           order.getFinalPrice());
+
+      // 구매 알림 생성
 
     } catch (Exception e) {
       log.error("결제 승인 성공 처리 중 오류 발생 - orderId: {}", order.getId(), e);

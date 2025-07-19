@@ -138,8 +138,8 @@ public interface ContentMapper extends PageResponseMapper {
   ContentPreviewCardResponse toContentPreviewCardResponse(ContentCardDTO contentCardDTO);
 
   default PageResponse<ContentPreviewCardResponse> toContentPreviewCardResponsePage(
-      PageResponse<ContentCardDTO> dtoPage) {
-    return toPageResponse(dtoPage, this::toContentPreviewCardResponse);
+      PageResponse<ContentCardDTO> DTOPage) {
+    return toPageResponse(DTOPage, this::toContentPreviewCardResponse);
   }
 
   // ====== 📤 DTO → Response 변환 ======

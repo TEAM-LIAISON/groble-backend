@@ -2,6 +2,7 @@ package liaison.groble.api.server.verification;
 
 import jakarta.validation.Valid;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -17,6 +18,7 @@ import liaison.groble.application.verification.VerificationService;
 import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.model.Accessor;
 import liaison.groble.common.response.GrobleResponse;
+import liaison.groble.common.response.ResponseHelper;
 import liaison.groble.mapping.verification.VerificationMapper;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -42,8 +44,17 @@ public class EmailVerificationController {
   private static final String SEND_PASSWORD_RESET = "/email/code/password-reset";
   private static final String RESET_PASSWORD = "/password/reset";
 
-  private final VerificationMapper verificationMapper;
+  // 응답 메시지 상수화
+  private static final String EMAIL_VERIFICATION_SUCCESS_MESSAGE = "이메일 인증 코드가 성공적으로 발송되었습니다.";
+
+  // Service
   private final VerificationService verificationService;
+
+  // Mapper
+  private final VerificationMapper verificationMapper;
+
+  // Helper
+  private final ResponseHelper responseHelper;
 
   @Operation(summary = "회원가입 이메일 인증 코드 발송", description = "통합 회원가입 과정에서 이메일로 4자리 인증 코드를 발송합니다.")
   @PostMapping(SEND_CODE_FOR_SIGNUP)
@@ -51,10 +62,10 @@ public class EmailVerificationController {
       @Parameter(description = "인증 코드를 받을 이메일 주소", required = true) @Valid @RequestBody
           EmailVerificationRequest request) {
 
-    EmailVerificationDTO dto = verificationMapper.toEmailVerificationDTO(request);
-    verificationService.sendEmailVerificationForSignUp(dto);
+    EmailVerificationDTO emailVerificationDTO = verificationMapper.toEmailVerificationDTO(request);
+    verificationService.sendEmailVerificationForSignUp(emailVerificationDTO);
 
-    return createSuccessResponse();
+    return responseHelper.success(null, EMAIL_VERIFICATION_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 
   @Operation(summary = "회원가입 이메일 인증 코드 검증", description = "회원가입 시 발송된 4자리 인증 코드의 유효성을 검증합니다.")

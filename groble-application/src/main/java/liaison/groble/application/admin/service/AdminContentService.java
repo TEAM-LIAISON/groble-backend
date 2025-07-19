@@ -18,7 +18,7 @@ import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.content.enums.AdminContentCheckingStatus;
 import liaison.groble.domain.content.enums.ContentStatus;
 import liaison.groble.domain.content.repository.ContentRepository;
-import liaison.groble.domain.notification.entity.ReviewDetails;
+import liaison.groble.domain.notification.entity.detail.ReviewDetails;
 import liaison.groble.domain.notification.enums.NotificationType;
 import liaison.groble.domain.notification.enums.SubNotificationType;
 import liaison.groble.domain.notification.repository.NotificationRepository;

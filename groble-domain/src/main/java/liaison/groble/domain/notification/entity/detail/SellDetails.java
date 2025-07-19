@@ -1,4 +1,4 @@
-package liaison.groble.domain.notification.entity;
+package liaison.groble.domain.notification.entity.detail;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CertifyDetails {
-  private String nickname;
+public class SellDetails {
+  // 판매된 콘텐츠 ID
+  private Long contentId;
 }

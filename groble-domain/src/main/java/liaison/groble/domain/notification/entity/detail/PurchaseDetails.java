@@ -1,4 +1,4 @@
-package liaison.groble.domain.notification.entity;
+package liaison.groble.domain.notification.entity.detail;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ReviewDetails {
+public class PurchaseDetails {
   private Long contentId;
-  private String thumbnailUrl;
 }

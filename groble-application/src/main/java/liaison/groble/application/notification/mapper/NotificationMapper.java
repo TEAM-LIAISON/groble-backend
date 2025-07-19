@@ -5,10 +5,10 @@ import java.time.LocalDateTime;
 import org.springframework.stereotype.Component;
 
 import liaison.groble.application.user.service.UserReader;
-import liaison.groble.domain.notification.entity.CertifyDetails;
 import liaison.groble.domain.notification.entity.Notification;
-import liaison.groble.domain.notification.entity.ReviewDetails;
-import liaison.groble.domain.notification.entity.SystemDetails;
+import liaison.groble.domain.notification.entity.detail.CertifyDetails;
+import liaison.groble.domain.notification.entity.detail.ReviewDetails;
+import liaison.groble.domain.notification.entity.detail.SystemDetails;
 import liaison.groble.domain.notification.enums.NotificationReadStatus;
 import liaison.groble.domain.notification.enums.NotificationType;
 import liaison.groble.domain.notification.enums.SubNotificationType;
