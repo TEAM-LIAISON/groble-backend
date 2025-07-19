@@ -57,8 +57,6 @@ public class AdminContentService {
     Content content = contentReader.getContentById(contentId);
     content.setAdminContentCheckingStatus(AdminContentCheckingStatus.VALIDATED);
     contentRepository.save(content);
-
-    sendContentReviewNotification(content, SubNotificationType.CONTENT_REVIEWED);
   }
 
   @Transactional
@@ -69,15 +67,18 @@ public class AdminContentService {
     content.setRejectReason(rejectReason);
     contentRepository.save(content);
 
-    sendContentReviewNotification(content, SubNotificationType.CONTENT_SOLD_STOPPED);
+    sendContentSoldNotification(content);
   }
 
-  private void sendContentReviewNotification(Content content, SubNotificationType subType) {
+  private void sendContentSoldNotification(Content content) {
     SellDetails sellDetails = SellDetails.builder().contentId(content.getId()).build();
 
     notificationRepository.save(
         notificationMapper.toNotification(
-            content.getUser().getId(), NotificationType.SELL, subType, sellDetails));
+            content.getUser().getId(),
+            NotificationType.SELL,
+            SubNotificationType.CONTENT_SOLD_STOPPED,
+            sellDetails));
   }
 
   private AdminContentSummaryInfoDTO convertFlatDTOToInfoResponse(

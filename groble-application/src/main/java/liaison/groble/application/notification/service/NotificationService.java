@@ -11,6 +11,7 @@ import liaison.groble.application.notification.dto.NotificationItemsDTO;
 import liaison.groble.application.notification.mapper.NotificationMapper;
 import liaison.groble.domain.notification.entity.Notification;
 import liaison.groble.domain.notification.entity.detail.CertifyDetails;
+import liaison.groble.domain.notification.entity.detail.ReviewDetails;
 import liaison.groble.domain.notification.entity.detail.SellDetails;
 import liaison.groble.domain.notification.entity.detail.SystemDetails;
 import liaison.groble.domain.notification.enums.NotificationType;
@@ -173,5 +174,26 @@ public class NotificationService {
             user.getId(), NotificationType.SELL, SubNotificationType.CONTENT_SOLD, sellDetails);
     notificationRepository.save(notification);
     log.info("콘텐츠 판매 알림 발송: userId={}, contentId={}", user.getId(), contentId);
+  }
+
+  @Transactional
+  public void sendContentReviewNotification(
+      User user, Long contentId, Long reviewId, String thumbnailUrl) {
+    ReviewDetails reviewDetails =
+        ReviewDetails.builder()
+            .contentId(contentId)
+            .reviewId(reviewId)
+            .thumbnailUrl(thumbnailUrl)
+            .build();
+
+    Notification notification =
+        notificationMapper.toNotification(
+            user.getId(),
+            NotificationType.REVIEW,
+            SubNotificationType.CONTENT_REVIEWED,
+            reviewDetails);
+
+    notificationRepository.save(notification);
+    log.info("콘텐츠 리뷰 알림 발송: userId={}, contentId={}", user.getId(), contentId);
   }
 }
