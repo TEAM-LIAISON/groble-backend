@@ -100,12 +100,8 @@ public class NotificationService {
 
   private NotificationDetailsDTO createReviewDetails(
       Notification notification, SubNotificationType subNotificationType) {
-    if (subNotificationType == SubNotificationType.CONTENT_REVIEW_APPROVED) {
-      return NotificationDetailsDTO.contentReviewApproved(
-          notification.getReviewDetails().getContentId(),
-          notification.getReviewDetails().getThumbnailUrl());
-    } else if (subNotificationType == SubNotificationType.CONTENT_REVIEW_REJECTED) {
-      return NotificationDetailsDTO.contentReviewRejected(
+    if (subNotificationType == SubNotificationType.CONTENT_REVIEWED) {
+      return NotificationDetailsDTO.contentReviewed(
           notification.getReviewDetails().getContentId(),
           notification.getReviewDetails().getThumbnailUrl());
     }

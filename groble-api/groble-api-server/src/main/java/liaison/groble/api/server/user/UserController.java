@@ -26,7 +26,7 @@ import liaison.groble.api.model.user.response.swagger.MyPageSummary;
 import liaison.groble.api.model.user.response.swagger.SwitchRole;
 import liaison.groble.api.model.user.response.swagger.UploadUserProfileImage;
 import liaison.groble.api.model.user.response.swagger.UserHeader;
-import liaison.groble.api.server.util.FileUtils;
+import liaison.groble.api.server.util.FileUtil;
 import liaison.groble.application.file.FileService;
 import liaison.groble.application.file.dto.FileUploadDTO;
 import liaison.groble.application.user.dto.UserHeaderDTO;
@@ -73,7 +73,7 @@ public class UserController {
   private final UserMapper userMapper;
 
   // Utils
-  private final FileUtils fileUtils;
+  private final FileUtil fileUtil;
 
   // Helper
   private final ResponseHelper responseHelper;
@@ -186,7 +186,7 @@ public class UserController {
     try {
       // 3) DTO 변환
       FileUploadDTO dto =
-          fileUtils.toServiceFileUploadDTO(profileImage, "profiles/" + accessor.getUserId());
+          fileUtil.toServiceFileUploadDTO(profileImage, "profiles/" + accessor.getUserId());
       // 4) 업로드
       var fileDTO = fileService.uploadFile(accessor.getUserId(), dto);
       // 5) 사용자 프로필에 URL 업데이트

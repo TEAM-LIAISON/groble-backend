@@ -9,7 +9,7 @@ import org.springframework.web.multipart.MultipartFile;
 import liaison.groble.application.file.dto.FileUploadDTO;
 
 @Component
-public class FileUtils {
+public class FileUtil {
   public FileUploadDTO toServiceFileUploadDTO(MultipartFile file, String directory)
       throws IOException {
     return FileUploadDTO.builder()

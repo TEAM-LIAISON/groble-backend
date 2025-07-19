@@ -59,7 +59,7 @@ public class AdminContentService {
     content.setAdminContentCheckingStatus(AdminContentCheckingStatus.VALIDATED);
     saveAndConvertToDTO(content);
 
-    sendContentReviewNotification(content, SubNotificationType.CONTENT_REVIEW_APPROVED);
+    sendContentReviewNotification(content, SubNotificationType.CONTENT_REVIEWED);
   }
 
   @Transactional
@@ -72,12 +72,11 @@ public class AdminContentService {
     log.info("콘텐츠 심사 거절 완료. 콘텐츠 ID: {}", contentId);
     saveAndConvertToDTO(content);
 
-    sendContentReviewNotification(content, SubNotificationType.CONTENT_REVIEW_REJECTED);
+    sendContentReviewNotification(content, SubNotificationType.CONTENT_REVIEWED);
   }
 
   private ContentDTO saveAndConvertToDTO(Content content) {
     content = contentRepository.save(content);
-    log.info("콘텐츠 저장 완료. ID: {}, 유저 ID: {}", content.getId(), content.getUser().getId());
     return contentEntityMapper.toDTO(content);
   }
 

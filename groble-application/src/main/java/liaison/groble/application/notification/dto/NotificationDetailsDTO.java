@@ -27,13 +27,8 @@ public class NotificationDetailsDTO {
     return NotificationDetailsDTO.builder().nickname(nickname).build();
   }
 
-  /** Factory method for CONTENT_REVIEW_APPROVED notifications */
-  public static NotificationDetailsDTO contentReviewApproved(Long contentId, String thumbnailUrl) {
-    return NotificationDetailsDTO.builder().contentId(contentId).thumbnailUrl(thumbnailUrl).build();
-  }
-
-  /** Factory method for CONTENT_REVIEW_REJECTED notifications */
-  public static NotificationDetailsDTO contentReviewRejected(Long contentId, String thumbnailUrl) {
+  /** Factory method for CONTENT_REVIEWED notifications */
+  public static NotificationDetailsDTO contentReviewed(Long contentId, String thumbnailUrl) {
     return NotificationDetailsDTO.builder().contentId(contentId).thumbnailUrl(thumbnailUrl).build();
   }
 

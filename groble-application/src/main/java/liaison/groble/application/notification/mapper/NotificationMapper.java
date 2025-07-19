@@ -51,7 +51,7 @@ public class NotificationMapper {
         break;
       case REVIEW:
         switch (subNotificationType) {
-          case CONTENT_REVIEW_APPROVED, CONTENT_REVIEW_REJECTED -> builder.reviewDetails(
+          case CONTENT_REVIEWED -> builder.reviewDetails(
               ReviewDetails.builder()
                   .contentId(((ReviewDetails) detailObject).getContentId())
                   .thumbnailUrl(((ReviewDetails) detailObject).getThumbnailUrl())

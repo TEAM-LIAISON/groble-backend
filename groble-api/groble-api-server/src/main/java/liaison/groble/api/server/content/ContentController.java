@@ -32,7 +32,7 @@ import liaison.groble.api.model.content.response.swagger.UploadContentDetailImag
 import liaison.groble.api.model.content.response.swagger.UploadContentDownloadFile;
 import liaison.groble.api.model.content.response.swagger.UploadContentThumbnail;
 import liaison.groble.api.model.file.response.FileUploadResponse;
-import liaison.groble.api.server.util.FileUtils;
+import liaison.groble.api.server.util.FileUtil;
 import liaison.groble.application.content.dto.ContentCardDTO;
 import liaison.groble.application.content.dto.ContentDetailDTO;
 import liaison.groble.application.content.dto.review.ContentReviewDTO;
@@ -90,7 +90,7 @@ public class ContentController {
   // Mapper
   private final ContentMapper contentMapper;
   private final ContentReviewMapper contentReviewMapper;
-  private final FileUtils fileUtils;
+  private final FileUtil fileUtil;
 
   // Helper
   private final ResponseHelper responseHelper;
@@ -234,7 +234,7 @@ public class ContentController {
     }
     try {
       FileUploadDTO fileUploadDTO =
-          fileUtils.toServiceFileUploadDTO(contentThumbnailImage, "contents/thumbnail");
+          fileUtil.toServiceFileUploadDTO(contentThumbnailImage, "contents/thumbnail");
       FileDTO fileDTO = fileService.uploadFile(accessor.getUserId(), fileUploadDTO);
       FileUploadResponse response =
           FileUploadResponse.of(
@@ -280,7 +280,7 @@ public class ContentController {
             .body(GrobleResponse.error("모든 파일이 유효한 이미지여야 합니다.", HttpStatus.BAD_REQUEST.value()));
       }
       try {
-        FileUploadDTO dto = fileUtils.toServiceFileUploadDTO(file, "contents/detail");
+        FileUploadDTO dto = fileUtil.toServiceFileUploadDTO(file, "contents/detail");
         FileDTO uploaded = fileService.uploadFile(accessor.getUserId(), dto);
         responses.add(
             FileUploadResponse.of(
@@ -325,7 +325,7 @@ public class ContentController {
     }
     try {
       FileUploadDTO fileUploadDTO =
-          fileUtils.toServiceFileUploadDTO(contentDocumentFile, "contents/document");
+          fileUtil.toServiceFileUploadDTO(contentDocumentFile, "contents/document");
       FileDTO fileDTO = fileService.uploadFile(accessor.getUserId(), fileUploadDTO);
       FileUploadResponse response =
           FileUploadResponse.of(
