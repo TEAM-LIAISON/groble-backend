@@ -40,7 +40,6 @@ import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.content.entity.ContentOption;
 import liaison.groble.domain.content.entity.DocumentOption;
 import liaison.groble.domain.content.enums.AdminContentCheckingStatus;
-import liaison.groble.domain.content.enums.ContentDeliveryMethod;
 import liaison.groble.domain.content.enums.ContentStatus;
 import liaison.groble.domain.content.enums.ContentType;
 import liaison.groble.domain.content.repository.CategoryRepository;
@@ -286,8 +285,6 @@ public class ContentService {
                   if (option instanceof DocumentOption) {
                     DocumentOption documentOption = (DocumentOption) option;
                     builder
-                        .contentDeliveryMethod(
-                            safeEnumName(documentOption.getContentDeliveryMethod()))
                         .documentFileUrl(documentOption.getDocumentFileUrl())
                         .documentLinkUrl(documentOption.getDocumentLinkUrl());
                   }
@@ -371,8 +368,6 @@ public class ContentService {
                   if (option instanceof DocumentOption) {
                     DocumentOption documentOption = (DocumentOption) option;
                     builder
-                        .contentDeliveryMethod(
-                            safeEnumName(documentOption.getContentDeliveryMethod()))
                         .documentFileUrl(documentOption.getDocumentFileUrl())
                         .documentLinkUrl(documentOption.getDocumentLinkUrl());
                   }
@@ -630,8 +625,6 @@ public class ContentService {
     // 문서 옵션 특화 필드 설정 - null 안전하게 처리
     if (optionDTO.getContentDeliveryMethod() != null) {
       try {
-        option.setContentDeliveryMethod(
-            ContentDeliveryMethod.valueOf(optionDTO.getContentDeliveryMethod()));
         option.setDocumentOriginalFileName(documentOriginalFileName);
         option.setDocumentFileUrl(optionDTO.getDocumentFileUrl());
         option.setDocumentLinkUrl(optionDTO.getDocumentLinkUrl());
@@ -706,10 +699,6 @@ public class ContentService {
 
         if (option instanceof DocumentOption documentOption) {
           builder
-              .contentDeliveryMethod(
-                  documentOption.getContentDeliveryMethod() != null
-                      ? documentOption.getContentDeliveryMethod().name()
-                      : null)
               .documentFileUrl(
                   documentOption.getDocumentFileUrl() != null
                       ? documentOption.getDocumentFileUrl()

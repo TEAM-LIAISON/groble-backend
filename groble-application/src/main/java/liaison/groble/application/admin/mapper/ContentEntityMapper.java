@@ -81,13 +81,8 @@ public class ContentEntityMapper {
       ContentOptionDTO.ContentOptionDTOBuilder builder, DocumentOption documentOption) {
 
     return builder
-        .contentDeliveryMethod(getEnumName(documentOption.getContentDeliveryMethod()))
         .documentFileUrl(documentOption.getDocumentFileUrl())
         .documentLinkUrl(documentOption.getDocumentLinkUrl())
         .build();
-  }
-
-  private String getEnumName(Enum<?> enumValue) {
-    return enumValue != null ? enumValue.name() : null;
   }
 }
