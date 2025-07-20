@@ -525,11 +525,6 @@ public class ContentService {
     if (dto.getContentIntroduction() != null) {
       content.setContentIntroduction(dto.getContentIntroduction());
     }
-    // 콘텐츠 상세 이미지 URL 목록 업데이트
-    //    if (dto.getContentDetailImageUrls() != null) {
-    //      content.getContentDetailImageUrls().clear();
-    //      content.getContentDetailImageUrls().addAll(dto.getContentDetailImageUrls());
-    //    }
     // 서비스 타겟, 프로세스, 제작자 소개 업데이트
     if (dto.getServiceTarget() != null) {
       content.setServiceTarget(dto.getServiceTarget());

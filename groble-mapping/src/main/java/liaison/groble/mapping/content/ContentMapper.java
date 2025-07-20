@@ -53,10 +53,6 @@ public interface ContentMapper extends PageResponseMapper {
                         .description(coachingOption.getDescription())
                         .price(coachingOption.getPrice())
                         .contentType(liaison.groble.domain.content.enums.ContentType.COACHING)
-                        .coachingPeriod(coachingOption.getCoachingPeriod())
-                        .documentProvision(coachingOption.getDocumentProvision())
-                        .coachingType(coachingOption.getCoachingType())
-                        .coachingTypeDescription(coachingOption.getCoachingTypeDescription())
                         .build());
               });
     }
@@ -74,7 +70,6 @@ public interface ContentMapper extends PageResponseMapper {
                         .description(documentOption.getDescription())
                         .price(documentOption.getPrice())
                         .contentType(liaison.groble.domain.content.enums.ContentType.DOCUMENT)
-                        .contentDeliveryMethod(documentOption.getContentDeliveryMethod())
                         .documentOriginalFileName(null)
                         .documentFileUrl(documentOption.getDocumentFileUrl())
                         .documentLinkUrl(documentOption.getDocumentLinkUrl())
@@ -102,10 +97,6 @@ public interface ContentMapper extends PageResponseMapper {
                         .description(coachingOption.getDescription())
                         .price(coachingOption.getPrice())
                         .contentType(liaison.groble.domain.content.enums.ContentType.COACHING)
-                        .coachingPeriod(coachingOption.getCoachingPeriod())
-                        .documentProvision(coachingOption.getDocumentProvision())
-                        .coachingType(coachingOption.getCoachingType())
-                        .coachingTypeDescription(coachingOption.getCoachingTypeDescription())
                         .build());
               });
     }
@@ -123,7 +114,6 @@ public interface ContentMapper extends PageResponseMapper {
                         .description(documentOption.getDescription())
                         .price(documentOption.getPrice())
                         .contentType(liaison.groble.domain.content.enums.ContentType.DOCUMENT)
-                        .contentDeliveryMethod(documentOption.getContentDeliveryMethod())
                         .documentOriginalFileName(null)
                         .documentFileUrl(documentOption.getDocumentFileUrl())
                         .documentLinkUrl(documentOption.getDocumentLinkUrl())

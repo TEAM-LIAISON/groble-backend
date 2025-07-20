@@ -45,7 +45,7 @@ public class ContentRegisterRequest {
 
   @Valid
   @Schema(description = "코칭 옵션 목록 (contentType이 COACHING인 경우)")
-  private List<CoachingOptionRegisterRequest> coachingOptions;
+  private List<BaseOptionRegisterRequest> coachingOptions;
 
   @Valid
   @Schema(description = "문서 옵션 목록 (contentType이 DOCUMENT인 경우)")
