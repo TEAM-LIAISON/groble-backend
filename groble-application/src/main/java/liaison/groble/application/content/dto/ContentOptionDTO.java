@@ -18,14 +18,7 @@ public class ContentOptionDTO {
   // enum OptionType { COACHING, DOCUMENT }
   private ContentType contentType;
 
-  // coaching 전용
-  private String coachingPeriod;
-  private String documentProvision;
-  private String coachingType;
-  private String coachingTypeDescription;
-
   // document 전용
-  private String contentDeliveryMethod;
   private String documentOriginalFileName;
   private String documentFileUrl;
   private String documentLinkUrl;

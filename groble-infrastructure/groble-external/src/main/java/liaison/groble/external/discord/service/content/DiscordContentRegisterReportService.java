@@ -21,7 +21,7 @@ public class DiscordContentRegisterReportService implements ContentRegisterRepor
   public void sendCreateContentRegisterReport(
       ContentRegisterCreateReportDTO contentRegisterCreateReportDTO) {
     var msg =
-        "## 콘텐츠 심사 요청 알림"
+        "## 콘텐츠 판매하기 알림"
             + "\n**회원 닉네임:** "
             + contentRegisterCreateReportDTO.nickname()
             + "\n**콘텐츠 ID:** "
@@ -32,7 +32,7 @@ public class DiscordContentRegisterReportService implements ContentRegisterRepor
             + contentRegisterCreateReportDTO.contentType()
             + "\n**콘텐츠 심사 요청 시각 (Asia/Seoul):** "
             + contentRegisterCreateReportDTO.createdAt()
-            + "\n님이 콘텐츠 심사 요청을 하셨습니다.";
+            + "\n님이 콘텐츠 판매하기를 하셨습니다.";
 
     discordService.sendMessages(url, msg);
   }

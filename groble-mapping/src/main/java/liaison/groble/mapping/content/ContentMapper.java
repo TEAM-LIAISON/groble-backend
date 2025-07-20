@@ -155,13 +155,6 @@ public interface ContentMapper extends PageResponseMapper {
                     .name(option.getName())
                     .description(option.getDescription())
                     .price(option.getPrice())
-                    // coaching 전용 필드들
-                    .coachingPeriod(option.getCoachingPeriod())
-                    .documentProvision(option.getDocumentProvision())
-                    .coachingType(option.getCoachingType())
-                    .coachingTypeDescription(option.getCoachingTypeDescription())
-                    // document 전용 필드들
-                    .contentDeliveryMethod(option.getContentDeliveryMethod())
                     .documentFileUrl(option.getDocumentFileUrl())
                     .documentLinkUrl(option.getDocumentLinkUrl())
                     .build())
@@ -195,10 +188,6 @@ public interface ContentMapper extends PageResponseMapper {
                     .name(option.getName())
                     .description(option.getDescription())
                     .price(option.getPrice())
-                    .coachingPeriod(option.getCoachingPeriod())
-                    .documentProvision(option.getDocumentProvision())
-                    .coachingType(option.getCoachingType())
-                    .coachingTypeDescription(option.getCoachingTypeDescription())
                     .build();
               } else {
                 return DocumentOptionResponse.builder()
@@ -206,7 +195,6 @@ public interface ContentMapper extends PageResponseMapper {
                     .name(option.getName())
                     .description(option.getDescription())
                     .price(option.getPrice())
-                    .contentDeliveryMethod(option.getContentDeliveryMethod())
                     .documentOriginalFileName(option.getDocumentOriginalFileName())
                     .documentFileUrl(option.getDocumentFileUrl())
                     .documentLinkUrl(option.getDocumentLinkUrl())

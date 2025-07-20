@@ -61,7 +61,7 @@ public class SellController {
   // 응답 메시지 상수화
   private static final String MY_SELLING_CONTENTS_SUCCESS_MESSAGE = "나의 판매 콘텐츠 조회에 성공하였습니다.";
   private static final String CONTENT_DRAFT_SUCCESS_MESSAGE = "콘텐츠 임시 저장에 성공하였습니다.";
-  private static final String CONTENT_REGISTER_SUCCESS_MESSAGE = "콘텐츠 심사 요청에 성공하였습니다.";
+  private static final String CONTENT_REGISTER_SUCCESS_MESSAGE = "콘텐츠 판매하기에 성공하였습니다.";
   private static final String STOP_CONTENT_SUCCESS_MESSAGE = "콘텐츠 판매 중단에 성공하였습니다.";
   private static final String DELETE_CONTENT_SUCCESS_MESSAGE = "콘텐츠 삭제에 성공하였습니다.";
   private static final String EXAMINE_REJECT_REASON_SUCCESS_MESSAGE = "콘텐츠 심사 거절 사유 조회에 성공하였습니다.";
@@ -98,6 +98,7 @@ public class SellController {
   @Operation(
       summary = "[✅ 콘텐츠 심사 요청] 작성 완료한 콘텐츠 심사 요청",
       description = "콘텐츠 심사를 요청합니다. 콘텐츠 유형(코칭/문서)에 따라 옵션 구조가 달라집니다.")
+  @Logging(item = "Content", action = "register", includeParam = true, includeResult = true)
   @PostMapping(REGISTER_CONTENT_PATH)
   public ResponseEntity<GrobleResponse<ContentResponse>> registerContent(
       @Auth Accessor accessor, @Valid @RequestBody ContentRegisterRequest request) {

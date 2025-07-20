@@ -212,8 +212,6 @@ public class ContentService {
     }
 
     // 7. 저장 및 변환
-    log.info("콘텐츠 심사 요청 완료. 유저 ID: {}", userId);
-
     final LocalDateTime nowInSeoul = LocalDateTime.now(ZoneId.of("Asia/Seoul"));
 
     final ContentRegisterCreateReportDTO contentRegisterCreateReportDTO =
@@ -617,17 +615,6 @@ public class ContentService {
       }
     }
 
-    // 문서 옵션 특화 필드 설정 - null 안전하게 처리
-    if (optionDTO.getContentDeliveryMethod() != null) {
-      try {
-        option.setDocumentOriginalFileName(documentOriginalFileName);
-        option.setDocumentFileUrl(optionDTO.getDocumentFileUrl());
-        option.setDocumentLinkUrl(optionDTO.getDocumentLinkUrl());
-      } catch (IllegalArgumentException e) {
-        log.warn("유효하지 않은 콘텐츠 제공 방식: {}", optionDTO.getContentDeliveryMethod());
-      }
-    }
-
     return option;
   }
 
@@ -803,20 +790,6 @@ public class ContentService {
 
         if (option.getPrice() == null) {
           missingFields.add("옵션" + (i + 1) + " 가격");
-        }
-
-        // 콘텐츠 유형별 옵션 필수 필드 검증
-        if (ContentType.COACHING.name().equals(contentDTO.getContentType())) {
-          if (option.getCoachingPeriod() == null) {
-            missingFields.add("옵션" + (i + 1) + " 코칭 기간");
-          }
-          if (option.getCoachingType() == null) {
-            missingFields.add("옵션" + (i + 1) + " 코칭 방식");
-          }
-        } else if (ContentType.DOCUMENT.name().equals(contentDTO.getContentType())) {
-          if (option.getContentDeliveryMethod() == null) {
-            missingFields.add("옵션" + (i + 1) + " 콘텐츠 제공 방식");
-          }
         }
       }
     }
