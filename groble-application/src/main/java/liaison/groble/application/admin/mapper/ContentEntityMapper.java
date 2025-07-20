@@ -7,7 +7,6 @@ import org.springframework.stereotype.Component;
 
 import liaison.groble.application.content.dto.ContentDTO;
 import liaison.groble.application.content.dto.ContentOptionDTO;
-import liaison.groble.domain.content.entity.CoachingOption;
 import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.content.entity.ContentOption;
 import liaison.groble.domain.content.entity.DocumentOption;
@@ -71,24 +70,11 @@ public class ContentEntityMapper {
             .description(option.getDescription())
             .price(option.getPrice());
 
-    if (option instanceof CoachingOption coachingOption) {
-      return addCoachingOptionFields(builder, coachingOption);
-    } else if (option instanceof DocumentOption documentOption) {
+    if (option instanceof DocumentOption documentOption) {
       return addDocumentOptionFields(builder, documentOption);
     }
 
     return builder.build();
-  }
-
-  private ContentOptionDTO addCoachingOptionFields(
-      ContentOptionDTO.ContentOptionDTOBuilder builder, CoachingOption coachingOption) {
-
-    return builder
-        .coachingPeriod(getEnumName(coachingOption.getCoachingPeriod()))
-        .documentProvision(getEnumName(coachingOption.getDocumentProvision()))
-        .coachingType(getEnumName(coachingOption.getCoachingType()))
-        .coachingTypeDescription(coachingOption.getCoachingTypeDescription())
-        .build();
   }
 
   private ContentOptionDTO addDocumentOptionFields(

@@ -36,17 +36,13 @@ import liaison.groble.domain.content.dto.FlatContentPreviewDTO;
 import liaison.groble.domain.content.dto.FlatContentReviewReplyDTO;
 import liaison.groble.domain.content.dto.FlatDynamicContentDTO;
 import liaison.groble.domain.content.entity.Category;
-import liaison.groble.domain.content.entity.CoachingOption;
 import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.content.entity.ContentOption;
 import liaison.groble.domain.content.entity.DocumentOption;
 import liaison.groble.domain.content.enums.AdminContentCheckingStatus;
-import liaison.groble.domain.content.enums.CoachingPeriod;
-import liaison.groble.domain.content.enums.CoachingType;
 import liaison.groble.domain.content.enums.ContentDeliveryMethod;
 import liaison.groble.domain.content.enums.ContentStatus;
 import liaison.groble.domain.content.enums.ContentType;
-import liaison.groble.domain.content.enums.DocumentProvision;
 import liaison.groble.domain.content.repository.CategoryRepository;
 import liaison.groble.domain.content.repository.ContentCustomRepository;
 import liaison.groble.domain.content.repository.ContentRepository;
@@ -287,14 +283,7 @@ public class ContentService {
                           .price(option.getPrice());
 
                   // 옵션 타입별 필드 설정
-                  if (option instanceof CoachingOption) {
-                    CoachingOption coachingOption = (CoachingOption) option;
-                    builder
-                        .coachingPeriod(safeEnumName(coachingOption.getCoachingPeriod()))
-                        .documentProvision(safeEnumName(coachingOption.getDocumentProvision()))
-                        .coachingType(safeEnumName(coachingOption.getCoachingType()))
-                        .coachingTypeDescription(coachingOption.getCoachingTypeDescription());
-                  } else if (option instanceof DocumentOption) {
+                  if (option instanceof DocumentOption) {
                     DocumentOption documentOption = (DocumentOption) option;
                     builder
                         .contentDeliveryMethod(
@@ -379,14 +368,7 @@ public class ContentService {
                           .price(option.getPrice());
 
                   // 옵션 타입별 필드 설정
-                  if (option instanceof CoachingOption) {
-                    CoachingOption coachingOption = (CoachingOption) option;
-                    builder
-                        .coachingPeriod(safeEnumName(coachingOption.getCoachingPeriod()))
-                        .documentProvision(safeEnumName(coachingOption.getDocumentProvision()))
-                        .coachingType(safeEnumName(coachingOption.getCoachingType()))
-                        .coachingTypeDescription(coachingOption.getCoachingTypeDescription());
-                  } else if (option instanceof DocumentOption) {
+                  if (option instanceof DocumentOption) {
                     DocumentOption documentOption = (DocumentOption) option;
                     builder
                         .contentDeliveryMethod(
@@ -615,9 +597,7 @@ public class ContentService {
       ContentType contentType, ContentOptionDTO optionDTO) {
     ContentOption option;
 
-    if (contentType == ContentType.COACHING) {
-      option = createCoachingOption(optionDTO);
-    } else if (contentType == ContentType.DOCUMENT) {
+    if (contentType == ContentType.DOCUMENT) {
       option = createDocumentOption(optionDTO);
     } else {
       log.warn("지원하지 않는 콘텐츠 유형입니다: {}", contentType);
@@ -628,40 +608,6 @@ public class ContentService {
     option.setName(optionDTO.getName());
     option.setDescription(optionDTO.getDescription());
     option.setPrice(optionDTO.getPrice());
-
-    return option;
-  }
-
-  /** 코칭 옵션을 생성합니다. */
-  private CoachingOption createCoachingOption(ContentOptionDTO optionDTO) {
-    CoachingOption option = new CoachingOption();
-
-    // 코칭 옵션 특화 필드 설정 - null 안전하게 처리
-    if (optionDTO.getCoachingPeriod() != null) {
-      try {
-        option.setCoachingPeriod(CoachingPeriod.valueOf(optionDTO.getCoachingPeriod()));
-      } catch (IllegalArgumentException e) {
-        log.warn("유효하지 않은 코칭 기간: {}", optionDTO.getCoachingPeriod());
-      }
-    }
-
-    if (optionDTO.getDocumentProvision() != null) {
-      try {
-        option.setDocumentProvision(DocumentProvision.valueOf(optionDTO.getDocumentProvision()));
-      } catch (IllegalArgumentException e) {
-        log.warn("유효하지 않은 자료 제공 옵션: {}", optionDTO.getDocumentProvision());
-      }
-    }
-
-    if (optionDTO.getCoachingType() != null) {
-      try {
-        option.setCoachingType(CoachingType.valueOf(optionDTO.getCoachingType()));
-      } catch (IllegalArgumentException e) {
-        log.warn("유효하지 않은 코칭 방식: {}", optionDTO.getCoachingType());
-      }
-    }
-
-    option.setCoachingTypeDescription(optionDTO.getCoachingTypeDescription());
 
     return option;
   }
@@ -758,22 +704,7 @@ public class ContentService {
                 .description(option.getDescription())
                 .price(option.getPrice());
 
-        if (option instanceof CoachingOption coachingOption) {
-          builder
-              .coachingPeriod(
-                  coachingOption.getCoachingPeriod() != null
-                      ? coachingOption.getCoachingPeriod().name()
-                      : null)
-              .documentProvision(
-                  coachingOption.getDocumentProvision() != null
-                      ? coachingOption.getDocumentProvision().name()
-                      : null)
-              .coachingType(
-                  coachingOption.getCoachingType() != null
-                      ? coachingOption.getCoachingType().name()
-                      : null)
-              .coachingTypeDescription(coachingOption.getCoachingTypeDescription());
-        } else if (option instanceof DocumentOption documentOption) {
+        if (option instanceof DocumentOption documentOption) {
           builder
               .contentDeliveryMethod(
                   documentOption.getContentDeliveryMethod() != null

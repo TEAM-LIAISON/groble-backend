@@ -32,7 +32,6 @@ import liaison.groble.domain.content.dto.FlatAdminContentSummaryInfoDTO;
 import liaison.groble.domain.content.dto.FlatContentPreviewDTO;
 import liaison.groble.domain.content.dto.FlatDynamicContentDTO;
 import liaison.groble.domain.content.entity.Content;
-import liaison.groble.domain.content.entity.QCoachingOption;
 import liaison.groble.domain.content.entity.QContent;
 import liaison.groble.domain.content.entity.QContentOption;
 import liaison.groble.domain.content.entity.QDocumentOption;
@@ -179,7 +178,6 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
     QUser qUser = QUser.user;
     QContentOption qContentOption = QContentOption.contentOption;
     QDocumentOption qDocOpt = QDocumentOption.documentOption;
-    QCoachingOption qCoachOpt = QCoachingOption.coachingOption;
 
     BooleanExpression condition =
         qContent
@@ -210,24 +208,9 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
 
     log.info("Has Valid DocOpt Check: {}", hasValidDocOpt);
 
-    // 4) 코칭 옵션 존재 여부
-    BooleanExpression hasValidCoachOpt =
-        JPAExpressions.selectOne()
-            .from(qCoachOpt)
-            .where(
-                qCoachOpt.content.eq(qContent),
-                qCoachOpt.coachingPeriod.isNotNull(),
-                qCoachOpt.coachingType.isNotNull())
-            .exists();
-
-    log.info("Has Valid CoachOpt Check: {}", hasValidCoachOpt);
-
     // 5) 판매 가능 여부 식
     Expression<Boolean> availableForSale =
-        new CaseBuilder()
-            .when(contentValid.and(hasValidDocOpt.or(hasValidCoachOpt)))
-            .then(true)
-            .otherwise(false);
+        new CaseBuilder().when(contentValid.and(hasValidDocOpt)).then(true).otherwise(false);
 
     log.info("Available For Sale Check: {}", availableForSale);
 
@@ -775,7 +758,6 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
     QContent qContent = QContent.content;
     QContentOption qOption = QContentOption.contentOption;
     QDocumentOption qDocOpt = QDocumentOption.documentOption;
-    QCoachingOption qCoachOpt = QCoachingOption.coachingOption;
     QUser qUser = QUser.user;
 
     // 1) 상태 + 사용자 필터
@@ -804,22 +786,9 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                 qDocOpt.documentFileUrl.isNotNull().or(qDocOpt.documentLinkUrl.isNotNull()))
             .exists();
 
-    // 4) 코칭 옵션 존재 여부
-    BooleanExpression hasValidCoachOpt =
-        JPAExpressions.selectOne()
-            .from(qCoachOpt)
-            .where(
-                qCoachOpt.content.eq(qContent),
-                qCoachOpt.coachingPeriod.isNotNull(),
-                qCoachOpt.coachingType.isNotNull())
-            .exists();
-
     // 5) 판매 가능 여부 식
     Expression<Boolean> availableForSale =
-        new CaseBuilder()
-            .when(contentValid.and(hasValidDocOpt.or(hasValidCoachOpt)))
-            .then(true)
-            .otherwise(false);
+        new CaseBuilder().when(contentValid.and(hasValidDocOpt)).then(true).otherwise(false);
 
     // 6) 메인 쿼리 빌드
     JPAQuery<FlatContentPreviewDTO> query =
@@ -879,7 +848,6 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
   public boolean isAvailableForSale(Long contentId) {
     QContent qContent = QContent.content;
     QDocumentOption qDocumentOption = QDocumentOption.documentOption;
-    QCoachingOption qCoachingOption = QCoachingOption.coachingOption;
 
     // 1) 콘텐츠 필수 필드 검사
     BooleanExpression contentValid =
@@ -903,18 +871,8 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     .or(qDocumentOption.documentLinkUrl.isNotNull()))
             .exists();
 
-    // 3) 코칭 옵션이 하나라도 있는지
-    BooleanExpression hasValidCoachOpt =
-        JPAExpressions.selectOne()
-            .from(qCoachingOption)
-            .where(
-                qCoachingOption.content.id.eq(contentId),
-                qCoachingOption.coachingPeriod.isNotNull(),
-                qCoachingOption.coachingType.isNotNull())
-            .exists();
-
     // 4) 최종 판매 가능 조건
-    BooleanExpression saleCondition = contentValid.and(hasValidDocOpt.or(hasValidCoachOpt));
+    BooleanExpression saleCondition = contentValid.and(hasValidDocOpt);
 
     // 5) 쿼리 실행 (null 안전하게 false 반환)
     Boolean result =
