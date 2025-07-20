@@ -80,10 +80,11 @@ jobs:
 
           echo "✅ Image verified in ECR"
 
-      - name: Prepare ECS task definition
+      - name: Register new ECS task definition
+        id: task-def
         run: |
           IMAGE_URI="${{ steps.deploy-info.outputs.image-uri }}"
-          echo "📋 Preparing task definition with image: $IMAGE_URI"
+          echo "📋 Registering new task definition with image: $IMAGE_URI"
 
           # 현재 태스크 정의 가져오기
           aws ecs describe-task-definition \
@@ -97,18 +98,35 @@ jobs:
 
           # 불필요한 필드 제거
           jq 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .placementConstraints, .compatibilities, .registeredAt, .registeredBy)' \
-             updated-task-definition.json > final-task-definition.json
+             updated-task-definition.json > clean-task-definition.json
 
-          echo "✅ Task definition prepared"
+          # 새 Task Definition 등록
+          TASK_DEF_ARN=$(aws ecs register-task-definition \
+            --cli-input-json file://clean-task-definition.json \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)
+
+          echo "task-definition-arn=$TASK_DEF_ARN" >> $GITHUB_OUTPUT
+          echo "✅ Task definition registered: $TASK_DEF_ARN"
+
+      - name: Prepare AppSpec with Task Definition ARN
+        run: |
+          TASK_DEF_ARN="${{ steps.task-def.outputs.task-definition-arn }}"
+          echo "📋 Preparing AppSpec with Task Definition ARN: $TASK_DEF_ARN"
+
+          # AppSpec 파일에서 <TASK_DEFINITION> 플레이스홀더를 실제 ARN으로 교체
+          sed "s|<TASK_DEFINITION>|$TASK_DEF_ARN|g" appspec.yml > deployment-appspec.yml
+
+          echo "✅ AppSpec prepared with Task Definition ARN"
 
       - name: Deploy with CodeDeploy
         id: deploy
         run: |
           echo "🚀 Starting CodeDeploy deployment..."
 
-          # CodeDeploy용 배포 패키지 생성
+          # CodeDeploy용 배포 패키지 생성 (수정된 AppSpec 사용)
           DEPLOYMENT_ARCHIVE="groble-prod-$(date +%Y%m%d-%H%M%S).zip"
-          zip -r $DEPLOYMENT_ARCHIVE appspec.yml final-task-definition.json
+          zip -r $DEPLOYMENT_ARCHIVE deployment-appspec.yml
 
           # S3 버킷 이름 가져오기
           S3_BUCKET=$(aws s3api list-buckets \

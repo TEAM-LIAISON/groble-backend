@@ -3,7 +3,7 @@ Resources:
   - TargetService:
       Type: AWS::ECS::Service
       Properties:
-        TaskDefinition: final-task-definition.json
+        TaskDefinition: <TASK_DEFINITION>
         LoadBalancerInfo:
           ContainerName: groble-prod-spring-api
           ContainerPort: 8080
