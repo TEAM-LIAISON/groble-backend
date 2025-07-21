@@ -87,6 +87,7 @@ public class NotificationMapper {
           case CONTENT_SOLD, CONTENT_SOLD_STOPPED -> builder.sellDetails(
               SellDetails.builder().contentId(((SellDetails) detailObject).getContentId()).build());
         }
+        break;
       default:
         throw new IllegalArgumentException("지원하지 않는 알림 타입입니다: " + notificationType);
     }

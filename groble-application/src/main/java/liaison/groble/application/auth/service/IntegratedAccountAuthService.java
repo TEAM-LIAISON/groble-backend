@@ -23,10 +23,10 @@ import liaison.groble.domain.port.VerificationCodePort;
 import liaison.groble.domain.terms.enums.TermsType;
 import liaison.groble.domain.user.entity.IntegratedAccount;
 import liaison.groble.domain.user.entity.User;
+import liaison.groble.domain.user.enums.UserStatus;
 import liaison.groble.domain.user.enums.UserType;
 import liaison.groble.domain.user.factory.UserFactory;
 import liaison.groble.domain.user.repository.UserRepository;
-import liaison.groble.domain.user.service.UserStatusService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -158,8 +158,7 @@ public class IntegratedAccountAuthService {
 
   /** 사용자 상태 활성화 */
   private void activateUser(User user) {
-    UserStatusService userStatusService = new UserStatusService();
-    userStatusService.activate(user);
+    user.getUserStatusInfo().updateStatus(UserStatus.ACTIVE);
   }
 
   /** 토큰 발급 및 저장 */

@@ -632,20 +632,6 @@ public class ContentService {
         .build();
   }
 
-  /** 커서에서 Content ID를 파싱합니다. */
-  private Long parseContentIdFromCursor(String cursor) {
-    if (cursor == null || cursor.isBlank()) {
-      return null;
-    }
-
-    try {
-      return Long.parseLong(cursor);
-    } catch (NumberFormatException e) {
-      log.warn("유효하지 않은 커서 형식: {}", cursor);
-      return null;
-    }
-  }
-
   private ContentType parseContentType(String type) {
     if (type == null || type.isBlank()) {
       return null;
