@@ -131,17 +131,62 @@ public class PurchasedContentDetailResponse {
   private BigDecimal finalPrice;
 
   // 결제 수단 상세 정보
+  @Schema(
+      description = "결제 수단",
+      example = "카드 : card / 계좌: transfer",
+      type = "string",
+      requiredMode = Schema.RequiredMode.REQUIRED)
   private String payType;
+
+  @Schema(
+      description = "카드사명",
+      example = "하나(외환)",
+      type = "string",
+      requiredMode = Schema.RequiredMode.NOT_REQUIRED)
   private String payCardName;
+
+  @Schema(
+      description = "카드 번호 (마스킹 처리된 값)",
+      example = "53275011****9548",
+      type = "string",
+      requiredMode = Schema.RequiredMode.NOT_REQUIRED)
   private String payCardNum;
 
   // 누락 변수 추가
+  @Schema(
+      description = "콘텐츠 썸네일 URL",
+      example = "https://example.com/thumbnail.jpg",
+      type = "string",
+      requiredMode = Schema.RequiredMode.REQUIRED)
   private String thumbnailUrl;
+
+  @Schema(
+      description = "환불 가능 여부",
+      example = "true",
+      type = "boolean",
+      requiredMode = Schema.RequiredMode.REQUIRED)
   private Boolean isRefundable;
+
+  @Schema(
+      description =
+          "취소 사유 (OTHER_PAYMENT_METHOD - 다른 수단으로 결제할게요, CHANGED_MIND - 마음이 바뀌었어요, FOUND_CHEAPER_CONTENT - 더 저렴한 콘텐츠를 찾았어요, ETC - 기타)",
+      example = "구매자 요청",
+      type = "string",
+      requiredMode = Schema.RequiredMode.NOT_REQUIRED)
   private String cancelReason;
+
   // 문의하기 링크 추가
+  @Schema(
+      description = "문의하기 응답 객체",
+      example = "https://example.com/contact",
+      type = "string",
+      requiredMode = Schema.RequiredMode.NOT_REQUIRED)
   private ContactInfoResponse contactInfo;
 
   // 내 리뷰 정보
+  @Schema(
+      description = "내 리뷰 상세 정보",
+      type = "object",
+      requiredMode = Schema.RequiredMode.NOT_REQUIRED)
   private ContentReviewDetailResponse myReview;
 }

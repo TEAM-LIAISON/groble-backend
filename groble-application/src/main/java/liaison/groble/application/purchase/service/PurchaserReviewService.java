@@ -6,6 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 import liaison.groble.application.content.ContentReader;
 import liaison.groble.application.content.ContentReviewReader;
 import liaison.groble.application.content.ContentReviewWriter;
+import liaison.groble.application.notification.service.NotificationService;
 import liaison.groble.application.order.service.OrderReader;
 import liaison.groble.application.purchase.dto.PurchaserContentReviewDTO;
 import liaison.groble.application.user.service.UserReader;
@@ -33,6 +34,7 @@ public class PurchaserReviewService {
   // Writer
   private final ContentReviewWriter contentReviewWriter;
   private final OrderReader orderReader;
+  private final NotificationService notificationService;
 
   @Transactional
   public PurchaserContentReviewDTO addReview(
@@ -62,6 +64,9 @@ public class PurchaserReviewService {
             .build();
 
     ContentReview savedContentReview = contentReviewWriter.save(contentReview);
+
+    notificationService.sendContentReviewNotification(
+        content.getUser(), content.getId(), savedContentReview.getId(), content.getThumbnailUrl());
 
     return PurchaserContentReviewDTO.builder()
         .rating(savedContentReview.getRating())

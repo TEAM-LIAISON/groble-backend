@@ -42,7 +42,10 @@ public class PhoneVerificationController {
   private static final String PHONE_NUMBER_VERIFY_CODE_SUCCESS_MESSAGE =
       "전화번호 인증 코드 검증이 성공적으로 완료되었습니다.";
 
+  // Service
   private final PhoneAuthService phoneAuthService;
+
+  // Helper
   private final ResponseHelper responseHelper;
 
   @Operation(summary = "[✅ 번호 인증 요청] 회원가입 및 전화번호 변경에 사용", description = "전화번호 인증 코드를 발송합니다.")

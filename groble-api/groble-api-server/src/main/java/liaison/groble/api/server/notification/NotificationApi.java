@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-import liaison.groble.api.model.notification.response.NotificationItems;
+import liaison.groble.api.model.notification.response.NotificationItemsResponse;
 import liaison.groble.api.model.notification.response.swagger.NotificationExamples;
 import liaison.groble.api.model.notification.response.swagger.NotificationItemsApiResponse;
 import liaison.groble.common.annotation.Auth;
@@ -25,11 +25,11 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 /** NotificationApi 인터페이스 OpenAPI Generator가 활성화되면 이 인터페이스는 자동 생성됩니다. 현재는 마이그레이션을 위한 임시 인터페이스입니다. */
 @RequestMapping("/api/v1/notifications")
-@Tag(name = "알림 관련 API", description = "알림 관련 API")
+@Tag(name = "[🔔 알림] 알림 삭제/조회", description = "알림 삭제 및 조회 API")
 @SecurityRequirement(name = "bearerAuth")
 public interface NotificationApi {
 
-  @Operation(summary = "알림 전체 삭제", description = "사용자의 모든 알림을 삭제합니다.")
+  @Operation(summary = "[✅ 알림 전체 삭제]", description = "사용자의 모든 알림을 삭제합니다.")
   @ApiResponses(
       value = {
         @ApiResponse(
@@ -46,7 +46,7 @@ public interface NotificationApi {
   ResponseEntity<GrobleResponse<Void>> deleteAllNotifications(
       @Parameter(hidden = true) @Auth Accessor accessor);
 
-  @Operation(summary = "알림 단일 삭제", description = "특정 알림을 삭제합니다.")
+  @Operation(summary = "[✅ 알림 단일 삭제]", description = "특정 알림을 삭제합니다.")
   @ApiResponses(
       value = {
         @ApiResponse(
@@ -65,7 +65,7 @@ public interface NotificationApi {
       @Parameter(hidden = true) @Auth Accessor accessor,
       @Parameter(description = "삭제할 알림 ID", required = true) @PathVariable Long notificationId);
 
-  @Operation(summary = "알림 전체 조회", description = "사용자의 모든 알림을 조회합니다.")
+  @Operation(summary = "[✅ 알림 전체 조회]", description = "사용자의 모든 알림을 조회합니다.")
   @ApiResponses({
     @ApiResponse(
         responseCode = "200",
@@ -110,6 +110,6 @@ public interface NotificationApi {
     @ApiResponse(responseCode = "404", description = "알림 목록 정보를 찾을 수 없음")
   })
   @GetMapping
-  ResponseEntity<GrobleResponse<NotificationItems>> getNotifications(
+  ResponseEntity<GrobleResponse<NotificationItemsResponse>> getNotifications(
       @Parameter(hidden = true) @Auth Accessor accessor);
 }

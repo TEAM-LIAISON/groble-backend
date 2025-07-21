@@ -30,7 +30,7 @@ public class OAuth2Controller {
   private String frontendDomain; // 환경별로 설정 가능하도록 변경
 
   /** OAuth2 인증 페이지로 리다이렉트하기 전에 리다이렉트 URI를 세션에 저장 */
-  @Operation(summary = "OAuth2 로그인 시작", description = "소셜 로그인 시작 전 리다이렉트 URI를 설정합니다.")
+  @Operation(summary = "[✅ 소셜 로그인] OAuth2 인증/인가 API", description = "OAuth2 인증을 시작합니다.")
   @GetMapping(AUTHORIZE_PATH)
   public void authorize(
       @RequestParam(value = "redirect_uri", defaultValue = "/auth/sign-in") String redirectUri,

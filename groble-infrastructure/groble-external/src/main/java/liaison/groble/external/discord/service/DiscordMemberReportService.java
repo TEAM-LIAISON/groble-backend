@@ -3,7 +3,7 @@ package liaison.groble.external.discord.service;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import liaison.groble.external.discord.dto.MemberCreateReportDto;
+import liaison.groble.external.discord.dto.MemberCreateReportDTO;
 
 import lombok.RequiredArgsConstructor;
 
@@ -17,15 +17,15 @@ public class DiscordMemberReportService implements MemberReportService {
   private final DiscordService discordService;
 
   @Override
-  public void sendCreateMemberReport(final MemberCreateReportDto memberCreateReportDto) {
+  public void sendCreateMemberReport(final MemberCreateReportDTO memberCreateReportDTO) {
     var msg =
         "## 회원 생성 알림"
             + "\n\n**회원 생성 ID:** "
-            + memberCreateReportDto.userId()
+            + memberCreateReportDTO.userId()
             + "\n**회원 생성 시간:** "
-            + memberCreateReportDto.createdAt()
+            + memberCreateReportDTO.createdAt()
             + "\n**회원 닉네임:** "
-            + memberCreateReportDto.nickname()
+            + memberCreateReportDTO.nickname()
             + "님이 회원가입하셨습니다.";
 
     discordService.sendMessages(url, msg);

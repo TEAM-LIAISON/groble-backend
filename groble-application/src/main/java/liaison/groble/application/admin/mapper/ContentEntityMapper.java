@@ -7,7 +7,6 @@ import org.springframework.stereotype.Component;
 
 import liaison.groble.application.content.dto.ContentDTO;
 import liaison.groble.application.content.dto.ContentOptionDTO;
-import liaison.groble.domain.content.entity.CoachingOption;
 import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.content.entity.ContentOption;
 import liaison.groble.domain.content.entity.DocumentOption;
@@ -16,8 +15,7 @@ import liaison.groble.domain.content.enums.ContentStatus;
 @Component
 public class ContentEntityMapper {
 
-  /** Content Entity를 ContentDto로 변환합니다. */
-  public ContentDTO toDto(Content content) {
+  public ContentDTO toDTO(Content content) {
     if (content == null) {
       return null;
     }
@@ -54,14 +52,14 @@ public class ContentEntityMapper {
       return null;
     }
 
-    List<ContentOptionDTO> optionDtos = new ArrayList<>();
+    List<ContentOptionDTO> optionDTOs = new ArrayList<>();
     for (ContentOption option : options) {
       if (option != null) {
-        optionDtos.add(convertSingleOption(option));
+        optionDTOs.add(convertSingleOption(option));
       }
     }
 
-    return optionDtos.isEmpty() ? null : optionDtos;
+    return optionDTOs.isEmpty() ? null : optionDTOs;
   }
 
   private ContentOptionDTO convertSingleOption(ContentOption option) {
@@ -72,37 +70,19 @@ public class ContentEntityMapper {
             .description(option.getDescription())
             .price(option.getPrice());
 
-    if (option instanceof CoachingOption coachingOption) {
-      return addCoachingOptionFields(builder, coachingOption);
-    } else if (option instanceof DocumentOption documentOption) {
+    if (option instanceof DocumentOption documentOption) {
       return addDocumentOptionFields(builder, documentOption);
     }
 
     return builder.build();
   }
 
-  private ContentOptionDTO addCoachingOptionFields(
-      ContentOptionDTO.ContentOptionDTOBuilder builder, CoachingOption coachingOption) {
-
-    return builder
-        .coachingPeriod(getEnumName(coachingOption.getCoachingPeriod()))
-        .documentProvision(getEnumName(coachingOption.getDocumentProvision()))
-        .coachingType(getEnumName(coachingOption.getCoachingType()))
-        .coachingTypeDescription(coachingOption.getCoachingTypeDescription())
-        .build();
-  }
-
   private ContentOptionDTO addDocumentOptionFields(
       ContentOptionDTO.ContentOptionDTOBuilder builder, DocumentOption documentOption) {
 
     return builder
-        .contentDeliveryMethod(getEnumName(documentOption.getContentDeliveryMethod()))
         .documentFileUrl(documentOption.getDocumentFileUrl())
         .documentLinkUrl(documentOption.getDocumentLinkUrl())
         .build();
-  }
-
-  private String getEnumName(Enum<?> enumValue) {
-    return enumValue != null ? enumValue.name() : null;
   }
 }

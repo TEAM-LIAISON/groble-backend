@@ -31,7 +31,6 @@ import liaison.groble.domain.content.enums.ContentStatus;
 import liaison.groble.domain.coupon.entity.UserCoupon;
 import liaison.groble.domain.order.vo.OrderOptionInfo;
 import liaison.groble.domain.payment.entity.Payment;
-import liaison.groble.domain.purchase.enums.CancelReason;
 import liaison.groble.domain.user.entity.User;
 
 import lombok.AccessLevel;
@@ -134,7 +133,7 @@ public class Order extends BaseTimeEntity {
     }
   }
 
-  public void cancelRequestOrder(CancelReason cancelReason, String reason) {
+  public void cancelRequestOrder(String reason) {
     validateStateTransition(OrderStatus.CANCEL_REQUEST);
     this.status = OrderStatus.CANCEL_REQUEST;
     this.orderNote = reason;

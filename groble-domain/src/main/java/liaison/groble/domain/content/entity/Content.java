@@ -130,9 +130,6 @@ public class Content extends BaseTimeEntity {
 
   // 비즈니스 로직으로 옵션 유형 검증
   public void addOption(ContentOption option) {
-    if (contentType == ContentType.COACHING && !(option instanceof CoachingOption)) {
-      throw new IllegalArgumentException("코칭 콘텐츠에는 코칭 옵션만 추가할 수 있습니다.");
-    }
     if (contentType == ContentType.DOCUMENT && !(option instanceof DocumentOption)) {
       throw new IllegalArgumentException("문서 콘텐츠에는 문서 옵션만 추가할 수 있습니다.");
     }

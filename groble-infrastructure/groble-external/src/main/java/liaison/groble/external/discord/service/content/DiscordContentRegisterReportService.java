@@ -19,20 +19,20 @@ public class DiscordContentRegisterReportService implements ContentRegisterRepor
 
   @Override
   public void sendCreateContentRegisterReport(
-      ContentRegisterCreateReportDTO contentRegisterCreateReportDto) {
+      ContentRegisterCreateReportDTO contentRegisterCreateReportDTO) {
     var msg =
-        "## 콘텐츠 심사 요청 알림"
+        "## 콘텐츠 판매하기 알림"
             + "\n**회원 닉네임:** "
-            + contentRegisterCreateReportDto.nickname()
+            + contentRegisterCreateReportDTO.nickname()
             + "\n**콘텐츠 ID:** "
-            + contentRegisterCreateReportDto.contentId()
+            + contentRegisterCreateReportDTO.contentId()
             + "\n**콘텐츠 제목:** "
-            + contentRegisterCreateReportDto.contentTitle()
+            + contentRegisterCreateReportDTO.contentTitle()
             + "\n**콘텐츠 유형 (자료/코칭):** "
-            + contentRegisterCreateReportDto.contentType()
+            + contentRegisterCreateReportDTO.contentType()
             + "\n**콘텐츠 심사 요청 시각 (Asia/Seoul):** "
-            + contentRegisterCreateReportDto.createdAt()
-            + "\n님이 콘텐츠 심사 요청을 하셨습니다.";
+            + contentRegisterCreateReportDTO.createdAt()
+            + "\n님이 콘텐츠 판매하기를 하셨습니다.";
 
     discordService.sendMessages(url, msg);
   }

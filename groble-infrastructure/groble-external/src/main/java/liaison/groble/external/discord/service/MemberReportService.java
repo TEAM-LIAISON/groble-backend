@@ -1,8 +1,8 @@
 package liaison.groble.external.discord.service;
 
-import liaison.groble.external.discord.dto.MemberCreateReportDto;
+import liaison.groble.external.discord.dto.MemberCreateReportDTO;
 
 public interface MemberReportService {
 
-  void sendCreateMemberReport(MemberCreateReportDto memberCreateReportDto);
+  void sendCreateMemberReport(MemberCreateReportDTO memberCreateReportDTO);
 }

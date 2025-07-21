@@ -25,6 +25,7 @@ import liaison.groble.application.content.dto.ContentCardDTO;
 import liaison.groble.application.content.dto.ContentDTO;
 import liaison.groble.application.content.service.ContentService;
 import liaison.groble.common.annotation.Auth;
+import liaison.groble.common.annotation.Logging;
 import liaison.groble.common.annotation.RequireRole;
 import liaison.groble.common.model.Accessor;
 import liaison.groble.common.response.GrobleResponse;
@@ -55,14 +56,16 @@ public class SellController {
   private static final String DELETE_CONTENT_PATH = "/{contentId}/delete";
   private static final String EXAMINE_REJECT_REASON_PATH = "/{contentId}/examine/reject";
   private static final String MY_SELLING_CONTENTS_PATH = "/my/selling-contents";
+  private static final String CONVERT_TO_SALE_PATH = "/{contentId}/convert-to-sale";
 
   // 응답 메시지 상수화
   private static final String MY_SELLING_CONTENTS_SUCCESS_MESSAGE = "나의 판매 콘텐츠 조회에 성공하였습니다.";
   private static final String CONTENT_DRAFT_SUCCESS_MESSAGE = "콘텐츠 임시 저장에 성공하였습니다.";
-  private static final String CONTENT_REGISTER_SUCCESS_MESSAGE = "콘텐츠 심사 요청에 성공하였습니다.";
+  private static final String CONTENT_REGISTER_SUCCESS_MESSAGE = "콘텐츠 판매하기에 성공하였습니다.";
   private static final String STOP_CONTENT_SUCCESS_MESSAGE = "콘텐츠 판매 중단에 성공하였습니다.";
   private static final String DELETE_CONTENT_SUCCESS_MESSAGE = "콘텐츠 삭제에 성공하였습니다.";
   private static final String EXAMINE_REJECT_REASON_SUCCESS_MESSAGE = "콘텐츠 심사 거절 사유 조회에 성공하였습니다.";
+  private static final String CONVERT_TO_SALE_SUCCESS_MESSAGE = "콘텐츠 판매하기 전환에 성공하였습니다.";
 
   // Service
   private final ContentService contentService;
@@ -95,6 +98,7 @@ public class SellController {
   @Operation(
       summary = "[✅ 콘텐츠 심사 요청] 작성 완료한 콘텐츠 심사 요청",
       description = "콘텐츠 심사를 요청합니다. 콘텐츠 유형(코칭/문서)에 따라 옵션 구조가 달라집니다.")
+  @Logging(item = "Content", action = "register", includeParam = true, includeResult = true)
   @PostMapping(REGISTER_CONTENT_PATH)
   public ResponseEntity<GrobleResponse<ContentResponse>> registerContent(
       @Auth Accessor accessor, @Valid @RequestBody ContentRegisterRequest request) {
@@ -165,5 +169,16 @@ public class SellController {
         contentMapper.toContentPreviewCardResponsePage(dtoPageResponse);
 
     return responseHelper.success(responsePage, MY_SELLING_CONTENTS_SUCCESS_MESSAGE, HttpStatus.OK);
+  }
+
+  @Operation(
+      summary = "[✅ 상품 관리] 콘텐츠 판매하기 전환",
+      description = "작성중인 콘텐츠를 판매하기로 전환합니다. (판매중인 콘텐츠로 이동합니다.)")
+  @Logging(item = "Content", action = "convertToSale", includeParam = true)
+  @PostMapping(CONVERT_TO_SALE_PATH)
+  public ResponseEntity<GrobleResponse<Void>> convertToSale(
+      @Auth Accessor accessor, @PathVariable("contentId") Long contentId) {
+    contentService.convertToSale(accessor.getUserId(), contentId);
+    return responseHelper.success(null, CONVERT_TO_SALE_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 }

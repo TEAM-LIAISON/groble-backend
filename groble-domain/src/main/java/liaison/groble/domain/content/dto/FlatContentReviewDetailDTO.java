@@ -14,6 +14,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class FlatContentReviewDetailDTO {
   private Long reviewId;
+  private String reviewStatus;
   private String contentTitle;
   private LocalDateTime createdAt;
   private String reviewerNickname;

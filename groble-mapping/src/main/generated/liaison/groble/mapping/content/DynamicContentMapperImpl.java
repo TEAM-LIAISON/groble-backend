@@ -12,7 +12,7 @@ import liaison.groble.application.content.dto.DynamicContentDTO;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-07-16T15:23:16+0900",
+    date = "2025-07-17T20:40:12+0900",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.10 (Amazon.com Inc.)")
 @Component
 public class DynamicContentMapperImpl implements DynamicContentMapper {

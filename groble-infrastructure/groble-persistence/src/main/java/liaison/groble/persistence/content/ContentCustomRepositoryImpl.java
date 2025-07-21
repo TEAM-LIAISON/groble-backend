@@ -13,14 +13,17 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 
+import com.querydsl.core.types.Expression;
 import com.querydsl.core.types.ExpressionUtils;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.ComparableExpressionBase;
 import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.core.types.dsl.PathBuilder;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
@@ -31,13 +34,16 @@ import liaison.groble.domain.content.dto.FlatDynamicContentDTO;
 import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.content.entity.QContent;
 import liaison.groble.domain.content.entity.QContentOption;
+import liaison.groble.domain.content.entity.QDocumentOption;
 import liaison.groble.domain.content.enums.ContentStatus;
 import liaison.groble.domain.content.enums.ContentType;
 import liaison.groble.domain.content.repository.ContentCustomRepository;
 import liaison.groble.domain.user.entity.QUser;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Repository
 @RequiredArgsConstructor
 public class ContentCustomRepositoryImpl implements ContentCustomRepository {
@@ -171,6 +177,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
     QContent qContent = QContent.content;
     QUser qUser = QUser.user;
     QContentOption qContentOption = QContentOption.contentOption;
+    QDocumentOption qDocOpt = QDocumentOption.documentOption;
 
     BooleanExpression condition =
         qContent
@@ -178,6 +185,34 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
             .eq(ContentStatus.ACTIVE)
             .and(qContent.isRepresentative.isFalse())
             .and(qContent.user.id.eq(userId));
+
+    // 2) 콘텐츠 필드 유효 검사
+    BooleanExpression contentValid =
+        qContent
+            .title
+            .isNotNull()
+            .and(qContent.thumbnailUrl.isNotNull())
+            .and(qContent.lowestPrice.isNotNull());
+
+    log.info("Content Validity Check: {}", contentValid);
+
+    // 3) 문서 옵션 존재 여부 (file OR link 중 하나라도 있으면 true)
+    BooleanExpression hasValidDocOpt =
+        JPAExpressions.selectOne()
+            .from(qDocOpt)
+            .where(
+                qDocOpt.content.eq(qContent),
+                // fileUrl 이 NOT NULL 이거나 linkUrl 이 NOT NULL 이면
+                qDocOpt.documentFileUrl.isNotNull().or(qDocOpt.documentLinkUrl.isNotNull()))
+            .exists();
+
+    log.info("Has Valid DocOpt Check: {}", hasValidDocOpt);
+
+    // 5) 판매 가능 여부 식
+    Expression<Boolean> availableForSale =
+        new CaseBuilder().when(contentValid.and(hasValidDocOpt)).then(true).otherwise(false);
+
+    log.info("Available For Sale Check: {}", availableForSale);
 
     return queryFactory
         .select(
@@ -188,11 +223,13 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                 qContent.title.as("title"),
                 qContent.thumbnailUrl.as("thumbnailUrl"),
                 qUser.userProfile.nickname.as("sellerName"),
+                qContent.lowestPrice.as("lowestPrice"),
                 ExpressionUtils.as(
                     select(qContentOption.count().intValue())
                         .from(qContentOption)
                         .where(qContentOption.content.eq(qContent)),
                     "priceOptionLength"),
+                ExpressionUtils.as(availableForSale, "isAvailableForSale"),
                 qContent.status.stringValue().as("status")))
         .from(qContent)
         .leftJoin(qContent.user, qUser)
@@ -716,14 +753,44 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
 
   @Override
   public Page<FlatContentPreviewDTO> findMyContentsWithStatus(
-      Pageable pageable, Long userId, ContentStatus status) {
+      Pageable pageable, Long userId, List<ContentStatus> statuses) {
 
     QContent qContent = QContent.content;
+    QContentOption qOption = QContentOption.contentOption;
+    QDocumentOption qDocOpt = QDocumentOption.documentOption;
     QUser qUser = QUser.user;
-    QContentOption qContentOption = QContentOption.contentOption;
 
-    BooleanExpression cond = qContent.status.eq(status).and(qContent.user.id.eq(userId));
+    // 1) 상태 + 사용자 필터
+    BooleanExpression statusFilter =
+        (statuses != null && !statuses.isEmpty()) ? qContent.status.in(statuses) : null;
+    BooleanExpression userFilter = qContent.user.id.eq(userId);
+    BooleanExpression whereClause =
+        statusFilter != null ? userFilter.and(statusFilter) : userFilter;
 
+    // 2) 콘텐츠 필드 유효 검사
+    BooleanExpression contentValid =
+        qContent
+            .title
+            .isNotNull()
+            .and(qContent.thumbnailUrl.isNotNull())
+            .and(qContent.lowestPrice.isNotNull());
+
+    // 3) 문서 옵션 존재 여부
+    // 3) 문서 옵션 존재 여부 (file OR link 중 하나라도 있으면 true)
+    BooleanExpression hasValidDocOpt =
+        JPAExpressions.selectOne()
+            .from(qDocOpt)
+            .where(
+                qDocOpt.content.eq(qContent),
+                // fileUrl 이 NOT NULL 이거나 linkUrl 이 NOT NULL 이면
+                qDocOpt.documentFileUrl.isNotNull().or(qDocOpt.documentLinkUrl.isNotNull()))
+            .exists();
+
+    // 5) 판매 가능 여부 식
+    Expression<Boolean> availableForSale =
+        new CaseBuilder().when(contentValid.and(hasValidDocOpt)).then(true).otherwise(false);
+
+    // 6) 메인 쿼리 빌드
     JPAQuery<FlatContentPreviewDTO> query =
         queryFactory
             .select(
@@ -735,47 +802,86 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     qContent.thumbnailUrl.as("thumbnailUrl"),
                     qUser.userProfile.nickname.as("sellerName"),
                     qContent.lowestPrice.as("lowestPrice"),
+
+                    // 옵션 개수
                     ExpressionUtils.as(
-                        select(qContentOption.count().intValue())
-                            .from(qContentOption)
-                            .where(qContentOption.content.eq(qContent)),
+                        JPAExpressions.select(qOption.count().intValue())
+                            .from(qOption)
+                            .where(qOption.content.eq(qContent)),
                         "priceOptionLength"),
+
+                    // 판매 가능 여부
+                    ExpressionUtils.as(availableForSale, "isAvailableForSale"),
+
+                    // 상태
                     qContent.status.stringValue().as("status")))
             .from(qContent)
-            .leftJoin(qContent.user, qUser) // 사용자 정보는 반드시 필요하니까 남겨두고
-            .where(cond);
+            .leftJoin(qContent.user, qUser)
+            .where(whereClause);
 
-    // 3) Pageable의 Sort 적용 (여기서는 예시로 createdAt 기준)
+    // 7) 정렬 적용
     if (pageable.getSort().isUnsorted()) {
       query.orderBy(qContent.createdAt.desc());
     } else {
-      // qContent 는 QContent.content
       PathBuilder<Content> path = new PathBuilder<>(Content.class, qContent.getMetadata());
-
-      // Sort.Order 순회
-      for (Sort.Order order : pageable.getSort()) {
-        // ASC / DESC
-        Order direction = order.isAscending() ? Order.ASC : Order.DESC;
-
-        // ComparableExpression 으로 꺼내오기
-        // (모든 필드를 Comparable 으로 가정)
-        ComparableExpressionBase<?> expr =
-            path.getComparable(order.getProperty(), Comparable.class);
-
-        // 이제 Expression 타입이 맞아서 컴파일 OK
-        query.orderBy(new OrderSpecifier<>(direction, expr));
+      for (Sort.Order o : pageable.getSort()) {
+        Order dir = o.isAscending() ? Order.ASC : Order.DESC;
+        query.orderBy(
+            new OrderSpecifier<>(dir, path.getComparable(o.getProperty(), Comparable.class)));
       }
     }
 
-    // 4) 페이징(Offset + Limit)
+    // 8) 페이징 & 결과 fetch
     List<FlatContentPreviewDTO> items =
         query.offset(pageable.getOffset()).limit(pageable.getPageSize()).fetch();
 
-    // 5) 전체 카운트
+    // 9) 전체 카운트
     long total =
         Optional.ofNullable(
-                queryFactory.select(qContent.count()).from(qContent).where(cond).fetchOne())
+                queryFactory.select(qContent.count()).from(qContent).where(whereClause).fetchOne())
             .orElse(0L);
+
     return new PageImpl<>(items, pageable, total);
+  }
+
+  @Override
+  public boolean isAvailableForSale(Long contentId) {
+    QContent qContent = QContent.content;
+    QDocumentOption qDocumentOption = QDocumentOption.documentOption;
+
+    // 1) 콘텐츠 필수 필드 검사
+    BooleanExpression contentValid =
+        qContent
+            .title
+            .isNotNull()
+            .and(qContent.thumbnailUrl.isNotNull())
+            .and(qContent.lowestPrice.isNotNull());
+
+    // 2) 문서 옵션이 하나라도 있는지
+    // 3) 문서 옵션 존재 여부 (file OR link 중 하나라도 있으면 true)
+    BooleanExpression hasValidDocOpt =
+        JPAExpressions.selectOne()
+            .from(qDocumentOption)
+            .where(
+                qDocumentOption.content.eq(qContent),
+                // fileUrl 이 NOT NULL 이거나 linkUrl 이 NOT NULL 이면
+                qDocumentOption
+                    .documentFileUrl
+                    .isNotNull()
+                    .or(qDocumentOption.documentLinkUrl.isNotNull()))
+            .exists();
+
+    // 4) 최종 판매 가능 조건
+    BooleanExpression saleCondition = contentValid.and(hasValidDocOpt);
+
+    // 5) 쿼리 실행 (null 안전하게 false 반환)
+    Boolean result =
+        queryFactory
+            .select(new CaseBuilder().when(saleCondition).then(true).otherwise(false))
+            .from(qContent)
+            .where(qContent.id.eq(contentId))
+            .fetchOne();
+
+    return Boolean.TRUE.equals(result);
   }
 }

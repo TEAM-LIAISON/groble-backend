@@ -17,11 +17,13 @@ import liaison.groble.domain.common.entity.BaseTimeEntity;
 import liaison.groble.domain.user.entity.User;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Getter
 @Entity
+@Builder
 @Table(
     name = "content_replies",
     indexes = {

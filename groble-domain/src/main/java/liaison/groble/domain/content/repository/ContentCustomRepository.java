@@ -53,7 +53,9 @@ public interface ContentCustomRepository {
   Page<FlatAdminContentSummaryInfoDTO> findContentsByPageable(Pageable pageable);
 
   Page<FlatContentPreviewDTO> findMyContentsWithStatus(
-      Pageable pageable, Long userId, ContentStatus status);
+      Pageable pageable, Long userId, List<ContentStatus> contentStatuses);
 
   boolean existsSellingContentByUser(Long userId);
+
+  boolean isAvailableForSale(Long contentId);
 }

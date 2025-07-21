@@ -1,5 +1,7 @@
 package liaison.groble.persistence.content;
 
+import java.util.Optional;
+
 import org.springframework.stereotype.Repository;
 
 import liaison.groble.domain.content.entity.ContentReview;
@@ -15,6 +17,10 @@ public class ContentReviewRepositoryImpl implements ContentReviewRepository {
 
   public ContentReview save(ContentReview contentReview) {
     return jpaContentReviewRepository.save(contentReview);
+  }
+
+  public Optional<ContentReview> getContentReviewById(Long reviewId) {
+    return jpaContentReviewRepository.findById(reviewId);
   }
 
   public boolean existsContentReview(Long userId, Long contentId) {

@@ -74,10 +74,10 @@ public class AdminContentController {
               @RequestParam(value = "sort", defaultValue = "createdAt")
               String sort) {
     Pageable pageable = PageUtils.createPageable(page, size, sort);
-    PageResponse<AdminContentSummaryInfoDTO> infoDtoPage =
+    PageResponse<AdminContentSummaryInfoDTO> infoDTOPage =
         adminContentService.getAllContents(pageable);
     PageResponse<AdminContentSummaryInfoResponse> responsePage =
-        adminContentMapper.toAdminContentSummaryInfoResponsePage(infoDtoPage);
+        adminContentMapper.toAdminContentSummaryInfoResponsePage(infoDTOPage);
 
     return responseHelper.success(
         responsePage, ADMIN_CONTENT_SUMMARY_INFO_SUCCESS_MESSAGE, HttpStatus.OK);

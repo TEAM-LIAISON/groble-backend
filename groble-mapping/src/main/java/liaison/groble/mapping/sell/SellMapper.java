@@ -17,8 +17,11 @@ import liaison.groble.application.sell.dto.SellManagePageDTO;
 import liaison.groble.common.response.PageResponse;
 import liaison.groble.mapping.common.PageResponseMapper;
 import liaison.groble.mapping.config.GrobleMapperConfig;
+import liaison.groble.mapping.content.ContentReplyMapper;
 
-@Mapper(config = GrobleMapperConfig.class)
+@Mapper(
+    config = GrobleMapperConfig.class,
+    uses = {ContentReplyMapper.class})
 public interface SellMapper extends PageResponseMapper {
   // ====== 📤 Request → DTO 변환 ======
   ReplyContentDTO toReplyContentDTO(ReplyContentRequest replyContentRequest);
@@ -41,12 +44,12 @@ public interface SellMapper extends PageResponseMapper {
   ReplyContentResponse toReplyContentResponse(ReplyContentDTO replyContentDTO);
 
   default PageResponse<ContentSellDetailResponse> toContentSellResponsePage(
-      PageResponse<ContentSellDetailDTO> dtoPageResponse) {
-    return toPageResponse(dtoPageResponse, this::toContentSellDetailResponse);
+      PageResponse<ContentSellDetailDTO> DTOPageResponse) {
+    return toPageResponse(DTOPageResponse, this::toContentSellDetailResponse);
   }
 
   default PageResponse<ContentReviewDetailResponse> toContentReviewResponsePage(
-      PageResponse<ContentReviewDetailDTO> dtoPageResponse) {
-    return toPageResponse(dtoPageResponse, this::toContentReviewDetailResponse);
+      PageResponse<ContentReviewDetailDTO> DTOPageResponse) {
+    return toPageResponse(DTOPageResponse, this::toContentReviewDetailResponse);
   }
 }

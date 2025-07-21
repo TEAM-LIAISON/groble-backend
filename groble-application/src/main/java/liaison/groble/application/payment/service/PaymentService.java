@@ -6,8 +6,10 @@ import org.springframework.transaction.annotation.Transactional;
 import liaison.groble.application.order.service.OrderReader;
 import liaison.groble.application.payment.dto.cancel.PaymentCancelDTO;
 import liaison.groble.application.payment.dto.cancel.PaymentCancelInfoDTO;
+import liaison.groble.application.purchase.service.PurchaseReader;
 import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.payment.entity.PayplePayment;
+import liaison.groble.domain.purchase.entity.Purchase;
 import liaison.groble.domain.purchase.enums.CancelReason;
 
 import lombok.RequiredArgsConstructor;
@@ -21,6 +23,7 @@ public class PaymentService {
   // Reader
   private final OrderReader orderReader;
   private final PaymentReader paymentReader;
+  private final PurchaseReader purchaseReader;
 
   @Transactional
   public void requestPaymentCancel(
@@ -30,13 +33,14 @@ public class PaymentService {
     log.info("결제 취소 요청 처리 시작 - 주문번호: {}, 사유: {}", merchantUid, cancelReason.getDescription());
     try {
       Order order = orderReader.getOrderByMerchantUidAndUserId(merchantUid, userId);
+      Purchase purchase = purchaseReader.getPurchaseByOrderId(order.getId());
       PayplePayment payplePayment = paymentReader.getPayplePaymentByOid(merchantUid);
 
       validateRequestCancellableStatus(order, payplePayment);
       log.info("환불 요청 가능 상태 검증 완료 - 주문번호: {}", merchantUid);
 
       // 환불 요청
-      handlePaymentCancelSuccess(order, cancelReason, paymentCancelDTO.getDetailReason());
+      handlePaymentCancelSuccess(order, purchase, cancelReason, paymentCancelDTO.getDetailReason());
     } catch (IllegalArgumentException | IllegalStateException e) {
       log.warn("결제 취소 처리 실패 - 주문번호: {}, 사유: {}", merchantUid, e.getMessage());
       throw e;
@@ -71,8 +75,9 @@ public class PaymentService {
   }
 
   private void handlePaymentCancelSuccess(
-      Order order, CancelReason cancelReason, String detailReason) {
-    order.cancelRequestOrder(cancelReason, detailReason);
+      Order order, Purchase purchase, CancelReason cancelReason, String detailReason) {
+    order.cancelRequestOrder(detailReason);
+    purchase.cancelRequestPurchase(cancelReason);
   }
 
   private CancelReason parseCancelReason(String cancelReason) {
