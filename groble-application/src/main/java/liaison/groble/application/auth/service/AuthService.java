@@ -6,7 +6,7 @@ import liaison.groble.application.auth.dto.UserWithdrawalDTO;
 
 public interface AuthService {
 
-  SignInAuthResultDTO signIn(SignInDTO signInDto);
+  SignInAuthResultDTO signIn(SignInDTO signInDTO);
 
-  void withdrawUser(Long userId, UserWithdrawalDTO userWithdrawalDto);
+  void withdrawUser(Long userId, UserWithdrawalDTO userWithdrawalDTO);
 }

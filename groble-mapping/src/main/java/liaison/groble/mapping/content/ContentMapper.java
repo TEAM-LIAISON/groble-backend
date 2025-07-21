@@ -53,10 +53,6 @@ public interface ContentMapper extends PageResponseMapper {
                         .description(coachingOption.getDescription())
                         .price(coachingOption.getPrice())
                         .contentType(liaison.groble.domain.content.enums.ContentType.COACHING)
-                        .coachingPeriod(coachingOption.getCoachingPeriod())
-                        .documentProvision(coachingOption.getDocumentProvision())
-                        .coachingType(coachingOption.getCoachingType())
-                        .coachingTypeDescription(coachingOption.getCoachingTypeDescription())
                         .build());
               });
     }
@@ -74,7 +70,6 @@ public interface ContentMapper extends PageResponseMapper {
                         .description(documentOption.getDescription())
                         .price(documentOption.getPrice())
                         .contentType(liaison.groble.domain.content.enums.ContentType.DOCUMENT)
-                        .contentDeliveryMethod(documentOption.getContentDeliveryMethod())
                         .documentOriginalFileName(null)
                         .documentFileUrl(documentOption.getDocumentFileUrl())
                         .documentLinkUrl(documentOption.getDocumentLinkUrl())
@@ -102,10 +97,6 @@ public interface ContentMapper extends PageResponseMapper {
                         .description(coachingOption.getDescription())
                         .price(coachingOption.getPrice())
                         .contentType(liaison.groble.domain.content.enums.ContentType.COACHING)
-                        .coachingPeriod(coachingOption.getCoachingPeriod())
-                        .documentProvision(coachingOption.getDocumentProvision())
-                        .coachingType(coachingOption.getCoachingType())
-                        .coachingTypeDescription(coachingOption.getCoachingTypeDescription())
                         .build());
               });
     }
@@ -123,7 +114,6 @@ public interface ContentMapper extends PageResponseMapper {
                         .description(documentOption.getDescription())
                         .price(documentOption.getPrice())
                         .contentType(liaison.groble.domain.content.enums.ContentType.DOCUMENT)
-                        .contentDeliveryMethod(documentOption.getContentDeliveryMethod())
                         .documentOriginalFileName(null)
                         .documentFileUrl(documentOption.getDocumentFileUrl())
                         .documentLinkUrl(documentOption.getDocumentLinkUrl())
@@ -138,8 +128,8 @@ public interface ContentMapper extends PageResponseMapper {
   ContentPreviewCardResponse toContentPreviewCardResponse(ContentCardDTO contentCardDTO);
 
   default PageResponse<ContentPreviewCardResponse> toContentPreviewCardResponsePage(
-      PageResponse<ContentCardDTO> dtoPage) {
-    return toPageResponse(dtoPage, this::toContentPreviewCardResponse);
+      PageResponse<ContentCardDTO> DTOPage) {
+    return toPageResponse(DTOPage, this::toContentPreviewCardResponse);
   }
 
   // ====== 📤 DTO → Response 변환 ======
@@ -165,13 +155,6 @@ public interface ContentMapper extends PageResponseMapper {
                     .name(option.getName())
                     .description(option.getDescription())
                     .price(option.getPrice())
-                    // coaching 전용 필드들
-                    .coachingPeriod(option.getCoachingPeriod())
-                    .documentProvision(option.getDocumentProvision())
-                    .coachingType(option.getCoachingType())
-                    .coachingTypeDescription(option.getCoachingTypeDescription())
-                    // document 전용 필드들
-                    .contentDeliveryMethod(option.getContentDeliveryMethod())
                     .documentFileUrl(option.getDocumentFileUrl())
                     .documentLinkUrl(option.getDocumentLinkUrl())
                     .build())
@@ -205,10 +188,6 @@ public interface ContentMapper extends PageResponseMapper {
                     .name(option.getName())
                     .description(option.getDescription())
                     .price(option.getPrice())
-                    .coachingPeriod(option.getCoachingPeriod())
-                    .documentProvision(option.getDocumentProvision())
-                    .coachingType(option.getCoachingType())
-                    .coachingTypeDescription(option.getCoachingTypeDescription())
                     .build();
               } else {
                 return DocumentOptionResponse.builder()
@@ -216,7 +195,6 @@ public interface ContentMapper extends PageResponseMapper {
                     .name(option.getName())
                     .description(option.getDescription())
                     .price(option.getPrice())
-                    .contentDeliveryMethod(option.getContentDeliveryMethod())
                     .documentOriginalFileName(option.getDocumentOriginalFileName())
                     .documentFileUrl(option.getDocumentFileUrl())
                     .documentLinkUrl(option.getDocumentLinkUrl())

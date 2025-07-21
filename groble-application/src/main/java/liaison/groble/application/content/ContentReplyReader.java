@@ -1,10 +1,12 @@
 package liaison.groble.application.content;
 
+import java.util.List;
+
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import liaison.groble.domain.content.repository.ContentReviewCustomRepository;
-import liaison.groble.domain.content.repository.ContentReviewRepository;
+import liaison.groble.domain.content.dto.FlatReviewReplyDTO;
+import liaison.groble.domain.content.repository.ContentReplyCustomRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -12,6 +14,9 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class ContentReplyReader {
-  private final ContentReviewRepository contentReviewRepository;
-  private final ContentReviewCustomRepository contentReviewCustomRepository;
+  private final ContentReplyCustomRepository contentReplyCustomRepository;
+
+  public List<FlatReviewReplyDTO> findRepliesByReviewId(Long reviewId) {
+    return contentReplyCustomRepository.findRepliesByReviewId(reviewId);
+  }
 }

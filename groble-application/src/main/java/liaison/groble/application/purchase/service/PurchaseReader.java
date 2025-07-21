@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import liaison.groble.common.exception.EntityNotFoundException;
 import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.purchase.dto.FlatContentSellDetailDTO;
+import liaison.groble.domain.purchase.dto.FlatPurchaseContentDetailDTO;
 import liaison.groble.domain.purchase.dto.FlatPurchaseContentPreviewDTO;
 import liaison.groble.domain.purchase.dto.FlatSellManageDetailDTO;
 import liaison.groble.domain.purchase.entity.Purchase;
@@ -26,6 +27,13 @@ import lombok.extern.slf4j.Slf4j;
 public class PurchaseReader {
   private final PurchaseRepository purchaseRepository;
   private final PurchaseCustomRepository purchaseCustomRepository;
+
+  public FlatPurchaseContentDetailDTO getPurchaseContentDetail(Long userId, String merchantUid) {
+    return purchaseCustomRepository
+        .getPurchaseContentDetail(userId, merchantUid)
+        .orElseThrow(
+            () -> new EntityNotFoundException("구매 정보를 찾을 수 없습니다. Merchant UID: " + merchantUid));
+  }
 
   // 주문 ID로 구매 정보 조회
   public Purchase getPurchaseByOrderId(Long orderId) {

@@ -3,16 +3,16 @@ package liaison.groble.application.auth.service;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import liaison.groble.application.auth.dto.VerifyBusinessMakerAccountDto;
-import liaison.groble.application.auth.dto.VerifyPersonalMakerAccountDto;
+import liaison.groble.application.auth.dto.VerifyBusinessMakerAccountDTO;
+import liaison.groble.application.auth.dto.VerifyPersonalMakerAccountDTO;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.domain.role.Role;
 import liaison.groble.domain.role.repository.RoleRepository;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.enums.BusinessType;
 import liaison.groble.domain.user.enums.SellerVerificationStatus;
-import liaison.groble.external.discord.dto.BusinessMakerVerificationCreateReportDto;
-import liaison.groble.external.discord.dto.PersonalMakerVerificationCreateReportDto;
+import liaison.groble.external.discord.dto.BusinessMakerVerificationCreateReportDTO;
+import liaison.groble.external.discord.dto.PersonalMakerVerificationCreateReportDTO;
 import liaison.groble.external.discord.service.maker.DiscordBusinessMakerVerificationReportService;
 import liaison.groble.external.discord.service.maker.DiscordPersonalMakerVerificationReportService;
 
@@ -33,7 +33,7 @@ public class AccountVerificationService {
       discordBusinessMakerVerificationReportService;
 
   @Transactional
-  public void verifyPersonalMakerAccount(Long userId, VerifyPersonalMakerAccountDto dto) {
+  public void verifyPersonalMakerAccount(Long userId, VerifyPersonalMakerAccountDTO dto) {
     User user = userReader.getUserById(userId);
 
     // 직접 업데이트
@@ -44,8 +44,8 @@ public class AccountVerificationService {
             dto.getBankAccountNumber(),
             dto.getCopyOfBankbookUrl());
 
-    final PersonalMakerVerificationCreateReportDto personalMakerVerificationCreateReportDto =
-        PersonalMakerVerificationCreateReportDto.builder()
+    final PersonalMakerVerificationCreateReportDTO personalMakerVerificationCreateReportDTO =
+        PersonalMakerVerificationCreateReportDTO.builder()
             .userId(user.getId())
             .nickname(user.getNickname())
             .bankAccountOwner(dto.getBankAccountOwner())
@@ -55,12 +55,12 @@ public class AccountVerificationService {
             .build();
 
     discordPersonalMakerVerificationReportService.sendCreatePersonalMakerVerificationReport(
-        personalMakerVerificationCreateReportDto);
+        personalMakerVerificationCreateReportDTO);
     updateSellerVerificationStatus(user);
   }
 
   @Transactional
-  public void verifyBusinessBankbook(Long userId, VerifyBusinessMakerAccountDto dto) {
+  public void verifyBusinessBankbook(Long userId, VerifyBusinessMakerAccountDTO dto) {
     User user = userReader.getUserById(userId);
 
     // 직접 업데이트
@@ -73,7 +73,7 @@ public class AccountVerificationService {
   }
 
   @Transactional
-  public void verifyBusinessAccount(Long userId, VerifyBusinessMakerAccountDto dto) {
+  public void verifyBusinessAccount(Long userId, VerifyBusinessMakerAccountDTO dto) {
     User user = userReader.getUserById(userId);
     // 직접 업데이트
     user.getSellerInfo()
@@ -87,8 +87,8 @@ public class AccountVerificationService {
             dto.getBusinessLicenseFileUrl(),
             dto.getTaxInvoiceEmail());
 
-    final BusinessMakerVerificationCreateReportDto businessMakerVerificationCreateReportDto =
-        BusinessMakerVerificationCreateReportDto.builder()
+    final BusinessMakerVerificationCreateReportDTO businessMakerVerificationCreateReportDTO =
+        BusinessMakerVerificationCreateReportDTO.builder()
             .userId(user.getId())
             .nickname(user.getNickname())
             .bankAccountOwner(user.getSellerInfo().getBankAccountOwner())
@@ -106,7 +106,7 @@ public class AccountVerificationService {
             .build();
 
     discordBusinessMakerVerificationReportService.sendCreateBusinessMakerVerificationReport(
-        businessMakerVerificationCreateReportDto);
+        businessMakerVerificationCreateReportDTO);
     updateSellerVerificationStatus(user);
   }
 

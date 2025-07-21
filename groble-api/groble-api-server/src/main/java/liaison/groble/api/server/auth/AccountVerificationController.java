@@ -19,16 +19,18 @@ import liaison.groble.api.model.auth.response.swagger.BusinessMaker;
 import liaison.groble.api.model.auth.response.swagger.BusinessVerification;
 import liaison.groble.api.model.auth.response.swagger.PersonalMaker;
 import liaison.groble.api.model.file.response.FileUploadResponse;
-import liaison.groble.api.server.file.mapper.FileCustomMapper;
-import liaison.groble.application.auth.dto.VerifyBusinessMakerAccountDto;
-import liaison.groble.application.auth.dto.VerifyPersonalMakerAccountDto;
+import liaison.groble.api.server.util.FileUtil;
+import liaison.groble.application.auth.dto.VerifyBusinessMakerAccountDTO;
+import liaison.groble.application.auth.dto.VerifyPersonalMakerAccountDTO;
 import liaison.groble.application.auth.service.AccountVerificationService;
 import liaison.groble.application.file.FileService;
-import liaison.groble.application.file.dto.FileDto;
-import liaison.groble.application.file.dto.FileUploadDto;
+import liaison.groble.application.file.dto.FileDTO;
+import liaison.groble.application.file.dto.FileUploadDTO;
 import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.model.Accessor;
 import liaison.groble.common.response.GrobleResponse;
+import liaison.groble.common.response.ResponseHelper;
+import liaison.groble.mapping.auth.AccountVerificationMapper;
 
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -38,77 +40,82 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/account-verification")
-@Tag(name = "은행 계좌 인증 API", description = "은행 계좌 인증 관련 API (개인 메이커 인증 & 개인 • 법인 사업자)")
+@Tag(name = "[🏧 계좌]은행 계좌 인증 API", description = "은행 계좌 인증 관련 API (개인 메이커 인증 & 개인 • 법인 사업자)")
 public class AccountVerificationController {
 
+  // API 경로 상수화
+  private static final String PERSONAL_MAKER_VERIFICATION_PATH = "/personal-maker";
+  private static final String BUSINESS_MAKER_VERIFICATION_PATH = "/business-maker";
+  private static final String BUSINESS_VERIFICATION_PATH = "/business";
+  private static final String UPLOAD_BANKBOOK_COPY_PATH = "/upload-bankbook-copy";
+  private static final String UPLOAD_BUSINESS_LICENSE_PATH = "/upload-business-license";
+
+  // 응답 메시지 상수화
+  private static final String PERSONAL_MAKER_VERIFICATION_SUCCESS_MESSAGE =
+      "개인 메이커 계좌 인증 요청이 성공적으로 처리되었습니다.";
+  private static final String BUSINESS_MAKER_VERIFICATION_SUCCESS_MESSAGE =
+      "법인 사업자 계좌 인증 요청이 성공적으로 처리되었습니다.";
+  private static final String BUSINESS_VERIFICATION_SUCCESS_MESSAGE =
+      "개인 • 법인 사업자 계좌 인증 요청이 성공적으로 처리되었습니다.";
+  private static final String UPLOAD_BANKBOOK_COPY_SUCCESS_MESSAGE =
+      "통장 사본 이미지 업로드가 성공적으로 완료되었습니다.";
+  private static final String UPLOAD_BUSINESS_LICENSE_SUCCESS_MESSAGE =
+      "사업자 등록증 사본 이미지 업로드가 성공적으로 완료되었습니다.";
+
+  // Service
   private final AccountVerificationService accountVerificationService;
   private final FileService fileService;
-  private final FileCustomMapper fileCustomMapper;
+  private final FileUtil fileUtil;
+
+  // Mapper
+  private final AccountVerificationMapper accountVerificationMapper;
+  // Helper
+  private final ResponseHelper responseHelper;
 
   /** 개인 메이커 계좌 인증 요청 처리 */
   @PersonalMaker
-  @PostMapping("/personal-maker")
+  @PostMapping(PERSONAL_MAKER_VERIFICATION_PATH)
   public ResponseEntity<GrobleResponse<Void>> verifyPersonalMakerAccount(
       @Auth Accessor accessor, @Valid @RequestBody VerifyPersonalMakerAccountRequest request) {
 
-    VerifyPersonalMakerAccountDto verifyPersonalMakerAccountDto =
-        VerifyPersonalMakerAccountDto.builder()
-            .bankAccountOwner(request.getBankAccountOwner())
-            .bankName(request.getBankName())
-            .bankAccountNumber(request.getBankAccountNumber())
-            .copyOfBankbookUrl(request.getCopyOfBankbookUrl())
-            .build();
-
+    VerifyPersonalMakerAccountDTO verifyPersonalMakerAccountDTO =
+        accountVerificationMapper.toVerifyPersonalMakerAccountDTO(request);
     accountVerificationService.verifyPersonalMakerAccount(
-        accessor.getUserId(), verifyPersonalMakerAccountDto);
-    return ResponseEntity.ok(GrobleResponse.success(null));
+        accessor.getUserId(), verifyPersonalMakerAccountDTO);
+    return responseHelper.success(null, PERSONAL_MAKER_VERIFICATION_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 
   @BusinessMaker
-  @PostMapping("/business-maker")
+  @PostMapping(BUSINESS_MAKER_VERIFICATION_PATH)
   public ResponseEntity<GrobleResponse<Void>> verifyBusinessBankbook(
       @Auth Accessor accessor,
       @Valid @RequestBody VerificationBusinessMakerAccountRequest request) {
 
-    VerifyBusinessMakerAccountDto verifyBusinessMakerAccountDto =
-        VerifyBusinessMakerAccountDto.builder()
-            .bankAccountOwner(request.getBankAccountOwner())
-            .bankName(request.getBankName())
-            .bankAccountNumber(request.getBankAccountNumber())
-            .copyOfBankbookUrl(request.getCopyOfBankbookUrl())
-            .build();
+    VerifyBusinessMakerAccountDTO verifyBusinessMakerAccountDTO =
+        accountVerificationMapper.toVerifyBusinessMakerAccountDTO(request);
 
     accountVerificationService.verifyBusinessBankbook(
-        accessor.getUserId(), verifyBusinessMakerAccountDto);
-    return ResponseEntity.ok(GrobleResponse.success(null));
+        accessor.getUserId(), verifyBusinessMakerAccountDTO);
+    return responseHelper.success(null, BUSINESS_MAKER_VERIFICATION_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 
   /** 개인 • 법인 사업자 계좌 인증 요청 처리 */
   @BusinessVerification
-  @PostMapping("/business")
+  @PostMapping(BUSINESS_VERIFICATION_PATH)
   public ResponseEntity<GrobleResponse<Void>> verifyBusinessAccount(
       @Auth Accessor accessor,
       @Valid @RequestBody VerificationBusinessMakerAccountRequest request) {
 
-    VerifyBusinessMakerAccountDto verifyBusinessMakerAccountDto =
-        VerifyBusinessMakerAccountDto.builder()
-            .businessType(convertToBusinessTypeDto(request.getBusinessType()))
-            .businessCategory(request.getBusinessCategory())
-            .businessSector(request.getBusinessSector())
-            .businessName(request.getBusinessName())
-            .representativeName(request.getRepresentativeName())
-            .businessAddress(request.getBusinessAddress())
-            .businessLicenseFileUrl(request.getBusinessLicenseFileUrl())
-            .taxInvoiceEmail(request.getTaxInvoiceEmail())
-            .build();
+    VerifyBusinessMakerAccountDTO verifyBusinessMakerAccountDTO =
+        accountVerificationMapper.toVerifyBusinessMakerAccountDTO(request);
 
     accountVerificationService.verifyBusinessAccount(
-        accessor.getUserId(), verifyBusinessMakerAccountDto);
+        accessor.getUserId(), verifyBusinessMakerAccountDTO);
     return ResponseEntity.ok(GrobleResponse.success(null));
   }
 
   /** 통장 사본 첨부 파일 업로드 */
-  @PostMapping("/upload-bankbook-copy")
+  @PostMapping(UPLOAD_BANKBOOK_COPY_PATH)
   public ResponseEntity<GrobleResponse<?>> uploadBankbookCopyImage(
       @Auth final Accessor accessor,
       @RequestPart("bankbookCopyImage")
@@ -132,14 +139,13 @@ public class AccountVerificationController {
     }
 
     try {
-      FileUploadDto fileUploadDto =
-          fileCustomMapper.toServiceFileUploadDto(bankbookCopyImage, "bankbook");
-      FileDto fileDto = fileService.uploadFile(accessor.getUserId(), fileUploadDto);
+      FileUploadDTO fileUploadDTO = fileUtil.toServiceFileUploadDTO(bankbookCopyImage, "bankbook");
+      FileDTO fileDTO = fileService.uploadFile(accessor.getUserId(), fileUploadDTO);
       FileUploadResponse response =
           FileUploadResponse.of(
-              fileDto.getOriginalFilename(),
-              fileDto.getFileUrl(),
-              fileDto.getContentType(),
+              fileDTO.getOriginalFilename(),
+              fileDTO.getFileUrl(),
+              fileDTO.getContentType(),
               "bankbook");
       return ResponseEntity.status(HttpStatus.CREATED)
           .body(
@@ -154,7 +160,7 @@ public class AccountVerificationController {
   }
 
   /** 통장 사본 첨부 파일 업로드 */
-  @PostMapping("/upload-business-license")
+  @PostMapping(UPLOAD_BUSINESS_LICENSE_PATH)
   public ResponseEntity<GrobleResponse<?>> uploadBusinessLicenseImage(
       @Auth final Accessor accessor,
       @RequestPart("businessLicenseImage")
@@ -178,14 +184,14 @@ public class AccountVerificationController {
     }
 
     try {
-      FileUploadDto fileUploadDto =
-          fileCustomMapper.toServiceFileUploadDto(businessLicenseImage, "business/license");
-      FileDto fileDto = fileService.uploadFile(accessor.getUserId(), fileUploadDto);
+      FileUploadDTO fileUploadDTO =
+          fileUtil.toServiceFileUploadDTO(businessLicenseImage, "business/license");
+      FileDTO fileDTO = fileService.uploadFile(accessor.getUserId(), fileUploadDTO);
       FileUploadResponse response =
           FileUploadResponse.of(
-              fileDto.getOriginalFilename(),
-              fileDto.getFileUrl(),
-              fileDto.getContentType(),
+              fileDTO.getOriginalFilename(),
+              fileDTO.getFileUrl(),
+              fileDTO.getContentType(),
               "business/license");
       return ResponseEntity.status(HttpStatus.CREATED)
           .body(
@@ -206,12 +212,5 @@ public class AccountVerificationController {
         && (contentType.equalsIgnoreCase("application/pdf")
             || contentType.equalsIgnoreCase("image/jpeg")
             || contentType.equalsIgnoreCase("image/png"));
-  }
-
-  private VerifyBusinessMakerAccountDto.BusinessType convertToBusinessTypeDto(
-      VerificationBusinessMakerAccountRequest.BusinessType businessType) {
-
-    // 예: request.getBusinessType()이 String 또는 Enum이라고 가정
-    return VerifyBusinessMakerAccountDto.BusinessType.valueOf(businessType.name());
   }
 }

@@ -1,8 +1,8 @@
 package liaison.groble.external.discord.service.maker;
 
-import liaison.groble.external.discord.dto.BusinessMakerVerificationCreateReportDto;
+import liaison.groble.external.discord.dto.BusinessMakerVerificationCreateReportDTO;
 
 public interface BusinessMakerVerificationReportService {
   void sendCreateBusinessMakerVerificationReport(
-      BusinessMakerVerificationCreateReportDto businessMakerVerificationCreateReportDto);
+      BusinessMakerVerificationCreateReportDTO businessMakerVerificationCreateReportDTO);
 }

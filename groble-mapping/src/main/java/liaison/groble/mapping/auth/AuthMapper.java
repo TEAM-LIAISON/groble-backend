@@ -11,11 +11,11 @@ import liaison.groble.api.model.auth.request.UserWithdrawalRequest;
 import liaison.groble.api.model.auth.request.VerifyEmailCodeRequest;
 import liaison.groble.api.model.auth.response.SignInResponse;
 import liaison.groble.api.model.auth.response.SignInTestResponse;
-import liaison.groble.application.auth.dto.PhoneNumberVerifyCodeRequestDto;
-import liaison.groble.application.auth.dto.PhoneNumberVerifyRequestDto;
+import liaison.groble.application.auth.dto.PhoneNumberVerifyCodeRequestDTO;
+import liaison.groble.application.auth.dto.PhoneNumberVerifyRequestDTO;
 import liaison.groble.application.auth.dto.SignInAuthResultDTO;
 import liaison.groble.application.auth.dto.SignInDTO;
-import liaison.groble.application.auth.dto.SignUpDto;
+import liaison.groble.application.auth.dto.SignUpDTO;
 import liaison.groble.application.auth.dto.UserWithdrawalDTO;
 import liaison.groble.application.auth.dto.VerifyEmailCodeDTO;
 import liaison.groble.mapping.config.GrobleMapperConfig;
@@ -25,36 +25,36 @@ public interface AuthMapper {
 
   // ====== 📥 Request → DTO 변환 ======
   /** [통합 로그인] SignInRequest → SignInDTO */
-  SignInDTO toSignInDto(SignInRequest request);
+  SignInDTO toSignInDTO(SignInRequest request);
 
-  /** [통합 회원가입] SignUpRequest → SignUpDto */
+  /** [통합 회원가입] SignUpRequest → SignUpDTO */
   @Mapping(
       target = "termsTypeStrings",
       expression = "java(request.getTermsTypes().stream().map(Enum::name).toList())")
-  SignUpDto toSignUpDto(SignUpRequest request);
+  SignUpDTO toSignUpDTO(SignUpRequest request);
 
   /** UserWithdrawalRequest → UserWithdrawalDTO */
   @Mapping(target = "reason", expression = "java(request.getReason().name())")
-  UserWithdrawalDTO toUserWithdrawalDto(UserWithdrawalRequest request);
+  UserWithdrawalDTO toUserWithdrawalDTO(UserWithdrawalRequest request);
 
   // ====== 📤 DTO → Response 변환 ======
 
   /** (email + 인증 결과 DTO) → SignInResponse */
   @Mapping(target = "authenticated", constant = "true")
-  SignInResponse toSignInResponse(String email, SignInAuthResultDTO dto);
+  SignInResponse toSignInResponse(String email, SignInAuthResultDTO signInAuthResultDTO);
 
   @Mapping(target = "email", source = "email")
   @Mapping(target = "authenticated", constant = "true")
-  SignInTestResponse toSignInTestResponse(String email, SignInAuthResultDTO dto);
+  SignInTestResponse toSignInTestResponse(String email, SignInAuthResultDTO signInAuthResultDTO);
 
   /** VerifyEmailCodeRequest → VerifyEmailCodeDTO */
-  VerifyEmailCodeDTO toVerifyEmailCodeDto(VerifyEmailCodeRequest request);
+  VerifyEmailCodeDTO toVerifyEmailCodeDTO(VerifyEmailCodeRequest request);
 
-  /** PhoneNumberVerifyRequest → PhoneNumberVerifyRequestDto */
-  PhoneNumberVerifyRequestDto toPhoneNumberVerifyRequestDto(PhoneNumberVerifyRequest request);
+  /** PhoneNumberVerifyRequest → PhoneNumberVerifyRequestDTO */
+  PhoneNumberVerifyRequestDTO toPhoneNumberVerifyRequestDTO(PhoneNumberVerifyRequest request);
 
-  /** PhoneNumberVerifyCodeRequest → PhoneNumberVerifyCodeRequestDto */
+  /** PhoneNumberVerifyCodeRequest → PhoneNumberVerifyCodeRequestDTO */
   @Mapping(source = "verificationCode", target = "verifyCode")
-  PhoneNumberVerifyCodeRequestDto toPhoneNumberVerifyCodeRequestDto(
+  PhoneNumberVerifyCodeRequestDTO toPhoneNumberVerifyCodeRequestDTO(
       PhoneNumberVerifyCodeRequest request);
 }

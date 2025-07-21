@@ -17,7 +17,7 @@ import liaison.groble.api.model.auth.response.SignUpResponse;
 import liaison.groble.application.auth.dto.SignInAuthResultDTO;
 import liaison.groble.application.auth.dto.SignInDTO;
 import liaison.groble.application.auth.dto.SignUpAuthResultDTO;
-import liaison.groble.application.auth.dto.SignUpDto;
+import liaison.groble.application.auth.dto.SignUpDTO;
 import liaison.groble.application.auth.service.IntegratedAccountAuthService;
 import liaison.groble.common.response.GrobleResponse;
 import liaison.groble.common.response.ResponseHelper;
@@ -77,12 +77,12 @@ public class IntegratedAccountAuthController {
       HttpServletResponse response) {
 
     // 로그인 처리
-    SignInDTO signInDto = authMapper.toSignInDto(request);
+    SignInDTO signInDTO = authMapper.toSignInDTO(request);
     SignInAuthResultDTO authResult =
-        integratedAccountAuthService.integratedAccountSignIn(signInDto);
+        integratedAccountAuthService.integratedAccountSignIn(signInDTO);
 
     // 응답 생성
-    SignInResponse signInResponse = authMapper.toSignInResponse(signInDto.getEmail(), authResult);
+    SignInResponse signInResponse = authMapper.toSignInResponse(signInDTO.getEmail(), authResult);
 
     // 토큰 쿠키 설정
     tokenCookieService.addTokenCookies(
@@ -112,9 +112,9 @@ public class IntegratedAccountAuthController {
       HttpServletResponse response) {
 
     // 회원가입 처리
-    SignUpDto signUpDto = authMapper.toSignUpDto(request);
+    SignUpDTO signUpDTO = authMapper.toSignUpDTO(request);
     SignUpAuthResultDTO authResult =
-        integratedAccountAuthService.integratedAccountSignUp(signUpDto);
+        integratedAccountAuthService.integratedAccountSignUp(signUpDTO);
 
     // 응답 생성
     SignUpResponse signUpResponse = SignUpResponse.of(request.getEmail());

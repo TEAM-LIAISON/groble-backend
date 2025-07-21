@@ -12,7 +12,7 @@ public class NotificationExamples {
               "success": true,
               "message": "알림 조회 성공",
               "data": {
-                "notificationItems": [
+                "notificationItemsResponse": [
                   {
                     "notificationId": 1,
                     "notificationType": "CERTIFY",
@@ -37,7 +37,7 @@ public class NotificationExamples {
               "success": true,
               "message": "알림 조회 성공",
               "data": {
-                "notificationItems": [
+                "notificationItemsResponse": [
                   {
                     "notificationId": 2,
                     "notificationType": "CERTIFY",
@@ -62,7 +62,7 @@ public class NotificationExamples {
               "success": true,
               "message": "알림 조회 성공",
               "data": {
-                "notificationItems": [
+                "notificationItemsResponse": [
                   {
                     "notificationId": 3,
                     "notificationType": "REVIEW",
@@ -88,7 +88,7 @@ public class NotificationExamples {
               "success": true,
               "message": "알림 조회 성공",
               "data": {
-                "notificationItems": [
+                "notificationItemsResponse": [
                   {
                     "notificationId": 4,
                     "notificationType": "REVIEW",
@@ -114,7 +114,7 @@ public class NotificationExamples {
               "success": true,
               "message": "알림 조회 성공",
               "data": {
-                "notificationItems": [
+                "notificationItemsResponse": [
                   {
                     "notificationId": 5,
                     "notificationType": "SYSTEM",
@@ -140,7 +140,7 @@ public class NotificationExamples {
               "success": true,
               "message": "알림 조회 성공",
               "data": {
-                "notificationItems": [
+                "notificationItemsResponse": [
                   {
                     "notificationId": 1,
                     "notificationType": "SYSTEM",

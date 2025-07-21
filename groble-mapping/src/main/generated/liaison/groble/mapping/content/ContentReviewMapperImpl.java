@@ -16,7 +16,7 @@ import liaison.groble.application.content.dto.review.ReviewReplyDTO;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-07-16T15:23:16+0900",
+    date = "2025-07-17T20:40:12+0900",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.10 (Amazon.com Inc.)")
 @Component
 public class ContentReviewMapperImpl implements ContentReviewMapper {
@@ -87,8 +87,23 @@ public class ContentReviewMapperImpl implements ContentReviewMapper {
     return contentDetailReviewResponse.build();
   }
 
-  @Override
-  public ReviewReplyResponse toReviewReplyResponse(ReviewReplyDTO reviewReplyDTO) {
+  protected List<ContentDetailReviewResponse>
+      contentDetailReviewDTOListToContentDetailReviewResponseList(
+          List<ContentDetailReviewDTO> list) {
+    if (list == null) {
+      return null;
+    }
+
+    List<ContentDetailReviewResponse> list1 =
+        new ArrayList<ContentDetailReviewResponse>(list.size());
+    for (ContentDetailReviewDTO contentDetailReviewDTO : list) {
+      list1.add(toContentDetailReviewResponse(contentDetailReviewDTO));
+    }
+
+    return list1;
+  }
+
+  protected ReviewReplyResponse reviewReplyDTOToReviewReplyResponse(ReviewReplyDTO reviewReplyDTO) {
     if (reviewReplyDTO == null) {
       return null;
     }
@@ -112,22 +127,6 @@ public class ContentReviewMapperImpl implements ContentReviewMapper {
     return reviewReplyResponse.build();
   }
 
-  protected List<ContentDetailReviewResponse>
-      contentDetailReviewDTOListToContentDetailReviewResponseList(
-          List<ContentDetailReviewDTO> list) {
-    if (list == null) {
-      return null;
-    }
-
-    List<ContentDetailReviewResponse> list1 =
-        new ArrayList<ContentDetailReviewResponse>(list.size());
-    for (ContentDetailReviewDTO contentDetailReviewDTO : list) {
-      list1.add(toContentDetailReviewResponse(contentDetailReviewDTO));
-    }
-
-    return list1;
-  }
-
   protected List<ReviewReplyResponse> reviewReplyDTOListToReviewReplyResponseList(
       List<ReviewReplyDTO> list) {
     if (list == null) {
@@ -136,7 +135,7 @@ public class ContentReviewMapperImpl implements ContentReviewMapper {
 
     List<ReviewReplyResponse> list1 = new ArrayList<ReviewReplyResponse>(list.size());
     for (ReviewReplyDTO reviewReplyDTO : list) {
-      list1.add(toReviewReplyResponse(reviewReplyDTO));
+      list1.add(reviewReplyDTOToReviewReplyResponse(reviewReplyDTO));
     }
 
     return list1;

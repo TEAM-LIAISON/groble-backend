@@ -1,8 +1,8 @@
 package liaison.groble.application.user.service;
 
-import liaison.groble.application.user.dto.UserHeaderDto;
-import liaison.groble.application.user.dto.UserMyPageDetailDto;
-import liaison.groble.application.user.dto.UserMyPageSummaryDto;
+import liaison.groble.application.user.dto.UserHeaderDTO;
+import liaison.groble.application.user.dto.UserMyPageDetailDTO;
+import liaison.groble.application.user.dto.UserMyPageSummaryDTO;
 
 public interface UserService {
 
@@ -51,17 +51,17 @@ public interface UserService {
    * 사용자 마이페이지 정보 조회
    *
    * @param userId 사용자 ID
-   * @return UserMyPageSummaryDto 사용자 마이페이지 정보
+   * @return UserMyPageSummaryDTO 사용자 마이페이지 정보
    */
-  UserMyPageSummaryDto getUserMyPageSummary(Long userId);
+  UserMyPageSummaryDTO getUserMyPageSummary(Long userId);
 
   /**
    * 사용자 마이페이지 상세 정보 조회
    *
    * @param userId 사용자 ID
-   * @return UserMyPageDetailDto 사용자 마이페이지 상세 정보
+   * @return UserMyPageDetailDTO 사용자 마이페이지 상세 정보
    */
-  UserMyPageDetailDto getUserMyPageDetail(Long userId);
+  UserMyPageDetailDTO getUserMyPageDetail(Long userId);
 
   /**
    * 사용자 초기 역할 설정
@@ -74,9 +74,9 @@ public interface UserService {
   /**
    * 사용자 헤더 정보 조회
    *
-   * @return UserHeaderDto 사용자 헤더 정보
+   * @return UserHeaderDTO 사용자 헤더 정보
    */
-  UserHeaderDto getUserHeaderInform(Long userId);
+  UserHeaderDTO getUserHeaderInform(Long userId);
 
   void updateProfileImageUrl(Long userId, String profileImagePath);
 

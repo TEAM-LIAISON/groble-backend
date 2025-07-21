@@ -44,7 +44,7 @@ public class ContentPreviewCardResponse {
       example = "true",
       type = "true",
       requiredMode = Schema.RequiredMode.REQUIRED)
-  private boolean isAvailableForSale;
+  private Boolean isAvailableForSale;
 
   @Schema(
       description =

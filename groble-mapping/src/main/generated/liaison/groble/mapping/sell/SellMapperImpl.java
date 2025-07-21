@@ -5,26 +5,38 @@ import java.util.List;
 
 import javax.annotation.processing.Generated;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import liaison.groble.api.model.sell.request.ReplyContentRequest;
 import liaison.groble.api.model.sell.response.ContentReviewDetailResponse;
 import liaison.groble.api.model.sell.response.ContentSellDetailResponse;
 import liaison.groble.api.model.sell.response.ReplyContentResponse;
+import liaison.groble.api.model.sell.response.ReviewReplyResponse;
 import liaison.groble.api.model.sell.response.SellManageDetailResponse;
 import liaison.groble.api.model.sell.response.SellManagePageResponse;
+import liaison.groble.application.content.dto.review.ReviewReplyDTO;
 import liaison.groble.application.sell.dto.ContentReviewDetailDTO;
 import liaison.groble.application.sell.dto.ContentSellDetailDTO;
 import liaison.groble.application.sell.dto.ReplyContentDTO;
 import liaison.groble.application.sell.dto.SellManageDetailDTO;
 import liaison.groble.application.sell.dto.SellManagePageDTO;
+import liaison.groble.mapping.content.ContentReplyMapper;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-07-16T15:55:59+0900",
+    date = "2025-07-19T17:17:01+0900",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.10 (Amazon.com Inc.)")
 @Component
 public class SellMapperImpl implements SellMapper {
+
+  private final ContentReplyMapper contentReplyMapper;
+
+  @Autowired
+  public SellMapperImpl(ContentReplyMapper contentReplyMapper) {
+
+    this.contentReplyMapper = contentReplyMapper;
+  }
 
   @Override
   public ReplyContentDTO toReplyContentDTO(ReplyContentRequest replyContentRequest) {
@@ -149,6 +161,9 @@ public class SellMapperImpl implements SellMapper {
     if (contentReviewDetailDTO.getReviewId() != null) {
       contentReviewDetailResponse.reviewId(contentReviewDetailDTO.getReviewId());
     }
+    if (contentReviewDetailDTO.getReviewStatus() != null) {
+      contentReviewDetailResponse.reviewStatus(contentReviewDetailDTO.getReviewStatus());
+    }
     if (contentReviewDetailDTO.getContentTitle() != null) {
       contentReviewDetailResponse.contentTitle(contentReviewDetailDTO.getContentTitle());
     }
@@ -167,6 +182,11 @@ public class SellMapperImpl implements SellMapper {
     }
     if (contentReviewDetailDTO.getRating() != null) {
       contentReviewDetailResponse.rating(contentReviewDetailDTO.getRating());
+    }
+    List<ReviewReplyResponse> list =
+        reviewReplyDTOListToReviewReplyResponseList(contentReviewDetailDTO.getReviewReplies());
+    if (list != null) {
+      contentReviewDetailResponse.reviewReplies(list);
     }
 
     return contentReviewDetailResponse.build();
@@ -213,6 +233,20 @@ public class SellMapperImpl implements SellMapper {
         new ArrayList<ContentReviewDetailResponse>(list.size());
     for (ContentReviewDetailDTO contentReviewDetailDTO : list) {
       list1.add(toContentReviewDetailResponse(contentReviewDetailDTO));
+    }
+
+    return list1;
+  }
+
+  protected List<ReviewReplyResponse> reviewReplyDTOListToReviewReplyResponseList(
+      List<ReviewReplyDTO> list) {
+    if (list == null) {
+      return null;
+    }
+
+    List<ReviewReplyResponse> list1 = new ArrayList<ReviewReplyResponse>(list.size());
+    for (ReviewReplyDTO reviewReplyDTO : list) {
+      list1.add(contentReplyMapper.toReviewReplyResponse(reviewReplyDTO));
     }
 
     return list1;

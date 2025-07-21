@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import liaison.groble.common.exception.EntityNotFoundException;
 import liaison.groble.domain.content.dto.FlatContentReviewDetailDTO;
 import liaison.groble.domain.content.dto.FlatContentReviewReplyDTO;
 import liaison.groble.domain.content.entity.ContentReview;
@@ -25,12 +26,18 @@ public class ContentReviewReader {
   private final ContentReviewCustomRepository contentReviewCustomRepository;
   private final ContentReviewRepository contentReviewRepository;
 
+  public ContentReview getContentReviewById(Long reviewId) {
+    return contentReviewRepository
+        .getContentReviewById(reviewId)
+        .orElseThrow(() -> new EntityNotFoundException("리뷰를 찾을 수 없습니다. Review ID: " + reviewId));
+  }
+
   public ContentReview getContentReview(Long userId, Long reviewId) {
     return contentReviewCustomRepository
         .getContentReview(userId, reviewId)
         .orElseThrow(
             () ->
-                new IllegalArgumentException(
+                new EntityNotFoundException(
                     "리뷰를 찾을 수 없습니다. User ID: " + userId + ", Review ID: " + reviewId));
   }
 
@@ -40,7 +47,7 @@ public class ContentReviewReader {
         .getContentReviewDetailDTO(userId, contentId, reviewId)
         .orElseThrow(
             () ->
-                new IllegalArgumentException(
+                new EntityNotFoundException(
                     "리뷰 상세 정보를 찾을 수 없습니다. User ID: "
                         + userId
                         + ", Content ID: "

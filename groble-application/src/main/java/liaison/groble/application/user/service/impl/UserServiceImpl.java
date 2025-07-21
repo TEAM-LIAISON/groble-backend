@@ -5,9 +5,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import liaison.groble.application.content.ContentReader;
-import liaison.groble.application.user.dto.UserHeaderDto;
-import liaison.groble.application.user.dto.UserMyPageDetailDto;
-import liaison.groble.application.user.dto.UserMyPageSummaryDto;
+import liaison.groble.application.user.dto.UserHeaderDTO;
+import liaison.groble.application.user.dto.UserMyPageDetailDTO;
+import liaison.groble.application.user.dto.UserMyPageSummaryDTO;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.application.user.service.UserService;
 import liaison.groble.common.exception.EntityNotFoundException;
@@ -137,7 +137,7 @@ public class UserServiceImpl implements UserService {
   }
 
   @Override
-  public UserMyPageSummaryDto getUserMyPageSummary(Long userId) {
+  public UserMyPageSummaryDTO getUserMyPageSummary(Long userId) {
     User user = userReader.getUserById(userId);
 
     // sellerInfo 가 없거나, isSeller=false 이면 디폴트로 PENDING 처리
@@ -150,7 +150,7 @@ public class UserServiceImpl implements UserService {
       verificationStatusDisplayName = status.getDisplayName();
     }
 
-    return UserMyPageSummaryDto.builder()
+    return UserMyPageSummaryDTO.builder()
         .nickname(user.getNickname())
         .profileImageUrl(user.getProfileImageUrl())
         .userTypeName(user.getLastUserType().name())
@@ -162,7 +162,7 @@ public class UserServiceImpl implements UserService {
   }
 
   @Override
-  public UserMyPageDetailDto getUserMyPageDetail(Long userId) {
+  public UserMyPageDetailDTO getUserMyPageDetail(Long userId) {
     User user = userReader.getUserById(userId);
 
     AccountType accountType = user.getAccountType();
@@ -193,7 +193,7 @@ public class UserServiceImpl implements UserService {
       verificationStatus = user.getSellerInfo().getVerificationStatus().name();
     }
 
-    return UserMyPageDetailDto.builder()
+    return UserMyPageDetailDTO.builder()
         .nickname(user.getNickname())
         .userTypeName(user.getLastUserType().name())
         .accountTypeName(user.getAccountType().name())
@@ -228,7 +228,7 @@ public class UserServiceImpl implements UserService {
   }
 
   @Override
-  public UserHeaderDto getUserHeaderInform(Long userId) {
+  public UserHeaderDTO getUserHeaderInform(Long userId) {
     User user = userReader.getUserById(userId);
 
     boolean isLogin;
@@ -243,7 +243,7 @@ public class UserServiceImpl implements UserService {
       isLogin = false;
     }
 
-    return UserHeaderDto.builder()
+    return UserHeaderDTO.builder()
         .isLogin(isLogin)
         .nickname(user.getNickname())
         .profileImageUrl(user.getProfileImageUrl())

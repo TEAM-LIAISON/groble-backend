@@ -9,10 +9,13 @@ import org.springframework.data.domain.Pageable;
 import liaison.groble.common.response.CursorResponse;
 import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.purchase.dto.FlatContentSellDetailDTO;
+import liaison.groble.domain.purchase.dto.FlatPurchaseContentDetailDTO;
 import liaison.groble.domain.purchase.dto.FlatPurchaseContentPreviewDTO;
 import liaison.groble.domain.purchase.dto.FlatSellManageDetailDTO;
 
 public interface PurchaseCustomRepository {
+
+  Optional<FlatPurchaseContentDetailDTO> getPurchaseContentDetail(Long userId, String merchantUid);
 
   CursorResponse<FlatPurchaseContentPreviewDTO> findMyPurchasingContentsWithCursor(
       Long userId, Long lastContentId, int size, List<Order.OrderStatus> statusList);

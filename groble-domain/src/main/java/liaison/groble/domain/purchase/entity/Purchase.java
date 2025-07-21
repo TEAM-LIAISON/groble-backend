@@ -162,4 +162,16 @@ public class Purchase extends BaseTimeEntity {
     COACHING_OPTION,
     DOCUMENT_OPTION
   }
+
+  public void cancelRequestPurchase(CancelReason reason) {
+    if (this.cancelledAt != null) {
+      throw new IllegalStateException("이미 취소된 구매입니다.");
+    }
+    this.cancelRequestedAt = LocalDateTime.now();
+    this.cancelReason = reason;
+  }
+
+  public void cancelPayment() {
+    this.cancelledAt = LocalDateTime.now();
+  }
 }

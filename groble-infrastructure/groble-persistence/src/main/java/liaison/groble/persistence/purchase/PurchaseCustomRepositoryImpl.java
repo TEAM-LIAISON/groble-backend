@@ -13,10 +13,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 
+import com.querydsl.core.types.Expression;
 import com.querydsl.core.types.ExpressionUtils;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.ComparableExpressionBase;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.PathBuilder;
@@ -29,9 +31,13 @@ import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.content.entity.QContent;
 import liaison.groble.domain.content.entity.QContentOption;
 import liaison.groble.domain.content.entity.QContentReview;
+import liaison.groble.domain.content.entity.QDocumentOption;
+import liaison.groble.domain.content.enums.ContentType;
 import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.order.entity.QOrder;
+import liaison.groble.domain.payment.entity.QPayplePayment;
 import liaison.groble.domain.purchase.dto.FlatContentSellDetailDTO;
+import liaison.groble.domain.purchase.dto.FlatPurchaseContentDetailDTO;
 import liaison.groble.domain.purchase.dto.FlatPurchaseContentPreviewDTO;
 import liaison.groble.domain.purchase.dto.FlatSellManageDetailDTO;
 import liaison.groble.domain.purchase.entity.QPurchase;
@@ -48,6 +54,105 @@ import lombok.RequiredArgsConstructor;
 public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
 
   private final JPAQueryFactory queryFactory;
+
+  @Override
+  public Optional<FlatPurchaseContentDetailDTO> getPurchaseContentDetail(
+      Long userId, String merchantUid) {
+    QContent qContent = QContent.content;
+    QPurchase qPurchase = QPurchase.purchase;
+    QOrder qOrder = QOrder.order;
+    QUser qUser = QUser.user;
+    QDocumentOption qDocOpt = QDocumentOption.documentOption;
+    QPayplePayment qPayplePayment = QPayplePayment.payplePayment;
+
+    Expression<String> documentOptionActionUrl =
+        ExpressionUtils.as(
+            Expressions.cases()
+                .when(qContent.contentType.eq(ContentType.DOCUMENT))
+                .then(
+                    JPAExpressions.select(qDocOpt.documentFileUrl.coalesce(qDocOpt.documentLinkUrl))
+                        .from(qDocOpt)
+                        .where(qDocOpt.id.eq(qPurchase.selectedOptionId))
+                        .limit(1))
+                .otherwise(Expressions.nullExpression(String.class)),
+            "documentOptionActionUrl");
+
+    Expression<Integer> one = ExpressionUtils.as(Expressions.constant(1), "selectedOptionQuantity");
+
+    // ★ isRefundable: order.status == PAID 일 때만 true
+    Expression<Boolean> isRefundableExpr =
+        ExpressionUtils.as(
+            new CaseBuilder()
+                .when(qOrder.status.eq(Order.OrderStatus.PAID))
+                .then(true)
+                .otherwise(false),
+            "isRefundable");
+
+    // --- PayplePayment 서브쿼리 3종 ---
+    Expression<String> payTypeExpr =
+        ExpressionUtils.as(
+            JPAExpressions.select(qPayplePayment.pcdPayType)
+                .from(qPayplePayment)
+                .where(qPayplePayment.pcdPayOid.eq(qOrder.merchantUid))
+                .limit(1),
+            "payType");
+
+    Expression<String> payCardNameExpr =
+        ExpressionUtils.as(
+            JPAExpressions.select(qPayplePayment.pcdPayCardName)
+                .from(qPayplePayment)
+                .where(qPayplePayment.pcdPayOid.eq(qOrder.merchantUid))
+                .limit(1),
+            "payCardName");
+
+    Expression<String> payCardNumExpr =
+        ExpressionUtils.as(
+            JPAExpressions.select(qPayplePayment.pcdPayCardNum)
+                .from(qPayplePayment)
+                .where(qPayplePayment.pcdPayOid.eq(qOrder.merchantUid))
+                .limit(1),
+            "payCardNum");
+
+    FlatPurchaseContentDetailDTO result =
+        queryFactory
+            .select(
+                Projections.fields(
+                    FlatPurchaseContentDetailDTO.class,
+                    qOrder.status.stringValue().as("orderStatus"),
+                    qOrder.merchantUid.as("merchantUid"),
+                    qPurchase.purchasedAt.as("purchasedAt"),
+                    qPurchase.cancelRequestedAt.as("cancelRequestedAt"),
+                    qPurchase.cancelledAt.as("cancelledAt"),
+                    qContent.id.as("contentId"),
+                    qContent.user.userProfile.nickname.as("sellerName"),
+                    qContent.title.as("contentTitle"),
+                    qPurchase.selectedOptionName.as("selectedOptionName"),
+                    one,
+                    qPurchase.selectedOptionType.stringValue().as("selectedOptionType"),
+                    documentOptionActionUrl,
+                    Expressions.cases()
+                        .<Boolean>when(qPurchase.finalPrice.eq(BigDecimal.ZERO))
+                        .then(true)
+                        .otherwise(false)
+                        .as("isFreePurchase"),
+                    qPurchase.originalPrice.as("originalPrice"),
+                    qPurchase.discountPrice.as("discountPrice"),
+                    qPurchase.finalPrice.as("finalPrice"),
+                    payTypeExpr,
+                    payCardNameExpr,
+                    payCardNumExpr,
+                    qContent.thumbnailUrl.as("thumbnailUrl"),
+                    isRefundableExpr,
+                    qPurchase.cancelReason.stringValue().as("cancelReason")))
+            .from(qPurchase)
+            .leftJoin(qPurchase.content, qContent)
+            .leftJoin(qPurchase.order, qOrder)
+            .leftJoin(qContent.user, qUser)
+            .where(qPurchase.user.id.eq(userId).and(qOrder.merchantUid.eq(merchantUid)))
+            .fetchOne();
+
+    return Optional.ofNullable(result);
+  }
 
   @Override
   public CursorResponse<FlatPurchaseContentPreviewDTO> findMyPurchasingContentsWithCursor(
@@ -176,7 +281,7 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
                 Projections.fields(
                     FlatContentSellDetailDTO.class,
                     qPurchase.id.as("purchaseId"),
-                    qContent.title.as("title"),
+                    qContent.title.as("contentTitle"),
                     qPurchase.purchasedAt.as("purchasedAt"),
                     qUser.userProfile.nickname.as("purchaserNickname"),
                     // 조건부 이메일 처리

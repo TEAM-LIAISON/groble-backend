@@ -33,7 +33,7 @@ public class AdminOrderService {
     Page<FlatAdminOrderSummaryInfoDTO> orderPage = orderReader.getAllOrders(pageable);
 
     List<AdminOrderSummaryInfoDTO> items =
-        orderPage.getContent().stream().map(this::convertFlatDtoToInfoResponse).toList();
+        orderPage.getContent().stream().map(this::convertFlatDTOToInfoResponse).toList();
 
     PageResponse.MetaData meta =
         PageResponse.MetaData.builder()
@@ -116,7 +116,7 @@ public class AdminOrderService {
     }
   }
 
-  private AdminOrderSummaryInfoDTO convertFlatDtoToInfoResponse(FlatAdminOrderSummaryInfoDTO flat) {
+  private AdminOrderSummaryInfoDTO convertFlatDTOToInfoResponse(FlatAdminOrderSummaryInfoDTO flat) {
     return AdminOrderSummaryInfoDTO.builder()
         .contentId(flat.getContentId())
         .merchantUid(flat.getMerchantUid())

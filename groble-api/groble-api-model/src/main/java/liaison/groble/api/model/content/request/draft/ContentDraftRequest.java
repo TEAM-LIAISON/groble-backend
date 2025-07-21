@@ -37,7 +37,7 @@ public class ContentDraftRequest {
 
   @Valid
   @Schema(description = "코칭 옵션 목록 (contentType이 COACHING인 경우)")
-  private List<CoachingOptionDraftRequest> coachingOptions;
+  private List<BaseOptionDraftRequest> coachingOptions;
 
   @Valid
   @Schema(description = "문서 옵션 목록 (contentType이 DOCUMENT인 경우)")
@@ -45,11 +45,6 @@ public class ContentDraftRequest {
 
   @Schema(description = "콘텐츠 소개", example = "사업계획서 컨설팅")
   private String contentIntroduction;
-
-  @Schema(
-      description = "콘텐츠 상세 이미지 URL 목록",
-      example = "[\"https://example.com/image1.jpg\", \"https://example.com/image2.jpg\"]")
-  private List<String> contentDetailImageUrls;
 
   @Schema(description = "서비스 타겟", example = "초창패, 창중, 예창패, 청창사 등을 준비하는 분")
   private String serviceTarget;

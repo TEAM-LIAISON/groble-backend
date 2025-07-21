@@ -27,8 +27,6 @@ public class QDocumentOption extends EntityPathBase<DocumentOption> {
     // inherited
     public final QContent content;
 
-    public final EnumPath<liaison.groble.domain.content.enums.ContentDeliveryMethod> contentDeliveryMethod = createEnum("contentDeliveryMethod", liaison.groble.domain.content.enums.ContentDeliveryMethod.class);
-
     //inherited
     public final DateTimePath<java.time.LocalDateTime> createdAt;
 

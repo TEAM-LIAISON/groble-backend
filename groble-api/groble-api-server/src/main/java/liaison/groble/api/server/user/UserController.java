@@ -26,18 +26,19 @@ import liaison.groble.api.model.user.response.swagger.MyPageSummary;
 import liaison.groble.api.model.user.response.swagger.SwitchRole;
 import liaison.groble.api.model.user.response.swagger.UploadUserProfileImage;
 import liaison.groble.api.model.user.response.swagger.UserHeader;
-import liaison.groble.api.server.file.mapper.FileCustomMapper;
-import liaison.groble.api.server.user.mapper.UserDtoMapper;
+import liaison.groble.api.server.util.FileUtil;
 import liaison.groble.application.file.FileService;
-import liaison.groble.application.file.dto.FileUploadDto;
-import liaison.groble.application.user.dto.UserHeaderDto;
-import liaison.groble.application.user.dto.UserMyPageDetailDto;
-import liaison.groble.application.user.dto.UserMyPageSummaryDto;
+import liaison.groble.application.file.dto.FileUploadDTO;
+import liaison.groble.application.user.dto.UserHeaderDTO;
+import liaison.groble.application.user.dto.UserMyPageDetailDTO;
+import liaison.groble.application.user.dto.UserMyPageSummaryDTO;
 import liaison.groble.application.user.service.UserService;
 import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.model.Accessor;
 import liaison.groble.common.response.GrobleResponse;
+import liaison.groble.common.response.ResponseHelper;
 import liaison.groble.common.utils.TokenCookieService;
+import liaison.groble.mapping.user.UserMapper;
 
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -53,22 +54,39 @@ import lombok.RequiredArgsConstructor;
     description = "마이페이지 조회, 프로필 이미지 업로드, 가입 유형 전환을 진행합니다.")
 public class UserController {
 
+  // API 경로 상수화
+  private static final String USER_SWITCH_ROLE_PATH = "/users/switch-role";
+  private static final String USER_MY_PAGE_SUMMARY_PATH = "/users/me/summary";
+  private static final String USER_MY_PAGE_DETAIL_PATH = "/users/me/detail";
+
+  // 응답 메시지 상수화
+  private static final String USER_SWITCH_ROLE_SUCCESS_MESSAGE = "가입 유형이 전환되었습니다.";
+  private static final String USER_MY_PAGE_SUMMARY_SUCCESS_MESSAGE = "마이페이지 요약 정보 조회에 성공했습니다.";
+  private static final String USER_MY_PAGE_DETAIL_SUCCESS_MESSAGE = "마이페이지 상세 정보 조회에 성공했습니다.";
+
+  // Service
   private final UserService userService;
-  private final UserDtoMapper userDtoMapper;
   private final FileService fileService;
-  private final FileCustomMapper fileCustomMapper;
   private final TokenCookieService tokenCookieService;
 
+  // Mapper
+  private final UserMapper userMapper;
+
+  // Utils
+  private final FileUtil fileUtil;
+
+  // Helper
+  private final ResponseHelper responseHelper;
+
   @SwitchRole
-  @PostMapping("/users/switch-role")
+  @PostMapping(USER_SWITCH_ROLE_PATH)
   public ResponseEntity<GrobleResponse<Void>> switchUserType(
       @Auth Accessor accessor, @Valid @RequestBody UserTypeRequest request) {
 
     boolean success = userService.switchUserType(accessor.getUserId(), request.getUserType());
 
     if (success) {
-      return ResponseEntity.status(HttpStatus.NO_CONTENT)
-          .body(GrobleResponse.success(null, "가입 유형이 전환되었습니다.", 204));
+      return responseHelper.success(null, USER_SWITCH_ROLE_SUCCESS_MESSAGE, HttpStatus.NO_CONTENT);
     } else {
       String target = request.getUserType().toUpperCase();
       String message;
@@ -88,22 +106,23 @@ public class UserController {
 
   /** 마이페이지 요약 정보 조회 */
   @MyPageSummary
-  @GetMapping("/users/me/summary")
+  @GetMapping(USER_MY_PAGE_SUMMARY_PATH)
   public ResponseEntity<GrobleResponse<MyPageSummaryResponseBase>> getUserMyPageSummary(
       @Auth Accessor accessor) {
-    UserMyPageSummaryDto summaryDto = userService.getUserMyPageSummary(accessor.getUserId());
+    UserMyPageSummaryDTO userMyPageSummaryDTO =
+        userService.getUserMyPageSummary(accessor.getUserId());
     return ResponseEntity.ok(
-        GrobleResponse.success(userDtoMapper.toApiMyPageSummaryResponse(summaryDto)));
+        GrobleResponse.success(userMapper.toApiMyPageSummaryResponse(userMyPageSummaryDTO)));
   }
 
   /** 마이페이지 상세 정보 조회 */
   @MyPageDetail
-  @GetMapping("/users/me/detail")
+  @GetMapping(USER_MY_PAGE_DETAIL_PATH)
   public ResponseEntity<GrobleResponse<UserMyPageDetailResponse>> getUserMyPageDetail(
       @Auth Accessor accessor) {
-    UserMyPageDetailDto detailDto = userService.getUserMyPageDetail(accessor.getUserId());
+    UserMyPageDetailDTO detailDTO = userService.getUserMyPageDetail(accessor.getUserId());
     return ResponseEntity.ok(
-        GrobleResponse.success(userDtoMapper.toApiMyPageDetailResponse(detailDto)));
+        GrobleResponse.success(userMapper.toApiMyPageDetailResponse(detailDTO)));
   }
 
   @UserHeader
@@ -115,8 +134,8 @@ public class UserController {
     boolean isLogin = userService.isLoginAble(accessor.getUserId());
 
     if (isLogin) {
-      UserHeaderDto userHeaderDto = userService.getUserHeaderInform(accessor.getUserId());
-      UserHeaderResponse userHeaderResponse = userDtoMapper.toApiUserHeaderResponse(userHeaderDto);
+      UserHeaderDTO userHeaderDTO = userService.getUserHeaderInform(accessor.getUserId());
+      UserHeaderResponse userHeaderResponse = userMapper.toUserHeaderResponse(userHeaderDTO);
 
       return ResponseEntity.ok(GrobleResponse.success(userHeaderResponse, "사용자 헤더 정보 조회 성공"));
 
@@ -166,19 +185,19 @@ public class UserController {
 
     try {
       // 3) DTO 변환
-      FileUploadDto dto =
-          fileCustomMapper.toServiceFileUploadDto(profileImage, "profiles/" + accessor.getUserId());
+      FileUploadDTO dto =
+          fileUtil.toServiceFileUploadDTO(profileImage, "profiles/" + accessor.getUserId());
       // 4) 업로드
-      var fileDto = fileService.uploadFile(accessor.getUserId(), dto);
+      var fileDTO = fileService.uploadFile(accessor.getUserId(), dto);
       // 5) 사용자 프로필에 URL 업데이트
-      userService.updateProfileImageUrl(accessor.getUserId(), fileDto.getFileUrl());
+      userService.updateProfileImageUrl(accessor.getUserId(), fileDTO.getFileUrl());
 
       // 6) 응답 생성
       FileUploadResponse response =
           FileUploadResponse.of(
-              fileDto.getOriginalFilename(),
-              fileDto.getFileUrl(),
-              fileDto.getContentType(),
+              fileDTO.getOriginalFilename(),
+              fileDTO.getFileUrl(),
+              fileDTO.getContentType(),
               dto.getDirectory());
       return ResponseEntity.status(HttpStatus.CREATED)
           .body(
