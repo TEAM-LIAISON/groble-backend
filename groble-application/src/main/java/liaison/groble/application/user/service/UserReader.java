@@ -1,7 +1,5 @@
 package liaison.groble.application.user.service;
 
-import java.util.Optional;
-
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,16 +39,6 @@ public class UserReader {
         .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다. ID: " + userId));
   }
 
-  /**
-   * 사용자 ID로 사용자 조회 (Optional 반환)
-   *
-   * @param userId 사용자 ID
-   * @return 사용자 Optional 객체
-   */
-  public Optional<User> findUserById(Long userId) {
-    return userRepository.findById(userId);
-  }
-
   // ===== 닉네임으로 User 조회 =====
 
   public User getUserByNickname(String nickname) {
@@ -71,11 +59,6 @@ public class UserReader {
   }
 
   // ===== 이메일로 User 조회 =====
-
-  public Optional<IntegratedAccount> findUserByIntegratedAccountEmail(String email) {
-    return integratedAccountRepository.findByIntegratedAccountEmail(email);
-  }
-
   public IntegratedAccount getUserByIntegratedAccountEmail(String email) {
     return integratedAccountRepository
         .findByIntegratedAccountEmail(email)
