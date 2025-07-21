@@ -20,7 +20,6 @@ import liaison.groble.api.model.content.response.ContentResponse;
 import liaison.groble.api.model.content.response.ContentStatusResponse;
 import liaison.groble.api.model.content.response.swagger.ContentExamineReject;
 import liaison.groble.api.model.content.response.swagger.ContentListResponse;
-import liaison.groble.api.model.content.response.swagger.ContentRegister;
 import liaison.groble.application.content.dto.ContentCardDTO;
 import liaison.groble.application.content.dto.ContentDTO;
 import liaison.groble.application.content.service.ContentService;
@@ -77,28 +76,25 @@ public class SellController {
   private final ResponseHelper responseHelper;
 
   @RequireRole("ROLE_SELLER")
-  @Operation(
-      summary = "[✅ 콘텐츠 임시 저장] 작성 완료한 콘텐츠 임시 저장",
-      description = "콘텐츠를 임시 저장합니다. 콘텐츠 유형(코칭/문서)에 따라 옵션 구조가 달라집니다.")
+  @Operation(summary = "[✅ 콘텐츠 임시 저장] 콘텐츠를 작성하다가 임시 저장.", description = "콘텐츠를 임시 저장합니다.")
+  @Logging(item = "Sell", action = "draftContent", includeParam = true, includeResult = true)
   @PostMapping(DRAFT_CONTENT_PATH)
-  public ResponseEntity<GrobleResponse<ContentResponse>> saveDraft(
+  public ResponseEntity<GrobleResponse<ContentResponse>> draftContent(
       @Auth Accessor accessor, @Valid @RequestBody ContentDraftRequest request) {
 
     ContentDTO contentDTO = contentMapper.toContentDTO(request);
-    ContentDTO savedContentDTO =
-        contentService.saveDraftAndReturn(accessor.getUserId(), contentDTO);
+    ContentDTO savedContentDTO = contentService.draftContent(accessor.getUserId(), contentDTO);
 
     ContentResponse response = contentMapper.toContentResponse(savedContentDTO);
     return responseHelper.success(response, CONTENT_DRAFT_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 
   // 콘텐츠 심사 요청
-  @ContentRegister
   @RequireRole("ROLE_SELLER")
   @Operation(
-      summary = "[✅ 콘텐츠 심사 요청] 작성 완료한 콘텐츠 심사 요청",
+      summary = "[✅ 콘텐츠 심사 요청] 작성 완료한 콘텐츠 판매하기",
       description = "콘텐츠 심사를 요청합니다. 콘텐츠 유형(코칭/문서)에 따라 옵션 구조가 달라집니다.")
-  @Logging(item = "Content", action = "register", includeParam = true, includeResult = true)
+  @Logging(item = "Sell", action = "registerContent", includeParam = true, includeResult = true)
   @PostMapping(REGISTER_CONTENT_PATH)
   public ResponseEntity<GrobleResponse<ContentResponse>> registerContent(
       @Auth Accessor accessor, @Valid @RequestBody ContentRegisterRequest request) {

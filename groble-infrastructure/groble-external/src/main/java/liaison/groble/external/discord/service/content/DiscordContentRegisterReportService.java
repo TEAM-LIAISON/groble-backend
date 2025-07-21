@@ -32,7 +32,7 @@ public class DiscordContentRegisterReportService implements ContentRegisterRepor
             + contentRegisterCreateReportDTO.contentType()
             + "\n**콘텐츠 심사 요청 시각 (Asia/Seoul):** "
             + contentRegisterCreateReportDTO.createdAt()
-            + "\n님이 콘텐츠 판매하기를 하셨습니다.";
+            + "\n콘텐츠 판매하기가 시작되었습니다.\n";
 
     discordService.sendMessages(url, msg);
   }

@@ -139,7 +139,7 @@ public class ContentService {
   }
 
   @Transactional
-  public ContentDTO saveDraftAndReturn(Long userId, ContentDTO contentDTO) {
+  public ContentDTO draftContent(Long userId, ContentDTO contentDTO) {
     // 1. 사용자 조회
     User user = userReader.getUserById(userId);
 
