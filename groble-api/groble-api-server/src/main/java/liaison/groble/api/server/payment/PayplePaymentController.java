@@ -5,7 +5,9 @@ import java.time.LocalDateTime;
 import jakarta.validation.Valid;
 
 import org.json.simple.JSONObject;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -31,11 +33,13 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@Validated
 @RestController
 @RequestMapping("/api/v1/payments/payple")
 @RequiredArgsConstructor
@@ -44,8 +48,6 @@ import lombok.extern.slf4j.Slf4j;
     description = "앱카드를 활용하여 결제를 진행하고, 결제 취소 기능을 제공합니다.")
 public class PayplePaymentController {
 
-  // API 경로 상수화
-  private static final String APP_CARD_REQUEST_PATH = "/app-card/request";
   private static final String PAYMENT_CANCEL_PATH = "/{merchantUid}/cancel";
 
   // 응답 메시지 상수화
@@ -60,25 +62,48 @@ public class PayplePaymentController {
   // Helper
   private final ResponseHelper responseHelper;
 
-  // 앱카드 결제 인증 결과를 수신하고 결제 승인 요청을 페이플 서버에 보낸다.
   @Operation(
       summary = "[❌ 앱카드 결제 승인] 페이플 앱카드 결제를 진행합니다.",
-      description = "앱카드 결제 인증 결과를 수신하고, Payple 서버에 승인 요청을 보냅니다.",
-      responses = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "성공",
-            content =
-                @Content(
-                    mediaType = "application/json",
-                    schema = @Schema(implementation = AppCardPayplePaymentResponse.class)))
-      })
+      description =
+          """
+          앱카드 결제 인증 결과를 수신하고, Payple 서버에 승인 요청을 보냅니다.
+
+          **주의사항:**
+          - 인증 실패 시 400 에러가 발생합니다
+          - 결제창이 닫힌 경우 빈 응답을 반환합니다
+          - 결제 승인은 비동기로 처리되며, 완료 시 이벤트가 발행됩니다
+          """)
+  @ApiResponses({
+    @ApiResponse(
+        responseCode = "200",
+        description = "결제 승인 요청 성공",
+        content =
+            @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = AppCardPayplePaymentResponse.class))),
+    @ApiResponse(
+        responseCode = "400",
+        description = "잘못된 요청 (인증 실패, 금액 불일치 등)",
+        content = @Content(schema = @Schema(implementation = GrobleResponse.class))),
+    @ApiResponse(
+        responseCode = "403",
+        description = "권한 없음 (다른 사용자의 주문)",
+        content = @Content(schema = @Schema(implementation = GrobleResponse.class))),
+    @ApiResponse(
+        responseCode = "409",
+        description = "충돌 (이미 처리된 주문)",
+        content = @Content(schema = @Schema(implementation = GrobleResponse.class))),
+    @ApiResponse(
+        responseCode = "500",
+        description = "서버 오류",
+        content = @Content(schema = @Schema(implementation = GrobleResponse.class)))
+  })
   @Logging(
       item = "Payment",
-      action = "AppCardPaymentRequest",
+      action = "requestAppCardPayment",
       includeParam = true,
       includeResult = true)
-  @PostMapping(APP_CARD_REQUEST_PATH)
+  @PostMapping("/app-card/request")
   public ResponseEntity<GrobleResponse<AppCardPayplePaymentResponse>> requestAppCardPayment(
       @Auth Accessor accessor,
       @Valid @RequestBody PaypleAuthResultRequest paypleAuthResultRequest) {
@@ -104,30 +129,12 @@ public class PayplePaymentController {
       String payRst = (String) approvalResult.get("PCD_PAY_RST");
       if (!"success".equalsIgnoreCase(payRst)) {
         String errorMsg = (String) approvalResult.get("PCD_PAY_MSG");
-        log.error("페이플 결제 승인 실패 - 메시지: {}", errorMsg);
         throw new PayplePaymentAuthException("페이플 결제 승인 실패: " + errorMsg);
       }
 
       // 승인 성공 응답 생성
-      AppCardPayplePaymentResponse response =
-          AppCardPayplePaymentResponse.builder()
-              .payRst(payRst)
-              .payCode((String) approvalResult.get("PCD_PAY_CODE"))
-              .payMsg((String) approvalResult.get("PCD_PAY_MSG"))
-              .payOid((String) approvalResult.get("PCD_PAY_OID"))
-              .payType((String) approvalResult.get("PCD_PAY_TYPE"))
-              .payTime((String) approvalResult.get("PCD_PAY_TIME"))
-              .payTotal((String) approvalResult.get("PCD_PAY_TOTAL"))
-              .payCardName((String) approvalResult.get("PCD_PAY_CARDNAME"))
-              .payCardNum((String) approvalResult.get("PCD_PAY_CARDNUM"))
-              .payCardQuota((String) approvalResult.get("PCD_PAY_CARDQUOTA"))
-              .payCardTradeNum((String) approvalResult.get("PCD_PAY_CARDTRADENUM"))
-              .payCardAuthNo((String) approvalResult.get("PCD_PAY_CARDAUTHNO"))
-              .payCardReceipt((String) approvalResult.get("PCD_CARD_RECEIPT"))
-              .build();
-
-      return ResponseEntity.ok(GrobleResponse.success(response));
-
+      AppCardPayplePaymentResponse response = buildPaymentResponse(approvalResult);
+      return responseHelper.success(response, APP_CARD_SUCCESS_MESSAGE, HttpStatus.OK);
     } catch (IllegalStateException e) {
       log.error("페이플 결제 검증 실패 - {}", e.getMessage());
       throw new PayplePaymentAuthException("결제 정보 검증 실패: " + e.getMessage());
@@ -187,5 +194,23 @@ public class PayplePaymentController {
       log.error("결제 취소 중 예상치 못한 오류 발생: {}", merchantUid, e);
       throw new PayplePaymentAuthException("결제 취소 처리 중 오류가 발생했습니다.");
     }
+  }
+
+  private AppCardPayplePaymentResponse buildPaymentResponse(JSONObject approvalResult) {
+    return AppCardPayplePaymentResponse.builder()
+        .payRst((String) approvalResult.get("PCD_PAY_RST"))
+        .payCode((String) approvalResult.get("PCD_PAY_CODE"))
+        .payMsg((String) approvalResult.get("PCD_PAY_MSG"))
+        .payOid((String) approvalResult.get("PCD_PAY_OID"))
+        .payType((String) approvalResult.get("PCD_PAY_TYPE"))
+        .payTime((String) approvalResult.get("PCD_PAY_TIME"))
+        .payTotal((String) approvalResult.get("PCD_PAY_TOTAL"))
+        .payCardName((String) approvalResult.get("PCD_PAY_CARDNAME"))
+        .payCardNum((String) approvalResult.get("PCD_PAY_CARDNUM"))
+        .payCardQuota((String) approvalResult.get("PCD_PAY_CARDQUOTA"))
+        .payCardTradeNum((String) approvalResult.get("PCD_PAY_CARDTRADENUM"))
+        .payCardAuthNo((String) approvalResult.get("PCD_PAY_CARDAUTHNO"))
+        .payCardReceipt((String) approvalResult.get("PCD_CARD_RECEIPT"))
+        .build();
   }
 }
