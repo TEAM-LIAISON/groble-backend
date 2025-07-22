@@ -4,5 +4,5 @@ import liaison.groble.external.discord.dto.ContentRegisterCreateReportDTO;
 
 public interface ContentRegisterReportService {
   void sendCreateContentRegisterReport(
-      ContentRegisterCreateReportDTO contentRegisterCreateReportDto);
+      ContentRegisterCreateReportDTO contentRegisterCreateReportDTO);
 }

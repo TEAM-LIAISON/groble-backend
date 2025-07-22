@@ -42,7 +42,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-@Tag(name = "[🏷 마켓] 마켓 관리 및 마켓 뷰어 API", description = "마켓 관리 및 마켓 뷰어 화면에서 사용되는 모든 기능을 제공합니다.")
+@Tag(name = "[🏷 마켓 관리] 마켓 관리 및 마켓 뷰어 API", description = "마켓 관리 및 마켓 뷰어 화면에서 사용되는 모든 기능을 제공합니다.")
 @RequestMapping("/api/v1/market")
 public class MarketController {
 
@@ -82,8 +82,10 @@ public class MarketController {
   @Logging(item = "Market", action = "getEditIntroSection", includeResult = true)
   public ResponseEntity<GrobleResponse<MakerIntroSectionResponse>> getEditIntroSection(
       @Auth Accessor accessor) {
-    MarketIntroSectionDTO dto = marketService.getEditIntroSection(accessor.getUserId());
-    MakerIntroSectionResponse response = marketMapper.toMakerIntroSectionResponse(dto);
+    MarketIntroSectionDTO marketIntroSectionDTO =
+        marketService.getEditIntroSection(accessor.getUserId());
+    MakerIntroSectionResponse response =
+        marketMapper.toMakerIntroSectionResponse(marketIntroSectionDTO);
 
     return responseHelper.success(response, MARKET_EDIT_INTRO_SUCCESS_MESSAGE, HttpStatus.OK);
   }
@@ -98,8 +100,10 @@ public class MarketController {
   @Logging(item = "Market", action = "getViewerMakerIntroSection", includeResult = true)
   public ResponseEntity<GrobleResponse<MakerIntroSectionResponse>> getViewerMakerIntroSection(
       @Valid @PathVariable("marketLinkUrl") String marketLinkUrl) {
-    MarketIntroSectionDTO dto = marketService.getViewerMakerIntroSection(marketLinkUrl);
-    MakerIntroSectionResponse response = marketMapper.toMakerIntroSectionResponse(dto);
+    MarketIntroSectionDTO makerIntroSectionDTO =
+        marketService.getViewerMakerIntroSection(marketLinkUrl);
+    MakerIntroSectionResponse response =
+        marketMapper.toMakerIntroSectionResponse(makerIntroSectionDTO);
 
     return responseHelper.success(response, MARKET_INTRO_SUCCESS_MESSAGE, HttpStatus.OK);
   }
@@ -123,10 +127,10 @@ public class MarketController {
       @RequestParam(value = "sort", defaultValue = "createdAt") String sort) {
 
     Pageable pageable = PageUtils.createPageable(page, size, sort);
-    PageResponse<ContentCardDTO> dtoPageResponse =
+    PageResponse<ContentCardDTO> DTOPageResponse =
         marketService.getMarketContents(marketLinkUrl, pageable);
     PageResponse<ContentPreviewCardResponse> responsePage =
-        contentMapper.toContentPreviewCardResponsePage(dtoPageResponse);
+        contentMapper.toContentPreviewCardResponsePage(DTOPageResponse);
 
     return responseHelper.success(responsePage, MARKET_CONTENTS_SUCCESS_MESSAGE, HttpStatus.OK);
   }

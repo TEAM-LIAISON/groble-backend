@@ -55,7 +55,7 @@ public class MarketService {
     // 나의 모든 콘텐츠 조회
     List<FlatContentPreviewDTO> myContents = contentReader.findAllMarketContentsByUserId(userId);
     log.info("Get market content for user: {}", userId);
-    List<ContentCardDTO> items = myContents.stream().map(this::convertFlatDtoToCardDto).toList();
+    List<ContentCardDTO> items = myContents.stream().map(this::convertFlatDTOToCardDTO).toList();
     log.info("Get market content cards for user: {}", userId);
     // 메이커 소개 섹션 빌드 결과
     return buildEditMarketIntroSectionResult(user, items, contactInfo, representativeContent);
@@ -80,11 +80,12 @@ public class MarketService {
   public PageResponse<ContentCardDTO> getMarketContents(String marketLinkUrl, Pageable pageable) {
     // 마켓 이름으로 메이커 조회
     User user = makerReader.getUserByMarketLinkUrl(marketLinkUrl);
-    log.info("userId: {}, marketLinkUrl: {}", user.getId(), marketLinkUrl);
+
     Page<FlatContentPreviewDTO> page =
         contentReader.findAllMarketContentsByUserIdWithPaging(user.getId(), pageable);
+
     List<ContentCardDTO> items =
-        page.getContent().stream().map(this::convertFlatDtoToCardDto).toList();
+        page.getContent().stream().map(this::convertFlatDTOToCardDTO).toList();
 
     PageResponse.MetaData meta =
         PageResponse.MetaData.builder()
@@ -236,8 +237,7 @@ public class MarketService {
         .orElse("UNVERIFIED");
   }
 
-  /** FlatPreviewContentDTO를 ContentCardDto로 변환합니다. */
-  private ContentCardDTO convertFlatDtoToCardDto(FlatContentPreviewDTO flat) {
+  private ContentCardDTO convertFlatDTOToCardDTO(FlatContentPreviewDTO flat) {
     return ContentCardDTO.builder()
         .contentId(flat.getContentId())
         .createdAt(flat.getCreatedAt())
@@ -246,6 +246,7 @@ public class MarketService {
         .sellerName(flat.getSellerName())
         .lowestPrice(flat.getLowestPrice())
         .priceOptionLength(flat.getPriceOptionLength())
+        .isAvailableForSale(flat.getIsAvailableForSale())
         .status(flat.getStatus())
         .build();
   }

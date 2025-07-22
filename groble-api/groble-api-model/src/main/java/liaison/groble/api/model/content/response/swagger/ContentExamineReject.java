@@ -14,7 +14,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
-@Operation(summary = "콘텐츠 심사 거절 사유 조회", description = "심사 거절된 콘텐츠의 거절 사유를 조회합니다.")
+@Operation(summary = "[✅ 심사 거절 사유 조회] 콘텐츠 심사 거절 사유 조회", description = "심사 거절된 콘텐츠의 거절 사유를 조회합니다.")
 @ApiResponses({
   @ApiResponse(
       responseCode = "200",

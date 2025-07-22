@@ -33,9 +33,9 @@ import lombok.extern.slf4j.Slf4j;
     description = "내가 구매한 콘텐츠에 대한 리뷰 작성, 수정, 삭제 기능을 제공합니다.")
 public class PurchaserReviewController {
   // API 경로 상수화
-  private static final String PURCHASER_REVIEW_ADD_PATH = "/{contentId}";
-  private static final String PURCHASER_REVIEW_UPDATE_PATH = "/{contentId}/update/{reviewId}";
-  private static final String PURCHASER_REVIEW_DELETE_PATH = "/{contentId}/delete/{reviewId}";
+  private static final String PURCHASER_REVIEW_ADD_PATH = "/{merchantUid}";
+  private static final String PURCHASER_REVIEW_UPDATE_PATH = "/update/{reviewId}";
+  private static final String PURCHASER_REVIEW_DELETE_PATH = "/delete/{reviewId}";
 
   // 응답 메시지 상수화
   private static final String PURCHASER_REVIEW_ADD_SUCCESS_MESSAGE = "구매자가 콘텐츠에 대한 리뷰 작성에 성공했습니다.";
@@ -54,7 +54,7 @@ public class PurchaserReviewController {
   private final ResponseHelper responseHelper;
 
   @Operation(
-      summary = "[❌ 내 콘텐츠 - 구매 관리 - 리뷰 추가] 내가 구매한 콘텐츠 리뷰 추가",
+      summary = "[✅ 내 콘텐츠 - 구매 관리 - 리뷰 추가] 내가 구매한 콘텐츠 리뷰 추가",
       description = "내가 구매한 콘텐츠에 대해서 리뷰를 추가합니다.")
   @Logging(
       item = "PurchaserReview",
@@ -64,13 +64,13 @@ public class PurchaserReviewController {
   @PostMapping(PURCHASER_REVIEW_ADD_PATH)
   public ResponseEntity<GrobleResponse<PurchaserContentReviewResponse>> addReview(
       @Auth Accessor accessor,
-      @PathVariable("contentId") Long contentId,
+      @PathVariable("merchantUid") String merchantUid,
       @RequestBody PurchaserContentReviewRequest purchaserContentReviewRequest) {
     PurchaserContentReviewDTO purchaserContentReviewDTO =
         purchaserContentReviewMapper.toPurchaserContentReviewDTO(purchaserContentReviewRequest);
     PurchaserContentReviewDTO addedReviewDTO =
         purchaserReviewService.addReview(
-            accessor.getUserId(), contentId, purchaserContentReviewDTO);
+            accessor.getUserId(), merchantUid, purchaserContentReviewDTO);
     PurchaserContentReviewResponse purchaserContentReviewResponse =
         purchaserContentReviewMapper.toPurchaserContentReviewResponse(addedReviewDTO);
     return responseHelper.success(
@@ -78,7 +78,7 @@ public class PurchaserReviewController {
   }
 
   @Operation(
-      summary = "[❌ 내 콘텐츠 - 구매 관리 - 리뷰 수정] 내가 작성한 콘텐츠의 리뷰 수정",
+      summary = "[✅ 내 콘텐츠 - 구매 관리 - 리뷰 수정] 내가 작성한 콘텐츠의 리뷰 수정",
       description = "내가 구매한 콘텐츠에 대해서 작성한 리뷰를 수정합니다.")
   @Logging(
       item = "PurchaserReview",
@@ -88,7 +88,6 @@ public class PurchaserReviewController {
   @PostMapping(PURCHASER_REVIEW_UPDATE_PATH)
   public ResponseEntity<GrobleResponse<PurchaserContentReviewResponse>> updateReview(
       @Auth Accessor accessor,
-      @PathVariable("contentId") Long contentId,
       @PathVariable("reviewId") Long reviewId,
       @RequestBody PurchaserContentReviewRequest purchaserContentReviewRequest) {
 
@@ -97,7 +96,7 @@ public class PurchaserReviewController {
 
     PurchaserContentReviewDTO updatedReviewDTO =
         purchaserReviewService.updateReview(
-            accessor.getUserId(), contentId, reviewId, purchaserContentReviewDTO);
+            accessor.getUserId(), reviewId, purchaserContentReviewDTO);
     PurchaserContentReviewResponse purchaserContentReviewResponse =
         purchaserContentReviewMapper.toPurchaserContentReviewResponse(updatedReviewDTO);
     return responseHelper.success(
@@ -105,7 +104,7 @@ public class PurchaserReviewController {
   }
 
   @Operation(
-      summary = "[❌ 내 콘텐츠 - 구매 관리 - 리뷰 삭제] 내가 작성한 콘텐츠의 리뷰 삭제",
+      summary = "[✅ 내 콘텐츠 - 구매 관리 - 리뷰 삭제] 내가 작성한 콘텐츠의 리뷰 삭제",
       description = "내가 구매한 콘텐츠에 대해서 작성한 리뷰를 삭제합니다.")
   @Logging(
       item = "PurchaserReview",
@@ -114,10 +113,8 @@ public class PurchaserReviewController {
       includeResult = true)
   @PostMapping(PURCHASER_REVIEW_DELETE_PATH)
   public ResponseEntity<GrobleResponse<Void>> deleteReview(
-      @Auth Accessor accessor,
-      @PathVariable("contentId") Long contentId,
-      @PathVariable("reviewId") Long reviewId) {
-    purchaserReviewService.deleteReview(accessor.getUserId(), contentId, reviewId);
+      @Auth Accessor accessor, @PathVariable("reviewId") Long reviewId) {
+    purchaserReviewService.deleteReview(accessor.getUserId(), reviewId);
     return responseHelper.success(null, PURCHASER_REVIEW_DELETE_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 }

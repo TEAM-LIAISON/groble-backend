@@ -17,7 +17,7 @@ import liaison.groble.api.model.auth.response.SignUpResponse;
 import liaison.groble.application.auth.dto.SignInAuthResultDTO;
 import liaison.groble.application.auth.dto.SignInDTO;
 import liaison.groble.application.auth.dto.SignUpAuthResultDTO;
-import liaison.groble.application.auth.dto.SignUpDto;
+import liaison.groble.application.auth.dto.SignUpDTO;
 import liaison.groble.application.auth.service.IntegratedAccountAuthService;
 import liaison.groble.common.response.GrobleResponse;
 import liaison.groble.common.response.ResponseHelper;
@@ -37,7 +37,7 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/auth/integrated")
-@Tag(name = "[통합 계정] 통합 계정의 회원가입 및 로그인 API", description = "통합 계정 회원가입, 로그인을 통해 토큰을 발급받습니다.")
+@Tag(name = "[🔑 통합 계정] 통합 계정의 회원가입 및 로그인 API", description = "통합 계정 회원가입, 로그인을 통해 토큰을 발급받습니다.")
 public class IntegratedAccountAuthController {
 
   // API 경로 상수화
@@ -48,9 +48,14 @@ public class IntegratedAccountAuthController {
   private static final String SIGN_IN_SUCCESS_MESSAGE = "통합 계정으로 로그인이 성공적으로 완료되었습니다.";
   private static final String SIGN_UP_SUCCESS_MESSAGE = "회원가입이 성공적으로 완료되었습니다.";
 
+  // Mapper
   private final AuthMapper authMapper;
+
+  // Service
   private final IntegratedAccountAuthService integratedAccountAuthService;
   private final TokenCookieService tokenCookieService;
+
+  // Helper
   private final ResponseHelper responseHelper;
 
   @Operation(
@@ -72,12 +77,12 @@ public class IntegratedAccountAuthController {
       HttpServletResponse response) {
 
     // 로그인 처리
-    SignInDTO signInDto = authMapper.toSignInDto(request);
+    SignInDTO signInDTO = authMapper.toSignInDTO(request);
     SignInAuthResultDTO authResult =
-        integratedAccountAuthService.integratedAccountSignIn(signInDto);
+        integratedAccountAuthService.integratedAccountSignIn(signInDTO);
 
     // 응답 생성
-    SignInResponse signInResponse = authMapper.toSignInResponse(signInDto.getEmail(), authResult);
+    SignInResponse signInResponse = authMapper.toSignInResponse(signInDTO.getEmail(), authResult);
 
     // 토큰 쿠키 설정
     tokenCookieService.addTokenCookies(
@@ -107,9 +112,9 @@ public class IntegratedAccountAuthController {
       HttpServletResponse response) {
 
     // 회원가입 처리
-    SignUpDto signUpDto = authMapper.toSignUpDto(request);
+    SignUpDTO signUpDTO = authMapper.toSignUpDTO(request);
     SignUpAuthResultDTO authResult =
-        integratedAccountAuthService.integratedAccountSignUp(signUpDto);
+        integratedAccountAuthService.integratedAccountSignUp(signUpDTO);
 
     // 응답 생성
     SignUpResponse signUpResponse = SignUpResponse.of(request.getEmail());

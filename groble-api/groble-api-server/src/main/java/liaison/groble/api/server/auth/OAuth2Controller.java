@@ -19,16 +19,19 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/oauth2")
-@Tag(name = "[소셜 계정] 소셜 로그인을 진행하는 기능 API", description = "OAuth2를 활용하여 소셜 로그인을 진행합니다.")
+@Tag(name = "[🔑 소셜 계정] 소셜 로그인을 진행하는 기능 API", description = "OAuth2를 활용하여 소셜 로그인을 진행합니다.")
 public class OAuth2Controller {
+
+  // API 경로 상수화
+  private static final String AUTHORIZE_PATH = "/authorize";
 
   // 환경별 프론트엔드 도메인 설정
   @Value("${app.frontend-url}")
   private String frontendDomain; // 환경별로 설정 가능하도록 변경
 
   /** OAuth2 인증 페이지로 리다이렉트하기 전에 리다이렉트 URI를 세션에 저장 */
-  @Operation(summary = "OAuth2 로그인 시작", description = "소셜 로그인 시작 전 리다이렉트 URI를 설정합니다.")
-  @GetMapping("/authorize")
+  @Operation(summary = "[✅ 소셜 로그인] OAuth2 인증/인가 API", description = "OAuth2 인증을 시작합니다.")
+  @GetMapping(AUTHORIZE_PATH)
   public void authorize(
       @RequestParam(value = "redirect_uri", defaultValue = "/auth/sign-in") String redirectUri,
       @RequestParam("provider") String provider,

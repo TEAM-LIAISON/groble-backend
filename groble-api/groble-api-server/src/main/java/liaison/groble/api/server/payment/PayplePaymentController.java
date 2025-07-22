@@ -16,7 +16,7 @@ import liaison.groble.api.model.payment.request.PaymentCancelRequest;
 import liaison.groble.api.model.payment.request.PaypleAuthResultRequest;
 import liaison.groble.api.model.payment.response.PaymentCancelResponse;
 import liaison.groble.application.payment.dto.AppCardPayplePaymentResponse;
-import liaison.groble.application.payment.dto.PaypleAuthResponseDto;
+import liaison.groble.application.payment.dto.PaypleAuthResponseDTO;
 import liaison.groble.application.payment.dto.PaypleAuthResultDTO;
 import liaison.groble.application.payment.exception.PayplePaymentAuthException;
 import liaison.groble.application.payment.service.PayplePaymentService;
@@ -82,24 +82,11 @@ public class PayplePaymentController {
   public ResponseEntity<GrobleResponse<AppCardPayplePaymentResponse>> requestAppCardPayment(
       @Auth Accessor accessor,
       @Valid @RequestBody PaypleAuthResultRequest paypleAuthResultRequest) {
-
-    log.info(
-        "페이플 인증 결과 수신 - 결과: {}, 코드: {}, 메시지: {}, 주문번호: {}",
-        paypleAuthResultRequest.getPayRst(),
-        paypleAuthResultRequest.getPayCode(),
-        paypleAuthResultRequest.getPayMsg(),
-        paypleAuthResultRequest.getPayOid());
-
     if (paypleAuthResultRequest.isError()) {
-      log.error(
-          "페이플 인증 실패 - 코드: {}, 메시지: {}",
-          paypleAuthResultRequest.getPayCode(),
-          paypleAuthResultRequest.getPayMsg());
       throw new PayplePaymentAuthException("페이플 인증 실패: " + paypleAuthResultRequest.getPayMsg());
     }
 
     if (paypleAuthResultRequest.isClosed()) {
-      log.warn("페이플 인증 취소 - 사용자가 결제창을 닫음");
       return ResponseEntity.ok(
           GrobleResponse.success(AppCardPayplePaymentResponse.builder().build()));
     }
@@ -169,12 +156,12 @@ public class PayplePaymentController {
       @Valid @RequestBody PaymentCancelRequest request) {
 
     try {
-      PaypleAuthResponseDto paypleAuthResponseDto = payplePaymentService.getPaymentAuthForCancel();
+      PaypleAuthResponseDTO paypleAuthResponseDTO = payplePaymentService.getPaymentAuthForCancel();
 
       // 결제 취소 처리
       JSONObject approvalResult =
           payplePaymentService.cancelPayment(
-              paypleAuthResponseDto, merchantUid, request.getDetailReason());
+              paypleAuthResponseDTO, merchantUid, request.getDetailReason());
 
       // 취소 성공 응답 생성
       PaymentCancelResponse response =

@@ -16,10 +16,12 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
 import liaison.groble.domain.common.entity.BaseTimeEntity;
 import liaison.groble.domain.content.enums.ReviewStatus;
+import liaison.groble.domain.purchase.entity.Purchase;
 import liaison.groble.domain.user.entity.User;
 
 import lombok.AllArgsConstructor;
@@ -38,6 +40,7 @@ import lombok.NoArgsConstructor;
       @Index(
           name = "idx_content_reviews_content_rating",
           columnList = "content_id, rating, review_status"),
+      @Index(name = "idx_content_reviews_purchase", columnList = "purchase_id")
     })
 @Getter
 @Builder
@@ -55,6 +58,10 @@ public class ContentReview extends BaseTimeEntity {
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "user_id", nullable = false)
   private User user;
+
+  @OneToOne
+  @JoinColumn(name = "purchase_id", nullable = false)
+  private Purchase purchase;
 
   @Column(precision = 2, scale = 1) // DECIMAL(2,1) 별점
   private BigDecimal rating; // 0.0 ~ 5.0

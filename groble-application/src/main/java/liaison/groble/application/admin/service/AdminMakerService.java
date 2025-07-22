@@ -3,7 +3,7 @@ package liaison.groble.application.admin.service;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import liaison.groble.application.admin.dto.AdminMakerDetailInfoDto;
+import liaison.groble.application.admin.dto.AdminMakerDetailInfoDTO;
 import liaison.groble.application.notification.service.NotificationService;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.domain.file.entity.FileInfo;
@@ -25,12 +25,12 @@ public class AdminMakerService {
   private final NotificationService notificationService;
 
   @Transactional(readOnly = true)
-  public AdminMakerDetailInfoDto getMakerDetailInfo(Long userId, String nickname) {
+  public AdminMakerDetailInfoDTO getMakerDetailInfo(Long userId, String nickname) {
     User user = userReader.getUserByNickname(nickname);
 
     SellerInfo si = user.getSellerInfo();
     if (si == null) {
-      return AdminMakerDetailInfoDto.builder().build(); // 또는 throw new IllegalStateException(...)
+      return AdminMakerDetailInfoDTO.builder().build(); // 또는 throw new IllegalStateException(...)
     }
 
     String copyOfBankBookOriginalFileName = null;
@@ -48,7 +48,7 @@ public class AdminMakerService {
     }
 
     /* 4) DTO 매핑 */
-    return AdminMakerDetailInfoDto.builder()
+    return AdminMakerDetailInfoDTO.builder()
         .isBusinessMaker(si.getBusinessSellerRequest())
         .verificationStatus(si.getVerificationStatus().name())
         .bankAccountOwner(si.getBankAccountOwner())

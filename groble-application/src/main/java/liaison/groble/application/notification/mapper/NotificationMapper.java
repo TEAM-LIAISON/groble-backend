@@ -5,10 +5,12 @@ import java.time.LocalDateTime;
 import org.springframework.stereotype.Component;
 
 import liaison.groble.application.user.service.UserReader;
-import liaison.groble.domain.notification.entity.CertifyDetails;
 import liaison.groble.domain.notification.entity.Notification;
-import liaison.groble.domain.notification.entity.ReviewDetails;
-import liaison.groble.domain.notification.entity.SystemDetails;
+import liaison.groble.domain.notification.entity.detail.CertifyDetails;
+import liaison.groble.domain.notification.entity.detail.PurchaseDetails;
+import liaison.groble.domain.notification.entity.detail.ReviewDetails;
+import liaison.groble.domain.notification.entity.detail.SellDetails;
+import liaison.groble.domain.notification.entity.detail.SystemDetails;
 import liaison.groble.domain.notification.enums.NotificationReadStatus;
 import liaison.groble.domain.notification.enums.NotificationType;
 import liaison.groble.domain.notification.enums.SubNotificationType;
@@ -51,7 +53,7 @@ public class NotificationMapper {
         break;
       case REVIEW:
         switch (subNotificationType) {
-          case CONTENT_REVIEW_APPROVED, CONTENT_REVIEW_REJECTED -> builder.reviewDetails(
+          case CONTENT_REVIEWED -> builder.reviewDetails(
               ReviewDetails.builder()
                   .contentId(((ReviewDetails) detailObject).getContentId())
                   .thumbnailUrl(((ReviewDetails) detailObject).getThumbnailUrl())
@@ -66,6 +68,25 @@ public class NotificationMapper {
                   .build());
         }
         break;
+      case PURCHASE:
+        switch (subNotificationType) {
+          case CONTENT_PURCHASED -> builder.purchaseDetails(
+              PurchaseDetails.builder()
+                  .contentId(((PurchaseDetails) detailObject).getContentId())
+                  .build());
+          case CONTENT_REVIEW_REPLY -> builder.purchaseDetails(
+              PurchaseDetails.builder()
+                  .contentId(((PurchaseDetails) detailObject).getContentId())
+                  .reviewId(((PurchaseDetails) detailObject).getReviewId())
+                  .build());
+        }
+        break;
+
+      case SELL:
+        switch (subNotificationType) {
+          case CONTENT_SOLD, CONTENT_SOLD_STOPPED -> builder.sellDetails(
+              SellDetails.builder().contentId(((SellDetails) detailObject).getContentId()).build());
+        }
       default:
         throw new IllegalArgumentException("지원하지 않는 알림 타입입니다: " + notificationType);
     }

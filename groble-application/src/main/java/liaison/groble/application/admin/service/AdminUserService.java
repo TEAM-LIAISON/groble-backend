@@ -25,7 +25,7 @@ public class AdminUserService {
     Page<FlatAdminUserSummaryInfoDTO> userPage = userCustomRepository.findUsersByPageable(pageable);
 
     List<AdminUserSummaryInfoDTO> items =
-        userPage.getContent().stream().map(this::convertFlatDtoToInfoResponse).toList();
+        userPage.getContent().stream().map(this::convertFlatDTOToInfoResponse).toList();
 
     PageResponse.MetaData meta =
         PageResponse.MetaData.builder()
@@ -36,7 +36,7 @@ public class AdminUserService {
     return PageResponse.from(userPage, items, meta);
   }
 
-  private AdminUserSummaryInfoDTO convertFlatDtoToInfoResponse(FlatAdminUserSummaryInfoDTO flat) {
+  private AdminUserSummaryInfoDTO convertFlatDTOToInfoResponse(FlatAdminUserSummaryInfoDTO flat) {
     return AdminUserSummaryInfoDTO.builder()
         .createdAt(flat.getCreatedAt())
         .isSellerTermsAgreed(flat.isSellerTermsAgreed())

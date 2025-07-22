@@ -52,7 +52,7 @@ public class OrderTermsService {
               user, orderTerms, true, dto.getIpAddress(), dto.getUserAgent());
 
       // 필요한 경우 각 동의에 대해 로그 기록 또는 후처리
-      createOrderTermsAgreementDto(agreement); // <- 리턴값 저장하지 않더라도 후처리에 필요하면 유지
+      createOrderTermsAgreementDTO(agreement); // <- 리턴값 저장하지 않더라도 후처리에 필요하면 유지
     }
   }
 
@@ -84,7 +84,7 @@ public class OrderTermsService {
   }
 
   // 약관 동의 DTO 생성 헬퍼 메서드
-  private TermsAgreementDTO createOrderTermsAgreementDto(UserOrderTerms agreement) {
+  private TermsAgreementDTO createOrderTermsAgreementDTO(UserOrderTerms agreement) {
     OrderTerms orderTerms = agreement.getOrderTerms();
 
     return TermsAgreementDTO.builder()

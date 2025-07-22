@@ -24,6 +24,11 @@ import jakarta.persistence.Transient;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import liaison.groble.domain.notification.entity.detail.CertifyDetails;
+import liaison.groble.domain.notification.entity.detail.PurchaseDetails;
+import liaison.groble.domain.notification.entity.detail.ReviewDetails;
+import liaison.groble.domain.notification.entity.detail.SellDetails;
+import liaison.groble.domain.notification.entity.detail.SystemDetails;
 import liaison.groble.domain.notification.enums.NotificationReadStatus;
 import liaison.groble.domain.notification.enums.NotificationType;
 import liaison.groble.domain.notification.enums.SubNotificationType;
@@ -67,10 +72,12 @@ public class Notification {
   @Column(name = "details", columnDefinition = "JSON")
   private String details;
 
-  // 세부 정보 객체들
+  // 세부 정보 객체들 / DB에 저장하지 않고 메모리에서만 사용
   @Transient private SystemDetails systemDetails;
   @Transient private ReviewDetails reviewDetails;
   @Transient private CertifyDetails certifyDetails;
+  @Transient private PurchaseDetails purchaseDetails;
+  @Transient private SellDetails sellDetails;
 
   private LocalDateTime createdAt;
 
@@ -78,7 +85,6 @@ public class Notification {
   @PrePersist
   @PreUpdate
   public void beforeSave() {
-    // 알림 타입에 따라 적절한 객체를 JSON으로 변환
     ObjectMapper mapper = new ObjectMapper();
     try {
       switch (notificationType) {
@@ -99,9 +105,7 @@ public class Notification {
 
   @PostLoad
   public void afterLoad() {
-    // JSON에서 적절한 객체로 역직렬화
     if (details == null) return;
-
     ObjectMapper mapper = new ObjectMapper();
     try {
       switch (notificationType) {
@@ -117,20 +121,6 @@ public class Notification {
       }
     } catch (JsonProcessingException e) {
       throw new RuntimeException("JSON 변환 오류", e);
-    }
-  }
-
-  // 현재 알림 타입에 맞는 세부 정보 객체를 반환하는 편의 메서드
-  public Object getDetails() {
-    switch (notificationType) {
-      case CERTIFY:
-        return certifyDetails;
-      case REVIEW:
-        return reviewDetails;
-      case SYSTEM:
-        return systemDetails;
-      default:
-        return null;
     }
   }
 }

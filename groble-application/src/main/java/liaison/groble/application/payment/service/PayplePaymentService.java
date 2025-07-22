@@ -11,8 +11,9 @@ import org.springframework.transaction.annotation.Transactional;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import liaison.groble.application.notification.service.NotificationService;
 import liaison.groble.application.order.service.OrderReader;
-import liaison.groble.application.payment.dto.PaypleAuthResponseDto;
+import liaison.groble.application.payment.dto.PaypleAuthResponseDTO;
 import liaison.groble.application.payment.dto.PaypleAuthResultDTO;
 import liaison.groble.application.purchase.service.PurchaseReader;
 import liaison.groble.domain.order.entity.Order;
@@ -37,6 +38,7 @@ public class PayplePaymentService {
 
   private final PayplePaymentRepository payplePaymentRepository;
   private final PaypleService paypleService;
+  private final NotificationService notificationService;
   private final PaypleConfig paypleConfig;
   private final PurchaseReader purchaseReader;
   private final OrderReader orderReader;
@@ -46,11 +48,11 @@ public class PayplePaymentService {
   private final ObjectMapper objectMapper;
 
   @Transactional
-  public void saveAppCardAuthResponse(Long userId, PaypleAuthResultDTO dto) {
-    log.info("앱카드 인증 정보 저장 시작 - 주문번호: {}, userId: {}", dto.getPayOid(), userId);
+  public void saveAppCardAuthResponse(Long userId, PaypleAuthResultDTO paypleAuthResultDTO) {
+    log.info("앱카드 인증 정보 저장 시작 - 주문번호: {}, userId: {}", paypleAuthResultDTO.getPayOid(), userId);
 
     // 1. 주문 조회 및 검증
-    Order order = orderReader.getOrderByMerchantUid(dto.getPayOid());
+    Order order = orderReader.getOrderByMerchantUid(paypleAuthResultDTO.getPayOid());
 
     // 2. 권한 검증
     validateOrderOwnership(order, userId);
@@ -59,14 +61,11 @@ public class PayplePaymentService {
     validateOrderPendingStatus(order);
 
     // 4. 금액 검증
-    validatePaymentPrice(order, dto.getPayTotal());
+    validatePaymentPrice(order, paypleAuthResultDTO.getPayTotal());
 
     // 5. PayplePayment 엔티티 생성 및 저장
-    PayplePayment payplePayment = createPayplePayment(order, dto);
+    PayplePayment payplePayment = createPayplePayment(order, paypleAuthResultDTO);
     payplePaymentRepository.save(payplePayment);
-
-    log.info(
-        "앱카드 인증 정보 저장 완료 - 주문번호: {}, payplePaymentId: {}", dto.getPayOid(), payplePayment.getId());
   }
 
   /**
@@ -118,7 +117,7 @@ public class PayplePaymentService {
    * @throws RuntimeException 인증 실패 시
    */
   @Transactional(readOnly = true)
-  public PaypleAuthResponseDto getPaymentAuth(String pcdPayWork) {
+  public PaypleAuthResponseDTO getPaymentAuth(String pcdPayWork) {
     log.info("페이플 파트너 인증 요청 시작 - payWork: {}", pcdPayWork);
 
     Map<String, String> params = new HashMap<>();
@@ -136,8 +135,8 @@ public class PayplePaymentService {
         throw new RuntimeException("페이플 파트너 인증 실패: " + errorMsg);
       }
 
-      PaypleAuthResponseDto authResponse =
-          PaypleAuthResponseDto.builder()
+      PaypleAuthResponseDTO authResponse =
+          PaypleAuthResponseDTO.builder()
               .result(authRst)
               .resultMsg((String) authResult.get("result_msg"))
               .cstId((String) authResult.get("cst_id"))
@@ -158,7 +157,7 @@ public class PayplePaymentService {
   }
 
   @Transactional(readOnly = true)
-  public PaypleAuthResponseDto getPaymentAuthForCancel() {
+  public PaypleAuthResponseDTO getPaymentAuthForCancel() {
     log.info("결제 취소를 위한 페이플 파트너 인증 요청 시작");
 
     // 취소 요청을 위한 일반 인증 사용
@@ -170,7 +169,7 @@ public class PayplePaymentService {
    *
    * <p>승인된 결제를 취소하고 환불 처리합니다. 페이플 API를 통해 환불을 요청하고, 성공 시 관련 엔티티들의 상태를 업데이트합니다.
    *
-   * @param paypleAuthResponseDto 페이플 인증 정보
+   * @param paypleAuthResponseDTO 페이플 인증 정보
    * @param merchantUid 주문 번호 (merchantUid)
    * @param reason 취소 사유
    * @return 취소 결과 JSON
@@ -180,7 +179,7 @@ public class PayplePaymentService {
    */
   @Transactional
   public JSONObject cancelPayment(
-      PaypleAuthResponseDto paypleAuthResponseDto, String merchantUid, String reason) {
+      PaypleAuthResponseDTO paypleAuthResponseDTO, String merchantUid, String reason) {
     log.info("결제 취소 처리 시작 - 주문번호: {}, 사유: {}", merchantUid, reason);
 
     try {
@@ -203,7 +202,7 @@ public class PayplePaymentService {
       // 3. 환불 요청
       log.info("페이플 환불 요청 시작 - 주문번호: {}, 결제금액: {}", merchantUid, purchase.getFinalPrice());
       PaypleRefundRequest refundRequest =
-          createRefundRequest(merchantUid, payplePayment, paypleAuthResponseDto);
+          createRefundRequest(merchantUid, payplePayment, paypleAuthResponseDTO);
       log.debug("환불 요청 데이터 생성 완료 - 요청금액: {}", refundRequest.getRefundTotal());
 
       JSONObject refundResult = paypleService.payRefund(refundRequest);
@@ -233,15 +232,9 @@ public class PayplePaymentService {
     }
   }
 
-  /**
-   * 취소 가능 상태 검증
-   *
-   * @param order 주문
-   * @throws IllegalStateException 취소할 수 없는 상태인 경우
-   */
   private void validateCancellableStatus(Order order) {
     // 주문 상태 검증
-    if (order.getStatus() != Order.OrderStatus.PAID) {
+    if (order.getStatus() != Order.OrderStatus.CANCEL_REQUEST) {
       throw new IllegalStateException(
           String.format(
               "결제 완료된 주문만 취소할 수 있습니다. orderId: %d, status: %s", order.getId(), order.getStatus()));
@@ -424,16 +417,14 @@ public class PayplePaymentService {
       // 5. Purchase 생성 및 확정 처리
       Purchase purchase = createAndCompletePurchase(order);
 
-      log.info(
-          "페이플 결제 승인 성공 처리 완료 - orderId: {}, paymentId: {}, purchaseId: {}, "
-              + "userId: {}, contentId: {}, finalPrice: {}원",
-          order.getId(),
-          payment.getId(),
-          purchase.getId(),
-          order.getUser().getId(),
-          purchase.getContent().getId(),
-          order.getFinalPrice());
+      // 6. 구매 알림 생성
+      // 상품이 판매됐어요
+      notificationService.sendContentSoldNotification(
+          purchase.getContent().getUser(), purchase.getContent().getId());
 
+      // 상품을 구매했어요
+      notificationService.sendContentPurchasedNotification(
+          purchase.getUser(), purchase.getContent().getId());
     } catch (Exception e) {
       log.error("결제 승인 성공 처리 중 오류 발생 - orderId: {}", order.getId(), e);
 
@@ -666,7 +657,7 @@ public class PayplePaymentService {
    * @return 환불 요청 객체
    */
   private PaypleRefundRequest createRefundRequest(
-      String merchantUid, PayplePayment payplePayment, PaypleAuthResponseDto authResponse) {
+      String merchantUid, PayplePayment payplePayment, PaypleAuthResponseDTO authResponse) {
     // 결제일자를 YYYYMMDD 형식으로 변환
     String payDate =
         payplePayment
@@ -701,6 +692,7 @@ public class PayplePaymentService {
     }
 
     order.cancelOrder(reason);
+    purchase.cancelPayment();
 
     log.info(
         "결제 취소 완료 - orderId: {}, paymentId: {}, purchaseId: {}, " + "환불금액: {}원, 사유: {}",

@@ -5,7 +5,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
-import liaison.groble.application.content.dto.ContentPayPageResponse;
+import liaison.groble.application.content.dto.ContentPayPageDTO;
 import liaison.groble.application.coupon.dto.UserCouponResponseDTO;
 import liaison.groble.domain.coupon.dto.FlatUserCouponCardDTO;
 import liaison.groble.domain.coupon.repository.UserCouponCustomRepository;
@@ -28,22 +28,21 @@ public class CouponService {
         .collect(Collectors.toList());
   }
 
-  public List<ContentPayPageResponse.UserCouponResponse> getUserCoupons(Long userId) {
+  public List<ContentPayPageDTO.UserCouponDTO> getUserCoupons(Long userId) {
     // 내가 사용 가능한 쿠폰들 조회 [쿠폰 상태가 발급됨, 유효 기간이 남아있는 쿠폰들 조회, 쿠폰 활성화 되어야 함]
     List<FlatUserCouponCardDTO> flatUserCouponCardDTOs =
         userCouponCustomRepository.findAllUsableCouponsByUserId(userId);
 
     return flatUserCouponCardDTOs.stream()
-        .map(this::convertFlatDtoToCouponDto)
+        .map(this::convertFlatDTOToUserCouponDTO)
         .collect(Collectors.toList());
   }
 
-  /** FlatPreviewContentDTO를 ContentCardDto로 변환합니다. */
-  private ContentPayPageResponse.UserCouponResponse convertFlatDtoToCouponDto(
+  private ContentPayPageDTO.UserCouponDTO convertFlatDTOToUserCouponDTO(
       FlatUserCouponCardDTO flat) {
-    return ContentPayPageResponse.UserCouponResponse.builder()
+    return ContentPayPageDTO.UserCouponDTO.builder()
         .couponCode(flat.getCouponCode())
-        .name(flat.getCouponCode())
+        .name(flat.getTitle())
         .couponType(flat.getCouponType())
         .discountValue(flat.getDiscountValue())
         .validUntil(flat.getValidUntil())
@@ -54,7 +53,7 @@ public class CouponService {
   private UserCouponResponseDTO convertFlatDTOToCouponDTO(FlatUserCouponCardDTO flat) {
     return UserCouponResponseDTO.builder()
         .couponCode(flat.getCouponCode())
-        .name(flat.getCouponCode())
+        .name(flat.getTitle())
         .couponType(flat.getCouponType())
         .discountValue(flat.getDiscountValue())
         .validUntil(flat.getValidUntil())

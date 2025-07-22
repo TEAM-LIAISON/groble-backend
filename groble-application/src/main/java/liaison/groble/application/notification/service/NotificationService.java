@@ -5,13 +5,16 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import liaison.groble.application.notification.dto.NotificationDetailsDto;
-import liaison.groble.application.notification.dto.NotificationItemDto;
-import liaison.groble.application.notification.dto.NotificationItemsDto;
+import liaison.groble.application.notification.dto.NotificationDetailsDTO;
+import liaison.groble.application.notification.dto.NotificationItemDTO;
+import liaison.groble.application.notification.dto.NotificationItemsDTO;
 import liaison.groble.application.notification.mapper.NotificationMapper;
-import liaison.groble.domain.notification.entity.CertifyDetails;
 import liaison.groble.domain.notification.entity.Notification;
-import liaison.groble.domain.notification.entity.SystemDetails;
+import liaison.groble.domain.notification.entity.detail.CertifyDetails;
+import liaison.groble.domain.notification.entity.detail.PurchaseDetails;
+import liaison.groble.domain.notification.entity.detail.ReviewDetails;
+import liaison.groble.domain.notification.entity.detail.SellDetails;
+import liaison.groble.domain.notification.entity.detail.SystemDetails;
 import liaison.groble.domain.notification.enums.NotificationType;
 import liaison.groble.domain.notification.enums.SubNotificationType;
 import liaison.groble.domain.notification.repository.NotificationCustomRepository;
@@ -29,16 +32,16 @@ public class NotificationService {
   private final NotificationRepository notificationRepository;
   private final NotificationMapper notificationMapper;
 
-  public NotificationItemsDto getNotificationItems(final Long userId) {
+  public NotificationItemsDTO getNotificationItems(final Long userId) {
     List<Notification> notifications =
         notificationCustomRepository.getNotificationsByReceiverUser(userId);
 
-    // Convert notifications to NotificationItemDto list
-    List<NotificationItemDto> notificationItemDtos =
-        notifications.stream().map(this::toNotificationItemDto).toList();
+    // Convert notifications to NotificationItemDTO list
+    List<NotificationItemDTO> notificationItemDTOS =
+        notifications.stream().map(this::toNotificationItemDTO).toList();
 
-    // Build and return NotificationItemsDto
-    return NotificationItemsDto.builder().notificationItems(notificationItemDtos).build();
+    // Build and return NotificationItemsDTO
+    return NotificationItemsDTO.builder().notificationItems(notificationItemDTOS).build();
   }
 
   /** 사용자의 모든 알림을 삭제합니다. */
@@ -55,10 +58,10 @@ public class NotificationService {
     log.info("알림이 삭제되었습니다. userId: {}, notificationId: {}", userId, notificationId);
   }
 
-  /** Converts a Notification entity to a NotificationItemDto */
-  private NotificationItemDto toNotificationItemDto(final Notification notification) {
+  /** Converts a Notification entity to a NotificationItemDTO */
+  private NotificationItemDTO toNotificationItemDTO(final Notification notification) {
     // 도메인 enum을 String으로 변환
-    return NotificationItemDto.builder()
+    return NotificationItemDTO.builder()
         .notificationId(notification.getId())
         .notificationType(notification.getNotificationType().name()) // enum을 String으로 변환
         .subNotificationType(notification.getSubNotificationType().name())
@@ -72,8 +75,8 @@ public class NotificationService {
         .build();
   }
 
-  /** Creates appropriate NotificationDetailsDto based on notification type and subtype */
-  private NotificationDetailsDto createNotificationDetails(
+  /** Creates appropriate NotificationDetailsDTO based on notification type and subtype */
+  private NotificationDetailsDTO createNotificationDetails(
       final Notification notification,
       final NotificationType type,
       final SubNotificationType subType) {
@@ -87,35 +90,31 @@ public class NotificationService {
     };
   }
 
-  private NotificationDetailsDto createCertifyDetails(
+  private NotificationDetailsDTO createCertifyDetails(
       Notification notification, SubNotificationType subNotificationType) {
     if (subNotificationType == SubNotificationType.MAKER_CERTIFIED) {
-      return NotificationDetailsDto.makerCertified(notification.getCertifyDetails().getNickname());
+      return NotificationDetailsDTO.makerCertified(notification.getCertifyDetails().getNickname());
     } else if (subNotificationType == SubNotificationType.MAKER_CERTIFY_REJECTED) {
-      return NotificationDetailsDto.makerCertifyRejected(
+      return NotificationDetailsDTO.makerCertifyRejected(
           notification.getCertifyDetails().getNickname());
     }
     return null;
   }
 
-  private NotificationDetailsDto createReviewDetails(
+  private NotificationDetailsDTO createReviewDetails(
       Notification notification, SubNotificationType subNotificationType) {
-    if (subNotificationType == SubNotificationType.CONTENT_REVIEW_APPROVED) {
-      return NotificationDetailsDto.contentReviewApproved(
-          notification.getReviewDetails().getContentId(),
-          notification.getReviewDetails().getThumbnailUrl());
-    } else if (subNotificationType == SubNotificationType.CONTENT_REVIEW_REJECTED) {
-      return NotificationDetailsDto.contentReviewRejected(
+    if (subNotificationType == SubNotificationType.CONTENT_REVIEWED) {
+      return NotificationDetailsDTO.contentReviewed(
           notification.getReviewDetails().getContentId(),
           notification.getReviewDetails().getThumbnailUrl());
     }
     return null;
   }
 
-  private NotificationDetailsDto createSystemDetails(
+  private NotificationDetailsDTO createSystemDetails(
       Notification notification, SubNotificationType subNotificationType) {
     if (subNotificationType == SubNotificationType.WELCOME_GROBLE) {
-      return NotificationDetailsDto.welcomeGroble(
+      return NotificationDetailsDTO.welcomeGroble(
           notification.getSystemDetails().getNickname(),
           notification.getSystemDetails().getSystemTitle());
     }
@@ -135,7 +134,6 @@ public class NotificationService {
             systemDetails);
 
     notificationRepository.save(notification);
-    log.info("환영 알림 발송: userId={}", user.getId());
   }
 
   @Transactional
@@ -166,5 +164,66 @@ public class NotificationService {
 
     notificationRepository.save(notification);
     log.info("메이커 인증 거절 알림 발송: userId={}", user.getId());
+  }
+
+  @Transactional
+  public void sendContentSoldNotification(User user, Long contentId) {
+    SellDetails sellDetails = SellDetails.builder().contentId(contentId).build();
+
+    Notification notification =
+        notificationMapper.toNotification(
+            user.getId(), NotificationType.SELL, SubNotificationType.CONTENT_SOLD, sellDetails);
+    notificationRepository.save(notification);
+    log.info("콘텐츠 판매 알림 발송: userId={}, contentId={}", user.getId(), contentId);
+  }
+
+  @Transactional
+  public void sendContentPurchasedNotification(User user, Long contentId) {
+    PurchaseDetails purchaseDetails = PurchaseDetails.builder().contentId(contentId).build();
+    Notification notification =
+        notificationMapper.toNotification(
+            user.getId(),
+            NotificationType.PURCHASE,
+            SubNotificationType.CONTENT_PURCHASED,
+            purchaseDetails);
+    notificationRepository.save(notification);
+  }
+
+  @Transactional
+  public void sendContentReviewReplyNotification(
+      User user, Long contentId, Long reviewId, String thumbnailUrl) {
+    PurchaseDetails purchaseDetails =
+        PurchaseDetails.builder().contentId(contentId).reviewId(reviewId).build();
+
+    Notification notification =
+        notificationMapper.toNotification(
+            user.getId(),
+            NotificationType.PURCHASE,
+            SubNotificationType.CONTENT_REVIEW_REPLY,
+            purchaseDetails);
+
+    notificationRepository.save(notification);
+    log.info("콘텐츠 리뷰 답글 알림 발송: userId={}, contentId={}", user.getId(), contentId);
+  }
+
+  @Transactional
+  public void sendContentReviewNotification(
+      User user, Long contentId, Long reviewId, String thumbnailUrl) {
+    ReviewDetails reviewDetails =
+        ReviewDetails.builder()
+            .contentId(contentId)
+            .reviewId(reviewId)
+            .thumbnailUrl(thumbnailUrl)
+            .build();
+
+    Notification notification =
+        notificationMapper.toNotification(
+            user.getId(),
+            NotificationType.REVIEW,
+            SubNotificationType.CONTENT_REVIEWED,
+            reviewDetails);
+
+    notificationRepository.save(notification);
+    log.info("콘텐츠 리뷰 알림 발송: userId={}, contentId={}", user.getId(), contentId);
   }
 }

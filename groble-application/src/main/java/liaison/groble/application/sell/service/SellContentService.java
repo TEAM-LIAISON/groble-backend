@@ -1,6 +1,8 @@
 package liaison.groble.application.sell.service;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -9,9 +11,13 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import liaison.groble.application.content.ContentReader;
+import liaison.groble.application.content.ContentReplyReader;
 import liaison.groble.application.content.ContentReplyWriter;
 import liaison.groble.application.content.ContentReviewReader;
 import liaison.groble.application.content.ContentReviewWriter;
+import liaison.groble.application.content.dto.review.ReviewReplyDTO;
+import liaison.groble.application.notification.service.NotificationService;
 import liaison.groble.application.order.service.OrderReader;
 import liaison.groble.application.purchase.service.PurchaseReader;
 import liaison.groble.application.sell.dto.ContentReviewDetailDTO;
@@ -19,12 +25,18 @@ import liaison.groble.application.sell.dto.ContentSellDetailDTO;
 import liaison.groble.application.sell.dto.ReplyContentDTO;
 import liaison.groble.application.sell.dto.SellManageDetailDTO;
 import liaison.groble.application.sell.dto.SellManagePageDTO;
+import liaison.groble.application.user.service.UserReader;
 import liaison.groble.common.response.PageResponse;
 import liaison.groble.domain.content.dto.FlatContentReviewDetailDTO;
+import liaison.groble.domain.content.dto.FlatReviewReplyDTO;
+import liaison.groble.domain.content.entity.Content;
+import liaison.groble.domain.content.entity.ContentReply;
+import liaison.groble.domain.content.entity.ContentReview;
 import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.purchase.dto.FlatContentSellDetailDTO;
 import liaison.groble.domain.purchase.dto.FlatSellManageDetailDTO;
 import liaison.groble.domain.purchase.entity.Purchase;
+import liaison.groble.domain.user.entity.User;
 import liaison.groble.external.discord.dto.DeleteReviewRequestReportDTO;
 import liaison.groble.external.discord.service.content.DiscordDeleteReviewRequestReportService;
 
@@ -39,16 +51,21 @@ public class SellContentService {
   // Reader
   private final ContentReviewReader contentReviewReader;
   private final PurchaseReader purchaseReader;
+  private final OrderReader orderReader;
+  private final ContentReader contentReader;
+  private final ContentReplyReader contentReplyReader;
+  private final UserReader userReader;
 
   // Writer
   private final ContentReviewWriter contentReviewWriter;
   private final ContentReplyWriter contentReplyWriter;
 
   private final DiscordDeleteReviewRequestReportService discordDeleteReviewRequestReportService;
-  private final OrderReader orderReader;
+  private final NotificationService notificationService;
 
   @Transactional(readOnly = true)
   public SellManagePageDTO getSellManagePage(Long userId, Long contentId) {
+    Content content = contentReader.getContentById(contentId);
     FlatSellManageDetailDTO flatSellManageDetailDTO =
         purchaseReader.getSellManageDetail(userId, contentId);
     // 상위 5개 판매 내역 조회
@@ -66,6 +83,7 @@ public class SellContentService {
         reviewPage.getContent().stream().map(this::convertFlatDTOToDetailDTO).toList();
 
     return SellManagePageDTO.builder()
+        .title(content.getTitle())
         .sellManageDetail(buildSellManageDetailDTO(flatSellManageDetailDTO))
         .contentSellDetailList(contentSellList)
         .contentReviewDetailList(contentReviewList)
@@ -113,7 +131,23 @@ public class SellContentService {
   public ContentReviewDetailDTO getContentReviewDetail(Long userId, Long contentId, Long reviewId) {
     FlatContentReviewDetailDTO contentReviewDetailDTO =
         contentReviewReader.getContentReviewDetail(userId, contentId, reviewId);
-    return buildContentReviewDetail(contentReviewDetailDTO);
+
+    List<FlatReviewReplyDTO> flatReviewReplyDTOs =
+        contentReplyReader.findRepliesByReviewId(reviewId);
+
+    List<ReviewReplyDTO> reviewReplyDTOs =
+        flatReviewReplyDTOs.stream()
+            .map(
+                reply ->
+                    ReviewReplyDTO.builder()
+                        .replyId(reply.getReplyId())
+                        .replyContent(reply.getReplyContent())
+                        .replierNickname(reply.getReplierNickname())
+                        .createdAt(reply.getCreatedAt())
+                        .build())
+            .toList();
+
+    return buildContentReviewDetail(contentReviewDetailDTO, reviewReplyDTOs);
   }
 
   @Transactional(readOnly = true)
@@ -122,10 +156,33 @@ public class SellContentService {
     Order order = orderReader.getOrderByMerchantUid(merchantUid);
     Purchase purchase = purchaseReader.getPurchaseByOrderId(order.getId());
 
-    return contentReviewReader
-        .getContentReviewDetail(userId, purchase.getContent().getId())
-        .map(this::buildContentReviewDetail) // 값이 있을 때만 DTO 변환
-        .orElse(null); // 없으면 null 반환 (필요하면 Optional 그대로 넘겨도 OK)
+    Long contentId = purchase.getContent().getId();
+
+    Optional<FlatContentReviewDetailDTO> reviewOpt =
+        contentReviewReader.getContentReviewDetail(userId, contentId);
+
+    // 2) 리뷰 + 리플리 조회 후 DTO 조합
+    return reviewOpt
+        .map(
+            flat -> {
+              // flat.getReviewId() 기준으로 답글들 불러오기
+              List<FlatReviewReplyDTO> replies =
+                  contentReplyReader.findRepliesByReviewId(flat.getReviewId());
+              // (2) Collectors.toList() 사용
+              List<ReviewReplyDTO> replyDTOs =
+                  replies.stream()
+                      .map(
+                          reply ->
+                              ReviewReplyDTO.builder()
+                                  .replyId(reply.getReplyId())
+                                  .replyContent(reply.getReplyContent())
+                                  .replierNickname(reply.getReplierNickname())
+                                  .createdAt(reply.getCreatedAt())
+                                  .build())
+                      .collect(Collectors.toList());
+              return buildContentReviewDetail(flat, replyDTOs);
+            })
+        .orElse(null); // 리뷰가 없으면 null 반환
   }
 
   @Transactional
@@ -140,7 +197,24 @@ public class SellContentService {
   @Transactional
   public ReplyContentDTO addReviewReply(
       Long userId, Long reviewId, ReplyContentDTO replyContentDTO) {
-    contentReplyWriter.addReply(userId, reviewId, replyContentDTO.getReplyContent());
+
+    User seller = userReader.getUserById(userId);
+    ContentReview contentReview = contentReviewReader.getContentReviewById(reviewId);
+    ContentReply contentReply =
+        ContentReply.builder()
+            .contentReview(contentReview)
+            .seller(seller)
+            .replyContent(replyContentDTO.getReplyContent())
+            .isDeleted(false)
+            .build();
+
+    contentReplyWriter.save(contentReply);
+    notificationService.sendContentReviewReplyNotification(
+        seller,
+        contentReview.getContent().getId(),
+        contentReview.getId(),
+        contentReply.getReplyContent());
+
     return ReplyContentDTO.builder().replyContent(replyContentDTO.getReplyContent()).build();
   }
 
@@ -179,16 +253,17 @@ public class SellContentService {
   }
 
   private ContentReviewDetailDTO buildContentReviewDetail(
-      FlatContentReviewDetailDTO flatContentReviewDetailDTO) {
-    log.info(flatContentReviewDetailDTO.toString());
+      FlatContentReviewDetailDTO flatContentReviewDetailDTO, List<ReviewReplyDTO> reviewReplyDTOs) {
     return ContentReviewDetailDTO.builder()
         .reviewId(flatContentReviewDetailDTO.getReviewId())
+        .reviewStatus(flatContentReviewDetailDTO.getReviewStatus())
         .contentTitle(flatContentReviewDetailDTO.getContentTitle())
         .createdAt(flatContentReviewDetailDTO.getCreatedAt())
         .reviewerNickname(flatContentReviewDetailDTO.getReviewerNickname())
         .reviewContent(flatContentReviewDetailDTO.getReviewContent())
         .selectedOptionName(flatContentReviewDetailDTO.getSelectedOptionName())
         .rating(flatContentReviewDetailDTO.getRating())
+        .reviewReplies(reviewReplyDTOs)
         .build();
   }
 
@@ -201,9 +276,11 @@ public class SellContentService {
   private ContentReviewDetailDTO convertFlatDTOToDetailDTO(FlatContentReviewDetailDTO flat) {
     return ContentReviewDetailDTO.builder()
         .reviewId(flat.getReviewId())
+        .reviewStatus(flat.getReviewStatus())
         .contentTitle(flat.getContentTitle())
         .createdAt(flat.getCreatedAt())
         .reviewerNickname(flat.getReviewerNickname())
+        .reviewContent(flat.getReviewContent())
         .selectedOptionName(flat.getSelectedOptionName())
         .rating(flat.getRating())
         .build();

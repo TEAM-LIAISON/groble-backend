@@ -95,6 +95,13 @@ public class PurchaseController {
   @Operation(
       summary = "[❌ 내 콘텐츠 - 구매 관리] 내가 구매한 콘텐츠 상세 조회 (결제완료/결제취소요청/환불완료)",
       description = "내가 구매한 콘텐츠의 상세 정보를 조회합니다. 구매 상태에 따라 콘텐츠 접근 권한이 다를 수 있습니다.")
+  @ApiResponse(
+      responseCode = "200",
+      description = My_PURCHASED_CONTENT_SUCCESS_MESSAGE,
+      content =
+          @Content(
+              mediaType = "application/json",
+              schema = @Schema(implementation = PurchasedContentDetailResponse.class)))
   @GetMapping(MY_PURCHASED_CONTENT_PATH)
   @Logging(
       item = "Purchase",
@@ -103,13 +110,16 @@ public class PurchaseController {
       includeResult = true)
   public ResponseEntity<GrobleResponse<PurchasedContentDetailResponse>> getMyPurchasedContent(
       @Auth Accessor accessor, @Valid @PathVariable("merchantUid") String merchantUid) {
+    // 구매 콘텐츠 정보 조회
     PurchasedContentDetailDTO purchasedContentDetailDTO =
         purchaseService.getMyPurchasedContent(accessor.getUserId(), merchantUid);
 
+    // 문의하기 정보 조회
     ContactInfoDTO contactInfoDTO =
         purchaseService.getContactInfo(accessor.getUserId(), merchantUid);
     ContactInfoResponse contactInfoResponse = marketMapper.toContactInfoResponse(contactInfoDTO);
 
+    // 리뷰 상세 정보 조회
     ContentReviewDetailDTO contentReviewDetailDTO =
         sellContentService.getContentReviewDetail(accessor.getUserId(), merchantUid);
 
@@ -154,11 +164,11 @@ public class PurchaseController {
               @RequestParam(value = "state", required = false)
               String state) {
     Pageable pageable = PageUtils.createPageable(page, size, sort);
-    PageResponse<PurchaseContentCardDTO> dtoPageResponse =
+    PageResponse<PurchaseContentCardDTO> DTOPageResponse =
         purchaseService.getMyPurchasedContents(accessor.getUserId(), state, pageable);
 
     PageResponse<PurchaserContentPreviewCardResponse> responsePage =
-        purchaseMapper.toPurchaserContentPreviewCardResponsePage(dtoPageResponse);
+        purchaseMapper.toPurchaserContentPreviewCardResponsePage(DTOPageResponse);
 
     return responseHelper.success(
         responsePage, MY_PURCHASING_CONTENT_SUCCESS_MESSAGE, HttpStatus.OK);

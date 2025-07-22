@@ -43,3 +43,6 @@ out/
 application-secret.yml
 application-secret-dev.yml
 application-secret-prod.yml
+
+/logs
+*.log

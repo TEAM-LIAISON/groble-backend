@@ -1,14 +1,19 @@
 package liaison.groble.application.auth.service;
 
 import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 import org.springframework.stereotype.Service;
 
+import liaison.groble.application.notification.service.NotificationService;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.common.utils.CodeGenerator;
 import liaison.groble.domain.port.VerificationCodePort;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.repository.UserRepository;
+import liaison.groble.external.discord.dto.MemberCreateReportDTO;
+import liaison.groble.external.discord.service.DiscordMemberReportService;
 import liaison.groble.external.sms.Message;
 import liaison.groble.external.sms.SmsSender;
 import liaison.groble.external.sms.exception.SmsSendException;
@@ -20,11 +25,21 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 public class PhoneAuthService {
+  // 상수 정의
+  private static final String ASIA_SEOUL_TIMEZONE = "Asia/Seoul";
+  private static final Duration CODE_TTL = Duration.ofMinutes(5);
+
+  // Sender & Port
   private final SmsSender smsSender;
   private final VerificationCodePort verificationCodePort;
+
+  // Reader
   private final UserRepository userRepository;
-  private static final Duration CODE_TTL = Duration.ofMinutes(5);
   private final UserReader userReader;
+
+  // Service
+  private final NotificationService notificationService;
+  private final DiscordMemberReportService discordMemberReportService;
 
   /** 로그인한 사용자의 전화번호 인증 코드 발송 - 기존 전화번호와 중복 체크 - 사용자별 Redis 키로 저장 */
   public void sendVerificationCodeForUser(Long userId, String phoneNumber) {
@@ -70,6 +85,8 @@ public class PhoneAuthService {
         user.updateMarketName(user.getNickname() + "님의 마켓");
       }
       user.updatePhoneNumber(phoneNumber);
+      notificationService.sendWelcomeNotification(user);
+      sendDiscordMemberReport(user);
       userRepository.save(user);
     }
     verificationCodePort.removeVerificationCodeForUser(userId, sanitized);
@@ -102,5 +119,19 @@ public class PhoneAuthService {
       log.error("SMS 전송 실패: phoneNumber={}, error={}", phoneNumber, e.getMessage(), e);
       throw new SmsSendException();
     }
+  }
+
+  /** Discord 신규 멤버 리포트 발송 */
+  private void sendDiscordMemberReport(User user) {
+    LocalDateTime nowInSeoul = LocalDateTime.now(ZoneId.of(ASIA_SEOUL_TIMEZONE));
+
+    MemberCreateReportDTO reportDTO =
+        MemberCreateReportDTO.builder()
+            .userId(user.getId())
+            .nickname(user.getNickname())
+            .createdAt(nowInSeoul)
+            .build();
+
+    discordMemberReportService.sendCreateMemberReport(reportDTO);
   }
 }

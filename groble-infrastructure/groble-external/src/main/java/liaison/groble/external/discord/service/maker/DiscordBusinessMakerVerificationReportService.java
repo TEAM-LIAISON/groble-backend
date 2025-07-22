@@ -3,7 +3,7 @@ package liaison.groble.external.discord.service.maker;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import liaison.groble.external.discord.dto.BusinessMakerVerificationCreateReportDto;
+import liaison.groble.external.discord.dto.BusinessMakerVerificationCreateReportDTO;
 import liaison.groble.external.discord.service.DiscordService;
 
 import lombok.RequiredArgsConstructor;
@@ -20,37 +20,37 @@ public class DiscordBusinessMakerVerificationReportService
 
   @Override
   public void sendCreateBusinessMakerVerificationReport(
-      BusinessMakerVerificationCreateReportDto businessMakerVerificationCreateReportDto) {
+      BusinessMakerVerificationCreateReportDTO businessMakerVerificationCreateReportDTO) {
     var msg =
         "## 개인 및 법인 사업자 메이커 인증 요청 알림"
             + "\n\n**회원 생성 ID:** "
-            + businessMakerVerificationCreateReportDto.userId()
+            + businessMakerVerificationCreateReportDTO.userId()
             + "\n**회원 닉네임:** "
-            + businessMakerVerificationCreateReportDto.nickname()
+            + businessMakerVerificationCreateReportDTO.nickname()
             + "\n**기입한 예금주명:** "
-            + businessMakerVerificationCreateReportDto.bankAccountOwner()
+            + businessMakerVerificationCreateReportDTO.bankAccountOwner()
             + "\n**기입한 정산 받을 은행:** "
-            + businessMakerVerificationCreateReportDto.bankName()
+            + businessMakerVerificationCreateReportDTO.bankName()
             + "\n**기입한 정산 받을 계좌:** "
-            + businessMakerVerificationCreateReportDto.bankAccountNumber()
+            + businessMakerVerificationCreateReportDTO.bankAccountNumber()
             + "\n**업로드한 통장 사본 첨부 URL:** "
-            + businessMakerVerificationCreateReportDto.copyOfBankbookUrl()
+            + businessMakerVerificationCreateReportDTO.copyOfBankbookUrl()
             + "\n**선택한 사업자 유형:** "
-            + businessMakerVerificationCreateReportDto.businessType()
+            + businessMakerVerificationCreateReportDTO.businessType()
             + "\n**기입한 업종:** "
-            + businessMakerVerificationCreateReportDto.businessCategory()
+            + businessMakerVerificationCreateReportDTO.businessCategory()
             + "\n**기입한 업태:** "
-            + businessMakerVerificationCreateReportDto.businessSector()
+            + businessMakerVerificationCreateReportDTO.businessSector()
             + "\n**기입한 상호:** "
-            + businessMakerVerificationCreateReportDto.businessName()
+            + businessMakerVerificationCreateReportDTO.businessName()
             + "\n**기입한 대표자 명:** "
-            + businessMakerVerificationCreateReportDto.representativeName()
+            + businessMakerVerificationCreateReportDTO.representativeName()
             + "\n**기입한 사업장 소재지:** "
-            + businessMakerVerificationCreateReportDto.businessAddress()
+            + businessMakerVerificationCreateReportDTO.businessAddress()
             + "\n**업로드한 사업자 등록증 사본 첨부 URL:** "
-            + businessMakerVerificationCreateReportDto.businessLicenseFileUrl()
+            + businessMakerVerificationCreateReportDTO.businessLicenseFileUrl()
             + "\n**기입한 세금계산서 수취 이메일:** "
-            + businessMakerVerificationCreateReportDto.taxInvoiceEmail()
+            + businessMakerVerificationCreateReportDTO.taxInvoiceEmail()
             + "\n님이 개인 및 법인 사업자 메이커 인증 요청을 하셨습니다.";
 
     discordService.sendMessages(url, msg);
