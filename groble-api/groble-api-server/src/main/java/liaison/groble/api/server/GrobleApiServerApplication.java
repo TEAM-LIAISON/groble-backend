@@ -5,6 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.retry.annotation.EnableRetry;
 
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 
@@ -24,6 +25,7 @@ import io.swagger.v3.oas.annotations.OpenAPIDefinition;
     basePackages = {"liaison.groble.persistence", "liaison.groble.domain.user.repository"})
 @EnableJpaAuditing
 @OpenAPIDefinition
+@EnableRetry
 public class GrobleApiServerApplication {
 
   public static void main(String[] args) {

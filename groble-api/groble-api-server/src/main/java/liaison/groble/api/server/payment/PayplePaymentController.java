@@ -105,19 +105,11 @@ public class PayplePaymentController {
       includeResult = true)
   @PostMapping("/app-card/request")
   public ResponseEntity<GrobleResponse<AppCardPayplePaymentResponse>> requestAppCardPayment(
-      @Auth Accessor accessor,
-      @Valid @RequestBody PaypleAuthResultRequest paypleAuthResultRequest) {
-    if (paypleAuthResultRequest.isError()) {
-      throw new PayplePaymentAuthException("페이플 인증 실패: " + paypleAuthResultRequest.getPayMsg());
-    }
+      @Auth Accessor accessor, @Valid @RequestBody PaypleAuthResultRequest request) {
+    log.info(
+        "앱카드 결제 승인 요청 - userId: {}, merchantUid: {}", accessor.getUserId(), request.getPayOid());
 
-    if (paypleAuthResultRequest.isClosed()) {
-      return ResponseEntity.ok(
-          GrobleResponse.success(AppCardPayplePaymentResponse.builder().build()));
-    }
-
-    PaypleAuthResultDTO authResultDTO =
-        paymentMapper.toPaypleAuthResultDTO(paypleAuthResultRequest);
+    PaypleAuthResultDTO authResultDTO = paymentMapper.toPaypleAuthResultDTO(request);
 
     payplePaymentService.saveAppCardAuthResponse(accessor.getUserId(), authResultDTO);
 

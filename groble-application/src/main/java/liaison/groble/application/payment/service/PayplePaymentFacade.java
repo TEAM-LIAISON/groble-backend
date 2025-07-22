@@ -2,6 +2,8 @@ package liaison.groble.application.payment.service;
 
 import org.springframework.stereotype.Service;
 
+import liaison.groble.application.payment.validator.PaymentValidator;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -13,4 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class PayplePaymentFacade {}
+public class PayplePaymentFacade {
+  private final PaypleApiClient paypleApiClient;
+  private final PaymentValidator paymentValidator;
+}
