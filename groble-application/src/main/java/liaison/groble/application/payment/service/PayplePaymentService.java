@@ -22,6 +22,7 @@ import liaison.groble.domain.payment.entity.Payment;
 import liaison.groble.domain.payment.entity.PayplePayment;
 import liaison.groble.domain.payment.repository.PaymentRepository;
 import liaison.groble.domain.payment.repository.PayplePaymentRepository;
+import liaison.groble.domain.port.EmailSenderPort;
 import liaison.groble.domain.purchase.entity.Purchase;
 import liaison.groble.domain.purchase.repository.PurchaseRepository;
 import liaison.groble.external.adapter.payment.PaypleRefundRequest;
@@ -46,6 +47,7 @@ public class PayplePaymentService {
   private final PaymentRepository paymentRepository;
   private final PurchaseRepository purchaseRepository;
   private final ObjectMapper objectMapper;
+  private final EmailSenderPort emailSenderPort;
 
   @Transactional
   public void saveAppCardAuthResponse(Long userId, PaypleAuthResultDTO paypleAuthResultDTO) {
@@ -416,6 +418,13 @@ public class PayplePaymentService {
 
       // 5. Purchase 생성 및 확정 처리
       Purchase purchase = createAndCompletePurchase(order);
+
+      emailSenderPort.sendSaleNotificationEmail(
+          purchase.getContent().getUser().getEmail(),
+          purchase.getContent().getTitle(),
+          payment.getPrice(),
+          purchase.getPurchasedAt(),
+          purchase.getContent().getId());
 
       // 6. 구매 알림 생성
       // 상품이 판매됐어요
