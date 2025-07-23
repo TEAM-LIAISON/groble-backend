@@ -53,4 +53,16 @@ public class PaypleAuthResultDTO {
   private String userDefine1;
   private String userDefine2;
   private String pcdPayUrl;
+
+  public boolean isSuccess() {
+    return "success".equals(payRst);
+  }
+
+  public boolean isError() {
+    return "error".equals(payRst);
+  }
+
+  public boolean isClosed() {
+    return "close".equals(payRst);
+  }
 }
