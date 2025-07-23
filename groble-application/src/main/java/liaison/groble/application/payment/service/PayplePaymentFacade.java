@@ -189,20 +189,32 @@ public class PayplePaymentFacade {
   }
 
   /** 결제 완료 이벤트 발행 */
-  private void publishPaymentCompletedEvent(PaymentCompletionResult result) {
-    PaymentCompletedEvent event =
-        PaymentCompletedEvent.builder()
-            .orderId(result.getOrderId())
-            .paymentId(result.getPaymentId())
-            .purchaseId(result.getPurchaseId())
-            .userId(result.getUserId())
-            .contentId(result.getContentId())
-            .sellerId(result.getSellerId())
-            .amount(result.getAmount())
-            .completedAt(result.getCompletedAt())
-            .build();
+  private void publishPaymentCompletedEvent(PaymentCompletionResult completionResult) {
+    log.info("=== 이벤트 발행 시작 === orderId: {}", completionResult.getOrderId());
 
-    eventPublisher.publish(event);
+    try {
+      PaymentCompletedEvent event =
+          PaymentCompletedEvent.builder()
+              .orderId(completionResult.getOrderId())
+              .paymentId(completionResult.getPaymentId())
+              .purchaseId(completionResult.getPurchaseId())
+              .userId(completionResult.getUserId())
+              .contentId(completionResult.getContentId())
+              .sellerId(completionResult.getSellerId())
+              .amount(completionResult.getAmount())
+              .completedAt(completionResult.getCompletedAt())
+              .build();
+
+      log.info("이벤트 객체 생성 완료: orderId={}", event.getOrderId());
+
+      eventPublisher.publish(event); // 이 부분이 있나요?
+
+      log.info("=== 이벤트 발행 완료 === orderId: {}", completionResult.getOrderId());
+
+    } catch (Exception e) {
+      log.error("이벤트 발행 중 예외 발생 - orderId: {}", completionResult.getOrderId(), e);
+      throw e; // 또는 log만 남기고 넘어갈지 결정
+    }
   }
 
   /** 환불 완료 이벤트 발행 */
