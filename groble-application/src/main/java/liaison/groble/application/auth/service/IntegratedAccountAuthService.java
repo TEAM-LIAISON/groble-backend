@@ -175,13 +175,8 @@ public class IntegratedAccountAuthService {
 
   /** 회원가입 후 비동기 작업 처리 */
   private void processPostSignUpTasks(String email, User user) {
-    // 웰컴 알림 발송
-    //
-
     // 인증 플래그 제거 (트랜잭션 커밋 후)
     registerVerificationFlagRemoval(email);
-
-    // Discord 신규 멤버 리포트
   }
 
   /** 인증 플래그 제거 등록 */
