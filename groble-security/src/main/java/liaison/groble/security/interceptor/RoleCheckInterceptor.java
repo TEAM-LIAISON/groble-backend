@@ -49,7 +49,6 @@ public class RoleCheckInterceptor implements HandlerInterceptor {
       String errorMessage = String.format("권한이 없습니다.");
       throw new ForbiddenException(errorMessage);
     }
-
     return true;
   }
 }

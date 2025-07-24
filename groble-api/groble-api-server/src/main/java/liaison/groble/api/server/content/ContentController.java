@@ -22,7 +22,6 @@ import liaison.groble.api.model.content.response.ContentDetailResponse;
 import liaison.groble.api.model.content.response.ContentPreviewCardResponse;
 import liaison.groble.api.model.content.response.HomeContentsResponse;
 import liaison.groble.api.model.content.response.review.ContentReviewResponse;
-import liaison.groble.api.model.content.response.swagger.ContentDetail;
 import liaison.groble.api.model.content.response.swagger.ContentsCoachingCategory;
 import liaison.groble.api.model.content.response.swagger.ContentsDocumentCategory;
 import liaison.groble.api.model.content.response.swagger.HomeContents;
@@ -38,6 +37,7 @@ import liaison.groble.application.file.FileService;
 import liaison.groble.application.file.dto.FileDTO;
 import liaison.groble.application.file.dto.FileUploadDTO;
 import liaison.groble.common.annotation.Auth;
+import liaison.groble.common.annotation.Logging;
 import liaison.groble.common.model.Accessor;
 import liaison.groble.common.response.GrobleResponse;
 import liaison.groble.common.response.PageResponse;
@@ -113,12 +113,22 @@ public class ContentController {
     return responseHelper.success(response, CONTENT_REVIEWS_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 
-  @ContentDetail
+  // 콘텐츠 상세 조회
+  @Operation(summary = "[✅ 콘텐츠 상세 정보 조회]", description = "콘텐츠 상세를 조회합니다.")
+  @ApiResponse(
+      responseCode = "200",
+      description = CONTENT_DETAIL_SUCCESS_MESSAGE,
+      content =
+          @Content(
+              mediaType = "application/json",
+              schema = @Schema(implementation = ContentDetailResponse.class)))
+  @Logging(item = "Content", action = "getContentDetail", includeParam = true, includeResult = true)
   @GetMapping(CONTENT_DETAIL_PATH)
   public ResponseEntity<GrobleResponse<ContentDetailResponse>> getContentDetail(
       @Auth(required = false) Accessor accessor, @PathVariable("contentId") Long contentId) {
     ContentDetailDTO contentDetailDTO;
 
+    // 왜 인증된 사용자와 인증되지 않은 사용자를 나눴었지?
     if (accessor.isAuthenticated()) {
       contentDetailDTO = contentService.getContentDetailForUser(accessor.getId(), contentId);
     } else {

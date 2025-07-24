@@ -236,7 +236,7 @@ public class ContentService {
     // 1. 사용자 및 콘텐츠 조회
     Content content = contentReader.getContentById(contentId);
 
-    // 2. 콘텐츠 소유권 확인
+    // 2. 콘텐츠 소유권 확인 (쿼리 추가 발생하지 않나?)
     boolean isOwner = content.getUser().getId().equals(userId);
 
     if (isOwner) {
