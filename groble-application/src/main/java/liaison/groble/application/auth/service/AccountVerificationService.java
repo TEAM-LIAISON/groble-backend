@@ -6,7 +6,6 @@ import org.springframework.transaction.annotation.Transactional;
 import liaison.groble.application.auth.dto.VerifyBusinessMakerAccountDTO;
 import liaison.groble.application.auth.dto.VerifyPersonalMakerAccountDTO;
 import liaison.groble.application.user.service.UserReader;
-import liaison.groble.domain.role.repository.RoleRepository;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.enums.BusinessType;
 import liaison.groble.domain.user.enums.SellerVerificationStatus;
@@ -23,7 +22,6 @@ public class AccountVerificationService {
 
   // Repository
   private final UserReader userReader;
-  private final RoleRepository roleRepository;
 
   // Discord
   private final DiscordPersonalMakerVerificationReportService

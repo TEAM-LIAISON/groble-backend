@@ -1,7 +1,6 @@
 package liaison.groble.security.interceptor;
 
 import java.util.Arrays;
-import java.util.stream.Collectors;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -47,16 +46,7 @@ public class RoleCheckInterceptor implements HandlerInterceptor {
                         .anyMatch(auth -> auth.getAuthority().equals(role)));
 
     if (!hasRequiredRole) {
-      String requiredRolesStr = Arrays.stream(requiredRoles).collect(Collectors.joining(", "));
-
-      String currentRoles =
-          authentication.getAuthorities().stream()
-              .map(auth -> auth.getAuthority())
-              .collect(Collectors.joining(", "));
-
-      String errorMessage =
-          String.format("필요한 권한이 없습니다. 필요한 권한: [%s], 현재 권한: [%s]", requiredRolesStr, currentRoles);
-
+      String errorMessage = String.format("권한이 없습니다.");
       throw new ForbiddenException(errorMessage);
     }
 
