@@ -18,5 +18,6 @@ public class ContentDetailReviewDTO {
   private String reviewContent;
   private String selectedOptionName;
   private BigDecimal rating;
+  private String merchantUid;
   private List<ReviewReplyDTO> reviewReplies;
 }

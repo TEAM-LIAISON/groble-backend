@@ -97,7 +97,6 @@ public class ContentService {
                                       .replyContent(row.getReplyContent())
                                       .build())
                           .collect(Collectors.toList());
-
                   return ContentDetailReviewDTO.builder()
                       .reviewId(firstRow.getReviewId())
                       .isReviewManage(
@@ -108,6 +107,7 @@ public class ContentService {
                       .reviewContent(firstRow.getReviewContent())
                       .selectedOptionName(firstRow.getSelectedOptionName())
                       .rating(firstRow.getRating())
+                      .merchantUid(firstRow.getMerchantUid())
                       .reviewReplies(replies)
                       .build();
                 })

@@ -71,6 +71,13 @@ public class ContentDetailReviewResponse {
   private BigDecimal rating;
 
   @Schema(
+      description = "리뷰 작성자 주문 고유 ID",
+      example = "order_1234567890",
+      type = "string",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private String merchantUid;
+
+  @Schema(
       description = "리뷰에 대한 판매자 답글",
       implementation = ReviewReplyResponse.class,
       requiredMode = Schema.RequiredMode.NOT_REQUIRED)
