@@ -251,6 +251,7 @@ public class ContentReviewCustomRepositoryImpl implements ContentReviewCustomRep
                 FlatContentReviewReplyDTO.class,
                 // Review 정보
                 qContentReview.id.as("reviewId"),
+                qContentReview.user.id.as("reviewerId"),
                 qContentReview.createdAt.as("reviewCreatedAt"),
                 qReviewer.userProfile.profileImageUrl.as("reviewerProfileImageUrl"),
                 qReviewer.userProfile.nickname.as("reviewerNickname"),

@@ -59,17 +59,19 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 public class ContentService {
+  // Reader
   private final UserReader userReader;
+  private final ContentReader contentReader;
+  private final ContentReviewReader contentReviewReader;
+
   private final ContentRepository contentRepository;
   private final ContentCustomRepository contentCustomRepository;
   private final CategoryRepository categoryRepository;
-  private final ContentReader contentReader;
-  private final ContentReviewReader contentReviewReader;
   private final DiscordContentRegisterReportService discordContentRegisterReportService;
   private final FileRepository fileRepository;
 
   @Transactional(readOnly = true)
-  public ContentReviewDTO getContentReviews(Long contentId, String sort) {
+  public ContentReviewDTO getContentReviews(Long contentId, String sort, Long userId) {
     List<FlatContentReviewReplyDTO> flatList =
         contentReviewReader.findReviewsWithRepliesByContentId(contentId);
 
@@ -98,6 +100,7 @@ public class ContentService {
 
                   return ContentDetailReviewDTO.builder()
                       .reviewId(firstRow.getReviewId())
+                      .isReviewManage(userId != null && userId.equals(firstRow.getReviewerId()))
                       .createdAt(firstRow.getReviewCreatedAt())
                       .reviewerProfileImageUrl(firstRow.getReviewerProfileImageUrl())
                       .reviewerNickname(firstRow.getReviewerNickname())

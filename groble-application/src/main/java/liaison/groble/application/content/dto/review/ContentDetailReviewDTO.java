@@ -11,6 +11,7 @@ import lombok.Getter;
 @Builder
 public class ContentDetailReviewDTO {
   private Long reviewId;
+  private Boolean isReviewManage;
   private LocalDateTime createdAt;
   private String reviewerProfileImageUrl;
   private String reviewerNickname;

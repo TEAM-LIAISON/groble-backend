@@ -97,6 +97,7 @@ public class ContentController {
       content = @Content(schema = @Schema(implementation = ContentReviewResponse.class)))
   @GetMapping(CONTENT_REVIEWS_PATH)
   public ResponseEntity<GrobleResponse<ContentReviewResponse>> getContentReviews(
+      @Auth Accessor accessor,
       @PathVariable("contentId") Long contentId,
       @Parameter(
               description = "정렬 기준",
@@ -107,8 +108,10 @@ public class ContentController {
           @RequestParam(value = "sort", defaultValue = "LATEST")
           String sort) {
 
-    ContentReviewDTO contentReviewDTO = contentService.getContentReviews(contentId, sort);
-
+    ContentReviewDTO contentReviewDTO =
+        contentService.getContentReviews(
+            contentId, sort, accessor.getUserId() // null if not authenticated
+            );
     ContentReviewResponse response = contentReviewMapper.toContentReviewResponse(contentReviewDTO);
     return responseHelper.success(response, CONTENT_REVIEWS_SUCCESS_MESSAGE, HttpStatus.OK);
   }

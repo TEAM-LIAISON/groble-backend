@@ -15,6 +15,7 @@ import lombok.NoArgsConstructor;
 public class FlatContentReviewReplyDTO {
   // Review(리뷰) 정보
   private Long reviewId;
+  private Long reviewerId;
   private LocalDateTime reviewCreatedAt;
   private String reviewerProfileImageUrl;
   private String reviewerNickname;

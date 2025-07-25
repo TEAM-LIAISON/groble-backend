@@ -23,6 +23,13 @@ public class ContentDetailReviewResponse {
       requiredMode = Schema.RequiredMode.REQUIRED)
   private Long reviewId;
 
+  @Schema(
+      description = "리뷰 작성자 여부",
+      example = "true",
+      type = "boolean",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private Boolean isReviewManage;
+
   @Schema(description = "리뷰 작성 일시", example = "2025-04-20T10:15:30")
   @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
   private LocalDateTime createdAt;
