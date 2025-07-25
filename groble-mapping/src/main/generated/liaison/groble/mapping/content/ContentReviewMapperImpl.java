@@ -16,7 +16,7 @@ import liaison.groble.application.content.dto.review.ReviewReplyDTO;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-07-23T20:36:40+0900",
+    date = "2025-07-25T22:13:53+0900",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.10 (Amazon.com Inc.)")
 @Component
 public class ContentReviewMapperImpl implements ContentReviewMapper {
@@ -57,6 +57,9 @@ public class ContentReviewMapperImpl implements ContentReviewMapper {
 
     if (contentDetailReviewDTO.getReviewId() != null) {
       contentDetailReviewResponse.reviewId(contentDetailReviewDTO.getReviewId());
+    }
+    if (contentDetailReviewDTO.getIsReviewManage() != null) {
+      contentDetailReviewResponse.isReviewManage(contentDetailReviewDTO.getIsReviewManage());
     }
     if (contentDetailReviewDTO.getCreatedAt() != null) {
       contentDetailReviewResponse.createdAt(contentDetailReviewDTO.getCreatedAt());

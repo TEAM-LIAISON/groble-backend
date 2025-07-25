@@ -97,7 +97,7 @@ public class ContentController {
       content = @Content(schema = @Schema(implementation = ContentReviewResponse.class)))
   @GetMapping(CONTENT_REVIEWS_PATH)
   public ResponseEntity<GrobleResponse<ContentReviewResponse>> getContentReviews(
-      @Auth Accessor accessor,
+      @Auth(required = false) Accessor accessor,
       @PathVariable("contentId") Long contentId,
       @Parameter(
               description = "정렬 기준",

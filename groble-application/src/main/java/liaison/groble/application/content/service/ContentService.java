@@ -100,7 +100,8 @@ public class ContentService {
 
                   return ContentDetailReviewDTO.builder()
                       .reviewId(firstRow.getReviewId())
-                      .isReviewManage(userId != null && userId.equals(firstRow.getReviewerId()))
+                      .isReviewManage(
+                          userId != null && userId.equals(firstRow.getReviewerId()) ? true : false)
                       .createdAt(firstRow.getReviewCreatedAt())
                       .reviewerProfileImageUrl(firstRow.getReviewerProfileImageUrl())
                       .reviewerNickname(firstRow.getReviewerNickname())
