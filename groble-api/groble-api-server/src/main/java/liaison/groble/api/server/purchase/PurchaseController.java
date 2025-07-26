@@ -55,12 +55,15 @@ public class PurchaseController {
   private static final String SELLER_CONTACT_INFO_PATH = "/inquiry/{merchantUid}";
   private static final String MY_PURCHASING_CONTENT_PATH = "/content/my/purchased-contents";
   private static final String MY_PURCHASED_CONTENT_PATH = "/content/my/{merchantUid}";
+  private static final String MY_PURCHASED_CONTENT_REVIEW_PATH = "/content/my/{merchantUid}/review";
 
   // 응답 메시지 상수화
   private static final String SELLER_CONTACT_INFO_SUCCESS_MESSAGE =
       "판매자(메이커)에게 문의하기 정보 조회에 성공했습니다.";
   private static final String MY_PURCHASING_CONTENT_SUCCESS_MESSAGE = "내가 구매한 콘텐츠 목록 조회에 성공했습니다.";
   private static final String My_PURCHASED_CONTENT_SUCCESS_MESSAGE = "내가 구매한 콘텐츠 상세 조회에 성공했습니다.";
+  private static final String My_PURCHASED_CONTENT_REVIEW_SUCCESS_MESSAGE =
+      "내가 구매한 콘텐츠 리뷰 상세 조회에 성공했습니다.";
 
   // Service
   private final PurchaseService purchaseService;
@@ -131,6 +134,43 @@ public class PurchaseController {
             purchasedContentDetailDTO, contactInfoResponse, contentReviewDetailResponse);
 
     return responseHelper.success(response, My_PURCHASED_CONTENT_SUCCESS_MESSAGE, HttpStatus.OK);
+  }
+
+  @Operation(
+      summary = "[✅ 내 콘텐츠 - 구매 관리] 내가 구매한 콘텐츠 리뷰 상세 조회",
+      description = "내가 구매한 콘텐츠의 리뷰를 상세 조회합니다.")
+  @ApiResponse(
+      responseCode = "200",
+      description = My_PURCHASED_CONTENT_REVIEW_SUCCESS_MESSAGE,
+      content =
+          @Content(
+              mediaType = "application/json",
+              schema = @Schema(implementation = PurchasedContentDetailResponse.class)))
+  @GetMapping(MY_PURCHASED_CONTENT_REVIEW_PATH)
+  @Logging(
+      item = "Purchase",
+      action = "getMyPurchasedContentReview",
+      includeParam = true,
+      includeResult = true)
+  public ResponseEntity<GrobleResponse<PurchasedContentDetailResponse>> getMyPurchasedContentReview(
+      @Auth Accessor accessor, @Valid @PathVariable("merchantUid") String merchantUid) {
+    // 구매 콘텐츠 정보 조회
+    PurchasedContentDetailDTO purchasedContentDetailDTO =
+        purchaseService.getMyPurchasedContent(accessor.getUserId(), merchantUid);
+
+    // 리뷰 상세 정보 조회
+    ContentReviewDetailDTO contentReviewDetailDTO =
+        sellContentService.getContentReviewDetail(accessor.getUserId(), merchantUid);
+
+    ContentReviewDetailResponse contentReviewDetailResponse =
+        sellMapper.toContentReviewDetailResponse(contentReviewDetailDTO);
+
+    PurchasedContentDetailResponse response =
+        purchaseMapper.toPurchasedContentDetailResponse(
+            purchasedContentDetailDTO, null, contentReviewDetailResponse);
+
+    return responseHelper.success(
+        response, My_PURCHASED_CONTENT_REVIEW_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 
   @Operation(
