@@ -31,8 +31,6 @@ public class QUser extends EntityPathBase<User> {
 
     public final NumberPath<Long> id = createNumber("id", Long.class);
 
-    public final liaison.groble.domain.user.vo.QIdentityVerification identityVerification;
-
     public final QIntegratedAccount integratedAccount;
 
     public final BooleanPath isSeller = createBoolean("isSeller");
@@ -80,7 +78,6 @@ public class QUser extends EntityPathBase<User> {
 
     public QUser(Class<? extends User> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
-        this.identityVerification = inits.isInitialized("identityVerification") ? new liaison.groble.domain.user.vo.QIdentityVerification(forProperty("identityVerification")) : null;
         this.integratedAccount = inits.isInitialized("integratedAccount") ? new QIntegratedAccount(forProperty("integratedAccount"), inits.get("integratedAccount")) : null;
         this.sellerInfo = inits.isInitialized("sellerInfo") ? new liaison.groble.domain.user.vo.QSellerInfo(forProperty("sellerInfo")) : null;
         this.socialAccount = inits.isInitialized("socialAccount") ? new QSocialAccount(forProperty("socialAccount"), inits.get("socialAccount")) : null;

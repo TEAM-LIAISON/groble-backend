@@ -32,7 +32,6 @@ import liaison.groble.domain.terms.enums.TermsType;
 import liaison.groble.domain.user.enums.AccountType;
 import liaison.groble.domain.user.enums.UserStatus;
 import liaison.groble.domain.user.enums.UserType;
-import liaison.groble.domain.user.vo.IdentityVerification;
 import liaison.groble.domain.user.vo.SellerInfo;
 import liaison.groble.domain.user.vo.UserProfile;
 import liaison.groble.domain.user.vo.UserStatusInfo;
@@ -106,7 +105,6 @@ public class User extends BaseTimeEntity {
   private Set<UserTerms> termsAgreements = new HashSet<>();
 
   @Embedded private SellerInfo sellerInfo;
-  @Embedded private IdentityVerification identityVerification;
 
   // SELLER
   @Builder.Default
@@ -147,10 +145,6 @@ public class User extends BaseTimeEntity {
     this.sellerInfo = sellerInfo;
   }
 
-  public void setIdentityVerification(IdentityVerification verification) {
-    this.identityVerification = verification;
-  }
-
   public void setSeller(boolean isSeller) {
     this.isSeller = isSeller;
   }
@@ -184,11 +178,6 @@ public class User extends BaseTimeEntity {
     return null;
   }
 
-  // 본인인증 완료 메서드
-  public void completeIdentityVerification(IdentityVerification verification) {
-    this.identityVerification = verification;
-  }
-
   /** 회원 탈퇴 처리 즉시 탈퇴 처리하고 사용자 상태를 WITHDRAWN으로 변경 */
   public void withdraw() {
     this.getUserStatusInfo().updateStatus(UserStatus.WITHDRAWN);
@@ -218,11 +207,6 @@ public class User extends BaseTimeEntity {
     // 판매자 정보 초기화 (선택적, 법적 요구사항에 따라 보존 여부 결정)
     if (this.sellerInfo != null) {
       this.sellerInfo.anonymize();
-    }
-
-    // 본인인증 정보 초기화
-    if (this.identityVerification != null) {
-      this.identityVerification.anonymize();
     }
   }
 
