@@ -4,10 +4,14 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import liaison.groble.common.exception.EntityNotFoundException;
+import liaison.groble.domain.market.entity.Market;
+import liaison.groble.domain.market.repository.MarketRepository;
 import liaison.groble.domain.user.entity.IntegratedAccount;
+import liaison.groble.domain.user.entity.SellerInfo;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.enums.UserStatus;
 import liaison.groble.domain.user.repository.IntegratedAccountRepository;
+import liaison.groble.domain.user.repository.SellerInfoRepository;
 import liaison.groble.domain.user.repository.SocialAccountRepository;
 import liaison.groble.domain.user.repository.UserRepository;
 
@@ -20,23 +24,44 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class UserReader {
+  // 주입 Repository
   private final UserRepository userRepository;
   private final IntegratedAccountRepository integratedAccountRepository;
   private final SocialAccountRepository socialAccountRepository;
+  private final SellerInfoRepository sellerInfoRepository;
+  private final MarketRepository marketRepository;
 
   // ===== ID로 User 조회 =====
-
-  /**
-   * 사용자 ID로 사용자 조회
-   *
-   * @param userId 사용자 ID
-   * @return 조회된 사용자
-   * @throws EntityNotFoundException 사용자가 존재하지 않을 경우
-   */
   public User getUserById(Long userId) {
     return userRepository
         .findById(userId)
         .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다. ID: " + userId));
+  }
+
+  // userId로 SellerInfo 조회 (User fetch join)
+  public SellerInfo getSellerInfoWithUser(Long userId) {
+    return sellerInfoRepository
+        .findByUserIdWithUser(userId)
+        .orElseThrow(() -> new EntityNotFoundException("사용자의 판매자 정보를 찾을 수 없습니다."));
+  }
+
+  public SellerInfo getSellerInfoWithUser(String nickname) {
+    return sellerInfoRepository
+        .findByUserNicknameWithUser(nickname)
+        .orElseThrow(() -> new EntityNotFoundException("해당 닉네임을 가진 사용자의 판매자 정보를 찾을 수 없습니다."));
+  }
+
+  public SellerInfo getSellerInfo(Long userId) {
+    return sellerInfoRepository
+        .findByUserId(userId)
+        .orElseThrow(() -> new EntityNotFoundException("사용자의 판매자 정보를 찾을 수 없습니다."));
+  }
+
+  // userId로 Market 조회
+  public Market getMarket(Long userId) {
+    return marketRepository
+        .findByUserId(userId)
+        .orElseThrow(() -> new EntityNotFoundException("사용자의 마켓 정보를 찾을 수 없습니다. ID: " + userId));
   }
 
   // ===== 닉네임으로 User 조회 =====

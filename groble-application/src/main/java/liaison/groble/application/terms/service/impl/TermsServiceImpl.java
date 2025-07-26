@@ -14,10 +14,10 @@ import liaison.groble.application.user.service.UserReader;
 import liaison.groble.domain.terms.entity.Terms;
 import liaison.groble.domain.terms.enums.TermsType;
 import liaison.groble.domain.terms.repository.TermsRepository;
+import liaison.groble.domain.user.entity.SellerInfo;
 import liaison.groble.domain.user.entity.User;
-import liaison.groble.domain.user.enums.SellerVerificationStatus;
+import liaison.groble.domain.user.repository.SellerInfoRepository;
 import liaison.groble.domain.user.repository.UserRepository;
-import liaison.groble.domain.user.vo.SellerInfo;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 public class TermsServiceImpl implements TermsService {
   private final TermsRepository termsRepository;
   private final UserRepository userRepository;
+  private final SellerInfoRepository sellerInfoRepository;
 
   private final UserReader userReader;
   private final UserHelper userHelper;
@@ -78,7 +79,8 @@ public class TermsServiceImpl implements TermsService {
     // 4. 메이커 약관 동의 처리
     user.updateMakerTermsAgreement(currentMakerTerms, true, clientIp, userAgent);
     user.setSeller(true);
-    user.setSellerInfo(SellerInfo.ofVerificationStatus(SellerVerificationStatus.PENDING));
+    SellerInfo sellerInfo = SellerInfo.createForUser(user);
+    sellerInfoRepository.save(sellerInfo);
 
     userHelper.addSellerRole(user);
 

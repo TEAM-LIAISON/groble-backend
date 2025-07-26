@@ -22,10 +22,12 @@ import liaison.groble.common.port.security.SecurityPort;
 import liaison.groble.domain.port.VerificationCodePort;
 import liaison.groble.domain.terms.enums.TermsType;
 import liaison.groble.domain.user.entity.IntegratedAccount;
+import liaison.groble.domain.user.entity.SellerInfo;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.enums.UserStatus;
 import liaison.groble.domain.user.enums.UserType;
 import liaison.groble.domain.user.factory.UserFactory;
+import liaison.groble.domain.user.repository.SellerInfoRepository;
 import liaison.groble.domain.user.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -47,7 +49,7 @@ public class IntegratedAccountAuthService {
   // Repository
   private final UserReader userReader;
   private final UserRepository userRepository;
-
+  private final SellerInfoRepository sellerInfoRepository;
   // Port
   private final SecurityPort securityPort;
   private final VerificationCodePort verificationCodePort;
@@ -138,6 +140,11 @@ public class IntegratedAccountAuthService {
     String encodedPassword = securityPort.encodePassword(signUpDTO.getPassword());
 
     User user = createUserByType(signUpDTO.getEmail(), encodedPassword, userType);
+
+    if (userType == UserType.SELLER) {
+      SellerInfo sellerInfo = SellerInfo.createForUser(user);
+      sellerInfoRepository.save(sellerInfo);
+    }
 
     // 기본 설정 적용
     userHelper.addDefaultRole(user);

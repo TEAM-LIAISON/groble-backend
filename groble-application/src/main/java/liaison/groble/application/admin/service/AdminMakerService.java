@@ -8,9 +8,8 @@ import liaison.groble.application.notification.service.NotificationService;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.domain.file.entity.FileInfo;
 import liaison.groble.domain.file.repository.FileRepository;
-import liaison.groble.domain.user.entity.User;
+import liaison.groble.domain.user.entity.SellerInfo;
 import liaison.groble.domain.user.enums.SellerVerificationStatus;
-import liaison.groble.domain.user.vo.SellerInfo;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,69 +25,63 @@ public class AdminMakerService {
 
   @Transactional(readOnly = true)
   public AdminMakerDetailInfoDTO getMakerDetailInfo(Long userId, String nickname) {
-    User user = userReader.getUserByNickname(nickname);
-
-    SellerInfo si = user.getSellerInfo();
-    if (si == null) {
-      return AdminMakerDetailInfoDTO.builder().build(); // 또는 throw new IllegalStateException(...)
-    }
+    SellerInfo sellerInfo = userReader.getSellerInfoWithUser(nickname);
 
     String copyOfBankBookOriginalFileName = null;
     String businessLicenseOriginalFileName = null;
 
-    if (si.getCopyOfBankbookUrl() != null) {
-      FileInfo bankBookFileInfo = fileRepository.findByFileUrl(si.getCopyOfBankbookUrl());
+    if (sellerInfo.getCopyOfBankbookUrl() != null) {
+      FileInfo bankBookFileInfo = fileRepository.findByFileUrl(sellerInfo.getCopyOfBankbookUrl());
       copyOfBankBookOriginalFileName = bankBookFileInfo.getOriginalFilename();
     }
 
-    if (si.getBusinessLicenseFileUrl() != null) {
+    if (sellerInfo.getBusinessLicenseFileUrl() != null) {
       FileInfo businessLicenseFileInfo =
-          fileRepository.findByFileUrl(si.getBusinessLicenseFileUrl());
+          fileRepository.findByFileUrl(sellerInfo.getBusinessLicenseFileUrl());
       businessLicenseOriginalFileName = businessLicenseFileInfo.getOriginalFilename();
     }
 
     /* 4) DTO 매핑 */
     return AdminMakerDetailInfoDTO.builder()
-        .isBusinessMaker(si.getBusinessSellerRequest())
-        .verificationStatus(si.getVerificationStatus().name())
-        .bankAccountOwner(si.getBankAccountOwner())
-        .bankName(si.getBankName())
-        .bankAccountNumber(si.getBankAccountNumber())
+        .isBusinessMaker(sellerInfo.getBusinessSellerRequest())
+        .verificationStatus(sellerInfo.getVerificationStatus().name())
+        .bankAccountOwner(sellerInfo.getBankAccountOwner())
+        .bankName(sellerInfo.getBankName())
+        .bankAccountNumber(sellerInfo.getBankAccountNumber())
         .copyOfBankBookOriginalFileName(copyOfBankBookOriginalFileName)
-        .copyOfBankbookUrl(si.getCopyOfBankbookUrl())
-        .businessType(si.getBusinessType() != null ? si.getBusinessType().name() : null)
-        .businessCategory(si.getBusinessCategory())
-        .businessSector(si.getBusinessSector())
-        .businessName(si.getBusinessName())
-        .representativeName(si.getRepresentativeName())
-        .businessAddress(si.getBusinessAddress())
+        .copyOfBankbookUrl(sellerInfo.getCopyOfBankbookUrl())
+        .businessType(
+            sellerInfo.getBusinessType() != null ? sellerInfo.getBusinessType().name() : null)
+        .businessCategory(sellerInfo.getBusinessCategory())
+        .businessSector(sellerInfo.getBusinessSector())
+        .businessName(sellerInfo.getBusinessName())
+        .representativeName(sellerInfo.getRepresentativeName())
+        .businessAddress(sellerInfo.getBusinessAddress())
         .businessLicenseOriginalFileName(businessLicenseOriginalFileName)
-        .businessLicenseFileUrl(si.getBusinessLicenseFileUrl())
-        .taxInvoiceEmail(si.getTaxInvoiceEmail())
+        .businessLicenseFileUrl(sellerInfo.getBusinessLicenseFileUrl())
+        .taxInvoiceEmail(sellerInfo.getTaxInvoiceEmail())
         .build();
   }
 
   @Transactional
-  public void approveMaker(Long userId, String nickname) {
-    User user = userReader.getUserByNickname(nickname);
+  public void approveMaker(String nickname) {
+    SellerInfo sellerInfo = userReader.getSellerInfoWithUser(nickname);
 
-    user.getSellerInfo()
-        .updateApprovedMaker(
-            user.isBusinessMakerVerificationRequested(), SellerVerificationStatus.VERIFIED);
+    sellerInfo.updateApprovedMaker(
+        sellerInfo.isBusinessMakerVerificationRequested(), SellerVerificationStatus.VERIFIED);
 
-    notificationService.sendMakerCertifiedVerificationNotification(user);
-
-    log.info("사업자 메이커 인증 승인 처리: userId={}, nickname={}", userId, nickname);
+    notificationService.sendMakerCertifiedVerificationNotification(sellerInfo.getUser());
   }
 
+  // 메이커 인증 반려 처리
   @Transactional
-  public void rejectMaker(Long userId, String nickname) {
-    User user = userReader.getUserByNickname(nickname);
+  public void rejectMaker(String nickname) {
+    // 판매자 정보 조회 (User fetch join)
+    SellerInfo sellerInfo = userReader.getSellerInfoWithUser(nickname);
 
-    user.getSellerInfo().updateRejectedMaker(SellerVerificationStatus.FAILED);
+    sellerInfo.updateRejectedMaker(SellerVerificationStatus.FAILED);
 
-    notificationService.sendMakerRejectedVerificationNotification(user);
-
-    log.info("사업자 메이커 인증 거절 처리: userId={}, nickname={}", userId, nickname);
+    notificationService.sendMakerRejectedVerificationNotificationAsync(
+        sellerInfo.getUser().getId(), nickname);
   }
 }

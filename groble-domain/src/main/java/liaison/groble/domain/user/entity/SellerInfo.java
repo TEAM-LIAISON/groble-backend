@@ -1,32 +1,49 @@
-package liaison.groble.domain.user.vo;
+package liaison.groble.domain.user.entity;
+
+import static jakarta.persistence.GenerationType.IDENTITY;
+import static lombok.AccessLevel.PROTECTED;
 
 import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
-import jakarta.persistence.Embeddable;
+import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
 
 import liaison.groble.domain.user.enums.BusinessType;
 import liaison.groble.domain.user.enums.SellerVerificationStatus;
 
-import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-@Embeddable
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
+/**
+ * 판매자 정보를 관리하는 엔티티
+ *
+ * @author 권동민
+ * @since 2025-07-27
+ */
+@Entity
+@Table(name = "seller_infos")
 @Getter
 @Builder
+@NoArgsConstructor(access = PROTECTED)
+@AllArgsConstructor
 public class SellerInfo {
-  @Column(name = "market_name", length = 30)
-  private String marketName;
+  @Id
+  @GeneratedValue(strategy = IDENTITY)
+  private Long id;
 
-  @Column(name = "market_link_url", length = 32)
-  private String marketLinkUrl;
+  @OneToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "user_id", unique = true, nullable = false)
+  private User user;
 
   /** 사업자 유형 (개인사업자-간이과세자, 개인사업자-일반과세자, 법인사업자) */
   @Column(name = "business_type")
@@ -102,13 +119,18 @@ public class SellerInfo {
   @Column(name = "copy_of_bankbook_url", columnDefinition = "TEXT")
   private String copyOfBankbookUrl;
 
-  public void updateVerificationStatus(SellerVerificationStatus status, String message) {
+  // 사업자 메이커 인증 요청 여부 확인
+  public boolean isBusinessMakerVerificationRequested() {
+    return businessLicenseFileUrl != null && !businessLicenseFileUrl.isBlank();
+  }
+
+  public void updateSellerVerificationStatus(SellerVerificationStatus status, String message) {
     this.verificationStatus = status;
     this.verificationMessage = message;
     this.lastVerificationAttempt = LocalDateTime.now();
   }
 
-  public void update(SellerInfo updatedInfo) {
+  public void updateSellerInfos(SellerInfo updatedInfo) {
     if (updatedInfo.getBusinessType() != null) {
       this.businessType = updatedInfo.getBusinessType();
     }
@@ -213,18 +235,6 @@ public class SellerInfo {
     return info;
   }
 
-  public void updateMarketName(String marketName) {
-    if (marketName != null && !marketName.isBlank()) {
-      this.marketName = marketName;
-    }
-  }
-
-  public void updateMarketLinkUrl(String marketLinkUrl) {
-    if (marketLinkUrl != null && !marketLinkUrl.isBlank()) {
-      this.marketLinkUrl = marketLinkUrl;
-    }
-  }
-
   // 개인 메이커 은행 정보만 업데이트
   public void updatePersonalMakerBankInfo(
       String bankAccountOwner,
@@ -280,5 +290,12 @@ public class SellerInfo {
 
   public void updateRejectedMaker(SellerVerificationStatus sellerVerificationStatus) {
     this.verificationStatus = sellerVerificationStatus;
+  }
+
+  public static SellerInfo createForUser(User user) {
+    return SellerInfo.builder()
+        .user(user)
+        .verificationStatus(SellerVerificationStatus.PENDING)
+        .build();
   }
 }

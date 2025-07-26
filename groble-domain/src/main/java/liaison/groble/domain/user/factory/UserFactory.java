@@ -7,10 +7,8 @@ import liaison.groble.domain.user.entity.SocialAccount;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.enums.AccountType;
 import liaison.groble.domain.user.enums.ProviderType;
-import liaison.groble.domain.user.enums.SellerVerificationStatus;
 import liaison.groble.domain.user.enums.UserStatus;
 import liaison.groble.domain.user.enums.UserType;
-import liaison.groble.domain.user.vo.SellerInfo;
 import liaison.groble.domain.user.vo.UserProfile;
 import liaison.groble.domain.user.vo.UserStatusInfo;
 
@@ -42,9 +40,6 @@ public class UserFactory {
             .build();
 
     user.setIntegratedAccount(account);
-
-    // 여기서 SellerInfo는 “인증 대기” 상태만 셋팅
-    user.setSellerInfo(SellerInfo.ofVerificationStatus(SellerVerificationStatus.PENDING));
 
     return user;
   }

@@ -32,7 +32,6 @@ import liaison.groble.domain.terms.enums.TermsType;
 import liaison.groble.domain.user.enums.AccountType;
 import liaison.groble.domain.user.enums.UserStatus;
 import liaison.groble.domain.user.enums.UserType;
-import liaison.groble.domain.user.vo.SellerInfo;
 import liaison.groble.domain.user.vo.UserProfile;
 import liaison.groble.domain.user.vo.UserStatusInfo;
 
@@ -104,8 +103,6 @@ public class User extends BaseTimeEntity {
   @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
   private Set<UserTerms> termsAgreements = new HashSet<>();
 
-  @Embedded private SellerInfo sellerInfo;
-
   // SELLER
   @Builder.Default
   @Column(name = "is_seller")
@@ -138,11 +135,6 @@ public class User extends BaseTimeEntity {
 
   public void updateLastUserType(UserType userType) {
     this.lastUserType = userType;
-  }
-
-  // Value Object 설정 메서드
-  public void setSellerInfo(SellerInfo sellerInfo) {
-    this.sellerInfo = sellerInfo;
   }
 
   public void setSeller(boolean isSeller) {
@@ -202,11 +194,6 @@ public class User extends BaseTimeEntity {
       integratedAccount.updatePassword(null);
     } else if (accountType == AccountType.SOCIAL && socialAccount != null) {
       socialAccount.anonymizeEmail(anonymizedEmail);
-    }
-
-    // 판매자 정보 초기화 (선택적, 법적 요구사항에 따라 보존 여부 결정)
-    if (this.sellerInfo != null) {
-      this.sellerInfo.anonymize();
     }
   }
 
@@ -305,13 +292,6 @@ public class User extends BaseTimeEntity {
     }
   }
 
-  // 사업자 메이커 인증 요청 여부 확인
-  public boolean isBusinessMakerVerificationRequested() {
-    return sellerInfo != null
-        && sellerInfo.getBusinessLicenseFileUrl() != null
-        && !sellerInfo.getBusinessLicenseFileUrl().isBlank();
-  }
-
   // 닉네임 조회
   public String getNickname() {
     return userProfile != null ? userProfile.getNickname() : null;
@@ -374,14 +354,5 @@ public class User extends BaseTimeEntity {
 
   public boolean isWithdrawn() {
     return this.userStatusInfo.getStatus() == UserStatus.WITHDRAWN;
-  }
-
-  // SellerInfo 관련 메서드
-  public void updateMarketName(String marketName) {
-    sellerInfo.updateMarketName(marketName);
-  }
-
-  public void updateMarketLinkUrl(String marketLinkUrl) {
-    sellerInfo.updateMarketLinkUrl(marketLinkUrl);
   }
 }

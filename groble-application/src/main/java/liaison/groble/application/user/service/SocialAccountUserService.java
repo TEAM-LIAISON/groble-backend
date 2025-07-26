@@ -11,12 +11,12 @@ import liaison.groble.application.auth.helper.TokenHelper;
 import liaison.groble.application.auth.helper.UserHelper;
 import liaison.groble.application.user.dto.SocialBasicInfoDTO;
 import liaison.groble.domain.terms.enums.TermsType;
+import liaison.groble.domain.user.entity.SellerInfo;
 import liaison.groble.domain.user.entity.User;
-import liaison.groble.domain.user.enums.SellerVerificationStatus;
 import liaison.groble.domain.user.enums.UserStatus;
 import liaison.groble.domain.user.enums.UserType;
+import liaison.groble.domain.user.repository.SellerInfoRepository;
 import liaison.groble.domain.user.repository.UserRepository;
-import liaison.groble.domain.user.vo.SellerInfo;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,7 +28,7 @@ public class SocialAccountUserService {
   // Repository
   private final UserReader userReader;
   private final UserRepository userRepository;
-
+  private final SellerInfoRepository sellerInfoRepository;
   // Helper
   private final AuthValidationHelper authValidationHelper;
   private final TermsHelper termsHelper;
@@ -50,7 +50,9 @@ public class SocialAccountUserService {
     user.updateLastUserType(userType);
     if (userType == UserType.SELLER) {
       user.setSeller(true);
-      user.setSellerInfo(SellerInfo.ofVerificationStatus(SellerVerificationStatus.PENDING));
+      user.setSeller(true);
+      SellerInfo sellerInfo = SellerInfo.createForUser(user);
+      sellerInfoRepository.save(sellerInfo);
     } else {
       user.setSeller(false);
     }

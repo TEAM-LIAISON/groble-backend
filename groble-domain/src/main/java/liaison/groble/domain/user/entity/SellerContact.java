@@ -51,7 +51,7 @@ public class SellerContact {
 
   /** 연관된 판매자 정보 (User or SellerInfo 등) */
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "user_id") // 또는 seller_info_id, 상황에 따라 다름
+  @JoinColumn(name = "user_id")
   private User user;
 
   // 업데이트 메서드 추가

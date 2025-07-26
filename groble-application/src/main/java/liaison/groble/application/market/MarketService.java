@@ -20,11 +20,12 @@ import liaison.groble.common.exception.DuplicateMarketLinkException;
 import liaison.groble.common.response.PageResponse;
 import liaison.groble.domain.content.dto.FlatContentPreviewDTO;
 import liaison.groble.domain.content.entity.Content;
+import liaison.groble.domain.market.entity.Market;
 import liaison.groble.domain.user.entity.SellerContact;
+import liaison.groble.domain.user.entity.SellerInfo;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.enums.ContactType;
 import liaison.groble.domain.user.repository.SellerContactRepository;
-import liaison.groble.domain.user.vo.SellerInfo;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,7 +44,9 @@ public class MarketService {
 
   @Transactional(readOnly = true)
   public MarketIntroSectionDTO getEditIntroSection(Long userId) {
-    User user = userReader.getUserById(userId);
+    SellerInfo sellerInfo = userReader.getSellerInfoWithUser(userId);
+    Market market = userReader.getMarket(userId);
+    User user = sellerInfo.getUser();
     log.info("Get edit intro section");
     // 문의하기 정보 조회
     ContactInfoDTO contactInfo = getContactInfo(user);
@@ -58,14 +61,16 @@ public class MarketService {
     List<ContentCardDTO> items = myContents.stream().map(this::convertFlatDTOToCardDTO).toList();
     log.info("Get market content cards for user: {}", userId);
     // 메이커 소개 섹션 빌드 결과
-    return buildEditMarketIntroSectionResult(user, items, contactInfo, representativeContent);
+    return buildEditMarketIntroSectionResult(
+        user, sellerInfo, market, items, contactInfo, representativeContent);
   }
 
   @Transactional(readOnly = true)
   public MarketIntroSectionDTO getViewerMakerIntroSection(String marketLinkUrl) {
     // 마켓 이름으로 메이커 조회
     User user = makerReader.getUserByMarketLinkUrl(marketLinkUrl);
-
+    SellerInfo sellerInfo = userReader.getSellerInfo(user.getId());
+    Market market = userReader.getMarket(user.getId());
     // 문의하기 정보 조회
     ContactInfoDTO contactInfo = getContactInfo(user);
 
@@ -73,7 +78,8 @@ public class MarketService {
     FlatContentPreviewDTO representativeContent = getRepresentativeContent(user.getId());
 
     // 메이커 소개 섹션 빌드 결과
-    return buildMarketIntroSectionResult(user, contactInfo, representativeContent);
+    return buildMarketIntroSectionResult(
+        user, sellerInfo, market, contactInfo, representativeContent);
   }
 
   @Transactional(readOnly = true)
@@ -99,7 +105,9 @@ public class MarketService {
   @Transactional
   public void editMarket(Long userId, MarketEditDTO marketEditDTO) {
     // userId로 사용자 조회
-    User user = userReader.getUserById(userId);
+    SellerInfo sellerInfo = userReader.getSellerInfoWithUser(userId);
+    Market market = userReader.getMarket(userId);
+    User user = sellerInfo.getUser();
 
     try {
       // 3. 변경 사항 추적을 위한 플래그
@@ -107,7 +115,7 @@ public class MarketService {
 
       // 4. 각 필드별 null 체크 후 업데이트
       if (marketEditDTO.getMarketName() != null && !marketEditDTO.getMarketName().isBlank()) {
-        user.updateMarketName(marketEditDTO.getMarketName());
+        market.changeMarketName(marketEditDTO.getMarketName());
         hasChanges = true;
       }
 
@@ -118,7 +126,7 @@ public class MarketService {
       }
 
       if (marketEditDTO.getMarketLinkUrl() != null && !marketEditDTO.getMarketLinkUrl().isBlank()) {
-        user.updateMarketLinkUrl(marketEditDTO.getMarketLinkUrl());
+        market.changeMarketLinkUrl(marketEditDTO.getMarketLinkUrl());
         hasChanges = true;
       }
 
@@ -196,14 +204,16 @@ public class MarketService {
 
   private MarketIntroSectionDTO buildEditMarketIntroSectionResult(
       User user,
+      SellerInfo sellerInfo,
+      Market market,
       List<ContentCardDTO> contentCards,
       ContactInfoDTO contactInfo,
       FlatContentPreviewDTO flatContentPreviewDTO) {
     return MarketIntroSectionDTO.builder()
         .profileImageUrl(user.getProfileImageUrl())
-        .marketName(getMarketNameSafely(user))
-        .marketLinkUrl(getMarketLinkUrlSafely(user))
-        .verificationStatus(getVerificationStatusSafely(user))
+        .marketName(getMarketNameSafely(market))
+        .marketLinkUrl(getMarketLinkUrlSafely(market))
+        .verificationStatus(getVerificationStatusSafely(sellerInfo))
         .contactInfo(Optional.ofNullable(contactInfo).orElse(ContactInfoDTO.builder().build()))
         .representativeContent(flatContentPreviewDTO)
         .contentCardList(contentCards)
@@ -211,27 +221,31 @@ public class MarketService {
   }
 
   private MarketIntroSectionDTO buildMarketIntroSectionResult(
-      User user, ContactInfoDTO contactInfo, FlatContentPreviewDTO flatContentPreviewDTO) {
+      User user,
+      SellerInfo sellerInfo,
+      Market market,
+      ContactInfoDTO contactInfo,
+      FlatContentPreviewDTO flatContentPreviewDTO) {
     return MarketIntroSectionDTO.builder()
         .profileImageUrl(user.getProfileImageUrl())
-        .marketName(getMarketNameSafely(user))
-        .marketLinkUrl(getMarketLinkUrlSafely(user))
-        .verificationStatus(getVerificationStatusSafely(user))
+        .marketName(getMarketNameSafely(market))
+        .marketLinkUrl(getMarketLinkUrlSafely(market))
+        .verificationStatus(getVerificationStatusSafely(sellerInfo))
         .contactInfo(Optional.ofNullable(contactInfo).orElse(ContactInfoDTO.builder().build()))
         .representativeContent(flatContentPreviewDTO)
         .build();
   }
 
-  private String getMarketNameSafely(User user) {
-    return Optional.ofNullable(user.getSellerInfo()).map(SellerInfo::getMarketName).orElse("");
+  private String getMarketNameSafely(Market market) {
+    return Optional.ofNullable(market).map(Market::getMarketName).orElse("");
   }
 
-  private String getMarketLinkUrlSafely(User user) {
-    return Optional.ofNullable(user.getSellerInfo()).map(SellerInfo::getMarketLinkUrl).orElse("");
+  private String getMarketLinkUrlSafely(Market market) {
+    return Optional.ofNullable(market).map(Market::getMarketLinkUrl).orElse("");
   }
 
-  private String getVerificationStatusSafely(User user) {
-    return Optional.ofNullable(user.getSellerInfo())
+  private String getVerificationStatusSafely(SellerInfo sellerInfo) {
+    return Optional.ofNullable(sellerInfo)
         .map(SellerInfo::getVerificationStatus)
         .map(Enum::name)
         .orElse("UNVERIFIED");

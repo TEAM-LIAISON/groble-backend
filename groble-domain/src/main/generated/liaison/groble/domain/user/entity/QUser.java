@@ -43,8 +43,6 @@ public class QUser extends EntityPathBase<User> {
 
     public final DateTimePath<java.time.Instant> refreshTokenExpiresAt = createDateTime("refreshTokenExpiresAt", java.time.Instant.class);
 
-    public final liaison.groble.domain.user.vo.QSellerInfo sellerInfo;
-
     public final QSocialAccount socialAccount;
 
     public final SetPath<liaison.groble.domain.terms.entity.UserTerms, liaison.groble.domain.terms.entity.QUserTerms> termsAgreements = this.<liaison.groble.domain.terms.entity.UserTerms, liaison.groble.domain.terms.entity.QUserTerms>createSet("termsAgreements", liaison.groble.domain.terms.entity.UserTerms.class, liaison.groble.domain.terms.entity.QUserTerms.class, PathInits.DIRECT2);
@@ -79,7 +77,6 @@ public class QUser extends EntityPathBase<User> {
     public QUser(Class<? extends User> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
         this.integratedAccount = inits.isInitialized("integratedAccount") ? new QIntegratedAccount(forProperty("integratedAccount"), inits.get("integratedAccount")) : null;
-        this.sellerInfo = inits.isInitialized("sellerInfo") ? new liaison.groble.domain.user.vo.QSellerInfo(forProperty("sellerInfo")) : null;
         this.socialAccount = inits.isInitialized("socialAccount") ? new QSocialAccount(forProperty("socialAccount"), inits.get("socialAccount")) : null;
         this.userProfile = inits.isInitialized("userProfile") ? new liaison.groble.domain.user.vo.QUserProfile(forProperty("userProfile")) : null;
         this.userStatusInfo = inits.isInitialized("userStatusInfo") ? new liaison.groble.domain.user.vo.QUserStatusInfo(forProperty("userStatusInfo")) : null;
