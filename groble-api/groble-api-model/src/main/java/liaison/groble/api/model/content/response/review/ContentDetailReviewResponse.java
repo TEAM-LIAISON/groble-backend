@@ -23,6 +23,13 @@ public class ContentDetailReviewResponse {
       requiredMode = Schema.RequiredMode.REQUIRED)
   private Long reviewId;
 
+  @Schema(
+      description = "리뷰 작성자 여부",
+      example = "true",
+      type = "boolean",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private Boolean isReviewManage;
+
   @Schema(description = "리뷰 작성 일시", example = "2025-04-20T10:15:30")
   @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
   private LocalDateTime createdAt;
@@ -62,6 +69,13 @@ public class ContentDetailReviewResponse {
       format = "decimal",
       requiredMode = Schema.RequiredMode.REQUIRED)
   private BigDecimal rating;
+
+  @Schema(
+      description = "리뷰 작성자 주문 고유 ID",
+      example = "order_1234567890",
+      type = "string",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private String merchantUid;
 
   @Schema(
       description = "리뷰에 대한 판매자 답글",

@@ -23,7 +23,7 @@ public class DiscordBusinessMakerVerificationReportService
       BusinessMakerVerificationCreateReportDTO businessMakerVerificationCreateReportDTO) {
     var msg =
         "## 개인 및 법인 사업자 메이커 인증 요청 알림"
-            + "\n\n**회원 생성 ID:** "
+            + "\n\n**회원 ID:** "
             + businessMakerVerificationCreateReportDTO.userId()
             + "\n**회원 닉네임:** "
             + businessMakerVerificationCreateReportDTO.nickname()
@@ -51,7 +51,7 @@ public class DiscordBusinessMakerVerificationReportService
             + businessMakerVerificationCreateReportDTO.businessLicenseFileUrl()
             + "\n**기입한 세금계산서 수취 이메일:** "
             + businessMakerVerificationCreateReportDTO.taxInvoiceEmail()
-            + "\n님이 개인 및 법인 사업자 메이커 인증 요청을 하셨습니다.";
+            + "\n개인 및 법인 사업자 메이커 인증 요청이 들어왔습니다.\n";
 
     discordService.sendMessages(url, msg);
   }

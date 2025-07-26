@@ -37,10 +37,4 @@ public class UserProfile {
   public void updatePhoneNumber(String phoneNumber) {
     this.phoneNumber = phoneNumber;
   }
-
-  public void anonymize() {
-    this.nickname = "탈퇴한 사용자";
-    this.profileImageUrl = null;
-    this.phoneNumber = null;
-  }
 }

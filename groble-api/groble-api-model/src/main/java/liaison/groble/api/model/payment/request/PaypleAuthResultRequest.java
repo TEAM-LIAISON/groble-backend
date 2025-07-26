@@ -183,16 +183,4 @@ public class PaypleAuthResultRequest {
   @Schema(description = "결제 페이지 URL", example = "https://payple.com/pay")
   @JsonProperty("PCD_PAY_URL")
   private String pcdPayUrl;
-
-  public boolean isSuccess() {
-    return "success".equals(payRst);
-  }
-
-  public boolean isError() {
-    return "error".equals(payRst);
-  }
-
-  public boolean isClosed() {
-    return "close".equals(payRst);
-  }
 }

@@ -1,6 +1,5 @@
 package liaison.groble.persistence.terms;
 
-import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Repository;
@@ -14,11 +13,6 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class UserOrderTermsRepositoryImpl implements UserOrderTermsRepository {
   private final JpaUserOrderTermsRepository jpaUserOrderTermsRepository;
-
-  @Override
-  public List<UserOrderTerms> findByUserId(Long userId) {
-    return jpaUserOrderTermsRepository.findByUserId(userId);
-  }
 
   @Override
   public Optional<UserOrderTerms> findByUserIdAndOrderTermsId(Long userId, Long orderTermsId) {

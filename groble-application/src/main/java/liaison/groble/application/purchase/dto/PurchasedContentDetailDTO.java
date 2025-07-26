@@ -9,6 +9,7 @@ import lombok.Getter;
 @Getter
 @Builder
 public class PurchasedContentDetailDTO {
+  // 주문 상태
   private final String orderStatus;
 
   // 주문 기본 정보

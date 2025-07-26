@@ -23,10 +23,10 @@ import liaison.groble.domain.port.VerificationCodePort;
 import liaison.groble.domain.terms.enums.TermsType;
 import liaison.groble.domain.user.entity.IntegratedAccount;
 import liaison.groble.domain.user.entity.User;
+import liaison.groble.domain.user.enums.UserStatus;
 import liaison.groble.domain.user.enums.UserType;
 import liaison.groble.domain.user.factory.UserFactory;
 import liaison.groble.domain.user.repository.UserRepository;
-import liaison.groble.domain.user.service.UserStatusService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -158,8 +158,7 @@ public class IntegratedAccountAuthService {
 
   /** 사용자 상태 활성화 */
   private void activateUser(User user) {
-    UserStatusService userStatusService = new UserStatusService();
-    userStatusService.activate(user);
+    user.getUserStatusInfo().updateStatus(UserStatus.ACTIVE);
   }
 
   /** 토큰 발급 및 저장 */
@@ -176,13 +175,8 @@ public class IntegratedAccountAuthService {
 
   /** 회원가입 후 비동기 작업 처리 */
   private void processPostSignUpTasks(String email, User user) {
-    // 웰컴 알림 발송
-    //
-
     // 인증 플래그 제거 (트랜잭션 커밋 후)
     registerVerificationFlagRemoval(email);
-
-    // Discord 신규 멤버 리포트
   }
 
   /** 인증 플래그 제거 등록 */

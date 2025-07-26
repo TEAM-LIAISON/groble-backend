@@ -59,17 +59,19 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 public class ContentService {
+  // Reader
   private final UserReader userReader;
+  private final ContentReader contentReader;
+  private final ContentReviewReader contentReviewReader;
+
   private final ContentRepository contentRepository;
   private final ContentCustomRepository contentCustomRepository;
   private final CategoryRepository categoryRepository;
-  private final ContentReader contentReader;
-  private final ContentReviewReader contentReviewReader;
   private final DiscordContentRegisterReportService discordContentRegisterReportService;
   private final FileRepository fileRepository;
 
   @Transactional(readOnly = true)
-  public ContentReviewDTO getContentReviews(Long contentId, String sort) {
+  public ContentReviewDTO getContentReviews(Long contentId, String sort, Long userId) {
     List<FlatContentReviewReplyDTO> flatList =
         contentReviewReader.findReviewsWithRepliesByContentId(contentId);
 
@@ -95,15 +97,17 @@ public class ContentService {
                                       .replyContent(row.getReplyContent())
                                       .build())
                           .collect(Collectors.toList());
-
                   return ContentDetailReviewDTO.builder()
                       .reviewId(firstRow.getReviewId())
+                      .isReviewManage(
+                          userId != null && userId.equals(firstRow.getReviewerId()) ? true : false)
                       .createdAt(firstRow.getReviewCreatedAt())
                       .reviewerProfileImageUrl(firstRow.getReviewerProfileImageUrl())
                       .reviewerNickname(firstRow.getReviewerNickname())
                       .reviewContent(firstRow.getReviewContent())
                       .selectedOptionName(firstRow.getSelectedOptionName())
                       .rating(firstRow.getRating())
+                      .merchantUid(firstRow.getMerchantUid())
                       .reviewReplies(replies)
                       .build();
                 })
@@ -139,7 +143,7 @@ public class ContentService {
   }
 
   @Transactional
-  public ContentDTO saveDraftAndReturn(Long userId, ContentDTO contentDTO) {
+  public ContentDTO draftContent(Long userId, ContentDTO contentDTO) {
     // 1. 사용자 조회
     User user = userReader.getUserById(userId);
 
@@ -236,7 +240,7 @@ public class ContentService {
     // 1. 사용자 및 콘텐츠 조회
     Content content = contentReader.getContentById(contentId);
 
-    // 2. 콘텐츠 소유권 확인
+    // 2. 콘텐츠 소유권 확인 (쿼리 추가 발생하지 않나?)
     boolean isOwner = content.getUser().getId().equals(userId);
 
     if (isOwner) {
@@ -630,20 +634,6 @@ public class ContentService {
         .isAvailableForSale(flat.getIsAvailableForSale())
         .status(flat.getStatus())
         .build();
-  }
-
-  /** 커서에서 Content ID를 파싱합니다. */
-  private Long parseContentIdFromCursor(String cursor) {
-    if (cursor == null || cursor.isBlank()) {
-      return null;
-    }
-
-    try {
-      return Long.parseLong(cursor);
-    } catch (NumberFormatException e) {
-      log.warn("유효하지 않은 커서 형식: {}", cursor);
-      return null;
-    }
   }
 
   private ContentType parseContentType(String type) {

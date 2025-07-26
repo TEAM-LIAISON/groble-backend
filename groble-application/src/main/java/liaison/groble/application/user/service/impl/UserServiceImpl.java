@@ -10,7 +10,6 @@ import liaison.groble.application.user.dto.UserMyPageDetailDTO;
 import liaison.groble.application.user.dto.UserMyPageSummaryDTO;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.application.user.service.UserService;
-import liaison.groble.common.exception.EntityNotFoundException;
 import liaison.groble.common.port.security.SecurityPort;
 import liaison.groble.domain.terms.enums.TermsType;
 import liaison.groble.domain.user.entity.IntegratedAccount;
@@ -77,63 +76,6 @@ public class UserServiceImpl implements UserService {
 
     log.info("역할 전환 성공: {} → {}", user.getEmail(), userType);
     return true;
-  }
-
-  @Override
-  @Transactional(readOnly = true)
-  public String getUserType(String email) {
-    // 이메일로 계정 찾기
-    IntegratedAccount account =
-        integratedAccountRepository
-            .findByIntegratedAccountEmail(email)
-            .orElseThrow(() -> new IllegalArgumentException("등록되지 않은 이메일입니다."));
-
-    User user = account.getUser();
-    return user.getLastUserType().name();
-  }
-
-  @Override
-  @Transactional(readOnly = true)
-  public String getNextRoutePath(String email) {
-    IntegratedAccount account =
-        integratedAccountRepository
-            .findByIntegratedAccountEmail(email)
-            .orElseThrow(() -> new IllegalArgumentException("등록되지 않은 이메일입니다."));
-
-    User user = account.getUser();
-
-    return null;
-  }
-
-  @Override
-  public void setOrUpdatePassword(Long userId, String password) {
-    User user =
-        userRepository
-            .findById(userId)
-            .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
-
-    // 1. 비밀번호 인코딩
-    String encodedPassword = securityPort.encodePassword(password);
-
-    user.getIntegratedAccount().updatePassword(encodedPassword);
-    userRepository.save(user);
-  }
-
-  @Override
-  public void resetPasswordWithToken(String token, String newPassword) {
-    // 토큰 검증 및 이메일 추출
-    String email = securityPort.validatePasswordResetTokenAndGetEmail(token, passwordResetSecret);
-
-    // 이메일로 사용자 계정 찾기
-    IntegratedAccount integratedAccount =
-        integratedAccountRepository
-            .findByIntegratedAccountEmail(email)
-            .orElseThrow(() -> new IllegalArgumentException("해당 이메일로 가입된 사용자가 없습니다."));
-
-    // 비밀번호 인코딩 후 저장
-    String encodedPassword = securityPort.encodePassword(newPassword);
-    integratedAccount.updatePassword(encodedPassword);
-    userRepository.save(integratedAccount.getUser());
   }
 
   @Override
@@ -206,25 +148,6 @@ public class UserServiceImpl implements UserService {
         .verificationStatus(verificationStatus)
         .alreadyRegisteredAsSeller(user.isSeller())
         .build();
-  }
-
-  @Override
-  public void setInitialUserType(Long userId, String userTypeName) {
-    User user =
-        userRepository
-            .findById(userId)
-            .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
-
-    // 역할 설정
-    UserType userType;
-    try {
-      userType = UserType.valueOf(userTypeName.toUpperCase());
-    } catch (IllegalArgumentException | NullPointerException e) {
-      throw new IllegalArgumentException("유효하지 않은 사용자 유형입니다: " + userTypeName);
-    }
-
-    user.updateLastUserType(userType);
-    userRepository.save(user);
   }
 
   @Override

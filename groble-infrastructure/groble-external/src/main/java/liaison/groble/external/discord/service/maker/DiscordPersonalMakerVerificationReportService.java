@@ -23,7 +23,7 @@ public class DiscordPersonalMakerVerificationReportService
       final PersonalMakerVerificationCreateReportDTO personalMakerVerificationCreateReportDTO) {
     var msg =
         "## 개인 메이커 인증 요청 알림"
-            + "\n\n**회원 생성 ID:** "
+            + "\n\n**회원 ID:** "
             + personalMakerVerificationCreateReportDTO.userId()
             + "\n**회원 닉네임:** "
             + personalMakerVerificationCreateReportDTO.nickname()
@@ -35,7 +35,7 @@ public class DiscordPersonalMakerVerificationReportService
             + personalMakerVerificationCreateReportDTO.bankAccountNumber()
             + "\n**업로드한 통장 사본 첨부 URL:** "
             + personalMakerVerificationCreateReportDTO.copyOfBankbookUrl()
-            + "\n님이 개인 메이커 인증 요청을 하셨습니다.";
+            + "\n개인 메이커 인증 요청이 들어왔습니다.\n";
 
     discordService.sendMessages(url, msg);
   }

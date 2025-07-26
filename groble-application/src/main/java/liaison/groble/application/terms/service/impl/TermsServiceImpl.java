@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import liaison.groble.application.auth.helper.UserHelper;
 import liaison.groble.application.terms.dto.MakerTermsAgreementDTO;
 import liaison.groble.application.terms.service.TermsService;
 import liaison.groble.application.user.service.UserReader;
@@ -29,6 +30,7 @@ public class TermsServiceImpl implements TermsService {
   private final UserRepository userRepository;
 
   private final UserReader userReader;
+  private final UserHelper userHelper;
 
   @Override
   public boolean getAdvertisingAgreementStatus(Long userId) {
@@ -77,6 +79,8 @@ public class TermsServiceImpl implements TermsService {
     user.updateMakerTermsAgreement(currentMakerTerms, true, clientIp, userAgent);
     user.setSeller(true);
     user.setSellerInfo(SellerInfo.ofVerificationStatus(SellerVerificationStatus.PENDING));
+
+    userHelper.addSellerRole(user);
 
     // 5. 사용자 저장
     User savedUser = userRepository.save(user);

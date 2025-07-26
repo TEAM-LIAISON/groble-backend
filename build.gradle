@@ -159,6 +159,9 @@ project(':groble-api:groble-api-server') {
         // Payple 결제 연동을 위한 의존성
         implementation 'org.apache.httpcomponents:httpclient:4.5.13'
         implementation 'com.googlecode.json-simple:json-simple:1.1'
+
+        // Retry
+        implementation 'org.springframework.retry:spring-retry'
     }
 
     tasks.named('bootJar') {
@@ -207,6 +210,8 @@ project(':groble-application') {
         // Loki 로그 연동 (Logback Appender)
         implementation 'com.github.loki4j:loki-logback-appender:1.5.1'
 
+        // Retry
+        implementation 'org.springframework.retry:spring-retry'
     }
 }
 

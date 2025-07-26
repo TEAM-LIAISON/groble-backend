@@ -6,6 +6,7 @@ import java.time.ZoneId;
 
 import org.springframework.stereotype.Service;
 
+import liaison.groble.application.auth.helper.UserHelper;
 import liaison.groble.application.notification.service.NotificationService;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.common.utils.CodeGenerator;
@@ -40,6 +41,7 @@ public class PhoneAuthService {
   // Service
   private final NotificationService notificationService;
   private final DiscordMemberReportService discordMemberReportService;
+  private final UserHelper userHelper;
 
   /** 로그인한 사용자의 전화번호 인증 코드 발송 - 기존 전화번호와 중복 체크 - 사용자별 Redis 키로 저장 */
   public void sendVerificationCodeForUser(Long userId, String phoneNumber) {
@@ -83,6 +85,7 @@ public class PhoneAuthService {
       // 2. /sign-up 플로우에서 전화번호를 인증하는 경우
       if (user.isMakerTermsAgreed()) { // 메이커 이용 약관에 동의를 한 경우
         user.updateMarketName(user.getNickname() + "님의 마켓");
+        userHelper.addSellerRole(user);
       }
       user.updatePhoneNumber(phoneNumber);
       notificationService.sendWelcomeNotification(user);

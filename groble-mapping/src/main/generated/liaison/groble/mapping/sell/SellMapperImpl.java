@@ -25,7 +25,7 @@ import liaison.groble.mapping.content.ContentReplyMapper;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-07-19T17:17:01+0900",
+    date = "2025-07-25T22:40:31+0900",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.10 (Amazon.com Inc.)")
 @Component
 public class SellMapperImpl implements SellMapper {

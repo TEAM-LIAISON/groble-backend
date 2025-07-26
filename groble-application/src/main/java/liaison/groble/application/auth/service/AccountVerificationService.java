@@ -6,8 +6,6 @@ import org.springframework.transaction.annotation.Transactional;
 import liaison.groble.application.auth.dto.VerifyBusinessMakerAccountDTO;
 import liaison.groble.application.auth.dto.VerifyPersonalMakerAccountDTO;
 import liaison.groble.application.user.service.UserReader;
-import liaison.groble.domain.role.Role;
-import liaison.groble.domain.role.repository.RoleRepository;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.enums.BusinessType;
 import liaison.groble.domain.user.enums.SellerVerificationStatus;
@@ -24,7 +22,6 @@ public class AccountVerificationService {
 
   // Repository
   private final UserReader userReader;
-  private final RoleRepository roleRepository;
 
   // Discord
   private final DiscordPersonalMakerVerificationReportService
@@ -112,17 +109,5 @@ public class AccountVerificationService {
 
   private void updateSellerVerificationStatus(User user) {
     user.getSellerInfo().updateVerificationStatus(SellerVerificationStatus.IN_PROGRESS, null);
-
-    Role roleSeller =
-        roleRepository
-            .findByName("ROLE_SELLER")
-            .orElseThrow(() -> new RuntimeException("메이커 역할(ROLE_SELLER)을 찾을 수 없습니다."));
-
-    boolean hasRole =
-        user.getUserRoles().stream().anyMatch(userRole -> userRole.getRole().equals(roleSeller));
-
-    if (!hasRole) {
-      user.addRole(roleSeller);
-    }
   }
 }

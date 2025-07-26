@@ -22,9 +22,6 @@ import lombok.extern.slf4j.Slf4j;
 public class AsyncConfig implements AsyncConfigurer {
   private final MeterRegistry meterRegistry;
 
-  private int coreSize = 4;
-  private int maxSize = 10;
-
   /**
    * 1) 앱 내 일반 비동기 작업용 Executor
    *

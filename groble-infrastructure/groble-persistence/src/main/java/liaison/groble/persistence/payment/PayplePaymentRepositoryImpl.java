@@ -15,6 +15,11 @@ public class PayplePaymentRepositoryImpl implements PayplePaymentRepository {
   private final JpaPayplePaymentRepository jpaPayplePaymentRepository;
 
   @Override
+  public Optional<PayplePayment> findById(Long payplePaymentId) {
+    return jpaPayplePaymentRepository.findById(payplePaymentId);
+  }
+
+  @Override
   public PayplePayment save(PayplePayment payplePayment) {
     return jpaPayplePaymentRepository.save(payplePayment);
   }

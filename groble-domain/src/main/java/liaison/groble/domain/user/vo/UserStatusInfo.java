@@ -34,15 +34,7 @@ public class UserStatusInfo {
     this.statusChangedAt = Instant.now();
   }
 
-  public boolean isAccessible() {
-    return status.isAccessible();
-  }
-
   public boolean isLoginable() {
     return status.isLoginable();
-  }
-
-  public boolean isPendingVerification() {
-    return status == UserStatus.PENDING_VERIFICATION;
   }
 }
