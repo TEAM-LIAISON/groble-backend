@@ -62,10 +62,6 @@ public class SellerInfo {
   @Column(name = "business_name")
   private String businessName;
 
-  /** 사업자등록번호 (000-00-00000 형식) */
-  @Column(name = "business_number")
-  private String businessNumber;
-
   /** 업태 (도소매업, 서비스업, 제조업 등) */
   @Column(name = "business_sector")
   private String businessSector;
@@ -140,9 +136,6 @@ public class SellerInfo {
     if (updatedInfo.getBusinessName() != null) {
       this.businessName = updatedInfo.getBusinessName();
     }
-    if (updatedInfo.getBusinessNumber() != null) {
-      this.businessNumber = updatedInfo.getBusinessNumber();
-    }
     if (updatedInfo.getBusinessSector() != null) {
       this.businessSector = updatedInfo.getBusinessSector();
     }
@@ -183,7 +176,6 @@ public class SellerInfo {
   public boolean isValidBusinessInfo() {
     // 공통 필수 정보 검증
     if (businessName == null
-        || businessNumber == null
         || businessType == null
         || businessAddress == null
         || representativeName == null
@@ -192,11 +184,6 @@ public class SellerInfo {
         || bankName == null
         || bankAccountNumber == null
         || bankAccountOwner == null) {
-      return false;
-    }
-
-    // 사업자등록번호 형식 검증 (000-00-00000)
-    if (!businessNumber.matches("\\d{3}-\\d{2}-\\d{5}")) {
       return false;
     }
 
@@ -211,7 +198,6 @@ public class SellerInfo {
   // 판매자 정보 익명화 로직
   public void anonymize() {
     this.businessName = null;
-    this.businessNumber = null;
     this.businessSector = null;
     this.businessCategory = null;
     this.businessAddress = null;

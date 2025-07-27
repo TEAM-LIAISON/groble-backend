@@ -36,8 +36,6 @@ public class QSellerInfo extends EntityPathBase<SellerInfo> {
 
     public final StringPath businessName = createString("businessName");
 
-    public final StringPath businessNumber = createString("businessNumber");
-
     public final StringPath businessSector = createString("businessSector");
 
     public final BooleanPath businessSellerRequest = createBoolean("businessSellerRequest");
