@@ -20,10 +20,12 @@ import liaison.groble.api.model.maker.response.MakerIntroSectionResponse;
 import liaison.groble.application.content.dto.ContentCardDTO;
 import liaison.groble.application.market.dto.MarketEditDTO;
 import liaison.groble.application.market.dto.MarketIntroSectionDTO;
+import liaison.groble.application.market.dto.MarketViewCountDTO;
 import liaison.groble.application.market.service.MarketService;
 import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.annotation.Logging;
 import liaison.groble.common.model.Accessor;
+import liaison.groble.common.request.RequestUtil;
 import liaison.groble.common.response.GrobleResponse;
 import liaison.groble.common.response.PageResponse;
 import liaison.groble.common.response.ResponseHelper;
@@ -72,6 +74,9 @@ public class MarketController {
   // Helper
   private final ResponseHelper responseHelper;
 
+  // Util
+  private final RequestUtil requestUtil;
+
   @Operation(
       summary = "[✅ 마켓 관리] 마켓 수정창 화면에서 메이커 정보 및 대표 콘텐츠 조회",
       description = "마켓 수정창 화면에서 메이커 정보를 조회하고 대표 콘텐츠가 존재한다면, 대표 콘텐츠 1개에 대한 정보를 반환합니다.")
@@ -99,9 +104,18 @@ public class MarketController {
   @GetMapping(MARKET_INTRO_PATH)
   @Logging(item = "Market", action = "getViewerMakerIntroSection", includeResult = true)
   public ResponseEntity<GrobleResponse<MakerIntroSectionResponse>> getViewerMakerIntroSection(
-      @Valid @PathVariable("marketLinkUrl") String marketLinkUrl) {
+      @Auth Accessor accessor, @Valid @PathVariable("marketLinkUrl") String marketLinkUrl) {
+
+    MarketViewCountDTO marketViewCountDTO =
+        MarketViewCountDTO.builder()
+            .userId(accessor.getUserId())
+            .ip(requestUtil.getClientIp())
+            .userAgent(requestUtil.getUserAgent())
+            .referer(null)
+            .build();
+
     MarketIntroSectionDTO makerIntroSectionDTO =
-        marketService.getViewerMakerIntroSection(marketLinkUrl);
+        marketService.getViewerMakerIntroSection(marketLinkUrl, marketViewCountDTO);
     MakerIntroSectionResponse response =
         marketMapper.toMakerIntroSectionResponse(makerIntroSectionDTO);
 

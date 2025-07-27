@@ -13,6 +13,7 @@ import liaison.groble.application.content.dto.ContentCardDTO;
 import liaison.groble.application.market.dto.ContactInfoDTO;
 import liaison.groble.application.market.dto.MarketEditDTO;
 import liaison.groble.application.market.dto.MarketIntroSectionDTO;
+import liaison.groble.application.market.dto.MarketViewCountDTO;
 import liaison.groble.application.sell.SellerContactReader;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.common.exception.DuplicateMarketLinkException;
@@ -33,7 +34,8 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 public class MarketService {
-
+  // Service
+  private final MarketViewCountService marketViewCountService;
   // Reader
   private final SellerContactReader sellerContactReader;
   private final ContentReader contentReader;
@@ -64,11 +66,14 @@ public class MarketService {
   }
 
   @Transactional(readOnly = true)
-  public MarketIntroSectionDTO getViewerMakerIntroSection(String marketLinkUrl) {
+  public MarketIntroSectionDTO getViewerMakerIntroSection(
+      String marketLinkUrl, MarketViewCountDTO marketViewCountDTO) {
     // 마켓 이름으로 메이커 조회
     Market market = userReader.getMarketWithUser(marketLinkUrl);
 
     User user = market.getUser();
+
+    marketViewCountService.recordMarketView(market.getId(), marketViewCountDTO);
 
     SellerInfo sellerInfo = userReader.getSellerInfo(user.getId());
     // 문의하기 정보 조회
