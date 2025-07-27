@@ -18,4 +18,19 @@ public class MarketRepositoryImpl implements MarketRepository {
   public Optional<Market> findByUserId(Long userId) {
     return jpaMarketRepository.findByUserId(userId);
   }
+
+  @Override
+  public Optional<Market> findByMarketLinkUrl(String marketLinkUrl) {
+    return jpaMarketRepository.findByMarketLinkUrl(marketLinkUrl);
+  }
+
+  @Override
+  public boolean existsByMarketLinkUrl(String marketLinkUrl) {
+    return jpaMarketRepository.existsByMarketLinkUrl(marketLinkUrl);
+  }
+
+  @Override
+  public Market save(Market market) {
+    return jpaMarketRepository.save(market);
+  }
 }

@@ -17,6 +17,7 @@ import liaison.groble.domain.market.exception.InvalidMarketNameException;
 import liaison.groble.domain.user.entity.User;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -29,6 +30,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(name = "markets")
 @Getter
+@Builder
 @NoArgsConstructor(access = PROTECTED)
 @AllArgsConstructor
 public class Market extends BaseTimeEntity {
@@ -47,6 +49,10 @@ public class Market extends BaseTimeEntity {
   // 마켓 링크 URL
   @Column(name = "market_link_url", length = 32)
   private String marketLinkUrl;
+
+  public static Market createForUser(User user) {
+    return Market.builder().user(user).build();
+  }
 
   // 마켓 이름 변경 메소드
   public void changeMarketName(String marketName) {

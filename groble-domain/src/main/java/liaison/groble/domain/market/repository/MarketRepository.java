@@ -6,4 +6,10 @@ import liaison.groble.domain.market.entity.Market;
 
 public interface MarketRepository {
   Optional<Market> findByUserId(Long userId);
+
+  Optional<Market> findByMarketLinkUrl(String marketLinkUrl);
+
+  boolean existsByMarketLinkUrl(String marketLinkUrl);
+
+  Market save(Market market);
 }

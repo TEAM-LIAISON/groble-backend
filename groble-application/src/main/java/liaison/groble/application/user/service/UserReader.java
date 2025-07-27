@@ -57,6 +57,12 @@ public class UserReader {
         .orElseThrow(() -> new EntityNotFoundException("사용자의 판매자 정보를 찾을 수 없습니다."));
   }
 
+  public Market getMarketWithUser(String marketLinkUrl) {
+    return marketRepository
+        .findByMarketLinkUrl(marketLinkUrl)
+        .orElseThrow(() -> new EntityNotFoundException("해당 마켓 링크 URL을 가진 마켓 정보를 찾을 수 없습니다."));
+  }
+
   // userId로 Market 조회
   public Market getMarket(Long userId) {
     return marketRepository
@@ -102,6 +108,6 @@ public class UserReader {
   }
 
   public boolean existsByMarketLinkUrl(String marketLinkUrl) {
-    return userRepository.existsBySellerInfoMarketLinkUrl(marketLinkUrl);
+    return marketRepository.existsByMarketLinkUrl(marketLinkUrl);
   }
 }

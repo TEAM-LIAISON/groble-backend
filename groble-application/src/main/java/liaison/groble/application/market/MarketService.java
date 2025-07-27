@@ -14,7 +14,6 @@ import liaison.groble.application.market.dto.ContactInfoDTO;
 import liaison.groble.application.market.dto.MarketEditDTO;
 import liaison.groble.application.market.dto.MarketIntroSectionDTO;
 import liaison.groble.application.sell.SellerContactReader;
-import liaison.groble.application.user.service.MakerReader;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.common.exception.DuplicateMarketLinkException;
 import liaison.groble.common.response.PageResponse;
@@ -36,7 +35,6 @@ import lombok.extern.slf4j.Slf4j;
 public class MarketService {
 
   // Reader
-  private final MakerReader makerReader;
   private final SellerContactReader sellerContactReader;
   private final ContentReader contentReader;
   private final UserReader userReader;
@@ -68,9 +66,11 @@ public class MarketService {
   @Transactional(readOnly = true)
   public MarketIntroSectionDTO getViewerMakerIntroSection(String marketLinkUrl) {
     // 마켓 이름으로 메이커 조회
-    User user = makerReader.getUserByMarketLinkUrl(marketLinkUrl);
+    Market market = userReader.getMarketWithUser(marketLinkUrl);
+
+    User user = market.getUser();
+
     SellerInfo sellerInfo = userReader.getSellerInfo(user.getId());
-    Market market = userReader.getMarket(user.getId());
     // 문의하기 정보 조회
     ContactInfoDTO contactInfo = getContactInfo(user);
 
@@ -85,10 +85,10 @@ public class MarketService {
   @Transactional(readOnly = true)
   public PageResponse<ContentCardDTO> getMarketContents(String marketLinkUrl, Pageable pageable) {
     // 마켓 이름으로 메이커 조회
-    User user = makerReader.getUserByMarketLinkUrl(marketLinkUrl);
+    Market market = userReader.getMarketWithUser(marketLinkUrl);
 
     Page<FlatContentPreviewDTO> page =
-        contentReader.findAllMarketContentsByUserIdWithPaging(user.getId(), pageable);
+        contentReader.findAllMarketContentsByUserIdWithPaging(market.getUser().getId(), pageable);
 
     List<ContentCardDTO> items =
         page.getContent().stream().map(this::convertFlatDTOToCardDTO).toList();
@@ -179,9 +179,8 @@ public class MarketService {
         sellerContactReader.findByUserAndContactType(user, contactType).orElse(null);
 
     if (sellerContact != null) {
-      sellerContact.updateContactValue(contactValue);
+      sellerContact.changeContactValue(contactValue);
     } else {
-      // 없으면 새로 생성
       sellerContact =
           SellerContact.builder()
               .user(user)

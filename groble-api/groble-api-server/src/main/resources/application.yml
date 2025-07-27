@@ -53,7 +53,7 @@ spring:
         order_inserts: true
         order_updates: true
     hibernate:
-        ddl-auto: validate
+        ddl-auto: create
   sql:
     init:
       mode: always
@@ -78,14 +78,6 @@ storage:
   provider: local
 
 app:
-  jwt:
-    access-token:
-      secret: 6M1boNRsyYPgKuR197f4w2uuh8DXfYyjxgPJKmINtHo=
-      expiration-ms: 3600000 # 1 hour
-    refresh-token:
-      secret: bZvf0E0wsJXugzxv2m25c5zHvJrNfvsQIjzU6eBScbk=
-      expiration-ms: 604800000 # 1 hour
-    issuer: groble-auth-service
   frontend-url: http://localhost:3000
   backend-url: http://localhost:8080
   cookie:
