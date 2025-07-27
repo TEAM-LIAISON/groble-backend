@@ -3,7 +3,7 @@ package liaison.groble.security.auth.adapter;
 import static liaison.groble.security.jwt.TokenType.ACCESS;
 import static liaison.groble.security.jwt.TokenType.REFRESH;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -42,8 +42,8 @@ public class SecurityAdapter implements SecurityPort {
   }
 
   @Override
-  public Instant getRefreshTokenExpirationTime(String refreshToken) {
-    return jwtTokenProvider.getRefreshTokenExpirationInstant(refreshToken);
+  public LocalDateTime getRefreshTokenExpirationTime(String refreshToken) {
+    return jwtTokenProvider.getRefreshTokenExpirationAt(refreshToken);
   }
 
   @Override

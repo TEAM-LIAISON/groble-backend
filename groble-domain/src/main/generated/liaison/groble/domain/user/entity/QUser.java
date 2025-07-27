@@ -35,13 +35,13 @@ public class QUser extends EntityPathBase<User> {
 
     public final BooleanPath isSeller = createBoolean("isSeller");
 
-    public final DateTimePath<java.time.Instant> lastLoginAt = createDateTime("lastLoginAt", java.time.Instant.class);
+    public final DateTimePath<java.time.LocalDateTime> lastLoginAt = createDateTime("lastLoginAt", java.time.LocalDateTime.class);
 
     public final EnumPath<liaison.groble.domain.user.enums.UserType> lastUserType = createEnum("lastUserType", liaison.groble.domain.user.enums.UserType.class);
 
     public final StringPath refreshToken = createString("refreshToken");
 
-    public final DateTimePath<java.time.Instant> refreshTokenExpiresAt = createDateTime("refreshTokenExpiresAt", java.time.Instant.class);
+    public final DateTimePath<java.time.LocalDateTime> refreshTokenExpiresAt = createDateTime("refreshTokenExpiresAt", java.time.LocalDateTime.class);
 
     public final QSocialAccount socialAccount;
 

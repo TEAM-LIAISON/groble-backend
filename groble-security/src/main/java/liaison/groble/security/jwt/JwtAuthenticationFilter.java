@@ -1,7 +1,10 @@
 package liaison.groble.security.jwt;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 import jakarta.servlet.FilterChain;
@@ -194,12 +197,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
       String newAccess =
           jwtTokenProvider.createAccessTokenWithRefreshConstraint(userId, email, refreshToken);
 
-      Instant refreshExpiration = jwtTokenProvider.getRefreshTokenExpirationInstant(refreshToken);
+      LocalDateTime refreshExpiration = jwtTokenProvider.getRefreshTokenExpirationAt(refreshToken);
+      Instant refreshInstant = refreshExpiration.atZone(ZoneId.systemDefault()).toInstant();
       Instant now = Instant.now();
       int maxAge =
           (int)
               Math.min(
-                  (refreshExpiration.toEpochMilli() - now.toEpochMilli()) / 1000,
+                  Duration.between(now, refreshInstant).getSeconds(),
                   jwtTokenProvider.getAccessTokenExpirationMs() / 1000);
 
       log.info("액세스 토큰 재발급 성공 - userId: {}", userId);

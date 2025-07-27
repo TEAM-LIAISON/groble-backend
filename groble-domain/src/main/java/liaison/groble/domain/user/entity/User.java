@@ -3,7 +3,7 @@ package liaison.groble.domain.user.entity;
 import static jakarta.persistence.EnumType.STRING;
 import static lombok.AccessLevel.PROTECTED;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -76,11 +76,11 @@ public class User extends BaseTimeEntity {
   private String refreshToken;
 
   @Column(name = "refresh_token_expires_at")
-  private Instant refreshTokenExpiresAt;
+  private LocalDateTime refreshTokenExpiresAt;
 
   /** 마지막 로그인 시간 */
   @Column(name = "last_login_at")
-  private Instant lastLoginAt;
+  private LocalDateTime lastLoginAt;
 
   /** 마지막으로 사용한 사용자 유형 (SELLER 또는 BUYER) */
   @Enumerated(STRING)
@@ -120,10 +120,10 @@ public class User extends BaseTimeEntity {
 
   /** 로그인 시간 업데이트 */
   public void updateLoginTime() {
-    this.lastLoginAt = Instant.now();
+    this.lastLoginAt = LocalDateTime.now();
   }
 
-  public void updateRefreshToken(String refreshToken, Instant refreshTokenExpiresAt) {
+  public void updateRefreshToken(String refreshToken, LocalDateTime refreshTokenExpiresAt) {
     this.refreshToken = refreshToken;
     this.refreshTokenExpiresAt = refreshTokenExpiresAt;
   }
@@ -237,14 +237,14 @@ public class User extends BaseTimeEntity {
             .orElse(null);
 
     if (existingAgreement != null) {
-      existingAgreement.updateAgreement(agreed, Instant.now(), ip, userAgent);
+      existingAgreement.updateAgreement(agreed, LocalDateTime.now(), ip, userAgent);
     } else {
       UserTerms newAgreement =
           UserTerms.builder()
               .user(this)
               .terms(advertisingTerms)
               .agreed(agreed)
-              .agreedAt(Instant.now())
+              .agreedAt(LocalDateTime.now())
               .agreedIp(ip)
               .agreedUserAgent(userAgent)
               .build();
@@ -275,7 +275,7 @@ public class User extends BaseTimeEntity {
 
     if (existingAgreement != null) {
       // 기존 동의 내역 업데이트
-      existingAgreement.updateAgreement(agreed, Instant.now(), ip, userAgent);
+      existingAgreement.updateAgreement(agreed, LocalDateTime.now(), ip, userAgent);
     } else {
       // 새로운 동의 내역 생성
       UserTerms newAgreement =
@@ -283,7 +283,7 @@ public class User extends BaseTimeEntity {
               .user(this)
               .terms(makerTerms)
               .agreed(agreed)
-              .agreedAt(Instant.now())
+              .agreedAt(LocalDateTime.now())
               .agreedIp(ip)
               .agreedUserAgent(userAgent)
               .build();

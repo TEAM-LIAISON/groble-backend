@@ -24,7 +24,7 @@ public class QUserOrderTerms extends EntityPathBase<UserOrderTerms> {
 
     public final BooleanPath agreed = createBoolean("agreed");
 
-    public final DateTimePath<java.time.Instant> agreedAt = createDateTime("agreedAt", java.time.Instant.class);
+    public final DateTimePath<java.time.LocalDateTime> agreedAt = createDateTime("agreedAt", java.time.LocalDateTime.class);
 
     public final StringPath agreedIp = createString("agreedIp");
 

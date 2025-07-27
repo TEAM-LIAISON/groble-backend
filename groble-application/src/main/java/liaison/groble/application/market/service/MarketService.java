@@ -1,4 +1,4 @@
-package liaison.groble.application.market;
+package liaison.groble.application.market.service;
 
 import java.util.List;
 import java.util.Optional;

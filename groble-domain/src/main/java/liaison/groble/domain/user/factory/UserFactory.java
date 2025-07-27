@@ -1,6 +1,6 @@
 package liaison.groble.domain.user.factory;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 import liaison.groble.domain.user.entity.IntegratedAccount;
 import liaison.groble.domain.user.entity.SocialAccount;
@@ -19,7 +19,10 @@ public class UserFactory {
 
     // 상태 정보 생성
     UserStatusInfo userStatusInfo =
-        UserStatusInfo.builder().status(UserStatus.ACTIVE).statusChangedAt(Instant.now()).build();
+        UserStatusInfo.builder()
+            .status(UserStatus.ACTIVE)
+            .statusChangedAt(LocalDateTime.now())
+            .build();
 
     // User 엔티티 생성
     User user =
@@ -50,7 +53,10 @@ public class UserFactory {
 
     // 상태 정보 생성
     UserStatusInfo statusInfo =
-        UserStatusInfo.builder().status(UserStatus.ACTIVE).statusChangedAt(Instant.now()).build();
+        UserStatusInfo.builder()
+            .status(UserStatus.ACTIVE)
+            .statusChangedAt(LocalDateTime.now())
+            .build();
 
     // User 엔티티 생성
     User user =
@@ -81,7 +87,10 @@ public class UserFactory {
 
     // 상태 정보 생성
     UserStatusInfo userStatusInfo =
-        UserStatusInfo.builder().status(UserStatus.ACTIVE).statusChangedAt(Instant.now()).build();
+        UserStatusInfo.builder()
+            .status(UserStatus.ACTIVE)
+            .statusChangedAt(LocalDateTime.now())
+            .build();
 
     // User 엔티티 생성
     User user =

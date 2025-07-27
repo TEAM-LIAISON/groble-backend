@@ -1,6 +1,5 @@
 package liaison.groble.application.terms.dto;
 
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -24,7 +23,7 @@ public class TermsAgreementDTO {
   private boolean required;
   private String contentUrl;
   private boolean agreed;
-  private Instant agreedAt;
+  private LocalDateTime agreedAt;
   private String ipAddress;
   private String userAgent;
   private LocalDateTime effectiveFrom;
