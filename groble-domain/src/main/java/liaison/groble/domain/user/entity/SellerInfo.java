@@ -274,10 +274,12 @@ public class SellerInfo {
     this.verificationStatus = sellerVerificationStatus;
   }
 
+  // 메이커 인증 거절
   public void updateRejectedMaker(SellerVerificationStatus sellerVerificationStatus) {
     this.verificationStatus = sellerVerificationStatus;
   }
 
+  // 판매자 정보 생성 팩토리 메소드
   public static SellerInfo createForUser(User user) {
     return SellerInfo.builder()
         .user(user)

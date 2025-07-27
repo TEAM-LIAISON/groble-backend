@@ -1,0 +1,45 @@
+package liaison.groble.domain.market.entity;
+
+import static com.querydsl.core.types.PathMetadataFactory.*;
+
+import com.querydsl.core.types.dsl.*;
+
+import com.querydsl.core.types.PathMetadata;
+import javax.annotation.processing.Generated;
+import com.querydsl.core.types.Path;
+
+
+/**
+ * QMarketViewStats is a Querydsl query type for MarketViewStats
+ */
+@Generated("com.querydsl.codegen.DefaultEntitySerializer")
+public class QMarketViewStats extends EntityPathBase<MarketViewStats> {
+
+    private static final long serialVersionUID = -145489807L;
+
+    public static final QMarketViewStats marketViewStats = new QMarketViewStats("marketViewStats");
+
+    public final liaison.groble.domain.common.entity.QBaseTimeEntity _super = new liaison.groble.domain.common.entity.QBaseTimeEntity(this);
+
+    //inherited
+    public final DateTimePath<java.time.LocalDateTime> createdAt = _super.createdAt;
+
+    public final NumberPath<Long> id = createNumber("id", Long.class);
+
+    //inherited
+    public final DateTimePath<java.time.LocalDateTime> updatedAt = _super.updatedAt;
+
+    public QMarketViewStats(String variable) {
+        super(MarketViewStats.class, forVariable(variable));
+    }
+
+    public QMarketViewStats(Path<? extends MarketViewStats> path) {
+        super(path.getType(), path.getMetadata());
+    }
+
+    public QMarketViewStats(PathMetadata metadata) {
+        super(MarketViewStats.class, metadata);
+    }
+
+}
+
