@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class MarketViewCountService {
 
+  // Repository
   private final MarketViewLogRepository marketViewLogRepository;
 
   // Port
