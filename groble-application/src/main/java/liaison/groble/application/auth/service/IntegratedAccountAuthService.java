@@ -74,6 +74,11 @@ public class IntegratedAccountAuthService {
       // 3. 사용자 저장 및 후처리
       User savedUser = userRepository.save(user);
 
+      if (userType == UserType.SELLER) {
+        SellerInfo sellerInfo = SellerInfo.createForUser(user);
+        sellerInfoRepository.save(sellerInfo);
+      }
+
       // 4. 토큰 발급 및 저장
       TokenDTO tokenDTO = issueAndSaveTokens(savedUser);
 
@@ -140,11 +145,6 @@ public class IntegratedAccountAuthService {
     String encodedPassword = securityPort.encodePassword(signUpDTO.getPassword());
 
     User user = createUserByType(signUpDTO.getEmail(), encodedPassword, userType);
-
-    if (userType == UserType.SELLER) {
-      SellerInfo sellerInfo = SellerInfo.createForUser(user);
-      sellerInfoRepository.save(sellerInfo);
-    }
 
     // 기본 설정 적용
     userHelper.addDefaultRole(user);
