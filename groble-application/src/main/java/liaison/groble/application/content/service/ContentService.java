@@ -7,12 +7,9 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
@@ -290,6 +287,7 @@ public class ContentService {
     // 옵션 목록 변환 - ContentOptionDTO 사용
     List<ContentOptionDTO> optionDTOs =
         content.getOptions().stream()
+            .filter(ContentOption::isActive) // is_active = true인 옵션만 필터링
             .map(
                 option -> {
                   ContentOptionDTO.ContentOptionDTOBuilder builder =
@@ -948,105 +946,6 @@ public class ContentService {
       return List.of(contentStatus);
     } catch (IllegalArgumentException e) {
       return Collections.emptyList();
-    }
-  }
-
-  private void updateContentOptions(Content content, List<ContentOptionDTO> newOptionDTOs) {
-    if (newOptionDTOs == null) {
-      newOptionDTOs = new ArrayList<>();
-      log.debug("No new options provided, initializing empty list");
-    }
-
-    Map<Long, ContentOption> existingOptionsMap =
-        content.getOptions().stream()
-            .filter(option -> option.getId() != null)
-            .collect(Collectors.toMap(ContentOption::getId, Function.identity()));
-
-    Set<Long> processedOptionIds = new HashSet<>();
-    List<BigDecimal> validPrices = new ArrayList<>();
-
-    // 새 옵션 처리
-    for (ContentOptionDTO optionDTO : newOptionDTOs) {
-      Long dtoId = optionDTO.getContentOptionId();
-      if (dtoId != null) {
-        // 기존 옵션 업데이트
-        ContentOption existingOption = existingOptionsMap.get(dtoId);
-        if (existingOption != null) {
-          if (content.getSaleCount() > 0) {
-            log.info(
-                "Sale count > 0, only updating price for option id={} to {}",
-                dtoId,
-                optionDTO.getPrice());
-            existingOption.setPrice(optionDTO.getPrice());
-          } else {
-            log.info("Updating full fields for option id={}", dtoId);
-            updateExistingOption(existingOption, optionDTO);
-          }
-          processedOptionIds.add(dtoId);
-
-          if (existingOption.getPrice() != null) {
-            validPrices.add(existingOption.getPrice());
-          }
-        } else {
-          log.warn("No existing option found with id={}, skipping update", dtoId);
-        }
-      } else {
-        // 새 옵션 추가
-        log.info("Adding new option for contentId={}", content.getId());
-        ContentOption newOption = createOptionByContentType(content.getContentType(), optionDTO);
-        if (newOption != null) {
-          content.addOption(newOption);
-          if (newOption.getPrice() != null) {
-            validPrices.add(newOption.getPrice());
-          }
-          log.debug("New option added: {}", newOption);
-        } else {
-          log.warn("Failed to create new option for DTO: {}", optionDTO);
-        }
-      }
-    }
-
-    // 처리되지 않은 기존 옵션들을 비활성화 또는 제거
-    for (Map.Entry<Long, ContentOption> entry : existingOptionsMap.entrySet()) {
-      Long optionId = entry.getKey();
-      ContentOption optionToDeactivate = entry.getValue();
-      if (!processedOptionIds.contains(optionId)) {
-        if (content.getSaleCount() > 0) {
-          log.info(
-              "Soft-deactivating option id={} due to removal request (saleCount={})",
-              optionId,
-              content.getSaleCount());
-          optionToDeactivate.deactivate();
-        } else {
-          log.info("Removing option id={} (no sale history)", optionId);
-          content.getOptions().remove(optionToDeactivate);
-        }
-      }
-    }
-
-    // 최저가 업데이트
-    if (!validPrices.isEmpty()) {
-      BigDecimal newLowest = Collections.min(validPrices);
-      content.setLowestPrice(newLowest);
-      log.info("Updated lowestPrice for contentId={} to {}", content.getId(), newLowest);
-    } else {
-      content.setLowestPrice(null);
-      log.info("No valid prices found, lowestPrice set to null for contentId={}", content.getId());
-    }
-  }
-
-  // 기존 옵션 업데이트 헬퍼 메서드
-  private void updateExistingOption(ContentOption option, ContentOptionDTO dto) {
-    option.updateCommonFields(dto.getName(), dto.getDescription(), dto.getPrice());
-
-    if (option instanceof DocumentOption documentOption && dto.getDocumentFileUrl() != null) {
-      documentOption.setDocumentFileUrl(dto.getDocumentFileUrl());
-      documentOption.setDocumentLinkUrl(dto.getDocumentLinkUrl());
-
-      FileInfo fileInfo = fileRepository.findByFileUrl(dto.getDocumentFileUrl());
-      if (fileInfo != null) {
-        documentOption.setDocumentOriginalFileName(fileInfo.getOriginalFilename());
-      }
     }
   }
 
