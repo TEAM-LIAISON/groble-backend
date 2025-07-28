@@ -13,9 +13,9 @@ import liaison.groble.application.user.dto.SocialBasicInfoDTO;
 import liaison.groble.domain.terms.enums.TermsType;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.enums.SellerVerificationStatus;
+import liaison.groble.domain.user.enums.UserStatus;
 import liaison.groble.domain.user.enums.UserType;
 import liaison.groble.domain.user.repository.UserRepository;
-import liaison.groble.domain.user.service.UserStatusService;
 import liaison.groble.domain.user.vo.SellerInfo;
 
 import lombok.RequiredArgsConstructor;
@@ -55,8 +55,7 @@ public class SocialAccountUserService {
       user.setSeller(false);
     }
 
-    UserStatusService userStatusService = new UserStatusService();
-    userStatusService.activate(user);
+    user.getUserStatusInfo().updateStatus(UserStatus.ACTIVE);
 
     termsHelper.processTermsAgreements(user, agreedTermsTypes);
   }

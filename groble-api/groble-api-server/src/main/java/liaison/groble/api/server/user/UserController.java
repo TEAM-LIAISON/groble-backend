@@ -22,7 +22,6 @@ import liaison.groble.api.model.user.response.MyPageSummaryResponseBase;
 import liaison.groble.api.model.user.response.UserHeaderResponse;
 import liaison.groble.api.model.user.response.UserMyPageDetailResponse;
 import liaison.groble.api.model.user.response.swagger.MyPageDetail;
-import liaison.groble.api.model.user.response.swagger.MyPageSummary;
 import liaison.groble.api.model.user.response.swagger.SwitchRole;
 import liaison.groble.api.model.user.response.swagger.UploadUserProfileImage;
 import liaison.groble.api.model.user.response.swagger.UserHeader;
@@ -105,7 +104,6 @@ public class UserController {
   }
 
   /** 마이페이지 요약 정보 조회 */
-  @MyPageSummary
   @GetMapping(USER_MY_PAGE_SUMMARY_PATH)
   public ResponseEntity<GrobleResponse<MyPageSummaryResponseBase>> getUserMyPageSummary(
       @Auth Accessor accessor) {

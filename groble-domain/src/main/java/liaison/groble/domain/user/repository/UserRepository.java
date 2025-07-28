@@ -18,9 +18,5 @@ public interface UserRepository {
 
   User saveAndFlush(User user);
 
-  boolean existsByPhoneNumber(String phoneNumber);
-
-  Optional<User> findByPhoneNumber(String phoneNumber);
-
   boolean existsBySellerInfoMarketLinkUrl(String marketLinkUrl);
 }

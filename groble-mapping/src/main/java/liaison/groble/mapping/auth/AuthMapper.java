@@ -3,21 +3,15 @@ package liaison.groble.mapping.auth;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-import liaison.groble.api.model.auth.request.PhoneNumberVerifyCodeRequest;
-import liaison.groble.api.model.auth.request.PhoneNumberVerifyRequest;
 import liaison.groble.api.model.auth.request.SignInRequest;
 import liaison.groble.api.model.auth.request.SignUpRequest;
 import liaison.groble.api.model.auth.request.UserWithdrawalRequest;
-import liaison.groble.api.model.auth.request.VerifyEmailCodeRequest;
 import liaison.groble.api.model.auth.response.SignInResponse;
 import liaison.groble.api.model.auth.response.SignInTestResponse;
-import liaison.groble.application.auth.dto.PhoneNumberVerifyCodeRequestDTO;
-import liaison.groble.application.auth.dto.PhoneNumberVerifyRequestDTO;
 import liaison.groble.application.auth.dto.SignInAuthResultDTO;
 import liaison.groble.application.auth.dto.SignInDTO;
 import liaison.groble.application.auth.dto.SignUpDTO;
 import liaison.groble.application.auth.dto.UserWithdrawalDTO;
-import liaison.groble.application.auth.dto.VerifyEmailCodeDTO;
 import liaison.groble.mapping.config.GrobleMapperConfig;
 
 @Mapper(config = GrobleMapperConfig.class)
@@ -46,15 +40,4 @@ public interface AuthMapper {
   @Mapping(target = "email", source = "email")
   @Mapping(target = "authenticated", constant = "true")
   SignInTestResponse toSignInTestResponse(String email, SignInAuthResultDTO signInAuthResultDTO);
-
-  /** VerifyEmailCodeRequest → VerifyEmailCodeDTO */
-  VerifyEmailCodeDTO toVerifyEmailCodeDTO(VerifyEmailCodeRequest request);
-
-  /** PhoneNumberVerifyRequest → PhoneNumberVerifyRequestDTO */
-  PhoneNumberVerifyRequestDTO toPhoneNumberVerifyRequestDTO(PhoneNumberVerifyRequest request);
-
-  /** PhoneNumberVerifyCodeRequest → PhoneNumberVerifyCodeRequestDTO */
-  @Mapping(source = "verificationCode", target = "verifyCode")
-  PhoneNumberVerifyCodeRequestDTO toPhoneNumberVerifyCodeRequestDTO(
-      PhoneNumberVerifyCodeRequest request);
 }

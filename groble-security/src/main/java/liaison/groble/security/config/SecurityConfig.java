@@ -176,6 +176,8 @@ public class SecurityConfig {
                     .requestMatchers(
                         new RegexRequestMatcher("^/api/v1/content/\\d+$", HttpMethod.GET.name()))
                     .permitAll()
+                    .requestMatchers("/api/v1/content/**/reviews")
+                    .permitAll()
                     .requestMatchers("/api/v1/contents/document/category")
                     .permitAll()
                     .requestMatchers("/api/v1/contents/coaching/category")

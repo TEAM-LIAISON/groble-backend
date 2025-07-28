@@ -173,4 +173,8 @@ public class Payment extends BaseTimeEntity {
       return description;
     }
   }
+
+  public void cancel() {
+    //
+  }
 }

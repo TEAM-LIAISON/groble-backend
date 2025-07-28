@@ -16,10 +16,6 @@ public class Accessor {
   private final String userType; // BUYER, SELLER, ANONYMOUS
   private final String accountType; // INTEGRATED, SOCIAL
 
-  public boolean hasRole(String role) {
-    return roles != null && roles.contains(role);
-  }
-
   public Long getUserId() {
     return id;
   }
@@ -31,15 +27,6 @@ public class Accessor {
    */
   public boolean isAuthenticated() {
     return this.id != null && !"ANONYMOUS".equals(this.userType);
-  }
-
-  /**
-   * 익명 사용자인지 확인
-   *
-   * @return 익명 사용자이면 true, 로그인한 사용자이면 false
-   */
-  public boolean isAnonymous() {
-    return "ANONYMOUS".equals(this.userType) || this.id == null;
   }
 
   /**
@@ -58,15 +45,6 @@ public class Accessor {
    */
   public boolean isSeller() {
     return "SELLER".equals(this.userType);
-  }
-
-  /**
-   * 소셜 계정 사용자인지 확인
-   *
-   * @return 소셜 계정 사용자이면 true
-   */
-  public boolean isSocialAccount() {
-    return "SOCIAL".equals(this.accountType);
   }
 
   /**

@@ -32,6 +32,7 @@ import liaison.groble.domain.content.entity.QContentReply;
 import liaison.groble.domain.content.entity.QContentReview;
 import liaison.groble.domain.content.enums.ReviewStatus;
 import liaison.groble.domain.content.repository.ContentReviewCustomRepository;
+import liaison.groble.domain.order.entity.QOrder;
 import liaison.groble.domain.purchase.entity.QPurchase;
 import liaison.groble.domain.user.entity.QUser;
 
@@ -233,6 +234,7 @@ public class ContentReviewCustomRepositoryImpl implements ContentReviewCustomRep
     QUser qReviewer = new QUser("reviewer");
     QUser qSeller = new QUser("seller");
     QPurchase qPurchase = QPurchase.purchase;
+    QOrder qOrder = QOrder.order;
 
     // selectedOptionName 서브쿼리
     Expression<String> selectedOptionNameExpression =
@@ -251,12 +253,15 @@ public class ContentReviewCustomRepositoryImpl implements ContentReviewCustomRep
                 FlatContentReviewReplyDTO.class,
                 // Review 정보
                 qContentReview.id.as("reviewId"),
+                qContentReview.user.id.as("reviewerId"),
                 qContentReview.createdAt.as("reviewCreatedAt"),
                 qReviewer.userProfile.profileImageUrl.as("reviewerProfileImageUrl"),
                 qReviewer.userProfile.nickname.as("reviewerNickname"),
                 qContentReview.reviewContent.as("reviewContent"),
                 selectedOptionNameExpression,
                 qContentReview.rating.as("rating"),
+                qContentReview.purchase.order.merchantUid.as("merchantUid"),
+
                 // Reply 정보
                 qContentReply.id.as("replyId"),
                 qContentReply.createdAt.as("replyCreatedAt"),
@@ -264,6 +269,8 @@ public class ContentReviewCustomRepositoryImpl implements ContentReviewCustomRep
                 qContentReply.replyContent.as("replyContent")))
         .from(qContentReview)
         .leftJoin(qContentReview.user, qReviewer)
+        .leftJoin(qContentReview.purchase, qPurchase)
+        .leftJoin(qPurchase.order, qOrder)
         .leftJoin(qContentReply)
         .on(
             qContentReply

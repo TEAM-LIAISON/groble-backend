@@ -63,12 +63,7 @@ public class ContentDetailResponse {
           "optionType": "COACHING_OPTION",
           "name": "1시간 코칭",
           "description": "1:1 전문가 코칭 1시간",
-          "price": 50000,
-          "coachingPeriod": "ONE_DAY",
-          "documentProvision": "PROVIDED",
-          "coachingType": "ONLINE",
-          "coachingTypeDescription": "줌을 통한 온라인 미팅",
-          "contentDeliveryMethod": null
+          "price": 50000
         },
         {
           "optionId": 3,
@@ -76,13 +71,9 @@ public class ContentDetailResponse {
           "name": "기본 템플릿",
           "description": "기본적인 사업계획서 템플릿",
           "price": 15000,
-          "coachingPeriod": null,
-          "documentProvision": null,
-          "coachingType": null,
-          "coachingTypeDescription": null,
-          "contentDeliveryMethod": "IMMEDIATE_DOWNLOAD",
           "documentFileUrl": "https://example.com/template.pdf",
-          "documentLinkUrl": "https://example.com/template-link"
+          "documentLinkUrl": "https://example.com/template-link",
+          "documentOriginalFileName": "template.pdf"
         }
       ]
       """))

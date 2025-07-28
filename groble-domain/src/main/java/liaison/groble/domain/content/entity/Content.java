@@ -7,9 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import jakarta.persistence.CascadeType;
-import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
-import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -73,55 +71,59 @@ public class Content extends BaseTimeEntity {
   @OneToMany(mappedBy = "content", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<ContentOption> options = new ArrayList<>();
 
+  // 썸네일 URL
   @Lob
   @Column(columnDefinition = "TEXT")
-  private String thumbnailUrl; // 썸네일 URL
+  private String thumbnailUrl;
 
+  // 콘텐츠 소개
+  // Editor 내부에 들어가는 값으로 Markdown 형식으로 저장됩니다
   @Lob
   @Column(columnDefinition = "TEXT")
-  private String contentIntroduction; // 콘텐츠 소개
+  private String contentIntroduction;
 
-  @ElementCollection
-  @CollectionTable(
-      name = "content_detail_image_urls",
-      joinColumns = @JoinColumn(name = "content_id"))
-  @Column(name = "image_url")
-  private List<String> contentDetailImageUrls = new ArrayList<>();
-
+  // 서비스 타겟
   @Column(name = "service_target", length = 1000)
-  private String serviceTarget; // 서비스 타겟
+  private String serviceTarget;
 
+  // 제공 절차
   @Column(name = "service_process", length = 1000)
-  private String serviceProcess; // 제공 절차
+  private String serviceProcess;
 
+  // 메이커 소개
   @Column(name = "maker_intro", length = 1000)
-  private String makerIntro; // 메이커 소개
+  private String makerIntro;
 
+  // 판매 수
   @Column(name = "sale_count")
-  private Integer saleCount = 0; // 판매 수
+  private Integer saleCount = 0;
 
+  // 콘텐츠 상태
+  // DRAFT, ACTIVE, DELETED, DISCONTINUED
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
   private ContentStatus status = ContentStatus.DRAFT;
 
+  // 관리자 콘텐츠 확인 상태
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
   private AdminContentCheckingStatus adminContentCheckingStatus =
       AdminContentCheckingStatus.PENDING;
 
+  // 최저가
   @Column(name = "lowest_price")
-  private BigDecimal lowestPrice; // 최저가
+  private BigDecimal lowestPrice;
 
+  // 정렬 순서
   @Column(name = "sort_order", nullable = false)
   private Integer sortOrder = 0;
 
-  // 값이 클수록(예: 100) 우선순위가 높다고 가정. 기본은 0.
-
+  // 콘텐츠 반려 사유
   @Lob
   @Column(name = "reject_reason", columnDefinition = "TEXT")
   private String rejectReason;
 
-  /** 조회수 */
+  // 콘텐츠 조회수
   @Column(name = "view_count", nullable = false)
   private Long viewCount = 0L;
 
@@ -192,24 +194,6 @@ public class Content extends BaseTimeEntity {
 
   public void setRepresentative(Boolean isRepresentative) {
     this.isRepresentative = isRepresentative;
-  }
-
-  // Content 클래스에 추가
-  public void setContentDetailImageUrls(List<String> urls) {
-    this.contentDetailImageUrls.clear();
-    if (urls != null) {
-      this.contentDetailImageUrls.addAll(urls);
-    }
-  }
-
-  public void addContentDetailImageUrl(String url) {
-    if (url != null && !url.isBlank()) {
-      this.contentDetailImageUrls.add(url);
-    }
-  }
-
-  public void removeContentDetailImageUrl(String url) {
-    this.contentDetailImageUrls.remove(url);
   }
 
   public void incrementSaleCount() {

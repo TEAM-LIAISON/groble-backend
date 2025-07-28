@@ -4,25 +4,19 @@ import javax.annotation.processing.Generated;
 
 import org.springframework.stereotype.Component;
 
-import liaison.groble.api.model.auth.request.PhoneNumberVerifyCodeRequest;
-import liaison.groble.api.model.auth.request.PhoneNumberVerifyRequest;
 import liaison.groble.api.model.auth.request.SignInRequest;
 import liaison.groble.api.model.auth.request.SignUpRequest;
 import liaison.groble.api.model.auth.request.UserWithdrawalRequest;
-import liaison.groble.api.model.auth.request.VerifyEmailCodeRequest;
 import liaison.groble.api.model.auth.response.SignInResponse;
 import liaison.groble.api.model.auth.response.SignInTestResponse;
-import liaison.groble.application.auth.dto.PhoneNumberVerifyCodeRequestDTO;
-import liaison.groble.application.auth.dto.PhoneNumberVerifyRequestDTO;
 import liaison.groble.application.auth.dto.SignInAuthResultDTO;
 import liaison.groble.application.auth.dto.SignInDTO;
 import liaison.groble.application.auth.dto.SignUpDTO;
 import liaison.groble.application.auth.dto.UserWithdrawalDTO;
-import liaison.groble.application.auth.dto.VerifyEmailCodeDTO;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-07-19T17:18:10+0900",
+    date = "2025-07-25T22:40:31+0900",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.10 (Amazon.com Inc.)")
 @Component
 public class AuthMapperImpl implements AuthMapper {
@@ -131,60 +125,5 @@ public class AuthMapperImpl implements AuthMapper {
     signInTestResponse.authenticated(true);
 
     return signInTestResponse.build();
-  }
-
-  @Override
-  public VerifyEmailCodeDTO toVerifyEmailCodeDTO(VerifyEmailCodeRequest request) {
-    if (request == null) {
-      return null;
-    }
-
-    VerifyEmailCodeDTO.VerifyEmailCodeDTOBuilder verifyEmailCodeDTO = VerifyEmailCodeDTO.builder();
-
-    if (request.getEmail() != null) {
-      verifyEmailCodeDTO.email(request.getEmail());
-    }
-    if (request.getVerificationCode() != null) {
-      verifyEmailCodeDTO.verificationCode(request.getVerificationCode());
-    }
-
-    return verifyEmailCodeDTO.build();
-  }
-
-  @Override
-  public PhoneNumberVerifyRequestDTO toPhoneNumberVerifyRequestDTO(
-      PhoneNumberVerifyRequest request) {
-    if (request == null) {
-      return null;
-    }
-
-    PhoneNumberVerifyRequestDTO.PhoneNumberVerifyRequestDTOBuilder phoneNumberVerifyRequestDTO =
-        PhoneNumberVerifyRequestDTO.builder();
-
-    if (request.getPhoneNumber() != null) {
-      phoneNumberVerifyRequestDTO.phoneNumber(request.getPhoneNumber());
-    }
-
-    return phoneNumberVerifyRequestDTO.build();
-  }
-
-  @Override
-  public PhoneNumberVerifyCodeRequestDTO toPhoneNumberVerifyCodeRequestDTO(
-      PhoneNumberVerifyCodeRequest request) {
-    if (request == null) {
-      return null;
-    }
-
-    PhoneNumberVerifyCodeRequestDTO.PhoneNumberVerifyCodeRequestDTOBuilder
-        phoneNumberVerifyCodeRequestDTO = PhoneNumberVerifyCodeRequestDTO.builder();
-
-    if (request.getVerificationCode() != null) {
-      phoneNumberVerifyCodeRequestDTO.verifyCode(request.getVerificationCode());
-    }
-    if (request.getPhoneNumber() != null) {
-      phoneNumberVerifyCodeRequestDTO.phoneNumber(request.getPhoneNumber());
-    }
-
-    return phoneNumberVerifyCodeRequestDTO.build();
   }
 }

@@ -18,14 +18,4 @@ public class UnauthorizedException extends AuthenticationException {
   public UnauthorizedException(String message) {
     super(message);
   }
-
-  /**
-   * 원인 예외와 함께 생성하는 생성자
-   *
-   * @param message 예외 메시지
-   * @param cause 원인 예외
-   */
-  public UnauthorizedException(String message, Throwable cause) {
-    super(message, cause);
-  }
 }

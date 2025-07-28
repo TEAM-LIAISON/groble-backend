@@ -43,22 +43,4 @@ public enum UserStatus {
   public boolean isLoginable() {
     return this == ACTIVE || this == DORMANT;
   }
-
-  /**
-   * 사용자에게 표시할 상태 메시지
-   *
-   * @return 상태 메시지
-   */
-  public String getStatusMessage() {
-    return switch (this) {
-      case ACTIVE -> "정상 이용 가능한 상태입니다.";
-      case INACTIVE -> "비활성화된 계정입니다. 계정을 활성화하려면 고객센터에 문의해주세요.";
-      case DORMANT -> "휴면 상태의 계정입니다. 로그인하시면 자동으로 활성화됩니다.";
-      case LOCKED -> "계정이 잠금 처리되었습니다. 관리자에게 문의해주세요.";
-      case SUSPENDED -> "계정이 일시 정지되었습니다. 정지 기간 이후 자동으로 활성화됩니다.";
-      case PENDING_WITHDRAWAL -> "탈퇴 대기 중인 계정입니다. 취소하시려면 고객센터에 문의해주세요.";
-      case WITHDRAWN -> "탈퇴 처리된 계정입니다.";
-      case PENDING_VERIFICATION -> "이메일 인증이 필요합니다. 인증 메일을 확인해주세요.";
-    };
-  }
 }
