@@ -794,6 +794,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
     Expression<Boolean> availableForSale =
         new CaseBuilder().when(contentValid.and(hasValidDocOpt)).then(true).otherwise(false);
 
+    // 6) 삭제 가능 여부 시
     Expression<Boolean> isDeletableExpr =
         new CaseBuilder()
             .when(

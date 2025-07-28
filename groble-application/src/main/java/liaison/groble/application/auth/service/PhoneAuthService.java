@@ -77,7 +77,6 @@ public class PhoneAuthService {
     }
 
     User user = userReader.getUserById(userId);
-    Market market = userReader.getMarket(userId);
     if (user.getPhoneNumber() != null && !user.getPhoneNumber().isEmpty()) {
       // 1. 전화번호를 변경하는 경우
       user.updatePhoneNumber(phoneNumber);
@@ -85,6 +84,7 @@ public class PhoneAuthService {
     } else {
       // 2. /sign-up 플로우에서 전화번호를 인증하는 경우
       if (user.isMakerTermsAgreed()) { // 메이커 이용 약관에 동의를 한 경우
+        Market market = userReader.getMarket(userId);
         market.changeMarketName(user.getNickname() + "님의 마켓");
         userHelper.addSellerRole(user);
       }
