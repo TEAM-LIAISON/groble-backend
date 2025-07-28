@@ -42,7 +42,7 @@ public class ContentPreviewCardResponse {
   @Schema(
       description = "판매하기 가능 여부 boolean 변수",
       example = "true",
-      type = "true",
+      type = "boolean",
       requiredMode = Schema.RequiredMode.REQUIRED)
   private Boolean isAvailableForSale;
 
@@ -51,4 +51,11 @@ public class ContentPreviewCardResponse {
       example = "DRAFT",
       allowableValues = {"ACTIVE", "DRAFT", "DELETED", "DISCONTINUED"})
   private String status;
+
+  @Schema(
+      description = "콘텐츠 삭제하기 가능 변수(판매 내역 1개라도 존재하면 false)",
+      example = "false",
+      type = "boolean",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private Boolean isDeletable;
 }

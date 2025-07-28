@@ -9,7 +9,7 @@ import liaison.groble.application.admin.dto.AdminContentSummaryInfoDTO;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-07-25T22:40:31+0900",
+    date = "2025-07-28T20:17:04+0900",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.10 (Amazon.com Inc.)")
 @Component
 public class AdminContentMapperImpl implements AdminContentMapper {
