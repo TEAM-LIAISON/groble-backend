@@ -180,12 +180,9 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
     QContentOption qContentOption = QContentOption.contentOption;
     QDocumentOption qDocOpt = QDocumentOption.documentOption;
 
+    // isRepresentative.isFalse() 조건 제거
     BooleanExpression condition =
-        qContent
-            .status
-            .eq(ContentStatus.ACTIVE)
-            .and(qContent.isRepresentative.isFalse())
-            .and(qContent.user.id.eq(userId));
+        qContent.status.eq(ContentStatus.ACTIVE).and(qContent.user.id.eq(userId));
 
     // 2) 콘텐츠 필드 유효 검사
     BooleanExpression contentValid =
@@ -235,6 +232,11 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
         .from(qContent)
         .leftJoin(qContent.user, qUser)
         .where(condition)
+        .orderBy(
+            // 대표 콘텐츠를 먼저 (true = 1, false = 0으로 정렬)
+            qContent.isRepresentative.desc(),
+            // 그 다음 생성일자 역순
+            qContent.createdAt.desc())
         .fetch();
   }
 
