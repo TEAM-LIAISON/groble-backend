@@ -75,7 +75,7 @@ public class IntegratedAccountAuthService {
       User savedUser = userRepository.save(user);
 
       if (userType == UserType.SELLER) {
-        SellerInfo sellerInfo = SellerInfo.createForUser(user);
+        SellerInfo sellerInfo = SellerInfo.createForUser(savedUser);
         sellerInfoRepository.save(sellerInfo);
       }
 
