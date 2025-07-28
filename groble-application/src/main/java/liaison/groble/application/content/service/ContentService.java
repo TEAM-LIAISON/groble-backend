@@ -288,6 +288,7 @@ public class ContentService {
                   if (option instanceof DocumentOption) {
                     DocumentOption documentOption = (DocumentOption) option;
                     builder
+                        .documentOriginalFileName(documentOption.getDocumentOriginalFileName())
                         .documentFileUrl(documentOption.getDocumentFileUrl())
                         .documentLinkUrl(documentOption.getDocumentLinkUrl());
                   }
