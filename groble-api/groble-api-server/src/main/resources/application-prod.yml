@@ -118,7 +118,6 @@ logging:
   level:
     root: INFO
     org.springframework.web: INFO
-    com.yourcompany.groble: INFO  # Set your application package
     org.springdoc: INFO
     io.swagger.v3: INFO
     # These are the critical ones causing problems
