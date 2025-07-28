@@ -7,9 +7,12 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
@@ -65,11 +68,14 @@ public class ContentService {
   private final ContentReader contentReader;
   private final ContentReviewReader contentReviewReader;
 
+  // Repository
   private final ContentRepository contentRepository;
   private final ContentCustomRepository contentCustomRepository;
   private final CategoryRepository categoryRepository;
-  private final DiscordContentRegisterReportService discordContentRegisterReportService;
   private final FileRepository fileRepository;
+
+  // Service
+  private final DiscordContentRegisterReportService discordContentRegisterReportService;
 
   @Transactional(readOnly = true)
   public ContentReviewDTO getContentReviews(Long contentId, String sort, Long userId) {
@@ -151,27 +157,22 @@ public class ContentService {
     // 2. 저장할 Content 준비
     Content content;
 
-    // 2.1 기존 Content 업데이트 또는 새 Content 생성
     if (contentDTO.getContentId() != null) {
       // 기존 Content 업데이트
       content = findAndValidateUserContent(userId, contentDTO.getContentId());
-      updateContentFromDTO(content, contentDTO);
 
-      // 기존 옵션 제거
-      if (content.getOptions() != null) {
-        content.getOptions().clear();
-      }
+      updateContentFromDTO(content, contentDTO);
+      updateContentOptions(content, contentDTO.getOptions());
     } else {
       // 새 Content 생성
       content = new Content(user);
       updateContentFromDTO(content, contentDTO);
-    }
 
-    // 3. 옵션 추가
-    if (contentDTO.getOptions() != null && !contentDTO.getOptions().isEmpty()) {
-      addOptionsToContent(content, contentDTO);
+      // 새 콘텐츠의 경우 옵션 추가
+      if (contentDTO.getOptions() != null && !contentDTO.getOptions().isEmpty()) {
+        addOptionsToContent(content, contentDTO);
+      }
     }
-
     // 4. 저장 및 변환
     return saveAndConvertToDTO(content);
   }
@@ -463,7 +464,8 @@ public class ContentService {
 
   /** 사용자의 Content를 찾고 접근 권한을 검증합니다. */
   private Content findAndValidateUserContent(Long userId, Long contentId) {
-    Content content = contentReader.getContentById(contentId);
+    // Content User Fetch Join
+    Content content = contentReader.getContentWithSeller(contentId);
 
     if (!content.getUser().getId().equals(userId)) {
       throw new ForbiddenException("해당 콘텐츠를 수정할 권한이 없습니다.");
@@ -602,9 +604,7 @@ public class ContentService {
         return null;
     }
 
-    option.setName(dto.getName());
-    option.setDescription(dto.getDescription());
-    option.setPrice(dto.getPrice());
+    option.updateCommonFields(dto.getName(), dto.getDescription(), dto.getPrice());
 
     return option;
   }
@@ -933,6 +933,86 @@ public class ContentService {
       return List.of(contentStatus);
     } catch (IllegalArgumentException e) {
       return Collections.emptyList();
+    }
+  }
+
+  private void updateContentOptions(Content content, List<ContentOptionDTO> newOptionDTOs) {
+    if (newOptionDTOs == null) {
+      newOptionDTOs = new ArrayList<>();
+    }
+
+    Map<Long, ContentOption> existingOptionsMap =
+        content.getOptions().stream()
+            .filter(option -> option.getId() != null)
+            .collect(Collectors.toMap(ContentOption::getId, Function.identity()));
+
+    Set<Long> processedOptionIds = new HashSet<>();
+    List<BigDecimal> validPrices = new ArrayList<>();
+
+    // 새 옵션 처리
+    for (ContentOptionDTO optionDTO : newOptionDTOs) {
+      if (optionDTO.getContentOptionId() != null) {
+        // 기존 옵션 업데이트
+        ContentOption existingOption = existingOptionsMap.get(optionDTO.getContentOptionId());
+        if (existingOption != null) {
+          // 판매 이력이 있는 경우 가격 변경만 허용
+          if (content.getSaleCount() > 0) {
+            existingOption.setPrice(optionDTO.getPrice());
+          } else {
+            // 판매 이력이 없으면 전체 수정 가능
+            updateExistingOption(existingOption, optionDTO);
+          }
+          processedOptionIds.add(optionDTO.getContentOptionId());
+
+          if (existingOption.getPrice() != null) {
+            validPrices.add(existingOption.getPrice());
+          }
+        }
+      } else {
+        // 새 옵션 추가
+        ContentOption newOption = createOptionByContentType(content.getContentType(), optionDTO);
+        if (newOption != null) {
+          content.addOption(newOption);
+          if (newOption.getPrice() != null) {
+            validPrices.add(newOption.getPrice());
+          }
+        }
+      }
+    }
+
+    // 처리되지 않은 기존 옵션들을 비활성화 (삭제하지 않음)
+    for (Map.Entry<Long, ContentOption> entry : existingOptionsMap.entrySet()) {
+      if (!processedOptionIds.contains(entry.getKey())) {
+        ContentOption optionToDeactivate = entry.getValue();
+        // 판매 이력이 있으면 비활성화만, 없으면 실제 제거
+        if (content.getSaleCount() > 0) {
+          optionToDeactivate.deactivate(); // soft delete
+        } else {
+          content.getOptions().remove(optionToDeactivate);
+        }
+      }
+    }
+
+    // 최저가 업데이트
+    if (!validPrices.isEmpty()) {
+      content.setLowestPrice(Collections.min(validPrices));
+    } else {
+      content.setLowestPrice(null);
+    }
+  }
+
+  // 기존 옵션 업데이트 헬퍼 메서드
+  private void updateExistingOption(ContentOption option, ContentOptionDTO dto) {
+    option.updateCommonFields(dto.getName(), dto.getDescription(), dto.getPrice());
+
+    if (option instanceof DocumentOption documentOption && dto.getDocumentFileUrl() != null) {
+      documentOption.setDocumentFileUrl(dto.getDocumentFileUrl());
+      documentOption.setDocumentLinkUrl(dto.getDocumentLinkUrl());
+
+      FileInfo fileInfo = fileRepository.findByFileUrl(dto.getDocumentFileUrl());
+      if (fileInfo != null) {
+        documentOption.setDocumentOriginalFileName(fileInfo.getOriginalFilename());
+      }
     }
   }
 }
