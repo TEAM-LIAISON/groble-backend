@@ -18,10 +18,7 @@ import lombok.experimental.SuperBuilder;
     include = JsonTypeInfo.As.PROPERTY,
     property = "optionType",
     visible = true)
-@JsonSubTypes({
-  @JsonSubTypes.Type(name = "COACHING_OPTION", value = CoachingOptionResponse.class),
-  @JsonSubTypes.Type(name = "DOCUMENT_OPTION", value = DocumentOptionResponse.class)
-})
+@JsonSubTypes({@JsonSubTypes.Type(name = "DOCUMENT_OPTION", value = DocumentOptionResponse.class)})
 @Schema(
     name = "BaseOptionResponse",
     description = "콘텐츠 옵션 공통 정보 응답",
