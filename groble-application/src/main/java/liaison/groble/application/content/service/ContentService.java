@@ -372,6 +372,7 @@ public class ContentService {
     // 옵션 목록 변환 - ContentOptionDTO 사용
     List<ContentOptionDTO> optionDTOs =
         content.getOptions().stream()
+            .filter(ContentOption::isActive) // is_active = true인 옵션만 필터링
             .map(
                 option -> {
                   ContentOptionDTO.ContentOptionDTOBuilder builder =
