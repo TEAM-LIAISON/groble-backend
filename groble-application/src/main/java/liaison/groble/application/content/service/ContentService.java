@@ -36,6 +36,7 @@ import liaison.groble.domain.content.dto.FlatContentPreviewDTO;
 import liaison.groble.domain.content.dto.FlatContentReviewReplyDTO;
 import liaison.groble.domain.content.dto.FlatDynamicContentDTO;
 import liaison.groble.domain.content.entity.Category;
+import liaison.groble.domain.content.entity.CoachingOption;
 import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.content.entity.ContentOption;
 import liaison.groble.domain.content.entity.DocumentOption;
@@ -585,41 +586,48 @@ public class ContentService {
   }
 
   /** Content 유형에 맞는 옵션을 생성합니다. */
-  private ContentOption createOptionByContentType(
-      ContentType contentType, ContentOptionDTO optionDTO) {
-    ContentOption option;
+  private ContentOption createOptionByContentType(ContentType contentType, ContentOptionDTO dto) {
 
-    if (contentType == ContentType.DOCUMENT) {
-      option = createDocumentOption(optionDTO);
-    } else {
-      log.warn("지원하지 않는 콘텐츠 유형입니다: {}", contentType);
-      return null;
+    ContentOption option;
+    switch (contentType) {
+      case DOCUMENT:
+        option = createDocumentOption(dto);
+        break;
+      case COACHING:
+        option = createCoachingOption();
+        break;
+      default:
+        log.warn("지원하지 않는 콘텐츠 유형입니다: {}", contentType);
+        return null;
     }
 
-    // 공통 필드 설정
-    option.setName(optionDTO.getName());
-    option.setDescription(optionDTO.getDescription());
-    option.setPrice(optionDTO.getPrice());
+    option.setName(dto.getName());
+    option.setDescription(dto.getDescription());
+    option.setPrice(dto.getPrice());
 
     return option;
   }
 
   /** 문서 옵션을 생성합니다. */
-  private DocumentOption createDocumentOption(ContentOptionDTO optionDTO) {
+  private DocumentOption createDocumentOption(ContentOptionDTO dto) {
     DocumentOption option = new DocumentOption();
-
-    // 문서 파일 URL이 null이 아닌지 확인
-    String fileUrl = optionDTO.getDocumentFileUrl();
-    String documentOriginalFileName = null;
+    // 문서 전용 필드 세팅
+    String fileUrl = dto.getDocumentFileUrl();
     if (fileUrl != null) {
-      // 3) 실제로 FileInfo가 있는지 조회
-      FileInfo oldDocumentInfo = fileRepository.findByFileUrl(fileUrl);
-      if (oldDocumentInfo != null) {
-        documentOriginalFileName = oldDocumentInfo.getOriginalFilename();
+      FileInfo info = fileRepository.findByFileUrl(fileUrl);
+      if (info != null) {
+        option.setDocumentOriginalFileName(info.getOriginalFilename());
       }
     }
+    option.setDocumentFileUrl(fileUrl);
+    option.setDocumentLinkUrl(dto.getDocumentLinkUrl());
 
     return option;
+  }
+
+  /** 코칭 옵션을 생성합니다. */
+  private ContentOption createCoachingOption() {
+    return new CoachingOption();
   }
 
   private ContentCardDTO convertFlatDTOToCardDTO(FlatContentPreviewDTO flat) {

@@ -1,4 +1,4 @@
-package liaison.groble.domain.role;
+package liaison.groble.domain.role.entity;
 
 import static com.querydsl.core.types.PathMetadataFactory.*;
 
@@ -15,7 +15,7 @@ import com.querydsl.core.types.Path;
 @Generated("com.querydsl.codegen.DefaultEntitySerializer")
 public class QRole extends EntityPathBase<Role> {
 
-    private static final long serialVersionUID = -1841301606L;
+    private static final long serialVersionUID = 477466685L;
 
     public static final QRole role = new QRole("role");
 

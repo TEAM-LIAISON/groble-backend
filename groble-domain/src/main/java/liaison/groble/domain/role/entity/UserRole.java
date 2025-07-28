@@ -1,4 +1,4 @@
-package liaison.groble.domain.role;
+package liaison.groble.domain.role.entity;
 
 import java.time.LocalDateTime;
 

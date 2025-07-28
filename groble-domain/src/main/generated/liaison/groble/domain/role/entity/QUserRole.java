@@ -1,4 +1,4 @@
-package liaison.groble.domain.role;
+package liaison.groble.domain.role.entity;
 
 import static com.querydsl.core.types.PathMetadataFactory.*;
 
@@ -16,7 +16,7 @@ import com.querydsl.core.types.dsl.PathInits;
 @Generated("com.querydsl.codegen.DefaultEntitySerializer")
 public class QUserRole extends EntityPathBase<UserRole> {
 
-    private static final long serialVersionUID = -66107387L;
+    private static final long serialVersionUID = -894314712L;
 
     private static final PathInits INITS = PathInits.DIRECT2;
 

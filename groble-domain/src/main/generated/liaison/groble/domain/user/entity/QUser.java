@@ -52,7 +52,7 @@ public class QUser extends EntityPathBase<User> {
 
     public final liaison.groble.domain.user.vo.QUserProfile userProfile;
 
-    public final SetPath<liaison.groble.domain.role.UserRole, liaison.groble.domain.role.QUserRole> userRoles = this.<liaison.groble.domain.role.UserRole, liaison.groble.domain.role.QUserRole>createSet("userRoles", liaison.groble.domain.role.UserRole.class, liaison.groble.domain.role.QUserRole.class, PathInits.DIRECT2);
+    public final SetPath<liaison.groble.domain.role.entity.UserRole, liaison.groble.domain.role.entity.QUserRole> userRoles = this.<liaison.groble.domain.role.entity.UserRole, liaison.groble.domain.role.entity.QUserRole>createSet("userRoles", liaison.groble.domain.role.entity.UserRole.class, liaison.groble.domain.role.entity.QUserRole.class, PathInits.DIRECT2);
 
     public final liaison.groble.domain.user.vo.QUserStatusInfo userStatusInfo;
 

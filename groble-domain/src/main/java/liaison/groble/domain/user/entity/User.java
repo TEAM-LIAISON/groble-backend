@@ -24,8 +24,8 @@ import jakarta.persistence.Table;
 import org.hibernate.LazyInitializationException;
 
 import liaison.groble.domain.common.entity.BaseTimeEntity;
-import liaison.groble.domain.role.Role;
-import liaison.groble.domain.role.UserRole;
+import liaison.groble.domain.role.entity.Role;
+import liaison.groble.domain.role.entity.UserRole;
 import liaison.groble.domain.terms.entity.Terms;
 import liaison.groble.domain.terms.entity.UserTerms;
 import liaison.groble.domain.terms.enums.TermsType;
