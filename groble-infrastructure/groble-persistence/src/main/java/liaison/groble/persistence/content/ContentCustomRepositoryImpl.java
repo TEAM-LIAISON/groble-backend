@@ -801,8 +801,8 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     .from(qPurchase)
                     .where(qPurchase.content.eq(qContent))
                     .exists())
-            .then(true)
-            .otherwise(false);
+            .then(false)
+            .otherwise(true);
 
     // 6) 메인 쿼리 빌드
     JPAQuery<FlatContentPreviewDTO> query =
