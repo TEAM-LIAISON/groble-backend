@@ -642,6 +642,7 @@ public class ContentService {
         .priceOptionLength(flat.getPriceOptionLength())
         .isAvailableForSale(flat.getIsAvailableForSale())
         .status(flat.getStatus())
+        .isDeletable(flat.getIsDeletable())
         .build();
   }
 

@@ -38,6 +38,7 @@ import liaison.groble.domain.content.entity.QDocumentOption;
 import liaison.groble.domain.content.enums.ContentStatus;
 import liaison.groble.domain.content.enums.ContentType;
 import liaison.groble.domain.content.repository.ContentCustomRepository;
+import liaison.groble.domain.purchase.entity.QPurchase;
 import liaison.groble.domain.user.entity.QUser;
 
 import lombok.RequiredArgsConstructor;
@@ -759,6 +760,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
     QContentOption qOption = QContentOption.contentOption;
     QDocumentOption qDocOpt = QDocumentOption.documentOption;
     QUser qUser = QUser.user;
+    QPurchase qPurchase = QPurchase.purchase;
 
     // 1) 상태 + 사용자 필터
     BooleanExpression statusFilter =
@@ -790,6 +792,16 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
     Expression<Boolean> availableForSale =
         new CaseBuilder().when(contentValid.and(hasValidDocOpt)).then(true).otherwise(false);
 
+    Expression<Boolean> isDeletableExpr =
+        new CaseBuilder()
+            .when(
+                JPAExpressions.selectOne()
+                    .from(qPurchase)
+                    .where(qPurchase.content.eq(qContent))
+                    .exists())
+            .then(true)
+            .otherwise(false);
+
     // 6) 메인 쿼리 빌드
     JPAQuery<FlatContentPreviewDTO> query =
         queryFactory
@@ -814,7 +826,9 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     ExpressionUtils.as(availableForSale, "isAvailableForSale"),
 
                     // 상태
-                    qContent.status.stringValue().as("status")))
+                    qContent.status.stringValue().as("status"),
+                    // 구매 내역 존재 여부 → isDeletable
+                    ExpressionUtils.as(isDeletableExpr, "isDeletable")))
             .from(qContent)
             .leftJoin(qContent.user, qUser)
             .where(whereClause);
