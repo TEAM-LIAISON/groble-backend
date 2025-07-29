@@ -6,6 +6,8 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import liaison.groble.application.market.dto.MarketViewCountDTO;
+import liaison.groble.application.user.service.UserReader;
+import liaison.groble.domain.market.entity.Market;
 import liaison.groble.domain.market.entity.MarketViewLog;
 import liaison.groble.domain.market.repository.MarketViewLogRepository;
 import liaison.groble.domain.port.DailyViewPort;
@@ -16,6 +18,9 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class MarketViewCountService {
 
+  // Reader
+  private final UserReader userReader;
+
   // Repository
   private final MarketViewLogRepository marketViewLogRepository;
 
@@ -23,7 +28,9 @@ public class MarketViewCountService {
   private final DailyViewPort dailyViewPort;
 
   @Async
-  public void recordMarketView(Long marketId, MarketViewCountDTO marketViewCountDTO) {
+  public void recordMarketView(String marketLinkUrl, MarketViewCountDTO marketViewCountDTO) {
+
+    Market market = userReader.getMarketWithUser(marketLinkUrl);
 
     // # 일별 조회수
     // view:count:market:123:20250128 → "42"
@@ -40,11 +47,11 @@ public class MarketViewCountService {
                 + ":"
                 + marketViewCountDTO.getUserAgent().hashCode();
 
-    if (dailyViewPort.incrementViewIfNotDuplicate("market", marketId, viewerKey)) {
+    if (dailyViewPort.incrementViewIfNotDuplicate("market", market.getId(), viewerKey)) {
       // 로그 저장
       MarketViewLog log =
           MarketViewLog.builder()
-              .marketId(marketId)
+              .marketId(market.getId())
               .viewerId(marketViewCountDTO.getUserId())
               .viewerIp(marketViewCountDTO.getIp())
               .userAgent(marketViewCountDTO.getUserAgent())
