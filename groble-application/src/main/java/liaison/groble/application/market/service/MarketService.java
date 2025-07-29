@@ -33,8 +33,6 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 public class MarketService {
-  // Service
-  private final MarketViewCountService marketViewCountService;
   // Reader
   private final SellerContactReader sellerContactReader;
   private final ContentReader contentReader;
