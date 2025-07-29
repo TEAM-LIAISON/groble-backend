@@ -53,7 +53,7 @@ spring:
         order_inserts: true
         order_updates: true
     hibernate:
-        ddl-auto: update
+        ddl-auto: validate
   sql:
     init:
       mode: always

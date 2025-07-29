@@ -180,7 +180,8 @@ public class MarketController {
   @Logging(item = "Market", action = "viewMarket", includeParam = true, includeResult = true)
   @PostMapping(MARKET_VIEW_PATH)
   public ResponseEntity<GrobleResponse<Void>> viewMarket(
-      @Auth Accessor accessor, @Valid @PathVariable("marketLinkUrl") String marketLinkUrl) {
+      @Auth(required = false) Accessor accessor,
+      @Valid @PathVariable("marketLinkUrl") String marketLinkUrl) {
 
     MarketViewCountDTO marketViewCountDTO =
         MarketViewCountDTO.builder()

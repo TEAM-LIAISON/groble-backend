@@ -323,8 +323,8 @@ public class ContentController {
               + "조회수는 1시간 동안 중복되지 않으며, 이후에는 다시 조회수가 증가합니다.")
   @Logging(item = "Content", action = "viewContent", includeParam = true, includeResult = true)
   @PostMapping(CONTENT_VIEW_PATH)
-  private ResponseEntity<GrobleResponse<Void>> viewContent(
-      @Auth Accessor accessor, @PathVariable("contentId") Long contentId) {
+  public ResponseEntity<GrobleResponse<Void>> viewContent(
+      @Auth(required = false) Accessor accessor, @PathVariable("contentId") Long contentId) {
     ContentViewCountDTO contentViewCountDTO =
         ContentViewCountDTO.builder()
             .userId(accessor.getUserId())
