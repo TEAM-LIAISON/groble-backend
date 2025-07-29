@@ -26,8 +26,20 @@ public class QMarketViewStats extends EntityPathBase<MarketViewStats> {
 
     public final NumberPath<Long> id = createNumber("id", Long.class);
 
+    public final NumberPath<Long> loggedInViewerCount = createNumber("loggedInViewerCount", Long.class);
+
+    public final NumberPath<Long> marketId = createNumber("marketId", Long.class);
+
+    public final EnumPath<MarketViewStats.PeriodType> periodType = createEnum("periodType", MarketViewStats.PeriodType.class);
+
+    public final DatePath<java.time.LocalDate> statDate = createDate("statDate", java.time.LocalDate.class);
+
+    public final NumberPath<Long> uniqueViewerCount = createNumber("uniqueViewerCount", Long.class);
+
     //inherited
     public final DateTimePath<java.time.LocalDateTime> updatedAt = _super.updatedAt;
+
+    public final NumberPath<Long> viewCount = createNumber("viewCount", Long.class);
 
     public QMarketViewStats(String variable) {
         super(MarketViewStats.class, forVariable(variable));
