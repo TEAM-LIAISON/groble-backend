@@ -31,14 +31,17 @@ import liaison.groble.api.model.file.response.FileUploadResponse;
 import liaison.groble.api.server.util.FileUtil;
 import liaison.groble.application.content.dto.ContentCardDTO;
 import liaison.groble.application.content.dto.ContentDetailDTO;
+import liaison.groble.application.content.dto.ContentViewCountDTO;
 import liaison.groble.application.content.dto.review.ContentReviewDTO;
 import liaison.groble.application.content.service.ContentService;
+import liaison.groble.application.content.service.ContentViewCountService;
 import liaison.groble.application.file.FileService;
 import liaison.groble.application.file.dto.FileDTO;
 import liaison.groble.application.file.dto.FileUploadDTO;
 import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.annotation.Logging;
 import liaison.groble.common.model.Accessor;
+import liaison.groble.common.request.RequestUtil;
 import liaison.groble.common.response.GrobleResponse;
 import liaison.groble.common.response.PageResponse;
 import liaison.groble.common.response.ResponseHelper;
@@ -71,6 +74,7 @@ public class ContentController {
   private static final String CONTENT_COACHING_CATEGORY_PATH = "/contents/coaching/category";
   private static final String CONTENT_DOCUMENT_CATEGORY_PATH = "/contents/document/category";
   private static final String CONTENT_REVIEWS_PATH = "/content/{contentId}/reviews";
+  private static final String CONTENT_VIEW_PATH = "/content/view/{contentId}";
 
   // 응답 메시지 상수화
   private static final String CONTENT_DETAIL_SUCCESS_MESSAGE = "콘텐츠 상세 조회에 성공하였습니다.";
@@ -78,14 +82,19 @@ public class ContentController {
   private static final String UPLOAD_CONTENT_THUMBNAIL_SUCCESS_MESSAGE =
       "콘텐츠 썸네일 이미지 업로드가 성공적으로 완료되었습니다.";
   private static final String CONTENT_REVIEWS_SUCCESS_MESSAGE = "콘텐츠 리뷰 목록 조회에 성공하였습니다.";
+  private static final String CONTENT_VIEW_SUCCESS_MESSAGE = "콘텐츠 뷰어 화면을 성공적으로 조회했습니다.";
 
   // Service
   private final ContentService contentService;
   private final FileService fileService;
+  private final ContentViewCountService contentViewCountService;
 
   // Mapper
   private final ContentMapper contentMapper;
   private final ContentReviewMapper contentReviewMapper;
+
+  // Util
+  private final RequestUtil requestUtil;
   private final FileUtil fileUtil;
 
   // Helper
@@ -305,6 +314,28 @@ public class ContentController {
               GrobleResponse.error(
                   "콘텐츠 자료 저장 중 오류가 발생했습니다. 다시 시도해주세요.", HttpStatus.INTERNAL_SERVER_ERROR.value()));
     }
+  }
+
+  @Operation(
+      summary = "[✅ 콘텐츠 뷰어] 콘텐츠 뷰어 화면 조회",
+      description =
+          "만료 시간 1시간 이내의 중복 조회를 방지하며, 콘텐츠 뷰어 화면을 조회합니다. "
+              + "조회수는 1시간 동안 중복되지 않으며, 이후에는 다시 조회수가 증가합니다.")
+  @Logging(item = "Content", action = "viewContent", includeParam = true, includeResult = true)
+  @PostMapping(CONTENT_VIEW_PATH)
+  private ResponseEntity<GrobleResponse<Void>> viewContent(
+      @Auth Accessor accessor, @PathVariable("contentId") Long contentId) {
+    ContentViewCountDTO contentViewCountDTO =
+        ContentViewCountDTO.builder()
+            .userId(accessor.getUserId())
+            .ip(requestUtil.getClientIp())
+            .userAgent(requestUtil.getUserAgent())
+            .referer(null)
+            .build();
+
+    contentViewCountService.recordContentView(contentId, contentViewCountDTO);
+
+    return responseHelper.success(null, CONTENT_VIEW_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 
   /** 이미지 파일 여부 확인 */

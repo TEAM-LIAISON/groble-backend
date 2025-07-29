@@ -177,8 +177,8 @@ public class MarketController {
       description =
           "만료 시간 1시간 이내의 중복 조회를 방지하며, 마켓 뷰어 화면을 조회합니다. "
               + "조회수는 1시간 동안 중복되지 않으며, 이후에는 다시 조회수가 증가합니다.")
-  @PostMapping(MARKET_VIEW_PATH)
   @Logging(item = "Market", action = "viewMarket", includeParam = true, includeResult = true)
+  @PostMapping(MARKET_VIEW_PATH)
   public ResponseEntity<GrobleResponse<Void>> viewMarket(
       @Auth Accessor accessor, @Valid @PathVariable("marketLinkUrl") String marketLinkUrl) {
 
