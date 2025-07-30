@@ -30,7 +30,7 @@ public class QContentViewStats extends EntityPathBase<ContentViewStats> {
 
     public final NumberPath<Long> loggedInViewerCount = createNumber("loggedInViewerCount", Long.class);
 
-    public final EnumPath<liaison.groble.domain.market.entity.MarketViewStats.PeriodType> periodType = createEnum("periodType", liaison.groble.domain.market.entity.MarketViewStats.PeriodType.class);
+    public final EnumPath<ContentViewStats.PeriodType> periodType = createEnum("periodType", ContentViewStats.PeriodType.class);
 
     public final DatePath<java.time.LocalDate> statDate = createDate("statDate", java.time.LocalDate.class);
 
