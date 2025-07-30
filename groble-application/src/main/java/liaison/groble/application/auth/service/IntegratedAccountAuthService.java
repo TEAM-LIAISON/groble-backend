@@ -1,6 +1,6 @@
 package liaison.groble.application.auth.service;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -22,10 +22,12 @@ import liaison.groble.common.port.security.SecurityPort;
 import liaison.groble.domain.port.VerificationCodePort;
 import liaison.groble.domain.terms.enums.TermsType;
 import liaison.groble.domain.user.entity.IntegratedAccount;
+import liaison.groble.domain.user.entity.SellerInfo;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.enums.UserStatus;
 import liaison.groble.domain.user.enums.UserType;
 import liaison.groble.domain.user.factory.UserFactory;
+import liaison.groble.domain.user.repository.SellerInfoRepository;
 import liaison.groble.domain.user.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -47,7 +49,7 @@ public class IntegratedAccountAuthService {
   // Repository
   private final UserReader userReader;
   private final UserRepository userRepository;
-
+  private final SellerInfoRepository sellerInfoRepository;
   // Port
   private final SecurityPort securityPort;
   private final VerificationCodePort verificationCodePort;
@@ -71,6 +73,11 @@ public class IntegratedAccountAuthService {
 
       // 3. 사용자 저장 및 후처리
       User savedUser = userRepository.save(user);
+
+      if (userType == UserType.SELLER) {
+        SellerInfo sellerInfo = SellerInfo.createForUser(savedUser);
+        sellerInfoRepository.save(sellerInfo);
+      }
 
       // 4. 토큰 발급 및 저장
       TokenDTO tokenDTO = issueAndSaveTokens(savedUser);
@@ -234,7 +241,7 @@ public class IntegratedAccountAuthService {
 
     String accessToken = securityPort.createAccessToken(user.getId(), user.getEmail());
     String refreshToken = securityPort.createRefreshToken(user.getId(), user.getEmail());
-    Instant refreshTokenExpiresAt = securityPort.getRefreshTokenExpirationTime(refreshToken);
+    LocalDateTime refreshTokenExpiresAt = securityPort.getRefreshTokenExpirationTime(refreshToken);
 
     user.updateRefreshToken(refreshToken, refreshTokenExpiresAt);
     userRepository.save(user);

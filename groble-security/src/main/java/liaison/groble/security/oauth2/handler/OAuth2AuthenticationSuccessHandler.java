@@ -3,7 +3,7 @@ package liaison.groble.security.oauth2.handler;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -81,7 +81,8 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     // 직접 토큰 생성
     String accessToken = jwtTokenProvider.createAccessToken(user.getId(), user.getEmail());
     String refreshToken = jwtTokenProvider.createRefreshToken(user.getId(), user.getEmail());
-    Instant refreshTokenExpiresAt = jwtTokenProvider.getRefreshTokenExpirationInstant(refreshToken);
+    LocalDateTime refreshTokenExpiresAt =
+        jwtTokenProvider.getRefreshTokenExpirationAt(refreshToken);
 
     // 리프레시 토큰 저장
     user.updateRefreshToken(refreshToken, refreshTokenExpiresAt);

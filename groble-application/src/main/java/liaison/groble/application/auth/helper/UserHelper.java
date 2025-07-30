@@ -3,7 +3,7 @@ package liaison.groble.application.auth.helper;
 import org.springframework.stereotype.Component;
 
 import liaison.groble.common.exception.EntityNotFoundException;
-import liaison.groble.domain.role.Role;
+import liaison.groble.domain.role.entity.Role;
 import liaison.groble.domain.role.repository.RoleRepository;
 import liaison.groble.domain.user.entity.User;
 

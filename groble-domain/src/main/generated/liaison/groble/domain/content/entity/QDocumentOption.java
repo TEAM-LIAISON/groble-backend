@@ -31,6 +31,9 @@ public class QDocumentOption extends EntityPathBase<DocumentOption> {
     public final DateTimePath<java.time.LocalDateTime> createdAt;
 
     //inherited
+    public final DateTimePath<java.time.LocalDateTime> deactivatedAt;
+
+    //inherited
     public final StringPath description;
 
     public final StringPath documentFileUrl = createString("documentFileUrl");
@@ -41,6 +44,9 @@ public class QDocumentOption extends EntityPathBase<DocumentOption> {
 
     //inherited
     public final NumberPath<Long> id;
+
+    //inherited
+    public final BooleanPath isActive;
 
     //inherited
     public final StringPath name;
@@ -72,8 +78,10 @@ public class QDocumentOption extends EntityPathBase<DocumentOption> {
         this._super = new QContentOption(type, metadata, inits);
         this.content = _super.content;
         this.createdAt = _super.createdAt;
+        this.deactivatedAt = _super.deactivatedAt;
         this.description = _super.description;
         this.id = _super.id;
+        this.isActive = _super.isActive;
         this.name = _super.name;
         this.price = _super.price;
         this.updatedAt = _super.updatedAt;

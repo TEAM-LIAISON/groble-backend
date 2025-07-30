@@ -140,10 +140,6 @@ public class Content extends BaseTimeEntity {
   }
 
   // Setter 메서드 추가
-  public void setUser(User user) {
-    this.user = user;
-  }
-
   public void setTitle(String title) {
     this.title = title;
   }
@@ -213,15 +209,5 @@ public class Content extends BaseTimeEntity {
     this.saleCount = 0;
     this.options = new ArrayList<>();
     this.sortOrder = 0; // 기본값
-  }
-
-  // sortOrder setter 추가
-  public void setSortOrder(Integer sortOrder) {
-    this.sortOrder = sortOrder;
-  }
-
-  // 팩토리 메서드
-  public static Content createDraft(User user) {
-    return new Content(user);
   }
 }

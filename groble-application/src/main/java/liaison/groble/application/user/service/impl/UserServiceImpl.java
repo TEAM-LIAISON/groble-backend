@@ -1,6 +1,5 @@
 package liaison.groble.application.user.service.impl;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -10,14 +9,14 @@ import liaison.groble.application.user.dto.UserMyPageDetailDTO;
 import liaison.groble.application.user.dto.UserMyPageSummaryDTO;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.application.user.service.UserService;
-import liaison.groble.common.port.security.SecurityPort;
 import liaison.groble.domain.terms.enums.TermsType;
 import liaison.groble.domain.user.entity.IntegratedAccount;
+import liaison.groble.domain.user.entity.SellerInfo;
 import liaison.groble.domain.user.entity.SocialAccount;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.enums.AccountType;
 import liaison.groble.domain.user.enums.UserType;
-import liaison.groble.domain.user.repository.IntegratedAccountRepository;
+import liaison.groble.domain.user.repository.SellerInfoRepository;
 import liaison.groble.domain.user.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -28,19 +27,11 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
   private final UserRepository userRepository;
-  private final IntegratedAccountRepository integratedAccountRepository;
-  private final SecurityPort securityPort;
+  private final SellerInfoRepository sellerInfoRepository;
 
   // 변경: 24시간 (24 * 60 = 1440분)
-  private final long PASSWORD_RESET_EXPIRATION_MINUTES = 1440;
   private final UserReader userReader;
   private final ContentReader contentReader;
-
-  @Value("${app.frontend-url}")
-  private String frontendUrl;
-
-  @Value("${app.security.password-reset-secret}")
-  private String passwordResetSecret;
 
   /**
    * 사용자 역할 전환 (판매자/구매자 모드 전환)
@@ -83,13 +74,22 @@ public class UserServiceImpl implements UserService {
     User user = userReader.getUserById(userId);
 
     // sellerInfo 가 없거나, isSeller=false 이면 디폴트로 PENDING 처리
-    String verificationStatusName = "PENDING";
-    String verificationStatusDisplayName = "인증 필요";
+    String verificationStatusName;
+    String verificationStatusDisplayName;
 
-    if (user.isSeller() && user.getSellerInfo() != null) {
-      var status = user.getSellerInfo().getVerificationStatus();
-      verificationStatusName = status.name();
-      verificationStatusDisplayName = status.getDisplayName();
+    if (user.isSeller()) {
+      SellerInfo sellerInfo = sellerInfoRepository.findByUserId(userId).orElse(null);
+      if (sellerInfo != null) {
+        var status = sellerInfo.getVerificationStatus();
+        verificationStatusName = status.name();
+        verificationStatusDisplayName = status.getDisplayName();
+      } else {
+        verificationStatusName = "PENDING";
+        verificationStatusDisplayName = "인증 필요";
+      }
+    } else {
+      verificationStatusName = "PENDING";
+      verificationStatusDisplayName = "인증 필요";
     }
 
     return UserMyPageSummaryDTO.builder()
@@ -112,7 +112,6 @@ public class UserServiceImpl implements UserService {
     String email = null;
     String phoneNumber = null;
     String providerTypeName = null;
-    String verificationStatus = null;
 
     if (accountType == AccountType.INTEGRATED && user.getIntegratedAccount() != null) {
       IntegratedAccount account = user.getIntegratedAccount();
@@ -131,9 +130,12 @@ public class UserServiceImpl implements UserService {
         !user.hasAgreedTo(TermsType.SELLER_TERMS_POLICY) || user.getPhoneNumber() == null;
     log.info("sellerAccountNotCreated: {}", sellerAccountNotCreated);
 
-    if (user.getSellerInfo() != null) {
-      verificationStatus = user.getSellerInfo().getVerificationStatus().name();
-    }
+    // SellerInfo 조회
+    String verificationStatus =
+        sellerInfoRepository
+            .findByUserId(userId)
+            .map(sellerInfo -> sellerInfo.getVerificationStatus().name())
+            .orElse(null);
 
     return UserMyPageDetailDTO.builder()
         .nickname(user.getNickname())

@@ -2,7 +2,9 @@ package liaison.groble.security.jwt;
 
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
-import java.time.Instant;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -88,23 +90,23 @@ public class JwtTokenProvider {
       throw new IllegalArgumentException("토큰 생성 시 사용자 ID는 null이 될 수 없습니다");
     }
 
-    Instant now = Instant.now();
-    Instant expiryDate = now.plusMillis(expirationMs);
+    LocalDateTime now = LocalDateTime.now();
+    LocalDateTime expiryDate = now.plusSeconds(expirationMs / 1000);
     String tokenId = UUID.randomUUID().toString();
 
     Map<String, Object> claims = new HashMap<>();
     claims.put("type", tokenType.name());
     claims.put("jti", tokenId);
-    claims.put("userId", userId); // ID는 항상 포함
-    claims.put("email", email); // 이메일은 Subject가 아닌 claim으로 포함
+    claims.put("userId", userId);
+    claims.put("email", email);
 
     String token =
         Jwts.builder()
             .setHeaderParam("typ", Header.JWT_TYPE)
             .setClaims(claims)
-            .setSubject(userId.toString()) // Subject를 userId로 변경
-            .setIssuedAt(Date.from(now))
-            .setExpiration(Date.from(expiryDate))
+            .setSubject(userId.toString())
+            .setIssuedAt(Date.from(now.atZone(ZoneId.systemDefault()).toInstant()))
+            .setExpiration(Date.from(expiryDate.atZone(ZoneId.systemDefault()).toInstant()))
             .setIssuer(issuer)
             .setId(tokenId)
             .signWith(key)
@@ -337,14 +339,16 @@ public class JwtTokenProvider {
     }
   }
 
-  public Instant getRefreshTokenExpirationInstant(String refreshToken) {
+  public LocalDateTime getRefreshTokenExpirationAt(String refreshToken) {
     try {
       Claims claims = parseToken(refreshToken, refreshTokenKey);
-      Date expiration = claims.getExpiration();
-      return expiration.toInstant();
+      return claims.getExpiration().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
     } catch (ExpiredJwtException e) {
-      // 만료된 토큰이어도 만료시간은 읽을 수 있음
-      return e.getClaims().getExpiration().toInstant();
+      return e.getClaims()
+          .getExpiration()
+          .toInstant()
+          .atZone(ZoneId.systemDefault())
+          .toLocalDateTime();
     } catch (Exception e) {
       throw new TokenException("RefreshToken에서 만료 시간을 추출할 수 없습니다", e);
     }
@@ -387,25 +391,25 @@ public class JwtTokenProvider {
       Long userId, String email, String refreshToken) {
     try {
       // 리프레시 토큰의 만료 시간 가져오기
-      Instant refreshExpiration = getRefreshTokenExpirationInstant(refreshToken);
-      Instant now = Instant.now();
+      LocalDateTime refreshExpiration = getRefreshTokenExpirationAt(refreshToken);
+      LocalDateTime now = LocalDateTime.now();
 
       // 기본 액세스 토큰 만료 시간
-      Instant defaultAccessExpiration = now.plusMillis(accessTokenExpirationMs);
+      LocalDateTime defaultAccessExpiration = now.plusSeconds(accessTokenExpirationMs / 1000);
 
       // 액세스 토큰 만료 시간은 리프레시 토큰 만료 시간과 기본 액세스 토큰 만료 시간 중 더 이른 시간으로 설정
-      Instant effectiveExpiration =
+      LocalDateTime effectiveExpiration =
           refreshExpiration.isBefore(defaultAccessExpiration)
               ? refreshExpiration
               : defaultAccessExpiration;
 
       // 만료 시간이 현재보다 이전이면 토큰 발급 불가
-      if (effectiveExpiration.isBefore(now) || effectiveExpiration.equals(now)) {
+      if (!effectiveExpiration.isAfter(now)) {
         throw new TokenException("유효한 토큰을 생성할 수 없습니다: 만료 시간이 현재 시간보다 이전입니다");
       }
 
       // 밀리초 단위로 변환
-      long expirationMs = effectiveExpiration.toEpochMilli() - now.toEpochMilli();
+      long expirationMs = Duration.between(now, effectiveExpiration).toMillis();
 
       // 액세스 토큰 생성 (제한된, 더 짧은 만료 시간 사용)
       return generateToken(userId, email, TokenType.ACCESS, accessTokenKey, expirationMs);

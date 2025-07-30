@@ -1,6 +1,6 @@
 package liaison.groble.domain.file.entity;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 import lombok.Builder;
 
@@ -8,6 +8,6 @@ import lombok.Builder;
 public class PresignedUrlInfo {
   private String key;
   private String url;
-  private Instant expiration;
+  private LocalDateTime expiration;
   private String contentType;
 }

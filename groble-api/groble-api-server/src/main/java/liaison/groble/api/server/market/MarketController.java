@@ -18,12 +18,15 @@ import liaison.groble.api.model.content.response.swagger.ContentListResponse;
 import liaison.groble.api.model.maker.request.MarketEditRequest;
 import liaison.groble.api.model.maker.response.MakerIntroSectionResponse;
 import liaison.groble.application.content.dto.ContentCardDTO;
-import liaison.groble.application.market.MarketService;
 import liaison.groble.application.market.dto.MarketEditDTO;
 import liaison.groble.application.market.dto.MarketIntroSectionDTO;
+import liaison.groble.application.market.dto.MarketViewCountDTO;
+import liaison.groble.application.market.service.MarketService;
+import liaison.groble.application.market.service.MarketViewCountService;
 import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.annotation.Logging;
 import liaison.groble.common.model.Accessor;
+import liaison.groble.common.request.RequestUtil;
 import liaison.groble.common.response.GrobleResponse;
 import liaison.groble.common.response.PageResponse;
 import liaison.groble.common.response.ResponseHelper;
@@ -52,6 +55,7 @@ public class MarketController {
   private static final String MARKET_CONTENTS_PATH = "/contents/{marketLinkUrl}";
   private static final String MARKET_EDIT_PATH = "/edit";
   private static final String MARKET_LINK_CHECK_PATH = "/link-check";
+  private static final String MARKET_VIEW_PATH = "/view/{marketLinkUrl}";
 
   // 응답 메시지 상수화
   private static final String MARKET_EDIT_INTRO_SUCCESS_MESSAGE =
@@ -61,9 +65,11 @@ public class MarketController {
   private static final String MARKET_CONTENTS_SUCCESS_MESSAGE = "마켓 뷰어 화면에서 콘텐츠 목록 전체 조회에 성공했습니다.";
   private static final String MARKET_EDIT_SUCCESS_MESSAGE = "마켓 관리 수정창에서 수정 완료 항목을 저장했습니다.";
   private static final String MARKET_LINK_CHECK_SUCCESS_MESSAGE = "사용 가능한 마켓 링크입니다.";
+  private static final String MARKET_VIEW_SUCCESS_MESSAGE = "마켓 뷰어 화면을 성공적으로 조회했습니다.";
 
   // Service
   private final MarketService marketService;
+  private final MarketViewCountService marketViewCountService;
 
   // Mapper
   private final ContentMapper contentMapper;
@@ -71,6 +77,9 @@ public class MarketController {
 
   // Helper
   private final ResponseHelper responseHelper;
+
+  // Util
+  private final RequestUtil requestUtil;
 
   @Operation(
       summary = "[✅ 마켓 관리] 마켓 수정창 화면에서 메이커 정보 및 대표 콘텐츠 조회",
@@ -99,7 +108,8 @@ public class MarketController {
   @GetMapping(MARKET_INTRO_PATH)
   @Logging(item = "Market", action = "getViewerMakerIntroSection", includeResult = true)
   public ResponseEntity<GrobleResponse<MakerIntroSectionResponse>> getViewerMakerIntroSection(
-      @Valid @PathVariable("marketLinkUrl") String marketLinkUrl) {
+      @Auth Accessor accessor, @Valid @PathVariable("marketLinkUrl") String marketLinkUrl) {
+
     MarketIntroSectionDTO makerIntroSectionDTO =
         marketService.getViewerMakerIntroSection(marketLinkUrl);
     MakerIntroSectionResponse response =
@@ -160,5 +170,29 @@ public class MarketController {
     marketService.checkMarketLink(marketLinkUrl);
 
     return responseHelper.success(null, MARKET_LINK_CHECK_SUCCESS_MESSAGE, HttpStatus.OK);
+  }
+
+  @Operation(
+      summary = "[✅ 마켓 뷰어] 마켓 뷰어 화면 조회",
+      description =
+          "만료 시간 1시간 이내의 중복 조회를 방지하며, 마켓 뷰어 화면을 조회합니다. "
+              + "조회수는 1시간 동안 중복되지 않으며, 이후에는 다시 조회수가 증가합니다.")
+  @Logging(item = "Market", action = "viewMarket", includeParam = true, includeResult = true)
+  @PostMapping(MARKET_VIEW_PATH)
+  public ResponseEntity<GrobleResponse<Void>> viewMarket(
+      @Auth(required = false) Accessor accessor,
+      @Valid @PathVariable("marketLinkUrl") String marketLinkUrl) {
+
+    MarketViewCountDTO marketViewCountDTO =
+        MarketViewCountDTO.builder()
+            .userId(accessor.getUserId())
+            .ip(requestUtil.getClientIp())
+            .userAgent(requestUtil.getUserAgent())
+            .referer(null)
+            .build();
+
+    marketViewCountService.recordMarketView(marketLinkUrl, marketViewCountDTO);
+
+    return responseHelper.success(null, MARKET_VIEW_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 }

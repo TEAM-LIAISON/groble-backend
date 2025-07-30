@@ -1,16 +1,14 @@
 package liaison.groble.domain.user.factory;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 import liaison.groble.domain.user.entity.IntegratedAccount;
 import liaison.groble.domain.user.entity.SocialAccount;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.enums.AccountType;
 import liaison.groble.domain.user.enums.ProviderType;
-import liaison.groble.domain.user.enums.SellerVerificationStatus;
 import liaison.groble.domain.user.enums.UserStatus;
 import liaison.groble.domain.user.enums.UserType;
-import liaison.groble.domain.user.vo.SellerInfo;
 import liaison.groble.domain.user.vo.UserProfile;
 import liaison.groble.domain.user.vo.UserStatusInfo;
 
@@ -21,7 +19,10 @@ public class UserFactory {
 
     // 상태 정보 생성
     UserStatusInfo userStatusInfo =
-        UserStatusInfo.builder().status(UserStatus.ACTIVE).statusChangedAt(Instant.now()).build();
+        UserStatusInfo.builder()
+            .status(UserStatus.ACTIVE)
+            .statusChangedAt(LocalDateTime.now())
+            .build();
 
     // User 엔티티 생성
     User user =
@@ -43,9 +44,6 @@ public class UserFactory {
 
     user.setIntegratedAccount(account);
 
-    // 여기서 SellerInfo는 “인증 대기” 상태만 셋팅
-    user.setSellerInfo(SellerInfo.ofVerificationStatus(SellerVerificationStatus.PENDING));
-
     return user;
   }
 
@@ -55,7 +53,10 @@ public class UserFactory {
 
     // 상태 정보 생성
     UserStatusInfo statusInfo =
-        UserStatusInfo.builder().status(UserStatus.ACTIVE).statusChangedAt(Instant.now()).build();
+        UserStatusInfo.builder()
+            .status(UserStatus.ACTIVE)
+            .statusChangedAt(LocalDateTime.now())
+            .build();
 
     // User 엔티티 생성
     User user =
@@ -86,7 +87,10 @@ public class UserFactory {
 
     // 상태 정보 생성
     UserStatusInfo userStatusInfo =
-        UserStatusInfo.builder().status(UserStatus.ACTIVE).statusChangedAt(Instant.now()).build();
+        UserStatusInfo.builder()
+            .status(UserStatus.ACTIVE)
+            .statusChangedAt(LocalDateTime.now())
+            .build();
 
     // User 엔티티 생성
     User user =

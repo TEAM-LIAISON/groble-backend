@@ -16,7 +16,7 @@ import liaison.groble.application.notification.dto.NotificationItemsDTO;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-07-25T22:40:30+0900",
+    date = "2025-07-30T17:38:21+0900",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.10 (Amazon.com Inc.)")
 @Component
 public class NotificationMapperImpl implements NotificationMapper {

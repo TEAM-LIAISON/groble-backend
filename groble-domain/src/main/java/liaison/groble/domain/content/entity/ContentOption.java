@@ -1,6 +1,7 @@
 package liaison.groble.domain.content.entity;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorColumn;
@@ -44,15 +45,31 @@ public abstract class ContentOption extends BaseTimeEntity {
   // 옵션 가격
   private BigDecimal price;
 
-  // Setter 메서드들
-  public void setName(String name) {
+  @Column(name = "is_active", nullable = false)
+  private Boolean isActive = true;
+
+  @Column(name = "deactivated_at")
+  private LocalDateTime deactivatedAt;
+
+  // 공통 필드 업데이트 메소드
+  public void updateCommonFields(String name, String description, BigDecimal price) {
     this.name = name;
-  }
-
-  public void setDescription(String description) {
     this.description = description;
+    this.price = price;
   }
 
+  // 활성화 상태 확인 메소드
+  public boolean isActive() {
+    return Boolean.TRUE.equals(isActive);
+  }
+
+  // 비활성화 메소드
+  public void deactivate() {
+    this.isActive = false;
+    this.deactivatedAt = LocalDateTime.now();
+  }
+
+  // 콘텐츠 설정
   public void setPrice(BigDecimal price) {
     this.price = price;
   }

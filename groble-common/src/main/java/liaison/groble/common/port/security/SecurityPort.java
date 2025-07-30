@@ -1,6 +1,6 @@
 package liaison.groble.common.port.security;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 public interface SecurityPort {
   String encodePassword(String password);
@@ -11,7 +11,7 @@ public interface SecurityPort {
 
   long getAccessTokenExpirationTime();
 
-  Instant getRefreshTokenExpirationTime(String refreshToken);
+  LocalDateTime getRefreshTokenExpirationTime(String refreshToken);
 
   boolean matches(String rawPassword, String encodedPassword);
 

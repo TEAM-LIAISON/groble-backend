@@ -19,7 +19,7 @@ import liaison.groble.application.content.dto.ContentOptionDTO;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-07-25T22:40:31+0900",
+    date = "2025-07-30T17:38:21+0900",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.10 (Amazon.com Inc.)")
 @Component
 public class ContentMapperImpl implements ContentMapper {
@@ -143,6 +143,9 @@ public class ContentMapperImpl implements ContentMapper {
     }
     if (contentCardDTO.getStatus() != null) {
       contentPreviewCardResponse.status(contentCardDTO.getStatus());
+    }
+    if (contentCardDTO.getIsDeletable() != null) {
+      contentPreviewCardResponse.isDeletable(contentCardDTO.getIsDeletable());
     }
 
     return contentPreviewCardResponse.build();

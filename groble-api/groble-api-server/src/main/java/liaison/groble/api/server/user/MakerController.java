@@ -44,9 +44,8 @@ public class MakerController {
   private final TermsMapper termsMapper;
   private final TermsService termsService;
   private final ClientInfoService clientInfoService; // 클라이언트 정보 서비스 주입
-  private final ResponseHelper responseHelper;
-
   // Helper
+  private final ResponseHelper responseHelper;
 
   /** 메이커 이용약관 동의 API */
   @Operation(summary = "[✅ 메이커 이용약관 동의]", description = "메이커(판매자)로 활동하기 위한 이용약관에 동의합니다.")

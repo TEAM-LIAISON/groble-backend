@@ -14,6 +14,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 import liaison.groble.domain.user.enums.ContactType;
+import liaison.groble.domain.user.exception.InvalidContactException;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -36,26 +37,38 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class SellerContact {
+  private static final int MAX_CONTACT_LENGTH = 500;
+
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
+  /** 연관된 판매자 정보 (User or SellerInfo 등) */
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "user_id", nullable = false)
+  private User user;
+
   /** INSTAGRAM, EMAIL, OPENCHAT 등 enum */
   @Enumerated(EnumType.STRING)
-  @Column(name = "contact_type", nullable = false)
+  @Column(name = "contact_type", nullable = false, length = 20)
   private ContactType contactType;
 
   /** 실제 URL 또는 이메일 주소 */
-  @Column(name = "contact_value", columnDefinition = "TEXT", nullable = false)
+  @Column(name = "contact_value", nullable = false, length = 500)
   private String contactValue;
 
-  /** 연관된 판매자 정보 (User or SellerInfo 등) */
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "user_id") // 또는 seller_info_id, 상황에 따라 다름
-  private User user;
-
-  // 업데이트 메서드 추가
-  public void updateContactValue(String contactValue) {
+  // 연락처 값을 변경하는 메소드
+  public void changeContactValue(String contactValue) {
+    validateContactValue(contactValue);
     this.contactValue = contactValue;
+  }
+
+  private static void validateContactValue(String value) {
+    if (value == null || value.isBlank()) {
+      throw new InvalidContactException("연락처 정보는 필수입니다");
+    }
+    if (value.length() > MAX_CONTACT_LENGTH) {
+      throw new InvalidContactException("연락처는 500자를 초과할 수 없습니다");
+    }
   }
 }

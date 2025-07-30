@@ -152,18 +152,17 @@ public class NotificationService {
   }
 
   @Transactional
-  public void sendMakerRejectedVerificationNotification(User user) {
-    CertifyDetails certifyDetails = CertifyDetails.builder().nickname(user.getNickname()).build();
+  public void sendMakerRejectedVerificationNotificationAsync(Long userId, String nickname) {
+    CertifyDetails certifyDetails = CertifyDetails.builder().nickname(nickname).build();
 
     Notification notification =
         notificationMapper.toNotification(
-            user.getId(),
+            userId,
             NotificationType.CERTIFY,
             SubNotificationType.MAKER_CERTIFY_REJECTED,
             certifyDetails);
 
     notificationRepository.save(notification);
-    log.info("메이커 인증 거절 알림 발송: userId={}", user.getId());
   }
 
   @Transactional

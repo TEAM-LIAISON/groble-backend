@@ -1,6 +1,5 @@
 package liaison.groble.application.auth.helper;
 
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
@@ -128,7 +127,7 @@ public class TermsHelper {
                     .user(user)
                     .terms(terms)
                     .agreed(true)
-                    .agreedAt(Instant.now()) // 동의 시간 추가
+                    .agreedAt(LocalDateTime.now()) // 동의 시간 추가
                     .agreedIp(clientIp)
                     .agreedUserAgent(userAgent)
                     .build();

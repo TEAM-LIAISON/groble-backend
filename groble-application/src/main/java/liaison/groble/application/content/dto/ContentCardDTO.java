@@ -18,4 +18,5 @@ public class ContentCardDTO {
   private int priceOptionLength;
   private Boolean isAvailableForSale;
   private String status;
+  private Boolean isDeletable;
 }

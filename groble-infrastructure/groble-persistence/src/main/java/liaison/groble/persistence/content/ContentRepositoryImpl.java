@@ -31,6 +31,11 @@ public class ContentRepositoryImpl implements ContentRepository {
   }
 
   @Override
+  public Optional<Content> findByIdWithSeller(Long contentId) {
+    return jpaContentRepository.findByIdWithSeller(contentId);
+  }
+
+  @Override
   public boolean existsByUserAndStatus(User user, ContentStatus status) {
     return jpaContentRepository.existsByUserAndStatus(user, status);
   }

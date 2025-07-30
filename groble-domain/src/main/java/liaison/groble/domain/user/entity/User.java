@@ -3,7 +3,7 @@ package liaison.groble.domain.user.entity;
 import static jakarta.persistence.EnumType.STRING;
 import static lombok.AccessLevel.PROTECTED;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -24,16 +24,14 @@ import jakarta.persistence.Table;
 import org.hibernate.LazyInitializationException;
 
 import liaison.groble.domain.common.entity.BaseTimeEntity;
-import liaison.groble.domain.role.Role;
-import liaison.groble.domain.role.UserRole;
+import liaison.groble.domain.role.entity.Role;
+import liaison.groble.domain.role.entity.UserRole;
 import liaison.groble.domain.terms.entity.Terms;
 import liaison.groble.domain.terms.entity.UserTerms;
 import liaison.groble.domain.terms.enums.TermsType;
 import liaison.groble.domain.user.enums.AccountType;
 import liaison.groble.domain.user.enums.UserStatus;
 import liaison.groble.domain.user.enums.UserType;
-import liaison.groble.domain.user.vo.IdentityVerification;
-import liaison.groble.domain.user.vo.SellerInfo;
 import liaison.groble.domain.user.vo.UserProfile;
 import liaison.groble.domain.user.vo.UserStatusInfo;
 
@@ -78,11 +76,11 @@ public class User extends BaseTimeEntity {
   private String refreshToken;
 
   @Column(name = "refresh_token_expires_at")
-  private Instant refreshTokenExpiresAt;
+  private LocalDateTime refreshTokenExpiresAt;
 
   /** 마지막 로그인 시간 */
   @Column(name = "last_login_at")
-  private Instant lastLoginAt;
+  private LocalDateTime lastLoginAt;
 
   /** 마지막으로 사용한 사용자 유형 (SELLER 또는 BUYER) */
   @Enumerated(STRING)
@@ -105,9 +103,6 @@ public class User extends BaseTimeEntity {
   @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
   private Set<UserTerms> termsAgreements = new HashSet<>();
 
-  @Embedded private SellerInfo sellerInfo;
-  @Embedded private IdentityVerification identityVerification;
-
   // SELLER
   @Builder.Default
   @Column(name = "is_seller")
@@ -125,10 +120,10 @@ public class User extends BaseTimeEntity {
 
   /** 로그인 시간 업데이트 */
   public void updateLoginTime() {
-    this.lastLoginAt = Instant.now();
+    this.lastLoginAt = LocalDateTime.now();
   }
 
-  public void updateRefreshToken(String refreshToken, Instant refreshTokenExpiresAt) {
+  public void updateRefreshToken(String refreshToken, LocalDateTime refreshTokenExpiresAt) {
     this.refreshToken = refreshToken;
     this.refreshTokenExpiresAt = refreshTokenExpiresAt;
   }
@@ -140,15 +135,6 @@ public class User extends BaseTimeEntity {
 
   public void updateLastUserType(UserType userType) {
     this.lastUserType = userType;
-  }
-
-  // Value Object 설정 메서드
-  public void setSellerInfo(SellerInfo sellerInfo) {
-    this.sellerInfo = sellerInfo;
-  }
-
-  public void setIdentityVerification(IdentityVerification verification) {
-    this.identityVerification = verification;
   }
 
   public void setSeller(boolean isSeller) {
@@ -184,11 +170,6 @@ public class User extends BaseTimeEntity {
     return null;
   }
 
-  // 본인인증 완료 메서드
-  public void completeIdentityVerification(IdentityVerification verification) {
-    this.identityVerification = verification;
-  }
-
   /** 회원 탈퇴 처리 즉시 탈퇴 처리하고 사용자 상태를 WITHDRAWN으로 변경 */
   public void withdraw() {
     this.getUserStatusInfo().updateStatus(UserStatus.WITHDRAWN);
@@ -213,16 +194,6 @@ public class User extends BaseTimeEntity {
       integratedAccount.updatePassword(null);
     } else if (accountType == AccountType.SOCIAL && socialAccount != null) {
       socialAccount.anonymizeEmail(anonymizedEmail);
-    }
-
-    // 판매자 정보 초기화 (선택적, 법적 요구사항에 따라 보존 여부 결정)
-    if (this.sellerInfo != null) {
-      this.sellerInfo.anonymize();
-    }
-
-    // 본인인증 정보 초기화
-    if (this.identityVerification != null) {
-      this.identityVerification.anonymize();
     }
   }
 
@@ -266,14 +237,14 @@ public class User extends BaseTimeEntity {
             .orElse(null);
 
     if (existingAgreement != null) {
-      existingAgreement.updateAgreement(agreed, Instant.now(), ip, userAgent);
+      existingAgreement.updateAgreement(agreed, LocalDateTime.now(), ip, userAgent);
     } else {
       UserTerms newAgreement =
           UserTerms.builder()
               .user(this)
               .terms(advertisingTerms)
               .agreed(agreed)
-              .agreedAt(Instant.now())
+              .agreedAt(LocalDateTime.now())
               .agreedIp(ip)
               .agreedUserAgent(userAgent)
               .build();
@@ -304,7 +275,7 @@ public class User extends BaseTimeEntity {
 
     if (existingAgreement != null) {
       // 기존 동의 내역 업데이트
-      existingAgreement.updateAgreement(agreed, Instant.now(), ip, userAgent);
+      existingAgreement.updateAgreement(agreed, LocalDateTime.now(), ip, userAgent);
     } else {
       // 새로운 동의 내역 생성
       UserTerms newAgreement =
@@ -312,20 +283,13 @@ public class User extends BaseTimeEntity {
               .user(this)
               .terms(makerTerms)
               .agreed(agreed)
-              .agreedAt(Instant.now())
+              .agreedAt(LocalDateTime.now())
               .agreedIp(ip)
               .agreedUserAgent(userAgent)
               .build();
 
       termsAgreements.add(newAgreement);
     }
-  }
-
-  // 사업자 메이커 인증 요청 여부 확인
-  public boolean isBusinessMakerVerificationRequested() {
-    return sellerInfo != null
-        && sellerInfo.getBusinessLicenseFileUrl() != null
-        && !sellerInfo.getBusinessLicenseFileUrl().isBlank();
   }
 
   // 닉네임 조회
@@ -390,14 +354,5 @@ public class User extends BaseTimeEntity {
 
   public boolean isWithdrawn() {
     return this.userStatusInfo.getStatus() == UserStatus.WITHDRAWN;
-  }
-
-  // SellerInfo 관련 메서드
-  public void updateMarketName(String marketName) {
-    sellerInfo.updateMarketName(marketName);
-  }
-
-  public void updateMarketLinkUrl(String marketLinkUrl) {
-    sellerInfo.updateMarketLinkUrl(marketLinkUrl);
   }
 }
