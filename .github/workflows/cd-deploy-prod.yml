@@ -178,33 +178,35 @@ jobs:
       - name: Verify deployment
         run: |
           echo "🔍 Verifying deployment..."
-
+          
           # ECS 서비스 상태 확인
           SERVICE_INFO=$(aws ecs describe-services \
             --cluster $ECS_CLUSTER \
             --services $ECS_SERVICE \
             --query 'services[0].{Status:status,Running:runningCount,Desired:desiredCount}')
-
+          
           echo "📊 ECS Service Status: $SERVICE_INFO"
-
-          # 로드밸런서 헬스체크 확인
-          LB_DNS=$(aws elbv2 describe-load-balancers \
-            --names groble-load-balancer \
-            --query 'LoadBalancers[0].DNSName' \
-            --output text)
-
-          echo "🔍 Testing application health..."
-
-          # 헬스체크 (최대 5분 대기)
+          
+          # 운영 API 도메인으로 헬스체크
+          echo "🔍 Testing application health on apitest.groble.im..."
+          
+          # 헬스체크 (최대 5분 대기) - 올바른 도메인과 엔드포인트 사용
           for i in {1..10}; do
-            if curl -f -s "https://$LB_DNS/health" > /dev/null; then
-              echo "✅ Application is healthy!"
+            HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://apitest.groble.im/actuator/health" || echo "000")
+          
+            if [ "$HTTP_STATUS" = "200" ]; then
+              echo "✅ Application is healthy! (HTTP $HTTP_STATUS)"
+              # 응답 내용도 확인
+              curl -s "https://apitest.groble.im/actuator/health" | jq '.' || echo "Response received but not JSON"
               break
             elif [ $i -eq 10 ]; then
               echo "❌ Application health check failed after 5 minutes"
+              echo "🔍 Last HTTP Status: $HTTP_STATUS"
+              echo "🔍 Debug: Checking endpoint availability..."
+              curl -v "https://apitest.groble.im/actuator/health" || true
               exit 1
             else
-              echo "⏳ Waiting for application to be ready... ($i/10)"
+              echo "⏳ Waiting for application to be ready... ($i/10) [HTTP: $HTTP_STATUS]"
               sleep 30
             fi
           done

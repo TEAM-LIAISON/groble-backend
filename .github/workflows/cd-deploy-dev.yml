@@ -187,24 +187,26 @@ jobs:
 
           echo "📊 ECS Service Status: $SERVICE_INFO"
 
-          # 로드밸런서 헬스체크 확인
-          LB_DNS=$(aws elbv2 describe-load-balancers \
-            --names groble-dev-load-balancer \
-            --query 'LoadBalancers[0].DNSName' \
-            --output text)
+          # 개발 API 도메인으로 헬스체크
+          echo "🔍 Testing application health on apidev.groble.im..."
 
-          echo "🔍 Testing application health..."
-
-          # 헬스체크 (최대 5분 대기)
+          # 헬스체크 (최대 5분 대기) - 개발 도메인 사용
           for i in {1..10}; do
-            if curl -f -s "https://$LB_DNS/health" > /dev/null; then
-              echo "✅ Application is healthy!"
+            HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://apidev.groble.im/actuator/health" || echo "000")
+
+            if [ "$HTTP_STATUS" = "200" ]; then
+              echo "✅ Application is healthy! (HTTP $HTTP_STATUS)"
+              # 응답 내용도 확인
+              curl -s "https://apidev.groble.im/actuator/health" | jq '.' || echo "Response received but not JSON"
               break
             elif [ $i -eq 10 ]; then
               echo "❌ Application health check failed after 5 minutes"
+              echo "🔍 Last HTTP Status: $HTTP_STATUS"
+              echo "🔍 Debug: Checking endpoint availability..."
+              curl -v "https://apidev.groble.im/actuator/health" || true
               exit 1
             else
-              echo "⏳ Waiting for application to be ready... ($i/10)"
+              echo "⏳ Waiting for application to be ready... ($i/10) [HTTP: $HTTP_STATUS]"
               sleep 30
             fi
           done
