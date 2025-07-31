@@ -6,7 +6,9 @@ import org.springframework.transaction.annotation.Transactional;
 import liaison.groble.application.order.service.OrderReader;
 import liaison.groble.application.payment.dto.cancel.PaymentCancelDTO;
 import liaison.groble.application.payment.dto.cancel.PaymentCancelInfoDTO;
+import liaison.groble.application.payment.exception.refund.PaymentRefundBadRequestException;
 import liaison.groble.application.purchase.service.PurchaseReader;
+import liaison.groble.domain.content.enums.ContentType;
 import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.payment.entity.PayplePayment;
 import liaison.groble.domain.purchase.entity.Purchase;
@@ -32,11 +34,14 @@ public class PaymentService {
 
     log.info("결제 취소 요청 처리 시작 - 주문번호: {}, 사유: {}", merchantUid, cancelReason.getDescription());
     try {
-      Order order = orderReader.getOrderByMerchantUidAndUserId(merchantUid, userId);
-      Purchase purchase = purchaseReader.getPurchaseByOrderId(order.getId());
-      PayplePayment payplePayment = paymentReader.getPayplePaymentByOid(merchantUid);
+      Purchase purchase = purchaseReader.getPurchaseWithOrderAndContent(merchantUid, userId);
+      if (purchase.getContent().getContentType().equals(ContentType.DOCUMENT)) {
+        throw new PaymentRefundBadRequestException("자료");
+      }
 
-      validateRequestCancellableStatus(order, payplePayment);
+      Order order = purchase.getOrder();
+      // 주문 상태 검증
+      validateRequestCancellableStatus(order);
       log.info("환불 요청 가능 상태 검증 완료 - 주문번호: {}", merchantUid);
 
       // 환불 요청
@@ -62,7 +67,7 @@ public class PaymentService {
     return buildPaymentCancelInfoDTO(merchantUid, order, payplePayment);
   }
 
-  private void validateRequestCancellableStatus(Order order, PayplePayment payplePayment) {
+  private void validateRequestCancellableStatus(Order order) {
     // 주문 상태 검증
     if (order.getStatus() != Order.OrderStatus.PAID) {
       throw new IllegalStateException(

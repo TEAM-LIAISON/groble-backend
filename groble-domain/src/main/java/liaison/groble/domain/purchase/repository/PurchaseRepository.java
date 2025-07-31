@@ -10,4 +10,6 @@ public interface PurchaseRepository {
   Purchase save(Purchase purchase);
 
   Optional<Purchase> findByOrderId(Long orderId);
+
+  Optional<Purchase> findByMerchantUidAndUserIdWithOrderAndContent(String merchantUid, Long userId);
 }
