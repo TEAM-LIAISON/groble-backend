@@ -137,6 +137,8 @@ public class MarketService {
       if (marketEditDTO.getRepresentativeContentId() != null) {
         updateRepresentativeContent(user, marketEditDTO.getRepresentativeContentId());
         hasChanges = true;
+      } else {
+        clearRepresentativeContent(user); // 또는 null로 설정
       }
     } catch (Exception e) {
       log.error("Error occurred while editing market for user: {}", user.getId(), e);
@@ -274,16 +276,6 @@ public class MarketService {
     Optional<Content> currentRepresentativeContent =
         contentReader.findByUserAndIsRepresentativeTrue(user);
 
-    // 2. 새로운 대표 콘텐츠 ID가 null인 경우 (대표 콘텐츠 해제)
-    if (representativeContentId == null) {
-      currentRepresentativeContent.ifPresent(
-          content -> {
-            content.setRepresentative(false);
-            log.info("대표 콘텐츠가 해제되었습니다. User ID: {}, Content ID: {}", user.getId(), content.getId());
-          });
-      return;
-    }
-
     // 3. 기존 대표 콘텐츠가 있는 경우
     if (currentRepresentativeContent.isPresent()) {
       Content currentContent = currentRepresentativeContent.get();
@@ -310,5 +302,17 @@ public class MarketService {
         "새로운 대표 콘텐츠가 설정되었습니다. User ID: {}, New Content ID: {}",
         user.getId(),
         representativeContentId);
+  }
+
+  private void clearRepresentativeContent(User user) {
+    Optional<Content> currentRepresentativeContent =
+        contentReader.findByUserAndIsRepresentativeTrue(user);
+    // 2. 새로운 대표 콘텐츠 ID가 null인 경우 (대표 콘텐츠 해제)
+    currentRepresentativeContent.ifPresent(
+        content -> {
+          content.setRepresentative(false);
+          log.info("대표 콘텐츠가 해제되었습니다. User ID: {}, Content ID: {}", user.getId(), content.getId());
+        });
+    return;
   }
 }
