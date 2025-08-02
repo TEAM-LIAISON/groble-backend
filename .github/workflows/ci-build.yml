@@ -2,9 +2,9 @@ name: CI - Build, Test & Push to ECR
 
 on:
   push:
-    branches: [ "config/#51-cicd-pipeline-upgrade-base", "main", "develop" ]
+    branches: [ "config/#51-cicd-pipeline-upgrade-base", "config/#52-cicd-pipeline-upgrade-local", "main", "develop" ]
   pull_request:
-    branches: [ "config/#51-cicd-pipeline-upgrade-base", "main", "develop" ]
+    branches: [ "config/#51-cicd-pipeline-upgrade-base", "config/#52-cicd-pipeline-upgrade-local", "main", "develop" ]
 
 permissions:
   contents: read
