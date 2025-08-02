@@ -53,7 +53,9 @@ jobs:
   build-dev:
     needs: test
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+    if: >   # TODO: dev 브랜치에 PR이 발생했을 때로 수정 (push는 임시 테스트 목적)
+      (github.event_name == 'pull_request' && github.base_ref == 'config/#52-cicd-pipeline-upgrade-local')
+      || (github.event_name == 'push' && github.ref == 'refs/heads/config/#52-cicd-pipeline-upgrade-local')
 
     outputs:
       image-tag: ${{ steps.build-info.outputs.image-tag }}
@@ -85,7 +87,7 @@ jobs:
 
       - name: Build Project with Gradle (Development)
         run: |
-          echo ${{ secrets.APPLICATION_SECRET_DEV }} | base64 --decode > groble-api/groble-api-server/src/main/resources/application-secret-dev.yml
+          echo ${{ secrets.APPLICATION_SECRET_TEST_DEV }} | base64 --decode > groble-api/groble-api-server/src/main/resources/application-secret-dev.yml
           ./gradlew :groble-api:groble-api-server:bootJar
 
       - name: Configure AWS credentials
@@ -217,11 +219,12 @@ jobs:
           echo "✅ Pushed image: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
 
 
-
   trigger-cd-dev:
     needs: build-dev
     runs-on: ubuntu-latest
-    if: success() && github.ref == 'refs/heads/develop' && github.event_name == 'push'
+    if: >   # TODO: dev 브랜치에 PR이 발생했을 때로 수정 (push는 임시 테스트 목적)
+      (github.event_name == 'pull_request' && github.base_ref == 'config/#52-cicd-pipeline-upgrade-local')
+      || (github.event_name == 'push' && github.ref == 'refs/heads/config/#52-cicd-pipeline-upgrade-local')
 
     steps:
       - name: Trigger Development Deployment
