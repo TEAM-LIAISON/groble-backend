@@ -28,7 +28,10 @@ public class CouponController {
 
   private static final String MY_COUPONS_PATH = "/my-coupons";
 
+  // Service
   private final CouponService couponService;
+
+  // Mapper
   private final CouponMapper couponMapper;
 
   @Operation(summary = "내가 소유한 쿠폰 목록 조회", description = "내가 소유한 쿠폰 목록을 조회합니다.")
