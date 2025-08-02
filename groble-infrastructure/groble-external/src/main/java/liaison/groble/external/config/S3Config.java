@@ -1,5 +1,6 @@
 package liaison.groble.external.config;
 
+import com.amazonaws.metrics.AwsSdkMetrics;
 import jakarta.annotation.PostConstruct;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -29,6 +30,7 @@ public class S3Config {
   public void validateProperties() {
     log.debug("▶ S3Config loaded with accessKeyId='{}', region='{}'", accessKey, region);
     // (secretKey는 노출 금지)
+    AwsSdkMetrics.setMetricCollector(null); // JMX 등록 끔
   }
 
   @Bean
