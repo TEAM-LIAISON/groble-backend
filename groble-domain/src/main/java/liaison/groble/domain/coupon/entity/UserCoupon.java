@@ -24,7 +24,9 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Entity
 @Table(
     name = "user_coupons",
@@ -78,14 +80,14 @@ public class UserCoupon extends BaseTimeEntity {
   }
 
   public void use(Order order) {
-    if (!isUsable()) {
-      throw new IllegalStateException("사용할 수 없는 쿠폰입니다.");
+    log.debug("▶ UserCoupon.use() called - current status: {}, couponId: {}", this.status, this.id);
+
+    if (this.status == CouponStatus.USED) {
+      throw new IllegalStateException("이미 사용된 쿠폰입니다.");
     }
 
     this.status = CouponStatus.USED;
     this.usedAt = LocalDateTime.now();
-
-    // 쿠폰 템플릿의 사용 횟수 증가
     couponTemplate.incrementUsageCount();
   }
 
