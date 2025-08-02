@@ -119,6 +119,8 @@ logging:
     io.swagger.v3: DEBUG
     software.amazon.awssdk: DEBUG
     org.apache.http: DEBUG
+  file:
+    path: ./logs
 
 management:
   endpoints:
