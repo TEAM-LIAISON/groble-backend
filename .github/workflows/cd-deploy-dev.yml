@@ -20,8 +20,6 @@ permissions:
 env:
   AWS_REGION: ap-northeast-2
   ECR_REPOSITORY: groble-dev-spring-api
-  CODEDEPLOY_APPLICATION: groble-dev-app
-  CODEDEPLOY_DEPLOYMENT_GROUP: groble-dev-deployment-group
   ECS_CLUSTER: groble-cluster
   ECS_SERVICE: groble-dev-service
 
@@ -109,71 +107,33 @@ jobs:
           echo "task-definition-arn=$TASK_DEF_ARN" >> $GITHUB_OUTPUT
           echo "✅ Task definition registered: $TASK_DEF_ARN"
 
-      - name: Prepare AppSpec with Task Definition ARN
-        run: |
-          TASK_DEF_ARN="${{ steps.task-def.outputs.task-definition-arn }}"
-          echo "📋 Preparing AppSpec with Task Definition ARN: $TASK_DEF_ARN"
-
-          # AppSpec 파일에서 <TASK_DEFINITION> 플레이스홀더를 실제 ARN으로 교체
-          sed "s|<TASK_DEFINITION>|$TASK_DEF_ARN|g" appspec.yml > deployment-appspec.yml
-
-          echo "✅ AppSpec prepared with Task Definition ARN"
-
-      - name: Deploy with CodeDeploy
+      - name: Deploy to ECS with Rolling Update
         id: deploy
         run: |
-          echo "🚀 Starting CodeDeploy deployment..."
+          TASK_DEF_ARN="${{ steps.task-def.outputs.task-definition-arn }}"
+          echo "🚀 Starting ECS rolling deployment..."
+          echo "📋 Using Task Definition ARN: $TASK_DEF_ARN"
 
-          # CodeDeploy용 배포 패키지 생성 (수정된 AppSpec 사용)
-          DEPLOYMENT_ARCHIVE="groble-dev-$(date +%Y%m%d-%H%M%S).zip"
-          cp deployment-appspec.yml appspec.yml
-          zip -r $DEPLOYMENT_ARCHIVE appspec.yml
+          # ECS 서비스 업데이트
+          aws ecs update-service \
+            --cluster $ECS_CLUSTER \
+            --service $ECS_SERVICE \
+            --task-definition $TASK_DEF_ARN \
+            --force-new-deployment
 
-          # S3 버킷 이름 가져오기
-          S3_BUCKET=$(aws s3api list-buckets \
-            --query 'Buckets[?contains(Name, `groble-codedeploy-artifacts`)].Name' \
-            --output text | head -1)
+          echo "✅ ECS service update initiated"
 
-          if [ -z "$S3_BUCKET" ]; then
-            echo "❌ CodeDeploy S3 bucket not found!"
-            exit 1
-          fi
-
-          # S3에 배포 아티팩트 업로드
-          aws s3 cp $DEPLOYMENT_ARCHIVE s3://$S3_BUCKET/
-
-          echo "📦 Deployment package uploaded: $DEPLOYMENT_ARCHIVE"
-
-          # CodeDeploy 배포 시작
-          DEPLOYMENT_ID=$(aws deploy create-deployment \
-            --application-name $CODEDEPLOY_APPLICATION \
-            --deployment-group-name $CODEDEPLOY_DEPLOYMENT_GROUP \
-            --s3-location bucket=$S3_BUCKET,key=$DEPLOYMENT_ARCHIVE,bundleType=zip \
-            --description "Development deployment - ${{ steps.deploy-info.outputs.image-tag }}" \
-            --query deploymentId \
-            --output text)
-
-          echo "deployment-id=$DEPLOYMENT_ID" >> $GITHUB_OUTPUT
-          echo "🎯 CodeDeploy deployment started: $DEPLOYMENT_ID"
-
-      - name: Wait for deployment completion
+      - name: Wait for ECS deployment completion
         run: |
-          DEPLOYMENT_ID="${{ steps.deploy.outputs.deployment-id }}"
-          echo "⏳ Waiting for deployment $DEPLOYMENT_ID to complete..."
+          echo "⏳ Waiting for ECS deployment to complete..."
 
-          # CodeDeploy 배포 완료 대기 (최대 30분)
-          aws deploy wait deployment-successful \
-            --deployment-id $DEPLOYMENT_ID \
-            --cli-read-timeout 1800 \
-            --cli-connect-timeout 60
+          # ECS 서비스 안정화 대기 (최대 15분)
+          aws ecs wait services-stable \
+            --cluster $ECS_CLUSTER \
+            --services $ECS_SERVICE \
+            --cli-read-timeout 900
 
-          # 배포 상태 확인
-          DEPLOYMENT_STATUS=$(aws deploy get-deployment \
-            --deployment-id $DEPLOYMENT_ID \
-            --query 'deploymentInfo.status' \
-            --output text)
-
-          echo "✅ Deployment completed with status: $DEPLOYMENT_STATUS"
+          echo "✅ ECS deployment completed successfully"
 
       - name: Verify deployment
         run: |
@@ -221,6 +181,5 @@ jobs:
 #            Image: ${{ steps.deploy-info.outputs.image-tag }}
 #            Commit: ${{ steps.deploy-info.outputs.commit-sha }}
 #            Actor: ${{ steps.deploy-info.outputs.actor }}
-#            Deployment ID: ${{ steps.deploy.outputs.deployment-id }}
 #        env:
 #          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
