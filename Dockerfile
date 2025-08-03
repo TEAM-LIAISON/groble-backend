@@ -13,7 +13,4 @@ ENV JAVA_TOOL_OPTIONS="-Dcom.amazonaws.sdk.disableMetricAdminMBeanRegistration=t
                       -Dcom.amazonaws.sdk.disableMetrics=true"
 
 # 컨테이너 시작 명령 설정
-ENTRYPOINT ["java",
-  "-Dspring.profiles.active=${PROFILES}",
-  "-Dserver.env=${ENV}",
-  "-jar","app.jar"]
+ENTRYPOINT ["java", "-Dspring.profiles.active=${PROFILES}", "-Dserver.env=${ENV}", "-jar", "app.jar"]
