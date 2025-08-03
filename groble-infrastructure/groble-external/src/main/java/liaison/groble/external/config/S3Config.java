@@ -30,7 +30,8 @@ public class S3Config {
   public void validateProperties() {
     log.debug("▶ S3Config loaded with accessKeyId='{}', region='{}'", accessKey, region);
     // (secretKey는 노출 금지)
-    AwsSdkMetrics.setMetricCollector(null); // JMX 등록 끔
+    System.setProperty("com.amazonaws.sdk.disableEc2Metadata", "true");
+    System.setProperty("com.amazonaws.sdk.disableCertChecking", "true");
   }
 
   @Bean
