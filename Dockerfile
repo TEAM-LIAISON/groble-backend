@@ -10,4 +10,9 @@ ARG ENV
 COPY ${JAR_FILE} app.jar
 
 # 컨테이너 시작 명령 설정
-ENTRYPOINT ["java", "-Dspring.profiles.active=${PROFILES}", "-Dserver.env=${ENV}", "-jar", "app.jar"]
+ENTRYPOINT ["java",
+  "-Dcom.amazonaws.sdk.disableMetricAdminMBeanRegistration=true",
+  "-Dcom.amazonaws.sdk.disableMetrics=true",
+  "-Dspring.profiles.active=${PROFILES}",
+  "-Dserver.env=${ENV}",
+  "-jar", "app.jar"]

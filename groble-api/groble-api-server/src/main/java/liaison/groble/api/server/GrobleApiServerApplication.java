@@ -26,7 +26,7 @@ import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 @OpenAPIDefinition
 public class GrobleApiServerApplication {
 
-  public static void main(String[] args) {
+    public static void main(String[] args) {
     SpringApplication.run(GrobleApiServerApplication.class, args);
   }
 }
