@@ -582,6 +582,7 @@ public class OrderService {
         .purchasedAt(purchase.getPurchasedAt())
         .contentId(content.getId())
         .contentTitle(content.getTitle())
+        .sellerName(content.getUser().getNickname())
         .orderStatus(order.getStatus().name())
 
         // 콘텐츠 정보
@@ -592,7 +593,7 @@ public class OrderService {
         .selectedOptionId(orderItem.getOptionId())
         .selectedOptionType(
             orderItem.getOptionType() != null ? orderItem.getOptionType().name() : null)
-
+        .selectedOptionName(purchase.getSelectedOptionName())
         // 가격 정보
         .originalPrice(order.getOriginalPrice())
         .discountPrice(order.getDiscountPrice())
