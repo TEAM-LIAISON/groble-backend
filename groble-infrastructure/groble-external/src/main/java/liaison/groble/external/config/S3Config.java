@@ -39,20 +39,10 @@ public class S3Config {
 
   @Bean
   public AmazonS3 amazonS3Client() {
-    log.info("=== S3 Client 생성 시작 ===");
-
     BasicAWSCredentials creds = new BasicAWSCredentials(accessKey, secretKey);
-    ClientConfiguration clientConfig = new ClientConfiguration();
-    // RequestMetricCollector.NONE 을 넘겨 메트릭 수집을 완전히 비활성화
-    AmazonS3Client s3 = new AmazonS3Client(
-            new AWSStaticCredentialsProvider(creds),
-            clientConfig,
-            RequestMetricCollector.NONE
-    );
-
-    s3.setRegion(Region.getRegion(Regions.fromName(region)));
-
-    log.info("=== S3 Client 생성 완료 ===");
-    return s3;
+    return AmazonS3ClientBuilder.standard()
+            .withRegion(region)
+            .withCredentials(new AWSStaticCredentialsProvider(creds))
+            .build();
   }
 }
