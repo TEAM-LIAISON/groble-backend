@@ -26,11 +26,6 @@ import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 @OpenAPIDefinition
 public class GrobleApiServerApplication {
 
-    static {
-        System.setProperty("com.amazonaws.sdk.disableMetricAdminMBeanRegistration","true");
-        System.setProperty("com.amazonaws.sdk.disableMetrics","true");
-    }
-
     public static void main(String[] args) {
     SpringApplication.run(GrobleApiServerApplication.class, args);
   }

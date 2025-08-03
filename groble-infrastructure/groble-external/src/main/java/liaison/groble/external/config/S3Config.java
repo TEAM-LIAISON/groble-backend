@@ -1,6 +1,11 @@
 package liaison.groble.external.config;
 
+import com.amazonaws.ClientConfiguration;
 import com.amazonaws.metrics.AwsSdkMetrics;
+import com.amazonaws.metrics.RequestMetricCollector;
+import com.amazonaws.regions.Region;
+import com.amazonaws.regions.Regions;
+import com.amazonaws.services.s3.AmazonS3Client;
 import jakarta.annotation.PostConstruct;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -34,10 +39,20 @@ public class S3Config {
 
   @Bean
   public AmazonS3 amazonS3Client() {
+    log.info("=== S3 Client 생성 시작 ===");
+
     BasicAWSCredentials creds = new BasicAWSCredentials(accessKey, secretKey);
-    return AmazonS3ClientBuilder.standard()
-            .withRegion(region)
-            .withCredentials(new AWSStaticCredentialsProvider(creds))
-            .build();
+    ClientConfiguration clientConfig = new ClientConfiguration();
+    // RequestMetricCollector.NONE 을 넘겨 메트릭 수집을 완전히 비활성화
+    AmazonS3Client s3 = new AmazonS3Client(
+            new AWSStaticCredentialsProvider(creds),
+            clientConfig,
+            RequestMetricCollector.NONE
+    );
+
+    s3.setRegion(Region.getRegion(Regions.fromName(region)));
+
+    log.info("=== S3 Client 생성 완료 ===");
+    return s3;
   }
 }

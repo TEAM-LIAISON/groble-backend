@@ -9,8 +9,5 @@ ARG ENV
 # 지정한 경로의 JAR 파일을 컨테이너 내 app.jar로 복사
 COPY ${JAR_FILE} app.jar
 
-ENV JAVA_TOOL_OPTIONS="-Dcom.amazonaws.sdk.disableMetricAdminMBeanRegistration=true \
-                      -Dcom.amazonaws.sdk.disableMetrics=true"
-
 # 컨테이너 시작 명령 설정
 ENTRYPOINT ["java", "-Dspring.profiles.active=${PROFILES}", "-Dserver.env=${ENV}", "-jar", "app.jar"]
