@@ -30,16 +30,51 @@ public class S3Config {
   public void validateProperties() {
     log.debug("▶ S3Config loaded with accessKeyId='{}', region='{}'", accessKey, region);
     // (secretKey는 노출 금지)
-    System.setProperty("com.amazonaws.sdk.disableEc2Metadata", "true");
-    System.setProperty("com.amazonaws.sdk.disableCertChecking", "true");
+//    System.setProperty("com.amazonaws.sdk.disableEc2Metadata", "true");
+//    System.setProperty("com.amazonaws.sdk.disableCertChecking", "true");
   }
+
+//  @Bean
+//  public AmazonS3 amazonS3Client() {
+//    BasicAWSCredentials creds = new BasicAWSCredentials(accessKey, secretKey);
+//    return AmazonS3ClientBuilder.standard()
+//        .withRegion(region)
+//        .withCredentials(new AWSStaticCredentialsProvider(creds))
+//        .build();
+//  }
 
   @Bean
   public AmazonS3 amazonS3Client() {
-    BasicAWSCredentials creds = new BasicAWSCredentials(accessKey, secretKey);
-    return AmazonS3ClientBuilder.standard()
-        .withRegion(region)
-        .withCredentials(new AWSStaticCredentialsProvider(creds))
-        .build();
+    try {
+      log.info("=== S3 Client 생성 시작 ===");
+      log.info("Access Key: {}", accessKey != null ? accessKey.substring(0, 4) + "****" : "NULL");
+      log.info("Region: {}", region);
+      log.info("Secret Key exists: {}", secretKey != null && !secretKey.isEmpty());
+
+      if (accessKey == null || accessKey.isEmpty()) {
+        throw new IllegalArgumentException("AWS Access Key is null or empty");
+      }
+      if (secretKey == null || secretKey.isEmpty()) {
+        throw new IllegalArgumentException("AWS Secret Key is null or empty");
+      }
+      if (region == null || region.isEmpty()) {
+        throw new IllegalArgumentException("AWS Region is null or empty");
+      }
+
+      BasicAWSCredentials creds = new BasicAWSCredentials(accessKey, secretKey);
+      log.info("AWS Credentials 생성 완료");
+
+      AmazonS3 s3Client = AmazonS3ClientBuilder.standard()
+              .withRegion(region)
+              .withCredentials(new AWSStaticCredentialsProvider(creds))
+              .build();
+
+      log.info("=== S3 Client 생성 완료 ===");
+      return s3Client;
+
+    } catch (Exception e) {
+      log.error("S3 Client 생성 실패: {}", e.getMessage(), e);
+      throw e;
+    }
   }
 }
