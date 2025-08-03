@@ -30,8 +30,8 @@ public class S3Config {
   public void validateProperties() {
     log.debug("▶ S3Config loaded with accessKeyId='{}', region='{}'", accessKey, region);
     // (secretKey는 노출 금지)
-//    System.setProperty("com.amazonaws.sdk.disableEc2Metadata", "true");
-//    System.setProperty("com.amazonaws.sdk.disableCertChecking", "true");
+    System.setProperty("com.amazonaws.sdk.disableMetricAdminMBeanRegistration", "true");
+    System.setProperty("com.amazonaws.sdk.disableMetrics", "true");
   }
 
 //  @Bean
