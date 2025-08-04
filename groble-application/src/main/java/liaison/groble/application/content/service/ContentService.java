@@ -158,9 +158,13 @@ public class ContentService {
     if (contentDTO.getContentId() != null) {
       content = findAndValidateUserContent(userId, contentDTO.getContentId());
 
-      // 판매 중인 콘텐츠는 수정 불가
+      // 판매 중일 경우 DRAFT 상태로 변경하여 수정 가능하게 처리
       if (content.getStatus() != ContentStatus.DRAFT) {
-        throw new ContentEditException("판매 중인 콘텐츠는 수정할 수 없습니다. 먼저 판매를 중단해주세요.");
+        if (content.getStatus() == ContentStatus.ACTIVE) {
+          content.setStatus(ContentStatus.DRAFT); // 상태 수동 변경
+        } else {
+          throw new ContentEditException("해당 콘텐츠는 수정할 수 없는 상태입니다.");
+        }
       }
 
       updateContentFromDTO(content, contentDTO);
