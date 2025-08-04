@@ -30,6 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 public class NotificationService {
   private final NotificationCustomRepository notificationCustomRepository;
   private final NotificationRepository notificationRepository;
+  private final NotificationReader notificationReader;
   private final NotificationMapper notificationMapper;
 
   public NotificationItemsDTO getNotificationItems(final Long userId) {
@@ -224,5 +225,12 @@ public class NotificationService {
 
     notificationRepository.save(notification);
     log.info("콘텐츠 리뷰 알림 발송: userId={}, contentId={}", user.getId(), contentId);
+  }
+
+  @Transactional
+  public void readNotification(Long userId, Long notificationId) {
+    Notification notification =
+        notificationReader.getNotificationByIdAndUserId(userId, notificationId);
+    notification.markAsRead();
   }
 }
