@@ -69,7 +69,11 @@ public class AdminContentService {
   }
 
   private void sendContentSoldNotification(Content content) {
-    SellDetails sellDetails = SellDetails.builder().contentId(content.getId()).build();
+    SellDetails sellDetails =
+        SellDetails.builder()
+            .contentId(content.getId())
+            .thumbnailUrl(content.getThumbnailUrl())
+            .build();
 
     notificationRepository.save(
         notificationMapper.toNotification(
