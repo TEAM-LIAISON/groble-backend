@@ -19,6 +19,8 @@ import liaison.groble.application.auth.helper.TokenHelper;
 import liaison.groble.application.auth.helper.UserHelper;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.common.port.security.SecurityPort;
+import liaison.groble.domain.market.entity.Market;
+import liaison.groble.domain.market.repository.MarketRepository;
 import liaison.groble.domain.port.VerificationCodePort;
 import liaison.groble.domain.terms.enums.TermsType;
 import liaison.groble.domain.user.entity.IntegratedAccount;
@@ -50,6 +52,7 @@ public class IntegratedAccountAuthService {
   private final UserReader userReader;
   private final UserRepository userRepository;
   private final SellerInfoRepository sellerInfoRepository;
+  private final MarketRepository marketRepository;
   // Port
   private final SecurityPort securityPort;
   private final VerificationCodePort verificationCodePort;
@@ -74,9 +77,12 @@ public class IntegratedAccountAuthService {
       // 3. 사용자 저장 및 후처리
       User savedUser = userRepository.save(user);
 
+      // 4. 메이커로 가입한 경우에 SellerInfo 생성 필요
       if (userType == UserType.SELLER) {
         SellerInfo sellerInfo = SellerInfo.createForUser(savedUser);
         sellerInfoRepository.save(sellerInfo);
+        Market market = Market.createForUser(user);
+        marketRepository.save(market);
       }
 
       // 4. 토큰 발급 및 저장
