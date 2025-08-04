@@ -143,7 +143,7 @@ public class PaymentTransactionService {
         .contentId(purchase.getContent().getId())
         .sellerId(purchase.getContent().getUser().getId())
         .amount(payment.getPrice())
-        .completedAt(LocalDateTime.now())
+        .completedAt(purchase.getPurchasedAt())
         .sellerEmail(purchase.getContent().getUser().getEmail())
         .contentTitle(purchase.getContent().getTitle())
         .build();
