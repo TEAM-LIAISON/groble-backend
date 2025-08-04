@@ -288,6 +288,8 @@ public class SellContentService {
 
   /** FlatContentSellDetailDTO ContentSellDetailDTO로 변환합니다. */
   private ContentSellDetailDTO convertFlatDTOToDetailDTO(FlatContentSellDetailDTO flat) {
+    log.info("▶ convertFlatDTOToDetailDTO: purchasedAt={}", flat.getPurchasedAt());
+
     return ContentSellDetailDTO.builder()
         .purchaseId(flat.getPurchaseId())
         .contentTitle(flat.getContentTitle())

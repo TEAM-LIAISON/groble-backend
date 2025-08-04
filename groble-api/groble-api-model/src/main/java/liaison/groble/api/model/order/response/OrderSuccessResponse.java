@@ -24,7 +24,7 @@ public class OrderSuccessResponse {
       example = "2025-04-20 10:15:30",
       type = "string",
       requiredMode = Schema.RequiredMode.REQUIRED)
-  @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+  @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Seoul")
   private LocalDateTime purchasedAt;
 
   @Schema(
