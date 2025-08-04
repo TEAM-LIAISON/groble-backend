@@ -13,4 +13,5 @@ public class PurchaseDetails {
   private Long contentId;
   private Long reviewId;
   private String merchantUid;
+  private String thumbnailUrl;
 }

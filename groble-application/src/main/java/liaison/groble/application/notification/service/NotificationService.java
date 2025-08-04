@@ -145,12 +145,14 @@ public class NotificationService {
     if (subNotificationType == SubNotificationType.CONTENT_SOLD) {
       return NotificationDetailsDTO.contentSold(
           notification.getSellDetails().getContentId(),
-          notification.getSellDetails().getPurchaseId());
+          notification.getSellDetails().getPurchaseId(),
+          notification.getSellDetails().getThumbnailUrl());
     }
     // 콘텐츠 판매 중단 [✅ 상품 판매가 중단됐어요]
     else if (subNotificationType == SubNotificationType.CONTENT_SOLD_STOPPED) {
       return NotificationDetailsDTO.contentSoldStopped(
-          notification.getSellDetails().getContentId());
+          notification.getSellDetails().getContentId(),
+          notification.getSellDetails().getThumbnailUrl());
     }
     return null;
   }
@@ -200,9 +202,14 @@ public class NotificationService {
   }
 
   @Transactional
-  public void sendContentSoldNotification(User user, Long contentId, Long purchaseId) {
+  public void sendContentSoldNotification(
+      User user, Long contentId, Long purchaseId, String thumbnailUrl) {
     SellDetails sellDetails =
-        SellDetails.builder().contentId(contentId).purchaseId(purchaseId).build();
+        SellDetails.builder()
+            .contentId(contentId)
+            .purchaseId(purchaseId)
+            .thumbnailUrl(thumbnailUrl)
+            .build();
 
     Notification notification =
         notificationMapper.toNotification(
@@ -211,9 +218,14 @@ public class NotificationService {
   }
 
   @Transactional
-  public void sendContentPurchasedNotification(User user, Long contentId, String merchantUid) {
+  public void sendContentPurchasedNotification(
+      User user, Long contentId, String merchantUid, String thumbnailUrl) {
     PurchaseDetails purchaseDetails =
-        PurchaseDetails.builder().contentId(contentId).merchantUid(merchantUid).build();
+        PurchaseDetails.builder()
+            .contentId(contentId)
+            .merchantUid(merchantUid)
+            .thumbnailUrl(thumbnailUrl)
+            .build();
     Notification notification =
         notificationMapper.toNotification(
             user.getId(),
@@ -227,7 +239,11 @@ public class NotificationService {
   public void sendContentReviewReplyNotification(
       User user, Long contentId, Long reviewId, String thumbnailUrl) {
     PurchaseDetails purchaseDetails =
-        PurchaseDetails.builder().contentId(contentId).reviewId(reviewId).build();
+        PurchaseDetails.builder()
+            .contentId(contentId)
+            .reviewId(reviewId)
+            .thumbnailUrl(thumbnailUrl)
+            .build();
 
     Notification notification =
         notificationMapper.toNotification(

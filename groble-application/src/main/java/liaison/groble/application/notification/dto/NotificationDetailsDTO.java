@@ -60,12 +60,17 @@ public class NotificationDetailsDTO {
   }
 
   /** Factory method for CONTENT_SOLD notifications */
-  public static NotificationDetailsDTO contentSold(Long contentId, Long purchaseId) {
-    return NotificationDetailsDTO.builder().contentId(contentId).purchaseId(purchaseId).build();
+  public static NotificationDetailsDTO contentSold(
+      Long contentId, Long purchaseId, String thumbnailUrl) {
+    return NotificationDetailsDTO.builder()
+        .contentId(contentId)
+        .purchaseId(purchaseId)
+        .thumbnailUrl(thumbnailUrl)
+        .build();
   }
 
   /** Factory method for CONTENT_SOLD_STOPPED notifications */
-  public static NotificationDetailsDTO contentSoldStopped(Long contentId) {
-    return NotificationDetailsDTO.builder().contentId(contentId).build();
+  public static NotificationDetailsDTO contentSoldStopped(Long contentId, String thumbnailUrl) {
+    return NotificationDetailsDTO.builder().contentId(contentId).thumbnailUrl(thumbnailUrl).build();
   }
 }
