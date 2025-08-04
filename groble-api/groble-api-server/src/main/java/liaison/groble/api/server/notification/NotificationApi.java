@@ -78,7 +78,8 @@ public interface NotificationApi {
                   @ExampleObject(
                       name = "여러 알림 타입 혼합",
                       summary = "여러 알림 타입이 혼합된 예제",
-                      description = "시스템 환영 알림, 판매자 인증 알림, 콘텐츠 승인/거부 알림 등 여러 유형의 알림이 혼합된 예제",
+                      description =
+                          "시스템 환영 알림, 판매자 인증 알림, 콘텐츠 승인/거부 알림, 콘텐츠 판매 알림 등 여러 유형의 알림이 혼합된 예제",
                       value = NotificationExamples.MixedNotificationsExample.EXAMPLE),
                   @ExampleObject(
                       name = "판매자 인증 성공",
@@ -104,7 +105,12 @@ public interface NotificationApi {
                       name = "시스템 환영",
                       summary = "시스템 환영 알림 예제",
                       description = "신규 사용자가 가입 시 받는 환영 알림",
-                      value = NotificationExamples.WelcomeGrobleExample.EXAMPLE)
+                      value = NotificationExamples.WelcomeGrobleExample.EXAMPLE),
+                  @ExampleObject(
+                      name = "콘텐츠 판매",
+                      summary = "콘텐츠 판매 발생 알림 예제",
+                      description = "콘텐츠가 판매되었을 때 메이커가 받는 알림",
+                      value = NotificationExamples.ContentSoldExample.EXAMPLE)
                 })),
     @ApiResponse(responseCode = "401", description = "인증 실패 (AccessToken 만료 또는 없음)"),
     @ApiResponse(responseCode = "404", description = "알림 목록 정보를 찾을 수 없음")
