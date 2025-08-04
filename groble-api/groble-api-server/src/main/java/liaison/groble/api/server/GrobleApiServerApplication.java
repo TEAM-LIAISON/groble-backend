@@ -1,5 +1,7 @@
 package liaison.groble.api.server;
 
+import java.util.TimeZone;
+
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
@@ -29,8 +31,9 @@ import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 @EnableAsync
 @EnableRetry
 public class GrobleApiServerApplication {
-
   public static void main(String[] args) {
+    // 애플리케이션 시작 시 JVM 기본 타임존을 Asia/Seoul로 설정
+    TimeZone.setDefault(TimeZone.getTimeZone("Asia/Seoul"));
     SpringApplication.run(GrobleApiServerApplication.class, args);
   }
 }
