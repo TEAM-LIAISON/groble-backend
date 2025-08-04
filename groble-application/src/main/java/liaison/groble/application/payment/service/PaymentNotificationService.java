@@ -93,8 +93,12 @@ public class PaymentNotificationService {
   /** 판매 알림 이메일 발송 */
   private void sendSaleNotificationEmail(PaymentCompletedEvent event) {
     try {
-      // EmailSenderPort를 통해 이메일 발송
-      // 이벤트에서 필요한 정보를 가져와서 처리
+      emailSenderPort.sendSaleNotificationEmail(
+          event.getSellerEmail(),
+          event.getContentTitle(),
+          event.getAmount(),
+          event.getCompletedAt(),
+          event.getContentId());
       log.debug("판매 알림 이메일 발송 완료 - orderId: {}", event.getOrderId());
     } catch (Exception e) {
       log.error("판매 알림 이메일 발송 실패 - orderId: {}", event.getOrderId(), e);

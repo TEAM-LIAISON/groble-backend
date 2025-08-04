@@ -419,13 +419,6 @@ public class PayplePaymentService {
       // 5. Purchase 생성 및 확정 처리
       Purchase purchase = createAndCompletePurchase(order);
 
-      emailSenderPort.sendSaleNotificationEmail(
-          purchase.getContent().getUser().getEmail(),
-          purchase.getContent().getTitle(),
-          payment.getPrice(),
-          purchase.getPurchasedAt(),
-          purchase.getContent().getId());
-
       // 6. 구매 알림 생성
       // 상품이 판매됐어요
       notificationService.sendContentSoldNotification(

@@ -22,4 +22,6 @@ public class PaymentCompletedEvent {
   private Long sellerId;
   private BigDecimal amount;
   private LocalDateTime completedAt;
+  private String sellerEmail;
+  private String contentTitle;
 }
