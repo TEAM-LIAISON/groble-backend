@@ -11,6 +11,7 @@ import lombok.Getter;
 @Builder
 public class PaymentCompletionResult {
   private final Long orderId;
+  private final String merchantUid;
   private final Long paymentId;
   private final Long purchaseId;
   private final Long userId;

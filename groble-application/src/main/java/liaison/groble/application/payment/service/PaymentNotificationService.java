@@ -70,7 +70,8 @@ public class PaymentNotificationService {
   private void sendBuyerNotification(PaymentCompletedEvent event) {
     try {
       User buyer = userReader.getUserById(event.getUserId());
-      notificationService.sendContentPurchasedNotification(buyer, event.getContentId());
+      notificationService.sendContentPurchasedNotification(
+          buyer, event.getContentId(), event.getMerchantUid());
       log.debug(
           "구매자 알림 발송 완료 - buyerId: {}, contentId: {}", event.getUserId(), event.getContentId());
     } catch (Exception e) {
@@ -82,7 +83,8 @@ public class PaymentNotificationService {
   private void sendSellerNotification(PaymentCompletedEvent event) {
     try {
       User seller = userReader.getUserById(event.getSellerId());
-      notificationService.sendContentSoldNotification(seller, event.getContentId());
+      notificationService.sendContentSoldNotification(
+          seller, event.getContentId(), event.getPurchaseId());
       log.debug(
           "판매자 알림 발송 완료 - sellerId: {}, contentId: {}", event.getSellerId(), event.getContentId());
     } catch (Exception e) {

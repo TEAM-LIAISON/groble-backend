@@ -87,6 +87,8 @@ public class NotificationService {
       case CERTIFY -> createCertifyDetails(notification, subType);
       case REVIEW -> createReviewDetails(notification, subType);
       case SYSTEM -> createSystemDetails(notification, subType);
+      case PURCHASE -> createPurchaseDetails(notification, subType);
+      case SELL -> createSellDetails(notification, subType);
       default -> null;
     };
   }
@@ -107,6 +109,7 @@ public class NotificationService {
     if (subNotificationType == SubNotificationType.CONTENT_REVIEWED) {
       return NotificationDetailsDTO.contentReviewed(
           notification.getReviewDetails().getContentId(),
+          notification.getReviewDetails().getReviewId(),
           notification.getReviewDetails().getThumbnailUrl());
     }
     return null;
@@ -118,6 +121,36 @@ public class NotificationService {
       return NotificationDetailsDTO.welcomeGroble(
           notification.getSystemDetails().getNickname(),
           notification.getSystemDetails().getSystemTitle());
+    }
+    return null;
+  }
+
+  private NotificationDetailsDTO createPurchaseDetails(
+      Notification notification, SubNotificationType subNotificationType) {
+    if (subNotificationType == SubNotificationType.CONTENT_REVIEW_REPLY) {
+      return NotificationDetailsDTO.contentReviewReplied(
+          notification.getPurchaseDetails().getContentId(),
+          notification.getPurchaseDetails().getReviewId());
+    } else if (subNotificationType == SubNotificationType.CONTENT_PURCHASED) {
+      return NotificationDetailsDTO.contentPurchased(
+          notification.getPurchaseDetails().getContentId(),
+          notification.getPurchaseDetails().getMerchantUid());
+    }
+    return null;
+  }
+
+  private NotificationDetailsDTO createSellDetails(
+      Notification notification, SubNotificationType subNotificationType) {
+    // 콘텐츠 판매 [✅ 상품이 판매됐어요]
+    if (subNotificationType == SubNotificationType.CONTENT_SOLD) {
+      return NotificationDetailsDTO.contentSold(
+          notification.getSellDetails().getContentId(),
+          notification.getSellDetails().getPurchaseId());
+    }
+    // 콘텐츠 판매 중단 [✅ 상품 판매가 중단됐어요]
+    else if (subNotificationType == SubNotificationType.CONTENT_SOLD_STOPPED) {
+      return NotificationDetailsDTO.contentSoldStopped(
+          notification.getSellDetails().getContentId());
     }
     return null;
   }
@@ -167,19 +200,20 @@ public class NotificationService {
   }
 
   @Transactional
-  public void sendContentSoldNotification(User user, Long contentId) {
-    SellDetails sellDetails = SellDetails.builder().contentId(contentId).build();
+  public void sendContentSoldNotification(User user, Long contentId, Long purchaseId) {
+    SellDetails sellDetails =
+        SellDetails.builder().contentId(contentId).purchaseId(purchaseId).build();
 
     Notification notification =
         notificationMapper.toNotification(
             user.getId(), NotificationType.SELL, SubNotificationType.CONTENT_SOLD, sellDetails);
     notificationRepository.save(notification);
-    log.info("콘텐츠 판매 알림 발송: userId={}, contentId={}", user.getId(), contentId);
   }
 
   @Transactional
-  public void sendContentPurchasedNotification(User user, Long contentId) {
-    PurchaseDetails purchaseDetails = PurchaseDetails.builder().contentId(contentId).build();
+  public void sendContentPurchasedNotification(User user, Long contentId, String merchantUid) {
+    PurchaseDetails purchaseDetails =
+        PurchaseDetails.builder().contentId(contentId).merchantUid(merchantUid).build();
     Notification notification =
         notificationMapper.toNotification(
             user.getId(),

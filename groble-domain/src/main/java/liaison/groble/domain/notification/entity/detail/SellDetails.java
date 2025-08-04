@@ -12,4 +12,5 @@ import lombok.NoArgsConstructor;
 public class SellDetails {
   // 판매된 콘텐츠 ID
   private Long contentId;
+  private Long purchaseId;
 }

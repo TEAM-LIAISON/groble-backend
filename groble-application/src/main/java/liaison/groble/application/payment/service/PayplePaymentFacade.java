@@ -196,6 +196,7 @@ public class PayplePaymentFacade {
       PaymentCompletedEvent event =
           PaymentCompletedEvent.builder()
               .orderId(completionResult.getOrderId())
+              .merchantUid(completionResult.getMerchantUid())
               .paymentId(completionResult.getPaymentId())
               .purchaseId(completionResult.getPurchaseId())
               .userId(completionResult.getUserId())

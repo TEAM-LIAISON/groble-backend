@@ -12,4 +12,5 @@ import lombok.NoArgsConstructor;
 public class PurchaseDetails {
   private Long contentId;
   private Long reviewId;
+  private String merchantUid;
 }

@@ -137,6 +137,7 @@ public class PaymentTransactionService {
 
     return PaymentCompletionResult.builder()
         .orderId(order.getId())
+        .merchantUid(order.getMerchantUid())
         .paymentId(payment.getId())
         .purchaseId(purchase.getId())
         .userId(order.getUser().getId())

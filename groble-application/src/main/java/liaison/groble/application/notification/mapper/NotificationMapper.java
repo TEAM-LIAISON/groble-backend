@@ -73,6 +73,7 @@ public class NotificationMapper {
           case CONTENT_PURCHASED -> builder.purchaseDetails(
               PurchaseDetails.builder()
                   .contentId(((PurchaseDetails) detailObject).getContentId())
+                  .merchantUid(((PurchaseDetails) detailObject).getMerchantUid())
                   .build());
           case CONTENT_REVIEW_REPLY -> builder.purchaseDetails(
               PurchaseDetails.builder()
