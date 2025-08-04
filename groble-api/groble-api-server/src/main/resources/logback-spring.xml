@@ -6,7 +6,7 @@
     -->
     <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
 
-    <property name="LOGS_ABSOLUTE_PATH" value="./logs"/>
+    <property name="LOGS_PATH" value="${LOG_PATH:-./logs}"/>
     <property name="CONSOLE_LOG_PATTERN"
               value="[%d{yyyy-MM-dd HH:mm:ss}:%-3relative]  %clr(%-5level) %clr(${PID:-}){magenta} %clr(---){faint} %clr([%15.15thread]){faint} %clr(%-40.40logger{36}){cyan} %clr(:){faint} %msg%n"/>
     <property name="FILE_LOG_PATTERN"
@@ -59,7 +59,7 @@
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <!-- 현재 활성 로그 파일의 경로 및 파일명을 설정합니다.
              여기서는 LOGS_ABSOLUTE_PATH 속성을 사용하여 "./logs/logback.log"로 지정합니다. -->
-        <file>${LOGS_ABSOLUTE_PATH}/logback.log</file>
+        <file>${LOGS_PATH}/logback.log</file>
         <encoder>
             <!-- 파일에 기록될 로그 메시지를 FILE_LOG_PATTERN 포맷으로 인코딩합니다. -->
             <pattern>${FILE_LOG_PATTERN}</pattern>
@@ -71,7 +71,7 @@
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <!-- 새 로그 파일의 이름 패턴을 지정합니다.
                  %d{yyyy-MM-dd}는 파일 이름에 날짜를 포함시킵니다. -->
-            <fileNamePattern>logFile.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <fileNamePattern>${LOGS_PATH}/logFile.%d{yyyy-MM-dd}.log</fileNamePattern>
             <!-- 최대 30일치 로그 파일을 보관합니다. -->
             <maxHistory>30</maxHistory>
             <!-- 보관되는 모든 로그 파일의 총 크기가 3GB를 초과하지 않도록 제한합니다. -->

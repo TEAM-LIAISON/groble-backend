@@ -28,6 +28,13 @@ public class PurchaseReader {
   private final PurchaseRepository purchaseRepository;
   private final PurchaseCustomRepository purchaseCustomRepository;
 
+  // 주문 번호로 내가 구매한 구매 정보를 Order Fetch Join 단일 조회
+  public Purchase getPurchaseWithOrderAndContent(String merchantUid, Long userId) {
+    return purchaseRepository
+        .findByMerchantUidAndUserIdWithOrderAndContent(merchantUid, userId)
+        .orElseThrow(() -> new EntityNotFoundException("구매 정보를 찾을 수 없습니다."));
+  }
+
   public FlatPurchaseContentDetailDTO getPurchaseContentDetail(Long userId, String merchantUid) {
     return purchaseCustomRepository
         .getPurchaseContentDetail(userId, merchantUid)

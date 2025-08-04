@@ -24,7 +24,9 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Entity
 @Table(
     name = "coupon_templates",
@@ -109,10 +111,24 @@ public class CouponTemplate extends BaseTimeEntity {
   // 비즈니스 메서드
   public boolean isUsable() {
     LocalDateTime now = LocalDateTime.now();
-    return isActive
-        && validFrom.isBefore(now)
-        && validUntil.isAfter(now)
-        && (totalUsageLimit == null || currentUsageCount < totalUsageLimit);
+
+    boolean result =
+        isActive
+            && validFrom.isBefore(now)
+            && validUntil.isAfter(now)
+            && (totalUsageLimit == null || currentUsageCount < totalUsageLimit);
+
+    log.debug(
+        "▶ CouponTemplate.isUsable() - result: {}, isActive: {}, now: {}, validFrom: {}, validUntil: {}, currentUsageCount: {}, totalUsageLimit: {}",
+        result,
+        isActive,
+        now,
+        validFrom,
+        validUntil,
+        currentUsageCount,
+        totalUsageLimit);
+
+    return result;
   }
 
   public void incrementUsageCount() {

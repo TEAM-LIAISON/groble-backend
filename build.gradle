@@ -326,7 +326,6 @@ project(':groble-security') {
     dependencies {
         implementation project(':groble-domain')
         implementation project(':groble-common')
-        implementation project(':groble-infrastructure:groble-persistence')
 
         // Spring Web
         implementation 'org.springframework.boot:spring-boot-starter-web'

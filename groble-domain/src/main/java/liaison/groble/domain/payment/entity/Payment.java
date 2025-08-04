@@ -152,9 +152,6 @@ public class Payment extends BaseTimeEntity {
     }
 
     this.paidAt = LocalDateTime.now();
-
-    // 주문 상태도 함께 업데이트
-    this.order.completePayment();
   }
 
   public enum PaymentMethod {

@@ -35,6 +35,13 @@ public class OrderSuccessResponse {
   private final Long contentId;
 
   @Schema(
+      description = "판매자 이름",
+      example = "홍길동 코칭",
+      type = "string",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private String sellerName;
+
+  @Schema(
       description = "콘텐츠 제목",
       example = "UX 디자인 입문 강의",
       type = "string",
@@ -66,6 +73,13 @@ public class OrderSuccessResponse {
       example = "COACHING_OPTION",
       type = "string")
   private final String selectedOptionType;
+
+  @Schema(
+      description = "옵션 이름",
+      example = "기본 옵션",
+      type = "string",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private String selectedOptionName;
 
   @Schema(
       description = "원래 가격",
