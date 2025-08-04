@@ -76,46 +76,55 @@ public interface NotificationApi {
                 schema = @Schema(implementation = NotificationItemsApiResponse.class),
                 examples = {
                   @ExampleObject(
-                      name = "여러 알림 타입 혼합",
-                      summary = "여러 알림 타입이 혼합된 예제",
-                      description =
-                          "시스템 환영 알림, 판매자 인증 알림, 콘텐츠 승인/거부 알림, 콘텐츠 판매 알림 등 여러 유형의 알림이 혼합된 예제",
-                      value = NotificationExamples.MixedNotificationsExample.EXAMPLE),
+                      name = "콘텐츠 구매",
+                      summary = "콘텐츠 구매 알림 예제",
+                      description = "사용자가 상품을 구매했을 때 받는 알림",
+                      value = NotificationExamples.ContentPurchasedExample.EXAMPLE),
                   @ExampleObject(
-                      name = "판매자 인증 성공",
-                      summary = "판매자 인증 성공 알림 예제",
-                      description = "판매자가 인증에 성공했을 때 받는 알림",
+                      name = "리뷰 답글",
+                      summary = "콘텐츠 리뷰 답글 알림 예제",
+                      description = "사용자의 리뷰에 답글이 달렸을 때 받는 알림",
+                      value = NotificationExamples.ContentReviewReplyExample.EXAMPLE),
+                  @ExampleObject(
+                      name = "리뷰 등록",
+                      summary = "리뷰 등록 알림 예제",
+                      description = "사용자가 콘텐츠에 리뷰를 등록했을 때 받는 알림",
+                      value = NotificationExamples.ContentReviewedExample.EXAMPLE),
+                  @ExampleObject(
+                      name = "콘텐츠 판매",
+                      summary = "상품 판매 알림 예제",
+                      description = "메이커의 콘텐츠가 판매되었을 때 받는 알림",
+                      value = NotificationExamples.ContentSoldExample.EXAMPLE),
+                  @ExampleObject(
+                      name = "판매 중단",
+                      summary = "상품 판매 중단 알림 예제",
+                      description = "메이커의 콘텐츠 판매가 중단되었을 때 받는 알림",
+                      value = NotificationExamples.ContentSoldStoppedExample.EXAMPLE),
+                  @ExampleObject(
+                      name = "인증 성공",
+                      summary = "메이커 인증 성공 알림 예제",
+                      description = "메이커 인증에 성공했을 때 받는 알림",
                       value = NotificationExamples.MakerCertifiedExample.EXAMPLE),
                   @ExampleObject(
-                      name = "판매자 인증 거부",
-                      summary = "판매자 인증 거부 알림 예제",
-                      description = "판매자 인증이 거부되었을 때 받는 알림",
+                      name = "인증 거부",
+                      summary = "메이커 인증 거부 알림 예제",
+                      description = "메이커 인증이 반려되었을 때 받는 알림",
                       value = NotificationExamples.MakerCertifyRejectedExample.EXAMPLE),
-                  @ExampleObject(
-                      name = "콘텐츠 승인",
-                      summary = "콘텐츠 승인 알림 예제",
-                      description = "업로드한 콘텐츠가 승인되었을 때 받는 알림",
-                      value = NotificationExamples.ContentReviewApprovedExample.EXAMPLE),
-                  @ExampleObject(
-                      name = "콘텐츠 거부",
-                      summary = "콘텐츠 거부 알림 예제",
-                      description = "업로드한 콘텐츠가 거부되었을 때 받는 알림",
-                      value = NotificationExamples.ContentReviewRejectedExample.EXAMPLE),
                   @ExampleObject(
                       name = "시스템 환영",
                       summary = "시스템 환영 알림 예제",
                       description = "신규 사용자가 가입 시 받는 환영 알림",
                       value = NotificationExamples.WelcomeGrobleExample.EXAMPLE),
                   @ExampleObject(
-                      name = "콘텐츠 판매",
-                      summary = "콘텐츠 판매 발생 알림 예제",
-                      description = "콘텐츠가 판매되었을 때 메이커가 받는 알림",
-                      value = NotificationExamples.ContentSoldExample.EXAMPLE)
+                      name = "혼합 알림",
+                      summary = "여러 알림 타입이 혼합된 예제",
+                      description = "모든 NotificationType과 SubNotificationType이 섞인 예제",
+                      value = NotificationExamples.MixedNotificationsExample.EXAMPLE)
                 })),
     @ApiResponse(responseCode = "401", description = "인증 실패 (AccessToken 만료 또는 없음)"),
     @ApiResponse(responseCode = "404", description = "알림 목록 정보를 찾을 수 없음")
   })
   @GetMapping
-  ResponseEntity<GrobleResponse<NotificationItemsResponse>> getNotifications(
+  public ResponseEntity<GrobleResponse<NotificationItemsResponse>> getNotifications(
       @Parameter(hidden = true) @Auth Accessor accessor);
 }
