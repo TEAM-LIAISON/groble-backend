@@ -32,6 +32,9 @@ spring:
   application:
     name: groble
 
+  jackson:
+    time-zone: Asia/Seoul
+
   flyway:
     enabled: true
     baseline-on-migrate: true
@@ -73,6 +76,9 @@ spring:
     suffix: .html
     mode: HTML
     cache: false
+
+server:
+  timezone: Asia/Seoul
 
 storage:
   provider: local
