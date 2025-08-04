@@ -83,7 +83,11 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
     Expression<Boolean> isRefundableExpr =
         ExpressionUtils.as(
             new CaseBuilder()
-                .when(qOrder.status.eq(Order.OrderStatus.PAID))
+                .when(
+                    qOrder
+                        .status
+                        .eq(Order.OrderStatus.PAID)
+                        .and(qContent.contentType.eq(ContentType.COACHING)))
                 .then(true)
                 .otherwise(false),
             "isRefundable");
