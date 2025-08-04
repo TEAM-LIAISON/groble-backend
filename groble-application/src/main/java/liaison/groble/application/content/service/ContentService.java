@@ -29,7 +29,10 @@ import liaison.groble.application.content.dto.review.ContentReviewDTO;
 import liaison.groble.application.content.dto.review.ReviewReplyDTO;
 import liaison.groble.application.content.exception.ContentEditException;
 import liaison.groble.application.content.exception.InActiveContentException;
+import liaison.groble.application.market.dto.ContactInfoDTO;
+import liaison.groble.application.sell.SellerContactReader;
 import liaison.groble.application.user.service.UserReader;
+import liaison.groble.common.exception.ContactNotFoundException;
 import liaison.groble.common.exception.EntityNotFoundException;
 import liaison.groble.common.exception.ForbiddenException;
 import liaison.groble.common.response.PageResponse;
@@ -49,6 +52,7 @@ import liaison.groble.domain.content.repository.ContentCustomRepository;
 import liaison.groble.domain.content.repository.ContentRepository;
 import liaison.groble.domain.file.entity.FileInfo;
 import liaison.groble.domain.file.repository.FileRepository;
+import liaison.groble.domain.user.entity.SellerContact;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.vo.UserProfile;
 import liaison.groble.external.discord.dto.ContentRegisterCreateReportDTO;
@@ -65,6 +69,7 @@ public class ContentService {
   private final UserReader userReader;
   private final ContentReader contentReader;
   private final ContentReviewReader contentReviewReader;
+  private final SellerContactReader sellerContactReader;
 
   // Repository
   private final ContentRepository contentRepository;
@@ -975,6 +980,19 @@ public class ContentService {
             content.addOption(newOption);
             log.info("새 옵션 추가: name={}, price={}", newOption.getName(), newOption.getPrice());
           });
+    }
+  }
+
+  @Transactional(readOnly = true)
+  public ContactInfoDTO getContactInfo(Long contentId) {
+    Content content = contentReader.getContentById(contentId);
+    User user = content.getUser();
+    try {
+      List<SellerContact> contacts = sellerContactReader.getContactsByUser(user);
+      return ContactInfoDTO.from(contacts);
+    } catch (ContactNotFoundException e) {
+      log.warn("판매자 연락처 정보 없음: userId={}", user.getId());
+      return ContactInfoDTO.builder().build();
     }
   }
 }

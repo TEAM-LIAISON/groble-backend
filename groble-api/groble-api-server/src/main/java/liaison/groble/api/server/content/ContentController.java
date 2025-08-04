@@ -28,6 +28,7 @@ import liaison.groble.api.model.content.response.swagger.HomeContents;
 import liaison.groble.api.model.content.response.swagger.UploadContentDownloadFile;
 import liaison.groble.api.model.content.response.swagger.UploadContentThumbnail;
 import liaison.groble.api.model.file.response.FileUploadResponse;
+import liaison.groble.api.model.maker.response.ContactInfoResponse;
 import liaison.groble.api.server.util.FileUtil;
 import liaison.groble.application.content.dto.ContentCardDTO;
 import liaison.groble.application.content.dto.ContentDetailDTO;
@@ -38,6 +39,7 @@ import liaison.groble.application.content.service.ContentViewCountService;
 import liaison.groble.application.file.FileService;
 import liaison.groble.application.file.dto.FileDTO;
 import liaison.groble.application.file.dto.FileUploadDTO;
+import liaison.groble.application.market.dto.ContactInfoDTO;
 import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.annotation.Logging;
 import liaison.groble.common.model.Accessor;
@@ -48,6 +50,7 @@ import liaison.groble.common.response.ResponseHelper;
 import liaison.groble.common.utils.PageUtils;
 import liaison.groble.mapping.content.ContentMapper;
 import liaison.groble.mapping.content.ContentReviewMapper;
+import liaison.groble.mapping.market.MarketMapper;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -90,6 +93,7 @@ public class ContentController {
   private final ContentViewCountService contentViewCountService;
 
   // Mapper
+  private final MarketMapper marketMapper;
   private final ContentMapper contentMapper;
   private final ContentReviewMapper contentReviewMapper;
 
@@ -147,7 +151,11 @@ public class ContentController {
       contentDetailDTO = contentService.getPublicContentDetail(contentId);
     }
 
-    ContentDetailResponse response = contentMapper.toContentDetailResponse(contentDetailDTO);
+    ContactInfoDTO contactInfoDTO = contentService.getContactInfo(contentId);
+    ContactInfoResponse contactInfoResponse = marketMapper.toContactInfoResponse(contactInfoDTO);
+
+    ContentDetailResponse response =
+        contentMapper.toContentDetailResponse(contentDetailDTO, contactInfoResponse);
     return responseHelper.success(response, CONTENT_DETAIL_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 
