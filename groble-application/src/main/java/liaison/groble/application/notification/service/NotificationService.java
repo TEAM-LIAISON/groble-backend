@@ -130,11 +130,13 @@ public class NotificationService {
     if (subNotificationType == SubNotificationType.CONTENT_REVIEW_REPLY) {
       return NotificationDetailsDTO.contentReviewReplied(
           notification.getPurchaseDetails().getContentId(),
-          notification.getPurchaseDetails().getReviewId());
+          notification.getPurchaseDetails().getReviewId(),
+          notification.getPurchaseDetails().getThumbnailUrl());
     } else if (subNotificationType == SubNotificationType.CONTENT_PURCHASED) {
       return NotificationDetailsDTO.contentPurchased(
           notification.getPurchaseDetails().getContentId(),
-          notification.getPurchaseDetails().getMerchantUid());
+          notification.getPurchaseDetails().getMerchantUid(),
+          notification.getPurchaseDetails().getThumbnailUrl());
     }
     return null;
   }

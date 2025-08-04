@@ -50,13 +50,23 @@ public class NotificationDetailsDTO {
   }
 
   /** Factory method for CONTENT_REVIEW_REPLY notifications */
-  public static NotificationDetailsDTO contentReviewReplied(Long contentId, Long reviewId) {
-    return NotificationDetailsDTO.builder().contentId(contentId).reviewId(reviewId).build();
+  public static NotificationDetailsDTO contentReviewReplied(
+      Long contentId, Long reviewId, String thumbnailUrl) {
+    return NotificationDetailsDTO.builder()
+        .contentId(contentId)
+        .reviewId(reviewId)
+        .thumbnailUrl(thumbnailUrl)
+        .build();
   }
 
   /** Factory method for CONTENT_PURCHASED notifications */
-  public static NotificationDetailsDTO contentPurchased(Long contentId, String merchantUid) {
-    return NotificationDetailsDTO.builder().contentId(contentId).merchantUid(merchantUid).build();
+  public static NotificationDetailsDTO contentPurchased(
+      Long contentId, String merchantUid, String thumbnailUrl) {
+    return NotificationDetailsDTO.builder()
+        .contentId(contentId)
+        .merchantUid(merchantUid)
+        .thumbnailUrl(thumbnailUrl)
+        .build();
   }
 
   /** Factory method for CONTENT_SOLD notifications */
