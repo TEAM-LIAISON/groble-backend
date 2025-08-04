@@ -72,6 +72,8 @@ public class QPayplePayment extends EntityPathBase<PayplePayment> {
 
     public final StringPath pcdPayIsTax = createString("pcdPayIsTax");
 
+    public final StringPath pcdPayMethod = createString("pcdPayMethod");
+
     public final StringPath pcdPayMonth = createString("pcdPayMonth");
 
     public final StringPath pcdPayMsg = createString("pcdPayMsg");

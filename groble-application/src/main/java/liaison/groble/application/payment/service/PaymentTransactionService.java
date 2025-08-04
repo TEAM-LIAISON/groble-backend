@@ -242,6 +242,7 @@ public class PaymentTransactionService {
         .pcdPayerHp(dto.getPayerHp())
         .pcdPayerEmail(dto.getPayerEmail())
         .pcdPayOid(dto.getPayOid())
+        .pcdPayMethod(dto.getPcdPayMethod())
         .pcdEasyPayMethod(dto.getEasyPayMethod())
         .pcdPayGoods(dto.getPayGoods())
         .pcdPayTotal(dto.getPayTotal())

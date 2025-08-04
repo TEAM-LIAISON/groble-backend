@@ -58,6 +58,9 @@ public class PayplePayment extends BaseTimeEntity {
   @Column(name = "pcd_pay_oid", unique = true)
   private String pcdPayOid; // 주문번호 (orderId - PK)
 
+  @Column(name = "pcd_pay_method")
+  private String pcdPayMethod; // 결제 수단 코드 (appCard, naverPay, kakaoPay)
+
   @Column(name = "pcd_easy_pay_method")
   private String pcdEasyPayMethod; // 선택한 결제 수단의 상세 유형 (카드, 계좌이체 등)
 
