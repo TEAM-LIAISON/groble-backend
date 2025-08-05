@@ -55,7 +55,7 @@ import liaison.groble.domain.file.repository.FileRepository;
 import liaison.groble.domain.user.entity.SellerContact;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.vo.UserProfile;
-import liaison.groble.external.discord.dto.ContentRegisterCreateReportDTO;
+import liaison.groble.external.discord.dto.content.ContentRegisterCreateReportDTO;
 import liaison.groble.external.discord.service.content.DiscordContentRegisterReportService;
 
 import lombok.RequiredArgsConstructor;

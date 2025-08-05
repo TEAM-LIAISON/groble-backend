@@ -1,4 +1,4 @@
-package liaison.groble.external.discord.dto;
+package liaison.groble.external.discord.dto.content;
 
 import java.time.LocalDateTime;
 
