@@ -576,6 +576,9 @@ public class OrderService {
     OrderItem orderItem = order.getOrderItems().get(0);
     Content content = orderItem.getContent();
 
+    log.info(
+        "주문 성공 응답 생성 - orderId: {}, purchasedAt: {}", order.getId(), purchase.getPurchasedAt());
+
     return OrderSuccessDTO.builder()
         // 주문 기본 정보
         .merchantUid(order.getMerchantUid())

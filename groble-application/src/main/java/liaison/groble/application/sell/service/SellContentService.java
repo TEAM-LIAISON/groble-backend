@@ -200,6 +200,8 @@ public class SellContentService {
 
     User seller = userReader.getUserById(userId);
     ContentReview contentReview = contentReviewReader.getContentReviewById(reviewId);
+    User buyer = contentReview.getUser();
+
     ContentReply contentReply =
         ContentReply.builder()
             .contentReview(contentReview)
@@ -209,11 +211,12 @@ public class SellContentService {
             .build();
 
     contentReplyWriter.save(contentReply);
+
     notificationService.sendContentReviewReplyNotification(
-        seller,
+        buyer,
         contentReview.getContent().getId(),
         contentReview.getId(),
-        contentReply.getReplyContent());
+        contentReview.getContent().getThumbnailUrl());
 
     return ReplyContentDTO.builder().replyContent(replyContentDTO.getReplyContent()).build();
   }
@@ -288,6 +291,8 @@ public class SellContentService {
 
   /** FlatContentSellDetailDTO ContentSellDetailDTO로 변환합니다. */
   private ContentSellDetailDTO convertFlatDTOToDetailDTO(FlatContentSellDetailDTO flat) {
+    log.info("▶ convertFlatDTOToDetailDTO: purchasedAt={}", flat.getPurchasedAt());
+
     return ContentSellDetailDTO.builder()
         .purchaseId(flat.getPurchaseId())
         .contentTitle(flat.getContentTitle())

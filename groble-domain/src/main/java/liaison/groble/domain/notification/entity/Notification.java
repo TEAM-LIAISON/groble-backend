@@ -135,4 +135,8 @@ public class Notification {
       throw new RuntimeException("JSON 변환 오류", e);
     }
   }
+
+  public void markAsRead() {
+    this.notificationReadStatus = NotificationReadStatus.READ;
+  }
 }

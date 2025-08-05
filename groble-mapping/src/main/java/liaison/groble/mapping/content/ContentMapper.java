@@ -17,6 +17,7 @@ import liaison.groble.api.model.content.response.ContentPreviewCardResponse;
 import liaison.groble.api.model.content.response.ContentResponse;
 import liaison.groble.api.model.content.response.ContentStatusResponse;
 import liaison.groble.api.model.content.response.DocumentOptionResponse;
+import liaison.groble.api.model.maker.response.ContactInfoResponse;
 import liaison.groble.application.content.dto.ContentCardDTO;
 import liaison.groble.application.content.dto.ContentDTO;
 import liaison.groble.application.content.dto.ContentDetailDTO;
@@ -168,9 +169,11 @@ public interface ContentMapper extends PageResponseMapper {
           "java(contentDetailDTO.getOptions() != null ? contentDetailDTO.getOptions().size() : 0)")
   @Mapping(
       target = "options",
-      source = "options",
+      source = "contentDetailDTO.options",
       qualifiedByName = "mapOptionsToBaseOptionResponse")
-  ContentDetailResponse toContentDetailResponse(ContentDetailDTO contentDetailDTO);
+  @Mapping(target = "contactInfo", source = "contactInfoResponse")
+  ContentDetailResponse toContentDetailResponse(
+      ContentDetailDTO contentDetailDTO, ContactInfoResponse contactInfoResponse);
 
   @Named("mapOptionsToBaseOptionResponse")
   default List<BaseOptionResponse> mapOptionsToBaseOptionResponse(List<ContentOptionDTO> options) {

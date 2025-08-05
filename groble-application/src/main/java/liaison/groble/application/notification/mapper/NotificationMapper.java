@@ -56,6 +56,7 @@ public class NotificationMapper {
           case CONTENT_REVIEWED -> builder.reviewDetails(
               ReviewDetails.builder()
                   .contentId(((ReviewDetails) detailObject).getContentId())
+                  .reviewId(((ReviewDetails) detailObject).getReviewId())
                   .thumbnailUrl(((ReviewDetails) detailObject).getThumbnailUrl())
                   .build());
         }
@@ -73,19 +74,31 @@ public class NotificationMapper {
           case CONTENT_PURCHASED -> builder.purchaseDetails(
               PurchaseDetails.builder()
                   .contentId(((PurchaseDetails) detailObject).getContentId())
+                  .merchantUid(((PurchaseDetails) detailObject).getMerchantUid())
+                  .thumbnailUrl(((PurchaseDetails) detailObject).getThumbnailUrl())
                   .build());
           case CONTENT_REVIEW_REPLY -> builder.purchaseDetails(
               PurchaseDetails.builder()
                   .contentId(((PurchaseDetails) detailObject).getContentId())
                   .reviewId(((PurchaseDetails) detailObject).getReviewId())
+                  .thumbnailUrl(((PurchaseDetails) detailObject).getThumbnailUrl())
                   .build());
         }
         break;
 
       case SELL:
         switch (subNotificationType) {
-          case CONTENT_SOLD, CONTENT_SOLD_STOPPED -> builder.sellDetails(
-              SellDetails.builder().contentId(((SellDetails) detailObject).getContentId()).build());
+          case CONTENT_SOLD -> builder.sellDetails(
+              SellDetails.builder()
+                  .contentId(((SellDetails) detailObject).getContentId())
+                  .purchaseId(((SellDetails) detailObject).getPurchaseId())
+                  .thumbnailUrl(((SellDetails) detailObject).getThumbnailUrl())
+                  .build());
+          case CONTENT_SOLD_STOPPED -> builder.sellDetails(
+              SellDetails.builder()
+                  .contentId(((SellDetails) detailObject).getContentId())
+                  .thumbnailUrl(((SellDetails) detailObject).getThumbnailUrl())
+                  .build());
         }
         break;
       default:

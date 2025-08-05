@@ -3,6 +3,8 @@ package liaison.groble.api.model.content.response;
 import java.math.BigDecimal;
 import java.util.List;
 
+import liaison.groble.api.model.maker.response.ContactInfoResponse;
+
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -89,4 +91,11 @@ public class ContentDetailResponse {
 
   @Schema(description = "메이커 소개", example = "- 동국대학교 철학과 졸업")
   private String makerIntro;
+
+  @Schema(
+      description = "문의하기 응답 객체",
+      example = "https://example.com/contact",
+      type = "string",
+      requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  private ContactInfoResponse contactInfo;
 }

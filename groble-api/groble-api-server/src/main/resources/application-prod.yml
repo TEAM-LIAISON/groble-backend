@@ -79,6 +79,9 @@ spring:
       max-file-size: 60MB # 한 개 파일의 최대 사이즈
       max-request-size: 60MB # 한 개 요청의 최대 사이즈
 
+server:
+  timezone: Asia/Seoul
+
 storage:
   provider: s3
   s3:
