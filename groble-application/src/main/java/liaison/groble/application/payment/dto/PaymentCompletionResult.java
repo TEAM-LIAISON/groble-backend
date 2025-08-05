@@ -21,4 +21,11 @@ public class PaymentCompletionResult {
   private final LocalDateTime completedAt;
   private final String sellerEmail;
   private final String contentTitle;
+
+  // 디스코드 알림용 변수 추가
+  private final String nickname;
+  private final String contentType;
+  private final Long optionId;
+  private final String selectedOptionName;
+  private final LocalDateTime purchasedAt;
 }

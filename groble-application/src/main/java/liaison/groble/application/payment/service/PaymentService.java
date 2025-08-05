@@ -13,6 +13,8 @@ import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.payment.entity.PayplePayment;
 import liaison.groble.domain.purchase.entity.Purchase;
 import liaison.groble.domain.purchase.enums.CancelReason;
+import liaison.groble.external.discord.dto.payment.ContentPaymentRefundReportDTO;
+import liaison.groble.external.discord.service.payment.ContentPaymentRefundRequestService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +28,7 @@ public class PaymentService {
   private final OrderReader orderReader;
   private final PaymentReader paymentReader;
   private final PurchaseReader purchaseReader;
+  private final ContentPaymentRefundRequestService contentPaymentRefundRequestService;
 
   @Transactional
   public void requestPaymentCancel(
@@ -46,6 +49,9 @@ public class PaymentService {
 
       // 환불 요청
       handlePaymentCancelSuccess(order, purchase, cancelReason, paymentCancelDTO.getDetailReason());
+
+      // 디스코드 알림 발송
+      sendDiscordPaymentRefundRequestNotification(userId, purchase, order);
     } catch (IllegalArgumentException | IllegalStateException e) {
       log.warn("결제 취소 처리 실패 - 주문번호: {}, 사유: {}", merchantUid, e.getMessage());
       throw e;
@@ -53,6 +59,27 @@ public class PaymentService {
       log.error("결제 취소 처리 중 예상치 못한 오류 발생 - 주문번호: {}", merchantUid, e);
       throw e;
     }
+  }
+
+  private void sendDiscordPaymentRefundRequestNotification(
+      Long userId, Purchase purchase, Order order) {
+    ContentPaymentRefundReportDTO contentPaymentRefundReportDTO =
+        ContentPaymentRefundReportDTO.builder()
+            .userId(userId)
+            .nickname(purchase.getUser().getNickname())
+            .contentId(purchase.getContent().getId())
+            .contentTitle(purchase.getContent().getTitle())
+            .contentType(purchase.getContent().getContentType().name())
+            .optionId(purchase.getSelectedOptionId())
+            .selectedOptionName(purchase.getSelectedOptionName())
+            .merchantUid(order.getMerchantUid())
+            .purchasedAt(purchase.getPurchasedAt())
+            .cancelReason(purchase.getCancelReason().name())
+            .cancelRequestedAt(purchase.getCancelRequestedAt())
+            .build();
+
+    contentPaymentRefundRequestService.sendContentPaymentRefundRequestReport(
+        contentPaymentRefundReportDTO);
   }
 
   @Transactional(readOnly = true)

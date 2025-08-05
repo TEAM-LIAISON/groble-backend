@@ -147,6 +147,11 @@ public class PaymentTransactionService {
         .completedAt(purchase.getPurchasedAt())
         .sellerEmail(purchase.getContent().getUser().getEmail())
         .contentTitle(purchase.getContent().getTitle())
+        .nickname(order.getUser().getNickname())
+        .contentType(purchase.getContent().getContentType().name())
+        .optionId(purchase.getSelectedOptionId())
+        .selectedOptionName(purchase.getSelectedOptionName())
+        .purchasedAt(purchase.getPurchasedAt())
         .build();
   }
 

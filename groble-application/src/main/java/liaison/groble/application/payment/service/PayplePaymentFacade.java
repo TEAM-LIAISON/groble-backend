@@ -206,6 +206,11 @@ public class PayplePaymentFacade {
               .completedAt(completionResult.getCompletedAt())
               .sellerEmail(completionResult.getSellerEmail())
               .contentTitle(completionResult.getContentTitle())
+              .nickname(completionResult.getNickname())
+              .contentType(completionResult.getContentType())
+              .optionId(completionResult.getOptionId())
+              .selectedOptionName(completionResult.getSelectedOptionName())
+              .purchasedAt(completionResult.getPurchasedAt())
               .build();
 
       log.info("이벤트 객체 생성 완료: orderId={}", event.getOrderId());
