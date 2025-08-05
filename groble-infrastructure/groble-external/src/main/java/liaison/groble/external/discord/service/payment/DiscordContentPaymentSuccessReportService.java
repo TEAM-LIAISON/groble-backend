@@ -12,7 +12,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class DiscordContentPaymentSuccessReportService
     implements ContentPaymentSuccessReportService {
-  @Value("${discord.webhook.alert.payment-refund-request.url}")
+  @Value("${discord.webhook.alert.payment-success.url}")
   private String url;
 
   private final DiscordService discordService;
