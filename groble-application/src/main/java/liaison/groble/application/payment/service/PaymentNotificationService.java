@@ -117,6 +117,7 @@ public class PaymentNotificationService {
     }
   }
 
+  /** 디스코드 결제 성사 알림 발송 */
   private void sendDiscordPaymentSuccessNotification(PaymentCompletedEvent event) {
     try {
 
