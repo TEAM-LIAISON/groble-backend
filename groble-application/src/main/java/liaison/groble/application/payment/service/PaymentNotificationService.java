@@ -11,6 +11,8 @@ import liaison.groble.application.user.service.UserReader;
 import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.port.EmailSenderPort;
 import liaison.groble.domain.user.entity.User;
+import liaison.groble.external.discord.dto.payment.ContentPaymentSuccessReportDTO;
+import liaison.groble.external.discord.service.payment.ContentPaymentSuccessReportService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +25,7 @@ public class PaymentNotificationService {
   private final EmailSenderPort emailSenderPort;
   private final UserReader userReader;
   private final ContentReader contentReader;
+  private final ContentPaymentSuccessReportService contentPaymentSuccessReportService;
 
   @Async("defaultAsyncExecutor") // 명시적으로 Executor 지정
   public void processAsyncPaymentCompletedEvent(PaymentCompletedEvent event) {
@@ -41,6 +44,8 @@ public class PaymentNotificationService {
       // 3. 판매자에게 이메일 발송
       sendSaleNotificationEmail(event);
 
+      // 4. 결제 완료 디스코드 알림 발송
+      sendDiscordPaymentSuccessNotification(event);
       log.info("비동기 결제 완료 처리 완료 - orderId: {}", event.getOrderId());
 
     } catch (Exception e) {
@@ -109,6 +114,31 @@ public class PaymentNotificationService {
       log.debug("판매 알림 이메일 발송 완료 - orderId: {}", event.getOrderId());
     } catch (Exception e) {
       log.error("판매 알림 이메일 발송 실패 - orderId: {}", event.getOrderId(), e);
+    }
+  }
+
+  private void sendDiscordPaymentSuccessNotification(PaymentCompletedEvent event) {
+    try {
+
+      ContentPaymentSuccessReportDTO contentPaymentSuccessReportDTO =
+          ContentPaymentSuccessReportDTO.builder()
+              .userId(event.getUserId())
+              .nickname(event.getNickname())
+              .contentId(event.getContentId())
+              .contentTitle(event.getContentTitle())
+              .contentType(event.getContentType())
+              .optionId(event.getOptionId())
+              .selectedOptionName(event.getSelectedOptionName())
+              .merchantUid(event.getMerchantUid())
+              .purchasedAt(event.getPurchasedAt())
+              .build();
+
+      contentPaymentSuccessReportService.sendContentPaymentSuccessReport(
+          contentPaymentSuccessReportDTO);
+
+      log.debug("디스코드 결제 성사 알림 발송");
+    } catch (Exception e) {
+      log.error("디스코드 결제 성사 알림 발송 실패", e);
     }
   }
 

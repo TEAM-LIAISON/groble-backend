@@ -25,4 +25,11 @@ public class PaymentCompletedEvent {
   private LocalDateTime completedAt;
   private String sellerEmail;
   private String contentTitle;
+
+  // 디스코드 알림용 변수 추가
+  private String nickname;
+  private String contentType;
+  private Long optionId;
+  private String selectedOptionName;
+  private LocalDateTime purchasedAt;
 }
