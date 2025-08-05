@@ -216,7 +216,7 @@ public class SellContentService {
         buyer,
         contentReview.getContent().getId(),
         contentReview.getId(),
-        contentReply.getReplyContent());
+        contentReview.getContent().getThumbnailUrl());
 
     return ReplyContentDTO.builder().replyContent(replyContentDTO.getReplyContent()).build();
   }
