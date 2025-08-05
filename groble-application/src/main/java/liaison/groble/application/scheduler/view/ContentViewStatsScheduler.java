@@ -15,8 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 public class ContentViewStatsScheduler {
   private final ContentStatsAggregationService aggregationService;
 
-  //  @Scheduled(cron = "0 01 0 * * ?", zone = "Asia/Seoul") // 매일 00:01 실행
-  @Scheduled(cron = "0 0/1 * * * ?", zone = "Asia/Seoul")
+  @Scheduled(cron = "0 01 0 * * ?", zone = "Asia/Seoul") // 매일 00:01 실행
   @Transactional
   public void aggregateDailyStats() {
     try {
@@ -26,8 +25,7 @@ public class ContentViewStatsScheduler {
     }
   }
 
-  //  @Scheduled(cron = "0 05 0 1 * ?", zone = "Asia/Seoul") // 매월 1일 00:05 실행
-  @Scheduled(cron = "0 0/1 * * * ?", zone = "Asia/Seoul")
+  @Scheduled(cron = "0 05 0 1 * ?", zone = "Asia/Seoul") // 매월 1일 00:05 실행
   @Transactional
   public void aggregateMonthlyStats() {
     try {
