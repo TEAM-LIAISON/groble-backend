@@ -1,6 +1,7 @@
 package liaison.groble.application.payment.service;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -16,6 +17,8 @@ import liaison.groble.application.order.service.OrderReader;
 import liaison.groble.application.payment.dto.PaypleAuthResponseDTO;
 import liaison.groble.application.payment.dto.PaypleAuthResultDTO;
 import liaison.groble.application.purchase.service.PurchaseReader;
+import liaison.groble.domain.coupon.entity.CouponTemplate;
+import liaison.groble.domain.coupon.entity.UserCoupon;
 import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.order.repository.OrderRepository;
 import liaison.groble.domain.payment.entity.Payment;
@@ -684,6 +687,16 @@ public class PayplePaymentService {
     order.cancelOrder(reason);
     purchase.cancelPayment();
 
+    // 2. 쿠폰 복원 처리
+    UserCoupon appliedCoupon = order.getAppliedCoupon();
+    if (appliedCoupon != null && isCouponRestorable(appliedCoupon)) {
+      appliedCoupon.cancel(); // 이미 구현된 cancel() 메소드 사용
+      log.info(
+          "쿠폰 복원 완료 - couponId: {}, userId: {}",
+          appliedCoupon.getId(),
+          appliedCoupon.getUser().getId());
+    }
+
     log.info(
         "결제 취소 완료 - orderId: {}, paymentId: {}, purchaseId: {}, " + "환불금액: {}원, 사유: {}",
         order.getId(),
@@ -691,6 +704,12 @@ public class PayplePaymentService {
         purchase.getId(),
         payplePayment.getPcdPayTotal(),
         reason);
+  }
+
+  private boolean isCouponRestorable(UserCoupon coupon) {
+    // 쿠폰 템플릿의 유효기간 확인
+    CouponTemplate template = coupon.getCouponTemplate();
+    return template.getValidUntil().isAfter(LocalDateTime.now());
   }
 
   /**
