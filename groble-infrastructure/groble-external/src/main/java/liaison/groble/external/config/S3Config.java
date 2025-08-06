@@ -1,11 +1,5 @@
 package liaison.groble.external.config;
 
-import com.amazonaws.ClientConfiguration;
-import com.amazonaws.metrics.AwsSdkMetrics;
-import com.amazonaws.metrics.RequestMetricCollector;
-import com.amazonaws.regions.Region;
-import com.amazonaws.regions.Regions;
-import com.amazonaws.services.s3.AmazonS3Client;
 import jakarta.annotation.PostConstruct;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -41,8 +35,8 @@ public class S3Config {
   public AmazonS3 amazonS3Client() {
     BasicAWSCredentials creds = new BasicAWSCredentials(accessKey, secretKey);
     return AmazonS3ClientBuilder.standard()
-            .withRegion(region)
-            .withCredentials(new AWSStaticCredentialsProvider(creds))
-            .build();
+        .withRegion(region)
+        .withCredentials(new AWSStaticCredentialsProvider(creds))
+        .build();
   }
 }

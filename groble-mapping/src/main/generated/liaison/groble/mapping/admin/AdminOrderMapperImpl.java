@@ -13,7 +13,7 @@ import liaison.groble.application.admin.dto.AdminOrderSummaryInfoDTO;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-07-17T20:40:11+0900",
+    date = "2025-08-07T01:42:05+0900",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.10 (Amazon.com Inc.)")
 @Component
 public class AdminOrderMapperImpl implements AdminOrderMapper {
