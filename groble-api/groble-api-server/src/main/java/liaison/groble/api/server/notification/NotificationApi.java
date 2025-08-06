@@ -83,22 +83,22 @@ public interface NotificationApi {
                   @ExampleObject(
                       name = "리뷰 답글",
                       summary = "콘텐츠 리뷰 답글 알림 예제",
-                      description = "사용자의 리뷰에 답글이 달렸을 때 받는 알림",
+                      description = "나의 리뷰에 판매자의 답글이 달렸을 때 받는 알림",
                       value = NotificationExamples.ContentReviewReplyExample.EXAMPLE),
                   @ExampleObject(
                       name = "리뷰 등록",
                       summary = "리뷰 등록 알림 예제",
-                      description = "사용자가 콘텐츠에 리뷰를 등록했을 때 받는 알림",
+                      description = "구매자가 나의 콘텐츠에 리뷰를 등록했을 때 받는 알림",
                       value = NotificationExamples.ContentReviewedExample.EXAMPLE),
                   @ExampleObject(
                       name = "콘텐츠 판매",
                       summary = "상품 판매 알림 예제",
-                      description = "메이커의 콘텐츠가 판매되었을 때 받는 알림",
+                      description = "나의 콘텐츠가 판매되었을 때 받는 알림",
                       value = NotificationExamples.ContentSoldExample.EXAMPLE),
                   @ExampleObject(
                       name = "판매 중단",
                       summary = "상품 판매 중단 알림 예제",
-                      description = "메이커의 콘텐츠 판매가 중단되었을 때 받는 알림",
+                      description = "나의 콘텐츠 판매가 중단되었을 때 받는 알림",
                       value = NotificationExamples.ContentSoldStoppedExample.EXAMPLE),
                   @ExampleObject(
                       name = "인증 성공",
@@ -114,12 +114,7 @@ public interface NotificationApi {
                       name = "시스템 환영",
                       summary = "시스템 환영 알림 예제",
                       description = "신규 사용자가 가입 시 받는 환영 알림",
-                      value = NotificationExamples.WelcomeGrobleExample.EXAMPLE),
-                  @ExampleObject(
-                      name = "혼합 알림",
-                      summary = "여러 알림 타입이 혼합된 예제",
-                      description = "모든 NotificationType과 SubNotificationType이 섞인 예제",
-                      value = NotificationExamples.MixedNotificationsExample.EXAMPLE)
+                      value = NotificationExamples.WelcomeGrobleExample.EXAMPLE)
                 })),
     @ApiResponse(responseCode = "401", description = "인증 실패 (AccessToken 만료 또는 없음)"),
     @ApiResponse(responseCode = "404", description = "알림 목록 정보를 찾을 수 없음")
