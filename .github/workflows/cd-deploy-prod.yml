@@ -188,11 +188,11 @@ jobs:
           echo "📊 ECS Service Status: $SERVICE_INFO"
           
           # 운영 API 도메인으로 헬스체크
-          echo "🔍 Testing application health on apitest.groble.im..."
+          echo "🔍 Testing application health on api.groble.im..."
           
           # 헬스체크 (최대 5분 대기) - 올바른 도메인과 엔드포인트 사용
           for i in {1..10}; do
-            HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://apitest.groble.im/actuator/health" || echo "000")
+            HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://api.groble.im/actuator/health" || echo "000")
           
             if [ "$HTTP_STATUS" = "200" ]; then
               echo "✅ Application is healthy! (HTTP $HTTP_STATUS)"
