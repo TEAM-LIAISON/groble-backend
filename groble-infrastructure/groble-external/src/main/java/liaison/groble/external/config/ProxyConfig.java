@@ -48,7 +48,7 @@ public class ProxyConfig {
   }
 
   /** 외부 API 호출용 RestTemplate (별도로 필요한 경우) */
-  @Bean("externalApiRestTemplate")
+  @Bean("externalApiRestTemplate") //
   public RestTemplate externalApiRestTemplate() {
     return restTemplate();
   }
