@@ -12,7 +12,10 @@ import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 
+import lombok.extern.slf4j.Slf4j;
+
 /** HTTP 클라이언트 프록시 설정 프록시 환경에서 외부 API 호출 시 사용됩니다. */
+@Slf4j
 @Configuration
 @ConditionalOnProperty(name = "http.proxy.enabled", havingValue = "true")
 public class ProxyConfig {
@@ -28,16 +31,18 @@ public class ProxyConfig {
   @Primary
   public RestTemplate restTemplate() {
     if (!StringUtils.hasText(proxyHost) || proxyPort <= 0) {
+      log.info("프록시 미설정 - 일반 RestTemplate 사용");
       return new RestTemplate();
     }
+
+    log.info("프록시 설정: {}:{}", proxyHost, proxyPort); // 로깅 추가
 
     SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
     Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(proxyHost, proxyPort));
     factory.setProxy(proxy);
 
-    // 타임아웃 설정
-    factory.setConnectTimeout(10000); // 10초
-    factory.setReadTimeout(30000); // 30초
+    factory.setConnectTimeout(10000);
+    factory.setReadTimeout(30000);
 
     return new RestTemplate(factory);
   }

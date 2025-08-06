@@ -146,13 +146,14 @@ springdoc:
 logging:
   level:
     root: INFO
-    com.yourcompany.groble: INFO  # Set your application package
+    com.yourcompany.groble: INFO
     org.springdoc: INFO
     io.swagger.v3: INFO
-    # These are the critical ones causing problems
-    org.apache.http: WARN         # Set HTTP client to WARN level
-    org.apache.http.wire: WARN    # Specifically disable wire logging
-    com.amazonaws: INFO           # Control AWS SDK logging
+    # 외부 요청 디버깅용
+    org.apache.http: DEBUG              # DEBUG로 변경
+    org.apache.http.wire: DEBUG         # DEBUG로 변경 (상세 통신 내용)
+    org.springframework.web.client: DEBUG  # RestTemplate 로깅 추가
+    com.amazonaws: INFO
 
 management:
   endpoints:
