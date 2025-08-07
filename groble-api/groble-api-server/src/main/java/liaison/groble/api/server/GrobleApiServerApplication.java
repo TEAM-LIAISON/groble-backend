@@ -81,8 +81,6 @@ public class GrobleApiServerApplication {
       log.info("SOCKS 프록시: {}:{}", socksProxyHost, socksProxyPort);
 
       // SOCKS 프록시 설정 (SMTP용)
-      System.setProperty("socksProxyHost", socksProxyHost);
-      System.setProperty("socksProxyPort", socksProxyPort);
       System.setProperty("mail.smtp.socks.host", socksProxyHost);
       System.setProperty("mail.smtp.socks.port", socksProxyPort);
 
