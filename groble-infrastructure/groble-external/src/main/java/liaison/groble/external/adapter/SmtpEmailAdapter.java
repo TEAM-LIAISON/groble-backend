@@ -10,8 +10,11 @@ import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
@@ -33,11 +36,25 @@ public class SmtpEmailAdapter implements EmailSenderPort {
   @Value("${spring.mail.username}")
   private String fromEmail;
 
+  @Value("${spring.mail.properties.mail.smtp.proxy.host:}")
+  private String proxyHost;
+
+  @Value("${spring.mail.properties.mail.smtp.proxy.port:3128}")
+  private String proxyPort;
+
   @Override
   @Async("mailExecutor")
+  @Retryable(
+      value = {MailException.class, MessagingException.class},
+      maxAttempts = 3,
+      backoff = @Backoff(delay = 2000, multiplier = 2))
   public void sendVerificationEmail(String to, String verificationCode) {
+    long startTime = System.currentTimeMillis();
+
     try {
-      MimeMessage message = emailSender.createMimeMessage();
+      log.info("이메일 발송 시작 - 수신자: {}, 프록시 설정: {}:{}", to, proxyHost, proxyPort);
+
+      MimeMessage message = createMimeMessage();
       message.addHeader("List-Unsubscribe", "<mailto:groble@groble.im>");
       MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
@@ -98,19 +115,32 @@ public class SmtpEmailAdapter implements EmailSenderPort {
       helper.setText(plainText, htmlContent);
 
       emailSender.send(message);
-      log.info("인증 이메일 발송 완료: {}", to);
+
+      long elapsedTime = System.currentTimeMillis() - startTime;
+      log.info("인증 이메일 발송 완료 - 수신자: {}, 소요시간: {}ms", to, elapsedTime);
 
     } catch (MessagingException e) {
-      log.error("인증 이메일 발송 실패: {}", e.getMessage(), e);
+      log.error("인증 이메일 발송 실패 - 수신자: {}, 에러: {}", to, e.getMessage(), e);
       throw new RuntimeException("이메일 발송 중 오류가 발생했습니다.", e);
+    } catch (MailException e) {
+      log.error("메일 서버 연결 실패 - 수신자: {}, 에러: {}", to, e.getMessage(), e);
+      throw new RuntimeException("메일 서버 연결에 실패했습니다. 프록시 설정을 확인해주세요.", e);
     }
   }
 
   @Override
   @Async("mailExecutor")
+  @Retryable(
+      value = {MailException.class, MessagingException.class},
+      maxAttempts = 3,
+      backoff = @Backoff(delay = 2000, multiplier = 2))
   public void sendPasswordResetEmail(String to, String resetToken) {
+    long startTime = System.currentTimeMillis();
+
     try {
-      MimeMessage message = emailSender.createMimeMessage();
+      log.info("비밀번호 재설정 이메일 발송 시작 - 수신자: {}", to);
+
+      MimeMessage message = createMimeMessage();
       message.addHeader("List-Unsubscribe", "<mailto:groble@groble.im>");
       MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
@@ -171,18 +201,29 @@ public class SmtpEmailAdapter implements EmailSenderPort {
       helper.setText(plainText, htmlContent);
 
       emailSender.send(message);
-      log.info("비밀번호 재설정 이메일 발송 완료: {}", to);
+
+      long elapsedTime = System.currentTimeMillis() - startTime;
+      log.info("비밀번호 재설정 이메일 발송 완료 - 수신자: {}, 소요시간: {}ms", to, elapsedTime);
 
     } catch (MessagingException e) {
-      log.error("비밀번호 재설정 이메일 발송 실패: {}", e.getMessage(), e);
+      log.error("비밀번호 재설정 이메일 발송 실패 - 수신자: {}, 에러: {}", to, e.getMessage(), e);
       throw new RuntimeException("이메일 발송 중 오류가 발생했습니다.", e);
+    } catch (MailException e) {
+      log.error("메일 서버 연결 실패 - 수신자: {}, 에러: {}", to, e.getMessage(), e);
+      throw new RuntimeException("메일 서버 연결에 실패했습니다. 프록시 설정을 확인해주세요.", e);
     }
   }
 
   @Override
   @Async("mailExecutor")
+  @Retryable(
+      value = {MailException.class, MessagingException.class},
+      maxAttempts = 3,
+      backoff = @Backoff(delay = 2000, multiplier = 2))
   public void sendSaleNotificationEmail(
       String to, String productName, BigDecimal price, LocalDateTime saleDate, Long contentId) {
+
+    long startTime = System.currentTimeMillis();
 
     // 1) 포맷터 생성: "yyyy.MM.dd HH:mm"
     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm");
@@ -195,8 +236,11 @@ public class SmtpEmailAdapter implements EmailSenderPort {
     currencyFormatter.setGroupingUsed(true); // 천 단위 콤마 사용
     currencyFormatter.setMaximumFractionDigits(0); // 소수점 이하 제거
     String formattedPrice = currencyFormatter.format(price) + "원";
+
     try {
-      MimeMessage message = emailSender.createMimeMessage();
+      log.info("판매 알림 이메일 발송 시작 - 수신자: {}, 상품: {}", to, productName);
+
+      MimeMessage message = createMimeMessage();
       message.addHeader("List-Unsubscribe", "<mailto:groble@groble.im>");
       MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
@@ -265,10 +309,30 @@ public class SmtpEmailAdapter implements EmailSenderPort {
       helper.setText(plainText, htmlContent);
 
       emailSender.send(message);
-      log.info("비밀번호 재설정 이메일 발송 완료: {}", to);
+
+      long elapsedTime = System.currentTimeMillis() - startTime;
+      log.info("판매 알림 이메일 발송 완료 - 수신자: {}, 소요시간: {}ms", to, elapsedTime);
+
     } catch (MessagingException e) {
-      log.error("판매 알림 이메일 발송 실패: {}", e.getMessage(), e);
+      log.error("판매 알림 이메일 발송 실패 - 수신자: {}, 에러: {}", to, e.getMessage(), e);
       throw new RuntimeException("이메일 발송 중 오류가 발생했습니다.", e);
+    } catch (MailException e) {
+      log.error("메일 서버 연결 실패 - 수신자: {}, 에러: {}", to, e.getMessage(), e);
+      throw new RuntimeException("메일 서버 연결에 실패했습니다. 프록시 설정을 확인해주세요.", e);
     }
+  }
+
+  /** MimeMessage 생성 시 프록시 설정 적용 */
+  private MimeMessage createMimeMessage() {
+    if (isProxyEnabled()) {
+      log.debug("프록시를 통한 SMTP 연결 - {}:{}", proxyHost, proxyPort);
+      // JavaMailSender의 Session에서 프록시 설정이 이미 적용됨 (yml 설정)
+    }
+    return emailSender.createMimeMessage();
+  }
+
+  /** 프록시 활성화 여부 확인 */
+  private boolean isProxyEnabled() {
+    return proxyHost != null && !proxyHost.isEmpty();
   }
 }

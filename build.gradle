@@ -313,7 +313,8 @@ project(':groble-infrastructure:groble-external') {
         implementation 'org.apache.httpcomponents:httpclient:4.5.13'
         implementation 'com.googlecode.json-simple:json-simple:1.1'
 
-
+        // Retry
+        implementation 'org.springframework.retry:spring-retry'
         // Flyway
 //        implementation 'org.flywaydb:flyway-core'
 //        implementation 'org.flywaydb:flyway-mysql'
