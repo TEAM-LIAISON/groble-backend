@@ -1,11 +1,32 @@
 spring:
   profiles:
     group:
-      blue: blue, common, secret-prod
-      green: green, common, secret-prod
+      blue: blue, common, secret-prod, proxy
+      green: green, common, secret-prod, proxy
 
 server:
   env: blue
+
+---
+spring:
+  config:
+    activate:
+      on-profile: proxy
+
+# 프록시 설정
+http:
+  proxy:
+    enabled: true
+    host: ${HTTP_PROXY_HOST:localhost}
+    port: ${HTTP_PROXY_PORT:3128}
+
+# 외부 API 호출용 프록시 설정
+external:
+  api:
+    proxy:
+      enabled: true
+      host: ${HTTP_PROXY_HOST:localhost}
+      port: ${HTTP_PROXY_PORT:3128}
 
 ---
 
@@ -30,7 +51,7 @@ spring:
       on-profile: green
 
 server:
-  port: 8081
+  port: 8080
   servlet:
     context-path: /
   error:
@@ -123,10 +144,11 @@ logging:
     org.springframework.web: INFO
     org.springdoc: INFO
     io.swagger.v3: INFO
-    # These are the critical ones causing problems
-    org.apache.http: WARN         # Set HTTP client to WARN level
-    org.apache.http.wire: WARN    # Specifically disable wire logging
-    com.amazonaws: INFO           # Control AWS SDK logging
+    # 외부 요청 디버깅용
+    org.apache.http: DEBUG              # DEBUG로 변경
+    org.apache.http.wire: DEBUG         # DEBUG로 변경 (상세 통신 내용)
+    org.springframework.web.client: DEBUG  # RestTemplate 로깅 추가
+    com.amazonaws: INFO
 
 management:
   endpoints:
