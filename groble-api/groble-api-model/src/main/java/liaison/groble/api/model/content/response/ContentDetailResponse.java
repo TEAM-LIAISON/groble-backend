@@ -3,6 +3,8 @@ package liaison.groble.api.model.content.response;
 import java.math.BigDecimal;
 import java.util.List;
 
+import liaison.groble.api.model.maker.response.ContactInfoResponse;
+
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -20,10 +22,9 @@ public class ContentDetailResponse {
   private Long contentId;
 
   @Schema(
-      description =
-          "콘텐츠 상태 [ACTIVE - 판매중], [DRAFT - 작성중], [PENDING - 심사중], [VALIDATED - 심사완료(승인)], [REJECTED - 심사완료(거절)]",
+      description = "콘텐츠 상태 [ACTIVE - 판매중], [DRAFT - 작성중], [DELETED - 삭제됨], [DISCONTINUED - 판매중단]",
       example = "DRAFT",
-      allowableValues = {"ACTIVE", "DRAFT", "PENDING", "VALIDATED", "REJECTED"})
+      allowableValues = {"ACTIVE", "DRAFT", "DELETED", "DISCONTINUED"})
   private String status;
 
   @Schema(description = "썸네일 이미지 URL", example = "https://example.com/thumbnail1.jpg")
@@ -63,12 +64,7 @@ public class ContentDetailResponse {
           "optionType": "COACHING_OPTION",
           "name": "1시간 코칭",
           "description": "1:1 전문가 코칭 1시간",
-          "price": 50000,
-          "coachingPeriod": "ONE_DAY",
-          "documentProvision": "PROVIDED",
-          "coachingType": "ONLINE",
-          "coachingTypeDescription": "줌을 통한 온라인 미팅",
-          "contentDeliveryMethod": null
+          "price": 50000
         },
         {
           "optionId": 3,
@@ -76,13 +72,9 @@ public class ContentDetailResponse {
           "name": "기본 템플릿",
           "description": "기본적인 사업계획서 템플릿",
           "price": 15000,
-          "coachingPeriod": null,
-          "documentProvision": null,
-          "coachingType": null,
-          "coachingTypeDescription": null,
-          "contentDeliveryMethod": "IMMEDIATE_DOWNLOAD",
           "documentFileUrl": "https://example.com/template.pdf",
-          "documentLinkUrl": "https://example.com/template-link"
+          "documentLinkUrl": "https://example.com/template-link",
+          "documentOriginalFileName": "template.pdf"
         }
       ]
       """))
@@ -99,4 +91,11 @@ public class ContentDetailResponse {
 
   @Schema(description = "메이커 소개", example = "- 동국대학교 철학과 졸업")
   private String makerIntro;
+
+  @Schema(
+      description = "문의하기 응답 객체",
+      example = "https://example.com/contact",
+      type = "string",
+      requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  private ContactInfoResponse contactInfo;
 }

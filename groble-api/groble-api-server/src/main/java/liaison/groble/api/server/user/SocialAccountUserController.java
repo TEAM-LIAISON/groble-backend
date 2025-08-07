@@ -37,8 +37,13 @@ public class SocialAccountUserController {
   // 응답 메시지 상수화
   private static final String SOCIAL_BASIC_INFO_SUCCESS_MESSAGE = "소셜 계정 기본 정보가 성공적으로 설정되었습니다.";
 
-  private final UserMapper userMapper;
+  // Service
   private final SocialAccountUserService socialAccountUserService;
+
+  // Mapper
+  private final UserMapper userMapper;
+
+  // Helper
   private final ResponseHelper responseHelper;
 
   @Operation(

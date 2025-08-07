@@ -1,0 +1,19 @@
+package liaison.groble.external.discord.dto.payment;
+
+import java.time.LocalDateTime;
+
+import lombok.Builder;
+
+@Builder
+public record ContentPaymentRefundReportDTO(
+    Long userId,
+    String nickname,
+    Long contentId,
+    String contentTitle,
+    String contentType,
+    Long optionId,
+    String selectedOptionName,
+    String merchantUid,
+    LocalDateTime purchasedAt,
+    String cancelReason,
+    LocalDateTime cancelRequestedAt) {}

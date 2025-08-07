@@ -11,11 +11,13 @@ import lombok.Getter;
 @Builder
 public class ContentDetailReviewDTO {
   private Long reviewId;
+  private Boolean isReviewManage;
   private LocalDateTime createdAt;
   private String reviewerProfileImageUrl;
   private String reviewerNickname;
   private String reviewContent;
   private String selectedOptionName;
   private BigDecimal rating;
+  private String merchantUid;
   private List<ReviewReplyDTO> reviewReplies;
 }

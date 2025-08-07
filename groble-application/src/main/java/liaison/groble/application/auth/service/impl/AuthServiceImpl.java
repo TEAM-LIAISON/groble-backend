@@ -1,6 +1,5 @@
 package liaison.groble.application.auth.service.impl;
 
-import java.time.Instant;
 import java.time.LocalDateTime;
 
 import org.springframework.stereotype.Service;
@@ -63,7 +62,7 @@ public class AuthServiceImpl implements AuthService {
     // 토큰 생성
     String accessToken = securityPort.createAccessToken(user.getId(), user.getEmail());
     String refreshToken = securityPort.createRefreshToken(user.getId(), user.getEmail());
-    Instant refreshTokenExpiresAt = securityPort.getRefreshTokenExpirationTime(refreshToken);
+    LocalDateTime refreshTokenExpiresAt = securityPort.getRefreshTokenExpirationTime(refreshToken);
 
     user.updateRefreshToken(refreshToken, refreshTokenExpiresAt);
     userRepository.save(user);

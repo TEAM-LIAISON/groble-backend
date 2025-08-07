@@ -5,7 +5,7 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Repository;
 
-import liaison.groble.domain.role.Role;
+import liaison.groble.domain.role.entity.Role;
 import liaison.groble.domain.role.repository.RoleRepository;
 
 import lombok.AllArgsConstructor;

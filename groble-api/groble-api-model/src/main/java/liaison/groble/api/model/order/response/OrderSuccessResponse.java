@@ -24,7 +24,7 @@ public class OrderSuccessResponse {
       example = "2025-04-20 10:15:30",
       type = "string",
       requiredMode = Schema.RequiredMode.REQUIRED)
-  @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+  @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Seoul")
   private LocalDateTime purchasedAt;
 
   @Schema(
@@ -33,6 +33,13 @@ public class OrderSuccessResponse {
       type = "number",
       requiredMode = Schema.RequiredMode.REQUIRED)
   private final Long contentId;
+
+  @Schema(
+      description = "판매자 이름",
+      example = "홍길동 코칭",
+      type = "string",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private String sellerName;
 
   @Schema(
       description = "콘텐츠 제목",
@@ -66,6 +73,13 @@ public class OrderSuccessResponse {
       example = "COACHING_OPTION",
       type = "string")
   private final String selectedOptionType;
+
+  @Schema(
+      description = "옵션 이름",
+      example = "기본 옵션",
+      type = "string",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private String selectedOptionName;
 
   @Schema(
       description = "원래 가격",

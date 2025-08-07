@@ -1,6 +1,5 @@
 package liaison.groble.application.user.service.impl;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -10,15 +9,14 @@ import liaison.groble.application.user.dto.UserMyPageDetailDTO;
 import liaison.groble.application.user.dto.UserMyPageSummaryDTO;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.application.user.service.UserService;
-import liaison.groble.common.exception.EntityNotFoundException;
-import liaison.groble.common.port.security.SecurityPort;
 import liaison.groble.domain.terms.enums.TermsType;
 import liaison.groble.domain.user.entity.IntegratedAccount;
+import liaison.groble.domain.user.entity.SellerInfo;
 import liaison.groble.domain.user.entity.SocialAccount;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.enums.AccountType;
 import liaison.groble.domain.user.enums.UserType;
-import liaison.groble.domain.user.repository.IntegratedAccountRepository;
+import liaison.groble.domain.user.repository.SellerInfoRepository;
 import liaison.groble.domain.user.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -29,19 +27,11 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
   private final UserRepository userRepository;
-  private final IntegratedAccountRepository integratedAccountRepository;
-  private final SecurityPort securityPort;
+  private final SellerInfoRepository sellerInfoRepository;
 
   // 변경: 24시간 (24 * 60 = 1440분)
-  private final long PASSWORD_RESET_EXPIRATION_MINUTES = 1440;
   private final UserReader userReader;
   private final ContentReader contentReader;
-
-  @Value("${app.frontend-url}")
-  private String frontendUrl;
-
-  @Value("${app.security.password-reset-secret}")
-  private String passwordResetSecret;
 
   /**
    * 사용자 역할 전환 (판매자/구매자 모드 전환)
@@ -80,74 +70,26 @@ public class UserServiceImpl implements UserService {
   }
 
   @Override
-  @Transactional(readOnly = true)
-  public String getUserType(String email) {
-    // 이메일로 계정 찾기
-    IntegratedAccount account =
-        integratedAccountRepository
-            .findByIntegratedAccountEmail(email)
-            .orElseThrow(() -> new IllegalArgumentException("등록되지 않은 이메일입니다."));
-
-    User user = account.getUser();
-    return user.getLastUserType().name();
-  }
-
-  @Override
-  @Transactional(readOnly = true)
-  public String getNextRoutePath(String email) {
-    IntegratedAccount account =
-        integratedAccountRepository
-            .findByIntegratedAccountEmail(email)
-            .orElseThrow(() -> new IllegalArgumentException("등록되지 않은 이메일입니다."));
-
-    User user = account.getUser();
-
-    return null;
-  }
-
-  @Override
-  public void setOrUpdatePassword(Long userId, String password) {
-    User user =
-        userRepository
-            .findById(userId)
-            .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
-
-    // 1. 비밀번호 인코딩
-    String encodedPassword = securityPort.encodePassword(password);
-
-    user.getIntegratedAccount().updatePassword(encodedPassword);
-    userRepository.save(user);
-  }
-
-  @Override
-  public void resetPasswordWithToken(String token, String newPassword) {
-    // 토큰 검증 및 이메일 추출
-    String email = securityPort.validatePasswordResetTokenAndGetEmail(token, passwordResetSecret);
-
-    // 이메일로 사용자 계정 찾기
-    IntegratedAccount integratedAccount =
-        integratedAccountRepository
-            .findByIntegratedAccountEmail(email)
-            .orElseThrow(() -> new IllegalArgumentException("해당 이메일로 가입된 사용자가 없습니다."));
-
-    // 비밀번호 인코딩 후 저장
-    String encodedPassword = securityPort.encodePassword(newPassword);
-    integratedAccount.updatePassword(encodedPassword);
-    userRepository.save(integratedAccount.getUser());
-  }
-
-  @Override
   public UserMyPageSummaryDTO getUserMyPageSummary(Long userId) {
     User user = userReader.getUserById(userId);
 
     // sellerInfo 가 없거나, isSeller=false 이면 디폴트로 PENDING 처리
-    String verificationStatusName = "PENDING";
-    String verificationStatusDisplayName = "인증 필요";
+    String verificationStatusName;
+    String verificationStatusDisplayName;
 
-    if (user.isSeller() && user.getSellerInfo() != null) {
-      var status = user.getSellerInfo().getVerificationStatus();
-      verificationStatusName = status.name();
-      verificationStatusDisplayName = status.getDisplayName();
+    if (user.isSeller()) {
+      SellerInfo sellerInfo = sellerInfoRepository.findByUserId(userId).orElse(null);
+      if (sellerInfo != null) {
+        var status = sellerInfo.getVerificationStatus();
+        verificationStatusName = status.name();
+        verificationStatusDisplayName = status.getDisplayName();
+      } else {
+        verificationStatusName = "PENDING";
+        verificationStatusDisplayName = "인증 필요";
+      }
+    } else {
+      verificationStatusName = "PENDING";
+      verificationStatusDisplayName = "인증 필요";
     }
 
     return UserMyPageSummaryDTO.builder()
@@ -170,7 +112,6 @@ public class UserServiceImpl implements UserService {
     String email = null;
     String phoneNumber = null;
     String providerTypeName = null;
-    String verificationStatus = null;
 
     if (accountType == AccountType.INTEGRATED && user.getIntegratedAccount() != null) {
       IntegratedAccount account = user.getIntegratedAccount();
@@ -189,9 +130,12 @@ public class UserServiceImpl implements UserService {
         !user.hasAgreedTo(TermsType.SELLER_TERMS_POLICY) || user.getPhoneNumber() == null;
     log.info("sellerAccountNotCreated: {}", sellerAccountNotCreated);
 
-    if (user.getSellerInfo() != null) {
-      verificationStatus = user.getSellerInfo().getVerificationStatus().name();
-    }
+    // SellerInfo 조회
+    String verificationStatus =
+        sellerInfoRepository
+            .findByUserId(userId)
+            .map(sellerInfo -> sellerInfo.getVerificationStatus().name())
+            .orElse(null);
 
     return UserMyPageDetailDTO.builder()
         .nickname(user.getNickname())
@@ -206,25 +150,6 @@ public class UserServiceImpl implements UserService {
         .verificationStatus(verificationStatus)
         .alreadyRegisteredAsSeller(user.isSeller())
         .build();
-  }
-
-  @Override
-  public void setInitialUserType(Long userId, String userTypeName) {
-    User user =
-        userRepository
-            .findById(userId)
-            .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
-
-    // 역할 설정
-    UserType userType;
-    try {
-      userType = UserType.valueOf(userTypeName.toUpperCase());
-    } catch (IllegalArgumentException | NullPointerException e) {
-      throw new IllegalArgumentException("유효하지 않은 사용자 유형입니다: " + userTypeName);
-    }
-
-    user.updateLastUserType(userType);
-    userRepository.save(user);
   }
 
   @Override

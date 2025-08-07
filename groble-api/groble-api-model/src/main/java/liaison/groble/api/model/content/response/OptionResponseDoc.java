@@ -24,30 +24,12 @@ public class OptionResponseDoc {
   @Schema(description = "옵션 가격", example = "50000")
   private Integer price;
 
-  // ─── CoachingOptionResponse 전용 필드 ────────────────────
-  @Schema(
-      description = "코칭 기간",
-      example = "ONE_DAY = [1일], TWO_TO_SIX_DAYS = [2-6일], MORE_THAN_ONE_WEEK = [일주일 이상]")
-  private String coachingPeriod;
-
-  @Schema(description = "자료 제공 여부", example = "PROVIDED - [자료 제공], NOT_PROVIDED - [자료 미제공]")
-  private String documentProvision;
-
-  @Schema(description = "코칭 방식", example = "ONLINE - [온라인], OFFLINE - [오프라인]")
-  private String coachingType;
-
-  @Schema(description = "코칭 방식 설명", example = "줌을 통한 온라인 미팅으로 진행됩니다.")
-  private String coachingTypeDescription;
-
-  // ─── DocumentOptionResponse 전용 필드 ───────────────────
-  @Schema(
-      description = "컨텐츠 제공 방식",
-      example = "IMMEDIATE_DOWNLOAD - [즉시 다운로드], FUTURE_UPLOAD - [추후 업로드]")
-  private String contentDeliveryMethod;
-
   @Schema(description = "문서 파일 URL", example = "https://example.com/document.pdf")
   private String documentFileUrl;
 
   @Schema(description = "문서 링크 URL", example = "https://example.com/document-link")
   private String documentLinkUrl;
+
+  @Schema(description = "문서 원본 파일 이름", example = "document.pdf")
+  private String documentOriginalFileName;
 }

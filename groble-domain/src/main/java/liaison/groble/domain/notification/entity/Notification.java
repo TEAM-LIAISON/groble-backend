@@ -97,6 +97,12 @@ public class Notification {
         case SYSTEM:
           details = systemDetails != null ? mapper.writeValueAsString(systemDetails) : null;
           break;
+        case PURCHASE:
+          details = purchaseDetails != null ? mapper.writeValueAsString(purchaseDetails) : null;
+          break;
+        case SELL:
+          details = sellDetails != null ? mapper.writeValueAsString(sellDetails) : null;
+          break;
       }
     } catch (JsonProcessingException e) {
       throw new RuntimeException("JSON 변환 오류", e);
@@ -118,9 +124,19 @@ public class Notification {
         case SYSTEM:
           systemDetails = mapper.readValue(details, SystemDetails.class);
           break;
+        case PURCHASE:
+          purchaseDetails = mapper.readValue(details, PurchaseDetails.class);
+          break;
+        case SELL:
+          sellDetails = mapper.readValue(details, SellDetails.class);
+          break;
       }
     } catch (JsonProcessingException e) {
       throw new RuntimeException("JSON 변환 오류", e);
     }
+  }
+
+  public void markAsRead() {
+    this.notificationReadStatus = NotificationReadStatus.READ;
   }
 }

@@ -32,6 +32,9 @@ spring:
   application:
     name: groble
 
+  jackson:
+    time-zone: Asia/Seoul
+
   flyway:
     enabled: true
     baseline-on-migrate: true
@@ -42,9 +45,9 @@ spring:
     database-platform: org.hibernate.dialect.MySQL8Dialect
     properties:
       hibernate:
-        format_sql: false
-        show_sql: false
-        use_sql_comments: false
+        format_sql: true
+        show_sql: true
+        use_sql_comments: true
         default_batch_fetch_size: 100
         generate_statistics: false   # 성능 모니터링 설정
         jdbc:
@@ -74,18 +77,13 @@ spring:
     mode: HTML
     cache: false
 
+server:
+  timezone: Asia/Seoul
+
 storage:
   provider: local
 
 app:
-  jwt:
-    access-token:
-      secret: 6M1boNRsyYPgKuR197f4w2uuh8DXfYyjxgPJKmINtHo=
-      expiration-ms: 3600000 # 1 hour
-    refresh-token:
-      secret: bZvf0E0wsJXugzxv2m25c5zHvJrNfvsQIjzU6eBScbk=
-      expiration-ms: 604800000 # 1 hour
-    issuer: groble-auth-service
   frontend-url: http://localhost:3000
   backend-url: http://localhost:8080
   cookie:
@@ -127,6 +125,8 @@ logging:
     io.swagger.v3: DEBUG
     software.amazon.awssdk: DEBUG
     org.apache.http: DEBUG
+  file:
+    path: ./logs
 
 management:
   endpoints:

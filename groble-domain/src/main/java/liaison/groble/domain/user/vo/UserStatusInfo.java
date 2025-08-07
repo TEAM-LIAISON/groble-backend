@@ -2,7 +2,7 @@ package liaison.groble.domain.user.vo;
 
 import static jakarta.persistence.EnumType.STRING;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
@@ -27,22 +27,14 @@ public class UserStatusInfo {
   private UserStatus status;
 
   @Column(name = "status_changed_at", nullable = false)
-  private Instant statusChangedAt;
+  private LocalDateTime statusChangedAt;
 
   public void updateStatus(UserStatus newStatus) {
     this.status = newStatus;
-    this.statusChangedAt = Instant.now();
-  }
-
-  public boolean isAccessible() {
-    return status.isAccessible();
+    this.statusChangedAt = LocalDateTime.now();
   }
 
   public boolean isLoginable() {
     return status.isLoginable();
-  }
-
-  public boolean isPendingVerification() {
-    return status == UserStatus.PENDING_VERIFICATION;
   }
 }

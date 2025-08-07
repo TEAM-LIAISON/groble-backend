@@ -1,7 +1,6 @@
 package liaison.groble.api.server.content;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -9,7 +8,6 @@ import jakarta.validation.Valid;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,30 +22,35 @@ import liaison.groble.api.model.content.response.ContentDetailResponse;
 import liaison.groble.api.model.content.response.ContentPreviewCardResponse;
 import liaison.groble.api.model.content.response.HomeContentsResponse;
 import liaison.groble.api.model.content.response.review.ContentReviewResponse;
-import liaison.groble.api.model.content.response.swagger.ContentDetail;
 import liaison.groble.api.model.content.response.swagger.ContentsCoachingCategory;
 import liaison.groble.api.model.content.response.swagger.ContentsDocumentCategory;
 import liaison.groble.api.model.content.response.swagger.HomeContents;
-import liaison.groble.api.model.content.response.swagger.UploadContentDetailImages;
 import liaison.groble.api.model.content.response.swagger.UploadContentDownloadFile;
 import liaison.groble.api.model.content.response.swagger.UploadContentThumbnail;
 import liaison.groble.api.model.file.response.FileUploadResponse;
+import liaison.groble.api.model.maker.response.ContactInfoResponse;
 import liaison.groble.api.server.util.FileUtil;
 import liaison.groble.application.content.dto.ContentCardDTO;
 import liaison.groble.application.content.dto.ContentDetailDTO;
+import liaison.groble.application.content.dto.ContentViewCountDTO;
 import liaison.groble.application.content.dto.review.ContentReviewDTO;
 import liaison.groble.application.content.service.ContentService;
+import liaison.groble.application.content.service.ContentViewCountService;
 import liaison.groble.application.file.FileService;
 import liaison.groble.application.file.dto.FileDTO;
 import liaison.groble.application.file.dto.FileUploadDTO;
+import liaison.groble.application.market.dto.ContactInfoDTO;
 import liaison.groble.common.annotation.Auth;
+import liaison.groble.common.annotation.Logging;
 import liaison.groble.common.model.Accessor;
+import liaison.groble.common.request.RequestUtil;
 import liaison.groble.common.response.GrobleResponse;
 import liaison.groble.common.response.PageResponse;
 import liaison.groble.common.response.ResponseHelper;
 import liaison.groble.common.utils.PageUtils;
 import liaison.groble.mapping.content.ContentMapper;
 import liaison.groble.mapping.content.ContentReviewMapper;
+import liaison.groble.mapping.market.MarketMapper;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -71,10 +74,10 @@ public class ContentController {
   private static final String CONTENT_DETAIL_PATH = "/content/{contentId}";
   private static final String HOME_CONTENTS_PATH = "/home/contents";
   private static final String UPLOAD_CONTENT_THUMBNAIL_PATH = "/content/thumbnail/image";
-  private static final String UPLOAD_CONTENT_DETAIL_IMAGES_PATH = "/content/detail/images";
   private static final String CONTENT_COACHING_CATEGORY_PATH = "/contents/coaching/category";
   private static final String CONTENT_DOCUMENT_CATEGORY_PATH = "/contents/document/category";
   private static final String CONTENT_REVIEWS_PATH = "/content/{contentId}/reviews";
+  private static final String CONTENT_VIEW_PATH = "/content/view/{contentId}";
 
   // 응답 메시지 상수화
   private static final String CONTENT_DETAIL_SUCCESS_MESSAGE = "콘텐츠 상세 조회에 성공하였습니다.";
@@ -82,14 +85,20 @@ public class ContentController {
   private static final String UPLOAD_CONTENT_THUMBNAIL_SUCCESS_MESSAGE =
       "콘텐츠 썸네일 이미지 업로드가 성공적으로 완료되었습니다.";
   private static final String CONTENT_REVIEWS_SUCCESS_MESSAGE = "콘텐츠 리뷰 목록 조회에 성공하였습니다.";
+  private static final String CONTENT_VIEW_SUCCESS_MESSAGE = "콘텐츠 뷰어 화면을 성공적으로 조회했습니다.";
 
   // Service
   private final ContentService contentService;
   private final FileService fileService;
+  private final ContentViewCountService contentViewCountService;
 
   // Mapper
+  private final MarketMapper marketMapper;
   private final ContentMapper contentMapper;
   private final ContentReviewMapper contentReviewMapper;
+
+  // Util
+  private final RequestUtil requestUtil;
   private final FileUtil fileUtil;
 
   // Helper
@@ -101,6 +110,7 @@ public class ContentController {
       content = @Content(schema = @Schema(implementation = ContentReviewResponse.class)))
   @GetMapping(CONTENT_REVIEWS_PATH)
   public ResponseEntity<GrobleResponse<ContentReviewResponse>> getContentReviews(
+      @Auth(required = false) Accessor accessor,
       @PathVariable("contentId") Long contentId,
       @Parameter(
               description = "정렬 기준",
@@ -111,25 +121,41 @@ public class ContentController {
           @RequestParam(value = "sort", defaultValue = "LATEST")
           String sort) {
 
-    ContentReviewDTO contentReviewDTO = contentService.getContentReviews(contentId, sort);
-
+    ContentReviewDTO contentReviewDTO =
+        contentService.getContentReviews(
+            contentId, sort, accessor.getUserId() // null if not authenticated
+            );
     ContentReviewResponse response = contentReviewMapper.toContentReviewResponse(contentReviewDTO);
     return responseHelper.success(response, CONTENT_REVIEWS_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 
-  @ContentDetail
+  // 콘텐츠 상세 조회
+  @Operation(summary = "[✅ 콘텐츠 상세 정보 조회]", description = "콘텐츠 상세를 조회합니다.")
+  @ApiResponse(
+      responseCode = "200",
+      description = CONTENT_DETAIL_SUCCESS_MESSAGE,
+      content =
+          @Content(
+              mediaType = "application/json",
+              schema = @Schema(implementation = ContentDetailResponse.class)))
+  @Logging(item = "Content", action = "getContentDetail", includeParam = true, includeResult = true)
   @GetMapping(CONTENT_DETAIL_PATH)
   public ResponseEntity<GrobleResponse<ContentDetailResponse>> getContentDetail(
       @Auth(required = false) Accessor accessor, @PathVariable("contentId") Long contentId) {
     ContentDetailDTO contentDetailDTO;
 
+    // 왜 인증된 사용자와 인증되지 않은 사용자를 나눴었지?
     if (accessor.isAuthenticated()) {
       contentDetailDTO = contentService.getContentDetailForUser(accessor.getId(), contentId);
     } else {
       contentDetailDTO = contentService.getPublicContentDetail(contentId);
     }
 
-    ContentDetailResponse response = contentMapper.toContentDetailResponse(contentDetailDTO);
+    ContactInfoDTO contactInfoDTO = contentService.getContactInfo(contentId);
+    ContactInfoResponse contactInfoResponse = marketMapper.toContactInfoResponse(contactInfoDTO);
+
+    ContentDetailResponse response =
+        contentMapper.toContentDetailResponse(contentDetailDTO, contactInfoResponse);
     return responseHelper.success(response, CONTENT_DETAIL_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 
@@ -254,54 +280,6 @@ public class ContentController {
     }
   }
 
-  @UploadContentDetailImages
-  @PostMapping(UPLOAD_CONTENT_DETAIL_IMAGES_PATH)
-  public ResponseEntity<GrobleResponse<?>> addContentDetailImages(
-      @Auth Accessor accessor,
-      @RequestPart("contentDetailImages")
-          @Parameter(
-              description = "콘텐츠 상세 이미지 파일들 (여러 개 가능)",
-              required = true,
-              content =
-                  @Content(
-                      mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
-                      array = @ArraySchema(schema = @Schema(type = "string", format = "binary"))))
-          List<MultipartFile> contentDetailImages) {
-
-    if (contentDetailImages == null || contentDetailImages.isEmpty()) {
-      return ResponseEntity.badRequest()
-          .body(GrobleResponse.error("적어도 하나 이상의 이미지를 선택해주세요.", HttpStatus.BAD_REQUEST.value()));
-    }
-
-    List<FileUploadResponse> responses = new ArrayList<>();
-    for (MultipartFile file : contentDetailImages) {
-      if (file.isEmpty() || !isImageFile(file)) {
-        return ResponseEntity.badRequest()
-            .body(GrobleResponse.error("모든 파일이 유효한 이미지여야 합니다.", HttpStatus.BAD_REQUEST.value()));
-      }
-      try {
-        FileUploadDTO dto = fileUtil.toServiceFileUploadDTO(file, "contents/detail");
-        FileDTO uploaded = fileService.uploadFile(accessor.getUserId(), dto);
-        responses.add(
-            FileUploadResponse.of(
-                uploaded.getOriginalFilename(),
-                uploaded.getFileUrl(),
-                uploaded.getContentType(),
-                "contents/detail"));
-      } catch (IOException e) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-            .body(
-                GrobleResponse.error(
-                    "상세 이미지 저장 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR.value()));
-      }
-    }
-
-    return ResponseEntity.status(HttpStatus.CREATED)
-        .body(
-            GrobleResponse.success(
-                responses, "상세 이미지 업로드가 성공적으로 완료되었습니다.", HttpStatus.CREATED.value()));
-  }
-
   // 콘텐츠의 즉시 다운로드 파일 객체 저장 요청
   @UploadContentDownloadFile
   @PostMapping("/content/document/upload/file")
@@ -344,6 +322,28 @@ public class ContentController {
               GrobleResponse.error(
                   "콘텐츠 자료 저장 중 오류가 발생했습니다. 다시 시도해주세요.", HttpStatus.INTERNAL_SERVER_ERROR.value()));
     }
+  }
+
+  @Operation(
+      summary = "[✅ 콘텐츠 뷰어] 콘텐츠 뷰어 화면 조회",
+      description =
+          "만료 시간 1시간 이내의 중복 조회를 방지하며, 콘텐츠 뷰어 화면을 조회합니다. "
+              + "조회수는 1시간 동안 중복되지 않으며, 이후에는 다시 조회수가 증가합니다.")
+  @Logging(item = "Content", action = "viewContent", includeParam = true, includeResult = true)
+  @PostMapping(CONTENT_VIEW_PATH)
+  public ResponseEntity<GrobleResponse<Void>> viewContent(
+      @Auth(required = false) Accessor accessor, @PathVariable("contentId") Long contentId) {
+    ContentViewCountDTO contentViewCountDTO =
+        ContentViewCountDTO.builder()
+            .userId(accessor.getUserId())
+            .ip(requestUtil.getClientIp())
+            .userAgent(requestUtil.getUserAgent())
+            .referer(null)
+            .build();
+
+    contentViewCountService.recordContentView(contentId, contentViewCountDTO);
+
+    return responseHelper.success(null, CONTENT_VIEW_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 
   /** 이미지 파일 여부 확인 */

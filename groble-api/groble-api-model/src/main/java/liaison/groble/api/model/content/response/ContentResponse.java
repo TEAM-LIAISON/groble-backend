@@ -81,9 +81,6 @@ public class ContentResponse {
     private String coachingTypeDescription;
 
     // 문서 옵션 관련 필드
-    @Schema(description = "콘텐츠 제공 방식", example = "IMMEDIATE_DOWNLOAD")
-    private String contentDeliveryMethod;
-
     @Schema(description = "문서 파일 URL", example = "https://example.com/document.pdf")
     private String documentFileUrl;
 

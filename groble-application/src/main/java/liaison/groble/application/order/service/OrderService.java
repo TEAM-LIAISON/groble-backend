@@ -78,20 +78,42 @@ public class OrderService {
     // 3. 구매자 정보 생성
     final Purchaser purchaser = buildPurchaserFromUser(user);
 
-    // 4. 주문 생성 및 저장
-    Order order = createAndSaveOrder(user, content, orderOptions, purchaser);
+    // 4. 주문 객체 생성 (저장하지 않음)
+    Order order = Order.createOrderWithMultipleOptions(user, content, orderOptions, purchaser);
 
-    // 5. 쿠폰 적용 (요청된 경우)
-    applyCouponIfRequested(order, user, dto.getCouponCodes());
+    // 5. 쿠폰 적용 (메모리상에서만)
+    UserCoupon appliedCoupon = null;
+    if (dto.getCouponCodes() != null && !dto.getCouponCodes().isEmpty()) {
+      appliedCoupon = findAndValidateBestCoupon(order, user, dto.getCouponCodes());
+      if (appliedCoupon != null) {
+        order.applyCoupon(appliedCoupon);
+      }
+    }
 
-    // 6. 무료 주문 처리 (최종 금액이 0원인 경우)
-    final boolean isFreePurchase = processIfFreeOrder(order);
+    // 6. 무료 주문 여부 확인 (실제 처리는 저장 후)
+    final boolean willBeFreePurchase = order.getFinalPrice().compareTo(BigDecimal.ZERO) == 0;
 
-    // 7. 주문 생성 로그 기록
-    logOrderCreation(order, userId, dto.getContentId(), validatedOptions.size(), isFreePurchase);
+    // 7. 주문 저장 (ID 생성)
+    order = orderRepository.save(order);
 
-    // 8. 응답 생성
-    return buildCreateOrderDTO(order, isFreePurchase);
+    // 8. merchantUid 생성 및 업데이트
+    order.setMerchantUid(Order.generateMerchantUid(order.getId()));
+    order = orderRepository.save(order);
+
+    // 9. 무료 주문 처리 (저장 후 수행)
+    if (willBeFreePurchase) {
+      boolean success = processFreeOrderPurchase(order);
+      if (!success) {
+        throw new RuntimeException("무료 주문 처리 실패 - 트랜잭션 롤백");
+      }
+    }
+
+    // 10. 주문 생성 로그 기록
+    logOrderCreation(
+        order, userId, dto.getContentId(), validatedOptions.size(), willBeFreePurchase);
+
+    // 11. 응답 생성
+    return buildCreateOrderDTO(order, willBeFreePurchase);
   }
 
   /**
@@ -207,6 +229,24 @@ public class OrderService {
   }
 
   /**
+   * 최적의 쿠폰 찾기 및 검증 (저장 전 처리용)
+   *
+   * @param order 주문 (아직 저장되지 않은 상태)
+   * @param user 사용자
+   * @param couponCodes 쿠폰 코드 목록
+   * @return 최적의 쿠폰 (없으면 null)
+   */
+  private UserCoupon findAndValidateBestCoupon(Order order, User user, List<String> couponCodes) {
+    // 무료 상품은 쿠폰 적용 불가
+    if (order.getOriginalPrice().compareTo(BigDecimal.ZERO) <= 0) {
+      log.info("무료 상품(원가 0원)은 쿠폰 적용이 불가능합니다");
+      return null;
+    }
+
+    return findBestCoupon(user, couponCodes, order.getOriginalPrice());
+  }
+
+  /**
    * 쿠폰 적용 처리
    *
    * <p>요청된 쿠폰들 중 가장 할인이 큰 쿠폰을 자동으로 선택하여 적용합니다. 무료 상품(원가 0원)에는 쿠폰을 적용할 수 없습니다.
@@ -214,7 +254,9 @@ public class OrderService {
    * @param order 주문
    * @param user 사용자
    * @param couponCodes 적용하려는 쿠폰 코드 목록
+   * @deprecated 트랜잭션 안전성을 위해 findAndValidateBestCoupon을 사용하세요
    */
+  @Deprecated
   private void applyCouponIfRequested(Order order, User user, List<String> couponCodes) {
     // 쿠폰 코드가 없으면 처리하지 않음
     if (couponCodes == null || couponCodes.isEmpty()) {
@@ -366,9 +408,10 @@ public class OrderService {
     try {
       // 1. 무료 Payment 생성 및 완료 처리
       Payment freePayment = createAndCompleteFreePayment(order);
-
+      log.info("무료 결제 정보 생성 완료 - orderId: {}, paymentId: {}", order.getId(), freePayment.getId());
       // 2. Purchase 생성 및 완료 처리
       Purchase purchase = createAndCompletePurchase(order);
+      log.info("무료 구매 정보 생성 완료 - orderId: {}, purchaseId: {}", order.getId(), purchase.getId());
 
       // 3. 주문 상태를 결제 완료로 변경
       order.completePayment();
@@ -533,12 +576,16 @@ public class OrderService {
     OrderItem orderItem = order.getOrderItems().get(0);
     Content content = orderItem.getContent();
 
+    log.info(
+        "주문 성공 응답 생성 - orderId: {}, purchasedAt: {}", order.getId(), purchase.getPurchasedAt());
+
     return OrderSuccessDTO.builder()
         // 주문 기본 정보
         .merchantUid(order.getMerchantUid())
         .purchasedAt(purchase.getPurchasedAt())
         .contentId(content.getId())
         .contentTitle(content.getTitle())
+        .sellerName(content.getUser().getNickname())
         .orderStatus(order.getStatus().name())
 
         // 콘텐츠 정보
@@ -549,7 +596,7 @@ public class OrderService {
         .selectedOptionId(orderItem.getOptionId())
         .selectedOptionType(
             orderItem.getOptionType() != null ? orderItem.getOptionType().name() : null)
-
+        .selectedOptionName(purchase.getSelectedOptionName())
         // 가격 정보
         .originalPrice(order.getOriginalPrice())
         .discountPrice(order.getDiscountPrice())

@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import liaison.groble.domain.role.Role;
+import liaison.groble.domain.role.entity.Role;
 import liaison.groble.domain.role.enums.RoleType;
 import liaison.groble.domain.role.repository.RoleRepository;
 import liaison.groble.domain.user.entity.SocialAccount;

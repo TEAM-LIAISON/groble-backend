@@ -22,6 +22,12 @@ public class OrderReader {
   private final OrderRepository orderRepository;
   private final OrderCustomRepository orderCustomRepository;
 
+  public Order getOrderById(Long orderId) {
+    return orderRepository
+        .findById(orderId)
+        .orElseThrow(() -> new EntityNotFoundException("주문을 찾을 수 없습니다. 주문 ID: " + orderId));
+  }
+
   public Order getOrderByMerchantUid(String merchantUid) {
     return orderRepository
         .findByMerchantUid(merchantUid)

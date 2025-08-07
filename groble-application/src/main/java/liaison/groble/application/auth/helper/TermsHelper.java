@@ -12,11 +12,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import liaison.groble.common.request.RequestUtil;
 import liaison.groble.domain.terms.entity.Terms;
+import liaison.groble.domain.terms.entity.UserTerms;
 import liaison.groble.domain.terms.enums.TermsType;
 import liaison.groble.domain.terms.repository.TermsRepository;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.enums.UserType;
-import liaison.groble.domain.user.service.UserTermsService;
 import liaison.groble.persistence.terms.UserTermsCustomRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -28,7 +28,6 @@ import lombok.extern.slf4j.Slf4j;
 public class TermsHelper {
   private final UserTermsCustomRepository userTermsCustomRepository;
   private final TermsRepository termsRepository;
-  private final UserTermsService userTermsService;
   private final RequestUtil requestUtil;
 
   /** 문자열 약관 유형 리스트를 TermsType enum 리스트로 변환 */
@@ -120,7 +119,22 @@ public class TermsHelper {
 
           // 동의한 약관에만 동의 정보 추가
           if (agreed) {
-            userTermsService.agreeToTerms(user, terms, clientIp, userAgent);
+            log.info("약관 동의 처리 시작 - 사용자: {}, 약관 유형: {}", user.getId(), terms.getType());
+
+            // agreedAt 필드 추가 (누락된 것으로 보임)
+            UserTerms agreement =
+                UserTerms.builder()
+                    .user(user)
+                    .terms(terms)
+                    .agreed(true)
+                    .agreedAt(LocalDateTime.now()) // 동의 시간 추가
+                    .agreedIp(clientIp)
+                    .agreedUserAgent(userAgent)
+                    .build();
+
+            user.getTermsAgreements().add(agreement);
+            log.info("약관 동의 정보 생성 완료 - 사용자: {}, 약관 ID: {}", user.getId(), terms.getId());
+
             log.debug("약관 {} 동의 정보 추가 완료", termsType);
           }
         } else {

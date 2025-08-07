@@ -12,10 +12,12 @@ import liaison.groble.application.admin.dto.AdminOrderCancellationReasonDTO;
 import liaison.groble.application.admin.dto.AdminOrderSummaryInfoDTO;
 import liaison.groble.application.order.service.OrderReader;
 import liaison.groble.application.payment.service.PayplePaymentService;
+import liaison.groble.application.purchase.service.PurchaseReader;
 import liaison.groble.common.response.PageResponse;
 import liaison.groble.domain.order.dto.FlatAdminOrderSummaryInfoDTO;
 import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.order.repository.OrderRepository;
+import liaison.groble.domain.purchase.entity.Purchase;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +29,7 @@ public class AdminOrderService {
   private final OrderReader orderReader;
   private final PayplePaymentService payplePaymentService;
   private final OrderRepository orderRepository;
+  private final PurchaseReader purchaseReader;
 
   // 모든 주문 목록 전체 조회 메서드
   public PageResponse<AdminOrderSummaryInfoDTO> getAllOrders(Pageable pageable) {
@@ -53,7 +56,11 @@ public class AdminOrderService {
       throw new IllegalArgumentException("취소 또는 취소 요청 상태가 아닙니다.");
     }
 
-    return AdminOrderCancellationReasonDTO.builder().cancelReason(order.getOrderNote()).build();
+    Purchase purchase = purchaseReader.getPurchaseByOrderId(order.getId());
+
+    return AdminOrderCancellationReasonDTO.builder()
+        .cancelReason(purchase.getCancelReason().name())
+        .build();
   }
 
   @Transactional

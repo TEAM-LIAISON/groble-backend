@@ -6,8 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 import liaison.groble.application.auth.dto.VerifyBusinessMakerAccountDTO;
 import liaison.groble.application.auth.dto.VerifyPersonalMakerAccountDTO;
 import liaison.groble.application.user.service.UserReader;
-import liaison.groble.domain.role.Role;
-import liaison.groble.domain.role.repository.RoleRepository;
+import liaison.groble.domain.user.entity.SellerInfo;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.enums.BusinessType;
 import liaison.groble.domain.user.enums.SellerVerificationStatus;
@@ -24,7 +23,6 @@ public class AccountVerificationService {
 
   // Repository
   private final UserReader userReader;
-  private final RoleRepository roleRepository;
 
   // Discord
   private final DiscordPersonalMakerVerificationReportService
@@ -34,15 +32,14 @@ public class AccountVerificationService {
 
   @Transactional
   public void verifyPersonalMakerAccount(Long userId, VerifyPersonalMakerAccountDTO dto) {
-    User user = userReader.getUserById(userId);
-
+    SellerInfo sellerInfo = userReader.getSellerInfoWithUser(userId);
+    User user = sellerInfo.getUser();
     // 직접 업데이트
-    user.getSellerInfo()
-        .updatePersonalMakerBankInfo(
-            dto.getBankAccountOwner(),
-            dto.getBankName(),
-            dto.getBankAccountNumber(),
-            dto.getCopyOfBankbookUrl());
+    sellerInfo.updatePersonalMakerBankInfo(
+        dto.getBankAccountOwner(),
+        dto.getBankName(),
+        dto.getBankAccountNumber(),
+        dto.getCopyOfBankbookUrl());
 
     final PersonalMakerVerificationCreateReportDTO personalMakerVerificationCreateReportDTO =
         PersonalMakerVerificationCreateReportDTO.builder()
@@ -56,45 +53,44 @@ public class AccountVerificationService {
 
     discordPersonalMakerVerificationReportService.sendCreatePersonalMakerVerificationReport(
         personalMakerVerificationCreateReportDTO);
-    updateSellerVerificationStatus(user);
+    updateSellerVerificationStatus(sellerInfo);
   }
 
   @Transactional
   public void verifyBusinessBankbook(Long userId, VerifyBusinessMakerAccountDTO dto) {
-    User user = userReader.getUserById(userId);
+    SellerInfo sellerInfo = userReader.getSellerInfoWithUser(userId);
 
     // 직접 업데이트
-    user.getSellerInfo()
-        .updateBusinessMakerBankInfo(
-            dto.getBankAccountOwner(),
-            dto.getBankName(),
-            dto.getBankAccountNumber(),
-            dto.getCopyOfBankbookUrl());
+    sellerInfo.updateBusinessMakerBankInfo(
+        dto.getBankAccountOwner(),
+        dto.getBankName(),
+        dto.getBankAccountNumber(),
+        dto.getCopyOfBankbookUrl());
   }
 
   @Transactional
   public void verifyBusinessAccount(Long userId, VerifyBusinessMakerAccountDTO dto) {
-    User user = userReader.getUserById(userId);
+    SellerInfo sellerInfo = userReader.getSellerInfoWithUser(userId);
+    User user = sellerInfo.getUser();
     // 직접 업데이트
-    user.getSellerInfo()
-        .updateBusinessInfo(
-            BusinessType.valueOf(dto.getBusinessType().name()),
-            dto.getBusinessCategory(),
-            dto.getBusinessSector(),
-            dto.getBusinessName(),
-            dto.getRepresentativeName(),
-            dto.getBusinessAddress(),
-            dto.getBusinessLicenseFileUrl(),
-            dto.getTaxInvoiceEmail());
+    sellerInfo.updateBusinessInfo(
+        BusinessType.valueOf(dto.getBusinessType().name()),
+        dto.getBusinessCategory(),
+        dto.getBusinessSector(),
+        dto.getBusinessName(),
+        dto.getRepresentativeName(),
+        dto.getBusinessAddress(),
+        dto.getBusinessLicenseFileUrl(),
+        dto.getTaxInvoiceEmail());
 
     final BusinessMakerVerificationCreateReportDTO businessMakerVerificationCreateReportDTO =
         BusinessMakerVerificationCreateReportDTO.builder()
             .userId(user.getId())
             .nickname(user.getNickname())
-            .bankAccountOwner(user.getSellerInfo().getBankAccountOwner())
-            .bankName(user.getSellerInfo().getBankName())
-            .bankAccountNumber(user.getSellerInfo().getBankAccountNumber())
-            .copyOfBankbookUrl(user.getSellerInfo().getCopyOfBankbookUrl())
+            .bankAccountOwner(sellerInfo.getBankAccountOwner())
+            .bankName(sellerInfo.getBankName())
+            .bankAccountNumber(sellerInfo.getBankAccountNumber())
+            .copyOfBankbookUrl(sellerInfo.getCopyOfBankbookUrl())
             .businessType(dto.getBusinessType().name())
             .businessCategory(dto.getBusinessCategory())
             .businessSector(dto.getBusinessSector())
@@ -107,22 +103,10 @@ public class AccountVerificationService {
 
     discordBusinessMakerVerificationReportService.sendCreateBusinessMakerVerificationReport(
         businessMakerVerificationCreateReportDTO);
-    updateSellerVerificationStatus(user);
+    updateSellerVerificationStatus(sellerInfo);
   }
 
-  private void updateSellerVerificationStatus(User user) {
-    user.getSellerInfo().updateVerificationStatus(SellerVerificationStatus.IN_PROGRESS, null);
-
-    Role roleSeller =
-        roleRepository
-            .findByName("ROLE_SELLER")
-            .orElseThrow(() -> new RuntimeException("메이커 역할(ROLE_SELLER)을 찾을 수 없습니다."));
-
-    boolean hasRole =
-        user.getUserRoles().stream().anyMatch(userRole -> userRole.getRole().equals(roleSeller));
-
-    if (!hasRole) {
-      user.addRole(roleSeller);
-    }
+  private void updateSellerVerificationStatus(SellerInfo sellerInfo) {
+    sellerInfo.updateSellerVerificationStatus(SellerVerificationStatus.IN_PROGRESS, null);
   }
 }

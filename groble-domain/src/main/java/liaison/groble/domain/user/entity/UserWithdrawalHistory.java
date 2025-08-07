@@ -40,18 +40,4 @@ public class UserWithdrawalHistory {
   private String additionalComment;
 
   private LocalDateTime withdrawalDate;
-
-  @Builder
-  public UserWithdrawalHistory(
-      Long userId,
-      String email,
-      WithdrawalReason reason,
-      String additionalComment,
-      LocalDateTime withdrawalDate) {
-    this.userId = userId;
-    this.email = email;
-    this.reason = reason;
-    this.additionalComment = additionalComment;
-    this.withdrawalDate = withdrawalDate;
-  }
 }

@@ -1,5 +1,11 @@
 package liaison.groble.external.adapter;
 
+import java.math.BigDecimal;
+import java.text.NumberFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Locale;
+
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 
@@ -169,6 +175,99 @@ public class SmtpEmailAdapter implements EmailSenderPort {
 
     } catch (MessagingException e) {
       log.error("비밀번호 재설정 이메일 발송 실패: {}", e.getMessage(), e);
+      throw new RuntimeException("이메일 발송 중 오류가 발생했습니다.", e);
+    }
+  }
+
+  @Override
+  @Async("mailExecutor")
+  public void sendSaleNotificationEmail(
+      String to, String productName, BigDecimal price, LocalDateTime saleDate, Long contentId) {
+
+    // 1) 포맷터 생성: "yyyy.MM.dd HH:mm"
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm");
+
+    // 2) LocalDateTime → 포맷된 문자열
+    String formattedDate = saleDate.format(formatter);
+
+    // 가격 포맷팅
+    NumberFormat currencyFormatter = NumberFormat.getNumberInstance(Locale.KOREA);
+    currencyFormatter.setGroupingUsed(true); // 천 단위 콤마 사용
+    currencyFormatter.setMaximumFractionDigits(0); // 소수점 이하 제거
+    String formattedPrice = currencyFormatter.format(price) + "원";
+    try {
+      MimeMessage message = emailSender.createMimeMessage();
+      message.addHeader("List-Unsubscribe", "<mailto:groble@groble.im>");
+      MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+      helper.setFrom(String.format("Groble <%s>", fromEmail));
+      helper.setReplyTo("groble@groble.im");
+      helper.setTo(to);
+      helper.setSubject("Groble 콘텐츠 판매 알림");
+
+      String detailUrl = frontendUrl + "/manage/store/products/" + contentId;
+
+      // ── 플레인 텍스트
+      String plainText =
+          "Groble 판매 알림\n\n"
+              + "아래 링크를 클릭하여 판매 내역을 확인하세요.\n"
+              + detailUrl
+              + "\n\n"
+              + "문의: groble@groble.im\n"
+              + "수신거부: groble@groble.im";
+
+      String htmlContent =
+          "<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"background:#ffffff;\">\n"
+              + "  <tr><td align=\"center\">\n"
+              + "    <table width=\"100%\" style=\"max-width:500px;margin:0 auto;\">\n"
+              + "      <tr><td style=\"padding:32px 20px;text-align:left;\">\n"
+              + "        <a href=\""
+              + frontendUrl
+              + "\" style=\"text-decoration:none;\">\n"
+              + "          <img src=\"https://image.groble.im/static/mail/Groble_Color.png\" alt=\"Groble\" width=\"170\"/>\n"
+              + "        </a>\n"
+              + "      </td></tr>\n"
+              + "      <tr><td style=\"padding:0 20px 16px;color:#111827;font-size:24px;font-weight:700;\">\n"
+              + "        상품 판매 알림\n"
+              + "      </td></tr>\n"
+              + "      <tr>\n"
+              + "        <td style=\"padding:0 24px 32px; margin:0; color:#222; font-size:16px; font-weight:500;\">\n"
+              + "          <table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"background:transparent;\">\n"
+              + "            <tr><td style=\"padding-bottom:8px;\">· 상품명: "
+              + productName
+              + "</td></tr>\n"
+              + "            <tr><td style=\"padding-bottom:8px;\">· 판매 금액: "
+              + formattedPrice
+              + "</td></tr>\n"
+              + "            <tr><td>· 판매 일시: "
+              + formattedDate
+              + "</td></tr>\n"
+              + "          </table>\n"
+              + "        </td>\n"
+              + "      </tr>\n"
+              + "      <tr><td style=\"text-align:center;padding:0 20px 32px;\">\n"
+              + "        <a href=\""
+              + detailUrl
+              + "\" style=\"display:block;padding:16px 0;width:100%;background-color:#00FCB4;border-radius:8px;color:#000;font-size:16px;font-weight:600;text-decoration:none;text-align:center;\">\n"
+              + "          확인하러 가기\n"
+              + "        </a>\n"
+              + "      </td></tr>\n"
+              + "      <tr><td style=\"border-top:1px solid #e5e7eb;padding:32px 20px;color:#C2C4C8;font-size:11px;line-height:1.6;text-align:left;\">\n"
+              + "        본 메일은 발신전용이며, 문의에 대한 회신은 처리되지 않습니다.<br/>\n"
+              + "        Groble에 관련하여 궁금하신 점이나 불편한 사항은 언제라도 <a href=\"mailto:groble@groble.im\">groble@groble.im</a>으로 연락해주세요.<br/>\n"
+              + "        수신거부는 <a href=\"mailto:groble@groble.im\">여기</a>를 클릭해 주세요.\n"
+              + "      </td></tr>\n"
+              + "      <tr><td style=\"height:40px;\"></td></tr>\n"
+              + "    </table>\n"
+              + "  </td></tr>\n"
+              + "</table>";
+
+      helper.setText(plainText, htmlContent);
+
+      emailSender.send(message);
+      log.info("비밀번호 재설정 이메일 발송 완료: {}", to);
+    } catch (MessagingException e) {
+      log.error("판매 알림 이메일 발송 실패: {}", e.getMessage(), e);
       throw new RuntimeException("이메일 발송 중 오류가 발생했습니다.", e);
     }
   }

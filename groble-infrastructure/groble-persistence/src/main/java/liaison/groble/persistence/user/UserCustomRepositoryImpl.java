@@ -17,6 +17,7 @@ import liaison.groble.domain.terms.entity.QUserTerms;
 import liaison.groble.domain.terms.enums.TermsType;
 import liaison.groble.domain.user.dto.FlatAdminUserSummaryInfoDTO;
 import liaison.groble.domain.user.entity.QIntegratedAccount;
+import liaison.groble.domain.user.entity.QSellerInfo;
 import liaison.groble.domain.user.entity.QSocialAccount;
 import liaison.groble.domain.user.entity.QUser;
 import liaison.groble.domain.user.enums.UserStatus;
@@ -59,8 +60,9 @@ public class UserCustomRepositoryImpl implements UserCustomRepository {
     QIntegratedAccount qInt = QIntegratedAccount.integratedAccount;
     QSocialAccount qSoc = QSocialAccount.socialAccount;
     QUserTerms ut = QUserTerms.userTerms;
+    QSellerInfo qSellerInfo = QSellerInfo.sellerInfo;
 
-    // 마케팅 수신 동의가 true인 레코드가 존재하는지
+    // 마케팅 수신 동의 존재 여부
     BooleanExpression marketingAgreedExists =
         JPAExpressions.selectOne()
             .from(ut)
@@ -68,7 +70,7 @@ public class UserCustomRepositoryImpl implements UserCustomRepository {
                 ut.user.eq(qUser), ut.terms.type.eq(TermsType.MARKETING_POLICY), ut.agreed.isTrue())
             .exists();
 
-    // 판매자 이용약관 동의가 true인 레코드가 존재하는지
+    // 판매자 약관 동의 존재 여부
     BooleanExpression sellerAgreedExists =
         JPAExpressions.selectOne()
             .from(ut)
@@ -89,46 +91,28 @@ public class UserCustomRepositoryImpl implements UserCustomRepository {
                     qInt.integratedAccountEmail.coalesce(qSoc.socialAccountEmail),
                     qUser.userProfile.phoneNumber.as("phoneNumber"),
                     marketingAgreedExists.as("isMarketingAgreed"),
-                    qUser
-                        .sellerInfo
+                    qSellerInfo
                         .businessLicenseFileUrl
                         .isNotNull()
-                        .and(qUser.sellerInfo.businessLicenseFileUrl.length().gt(0))
+                        .and(qSellerInfo.businessLicenseFileUrl.length().gt(0))
                         .as("hasBusinessLicense"),
-                    qUser
-                        .sellerInfo
+                    qSellerInfo
                         .verificationStatus
                         .stringValue()
                         .coalesce("NONE")
                         .as("verificationStatus"),
-                    qUser.sellerInfo.businessSellerRequest.coalesce(false).as("isBusinessSeller"),
-                    qUser
-                        .sellerInfo
-                        .businessType
-                        .stringValue()
-                        .coalesce("NONE")
-                        .as("businessType")))
+                    qSellerInfo.businessSellerRequest.coalesce(false).as("isBusinessSeller"),
+                    qSellerInfo.businessType.stringValue().coalesce("NONE").as("businessType")))
             .from(qUser)
             .leftJoin(qUser.integratedAccount, qInt)
             .leftJoin(qUser.socialAccount, qSoc)
+            .leftJoin(qSellerInfo)
+            .on(qSellerInfo.user.eq(qUser))
             .orderBy(qUser.createdAt.desc())
             .offset(pageable.getOffset())
             .limit(pageable.getPageSize());
 
     List<FlatAdminUserSummaryInfoDTO> content = query.fetch();
-
-    // isSellerTermsAgreed 값 확인 로그 추가
-    log.info("findUsersByPageable - 조회된 사용자 수: {}", content.size());
-    for (int i = 0; i < content.size(); i++) {
-      FlatAdminUserSummaryInfoDTO user = content.get(i);
-      log.debug(
-          "User[{}] - nickname: {}, isSellerTermsAgreed: {}, verificationStatus: {}",
-          i,
-          user.getNickname(),
-          user.isSellerTermsAgreed(),
-          user.getVerificationStatus());
-    }
-
     Long total = queryFactory.select(qUser.count()).from(qUser).fetchOne();
 
     return new PageImpl<>(content, pageable, total != null ? total : 0);
