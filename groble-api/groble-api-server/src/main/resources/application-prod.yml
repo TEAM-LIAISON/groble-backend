@@ -109,14 +109,6 @@ storage:
     bucket: image.groble.im
 
 app:
-  jwt:
-    access-token:
-      secret: 6M1boNRsyYPgKuR197f4w2uuh8DXfYyjxgPJKmINtHo=
-      expiration-ms: 3600000 # 1 hour
-    refresh-token:
-      secret: bZvf0E0wsJXugzxv2m25c5zHvJrNfvsQIjzU6eBScbk=
-      expiration-ms: 604800000 # 1 hour
-    issuer: groble-auth-service
   frontend-url: https://groble.im
   backend-url: https://api.groble.im
   cookie:
