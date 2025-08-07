@@ -43,7 +43,9 @@ public class EmailConfig {
     properties.setProperty("mail.smtp.starttls.enable", "true");
     properties.setProperty("mail.debug", "true");
 
-    // SOCKS 프록시 설정 제거
+    // SSL 인증서 검증 비활성화
+    properties.setProperty("mail.smtp.ssl.trust", "*");
+    properties.setProperty("mail.smtp.ssl.checkserveridentity", "false");
 
     properties.setProperty("mail.smtp.connectiontimeout", "10000");
     properties.setProperty("mail.smtp.timeout", "10000");
