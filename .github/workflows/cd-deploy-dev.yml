@@ -115,7 +115,7 @@ jobs:
           echo "📋 Preparing AppSpec with Task Definition ARN: $TASK_DEF_ARN"
 
           # AppSpec 파일에서 <TASK_DEFINITION> 플레이스홀더를 실제 ARN으로 교체
-          sed "s|<TASK_DEFINITION>|$TASK_DEF_ARN|g" appspec.yml > deployment-appspec.yml
+          sed "s|<TASK_DEFINITION>|$TASK_DEF_ARN|g" appspec-dev.yml > deployment-appspec.yml
 
           echo "✅ AppSpec prepared with Task Definition ARN"    
 
@@ -123,7 +123,7 @@ jobs:
         id: deploy
         run: |
           echo "🚀 Starting CodeDeploy deployment..."
-
+          
           # CodeDeploy용 배포 패키지 생성 (수정된 AppSpec 사용)
           DEPLOYMENT_ARCHIVE="groble-dev-$(date +%Y%m%d-%H%M%S).zip"
           cp deployment-appspec.yml appspec.yml

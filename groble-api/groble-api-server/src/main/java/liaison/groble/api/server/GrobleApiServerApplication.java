@@ -51,36 +51,46 @@ public class GrobleApiServerApplication {
 
   private static void setGlobalProxy(Environment env) {
     String proxyEnabled = env.getProperty("http.proxy.enabled", "false");
+    String socksEnabled = env.getProperty("socks.proxy.enabled", "false");
 
     if ("true".equals(proxyEnabled)) {
-      String proxyHost = env.getProperty("http.proxy.host", "10.0.1.238");
-      String proxyPort = env.getProperty("http.proxy.port", "3128");
+      String httpProxyHost = env.getProperty("http.proxy.host", "10.0.1.238");
+      String httpProxyPort = env.getProperty("http.proxy.port", "3128");
 
       log.info("=== 전역 프록시 설정 시작 ===");
-      log.info("프록시 서버: {}:{}", proxyHost, proxyPort);
+      log.info("HTTP/HTTPS 프록시: {}:{}", httpProxyHost, httpProxyPort);
 
-      // HTTP 프록시 설정
-      System.setProperty("http.proxyHost", proxyHost);
-      System.setProperty("http.proxyPort", proxyPort);
-
-      // HTTPS 프록시 설정
-      System.setProperty("https.proxyHost", proxyHost);
-      System.setProperty("https.proxyPort", proxyPort);
+      // HTTP/HTTPS 프록시 설정
+      System.setProperty("http.proxyHost", httpProxyHost);
+      System.setProperty("http.proxyPort", httpProxyPort);
+      System.setProperty("https.proxyHost", httpProxyHost);
+      System.setProperty("https.proxyPort", httpProxyPort);
 
       // 프록시를 거치지 않을 호스트 설정
       System.setProperty(
           "http.nonProxyHosts",
-          "localhost|127.0.0.1|10.*|172.16.*|172.31.*|*.groble.im|*.rds.amazonaws.com|*.cache.amazonaws.com|smtp.gmail.com|*.gmail.com");
+          "localhost|127.0.0.1|10.*|172.16.*|172.31.*|*.groble.im|*.rds.amazonaws.com|*.cache.amazonaws.com");
 
-      // SMTP용 추가 설정 (JavaMail이 참조할 수 있도록)
-      System.setProperty("mail.smtp.proxy.host", "");
-      System.setProperty("mail.smtp.proxy.port", "");
+      log.info("HTTP/HTTPS 프록시 설정 완료");
+    }
 
+    if ("true".equals(socksEnabled)) {
+      String socksProxyHost = env.getProperty("socks.proxy.host", "10.0.1.238");
+      String socksProxyPort = env.getProperty("socks.proxy.port", "1080");
+
+      log.info("SOCKS 프록시: {}:{}", socksProxyHost, socksProxyPort);
+
+      // SOCKS 프록시 설정 (SMTP용)
+      System.setProperty("socksProxyHost", socksProxyHost);
+      System.setProperty("socksProxyPort", socksProxyPort);
+      System.setProperty("mail.smtp.socks.host", socksProxyHost);
+      System.setProperty("mail.smtp.socks.port", socksProxyPort);
+
+      log.info("SOCKS 프록시 설정 완료");
+    }
+
+    if ("true".equals(proxyEnabled) || "true".equals(socksEnabled)) {
       log.info("전역 프록시 설정 완료");
-      log.info("http.proxyHost: {}", System.getProperty("http.proxyHost"));
-      log.info("https.proxyHost: {}", System.getProperty("https.proxyHost"));
-      log.info("http.nonProxyHosts: {}", System.getProperty("http.nonProxyHosts"));
-
       testProxyConnection();
     } else {
       log.info("프록시 설정 비활성화 상태");
