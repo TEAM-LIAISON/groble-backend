@@ -14,11 +14,7 @@ public interface JpaUserRepository extends JpaRepository<User, Long> {
 
   Optional<User> findByUserProfilePhoneNumber(String phoneNumber);
 
-  Optional<User> findBySellerInfoMarketLinkUrl(String marketLinkUrl);
-
   boolean existsByUserProfileNicknameAndUserStatusInfo_Status(String nickname, UserStatus status);
 
   boolean existsByUserProfilePhoneNumber(String phoneNumber);
-
-  boolean existsBySellerInfoMarketLinkUrl(String marketLinkUrl);
 }

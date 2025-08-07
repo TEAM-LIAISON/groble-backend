@@ -1,6 +1,6 @@
 package liaison.groble.application.terms.service;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -71,13 +71,13 @@ public class OrderTermsService {
               .user(user)
               .orderTerms(orderTerms)
               .agreed(agreed)
-              .agreedAt(Instant.now())
+              .agreedAt(LocalDateTime.now())
               .agreedIp(ipAddress)
               .agreedUserAgent(userAgent)
               .build();
     } else {
       // 기존 동의 업데이트
-      agreement.updateAgreement(agreed, Instant.now(), ipAddress, userAgent);
+      agreement.updateAgreement(agreed, LocalDateTime.now(), ipAddress, userAgent);
     }
 
     return userOrderTermsRepository.save(agreement);

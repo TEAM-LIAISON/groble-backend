@@ -13,6 +13,8 @@ public interface ContentRepository {
 
   Optional<Content> findByIdAndUser(Long contentId, User user);
 
+  Optional<Content> findByIdWithSeller(Long contentId);
+
   Optional<Content> findByIdAndStatus(Long contentId, ContentStatus status);
 
   Optional<Content> findByUserAndIsRepresentativeTrue(User user);

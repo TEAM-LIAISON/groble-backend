@@ -83,26 +83,58 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
     Expression<Boolean> isRefundableExpr =
         ExpressionUtils.as(
             new CaseBuilder()
-                .when(qOrder.status.eq(Order.OrderStatus.PAID))
+                .when(
+                    qOrder
+                        .status
+                        .eq(Order.OrderStatus.PAID)
+                        .and(qContent.contentType.eq(ContentType.COACHING)))
                 .then(true)
                 .otherwise(false),
             "isRefundable");
 
-    // --- PayplePayment 서브쿼리 3종 ---
+    // --- PayplePayment 서브쿼리 수정 ---
+
+    // payType 수정
     Expression<String> payTypeExpr =
         ExpressionUtils.as(
-            JPAExpressions.select(qPayplePayment.pcdPayType)
-                .from(qPayplePayment)
-                .where(qPayplePayment.pcdPayOid.eq(qOrder.merchantUid))
-                .limit(1),
+            Expressions.cases()
+                .when(
+                    JPAExpressions.select(qPayplePayment.pcdPayMethod)
+                        .from(qPayplePayment)
+                        .where(qPayplePayment.pcdPayOid.eq(qOrder.merchantUid))
+                        .limit(1)
+                        .in("kakaoPay", "naverPay"))
+                .then(Expressions.nullExpression(String.class))
+                .otherwise(
+                    JPAExpressions.select(qPayplePayment.pcdPayType)
+                        .from(qPayplePayment)
+                        .where(qPayplePayment.pcdPayOid.eq(qOrder.merchantUid))
+                        .limit(1)),
             "payType");
 
+    // payCardName 수정
     Expression<String> payCardNameExpr =
         ExpressionUtils.as(
-            JPAExpressions.select(qPayplePayment.pcdPayCardName)
-                .from(qPayplePayment)
-                .where(qPayplePayment.pcdPayOid.eq(qOrder.merchantUid))
-                .limit(1),
+            Expressions.cases()
+                .when(
+                    JPAExpressions.select(qPayplePayment.pcdPayMethod)
+                        .from(qPayplePayment)
+                        .where(qPayplePayment.pcdPayOid.eq(qOrder.merchantUid))
+                        .limit(1)
+                        .eq("kakaoPay"))
+                .then("카카오페이")
+                .when(
+                    JPAExpressions.select(qPayplePayment.pcdPayMethod)
+                        .from(qPayplePayment)
+                        .where(qPayplePayment.pcdPayOid.eq(qOrder.merchantUid))
+                        .limit(1)
+                        .eq("naverPay"))
+                .then("네이버페이")
+                .otherwise(
+                    JPAExpressions.select(qPayplePayment.pcdPayCardName)
+                        .from(qPayplePayment)
+                        .where(qPayplePayment.pcdPayOid.eq(qOrder.merchantUid))
+                        .limit(1)),
             "payCardName");
 
     Expression<String> payCardNumExpr =

@@ -21,7 +21,7 @@ public class QUserStatusInfo extends BeanPath<UserStatusInfo> {
 
     public final EnumPath<liaison.groble.domain.user.enums.UserStatus> status = createEnum("status", liaison.groble.domain.user.enums.UserStatus.class);
 
-    public final DateTimePath<java.time.Instant> statusChangedAt = createDateTime("statusChangedAt", java.time.Instant.class);
+    public final DateTimePath<java.time.LocalDateTime> statusChangedAt = createDateTime("statusChangedAt", java.time.LocalDateTime.class);
 
     public QUserStatusInfo(String variable) {
         super(UserStatusInfo.class, forVariable(variable));

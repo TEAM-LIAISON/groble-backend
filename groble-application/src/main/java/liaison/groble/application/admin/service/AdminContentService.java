@@ -8,7 +8,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import liaison.groble.application.admin.dto.AdminContentSummaryInfoDTO;
-import liaison.groble.application.admin.mapper.ContentEntityMapper;
 import liaison.groble.application.content.ContentReader;
 import liaison.groble.application.notification.mapper.NotificationMapper;
 import liaison.groble.common.response.PageResponse;
@@ -34,7 +33,6 @@ public class AdminContentService {
   private final ContentRepository contentRepository;
   private final NotificationMapper notificationMapper;
   private final NotificationRepository notificationRepository;
-  private final ContentEntityMapper contentEntityMapper;
 
   public PageResponse<AdminContentSummaryInfoDTO> getAllContents(Pageable pageable) {
     Page<FlatAdminContentSummaryInfoDTO> contentPage =
@@ -71,7 +69,11 @@ public class AdminContentService {
   }
 
   private void sendContentSoldNotification(Content content) {
-    SellDetails sellDetails = SellDetails.builder().contentId(content.getId()).build();
+    SellDetails sellDetails =
+        SellDetails.builder()
+            .contentId(content.getId())
+            .thumbnailUrl(content.getThumbnailUrl())
+            .build();
 
     notificationRepository.save(
         notificationMapper.toNotification(

@@ -31,21 +31,17 @@ public class QUser extends EntityPathBase<User> {
 
     public final NumberPath<Long> id = createNumber("id", Long.class);
 
-    public final liaison.groble.domain.user.vo.QIdentityVerification identityVerification;
-
     public final QIntegratedAccount integratedAccount;
 
     public final BooleanPath isSeller = createBoolean("isSeller");
 
-    public final DateTimePath<java.time.Instant> lastLoginAt = createDateTime("lastLoginAt", java.time.Instant.class);
+    public final DateTimePath<java.time.LocalDateTime> lastLoginAt = createDateTime("lastLoginAt", java.time.LocalDateTime.class);
 
     public final EnumPath<liaison.groble.domain.user.enums.UserType> lastUserType = createEnum("lastUserType", liaison.groble.domain.user.enums.UserType.class);
 
     public final StringPath refreshToken = createString("refreshToken");
 
-    public final DateTimePath<java.time.Instant> refreshTokenExpiresAt = createDateTime("refreshTokenExpiresAt", java.time.Instant.class);
-
-    public final liaison.groble.domain.user.vo.QSellerInfo sellerInfo;
+    public final DateTimePath<java.time.LocalDateTime> refreshTokenExpiresAt = createDateTime("refreshTokenExpiresAt", java.time.LocalDateTime.class);
 
     public final QSocialAccount socialAccount;
 
@@ -56,7 +52,7 @@ public class QUser extends EntityPathBase<User> {
 
     public final liaison.groble.domain.user.vo.QUserProfile userProfile;
 
-    public final SetPath<liaison.groble.domain.role.UserRole, liaison.groble.domain.role.QUserRole> userRoles = this.<liaison.groble.domain.role.UserRole, liaison.groble.domain.role.QUserRole>createSet("userRoles", liaison.groble.domain.role.UserRole.class, liaison.groble.domain.role.QUserRole.class, PathInits.DIRECT2);
+    public final SetPath<liaison.groble.domain.role.entity.UserRole, liaison.groble.domain.role.entity.QUserRole> userRoles = this.<liaison.groble.domain.role.entity.UserRole, liaison.groble.domain.role.entity.QUserRole>createSet("userRoles", liaison.groble.domain.role.entity.UserRole.class, liaison.groble.domain.role.entity.QUserRole.class, PathInits.DIRECT2);
 
     public final liaison.groble.domain.user.vo.QUserStatusInfo userStatusInfo;
 
@@ -80,9 +76,7 @@ public class QUser extends EntityPathBase<User> {
 
     public QUser(Class<? extends User> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
-        this.identityVerification = inits.isInitialized("identityVerification") ? new liaison.groble.domain.user.vo.QIdentityVerification(forProperty("identityVerification")) : null;
         this.integratedAccount = inits.isInitialized("integratedAccount") ? new QIntegratedAccount(forProperty("integratedAccount"), inits.get("integratedAccount")) : null;
-        this.sellerInfo = inits.isInitialized("sellerInfo") ? new liaison.groble.domain.user.vo.QSellerInfo(forProperty("sellerInfo")) : null;
         this.socialAccount = inits.isInitialized("socialAccount") ? new QSocialAccount(forProperty("socialAccount"), inits.get("socialAccount")) : null;
         this.userProfile = inits.isInitialized("userProfile") ? new liaison.groble.domain.user.vo.QUserProfile(forProperty("userProfile")) : null;
         this.userStatusInfo = inits.isInitialized("userStatusInfo") ? new liaison.groble.domain.user.vo.QUserStatusInfo(forProperty("userStatusInfo")) : null;

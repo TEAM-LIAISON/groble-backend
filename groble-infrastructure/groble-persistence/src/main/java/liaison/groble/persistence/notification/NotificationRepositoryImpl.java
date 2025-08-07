@@ -1,5 +1,7 @@
 package liaison.groble.persistence.notification;
 
+import java.util.Optional;
+
 import org.springframework.stereotype.Repository;
 
 import liaison.groble.domain.notification.entity.Notification;
@@ -15,5 +17,10 @@ public class NotificationRepositoryImpl implements NotificationRepository {
   @Override
   public Notification save(final Notification notification) {
     return jpaNotificationRepository.save(notification);
+  }
+
+  @Override
+  public Optional<Notification> findByIdAndUserId(Long notificationId, Long userId) {
+    return jpaNotificationRepository.findByIdAndUserId(notificationId, userId);
   }
 }

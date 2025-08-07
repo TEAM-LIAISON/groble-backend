@@ -27,8 +27,12 @@ import liaison.groble.application.content.dto.DynamicContentDTO;
 import liaison.groble.application.content.dto.review.ContentDetailReviewDTO;
 import liaison.groble.application.content.dto.review.ContentReviewDTO;
 import liaison.groble.application.content.dto.review.ReviewReplyDTO;
+import liaison.groble.application.content.exception.ContentEditException;
 import liaison.groble.application.content.exception.InActiveContentException;
+import liaison.groble.application.market.dto.ContactInfoDTO;
+import liaison.groble.application.sell.SellerContactReader;
 import liaison.groble.application.user.service.UserReader;
+import liaison.groble.common.exception.ContactNotFoundException;
 import liaison.groble.common.exception.EntityNotFoundException;
 import liaison.groble.common.exception.ForbiddenException;
 import liaison.groble.common.response.PageResponse;
@@ -36,6 +40,7 @@ import liaison.groble.domain.content.dto.FlatContentPreviewDTO;
 import liaison.groble.domain.content.dto.FlatContentReviewReplyDTO;
 import liaison.groble.domain.content.dto.FlatDynamicContentDTO;
 import liaison.groble.domain.content.entity.Category;
+import liaison.groble.domain.content.entity.CoachingOption;
 import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.content.entity.ContentOption;
 import liaison.groble.domain.content.entity.DocumentOption;
@@ -47,9 +52,10 @@ import liaison.groble.domain.content.repository.ContentCustomRepository;
 import liaison.groble.domain.content.repository.ContentRepository;
 import liaison.groble.domain.file.entity.FileInfo;
 import liaison.groble.domain.file.repository.FileRepository;
+import liaison.groble.domain.user.entity.SellerContact;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.vo.UserProfile;
-import liaison.groble.external.discord.dto.ContentRegisterCreateReportDTO;
+import liaison.groble.external.discord.dto.content.ContentRegisterCreateReportDTO;
 import liaison.groble.external.discord.service.content.DiscordContentRegisterReportService;
 
 import lombok.RequiredArgsConstructor;
@@ -63,12 +69,16 @@ public class ContentService {
   private final UserReader userReader;
   private final ContentReader contentReader;
   private final ContentReviewReader contentReviewReader;
+  private final SellerContactReader sellerContactReader;
 
+  // Repository
   private final ContentRepository contentRepository;
   private final ContentCustomRepository contentCustomRepository;
   private final CategoryRepository categoryRepository;
-  private final DiscordContentRegisterReportService discordContentRegisterReportService;
   private final FileRepository fileRepository;
+
+  // Service
+  private final DiscordContentRegisterReportService discordContentRegisterReportService;
 
   @Transactional(readOnly = true)
   public ContentReviewDTO getContentReviews(Long contentId, String sort, Long userId) {
@@ -150,28 +160,40 @@ public class ContentService {
     // 2. 저장할 Content 준비
     Content content;
 
-    // 2.1 기존 Content 업데이트 또는 새 Content 생성
     if (contentDTO.getContentId() != null) {
-      // 기존 Content 업데이트
       content = findAndValidateUserContent(userId, contentDTO.getContentId());
+
+      // 판매 중일 경우 DRAFT 상태로 변경하여 수정 가능하게 처리
+      if (content.getStatus() != ContentStatus.DRAFT) {
+        if (content.getStatus() == ContentStatus.ACTIVE) {
+          content.setStatus(ContentStatus.DRAFT); // 상태 수동 변경
+        } else {
+          throw new ContentEditException("해당 콘텐츠는 수정할 수 없는 상태입니다.");
+        }
+      }
+
       updateContentFromDTO(content, contentDTO);
 
-      // 기존 옵션 제거
-      if (content.getOptions() != null) {
+      // 옵션 처리
+      if (content.getSaleCount() > 0) {
+        // 판매 이력 있음: 기존 옵션 비활성화 + 새 옵션 추가
+        handleOptionsWithSalesHistory(content, contentDTO.getOptions());
+      } else {
+        // 판매 이력 없음: 완전 교체
         content.getOptions().clear();
+        if (contentDTO.getOptions() != null) {
+          addOptionsToContent(content, contentDTO);
+        }
       }
     } else {
-      // 새 Content 생성
+      // 새 콘텐츠
       content = new Content(user);
       updateContentFromDTO(content, contentDTO);
+      if (contentDTO.getOptions() != null) {
+        addOptionsToContent(content, contentDTO);
+      }
     }
 
-    // 3. 옵션 추가
-    if (contentDTO.getOptions() != null && !contentDTO.getOptions().isEmpty()) {
-      addOptionsToContent(content, contentDTO);
-    }
-
-    // 4. 저장 및 변환
     return saveAndConvertToDTO(content);
   }
 
@@ -274,6 +296,7 @@ public class ContentService {
     // 옵션 목록 변환 - ContentOptionDTO 사용
     List<ContentOptionDTO> optionDTOs =
         content.getOptions().stream()
+            .filter(ContentOption::isActive) // is_active = true인 옵션만 필터링
             .map(
                 option -> {
                   ContentOptionDTO.ContentOptionDTOBuilder builder =
@@ -287,6 +310,7 @@ public class ContentService {
                   if (option instanceof DocumentOption) {
                     DocumentOption documentOption = (DocumentOption) option;
                     builder
+                        .documentOriginalFileName(documentOption.getDocumentOriginalFileName())
                         .documentFileUrl(documentOption.getDocumentFileUrl())
                         .documentLinkUrl(documentOption.getDocumentLinkUrl());
                   }
@@ -357,6 +381,7 @@ public class ContentService {
     // 옵션 목록 변환 - ContentOptionDTO 사용
     List<ContentOptionDTO> optionDTOs =
         content.getOptions().stream()
+            .filter(ContentOption::isActive) // is_active = true인 옵션만 필터링
             .map(
                 option -> {
                   ContentOptionDTO.ContentOptionDTOBuilder builder =
@@ -461,7 +486,8 @@ public class ContentService {
 
   /** 사용자의 Content를 찾고 접근 권한을 검증합니다. */
   private Content findAndValidateUserContent(Long userId, Long contentId) {
-    Content content = contentReader.getContentById(contentId);
+    // Content User Fetch Join
+    Content content = contentReader.getContentWithSeller(contentId);
 
     if (!content.getUser().getId().equals(userId)) {
       throw new ForbiddenException("해당 콘텐츠를 수정할 권한이 없습니다.");
@@ -585,41 +611,46 @@ public class ContentService {
   }
 
   /** Content 유형에 맞는 옵션을 생성합니다. */
-  private ContentOption createOptionByContentType(
-      ContentType contentType, ContentOptionDTO optionDTO) {
-    ContentOption option;
+  private ContentOption createOptionByContentType(ContentType contentType, ContentOptionDTO dto) {
 
-    if (contentType == ContentType.DOCUMENT) {
-      option = createDocumentOption(optionDTO);
-    } else {
-      log.warn("지원하지 않는 콘텐츠 유형입니다: {}", contentType);
-      return null;
+    ContentOption option;
+    switch (contentType) {
+      case DOCUMENT:
+        option = createDocumentOption(dto);
+        break;
+      case COACHING:
+        option = createCoachingOption();
+        break;
+      default:
+        log.warn("지원하지 않는 콘텐츠 유형입니다: {}", contentType);
+        return null;
     }
 
-    // 공통 필드 설정
-    option.setName(optionDTO.getName());
-    option.setDescription(optionDTO.getDescription());
-    option.setPrice(optionDTO.getPrice());
+    option.updateCommonFields(dto.getName(), dto.getDescription(), dto.getPrice());
 
     return option;
   }
 
   /** 문서 옵션을 생성합니다. */
-  private DocumentOption createDocumentOption(ContentOptionDTO optionDTO) {
+  private DocumentOption createDocumentOption(ContentOptionDTO dto) {
     DocumentOption option = new DocumentOption();
-
-    // 문서 파일 URL이 null이 아닌지 확인
-    String fileUrl = optionDTO.getDocumentFileUrl();
-    String documentOriginalFileName = null;
+    // 문서 전용 필드 세팅
+    String fileUrl = dto.getDocumentFileUrl();
     if (fileUrl != null) {
-      // 3) 실제로 FileInfo가 있는지 조회
-      FileInfo oldDocumentInfo = fileRepository.findByFileUrl(fileUrl);
-      if (oldDocumentInfo != null) {
-        documentOriginalFileName = oldDocumentInfo.getOriginalFilename();
+      FileInfo info = fileRepository.findByFileUrl(fileUrl);
+      if (info != null) {
+        option.setDocumentOriginalFileName(info.getOriginalFilename());
       }
     }
+    option.setDocumentFileUrl(fileUrl);
+    option.setDocumentLinkUrl(dto.getDocumentLinkUrl());
 
     return option;
+  }
+
+  /** 코칭 옵션을 생성합니다. */
+  private ContentOption createCoachingOption() {
+    return new CoachingOption();
   }
 
   private ContentCardDTO convertFlatDTOToCardDTO(FlatContentPreviewDTO flat) {
@@ -633,6 +664,7 @@ public class ContentService {
         .priceOptionLength(flat.getPriceOptionLength())
         .isAvailableForSale(flat.getIsAvailableForSale())
         .status(flat.getStatus())
+        .isDeletable(flat.getIsDeletable())
         .build();
   }
 
@@ -924,6 +956,43 @@ public class ContentService {
       return List.of(contentStatus);
     } catch (IllegalArgumentException e) {
       return Collections.emptyList();
+    }
+  }
+
+  private void handleOptionsWithSalesHistory(Content content, List<ContentOptionDTO> newOptions) {
+    log.info(
+        "판매 이력이 있는 콘텐츠 옵션 수정: contentId={}, saleCount={}", content.getId(), content.getSaleCount());
+
+    // 모든 기존 옵션 비활성화
+    content.getOptions().stream()
+        .filter(ContentOption::isActive)
+        .forEach(
+            option -> {
+              option.deactivate();
+              log.info("기존 옵션 비활성화: optionId={}", option.getId());
+            });
+
+    // 새 옵션 추가
+    if (newOptions != null) {
+      newOptions.forEach(
+          dto -> {
+            ContentOption newOption = createOptionByContentType(content.getContentType(), dto);
+            content.addOption(newOption);
+            log.info("새 옵션 추가: name={}, price={}", newOption.getName(), newOption.getPrice());
+          });
+    }
+  }
+
+  @Transactional(readOnly = true)
+  public ContactInfoDTO getContactInfo(Long contentId) {
+    Content content = contentReader.getContentById(contentId);
+    User user = content.getUser();
+    try {
+      List<SellerContact> contacts = sellerContactReader.getContactsByUser(user);
+      return ContactInfoDTO.from(contacts);
+    } catch (ContactNotFoundException e) {
+      log.warn("판매자 연락처 정보 없음: userId={}", user.getId());
+      return ContactInfoDTO.builder().build();
     }
   }
 }

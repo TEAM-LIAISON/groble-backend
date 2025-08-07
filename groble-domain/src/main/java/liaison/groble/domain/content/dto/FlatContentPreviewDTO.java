@@ -22,4 +22,5 @@ public class FlatContentPreviewDTO {
   private int priceOptionLength;
   private Boolean isAvailableForSale;
   private String status;
+  private Boolean isDeletable;
 }

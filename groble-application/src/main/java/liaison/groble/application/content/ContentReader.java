@@ -43,6 +43,12 @@ public class ContentReader {
         .orElseThrow(() -> new EntityNotFoundException("콘텐츠를 찾을 수 없습니다. ID: " + contentId));
   }
 
+  public Content getContentWithSeller(Long contentId) {
+    return contentRepository
+        .findByIdWithSeller(contentId)
+        .orElseThrow(() -> new EntityNotFoundException("콘텐츠를 찾을 수 없습니다."));
+  }
+
   // ===== status & ID로 Content 조회 =====
   public Content getContentByStatusAndId(Long contentId, ContentStatus status) {
     return contentRepository

@@ -1,11 +1,7 @@
 package liaison.groble.external.s3;
 
 import java.io.InputStream;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.time.Duration;
-import java.time.Instant;
-import java.util.Date;
 
 import jakarta.annotation.PostConstruct;
 
@@ -13,11 +9,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.UriUtils;
 
-import com.amazonaws.HttpMethod;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.*;
 
-import liaison.groble.domain.file.entity.PresignedUrlInfo;
 import liaison.groble.domain.file.service.FileStorageService;
 
 import lombok.RequiredArgsConstructor;
@@ -59,30 +53,6 @@ public class S3FileStorageService implements FileStorageService {
     String resultUrl = cloudDomain + "/" + encodedKey;
     log.debug("Uploaded to S3, returning URL: {}", resultUrl);
     return resultUrl;
-  }
-
-  @Override
-  public PresignedUrlInfo generatePresignedUrl(
-      String fileName, String contentType, String directory) {
-    String key = (directory.endsWith("/") ? directory : directory + "/") + fileName;
-    Date expiration = Date.from(Instant.now().plus(Duration.ofMinutes(15)));
-
-    GeneratePresignedUrlRequest req =
-        new GeneratePresignedUrlRequest(bucketName, key)
-            .withMethod(HttpMethod.PUT)
-            .withExpiration(expiration)
-            .withContentType(contentType);
-
-    URL presigned = amazonS3.generatePresignedUrl(req);
-    // presigned URL도 커스텀 도메인 호스트로 치환
-    String presignUrl = presigned.toString().replaceFirst("https://[^/]+", cloudDomain);
-
-    return PresignedUrlInfo.builder()
-        .key(key)
-        .url(presignUrl)
-        .expiration(expiration.toInstant())
-        .contentType(contentType)
-        .build();
   }
 
   @Override

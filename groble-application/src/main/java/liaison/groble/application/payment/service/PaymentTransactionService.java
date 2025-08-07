@@ -137,15 +137,21 @@ public class PaymentTransactionService {
 
     return PaymentCompletionResult.builder()
         .orderId(order.getId())
+        .merchantUid(order.getMerchantUid())
         .paymentId(payment.getId())
         .purchaseId(purchase.getId())
         .userId(order.getUser().getId())
         .contentId(purchase.getContent().getId())
         .sellerId(purchase.getContent().getUser().getId())
         .amount(payment.getPrice())
-        .completedAt(LocalDateTime.now())
+        .completedAt(purchase.getPurchasedAt())
         .sellerEmail(purchase.getContent().getUser().getEmail())
         .contentTitle(purchase.getContent().getTitle())
+        .nickname(order.getUser().getNickname())
+        .contentType(purchase.getContent().getContentType().name())
+        .optionId(purchase.getSelectedOptionId())
+        .selectedOptionName(purchase.getSelectedOptionName())
+        .purchasedAt(purchase.getPurchasedAt())
         .build();
   }
 
@@ -242,6 +248,7 @@ public class PaymentTransactionService {
         .pcdPayerHp(dto.getPayerHp())
         .pcdPayerEmail(dto.getPayerEmail())
         .pcdPayOid(dto.getPayOid())
+        .pcdPayMethod(dto.getPcdPayMethod())
         .pcdEasyPayMethod(dto.getEasyPayMethod())
         .pcdPayGoods(dto.getPayGoods())
         .pcdPayTotal(dto.getPayTotal())

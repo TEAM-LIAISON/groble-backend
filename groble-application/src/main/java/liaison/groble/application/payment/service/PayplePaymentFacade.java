@@ -196,6 +196,7 @@ public class PayplePaymentFacade {
       PaymentCompletedEvent event =
           PaymentCompletedEvent.builder()
               .orderId(completionResult.getOrderId())
+              .merchantUid(completionResult.getMerchantUid())
               .paymentId(completionResult.getPaymentId())
               .purchaseId(completionResult.getPurchaseId())
               .userId(completionResult.getUserId())
@@ -203,6 +204,13 @@ public class PayplePaymentFacade {
               .sellerId(completionResult.getSellerId())
               .amount(completionResult.getAmount())
               .completedAt(completionResult.getCompletedAt())
+              .sellerEmail(completionResult.getSellerEmail())
+              .contentTitle(completionResult.getContentTitle())
+              .nickname(completionResult.getNickname())
+              .contentType(completionResult.getContentType())
+              .optionId(completionResult.getOptionId())
+              .selectedOptionName(completionResult.getSelectedOptionName())
+              .purchasedAt(completionResult.getPurchasedAt())
               .build();
 
       log.info("이벤트 객체 생성 완료: orderId={}", event.getOrderId());

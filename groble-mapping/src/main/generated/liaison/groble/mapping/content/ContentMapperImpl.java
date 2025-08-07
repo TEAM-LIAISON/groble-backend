@@ -12,6 +12,7 @@ import liaison.groble.api.model.content.response.ContentDetailResponse;
 import liaison.groble.api.model.content.response.ContentPreviewCardResponse;
 import liaison.groble.api.model.content.response.ContentResponse;
 import liaison.groble.api.model.content.response.ContentStatusResponse;
+import liaison.groble.api.model.maker.response.ContactInfoResponse;
 import liaison.groble.application.content.dto.ContentCardDTO;
 import liaison.groble.application.content.dto.ContentDTO;
 import liaison.groble.application.content.dto.ContentDetailDTO;
@@ -19,7 +20,7 @@ import liaison.groble.application.content.dto.ContentOptionDTO;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-07-25T22:40:31+0900",
+    date = "2025-08-04T21:14:43+0900",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.10 (Amazon.com Inc.)")
 @Component
 public class ContentMapperImpl implements ContentMapper {
@@ -144,6 +145,9 @@ public class ContentMapperImpl implements ContentMapper {
     if (contentCardDTO.getStatus() != null) {
       contentPreviewCardResponse.status(contentCardDTO.getStatus());
     }
+    if (contentCardDTO.getIsDeletable() != null) {
+      contentPreviewCardResponse.isDeletable(contentCardDTO.getIsDeletable());
+    }
 
     return contentPreviewCardResponse.build();
   }
@@ -214,58 +218,63 @@ public class ContentMapperImpl implements ContentMapper {
   }
 
   @Override
-  public ContentDetailResponse toContentDetailResponse(ContentDetailDTO contentDetailDTO) {
-    if (contentDetailDTO == null) {
+  public ContentDetailResponse toContentDetailResponse(
+      ContentDetailDTO contentDetailDTO, ContactInfoResponse contactInfoResponse) {
+    if (contentDetailDTO == null && contactInfoResponse == null) {
       return null;
     }
 
     ContentDetailResponse.ContentDetailResponseBuilder contentDetailResponse =
         ContentDetailResponse.builder();
 
-    List<?> list = mapOptionsToBaseOptionResponse(contentDetailDTO.getOptions());
-    if (list != null) {
-      contentDetailResponse.options(list);
+    if (contentDetailDTO != null) {
+      List<?> list = mapOptionsToBaseOptionResponse(contentDetailDTO.getOptions());
+      if (list != null) {
+        contentDetailResponse.options(list);
+      }
+      if (contentDetailDTO.getContentId() != null) {
+        contentDetailResponse.contentId(contentDetailDTO.getContentId());
+      }
+      if (contentDetailDTO.getStatus() != null) {
+        contentDetailResponse.status(contentDetailDTO.getStatus());
+      }
+      if (contentDetailDTO.getThumbnailUrl() != null) {
+        contentDetailResponse.thumbnailUrl(contentDetailDTO.getThumbnailUrl());
+      }
+      if (contentDetailDTO.getContentType() != null) {
+        contentDetailResponse.contentType(contentDetailDTO.getContentType());
+      }
+      if (contentDetailDTO.getCategoryId() != null) {
+        contentDetailResponse.categoryId(contentDetailDTO.getCategoryId());
+      }
+      if (contentDetailDTO.getTitle() != null) {
+        contentDetailResponse.title(contentDetailDTO.getTitle());
+      }
+      if (contentDetailDTO.getSellerProfileImageUrl() != null) {
+        contentDetailResponse.sellerProfileImageUrl(contentDetailDTO.getSellerProfileImageUrl());
+      }
+      if (contentDetailDTO.getSellerName() != null) {
+        contentDetailResponse.sellerName(contentDetailDTO.getSellerName());
+      }
+      if (contentDetailDTO.getLowestPrice() != null) {
+        contentDetailResponse.lowestPrice(contentDetailDTO.getLowestPrice());
+      }
+      if (contentDetailDTO.getContentIntroduction() != null) {
+        contentDetailResponse.contentIntroduction(contentDetailDTO.getContentIntroduction());
+      }
+      if (contentDetailDTO.getServiceTarget() != null) {
+        contentDetailResponse.serviceTarget(contentDetailDTO.getServiceTarget());
+      }
+      if (contentDetailDTO.getServiceProcess() != null) {
+        contentDetailResponse.serviceProcess(contentDetailDTO.getServiceProcess());
+      }
+      if (contentDetailDTO.getMakerIntro() != null) {
+        contentDetailResponse.makerIntro(contentDetailDTO.getMakerIntro());
+      }
     }
-    if (contentDetailDTO.getContentId() != null) {
-      contentDetailResponse.contentId(contentDetailDTO.getContentId());
+    if (contactInfoResponse != null) {
+      contentDetailResponse.contactInfo(contactInfoResponse);
     }
-    if (contentDetailDTO.getStatus() != null) {
-      contentDetailResponse.status(contentDetailDTO.getStatus());
-    }
-    if (contentDetailDTO.getThumbnailUrl() != null) {
-      contentDetailResponse.thumbnailUrl(contentDetailDTO.getThumbnailUrl());
-    }
-    if (contentDetailDTO.getContentType() != null) {
-      contentDetailResponse.contentType(contentDetailDTO.getContentType());
-    }
-    if (contentDetailDTO.getCategoryId() != null) {
-      contentDetailResponse.categoryId(contentDetailDTO.getCategoryId());
-    }
-    if (contentDetailDTO.getTitle() != null) {
-      contentDetailResponse.title(contentDetailDTO.getTitle());
-    }
-    if (contentDetailDTO.getSellerProfileImageUrl() != null) {
-      contentDetailResponse.sellerProfileImageUrl(contentDetailDTO.getSellerProfileImageUrl());
-    }
-    if (contentDetailDTO.getSellerName() != null) {
-      contentDetailResponse.sellerName(contentDetailDTO.getSellerName());
-    }
-    if (contentDetailDTO.getLowestPrice() != null) {
-      contentDetailResponse.lowestPrice(contentDetailDTO.getLowestPrice());
-    }
-    if (contentDetailDTO.getContentIntroduction() != null) {
-      contentDetailResponse.contentIntroduction(contentDetailDTO.getContentIntroduction());
-    }
-    if (contentDetailDTO.getServiceTarget() != null) {
-      contentDetailResponse.serviceTarget(contentDetailDTO.getServiceTarget());
-    }
-    if (contentDetailDTO.getServiceProcess() != null) {
-      contentDetailResponse.serviceProcess(contentDetailDTO.getServiceProcess());
-    }
-    if (contentDetailDTO.getMakerIntro() != null) {
-      contentDetailResponse.makerIntro(contentDetailDTO.getMakerIntro());
-    }
-
     contentDetailResponse.priceOptionLength(
         contentDetailDTO.getOptions() != null ? contentDetailDTO.getOptions().size() : 0);
 

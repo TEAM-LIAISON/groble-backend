@@ -29,9 +29,13 @@ public class QContentOption extends EntityPathBase<ContentOption> {
     //inherited
     public final DateTimePath<java.time.LocalDateTime> createdAt = _super.createdAt;
 
+    public final DateTimePath<java.time.LocalDateTime> deactivatedAt = createDateTime("deactivatedAt", java.time.LocalDateTime.class);
+
     public final StringPath description = createString("description");
 
     public final NumberPath<Long> id = createNumber("id", Long.class);
+
+    public final BooleanPath isActive = createBoolean("isActive");
 
     public final StringPath name = createString("name");
 

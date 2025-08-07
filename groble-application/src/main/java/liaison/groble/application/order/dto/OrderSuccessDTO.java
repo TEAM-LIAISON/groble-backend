@@ -20,6 +20,8 @@ public class OrderSuccessDTO {
 
   private final String contentTitle;
 
+  private final String sellerName;
+
   private final String orderStatus;
 
   private final String contentDescription;
@@ -27,6 +29,7 @@ public class OrderSuccessDTO {
 
   private final Long selectedOptionId;
   private final String selectedOptionType;
+  private final String selectedOptionName;
 
   private final BigDecimal originalPrice;
   private final BigDecimal discountPrice;
