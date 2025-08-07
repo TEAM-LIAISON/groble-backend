@@ -5,5 +5,5 @@ Resources:
       Properties:
         TaskDefinition: <TASK_DEFINITION>
         LoadBalancerInfo:
-          ContainerName: groble-spring-api
+          ContainerName: groble-prod-spring-api
           ContainerPort: 8080
