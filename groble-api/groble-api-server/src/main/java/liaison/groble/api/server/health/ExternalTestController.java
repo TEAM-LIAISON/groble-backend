@@ -16,7 +16,7 @@ public class ExternalTestController {
     try {
       RestTemplate restTemplate = new RestTemplate();
       String body = restTemplate.getForObject("https://www.google.com", String.class);
-      return ResponseEntity.ok("요청 성공: 응답 길이 = " + body.length());
+      return ResponseEntity.ok("✅요청 성공: 응답 길이 = " + body.length());
     } catch (Exception e) {
       log.error("External call failed", e);
       e.printStackTrace();
