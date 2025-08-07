@@ -313,8 +313,6 @@ project(':groble-infrastructure:groble-external') {
         implementation 'org.apache.httpcomponents:httpclient:4.5.13'
         implementation 'com.googlecode.json-simple:json-simple:1.1'
 
-//        // Web Flux
-//        implementation 'org.springframework.boot:spring-boot-starter-webflux'
 
         // Flyway
 //        implementation 'org.flywaydb:flyway-core'

@@ -16,7 +16,7 @@ import liaison.groble.application.order.dto.OrderSuccessDTO;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-08-04T21:14:43+0900",
+    date = "2025-08-07T01:42:05+0900",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.10 (Amazon.com Inc.)")
 @Component
 public class OrderMapperImpl implements OrderMapper {
@@ -107,9 +107,6 @@ public class OrderMapperImpl implements OrderMapper {
     if (orderSuccessDTO.getContentId() != null) {
       orderSuccessResponse.contentId(orderSuccessDTO.getContentId());
     }
-    if (orderSuccessDTO.getSellerName() != null) {
-      orderSuccessResponse.sellerName(orderSuccessDTO.getSellerName());
-    }
     if (orderSuccessDTO.getContentTitle() != null) {
       orderSuccessResponse.contentTitle(orderSuccessDTO.getContentTitle());
     }
@@ -127,9 +124,6 @@ public class OrderMapperImpl implements OrderMapper {
     }
     if (orderSuccessDTO.getSelectedOptionType() != null) {
       orderSuccessResponse.selectedOptionType(orderSuccessDTO.getSelectedOptionType());
-    }
-    if (orderSuccessDTO.getSelectedOptionName() != null) {
-      orderSuccessResponse.selectedOptionName(orderSuccessDTO.getSelectedOptionName());
     }
     if (orderSuccessDTO.getOriginalPrice() != null) {
       orderSuccessResponse.originalPrice(orderSuccessDTO.getOriginalPrice());

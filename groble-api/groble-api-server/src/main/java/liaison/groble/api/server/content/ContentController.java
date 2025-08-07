@@ -1,6 +1,7 @@
 package liaison.groble.api.server.content;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -8,6 +9,7 @@ import jakarta.validation.Valid;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -74,6 +76,7 @@ public class ContentController {
   private static final String CONTENT_DETAIL_PATH = "/content/{contentId}";
   private static final String HOME_CONTENTS_PATH = "/home/contents";
   private static final String UPLOAD_CONTENT_THUMBNAIL_PATH = "/content/thumbnail/image";
+  private static final String UPLOAD_CONTENT_DETAIL_IMAGES_PATH = "/content/detail/images";
   private static final String CONTENT_COACHING_CATEGORY_PATH = "/contents/coaching/category";
   private static final String CONTENT_DOCUMENT_CATEGORY_PATH = "/contents/document/category";
   private static final String CONTENT_REVIEWS_PATH = "/content/{contentId}/reviews";
@@ -344,6 +347,53 @@ public class ContentController {
     contentViewCountService.recordContentView(contentId, contentViewCountDTO);
 
     return responseHelper.success(null, CONTENT_VIEW_SUCCESS_MESSAGE, HttpStatus.OK);
+  }
+
+  @PostMapping(UPLOAD_CONTENT_DETAIL_IMAGES_PATH)
+  public ResponseEntity<GrobleResponse<?>> addContentDetailImages(
+      @Auth Accessor accessor,
+      @RequestPart("contentDetailImages")
+          @Parameter(
+              description = "콘텐츠 상세 이미지 파일들 (여러 개 가능)",
+              required = true,
+              content =
+                  @Content(
+                      mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
+                      array = @ArraySchema(schema = @Schema(type = "string", format = "binary"))))
+          List<MultipartFile> contentDetailImages) {
+
+    if (contentDetailImages == null || contentDetailImages.isEmpty()) {
+      return ResponseEntity.badRequest()
+          .body(GrobleResponse.error("적어도 하나 이상의 이미지를 선택해주세요.", HttpStatus.BAD_REQUEST.value()));
+    }
+
+    List<FileUploadResponse> responses = new ArrayList<>();
+    for (MultipartFile file : contentDetailImages) {
+      if (file.isEmpty() || !isImageFile(file)) {
+        return ResponseEntity.badRequest()
+            .body(GrobleResponse.error("모든 파일이 유효한 이미지여야 합니다.", HttpStatus.BAD_REQUEST.value()));
+      }
+      try {
+        FileUploadDTO dto = fileUtil.toServiceFileUploadDTO(file, "contents/detail");
+        FileDTO uploaded = fileService.uploadFile(accessor.getUserId(), dto);
+        responses.add(
+            FileUploadResponse.of(
+                uploaded.getOriginalFilename(),
+                uploaded.getFileUrl(),
+                uploaded.getContentType(),
+                "contents/detail"));
+      } catch (IOException e) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            .body(
+                GrobleResponse.error(
+                    "상세 이미지 저장 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR.value()));
+      }
+    }
+
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(
+            GrobleResponse.success(
+                responses, "상세 이미지 업로드가 성공적으로 완료되었습니다.", HttpStatus.CREATED.value()));
   }
 
   /** 이미지 파일 여부 확인 */

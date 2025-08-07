@@ -54,6 +54,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
   // 인증이 필요없는 경로 패턴 목록
   private static final List<String> PUBLIC_PATHS =
       List.of(
+          "test-external",
           "api/v1/oauth2/**",
           "/api/v1/home",
           "/api/v1/auth/sign-up",

@@ -1,0 +1,226 @@
+name: CD - Deploy to Production
+
+on:
+  repository_dispatch:
+    types: [deploy-production]
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Docker image tag to deploy'
+        required: true
+        type: string
+      confirm:
+        description: 'Type "DEPLOY" to confirm production deployment'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+env:
+  AWS_REGION: ap-northeast-2
+  ECR_REPOSITORY: groble-prod-spring-api
+  CODEDEPLOY_APPLICATION: groble-app
+  CODEDEPLOY_DEPLOYMENT_GROUP: groble-prod-deployment-group
+  ECS_CLUSTER: groble-cluster
+  ECS_SERVICE: groble-prod-service
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production  # 수동 승인 필요
+
+    # 수동 실행 시 확인 단계
+    if: |
+      (github.event_name == 'repository_dispatch') ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.confirm == 'DEPLOY')
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set deployment info
+        id: deploy-info
+        run: |
+          if [ "${{ github.event_name }}" == "repository_dispatch" ]; then
+            echo "image-tag=${{ github.event.client_payload.image_tag }}" >> $GITHUB_OUTPUT
+            echo "image-uri=${{ github.event.client_payload.image_uri }}" >> $GITHUB_OUTPUT
+            echo "commit-sha=${{ github.event.client_payload.commit_sha }}" >> $GITHUB_OUTPUT
+            echo "actor=${{ github.event.client_payload.actor }}" >> $GITHUB_OUTPUT
+            echo "run-id=${{ github.event.client_payload.run_id }}" >> $GITHUB_OUTPUT
+            echo "environment=${{ github.event.client_payload.environment }}" >> $GITHUB_OUTPUT
+            echo "branch=${{ github.event.client_payload.branch }}" >> $GITHUB_OUTPUT
+            echo "workflow-run-id=${{ github.event.client_payload.workflow_run_id }}" >> $GITHUB_OUTPUT
+          else
+            echo "image-tag=${{ github.event.inputs.image_tag }}" >> $GITHUB_OUTPUT
+            echo "image-uri=${{ secrets.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ github.event.inputs.image_tag }}" >> $GITHUB_OUTPUT
+            echo "commit-sha=${{ github.sha }}" >> $GITHUB_OUTPUT
+            echo "actor=${{ github.actor }}" >> $GITHUB_OUTPUT
+            echo "run-id=${{ github.run_id }}" >> $GITHUB_OUTPUT
+            echo "environment=production" >> $GITHUB_OUTPUT
+            echo "branch=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+            echo "workflow-run-id=${{ github.run_id }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Verify image exists in ECR
+        run: |
+          IMAGE_TAG="${{ steps.deploy-info.outputs.image-tag }}"
+          echo "🔍 Verifying image exists: $ECR_REPOSITORY:$IMAGE_TAG"
+
+          aws ecr describe-images \
+            --repository-name $ECR_REPOSITORY \
+            --image-ids imageTag=$IMAGE_TAG
+
+          echo "✅ Image verified in ECR"
+
+      - name: Register new ECS task definition
+        id: task-def
+        run: |
+          IMAGE_URI="${{ steps.deploy-info.outputs.image-uri }}"
+          echo "📋 Registering new task definition with image: $IMAGE_URI"
+
+          # 현재 태스크 정의 가져오기
+          aws ecs describe-task-definition \
+            --task-definition groble-prod-task \
+            --query taskDefinition > task-definition.json
+
+          # 새 이미지 URI로 업데이트
+          jq --arg IMAGE_URI "$IMAGE_URI" \
+             '.containerDefinitions[0].image = $IMAGE_URI' \
+             task-definition.json > updated-task-definition.json
+
+          # 불필요한 필드 제거
+          jq 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .placementConstraints, .compatibilities, .registeredAt, .registeredBy)' \
+             updated-task-definition.json > clean-task-definition.json
+
+          # 새 Task Definition 등록
+          TASK_DEF_ARN=$(aws ecs register-task-definition \
+            --cli-input-json file://clean-task-definition.json \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)
+
+          echo "task-definition-arn=$TASK_DEF_ARN" >> $GITHUB_OUTPUT
+          echo "✅ Task definition registered: $TASK_DEF_ARN"
+
+      - name: Prepare AppSpec with Task Definition ARN
+        run: |
+          TASK_DEF_ARN="${{ steps.task-def.outputs.task-definition-arn }}"
+          echo "📋 Preparing AppSpec with Task Definition ARN: $TASK_DEF_ARN"
+
+          # AppSpec 파일에서 <TASK_DEFINITION> 플레이스홀더를 실제 ARN으로 교체
+          sed "s|<TASK_DEFINITION>|$TASK_DEF_ARN|g" appspec.yml > deployment-appspec.yml
+
+          echo "✅ AppSpec prepared with Task Definition ARN"
+
+      - name: Deploy with CodeDeploy
+        id: deploy
+        run: |
+          echo "🚀 Starting CodeDeploy deployment..."
+
+          # CodeDeploy용 배포 패키지 생성 (수정된 AppSpec 사용)
+          DEPLOYMENT_ARCHIVE="groble-prod-$(date +%Y%m%d-%H%M%S).zip"
+          cp deployment-appspec.yml appspec.yml
+          zip -r $DEPLOYMENT_ARCHIVE appspec.yml
+
+          # S3 버킷 이름 가져오기
+          S3_BUCKET=$(aws s3api list-buckets \
+            --query 'Buckets[?contains(Name, `groble-codedeploy-artifacts`)].Name' \
+            --output text | head -1)
+
+          if [ -z "$S3_BUCKET" ]; then
+            echo "❌ CodeDeploy S3 bucket not found!"
+            exit 1
+          fi
+
+          # S3에 배포 아티팩트 업로드
+          aws s3 cp $DEPLOYMENT_ARCHIVE s3://$S3_BUCKET/
+
+          echo "📦 Deployment package uploaded: $DEPLOYMENT_ARCHIVE"
+
+          # CodeDeploy 배포 시작
+          DEPLOYMENT_ID=$(aws deploy create-deployment \
+            --application-name $CODEDEPLOY_APPLICATION \
+            --deployment-group-name $CODEDEPLOY_DEPLOYMENT_GROUP \
+            --s3-location bucket=$S3_BUCKET,key=$DEPLOYMENT_ARCHIVE,bundleType=zip \
+            --description "Production deployment - ${{ steps.deploy-info.outputs.image-tag }}" \
+            --query deploymentId \
+            --output text)
+
+          echo "deployment-id=$DEPLOYMENT_ID" >> $GITHUB_OUTPUT
+          echo "🎯 CodeDeploy deployment started: $DEPLOYMENT_ID"
+
+      - name: Wait for deployment completion
+        run: |
+          DEPLOYMENT_ID="${{ steps.deploy.outputs.deployment-id }}"
+          echo "⏳ Waiting for deployment $DEPLOYMENT_ID to complete..."
+
+          # CodeDeploy 배포 완료 대기 (최대 30분)
+          aws deploy wait deployment-successful \
+            --deployment-id $DEPLOYMENT_ID \
+            --cli-read-timeout 1800 \
+            --cli-connect-timeout 60
+
+          # 배포 상태 확인
+          DEPLOYMENT_STATUS=$(aws deploy get-deployment \
+            --deployment-id $DEPLOYMENT_ID \
+            --query 'deploymentInfo.status' \
+            --output text)
+
+          echo "✅ Deployment completed with status: $DEPLOYMENT_STATUS"
+
+      - name: Verify deployment
+        run: |
+          echo "🔍 Verifying deployment..."
+          
+          # ECS 서비스 상태 확인
+          SERVICE_INFO=$(aws ecs describe-services \
+            --cluster $ECS_CLUSTER \
+            --services $ECS_SERVICE \
+            --query 'services[0].{Status:status,Running:runningCount,Desired:desiredCount}')
+          
+          echo "📊 ECS Service Status: $SERVICE_INFO"
+          
+          # 운영 API 도메인으로 헬스체크
+          echo "🔍 Testing application health on api.groble.im..."
+          
+          # 헬스체크 (최대 5분 대기) - 올바른 도메인과 엔드포인트 사용
+          for i in {1..10}; do
+            HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://api.groble.im/actuator/health" || echo "000")
+          
+            if [ "$HTTP_STATUS" = "200" ]; then
+              echo "✅ Application is healthy! (HTTP $HTTP_STATUS)"
+              # 응답 내용도 확인
+              curl -s "https://apitest.groble.im/actuator/health" | jq '.' || echo "Response received but not JSON"
+              break
+            elif [ $i -eq 10 ]; then
+              echo "❌ Application health check failed after 5 minutes"
+              echo "🔍 Last HTTP Status: $HTTP_STATUS"
+              echo "🔍 Debug: Checking endpoint availability..."
+              curl -v "https://apitest.groble.im/actuator/health" || true
+              exit 1
+            else
+              echo "⏳ Waiting for application to be ready... ($i/10) [HTTP: $HTTP_STATUS]"
+              sleep 30
+            fi
+          done
+
+#      - name: Notify deployment status
+#        if: always()
+#        uses: 8398a7/action-slack@v3
+#        with:
+#          status: ${{ job.status }}
+#          text: |
+#            🚀 Production Deployment ${{ job.status }}!
+#            Image: ${{ steps.deploy-info.outputs.image-tag }}
+#            Commit: ${{ steps.deploy-info.outputs.commit-sha }}
+#            Actor: ${{ steps.deploy-info.outputs.actor }}
+#            Deployment ID: ${{ steps.deploy.outputs.deployment-id }}
+#        env:
+#          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
