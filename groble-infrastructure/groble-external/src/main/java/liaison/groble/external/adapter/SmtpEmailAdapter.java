@@ -36,11 +36,14 @@ public class SmtpEmailAdapter implements EmailSenderPort {
   @Value("${spring.mail.username}")
   private String fromEmail;
 
-  @Value("${spring.mail.properties.mail.smtp.proxy.host:}")
-  private String proxyHost;
+  @Value("${socks.proxy.host:10.0.1.238}")
+  private String socksProxyHost;
 
-  @Value("${spring.mail.properties.mail.smtp.proxy.port:3128}")
-  private String proxyPort;
+  @Value("${socks.proxy.port:1080}")
+  private String socksProxyPort;
+
+  @Value("${socks.proxy.enabled:true}")
+  private boolean socksProxyEnabled;
 
   @Override
   @Async("mailExecutor")
@@ -52,7 +55,11 @@ public class SmtpEmailAdapter implements EmailSenderPort {
     long startTime = System.currentTimeMillis();
 
     try {
-      log.info("이메일 발송 시작 - 수신자: {}, 프록시 설정: {}:{}", to, proxyHost, proxyPort);
+      log.info(
+          "이메일 발송 시작 - 수신자: {}, SOCKS 프록시: {}:{}",
+          to,
+          socksProxyEnabled ? socksProxyHost : "직접연결",
+          socksProxyEnabled ? socksProxyPort : "N/A");
 
       MimeMessage message = createMimeMessage();
       message.addHeader("List-Unsubscribe", "<mailto:groble@groble.im>");
@@ -124,7 +131,7 @@ public class SmtpEmailAdapter implements EmailSenderPort {
       throw new RuntimeException("이메일 발송 중 오류가 발생했습니다.", e);
     } catch (MailException e) {
       log.error("메일 서버 연결 실패 - 수신자: {}, 에러: {}", to, e.getMessage(), e);
-      throw new RuntimeException("메일 서버 연결에 실패했습니다. 프록시 설정을 확인해주세요.", e);
+      throw new RuntimeException("메일 서버 연결에 실패했습니다. SOCKS 프록시 설정을 확인해주세요.", e);
     }
   }
 
@@ -210,7 +217,7 @@ public class SmtpEmailAdapter implements EmailSenderPort {
       throw new RuntimeException("이메일 발송 중 오류가 발생했습니다.", e);
     } catch (MailException e) {
       log.error("메일 서버 연결 실패 - 수신자: {}, 에러: {}", to, e.getMessage(), e);
-      throw new RuntimeException("메일 서버 연결에 실패했습니다. 프록시 설정을 확인해주세요.", e);
+      throw new RuntimeException("메일 서버 연결에 실패했습니다. SOCKS 프록시 설정을 확인해주세요.", e);
     }
   }
 
@@ -318,21 +325,17 @@ public class SmtpEmailAdapter implements EmailSenderPort {
       throw new RuntimeException("이메일 발송 중 오류가 발생했습니다.", e);
     } catch (MailException e) {
       log.error("메일 서버 연결 실패 - 수신자: {}, 에러: {}", to, e.getMessage(), e);
-      throw new RuntimeException("메일 서버 연결에 실패했습니다. 프록시 설정을 확인해주세요.", e);
+      throw new RuntimeException("메일 서버 연결에 실패했습니다. SOCKS 프록시 설정을 확인해주세요.", e);
     }
   }
 
-  /** MimeMessage 생성 시 프록시 설정 적용 */
+  /** MimeMessage 생성 SOCKS 프록시는 시스템 프로퍼티로 이미 설정되어 있어야 함 */
   private MimeMessage createMimeMessage() {
-    if (isProxyEnabled()) {
-      log.debug("프록시를 통한 SMTP 연결 - {}:{}", proxyHost, proxyPort);
-      // JavaMailSender의 Session에서 프록시 설정이 이미 적용됨 (yml 설정)
+    if (socksProxyEnabled) {
+      log.debug("SOCKS 프록시 경유 SMTP 연결 - {}:{}", socksProxyHost, socksProxyPort);
+      // SOCKS 프록시는 시스템 프로퍼티로 설정됨 (setGlobalProxy 메서드에서)
+      // JavaMail이 자동으로 사용
     }
     return emailSender.createMimeMessage();
-  }
-
-  /** 프록시 활성화 여부 확인 */
-  private boolean isProxyEnabled() {
-    return proxyHost != null && !proxyHost.isEmpty();
   }
 }
