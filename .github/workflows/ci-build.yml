@@ -223,8 +223,8 @@ jobs:
     needs: build-dev
     runs-on: ubuntu-latest
     if: >   # TODO: dev 브랜치에 PR이 발생했을 때로 수정 (push는 임시 테스트 목적)
-      (github.event_name == 'pull_request' && github.base_ref == 'config/#52-cicd-pipeline-upgrade-local')
-      || (github.event_name == 'push' && github.ref == 'refs/heads/config/#52-cicd-pipeline-upgrade-local')
+      (github.event_name == 'pull_request' && github.base_ref == 'develop')
+      || (github.event_name == 'push' && github.ref == 'refs/heads/develop')
 
     steps:
       - name: Trigger Development Deployment
