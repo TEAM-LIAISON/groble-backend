@@ -21,6 +21,7 @@ import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.ComparableExpressionBase;
+import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.core.types.dsl.PathBuilder;
 import com.querydsl.jpa.JPAExpressions;
@@ -32,6 +33,7 @@ import liaison.groble.domain.content.dto.FlatAdminContentSummaryInfoDTO;
 import liaison.groble.domain.content.dto.FlatContentPreviewDTO;
 import liaison.groble.domain.content.dto.FlatDynamicContentDTO;
 import liaison.groble.domain.content.entity.Content;
+import liaison.groble.domain.content.entity.QCoachingOption;
 import liaison.groble.domain.content.entity.QContent;
 import liaison.groble.domain.content.entity.QContentOption;
 import liaison.groble.domain.content.entity.QDocumentOption;
@@ -865,40 +867,75 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
   public boolean isAvailableForSale(Long contentId) {
     QContent qContent = QContent.content;
     QDocumentOption qDocumentOption = QDocumentOption.documentOption;
+    QCoachingOption qCoachingOption = QCoachingOption.coachingOption;
 
     // 1) 콘텐츠 필수 필드 검사
     BooleanExpression contentValid =
         qContent
-            .title
+            .thumbnailUrl
             .isNotNull()
-            .and(qContent.thumbnailUrl.isNotNull())
-            .and(qContent.lowestPrice.isNotNull());
+            .and(qContent.status.eq(ContentStatus.DRAFT))
+            .and(qContent.title.isNotNull())
+            .and(qContent.makerIntro.isNotNull())
+            .and(qContent.serviceProcess.isNotNull())
+            .and(qContent.serviceTarget.isNotNull());
 
-    // 2) 문서 옵션이 하나라도 있는지
-    // 3) 문서 옵션 존재 여부 (file OR link 중 하나라도 있으면 true)
+    // 2) DOCUMENT 타입일 때 옵션 검사
     BooleanExpression hasValidDocOpt =
         JPAExpressions.selectOne()
             .from(qDocumentOption)
             .where(
-                qDocumentOption.content.eq(qContent),
-                // fileUrl 이 NOT NULL 이거나 linkUrl 이 NOT NULL 이면
+                qDocumentOption.content.id.eq(contentId),
+                qDocumentOption.name.isNotNull(),
+                qDocumentOption.description.isNotNull(),
+                // 파일(URL+이름) 또는 링크 중 하나는 필수
                 qDocumentOption
                     .documentFileUrl
                     .isNotNull()
+                    .and(qDocumentOption.documentOriginalFileName.isNotNull())
                     .or(qDocumentOption.documentLinkUrl.isNotNull()))
             .exists();
 
-    // 4) 최종 판매 가능 조건
-    BooleanExpression saleCondition = contentValid.and(hasValidDocOpt);
+    // 3) COACHING 타입일 때 옵션 검사
+    BooleanExpression hasValidCoachingOpt =
+        JPAExpressions.selectOne()
+            .from(qCoachingOption)
+            .where(
+                qCoachingOption.content.id.eq(contentId),
+                qCoachingOption.name.isNotNull(),
+                qCoachingOption.description.isNotNull())
+            .exists();
 
-    // 5) 쿼리 실행 (null 안전하게 false 반환)
-    Boolean result =
+    // 4) ContentType 가져오기
+    ContentType contentType =
         queryFactory
-            .select(new CaseBuilder().when(saleCondition).then(true).otherwise(false))
+            .select(qContent.contentType)
             .from(qContent)
             .where(qContent.id.eq(contentId))
             .fetchOne();
 
-    return Boolean.TRUE.equals(result);
+    if (contentType == null) {
+      return false;
+    }
+
+    // 5) 타입별 조건 검사
+    BooleanExpression finalCondition;
+    if (contentType == ContentType.DOCUMENT) {
+      finalCondition = contentValid.and(hasValidDocOpt);
+    } else if (contentType == ContentType.COACHING) {
+      finalCondition = contentValid.and(hasValidCoachingOpt);
+    } else {
+      return false;
+    }
+
+    // 6) 최종 쿼리
+    Boolean result =
+        queryFactory
+            .select(Expressions.constant(true))
+            .from(qContent)
+            .where(qContent.id.eq(contentId), finalCondition)
+            .fetchFirst();
+
+    return result != null;
   }
 }
