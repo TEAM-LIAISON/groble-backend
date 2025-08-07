@@ -51,7 +51,6 @@ public class GrobleApiServerApplication {
 
   private static void setGlobalProxy(Environment env) {
     String proxyEnabled = env.getProperty("http.proxy.enabled", "false");
-    String socksEnabled = env.getProperty("socks.proxy.enabled", "false");
 
     if ("true".equals(proxyEnabled)) {
       String httpProxyHost = env.getProperty("http.proxy.host", "10.0.1.238");
@@ -60,35 +59,16 @@ public class GrobleApiServerApplication {
       log.info("=== 전역 프록시 설정 시작 ===");
       log.info("HTTP/HTTPS 프록시: {}:{}", httpProxyHost, httpProxyPort);
 
-      // HTTP/HTTPS 프록시 설정
       System.setProperty("http.proxyHost", httpProxyHost);
       System.setProperty("http.proxyPort", httpProxyPort);
       System.setProperty("https.proxyHost", httpProxyHost);
       System.setProperty("https.proxyPort", httpProxyPort);
 
-      // 프록시를 거치지 않을 호스트 설정
       System.setProperty(
           "http.nonProxyHosts",
           "localhost|127.0.0.1|10.*|172.16.*|172.31.*|*.groble.im|*.rds.amazonaws.com|*.cache.amazonaws.com");
 
       log.info("HTTP/HTTPS 프록시 설정 완료");
-    }
-
-    if ("true".equals(socksEnabled)) {
-      String socksProxyHost = env.getProperty("socks.proxy.host", "10.0.1.238");
-      String socksProxyPort = env.getProperty("socks.proxy.port", "1080");
-
-      log.info("SOCKS 프록시: {}:{}", socksProxyHost, socksProxyPort);
-
-      // SOCKS 프록시 설정 (SMTP용)
-      System.setProperty("mail.smtp.socks.host", socksProxyHost);
-      System.setProperty("mail.smtp.socks.port", socksProxyPort);
-
-      log.info("SOCKS 프록시 설정 완료");
-    }
-
-    if ("true".equals(proxyEnabled) || "true".equals(socksEnabled)) {
-      log.info("전역 프록시 설정 완료");
       testProxyConnection();
     } else {
       log.info("프록시 설정 비활성화 상태");
