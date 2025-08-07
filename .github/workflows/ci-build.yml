@@ -87,7 +87,7 @@ jobs:
 
       - name: Build Project with Gradle (Development)
         run: |
-          echo ${{ secrets.APPLICATION_SECRET_TEST_DEV }} | base64 --decode > groble-api/groble-api-server/src/main/resources/application-secret-dev.yml
+          echo ${{ secrets.APPLICATION_SECRET_DEV }} | base64 --decode > groble-api/groble-api-server/src/main/resources/application-secret-dev.yml
           ./gradlew :groble-api:groble-api-server:bootJar
 
       - name: Configure AWS credentials
@@ -171,7 +171,7 @@ jobs:
 
       - name: Build Project with Gradle (Production)
         run: |
-          echo ${{ secrets.APPLICATION_SECRET_TEST }} | base64 --decode > groble-api/groble-api-server/src/main/resources/application-secret-prod.yml
+          echo ${{ secrets.APPLICATION_SECRET_PROD }} | base64 --decode > groble-api/groble-api-server/src/main/resources/application-secret-prod.yml
           ./gradlew :groble-api:groble-api-server:bootJar
 
       - name: Configure AWS credentials
