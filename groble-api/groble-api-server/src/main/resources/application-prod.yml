@@ -16,7 +16,7 @@ spring:
 # 프록시 설정
 http:
   proxy:
-    enabled: false
+    enabled: true
     host: ${HTTP_PROXY_HOST:localhost}
     port: ${HTTP_PROXY_PORT:3128}
 
@@ -24,7 +24,7 @@ http:
 external:
   api:
     proxy:
-      enabled: false
+      enabled: true
       host: ${HTTP_PROXY_HOST:localhost}
       port: ${HTTP_PROXY_PORT:3128}
 
