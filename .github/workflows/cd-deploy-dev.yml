@@ -109,6 +109,16 @@ jobs:
           echo "task-definition-arn=$TASK_DEF_ARN" >> $GITHUB_OUTPUT
           echo "✅ Task definition registered: $TASK_DEF_ARN"
 
+      - name: Prepare AppSpec with Task Definition ARN
+        run: |
+          TASK_DEF_ARN="${{ steps.task-def.outputs.task-definition-arn }}"
+          echo "📋 Preparing AppSpec with Task Definition ARN: $TASK_DEF_ARN"
+
+          # AppSpec 파일에서 <TASK_DEFINITION> 플레이스홀더를 실제 ARN으로 교체
+          sed "s|<TASK_DEFINITION>|$TASK_DEF_ARN|g" appspec.yml > deployment-appspec.yml
+
+          echo "✅ AppSpec prepared with Task Definition ARN"    
+
       - name: Deploy with CodeDeploy
         id: deploy
         run: |
