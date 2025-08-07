@@ -123,11 +123,11 @@ jobs:
         id: deploy
         run: |
           echo "🚀 Starting CodeDeploy deployment..."
-
+          
           # CodeDeploy용 배포 패키지 생성 (수정된 AppSpec 사용)
           DEPLOYMENT_ARCHIVE="groble-dev-$(date +%Y%m%d-%H%M%S).zip"
-          cp deployment-appspec.yml appspec-dev.yml
-          zip -r $DEPLOYMENT_ARCHIVE appspec-dev.yml
+          cp deployment-appspec.yml appspec.yml
+          zip -r $DEPLOYMENT_ARCHIVE appspec.yml
 
           # S3 버킷 이름 가져오기
           S3_BUCKET=$(aws s3api list-buckets \
