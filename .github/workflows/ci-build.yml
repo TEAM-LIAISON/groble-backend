@@ -2,9 +2,9 @@ name: CI - Build, Test & Push to ECR
 
 on:
   push:
-    branches: [ "config/#51-cicd-pipeline-upgrade-base", "config/#52-cicd-pipeline-upgrade-local", "main", "develop" ]
+    branches: [ "main", "develop" ]
   pull_request:
-    branches: [ "config/#51-cicd-pipeline-upgrade-base", "config/#52-cicd-pipeline-upgrade-local", "main", "develop" ]
+    branches: [ "main", "develop" ]
 
 permissions:
   contents: read
@@ -54,8 +54,8 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     if: >   # TODO: dev 브랜치에 PR이 발생했을 때로 수정 (push는 임시 테스트 목적)
-      (github.event_name == 'pull_request' && github.base_ref == 'config/#52-cicd-pipeline-upgrade-local')
-      || (github.event_name == 'push' && github.ref == 'refs/heads/config/#52-cicd-pipeline-upgrade-local')
+      (github.event_name == 'pull_request' && github.base_ref == 'develop')
+      || (github.event_name == 'push' && github.ref == 'refs/heads/develop')
 
     outputs:
       image-tag: ${{ steps.build-info.outputs.image-tag }}
@@ -138,8 +138,8 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     if: >   # TODO: main 브랜치에 PR이 발생했을 때로 수정 (push는 임시 테스트 목적)
-      (github.event_name == 'pull_request' && github.base_ref == 'config/#51-cicd-pipeline-upgrade-base')
-      || (github.event_name == 'push' && github.ref == 'refs/heads/config/#51-cicd-pipeline-upgrade-base')
+      (github.event_name == 'pull_request' && github.base_ref == 'main')
+      || (github.event_name == 'push' && github.ref == 'refs/heads/main')
 
     outputs:
       image-tag: ${{ steps.build-info.outputs.image-tag }}
@@ -249,8 +249,8 @@ jobs:
     needs: build-prod
     runs-on: ubuntu-latest
     if: >   # TODO: main 브랜치에 PR이 발생했을 때로 수정 (push는 임시 테스트 목적)
-      (github.event_name == 'pull_request' && github.base_ref == 'config/#51-cicd-pipeline-upgrade-base')
-      || (github.event_name == 'push' && github.ref == 'refs/heads/config/#51-cicd-pipeline-upgrade-base')
+      (github.event_name == 'pull_request' && github.base_ref == 'main')
+      || (github.event_name == 'push' && github.ref == 'refs/heads/main')
 
     steps:
       - name: Trigger Production Deployment
