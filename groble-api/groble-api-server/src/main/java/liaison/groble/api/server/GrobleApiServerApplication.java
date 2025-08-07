@@ -92,8 +92,8 @@ public class GrobleApiServerApplication {
       java.net.URL url = new java.net.URL("https://www.google.com");
       java.net.HttpURLConnection connection = (java.net.HttpURLConnection) url.openConnection();
       connection.setRequestMethod("HEAD");
-      connection.setConnectTimeout(5000);
-      connection.setReadTimeout(5000);
+      connection.setConnectTimeout(60000);
+      connection.setReadTimeout(60000);
 
       int responseCode = connection.getResponseCode();
       connection.disconnect();
