@@ -141,14 +141,14 @@ springdoc:
 logging:
   level:
     root: INFO
-    org.springframework.web: INFO
-    org.springdoc: INFO
-    io.swagger.v3: INFO
-    # 외부 요청 디버깅용
-    org.apache.http: DEBUG              # DEBUG로 변경
-    org.apache.http.wire: DEBUG         # DEBUG로 변경 (상세 통신 내용)
-    org.springframework.web.client: DEBUG  # RestTemplate 로깅 추가
-    com.amazonaws: INFO
+    org.springframework.web: WARN
+    org.springdoc: WARN
+    io.swagger.v3: WARN
+    # 외부 요청 - 운영 환경
+    org.apache.http: WARN               # 에러/경고만
+    org.apache.http.wire: OFF           # 통신 상세 로그 비활성화
+    org.springframework.web.client: WARN  # RestTemplate 경고만
+    com.amazonaws: WARN
 
 management:
   endpoints:
