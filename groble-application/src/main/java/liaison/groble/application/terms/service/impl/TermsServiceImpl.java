@@ -11,6 +11,8 @@ import liaison.groble.application.auth.helper.UserHelper;
 import liaison.groble.application.terms.dto.MakerTermsAgreementDTO;
 import liaison.groble.application.terms.service.TermsService;
 import liaison.groble.application.user.service.UserReader;
+import liaison.groble.domain.market.entity.Market;
+import liaison.groble.domain.market.repository.MarketRepository;
 import liaison.groble.domain.terms.entity.Terms;
 import liaison.groble.domain.terms.enums.TermsType;
 import liaison.groble.domain.terms.repository.TermsRepository;
@@ -29,6 +31,7 @@ public class TermsServiceImpl implements TermsService {
   private final TermsRepository termsRepository;
   private final UserRepository userRepository;
   private final SellerInfoRepository sellerInfoRepository;
+  private final MarketRepository marketRepository;
 
   private final UserReader userReader;
   private final UserHelper userHelper;
@@ -81,6 +84,9 @@ public class TermsServiceImpl implements TermsService {
     user.setSeller(true);
     SellerInfo sellerInfo = SellerInfo.createForUser(user);
     sellerInfoRepository.save(sellerInfo);
+
+    Market market = Market.createForUser(user);
+    marketRepository.save(market);
 
     userHelper.addSellerRole(user);
 
