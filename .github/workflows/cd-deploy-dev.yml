@@ -20,6 +20,8 @@ permissions:
 env:
   AWS_REGION: ap-northeast-2
   ECR_REPOSITORY: groble-dev-spring-api
+  CODEDEPLOY_APPLICATION: groble-app
+  CODEDEPLOY_DEPLOYMENT_GROUP: groble-dev-deployment-group
   ECS_CLUSTER: groble-cluster
   ECS_SERVICE: groble-dev-service
 
@@ -107,33 +109,61 @@ jobs:
           echo "task-definition-arn=$TASK_DEF_ARN" >> $GITHUB_OUTPUT
           echo "✅ Task definition registered: $TASK_DEF_ARN"
 
-      - name: Deploy to ECS with Rolling Update
+      - name: Deploy with CodeDeploy
         id: deploy
         run: |
-          TASK_DEF_ARN="${{ steps.task-def.outputs.task-definition-arn }}"
-          echo "🚀 Starting ECS rolling deployment..."
-          echo "📋 Using Task Definition ARN: $TASK_DEF_ARN"
+          echo "🚀 Starting CodeDeploy deployment..."
 
-          # ECS 서비스 업데이트
-          aws ecs update-service \
-            --cluster $ECS_CLUSTER \
-            --service $ECS_SERVICE \
-            --task-definition $TASK_DEF_ARN \
-            --force-new-deployment
+          # CodeDeploy용 배포 패키지 생성 (수정된 AppSpec 사용)
+          DEPLOYMENT_ARCHIVE="groble-dev-$(date +%Y%m%d-%H%M%S).zip"
+          cp deployment-appspec.yml appspec.yml
+          zip -r $DEPLOYMENT_ARCHIVE appspec.yml
 
-          echo "✅ ECS service update initiated"
+          # S3 버킷 이름 가져오기
+          S3_BUCKET=$(aws s3api list-buckets \
+            --query 'Buckets[?contains(Name, `groble-codedeploy-artifacts`)].Name' \
+            --output text | head -1)
 
-      - name: Wait for ECS deployment completion
+          if [ -z "$S3_BUCKET" ]; then
+            echo "❌ CodeDeploy S3 bucket not found!"
+            exit 1
+          fi
+
+          # S3에 배포 아티팩트 업로드
+          aws s3 cp $DEPLOYMENT_ARCHIVE s3://$S3_BUCKET/
+
+          echo "📦 Deployment package uploaded: $DEPLOYMENT_ARCHIVE"
+
+          # CodeDeploy 배포 시작
+          DEPLOYMENT_ID=$(aws deploy create-deployment \
+            --application-name $CODEDEPLOY_APPLICATION \
+            --deployment-group-name $CODEDEPLOY_DEPLOYMENT_GROUP \
+            --s3-location bucket=$S3_BUCKET,key=$DEPLOYMENT_ARCHIVE,bundleType=zip \
+            --description "Development deployment - ${{ steps.deploy-info.outputs.image-tag }}" \
+            --query deploymentId \
+            --output text)
+
+          echo "deployment-id=$DEPLOYMENT_ID" >> $GITHUB_OUTPUT
+          echo "🎯 CodeDeploy deployment started: $DEPLOYMENT_ID"
+
+      - name: Wait for deployment completion
         run: |
-          echo "⏳ Waiting for ECS deployment to complete..."
+          DEPLOYMENT_ID="${{ steps.deploy.outputs.deployment-id }}"
+          echo "⏳ Waiting for deployment $DEPLOYMENT_ID to complete..."
 
-          # ECS 서비스 안정화 대기 (최대 15분)
-          aws ecs wait services-stable \
-            --cluster $ECS_CLUSTER \
-            --services $ECS_SERVICE \
-            --cli-read-timeout 900
+          # CodeDeploy 배포 완료 대기 (최대 30분)
+          aws deploy wait deployment-successful \
+            --deployment-id $DEPLOYMENT_ID \
+            --cli-read-timeout 1800 \
+            --cli-connect-timeout 60
 
-          echo "✅ ECS deployment completed successfully"
+          # 배포 상태 확인
+          DEPLOYMENT_STATUS=$(aws deploy get-deployment \
+            --deployment-id $DEPLOYMENT_ID \
+            --query 'deploymentInfo.status' \
+            --output text)
+
+          echo "✅ Deployment completed with status: $DEPLOYMENT_STATUS"
 
       - name: Verify deployment
         run: |
@@ -147,23 +177,23 @@ jobs:
 
           echo "📊 ECS Service Status: $SERVICE_INFO"
 
-          # 개발 API 도메인으로 헬스체크
+          # 운영 API 도메인으로 헬스체크
           echo "🔍 Testing application health on api.dev.groble.im..."
 
-          # 헬스체크 (최대 5분 대기) - 개발 도메인 사용
+          # 헬스체크 (최대 5분 대기) - 올바른 도메인과 엔드포인트 사용
           for i in {1..10}; do
             HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://api.dev.groble.im/actuator/health" || echo "000")
 
             if [ "$HTTP_STATUS" = "200" ]; then
               echo "✅ Application is healthy! (HTTP $HTTP_STATUS)"
               # 응답 내용도 확인
-              curl -s "https://apidev.groble.im/actuator/health" | jq '.' || echo "Response received but not JSON"
+              curl -s "https://api.dev.groble.im/actuator/health" | jq '.' || echo "Response received but not JSON"
               break
             elif [ $i -eq 10 ]; then
               echo "❌ Application health check failed after 5 minutes"
               echo "🔍 Last HTTP Status: $HTTP_STATUS"
               echo "🔍 Debug: Checking endpoint availability..."
-              curl -v "https://apidev.groble.im/actuator/health" || true
+              curl -v "https://api.dev.groble.im/actuator/health" || true
               exit 1
             else
               echo "⏳ Waiting for application to be ready... ($i/10) [HTTP: $HTTP_STATUS]"
