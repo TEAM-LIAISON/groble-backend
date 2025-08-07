@@ -85,13 +85,14 @@ public class TermsServiceImpl implements TermsService {
     SellerInfo sellerInfo = SellerInfo.createForUser(user);
     sellerInfoRepository.save(sellerInfo);
 
+    // 5. 사용자 저장
+    User savedUser = userRepository.save(user);
+
     Market market = Market.createForUser(user);
+    market.changeMarketName(user.getNickname() + "님의 마켓");
     marketRepository.save(market);
 
     userHelper.addSellerRole(user);
-
-    // 5. 사용자 저장
-    User savedUser = userRepository.save(user);
 
     log.info("메이커 이용약관 동의 완료: userId={}", savedUser.getId());
 
