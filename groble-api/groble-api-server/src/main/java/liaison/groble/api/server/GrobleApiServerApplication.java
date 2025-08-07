@@ -49,7 +49,6 @@ public class GrobleApiServerApplication {
     setGlobalProxy(context.getEnvironment());
   }
 
-  /** JVM 레벨에서 전역 프록시 설정 모든 HTTP/HTTPS 연결이 이 프록시를 통해 나가게 됨 */
   private static void setGlobalProxy(Environment env) {
     String proxyEnabled = env.getProperty("http.proxy.enabled", "false");
 
@@ -68,18 +67,20 @@ public class GrobleApiServerApplication {
       System.setProperty("https.proxyHost", proxyHost);
       System.setProperty("https.proxyPort", proxyPort);
 
-      // 프록시를 거치지 않을 호스트 설정 (내부 통신용)
-      // RDS, Redis, 내부 서비스는 프록시를 거치지 않음
+      // 프록시를 거치지 않을 호스트 설정
       System.setProperty(
           "http.nonProxyHosts",
-          "localhost|127.0.0.1|10.*|172.16.*|172.31.*|*.groble.im|*.rds.amazonaws.com|*.cache.amazonaws.com");
+          "localhost|127.0.0.1|10.*|172.16.*|172.31.*|*.groble.im|*.rds.amazonaws.com|*.cache.amazonaws.com|smtp.gmail.com|*.gmail.com");
+
+      // SMTP용 추가 설정 (JavaMail이 참조할 수 있도록)
+      System.setProperty("mail.smtp.proxy.host", "");
+      System.setProperty("mail.smtp.proxy.port", "");
 
       log.info("전역 프록시 설정 완료");
       log.info("http.proxyHost: {}", System.getProperty("http.proxyHost"));
       log.info("https.proxyHost: {}", System.getProperty("https.proxyHost"));
       log.info("http.nonProxyHosts: {}", System.getProperty("http.nonProxyHosts"));
 
-      // 간단한 연결 테스트
       testProxyConnection();
     } else {
       log.info("프록시 설정 비활성화 상태");
