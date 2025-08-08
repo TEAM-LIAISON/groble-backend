@@ -148,17 +148,33 @@ springdoc:
   show-actuator: false
   model-and-view-allowed: true
 
+# Logging
 logging:
   level:
     root: INFO
-    org.springframework.web: WARN
-    org.springdoc: WARN
-    io.swagger.v3: WARN
-    # 외부 요청 - 운영 환경
-    org.apache.http: WARN               # 에러/경고만
-    org.apache.http.wire: OFF           # 통신 상세 로그 비활성화
-    org.springframework.web.client: WARN  # RestTemplate 경고만
-    com.amazonaws: WARN
+    liaison: DEBUG
+    # Spring 전반
+    org.springframework: INFO
+    org.springframework.web: DEBUG            # 요청 매핑/핸들러 흐름
+    org.springframework.http: INFO
+    org.springframework.web.client: INFO      # RestTemplate
+    org.springframework.web.reactive.function.client: INFO  # WebClient
+    reactor.netty.http.client: INFO
+
+    # DB 쿼리
+    org.springframework.jdbc.core: DEBUG      # JdbcTemplate가 실행하는 SQL
+    org.hibernate.SQL: DEBUG                  # Hibernate가 만든 SQL
+    org.hibernate.orm.jdbc.bind: TRACE        # 바인딩 파라미터 (Boot 3+)
+    # (Boot 2.x면) org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+    # HTTP 클라이언트 (Apache)
+    org.apache.http: INFO
+    org.apache.http.wire: WARN                # 너무 시끄러우니 기본은 WARN
+
+    # 문서/외부
+    org.springdoc: INFO
+    io.swagger.v3: INFO
+    com.amazonaws: INFO
 
 management:
   endpoints:
