@@ -73,6 +73,7 @@ spring:
     baseline-version: 0
     validate-on-migrate: true
     clean-disabled: true
+
   jpa:
     database-platform: org.hibernate.dialect.MySQL8Dialect
     properties:
@@ -88,20 +89,29 @@ spring:
         order_inserts: true
         order_updates: true
     hibernate:
-      ddl-auto: create
+      ddl-auto: validate
   mvc:
     path match:
       matching-strategy: ant_path_matcher
 
   servlet:
     multipart:
-      enabled: true # 멀티파트 업로드 지원 여부
-      file-size-threshold: 0B # 파일을 디스크에 저장하지 않고 메모리에 저장하는 최소 크기 (default: 0B)
-      max-file-size: 60MB # 한 개 파일의 최대 사이즈
-      max-request-size: 60MB # 한 개 요청의 최대 사이즈
+      enabled: true
+      file-size-threshold: 2MB  # 2MB 이하는 메모리에 보관 (성능 개선)
+      max-file-size: 60MB  # 유지
+      max-request-size: 60MB  # 유지
+      resolve-lazily: true  # 실제 파일 접근 시점에 파싱 (메모리 효율)
 
 server:
   timezone: Asia/Seoul
+  tomcat:
+    connection-timeout: 60000  # 60초 (연결 타임아웃)
+    max-swallow-size: 62914560  # 60MB (max-file-size와 동일)
+    max-http-form-post-size: 62914560  # 60MB
+    keep-alive-timeout: 60000  # Keep-Alive 타임아웃
+  error:
+    include-message: always  # 에러 메시지 포함
+    include-stacktrace: on-param  # 스택트레이스 조건부 포함
 
 storage:
   provider: s3
@@ -138,16 +148,32 @@ springdoc:
   show-actuator: false
   model-and-view-allowed: true
 
+# Logging
 logging:
   level:
     root: INFO
-    org.springframework.web: INFO
+    liaison: DEBUG
+    # Spring 전반
+    org.springframework: INFO
+    org.springframework.web: DEBUG            # 요청 매핑/핸들러 흐름
+    org.springframework.http: INFO
+    org.springframework.web.client: INFO      # RestTemplate
+    org.springframework.web.reactive.function.client: INFO  # WebClient
+    reactor.netty.http.client: INFO
+
+    # DB 쿼리
+    org.springframework.jdbc.core: DEBUG      # JdbcTemplate가 실행하는 SQL
+    org.hibernate.SQL: DEBUG                  # Hibernate가 만든 SQL
+    org.hibernate.orm.jdbc.bind: TRACE        # 바인딩 파라미터 (Boot 3+)
+    # (Boot 2.x면) org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+    # HTTP 클라이언트 (Apache)
+    org.apache.http: INFO
+    org.apache.http.wire: WARN                # 너무 시끄러우니 기본은 WARN
+
+    # 문서/외부
     org.springdoc: INFO
     io.swagger.v3: INFO
-    # 외부 요청 디버깅용
-    org.apache.http: DEBUG              # DEBUG로 변경
-    org.apache.http.wire: DEBUG         # DEBUG로 변경 (상세 통신 내용)
-    org.springframework.web.client: DEBUG  # RestTemplate 로깅 추가
     com.amazonaws: INFO
 
 management:
