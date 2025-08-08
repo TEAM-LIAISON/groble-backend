@@ -104,9 +104,18 @@ spring:
       file-size-threshold: 0B # 파일을 디스크에 저장하지 않고 메모리에 저장하는 최소 크기 (default: 0B)
       max-file-size: 60MB # 한 개 파일의 최대 사이즈
       max-request-size: 60MB # 한 개 요청의 최대 사이즈
+      resolve-lazily: true  # 실제 파일 접근 시점에 파싱 (메모리 효율)
 
 server:
   timezone: Asia/Seoul
+  tomcat:
+    connection-timeout: 60000  # 60초 (연결 타임아웃)
+    max-swallow-size: 62914560  # 60MB (max-file-size와 동일)
+    max-http-form-post-size: 62914560  # 60MB
+    keep-alive-timeout: 60000  # Keep-Alive 타임아웃
+  error:
+    include-message: always  # 에러 메시지 포함
+    include-stacktrace: on-param  # 스택트레이스 조건부 포함
 
 storage:
   provider: s3
