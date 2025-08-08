@@ -108,7 +108,7 @@ public class MarketController {
   @GetMapping(MARKET_INTRO_PATH)
   @Logging(item = "Market", action = "getViewerMakerIntroSection", includeResult = true)
   public ResponseEntity<GrobleResponse<MakerIntroSectionResponse>> getViewerMakerIntroSection(
-      @Auth Accessor accessor, @Valid @PathVariable("marketLinkUrl") String marketLinkUrl) {
+      @Valid @PathVariable("marketLinkUrl") String marketLinkUrl) {
 
     MarketIntroSectionDTO makerIntroSectionDTO =
         marketService.getViewerMakerIntroSection(marketLinkUrl);

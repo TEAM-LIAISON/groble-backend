@@ -11,6 +11,12 @@ import org.springframework.mail.javamail.JavaMailSenderImpl;
 @Configuration
 public class EmailConfig {
 
+  @Value("${spring.mail.host}")
+  private String host;
+
+  @Value("${spring.mail.port}")
+  private int port;
+
   @Value("${spring.mail.username}")
   private String id;
 
@@ -21,10 +27,10 @@ public class EmailConfig {
   public JavaMailSender javaMailSender() {
     JavaMailSenderImpl javaMailSender = new JavaMailSenderImpl();
 
-    javaMailSender.setHost("smtp.gmail.com"); // 일반적인 Gmail 서버를 사용
+    javaMailSender.setHost(host); // 10.0.1.231
+    javaMailSender.setPort(port); // 5587
     javaMailSender.setUsername(id);
     javaMailSender.setPassword(password);
-    javaMailSender.setPort(587); // TLS 포트 설정
     javaMailSender.setJavaMailProperties(getMailProperties());
 
     return javaMailSender;
@@ -34,9 +40,17 @@ public class EmailConfig {
     Properties properties = new Properties();
     properties.setProperty("mail.transport.protocol", "smtp");
     properties.setProperty("mail.smtp.auth", "true");
-    properties.setProperty("mail.smtp.starttls.enable", "true"); // TLS 설정
+    properties.setProperty("mail.smtp.starttls.enable", "true");
     properties.setProperty("mail.debug", "true");
-    properties.setProperty("mail.smtp.ssl.trust", "smtp.gmail.com");
+
+    // SSL 인증서 검증 비활성화
+    properties.setProperty("mail.smtp.ssl.trust", "*");
+    properties.setProperty("mail.smtp.ssl.checkserveridentity", "false");
+
+    properties.setProperty("mail.smtp.connectiontimeout", "10000");
+    properties.setProperty("mail.smtp.timeout", "10000");
+    properties.setProperty("mail.smtp.writetimeout", "5000");
+
     return properties;
   }
 }
