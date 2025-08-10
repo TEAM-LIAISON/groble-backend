@@ -316,8 +316,8 @@ project(':groble-infrastructure:groble-external') {
         // Retry
         implementation 'org.springframework.retry:spring-retry'
         // Flyway
-//        implementation 'org.flywaydb:flyway-core'
-//        implementation 'org.flywaydb:flyway-mysql'
+        implementation 'org.flywaydb:flyway-core'
+        implementation 'org.flywaydb:flyway-mysql'
     }
 }
 

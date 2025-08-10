@@ -93,20 +93,38 @@ spring:
         order_inserts: true
         order_updates: true
     hibernate:
-      ddl-auto: create
+      ddl-auto: validate
   mvc:
     path match:
       matching-strategy: ant_path_matcher
+    async:
+      request-timeout: 120s            # 멀티파트 처리 대기 시간
 
   servlet:
     multipart:
-      enabled: true # 멀티파트 업로드 지원 여부
-      file-size-threshold: 0B # 파일을 디스크에 저장하지 않고 메모리에 저장하는 최소 크기 (default: 0B)
-      max-file-size: 60MB # 한 개 파일의 최대 사이즈
-      max-request-size: 60MB # 한 개 요청의 최대 사이즈
+      enabled: true
+      file-size-threshold: 2MB            # 2MB 초과 시 디스크로 스필
+      max-file-size: 60MB                  # 단일 파일 최대 용량
+      max-request-size: 60MB               # 요청 전체 최대 용량
+      resolve-lazily: true                 # 실제 파일 접근 시 파싱 (메모리 절약)
 
 server:
   timezone: Asia/Seoul
+
+  tomcat:
+    connection-timeout: 120000       # 120초 - 업로드 연결 타임아웃
+    keep-alive-timeout: 90000        # 90초 - 장시간 아이들 커넥션 방지
+    max-swallow-size: -1             # 무제한 (Spring이 한도 관리)
+    max-http-form-post-size: -1      # 무제한 (Spring이 한도 관리)
+    max-http-header-size: 16384      # 16KB를 바이트로
+    max-connections: 2000            # 동시 연결 수 (서버 스펙에 맞춰 조정)
+    accept-count: 100                # 큐에 대기할 수 있는 최대 연결 수
+    threads:
+      max: 300                       # 요청 처리 스레드 수 (CPU/메모리에 맞춰 조정)
+
+  error:
+    include-message: always
+    include-stacktrace: on-param
 
 storage:
   provider: s3

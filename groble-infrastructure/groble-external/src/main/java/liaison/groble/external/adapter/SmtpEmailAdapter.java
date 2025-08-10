@@ -36,14 +36,7 @@ public class SmtpEmailAdapter implements EmailSenderPort {
   @Value("${spring.mail.username}")
   private String fromEmail;
 
-  @Value("${socks.proxy.host:10.0.1.238}")
-  private String socksProxyHost;
-
-  @Value("${socks.proxy.port:1080}")
-  private String socksProxyPort;
-
-  @Value("${socks.proxy.enabled:true}")
-  private boolean socksProxyEnabled;
+  // SOCKS 프록시 관련 필드 모두 제거
 
   @Override
   @Async("mailExecutor")
@@ -55,13 +48,9 @@ public class SmtpEmailAdapter implements EmailSenderPort {
     long startTime = System.currentTimeMillis();
 
     try {
-      log.info(
-          "이메일 발송 시작 - 수신자: {}, SOCKS 프록시: {}:{}",
-          to,
-          socksProxyEnabled ? socksProxyHost : "직접연결",
-          socksProxyEnabled ? socksProxyPort : "N/A");
+      log.info("이메일 발송 시작 - 수신자: {}", to); // 프록시 로그 제거
 
-      MimeMessage message = createMimeMessage();
+      MimeMessage message = emailSender.createMimeMessage();
       message.addHeader("List-Unsubscribe", "<mailto:groble@groble.im>");
       MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
@@ -331,11 +320,6 @@ public class SmtpEmailAdapter implements EmailSenderPort {
 
   /** MimeMessage 생성 SOCKS 프록시는 시스템 프로퍼티로 이미 설정되어 있어야 함 */
   private MimeMessage createMimeMessage() {
-    if (socksProxyEnabled) {
-      log.debug("SOCKS 프록시 경유 SMTP 연결 - {}:{}", socksProxyHost, socksProxyPort);
-      // SOCKS 프록시는 시스템 프로퍼티로 설정됨 (setGlobalProxy 메서드에서)
-      // JavaMail이 자동으로 사용
-    }
     return emailSender.createMimeMessage();
   }
 }
