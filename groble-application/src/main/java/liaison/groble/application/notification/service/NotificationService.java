@@ -282,7 +282,7 @@ public class NotificationService {
   @Transactional
   public void readNotification(Long userId, Long notificationId) {
     Notification notification =
-        notificationReader.getNotificationByIdAndUserId(userId, notificationId);
+        notificationReader.getNotificationByIdAndUserId(notificationId, userId);
     notification.markAsRead();
   }
 }

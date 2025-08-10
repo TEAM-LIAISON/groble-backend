@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.multipart.MultipartFile;
 
 import liaison.groble.api.model.auth.request.VerificationBusinessMakerAccountRequest;
@@ -36,7 +37,9 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/account-verification")
@@ -151,6 +154,12 @@ public class AccountVerificationController {
           .body(
               GrobleResponse.success(
                   response, "통장 사본 이미지 업로드가 성공적으로 완료되었습니다.", HttpStatus.CREATED.value()));
+    } catch (MultipartException e) {
+      log.error("Multipart 파싱 오류: ", e);
+      return ResponseEntity.status(HttpStatus.REQUEST_TIMEOUT)
+          .body(
+              GrobleResponse.error(
+                  "파일 업로드 중 연결이 끊어졌습니다. 다시 시도해주세요.", HttpStatus.REQUEST_TIMEOUT.value()));
     } catch (IOException ioe) {
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
           .body(
@@ -197,12 +206,17 @@ public class AccountVerificationController {
           .body(
               GrobleResponse.success(
                   response, "사업자 등록증 사본 이미지 업로드가 성공적으로 완료되었습니다.", HttpStatus.CREATED.value()));
-    } catch (IOException ioe) {
+    } catch (MultipartException e) {
+      log.error("Multipart 파싱 오류: ", e);
+      return ResponseEntity.status(HttpStatus.REQUEST_TIMEOUT)
+          .body(
+              GrobleResponse.error(
+                  "파일 업로드 중 연결이 끊어졌습니다. 다시 시도해주세요.", HttpStatus.REQUEST_TIMEOUT.value()));
+    } catch (IOException e) {
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
           .body(
               GrobleResponse.error(
-                  "사업자 등록증 사본 저장 중 오류가 발생했습니다. 다시 시도해주세요.",
-                  HttpStatus.INTERNAL_SERVER_ERROR.value()));
+                  "파일 저장 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR.value()));
     }
   }
 

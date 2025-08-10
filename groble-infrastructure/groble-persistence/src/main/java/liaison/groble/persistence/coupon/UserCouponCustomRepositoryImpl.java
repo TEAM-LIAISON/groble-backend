@@ -1,6 +1,7 @@
 package liaison.groble.persistence.coupon;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 
 import org.springframework.stereotype.Repository;
@@ -23,6 +24,10 @@ public class UserCouponCustomRepositoryImpl implements UserCouponCustomRepositor
 
   @Override
   public List<FlatUserCouponCardDTO> findAllUsableCouponsByUserId(Long userId) {
+    if (userId == null) {
+      return Collections.emptyList(); // 또는 예외 처리
+    }
+
     QUserCoupon qUserCoupon = QUserCoupon.userCoupon;
     QCouponTemplate qCouponTemplate = QCouponTemplate.couponTemplate;
 
@@ -39,13 +44,10 @@ public class UserCouponCustomRepositoryImpl implements UserCouponCustomRepositor
         .from(qUserCoupon)
         .leftJoin(qUserCoupon.couponTemplate, qCouponTemplate)
         .where(
-            qUserCoupon
-                .user
-                .id
-                .eq(userId)
-                .and(qUserCoupon.status.eq(CouponStatus.ISSUED))
-                .and(qCouponTemplate.validFrom.loe(LocalDateTime.now()))
-                .and(qCouponTemplate.validUntil.goe(LocalDateTime.now())))
+            qUserCoupon.user.id.eq(userId),
+            qUserCoupon.status.eq(CouponStatus.ISSUED),
+            qCouponTemplate.validFrom.loe(LocalDateTime.now()),
+            qCouponTemplate.validUntil.goe(LocalDateTime.now()))
         .fetch();
   }
 }
