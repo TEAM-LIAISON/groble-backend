@@ -40,22 +40,21 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
 
-#      - name: Run tests
-#        run: ./gradlew test
-#
-#      - name: Upload test results
-#        uses: actions/upload-artifact@v4
-#        if: always()
-#        with:
-#          name: test-results-${{ github.sha }}
-#          path: '**/build/test-results/test/TEST-*.xml'
+  #      - name: Run tests
+  #        run: ./gradlew test
+  #
+  #      - name: Upload test results
+  #        uses: actions/upload-artifact@v4
+  #        if: always()
+  #        with:
+  #          name: test-results-${{ github.sha }}
+  #          path: '**/build/test-results/test/TEST-*.xml'
 
   build-dev:
     needs: test
     runs-on: ubuntu-latest
-    if: >   # TODO: dev 브랜치에 PR이 발생했을 때로 수정 (push는 임시 테스트 목적)
-      (github.event_name == 'pull_request' && github.base_ref == 'develop')
-      || (github.event_name == 'push' && github.ref == 'refs/heads/develop')
+    # develop 브랜치: PR이 열린 상태에서 push만 실행 (PR merge 시에는 실행 안 함)
+    if: github.event_name == 'pull_request' && github.base_ref == 'develop'
 
     outputs:
       image-tag: ${{ steps.build-info.outputs.image-tag }}
@@ -137,9 +136,8 @@ jobs:
   build-prod:
     needs: test
     runs-on: ubuntu-latest
-    if: >   # TODO: main 브랜치에 PR이 발생했을 때로 수정 (push는 임시 테스트 목적)
-      (github.event_name == 'pull_request' && github.base_ref == 'main')
-      || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    # main 브랜치: merge가 확정되었을 때(push)만 실행
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
     outputs:
       image-tag: ${{ steps.build-info.outputs.image-tag }}
@@ -222,9 +220,8 @@ jobs:
   trigger-cd-dev:
     needs: build-dev
     runs-on: ubuntu-latest
-    if: >   # TODO: dev 브랜치에 PR이 발생했을 때로 수정 (push는 임시 테스트 목적)
-      (github.event_name == 'pull_request' && github.base_ref == 'develop')
-      || (github.event_name == 'push' && github.ref == 'refs/heads/develop')
+    # develop 브랜치: PR이 열린 상태에서 push만 실행 (PR merge 시에는 실행 안 함)
+    if: github.event_name == 'pull_request' && github.base_ref == 'develop'
 
     steps:
       - name: Trigger Development Deployment
@@ -248,9 +245,8 @@ jobs:
   trigger-cd-prod:
     needs: build-prod
     runs-on: ubuntu-latest
-    if: >   # TODO: main 브랜치에 PR이 발생했을 때로 수정 (push는 임시 테스트 목적)
-      (github.event_name == 'pull_request' && github.base_ref == 'main')
-      || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    # main 브랜치: merge가 확정되었을 때(push)만 실행
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
     steps:
       - name: Trigger Production Deployment
