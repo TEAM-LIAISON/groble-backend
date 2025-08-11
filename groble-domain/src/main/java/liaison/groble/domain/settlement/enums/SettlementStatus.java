@@ -1,4 +1,4 @@
-package liaison.groble.domain.statistics.enums;
+package liaison.groble.domain.settlement.enums;
 
 public enum SettlementStatus {
   PENDING("정산 예정"), // 정산이 예정된 상태 (아직 정산 마감 날짜 안지남)

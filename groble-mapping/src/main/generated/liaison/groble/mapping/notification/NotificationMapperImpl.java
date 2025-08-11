@@ -16,7 +16,7 @@ import liaison.groble.application.notification.dto.NotificationItemsDTO;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-08-07T01:42:05+0900",
+    date = "2025-08-12T01:08:05+0900",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.10 (Amazon.com Inc.)")
 @Component
 public class NotificationMapperImpl implements NotificationMapper {
@@ -36,6 +36,15 @@ public class NotificationMapperImpl implements NotificationMapper {
     }
     if (notificationDetailsDTO.getContentId() != null) {
       notificationDetailsResponse.contentId(notificationDetailsDTO.getContentId());
+    }
+    if (notificationDetailsDTO.getReviewId() != null) {
+      notificationDetailsResponse.reviewId(notificationDetailsDTO.getReviewId());
+    }
+    if (notificationDetailsDTO.getMerchantUid() != null) {
+      notificationDetailsResponse.merchantUid(notificationDetailsDTO.getMerchantUid());
+    }
+    if (notificationDetailsDTO.getPurchaseId() != null) {
+      notificationDetailsResponse.purchaseId(notificationDetailsDTO.getPurchaseId());
     }
     if (notificationDetailsDTO.getThumbnailUrl() != null) {
       notificationDetailsResponse.thumbnailUrl(notificationDetailsDTO.getThumbnailUrl());
