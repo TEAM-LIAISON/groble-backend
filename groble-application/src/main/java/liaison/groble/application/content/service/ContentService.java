@@ -167,6 +167,10 @@ public class ContentService {
       if (content.getStatus() != ContentStatus.DRAFT) {
         if (content.getStatus() == ContentStatus.ACTIVE) {
           content.setStatus(ContentStatus.DRAFT); // 상태 수동 변경
+          // 대표 콘텐츠였다면 대표 콘텐츠 해제되도록 수정
+          if (content.getIsRepresentative()) {
+            content.setRepresentative(false);
+          }
         } else {
           throw new ContentEditException("해당 콘텐츠는 수정할 수 없는 상태입니다.");
         }
