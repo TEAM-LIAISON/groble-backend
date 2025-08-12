@@ -12,9 +12,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import liaison.groble.api.model.admin.request.AdminMakerVerifyRequest;
-import liaison.groble.api.model.admin.response.AdminMakerDetailInfoResponse;
+import liaison.groble.api.model.admin.request.AdminMemoRequest;
+import liaison.groble.api.model.admin.response.maker.AdminMakerDetailInfoResponse;
+import liaison.groble.api.model.admin.response.maker.AdminMemoResponse;
 import liaison.groble.api.model.maker.response.MakerIntroSectionResponse;
 import liaison.groble.application.admin.dto.AdminMakerDetailInfoDTO;
+import liaison.groble.application.admin.dto.AdminMemoDTO;
 import liaison.groble.application.admin.service.AdminMakerService;
 import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.annotation.Logging;
@@ -46,7 +49,7 @@ public class AdminMakerController {
 
   // 응답 메시지 상수화
   private static final String MAKER_DETAIL_INFO_SUCCESS_MESSAGE = "메이커 상세 정보 조회 성공";
-
+  private static final String ADMIN_MEMO_SAVE_SUCCESS_MESSAGE = "관리자 메모 저장 성공";
   // Service
   private final AdminMakerService adminMakerService;
 
@@ -96,5 +99,16 @@ public class AdminMakerController {
     };
   }
 
-  // TODO : 관리자 메모 저장 및 수정
+  @PostMapping("/maker/memo/{nickname}")
+  public ResponseEntity<GrobleResponse<AdminMemoResponse>> saveAdminMemo(
+      @Auth Accessor accessor,
+      @Valid @PathVariable("nickname") String nickname,
+      @Valid @RequestBody AdminMemoRequest adminMemoRequest) {
+    AdminMemoDTO memoDTO = adminMakerMapper.toAdminMemoDTO(adminMemoRequest);
+
+    AdminMemoDTO savedAdminMemoDTO =
+        adminMakerService.saveAdminMemo(accessor.getUserId(), nickname, memoDTO);
+    AdminMemoResponse savedAdminMemo = adminMakerMapper.toAdminMemoResponse(savedAdminMemoDTO);
+    return responseHelper.success(savedAdminMemo, ADMIN_MEMO_SAVE_SUCCESS_MESSAGE, HttpStatus.OK);
+  }
 }

@@ -4,12 +4,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import liaison.groble.application.admin.dto.AdminMakerDetailInfoDTO;
+import liaison.groble.application.admin.dto.AdminMemoDTO;
 import liaison.groble.application.notification.service.NotificationService;
 import liaison.groble.application.user.service.UserReader;
+import liaison.groble.application.user.service.UserWriter;
 import liaison.groble.domain.file.entity.FileInfo;
 import liaison.groble.domain.file.repository.FileRepository;
 import liaison.groble.domain.market.entity.Market;
 import liaison.groble.domain.user.entity.SellerInfo;
+import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.enums.SellerVerificationStatus;
 
 import lombok.RequiredArgsConstructor;
@@ -23,6 +26,7 @@ public class AdminMakerService {
   private final UserReader userReader;
   private final FileRepository fileRepository;
   private final NotificationService notificationService;
+  private final UserWriter userWriter;
 
   @Transactional(readOnly = true)
   public AdminMakerDetailInfoDTO getMakerDetailInfo(Long userId, String nickname) {
@@ -93,5 +97,14 @@ public class AdminMakerService {
 
     notificationService.sendMakerRejectedVerificationNotificationAsync(
         sellerInfo.getUser().getId(), nickname);
+  }
+
+  @Transactional
+  public AdminMemoDTO saveAdminMemo(Long userId, String nickname, AdminMemoDTO memoDTO) {
+    User user = userReader.getUserByNickname(nickname);
+    String adminMemo = memoDTO.getAdminMemo();
+    user.setAdminMemo(adminMemo);
+
+    return AdminMemoDTO.builder().adminMemo(adminMemo).build();
   }
 }

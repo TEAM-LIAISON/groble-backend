@@ -1,4 +1,4 @@
-package liaison.groble.api.model.admin.response;
+package liaison.groble.api.model.admin.response.maker;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
