@@ -8,4 +8,6 @@ public interface SettlementItemRepository {
   boolean existsByPurchaseId(Long purchaseId);
 
   Optional<SettlementItem> findByPurchaseId(Long purchaseId);
+
+  SettlementItem save(SettlementItem item);
 }

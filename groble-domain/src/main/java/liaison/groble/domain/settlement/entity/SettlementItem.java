@@ -98,6 +98,7 @@ public class SettlementItem extends BaseTimeEntity {
   @Builder
   public SettlementItem(
       Settlement settlement, Purchase purchase, BigDecimal platformFeeRate, BigDecimal pgFeeRate) {
+
     if (settlement == null) {
       throw new IllegalArgumentException("정산 정보는 필수입니다.");
     }
@@ -115,23 +116,31 @@ public class SettlementItem extends BaseTimeEntity {
 
     this.settlement = settlement;
     this.purchase = purchase;
-    this.capturedPlatformFeeRate = platformFeeRate; // 플랫폼 수수료율 스냅샷
-    this.capturedPgFeeRate = pgFeeRate; // PG 수수료율 스냅샷
+    this.capturedPlatformFeeRate = platformFeeRate;
+    this.capturedPgFeeRate = pgFeeRate;
 
-    // Purchase에서 정보 복사 (null 안전 처리 및 반올림 적용)
+    // Purchase에서 정보 복사
     BigDecimal finalPrice =
         purchase.getFinalPrice() != null ? purchase.getFinalPrice() : BigDecimal.ZERO;
 
-    this.salesAmount = finalPrice.setScale(2, RoundingMode.HALF_UP);
+    // ============ 원화 반올림 처리 수정 ============
 
-    // 수수료 계산
-    this.platformFee = this.salesAmount.multiply(platformFeeRate).setScale(2, RoundingMode.HALF_UP);
-    this.pgFee = this.salesAmount.multiply(pgFeeRate).setScale(2, RoundingMode.HALF_UP);
-    this.totalFee = this.platformFee.add(this.pgFee).setScale(2, RoundingMode.HALF_UP);
+    // 판매 금액 (이미 원 단위라고 가정)
+    this.salesAmount = finalPrice.setScale(0, RoundingMode.UNNECESSARY);
+
+    // 수수료 계산 - 원 단위로 반올림
+    BigDecimal platformFeeRaw = this.salesAmount.multiply(platformFeeRate);
+    BigDecimal pgFeeRaw = this.salesAmount.multiply(pgFeeRate);
+
+    // 원 단위로 반올림 (소수점 없음)
+    this.platformFee = platformFeeRaw.setScale(0, RoundingMode.HALF_UP);
+    this.pgFee = pgFeeRaw.setScale(0, RoundingMode.HALF_UP);
+    this.totalFee = this.platformFee.add(this.pgFee);
 
     // 실 정산 금액 계산
-    this.settlementAmount =
-        this.salesAmount.subtract(this.totalFee).setScale(2, RoundingMode.HALF_UP);
+    this.settlementAmount = this.salesAmount.subtract(this.totalFee);
+
+    // ============ 반올림 처리 수정 끝 ============
 
     // 스냅샷 정보 저장
     this.contentTitle = purchase.getContent() != null ? purchase.getContent().getTitle() : null;
@@ -148,25 +157,6 @@ public class SettlementItem extends BaseTimeEntity {
   }
 
   // === 비즈니스 메서드 ===
-
-  /** 환불 처리 */
-  public void processRefund() {
-    if (Boolean.TRUE.equals(this.isRefunded)) {
-      throw new IllegalStateException("이미 환불 처리된 항목입니다.");
-    }
-
-    this.isRefunded = true;
-    this.refundedAt = LocalDateTime.now();
-
-    // 환불 시 정산 금액을 0으로 설정
-    this.settlementAmount = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
-
-    // Settlement의 금액 재계산 호출 (public 메서드)
-    if (settlement != null) {
-      settlement.recalcFromItems();
-    }
-  }
-
   /** 환불 취소 */
   public void cancelRefund() {
     if (!Boolean.TRUE.equals(this.isRefunded)) {
@@ -186,25 +176,43 @@ public class SettlementItem extends BaseTimeEntity {
     }
   }
 
-  /** 정산 금액 재계산 (수수료율 변경 시) */
+  /** 환불 처리 - 원화 처리 */
+  public void processRefund() {
+    if (Boolean.TRUE.equals(this.isRefunded)) {
+      throw new IllegalStateException("이미 환불 처리된 항목입니다.");
+    }
+
+    this.isRefunded = true;
+    this.refundedAt = LocalDateTime.now();
+
+    // 환불 시 정산 금액을 0으로 설정 (원 단위)
+    this.settlementAmount = BigDecimal.ZERO;
+
+    // Settlement의 금액 재계산 호출
+    if (settlement != null) {
+      settlement.recalcFromItems();
+    }
+  }
+
+  /** 정산 금액 재계산 (수수료율 변경 시) - 원화 반올림 처리 */
   public void recalculateWithNewFeeRates(BigDecimal newPlatformFeeRate, BigDecimal newPgFeeRate) {
     if (Boolean.TRUE.equals(this.isRefunded)) {
-      // 환불된 항목은 재계산하지 않음
       return;
     }
 
     this.capturedPlatformFeeRate = newPlatformFeeRate;
     this.capturedPgFeeRate = newPgFeeRate;
 
-    // 수수료 재계산
-    this.platformFee =
-        this.salesAmount.multiply(newPlatformFeeRate).setScale(2, RoundingMode.HALF_UP);
-    this.pgFee = this.salesAmount.multiply(newPgFeeRate).setScale(2, RoundingMode.HALF_UP);
-    this.totalFee = this.platformFee.add(this.pgFee).setScale(2, RoundingMode.HALF_UP);
+    // 수수료 재계산 - 원 단위로 반올림
+    BigDecimal platformFeeRaw = this.salesAmount.multiply(newPlatformFeeRate);
+    BigDecimal pgFeeRaw = this.salesAmount.multiply(newPgFeeRate);
+
+    this.platformFee = platformFeeRaw.setScale(0, RoundingMode.HALF_UP);
+    this.pgFee = pgFeeRaw.setScale(0, RoundingMode.HALF_UP);
+    this.totalFee = this.platformFee.add(this.pgFee);
 
     // 실 정산 금액 재계산
-    this.settlementAmount =
-        this.salesAmount.subtract(this.totalFee).setScale(2, RoundingMode.HALF_UP);
+    this.settlementAmount = this.salesAmount.subtract(this.totalFee);
 
     // Settlement의 금액 재계산
     if (settlement != null) {

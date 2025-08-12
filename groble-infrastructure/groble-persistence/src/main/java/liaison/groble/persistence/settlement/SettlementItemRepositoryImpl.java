@@ -23,4 +23,9 @@ public class SettlementItemRepositoryImpl implements SettlementItemRepository {
   public Optional<SettlementItem> findByPurchaseId(Long purchaseId) {
     return jpaSettlementItemRepository.findByPurchaseId(purchaseId);
   }
+
+  @Override
+  public SettlementItem save(SettlementItem item) {
+    return jpaSettlementItemRepository.save(item);
+  }
 }

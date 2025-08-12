@@ -212,6 +212,8 @@ project(':groble-application') {
 
         // Retry
         implementation 'org.springframework.retry:spring-retry'
+
+        testImplementation(project(":groble-api:groble-api-server")) // 메인 앱 모듈
     }
 }
 

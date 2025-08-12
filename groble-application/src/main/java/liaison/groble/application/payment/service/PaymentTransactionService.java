@@ -1,6 +1,7 @@
 package liaison.groble.application.payment.service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -219,43 +220,6 @@ public class PaymentTransactionService {
         .build();
   }
 
-  /**
-   * 결제 취소 완료 처리
-   *
-   * @param cancelInfo 취소 정보
-   * @param reason 취소 사유
-   * @return 취소 결과
-   */
-  @Transactional
-  public PaymentCancelResult completeCancel(PaymentCancelInfo cancelInfo, String reason) {
-    log.info("결제 취소 완료 처리 시작 - orderId: {}", cancelInfo.getOrderId());
-
-    // 1. 엔티티 조회
-    Order order = orderReader.getOrderById(cancelInfo.getOrderId());
-    Payment payment = paymentReader.getPaymentById(cancelInfo.getPaymentId());
-    Purchase purchase = purchaseReader.getPurchaseByOrderId(order.getId());
-
-    // 2. 취소 처리
-    order.cancelOrder(reason);
-    payment.cancel();
-    purchase.cancelPayment();
-
-    log.info(
-        "결제 취소 완료 - orderId: {}, paymentId: {}, purchaseId: {}",
-        order.getId(),
-        payment.getId(),
-        purchase.getId());
-
-    return PaymentCancelResult.builder()
-        .orderId(order.getId())
-        .paymentId(payment.getId())
-        .userId(order.getUser().getId())
-        .refundAmount(cancelInfo.getRefundAmount())
-        .reason(reason)
-        .refundedAt(LocalDateTime.now())
-        .build();
-  }
-
   /** PayplePayment 생성 */
   private PayplePayment createPayplePayment(Order order, PaypleAuthResultDTO dto) {
     return PayplePayment.builder()
@@ -328,7 +292,7 @@ public class PaymentTransactionService {
     return (quota == null || quota.trim().isEmpty()) ? "00" : quota;
   }
 
-  /** 정산 데이터 생성 - Reader 활용 */
+  /** 정산 데이터 생성 - 원화 반올림 로직 명확화 */
   private void createSettlementData(Purchase purchase, Payment payment) {
     Long sellerId = purchase.getContent().getUser().getId();
 
@@ -337,16 +301,45 @@ public class PaymentTransactionService {
     LocalDate periodStart = purchaseDate.withDayOfMonth(1);
     LocalDate periodEnd = purchaseDate.withDayOfMonth(purchaseDate.lengthOfMonth());
 
-    // Settlement 조회 또는 생성 - Reader 활용
+    // Settlement 조회 또는 생성
     Settlement settlement = getOrCreateSettlement(sellerId, periodStart, periodEnd);
 
-    // 멱등성 체크 - Reader 활용
+    // 멱등성 체크
     if (settlementReader.existsSettlementItemByPurchaseId(purchase.getId())) {
       log.info("정산 항목이 이미 존재합니다 - purchaseId: {}", purchase.getId());
       return;
     }
 
-    // SettlementItem 생성
+    // ========== 원화 반올림 처리 확인 로직 추가 ==========
+
+    // 판매 금액 확인 (원 단위여야 함)
+    BigDecimal salesAmount = purchase.getFinalPrice();
+    if (salesAmount.scale() > 0) {
+      log.warn("판매 금액에 소수점이 포함되어 있습니다. 원 단위로 변환 - amount: {}", salesAmount);
+      salesAmount = salesAmount.setScale(0, RoundingMode.HALF_UP);
+    }
+
+    // 수수료 계산 미리보기 (디버그용)
+    BigDecimal platformFeeRate = settlement.getPlatformFeeRate();
+    BigDecimal pgFeeRate = settlement.getPgFeeRate();
+
+    // 예상 수수료 계산 (반올림 전)
+    BigDecimal expectedPlatformFeeRaw = salesAmount.multiply(platformFeeRate);
+    BigDecimal expectedPgFeeRaw = salesAmount.multiply(pgFeeRate);
+
+    log.debug(
+        "수수료 계산 예상 - 판매액: {}원, " + "플랫폼수수료: {}원 → {}원 ({}%), " + "PG수수료: {}원 → {}원 ({}%)",
+        salesAmount.toPlainString(),
+        expectedPlatformFeeRaw.toPlainString(),
+        expectedPlatformFeeRaw.setScale(0, RoundingMode.HALF_UP).toPlainString(),
+        platformFeeRate.multiply(new BigDecimal("100")).toPlainString(),
+        expectedPgFeeRaw.toPlainString(),
+        expectedPgFeeRaw.setScale(0, RoundingMode.HALF_UP).toPlainString(),
+        pgFeeRate.multiply(new BigDecimal("100")).toPlainString());
+
+    // ========== 원화 반올림 처리 확인 끝 ==========
+
+    // SettlementItem 생성 (Builder 내부에서 자동 반올림 처리)
     SettlementItem settlementItem =
         SettlementItem.builder()
             .settlement(settlement)
@@ -359,15 +352,41 @@ public class PaymentTransactionService {
     settlement.addSettlementItem(settlementItem);
     settlementWriter.saveSettlement(settlement);
 
+    // ========== 반올림 결과 상세 로그 ==========
     log.info(
-        "정산 데이터 생성 완료 - settlementId: {}, itemId: {}, salesAmount: {}, settlementAmount: {}",
+        "정산 생성 완료 [원화 반올림 적용] - "
+            + "settlementId: {}, itemId: {}, "
+            + "판매액: {}원, "
+            + "플랫폼수수료: {}원 ({}%), "
+            + "PG수수료: {}원 ({}%), "
+            + "총수수료: {}원, "
+            + "정산액: {}원",
         settlement.getId(),
         settlementItem.getId(),
-        settlementItem.getSalesAmount(),
-        settlementItem.getSettlementAmount());
+        settlementItem.getSalesAmount().toPlainString(),
+        settlementItem.getPlatformFee().toPlainString(),
+        platformFeeRate.multiply(new BigDecimal("100")).toPlainString(),
+        settlementItem.getPgFee().toPlainString(),
+        pgFeeRate.multiply(new BigDecimal("100")).toPlainString(),
+        settlementItem.getTotalFee().toPlainString(),
+        settlementItem.getSettlementAmount().toPlainString());
+
+    // 반올림으로 인한 차이 확인 (디버그 레벨)
+    if (log.isDebugEnabled()) {
+      BigDecimal platformFeeDiff = expectedPlatformFeeRaw.subtract(settlementItem.getPlatformFee());
+      BigDecimal pgFeeDiff = expectedPgFeeRaw.subtract(settlementItem.getPgFee());
+
+      if (platformFeeDiff.abs().compareTo(BigDecimal.ZERO) > 0
+          || pgFeeDiff.abs().compareTo(BigDecimal.ZERO) > 0) {
+        log.debug(
+            "반올림 차이 - 플랫폼: {}원, PG: {}원",
+            platformFeeDiff.toPlainString(),
+            pgFeeDiff.toPlainString());
+      }
+    }
   }
 
-  /** Settlement 조회 또는 생성 - Reader와 Creator 활용 */
+  /** Settlement 조회 또는 생성 - 원화 처리 확인 추가 */
   private Settlement getOrCreateSettlement(
       Long sellerId, LocalDate periodStart, LocalDate periodEnd) {
     // 1차: Reader로 조회 시도
@@ -381,7 +400,22 @@ public class PaymentTransactionService {
     // 2차: 없으면 Creator로 생성 시도
     try {
       User seller = userReader.getUserById(sellerId);
-      return settlementWriter.createSettlement(seller, periodStart, periodEnd);
+
+      // ========== 수수료율 설정 시 검증 ==========
+      BigDecimal platformFeeRate = new BigDecimal("0.0150"); // 1.5%
+      BigDecimal pgFeeRate = new BigDecimal("0.0170"); // 1.7%
+
+      log.info(
+          "새 정산 생성 - sellerId: {}, period: {} ~ {}, " + "플랫폼수수료율: {}%, PG수수료율: {}%",
+          sellerId,
+          periodStart,
+          periodEnd,
+          platformFeeRate.multiply(new BigDecimal("100")).toPlainString(),
+          pgFeeRate.multiply(new BigDecimal("100")).toPlainString());
+
+      return settlementWriter.createSettlement(
+          seller, periodStart, periodEnd, platformFeeRate, pgFeeRate);
+
     } catch (DataIntegrityViolationException e) {
       // 3차: UNIQUE 제약 위반 (동시 생성) - Reader로 재조회
       log.info(
@@ -392,5 +426,80 @@ public class PaymentTransactionService {
 
       return settlementReader.getSettlementByUserIdAndPeriod(sellerId, periodStart, periodEnd);
     }
+  }
+
+  /** 결제 취소 완료 처리 - 정산 환불 처리 추가 */
+  @Transactional
+  public PaymentCancelResult completeCancel(PaymentCancelInfo cancelInfo, String reason) {
+    log.info("결제 취소 완료 처리 시작 - orderId: {}", cancelInfo.getOrderId());
+
+    // 1. 엔티티 조회
+    Order order = orderReader.getOrderById(cancelInfo.getOrderId());
+    Payment payment = paymentReader.getPaymentById(cancelInfo.getPaymentId());
+    Purchase purchase = purchaseReader.getPurchaseByOrderId(order.getId());
+
+    // 2. 취소 처리
+    order.cancelOrder(reason);
+    payment.cancel();
+    purchase.cancelPayment();
+
+    // ========== 정산 환불 처리 추가 ==========
+    try {
+      processRefundSettlement(purchase.getId());
+      log.info("정산 환불 처리 완료 - purchaseId: {}", purchase.getId());
+    } catch (Exception e) {
+      log.error("정산 환불 처리 실패 - purchaseId: {}, error: {}", purchase.getId(), e.getMessage());
+      // 환불 정산 실패는 결제 취소를 롤백하지 않음
+      // 별도 배치나 수동 처리 필요
+    }
+    // ========== 정산 환불 처리 끝 ==========
+
+    log.info(
+        "결제 취소 완료 - orderId: {}, paymentId: {}, purchaseId: {}",
+        order.getId(),
+        payment.getId(),
+        purchase.getId());
+
+    return PaymentCancelResult.builder()
+        .orderId(order.getId())
+        .paymentId(payment.getId())
+        .userId(order.getUser().getId())
+        .refundAmount(cancelInfo.getRefundAmount())
+        .reason(reason)
+        .refundedAt(LocalDateTime.now())
+        .build();
+  }
+
+  /** 환불 정산 처리 */
+  private void processRefundSettlement(Long purchaseId) {
+    log.info("환불 정산 처리 시작 - purchaseId: {}", purchaseId);
+
+    // SettlementItem 조회
+    SettlementItem settlementItem = settlementReader.getSettlementItemByPurchaseId(purchaseId);
+
+    // 이미 환불 처리된 경우 체크
+    if (settlementItem.isRefundedSafe()) {
+      log.warn("이미 환불 처리된 정산 항목입니다 - purchaseId: {}", purchaseId);
+      return;
+    }
+
+    // 환불 전 정산 정보 로그
+    log.info(
+        "환불 전 정산 정보 - " + "판매액: {}원, 정산액: {}원",
+        settlementItem.getSalesAmount().toPlainString(),
+        settlementItem.getSettlementAmount().toPlainString());
+
+    // 환불 처리 (Settlement 합계도 자동 재계산됨)
+    settlementItem.processRefund();
+
+    // 저장
+    settlementWriter.saveSettlementItem(settlementItem);
+    settlementWriter.saveSettlement(settlementItem.getSettlement());
+
+    log.info(
+        "환불 정산 처리 완료 - purchaseId: {}, " + "환불금액: {}원, 환불후 정산액: {}원",
+        purchaseId,
+        settlementItem.getSalesAmount().toPlainString(),
+        settlementItem.getSettlementAmount().toPlainString());
   }
 }

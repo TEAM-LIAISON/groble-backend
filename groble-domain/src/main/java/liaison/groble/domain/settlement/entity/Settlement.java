@@ -154,41 +154,6 @@ public class Settlement extends BaseTimeEntity {
     recalcFromItems();
   }
 
-  /** 항목 스냅샷 기반으로 금액 재계산 (public 메서드) 환불된 항목은 제외하고 계산 */
-  public void recalcFromItems() {
-    BigDecimal gross = BigDecimal.ZERO;
-    BigDecimal platformFeeSum = BigDecimal.ZERO;
-    BigDecimal pgFeeSum = BigDecimal.ZERO;
-    BigDecimal totalFeeSum = BigDecimal.ZERO;
-    BigDecimal net = BigDecimal.ZERO;
-    BigDecimal refund = BigDecimal.ZERO;
-    int refundCnt = 0;
-
-    for (SettlementItem item : settlementItems) {
-      if (Boolean.TRUE.equals(item.getIsRefunded())) {
-        // 환불 항목
-        refund = refund.add(nullSafeValue(item.getSalesAmount()));
-        refundCnt++;
-        continue;
-      }
-
-      // 정상 항목
-      gross = gross.add(nullSafeValue(item.getSalesAmount()));
-      platformFeeSum = platformFeeSum.add(nullSafeValue(item.getPlatformFee()));
-      pgFeeSum = pgFeeSum.add(nullSafeValue(item.getPgFee()));
-      totalFeeSum = totalFeeSum.add(nullSafeValue(item.getTotalFee()));
-      net = net.add(nullSafeValue(item.getSettlementAmount()));
-    }
-
-    this.totalSalesAmount = gross.setScale(2, RoundingMode.HALF_UP);
-    this.platformFee = platformFeeSum.setScale(2, RoundingMode.HALF_UP);
-    this.pgFee = pgFeeSum.setScale(2, RoundingMode.HALF_UP);
-    this.totalFee = totalFeeSum.setScale(2, RoundingMode.HALF_UP);
-    this.settlementAmount = net.setScale(2, RoundingMode.HALF_UP);
-    this.totalRefundAmount = refund.setScale(2, RoundingMode.HALF_UP);
-    this.refundCount = refundCnt;
-  }
-
   private static BigDecimal nullSafeValue(BigDecimal value) {
     return value == null ? BigDecimal.ZERO : value;
   }
@@ -293,5 +258,41 @@ public class Settlement extends BaseTimeEntity {
     public String getDescription() {
       return description;
     }
+  }
+
+  /** 항목 스냅샷 기반으로 금액 재계산 - 원화 반올림 처리 */
+  public void recalcFromItems() {
+    BigDecimal gross = BigDecimal.ZERO;
+    BigDecimal platformFeeSum = BigDecimal.ZERO;
+    BigDecimal pgFeeSum = BigDecimal.ZERO;
+    BigDecimal totalFeeSum = BigDecimal.ZERO;
+    BigDecimal net = BigDecimal.ZERO;
+    BigDecimal refund = BigDecimal.ZERO;
+    int refundCnt = 0;
+
+    for (SettlementItem item : settlementItems) {
+      if (Boolean.TRUE.equals(item.getIsRefunded())) {
+        // 환불 항목
+        refund = refund.add(nullSafeValue(item.getSalesAmount()));
+        refundCnt++;
+        continue;
+      }
+
+      // 정상 항목
+      gross = gross.add(nullSafeValue(item.getSalesAmount()));
+      platformFeeSum = platformFeeSum.add(nullSafeValue(item.getPlatformFee()));
+      pgFeeSum = pgFeeSum.add(nullSafeValue(item.getPgFee()));
+      totalFeeSum = totalFeeSum.add(nullSafeValue(item.getTotalFee()));
+      net = net.add(nullSafeValue(item.getSettlementAmount()));
+    }
+
+    // ============ 원화 처리 - 소수점 없음 ============
+    this.totalSalesAmount = gross; // 이미 원 단위
+    this.platformFee = platformFeeSum; // 이미 원 단위
+    this.pgFee = pgFeeSum; // 이미 원 단위
+    this.totalFee = totalFeeSum; // 이미 원 단위
+    this.settlementAmount = net; // 이미 원 단위
+    this.totalRefundAmount = refund; // 이미 원 단위
+    this.refundCount = refundCnt;
   }
 }
