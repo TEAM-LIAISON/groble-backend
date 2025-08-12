@@ -22,4 +22,8 @@ public class AdminMakerDetailInfoDTO {
   private String businessLicenseOriginalFileName;
   private String businessLicenseFileUrl;
   private String taxInvoiceEmail;
+
+  private String phoneNumber;
+  private String marketLinkUrl;
+  private String adminMemo;
 }

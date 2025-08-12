@@ -15,4 +15,6 @@ public interface JpaMarketRepository extends JpaRepository<Market, Long> {
   Optional<Market> findByMarketLinkUrl(@Param("marketLinkUrl") String marketLinkUrl);
 
   boolean existsByMarketLinkUrl(String marketLinkUrl);
+
+  boolean existsByUserId(Long userId);
 }

@@ -49,7 +49,7 @@ public class PayplePaymentController {
   private final PaymentMapper paymentMapper;
 
   @Operation(
-      summary = "[❌ 앱카드 결제 승인] 페이플 앱카드 결제를 진행합니다.",
+      summary = "[✅ 앱카드 결제 승인] 페이플 앱카드 결제를 진행합니다.",
       description =
           """
           앱카드 결제 인증 결과를 수신하고, Payple 서버에 승인 요청을 보냅니다.

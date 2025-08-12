@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import liaison.groble.application.content.ContentReader;
+import liaison.groble.application.notification.service.NotificationReader;
 import liaison.groble.application.user.dto.UserHeaderDTO;
 import liaison.groble.application.user.dto.UserMyPageDetailDTO;
 import liaison.groble.application.user.dto.UserMyPageSummaryDTO;
@@ -32,6 +33,7 @@ public class UserServiceImpl implements UserService {
   // 변경: 24시간 (24 * 60 = 1440분)
   private final UserReader userReader;
   private final ContentReader contentReader;
+  private final NotificationReader notificationReader;
 
   /**
    * 사용자 역할 전환 (판매자/구매자 모드 전환)
@@ -155,7 +157,7 @@ public class UserServiceImpl implements UserService {
   @Override
   public UserHeaderDTO getUserHeaderInform(Long userId) {
     User user = userReader.getUserById(userId);
-
+    long unreadNotificationCount = notificationReader.countUnreadNotificationsByUserId(userId);
     boolean isLogin;
 
     if (user.getUserProfile() != null) {
@@ -173,7 +175,7 @@ public class UserServiceImpl implements UserService {
         .nickname(user.getNickname())
         .profileImageUrl(user.getProfileImageUrl())
         .canSwitchToSeller(user.isSeller())
-        .unreadNotificationCount(0) // TODO: 알림 개수 조회 로직 추가
+        .unreadNotificationCount(unreadNotificationCount)
         .alreadyRegisteredAsSeller(user.isSeller())
         .lastUserType(user.getLastUserType().name())
         .build();
