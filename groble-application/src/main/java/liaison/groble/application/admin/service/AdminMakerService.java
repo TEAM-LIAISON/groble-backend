@@ -33,8 +33,8 @@ public class AdminMakerService {
     SellerInfo sellerInfo = userReader.getSellerInfoWithUser(nickname);
     String marketLinkUrl = null;
 
-    if (userReader.existsMarketByUserId(userId)) {
-      Market market = userReader.getMarketWithUser(nickname);
+    if (userReader.existsMarketByUserId(sellerInfo.getUser().getId())) {
+      Market market = userReader.getMarket(sellerInfo.getUser().getId());
       marketLinkUrl = market.getMarketLinkUrl();
     }
 
