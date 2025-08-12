@@ -25,4 +25,9 @@ public class NotificationReader {
                 new EntityNotFoundException(
                     "알림을 찾을 수 없습니다. notificationId: " + notificationId + ", userId: " + userId));
   }
+
+  // 읽지 않은 알림 개수 조회
+  public long countUnreadNotificationsByUserId(Long userId) {
+    return notificationRepository.countUnreadByUserId(userId);
+  }
 }

@@ -8,4 +8,6 @@ public interface NotificationRepository {
   Notification save(Notification notification);
 
   Optional<Notification> findByIdAndUserId(Long notificationId, Long userId);
+
+  long countUnreadByUserId(Long userId);
 }
