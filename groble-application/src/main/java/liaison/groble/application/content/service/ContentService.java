@@ -886,6 +886,20 @@ public class ContentService {
       }
 
       content.setStatus(ContentStatus.ACTIVE);
+
+      final LocalDateTime nowInSeoul = LocalDateTime.now(ZoneId.of("Asia/Seoul"));
+
+      final ContentRegisterCreateReportDTO contentRegisterCreateReportDTO =
+          ContentRegisterCreateReportDTO.builder()
+              .nickname(content.getUser().getNickname())
+              .contentId(content.getId())
+              .contentTitle(content.getTitle())
+              .contentType(content.getContentType().name())
+              .createdAt(nowInSeoul)
+              .build();
+
+      discordContentRegisterReportService.sendCreateContentRegisterReport(
+          contentRegisterCreateReportDTO);
     } else {
       throw new IllegalArgumentException("콘텐츠는 판매 가능한 상태가 아닙니다.");
     }
