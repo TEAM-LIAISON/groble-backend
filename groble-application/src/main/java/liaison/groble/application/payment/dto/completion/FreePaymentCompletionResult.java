@@ -1,4 +1,4 @@
-package liaison.groble.application.payment.dto;
+package liaison.groble.application.payment.dto.completion;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -9,7 +9,7 @@ import lombok.Getter;
 /** 결제 완료 결과 */
 @Getter
 @Builder
-public class PaymentCompletionResult {
+public class FreePaymentCompletionResult {
   private final Long orderId;
   private final String merchantUid;
   private final Long paymentId;

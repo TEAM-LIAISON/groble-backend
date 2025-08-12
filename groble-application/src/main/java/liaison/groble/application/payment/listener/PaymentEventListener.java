@@ -3,6 +3,7 @@ package liaison.groble.application.payment.listener;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
+import liaison.groble.application.payment.event.FreePaymentCompletedEvent;
 import liaison.groble.application.payment.event.PaymentCompletedEvent;
 import liaison.groble.application.payment.event.PaymentRefundedEvent;
 import liaison.groble.application.payment.service.PaymentNotificationService;
@@ -37,6 +38,23 @@ public class PaymentEventListener {
 
     // 내부에서 비동기 서비스 호출
     paymentNotificationService.processAsyncPaymentCompletedEvent(event);
+
+    log.info("비동기 처리 요청 완료 - orderId: {}", event.getOrderId());
+  }
+
+  /**
+   * 무료 결제 완료 이벤트 처리
+   *
+   * <p>단순한 @EventListener로 이벤트를 수신하고, 내부에서 비동기 서비스를 호출합니다.
+   *
+   * @param event 결제 완료 이벤트
+   */
+  @EventListener
+  public void handleFreePaymentCompleted(FreePaymentCompletedEvent event) {
+    log.info("결제 완료 이벤트 수신 - orderId: {}, userId: {}", event.getOrderId(), event.getUserId());
+
+    // 내부에서 비동기 서비스 호출
+    paymentNotificationService.processAsyncFreePaymentCompletedEvent(event);
 
     log.info("비동기 처리 요청 완료 - orderId: {}", event.getOrderId());
   }

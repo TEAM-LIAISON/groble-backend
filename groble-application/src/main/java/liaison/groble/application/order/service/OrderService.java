@@ -12,8 +12,11 @@ import liaison.groble.application.order.dto.CreateOrderRequestDTO;
 import liaison.groble.application.order.dto.CreateOrderSuccessDTO;
 import liaison.groble.application.order.dto.OrderSuccessDTO;
 import liaison.groble.application.order.dto.ValidatedOrderOptionDTO;
+import liaison.groble.application.payment.dto.completion.FreePaymentCompletionResult;
+import liaison.groble.application.payment.event.PaymentCompletedEvent;
 import liaison.groble.application.purchase.service.PurchaseReader;
 import liaison.groble.application.user.service.UserReader;
+import liaison.groble.common.event.EventPublisher;
 import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.content.entity.ContentOption;
 import liaison.groble.domain.coupon.entity.UserCoupon;
@@ -57,10 +60,15 @@ public class OrderService {
   private final UserReader userReader;
   private final ContentReader contentReader;
   private final PurchaseReader purchaseReader;
+
+  // Repository
   private final OrderRepository orderRepository;
   private final UserCouponRepository userCouponRepository;
   private final PurchaseRepository purchaseRepository;
   private final PaymentRepository paymentRepository;
+
+  // Event Publisher
+  private final EventPublisher eventPublisher;
 
   @Transactional
   public CreateOrderSuccessDTO createOrderForUser(CreateOrderRequestDTO dto, Long userId) {
@@ -417,6 +425,30 @@ public class OrderService {
       order.completePayment();
       orderRepository.save(order);
 
+      // 5-2. 승인 성공 시 결제 완료 처리
+      FreePaymentCompletionResult freePaymentCompletionResult =
+          FreePaymentCompletionResult.builder()
+              .orderId(order.getId())
+              .merchantUid(order.getMerchantUid())
+              .paymentId(purchase.getPayment().getId())
+              .purchaseId(purchase.getId())
+              .userId(order.getUser().getId())
+              .contentId(purchase.getContent().getId())
+              .sellerId(purchase.getContent().getUser().getId())
+              .amount(purchase.getPayment().getPrice())
+              .completedAt(purchase.getPurchasedAt())
+              .sellerEmail(purchase.getContent().getUser().getEmail())
+              .contentTitle(purchase.getContent().getTitle())
+              .nickname(order.getUser().getNickname())
+              .contentType(purchase.getContent().getContentType().name())
+              .optionId(purchase.getSelectedOptionId())
+              .selectedOptionName(purchase.getSelectedOptionName())
+              .purchasedAt(purchase.getPurchasedAt())
+              .build();
+
+      // 6. 결제 완료 이벤트 발행
+      publishFreePaymentCompletedEvent(freePaymentCompletionResult);
+
       log.info(
           "무료 주문 구매 처리 성공 - orderId: {}, paymentId: {}, purchaseId: {}, userId: {}, contentId: {}",
           order.getId(),
@@ -676,5 +708,43 @@ public class OrderService {
         order.getFinalPrice(),
         order.getDiscountPrice(),
         isFree);
+  }
+
+  /** 결제 완료 이벤트 발행 */
+  private void publishFreePaymentCompletedEvent(
+      FreePaymentCompletionResult freePaymentCompletionResult) {
+    log.info("=== 무료 결제 이벤트 발행 시작 === orderId: {}", freePaymentCompletionResult.getOrderId());
+
+    try {
+      PaymentCompletedEvent event =
+          PaymentCompletedEvent.builder()
+              .orderId(freePaymentCompletionResult.getOrderId())
+              .merchantUid(freePaymentCompletionResult.getMerchantUid())
+              .paymentId(freePaymentCompletionResult.getPaymentId())
+              .purchaseId(freePaymentCompletionResult.getPurchaseId())
+              .userId(freePaymentCompletionResult.getUserId())
+              .contentId(freePaymentCompletionResult.getContentId())
+              .sellerId(freePaymentCompletionResult.getSellerId())
+              .amount(freePaymentCompletionResult.getAmount())
+              .completedAt(freePaymentCompletionResult.getCompletedAt())
+              .sellerEmail(freePaymentCompletionResult.getSellerEmail())
+              .contentTitle(freePaymentCompletionResult.getContentTitle())
+              .nickname(freePaymentCompletionResult.getNickname())
+              .contentType(freePaymentCompletionResult.getContentType())
+              .optionId(freePaymentCompletionResult.getOptionId())
+              .selectedOptionName(freePaymentCompletionResult.getSelectedOptionName())
+              .purchasedAt(freePaymentCompletionResult.getPurchasedAt())
+              .build();
+
+      log.info("무료 결제 이벤트 객체 생성 완료: orderId={}", event.getOrderId());
+
+      eventPublisher.publish(event); // 이 부분이 있나요?
+
+      log.info("=== 무료 결제 이벤트 발행 완료 === orderId: {}", freePaymentCompletionResult.getOrderId());
+
+    } catch (Exception e) {
+      log.error("무료 결제 이벤트 발행 중 예외 발생 - orderId: {}", freePaymentCompletionResult.getOrderId(), e);
+      throw e; // 또는 log만 남기고 넘어갈지 결정
+    }
   }
 }
