@@ -350,6 +350,7 @@ public class PaymentTransactionService {
 
     // Settlement에 항목 추가
     settlement.addSettlementItem(settlementItem);
+    settlementWriter.saveSettlementItem(settlementItem);
     settlementWriter.saveSettlement(settlement);
 
     // ========== 반올림 결과 상세 로그 ==========
