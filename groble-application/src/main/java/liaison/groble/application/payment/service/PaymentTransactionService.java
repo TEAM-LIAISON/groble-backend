@@ -142,7 +142,18 @@ public class PaymentTransactionService {
     Purchase purchase = createPurchase(order);
 
     // =============== 정산 데이터 관리 로직 시작 ===============
-
+    try {
+      createSettlementData(purchase, payment);
+      log.info("정산 데이터 생성 완료 - purchaseId: {}", purchase.getId());
+    } catch (DataIntegrityViolationException e) {
+      // 멱등성 보장: 이미 정산 데이터가 존재하는 경우 (재시도 등)
+      log.warn("정산 데이터가 이미 존재합니다 - purchaseId: {}", purchase.getId());
+    } catch (Exception e) {
+      // 정산 실패는 결제 완료를 롤백하지 않음 (보상 트랜잭션 또는 배치로 처리)
+      log.error("정산 데이터 생성 실패 - purchaseId: {}, error: {}", purchase.getId(), e.getMessage());
+      // 실패한 정산은 별도 배치나 수동 처리를 위해 큐에 저장
+      //          settlementFailureQueue.add(purchase.getId());
+    }
     // =============== 정산 데이터 관리 로직 끝 ===============
     log.info(
         "결제 완료 처리 완료 - orderId: {}, paymentId: {}, purchaseId: {}",
