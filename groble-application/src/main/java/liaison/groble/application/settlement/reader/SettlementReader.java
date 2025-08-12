@@ -1,0 +1,75 @@
+package liaison.groble.application.settlement.reader;
+
+import java.time.LocalDate;
+import java.util.Optional;
+
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+
+import liaison.groble.common.exception.EntityNotFoundException;
+import liaison.groble.domain.settlement.entity.Settlement;
+import liaison.groble.domain.settlement.entity.SettlementItem;
+import liaison.groble.domain.settlement.repository.SettlementItemRepository;
+import liaison.groble.domain.settlement.repository.SettlementRepository;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+/**
+ * 정산 조회 담당 전용 컴포넌트
+ *
+ * <p>모든 정산 조회 로직을 중앙화하여 일관성 있는 조회 및 예외 처리를 제공
+ */
+@Slf4j
+@Component
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
+public class SettlementReader {
+  private final SettlementRepository settlementRepository;
+  private final SettlementItemRepository settlementItemRepository;
+
+  /**
+   * 정산 정보 조회 (필수)
+   *
+   * @throws EntityNotFoundException 정산 정보가 없는 경우
+   */
+  public Settlement getSettlementByUserIdAndPeriod(
+      Long sellerId, LocalDate periodStart, LocalDate periodEnd) {
+    return settlementRepository
+        .findByUserIdAndPeriod(sellerId, periodStart, periodEnd)
+        .orElseThrow(
+            () ->
+                new EntityNotFoundException(
+                    String.format(
+                        "정산 정보를 찾을 수 없습니다 - sellerId: %d, period: %s ~ %s",
+                        sellerId, periodStart, periodEnd)));
+  }
+
+  /**
+   * 정산 정보 조회 (Optional)
+   *
+   * @return 정산 정보 Optional
+   */
+  public Optional<Settlement> findSettlementByUserIdAndPeriod(
+      Long sellerId, LocalDate periodStart, LocalDate periodEnd) {
+    return settlementRepository.findByUserIdAndPeriod(sellerId, periodStart, periodEnd);
+  }
+
+  /** 정산 항목 존재 여부 확인 */
+  public boolean existsSettlementItemByPurchaseId(Long purchaseId) {
+    return settlementItemRepository.existsByPurchaseId(purchaseId);
+  }
+
+  /** 구매 ID로 정산 항목 조회 */
+  public Optional<SettlementItem> findSettlementItemByPurchaseId(Long purchaseId) {
+    return settlementItemRepository.findByPurchaseId(purchaseId);
+  }
+
+  /** 구매 ID로 정산 항목 조회 (필수) */
+  public SettlementItem getSettlementItemByPurchaseId(Long purchaseId) {
+    return settlementItemRepository
+        .findByPurchaseId(purchaseId)
+        .orElseThrow(
+            () -> new EntityNotFoundException("정산 항목을 찾을 수 없습니다 - purchaseId: " + purchaseId));
+  }
+}

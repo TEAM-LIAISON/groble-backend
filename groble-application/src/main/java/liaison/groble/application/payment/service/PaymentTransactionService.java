@@ -1,8 +1,11 @@
 package liaison.groble.application.payment.service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Optional;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,6 +18,9 @@ import liaison.groble.application.payment.dto.PaypleAuthResultDTO;
 import liaison.groble.application.payment.dto.completion.PaymentCompletionResult;
 import liaison.groble.application.payment.validator.PaymentValidator;
 import liaison.groble.application.purchase.service.PurchaseReader;
+import liaison.groble.application.settlement.reader.SettlementReader;
+import liaison.groble.application.settlement.writer.SettlementWriter;
+import liaison.groble.application.user.service.UserReader;
 import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.payment.entity.Payment;
 import liaison.groble.domain.payment.entity.PayplePayment;
@@ -22,6 +28,9 @@ import liaison.groble.domain.payment.repository.PaymentRepository;
 import liaison.groble.domain.payment.repository.PayplePaymentRepository;
 import liaison.groble.domain.purchase.entity.Purchase;
 import liaison.groble.domain.purchase.repository.PurchaseRepository;
+import liaison.groble.domain.settlement.entity.Settlement;
+import liaison.groble.domain.settlement.entity.SettlementItem;
+import liaison.groble.domain.user.entity.User;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,6 +51,9 @@ public class PaymentTransactionService {
   private final PayplePaymentRepository payplePaymentRepository;
   private final PaymentRepository paymentRepository;
   private final PurchaseRepository purchaseRepository;
+  private final SettlementReader settlementReader;
+  private final SettlementWriter settlementWriter;
+  private final UserReader userReader;
 
   /**
    * 인증 정보 저장 및 검증
@@ -129,6 +141,9 @@ public class PaymentTransactionService {
     // 6. Purchase 생성 및 저장
     Purchase purchase = createPurchase(order);
 
+    // =============== 정산 데이터 관리 로직 시작 ===============
+
+    // =============== 정산 데이터 관리 로직 끝 ===============
     log.info(
         "결제 완료 처리 완료 - orderId: {}, paymentId: {}, purchaseId: {}",
         order.getId(),
@@ -300,5 +315,71 @@ public class PaymentTransactionService {
   /** 할부 개월수 정규화 */
   private String normalizeQuota(String quota) {
     return (quota == null || quota.trim().isEmpty()) ? "00" : quota;
+  }
+
+  /** 정산 데이터 생성 - Reader 활용 */
+  private void createSettlementData(Purchase purchase, Payment payment) {
+    Long sellerId = purchase.getContent().getUser().getId();
+
+    // 정산 기간 계산
+    LocalDate purchaseDate = purchase.getPurchasedAt().toLocalDate();
+    LocalDate periodStart = purchaseDate.withDayOfMonth(1);
+    LocalDate periodEnd = purchaseDate.withDayOfMonth(purchaseDate.lengthOfMonth());
+
+    // Settlement 조회 또는 생성 - Reader 활용
+    Settlement settlement = getOrCreateSettlement(sellerId, periodStart, periodEnd);
+
+    // 멱등성 체크 - Reader 활용
+    if (settlementReader.existsSettlementItemByPurchaseId(purchase.getId())) {
+      log.info("정산 항목이 이미 존재합니다 - purchaseId: {}", purchase.getId());
+      return;
+    }
+
+    // SettlementItem 생성
+    SettlementItem settlementItem =
+        SettlementItem.builder()
+            .settlement(settlement)
+            .purchase(purchase)
+            .platformFeeRate(settlement.getPlatformFeeRate())
+            .pgFeeRate(settlement.getPgFeeRate())
+            .build();
+
+    // Settlement에 항목 추가
+    settlement.addSettlementItem(settlementItem);
+    settlementWriter.saveSettlement(settlement);
+
+    log.info(
+        "정산 데이터 생성 완료 - settlementId: {}, itemId: {}, salesAmount: {}, settlementAmount: {}",
+        settlement.getId(),
+        settlementItem.getId(),
+        settlementItem.getSalesAmount(),
+        settlementItem.getSettlementAmount());
+  }
+
+  /** Settlement 조회 또는 생성 - Reader와 Creator 활용 */
+  private Settlement getOrCreateSettlement(
+      Long sellerId, LocalDate periodStart, LocalDate periodEnd) {
+    // 1차: Reader로 조회 시도
+    Optional<Settlement> existingSettlement =
+        settlementReader.findSettlementByUserIdAndPeriod(sellerId, periodStart, periodEnd);
+
+    if (existingSettlement.isPresent()) {
+      return existingSettlement.get();
+    }
+
+    // 2차: 없으면 Creator로 생성 시도
+    try {
+      User seller = userReader.getUserById(sellerId);
+      return settlementWriter.createSettlement(seller, periodStart, periodEnd);
+    } catch (DataIntegrityViolationException e) {
+      // 3차: UNIQUE 제약 위반 (동시 생성) - Reader로 재조회
+      log.info(
+          "Settlement 동시 생성 감지, 재조회 - sellerId: {}, period: {} ~ {}",
+          sellerId,
+          periodStart,
+          periodEnd);
+
+      return settlementReader.getSettlementByUserIdAndPeriod(sellerId, periodStart, periodEnd);
+    }
   }
 }

@@ -99,7 +99,7 @@ public class AdminMakerController {
     };
   }
 
-  @Operation(summary = "[✅ 관리자 메이커] 메모 추가")
+  @Operation(summary = "[✅ 관리자] 메모 추가", description = "사용자에 대한 관리자 메모를 추가합니다.")
   @RequireRole("ROLE_ADMIN")
   @PostMapping("/maker/memo/{nickname}")
   public ResponseEntity<GrobleResponse<AdminMemoResponse>> saveAdminMemo(
