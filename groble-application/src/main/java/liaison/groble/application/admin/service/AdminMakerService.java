@@ -8,6 +8,7 @@ import liaison.groble.application.notification.service.NotificationService;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.domain.file.entity.FileInfo;
 import liaison.groble.domain.file.repository.FileRepository;
+import liaison.groble.domain.market.entity.Market;
 import liaison.groble.domain.user.entity.SellerInfo;
 import liaison.groble.domain.user.enums.SellerVerificationStatus;
 
@@ -26,6 +27,12 @@ public class AdminMakerService {
   @Transactional(readOnly = true)
   public AdminMakerDetailInfoDTO getMakerDetailInfo(Long userId, String nickname) {
     SellerInfo sellerInfo = userReader.getSellerInfoWithUser(nickname);
+    String marketLinkUrl = null;
+
+    if (userReader.existsMarketByUserId(userId)) {
+      Market market = userReader.getMarketWithUser(nickname);
+      marketLinkUrl = market.getMarketLinkUrl();
+    }
 
     String copyOfBankBookOriginalFileName = null;
     String businessLicenseOriginalFileName = null;
@@ -60,6 +67,9 @@ public class AdminMakerService {
         .businessLicenseOriginalFileName(businessLicenseOriginalFileName)
         .businessLicenseFileUrl(sellerInfo.getBusinessLicenseFileUrl())
         .taxInvoiceEmail(sellerInfo.getTaxInvoiceEmail())
+        .phoneNumber(sellerInfo.getUser().getPhoneNumber())
+        .marketLinkUrl(marketLinkUrl)
+        .adminMemo(sellerInfo.getUser().getAdminMemo())
         .build();
   }
 

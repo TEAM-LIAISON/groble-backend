@@ -108,6 +108,9 @@ public class User extends BaseTimeEntity {
   @Column(name = "is_seller")
   private boolean isSeller = false;
 
+  @Column(name = "admin_memo", columnDefinition = "TEXT")
+  private String adminMemo;
+
   /** IntegratedAccount 설정 (양방향 관계) */
   public void setIntegratedAccount(IntegratedAccount integratedAccount) {
     this.integratedAccount = integratedAccount;
@@ -139,6 +142,10 @@ public class User extends BaseTimeEntity {
 
   public void setSeller(boolean isSeller) {
     this.isSeller = isSeller;
+  }
+
+  public void setAdminMemo(String adminMemo) {
+    this.adminMemo = adminMemo;
   }
 
   // 역할 관리 메서드

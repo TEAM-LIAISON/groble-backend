@@ -110,4 +110,8 @@ public class UserReader {
   public boolean existsByMarketLinkUrl(String marketLinkUrl) {
     return marketRepository.existsByMarketLinkUrl(marketLinkUrl);
   }
+
+  public boolean existsMarketByUserId(Long userId) {
+    return marketRepository.existsByUserId(userId);
+  }
 }
