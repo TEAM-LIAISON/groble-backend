@@ -1,2 +1,2 @@
 ALTER TABLE `users`
-  ADD COLUMN IF NOT EXISTS `admin_memo` TEXT NULL COMMENT '관리자 메모';
+  ADD COLUMN `admin_memo` TEXT NULL COMMENT '관리자 메모';
