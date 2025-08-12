@@ -4,12 +4,15 @@ import javax.annotation.processing.Generated;
 
 import org.springframework.stereotype.Component;
 
-import liaison.groble.api.model.admin.response.AdminMakerDetailInfoResponse;
+import liaison.groble.api.model.admin.request.AdminMemoRequest;
+import liaison.groble.api.model.admin.response.maker.AdminMakerDetailInfoResponse;
+import liaison.groble.api.model.admin.response.maker.AdminMemoResponse;
 import liaison.groble.application.admin.dto.AdminMakerDetailInfoDTO;
+import liaison.groble.application.admin.dto.AdminMemoDTO;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-08-07T01:42:05+0900",
+    date = "2025-08-12T20:22:59+0900",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.10 (Amazon.com Inc.)")
 @Component
 public class AdminMakerMapperImpl implements AdminMakerMapper {
@@ -79,7 +82,46 @@ public class AdminMakerMapperImpl implements AdminMakerMapper {
     if (adminMakerDetailInfoDTO.getTaxInvoiceEmail() != null) {
       adminMakerDetailInfoResponse.taxInvoiceEmail(adminMakerDetailInfoDTO.getTaxInvoiceEmail());
     }
+    if (adminMakerDetailInfoDTO.getPhoneNumber() != null) {
+      adminMakerDetailInfoResponse.phoneNumber(adminMakerDetailInfoDTO.getPhoneNumber());
+    }
+    if (adminMakerDetailInfoDTO.getMarketLinkUrl() != null) {
+      adminMakerDetailInfoResponse.marketLinkUrl(adminMakerDetailInfoDTO.getMarketLinkUrl());
+    }
+    if (adminMakerDetailInfoDTO.getAdminMemo() != null) {
+      adminMakerDetailInfoResponse.adminMemo(adminMakerDetailInfoDTO.getAdminMemo());
+    }
 
     return adminMakerDetailInfoResponse.build();
+  }
+
+  @Override
+  public AdminMemoDTO toAdminMemoDTO(AdminMemoRequest adminMemoRequest) {
+    if (adminMemoRequest == null) {
+      return null;
+    }
+
+    AdminMemoDTO.AdminMemoDTOBuilder adminMemoDTO = AdminMemoDTO.builder();
+
+    if (adminMemoRequest.getAdminMemo() != null) {
+      adminMemoDTO.adminMemo(adminMemoRequest.getAdminMemo());
+    }
+
+    return adminMemoDTO.build();
+  }
+
+  @Override
+  public AdminMemoResponse toAdminMemoResponse(AdminMemoDTO adminMemoDTO) {
+    if (adminMemoDTO == null) {
+      return null;
+    }
+
+    AdminMemoResponse.AdminMemoResponseBuilder adminMemoResponse = AdminMemoResponse.builder();
+
+    if (adminMemoDTO.getAdminMemo() != null) {
+      adminMemoResponse.adminMemo(adminMemoDTO.getAdminMemo());
+    }
+
+    return adminMemoResponse.build();
   }
 }

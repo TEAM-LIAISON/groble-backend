@@ -11,5 +11,7 @@ public interface MarketRepository {
 
   boolean existsByMarketLinkUrl(String marketLinkUrl);
 
+  boolean existsByUserId(Long userId);
+
   Market save(Market market);
 }

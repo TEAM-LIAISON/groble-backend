@@ -23,4 +23,9 @@ public class NotificationRepositoryImpl implements NotificationRepository {
   public Optional<Notification> findByIdAndUserId(Long notificationId, Long userId) {
     return jpaNotificationRepository.findByIdAndUserId(notificationId, userId);
   }
+
+  @Override
+  public long countUnreadByUserId(Long userId) {
+    return jpaNotificationRepository.countUnreadByUserId(userId);
+  }
 }

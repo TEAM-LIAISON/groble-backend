@@ -30,6 +30,11 @@ public class MarketRepositoryImpl implements MarketRepository {
   }
 
   @Override
+  public boolean existsByUserId(Long userId) {
+    return jpaMarketRepository.existsByUserId(userId);
+  }
+
+  @Override
   public Market save(Market market) {
     return jpaMarketRepository.save(market);
   }

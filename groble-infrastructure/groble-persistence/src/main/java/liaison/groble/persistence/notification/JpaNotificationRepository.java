@@ -12,4 +12,15 @@ public interface JpaNotificationRepository extends JpaRepository<Notification, L
   @Query("SELECT n FROM Notification n WHERE n.id = :notificationId AND n.user.id = :userId")
   Optional<Notification> findByIdAndUserId(
       @Param("notificationId") Long notificationId, @Param("userId") Long userId);
+
+  @Query(
+      value =
+          """
+  SELECT COUNT(*)
+  FROM notifications
+  WHERE receiver_user_id = :userId
+    AND notification_read_status = 'UNREAD'
+""",
+      nativeQuery = true)
+  long countUnreadByUserId(@Param("userId") Long userId);
 }

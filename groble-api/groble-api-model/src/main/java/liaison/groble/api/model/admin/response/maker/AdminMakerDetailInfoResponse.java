@@ -1,4 +1,4 @@
-package liaison.groble.api.model.admin.response;
+package liaison.groble.api.model.admin.response.maker;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -140,4 +140,28 @@ public class AdminMakerDetailInfoResponse {
       format = "email",
       requiredMode = Schema.RequiredMode.REQUIRED)
   private String taxInvoiceEmail;
+
+  /** 13. 회원 전화번호 */
+  @Schema(
+      description = "회원 전화번호",
+      example = "010-1234-5678",
+      type = "string",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private String phoneNumber;
+
+  /** 14. 마켓 링크 URL */
+  @Schema(
+      description = "마켓 링크 URL",
+      example = "dongmindongmin",
+      type = "string",
+      requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  private String marketLinkUrl;
+
+  /** 15. 관리자 메모 */
+  @Schema(
+      description = "관리자 메모 내용",
+      example = "불량 사용자에요",
+      type = "string",
+      requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  private String adminMemo;
 }

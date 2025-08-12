@@ -13,7 +13,7 @@ import liaison.groble.application.coupon.dto.UserCouponResponseDTO;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-08-07T01:42:05+0900",
+    date = "2025-08-12T01:08:05+0900",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.10 (Amazon.com Inc.)")
 @Component
 public class CouponMapperImpl implements CouponMapper {

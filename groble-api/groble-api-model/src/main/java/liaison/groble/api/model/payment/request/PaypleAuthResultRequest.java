@@ -1,5 +1,6 @@
 package liaison.groble.api.model.payment.request;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -7,6 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 @Schema(name = "PaypleAuthResultRequest", description = "Payple 인증 결과 요청 모델")
 @Getter
 @NoArgsConstructor

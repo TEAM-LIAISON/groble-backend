@@ -167,6 +167,10 @@ public class ContentService {
       if (content.getStatus() != ContentStatus.DRAFT) {
         if (content.getStatus() == ContentStatus.ACTIVE) {
           content.setStatus(ContentStatus.DRAFT); // 상태 수동 변경
+          // 대표 콘텐츠였다면 대표 콘텐츠 해제되도록 수정
+          if (content.getIsRepresentative()) {
+            content.setRepresentative(false);
+          }
         } else {
           throw new ContentEditException("해당 콘텐츠는 수정할 수 없는 상태입니다.");
         }
@@ -882,6 +886,20 @@ public class ContentService {
       }
 
       content.setStatus(ContentStatus.ACTIVE);
+
+      final LocalDateTime nowInSeoul = LocalDateTime.now(ZoneId.of("Asia/Seoul"));
+
+      final ContentRegisterCreateReportDTO contentRegisterCreateReportDTO =
+          ContentRegisterCreateReportDTO.builder()
+              .nickname(content.getUser().getNickname())
+              .contentId(content.getId())
+              .contentTitle(content.getTitle())
+              .contentType(content.getContentType().name())
+              .createdAt(nowInSeoul)
+              .build();
+
+      discordContentRegisterReportService.sendCreateContentRegisterReport(
+          contentRegisterCreateReportDTO);
     } else {
       throw new IllegalArgumentException("콘텐츠는 판매 가능한 상태가 아닙니다.");
     }

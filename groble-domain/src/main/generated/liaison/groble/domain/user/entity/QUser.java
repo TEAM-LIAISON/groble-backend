@@ -26,6 +26,8 @@ public class QUser extends EntityPathBase<User> {
 
     public final EnumPath<liaison.groble.domain.user.enums.AccountType> accountType = createEnum("accountType", liaison.groble.domain.user.enums.AccountType.class);
 
+    public final StringPath adminMemo = createString("adminMemo");
+
     //inherited
     public final DateTimePath<java.time.LocalDateTime> createdAt = _super.createdAt;
 
