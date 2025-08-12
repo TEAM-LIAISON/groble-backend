@@ -86,7 +86,11 @@ public class Settlement extends BaseTimeEntity {
   private String settlementNote; // 정산 메모
 
   // 정산 항목들
-  @OneToMany(mappedBy = "settlement", cascade = CascadeType.ALL, orphanRemoval = true)
+  // Settlement.java
+  @OneToMany(
+      mappedBy = "settlement",
+      cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE},
+      orphanRemoval = true)
   private List<SettlementItem> settlementItems = new ArrayList<>();
 
   // 수수료율 (기본값: 플랫폼 1.5%, PG 1.7%)
