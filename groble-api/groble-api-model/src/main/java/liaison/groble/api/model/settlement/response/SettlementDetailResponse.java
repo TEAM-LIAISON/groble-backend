@@ -68,7 +68,7 @@ public class SettlementDetailResponse {
 
   // 세금계산서 버튼이 활성화 되더라도 간이과세자나 비사업자는 발행 불가
   @Schema(
-      description = "세금계산서 발행 가능 여부",
+      description = "세금계산서 발행 가능 여부 (모달 2개 관리용)",
       example = "true",
       type = "boolean",
       requiredMode = Schema.RequiredMode.REQUIRED)
