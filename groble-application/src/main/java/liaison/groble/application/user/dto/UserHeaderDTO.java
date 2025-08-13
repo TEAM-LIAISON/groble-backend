@@ -14,6 +14,7 @@ import lombok.Setter;
 public class UserHeaderDTO {
   private Boolean isLogin;
   private String nickname;
+  private String email;
   private String profileImageUrl;
   private boolean canSwitchToSeller;
   private long unreadNotificationCount;

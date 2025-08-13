@@ -5,7 +5,9 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 
 import jakarta.persistence.*;
 
@@ -42,6 +44,14 @@ public class Settlement extends BaseTimeEntity {
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "user_id", nullable = false)
   private User user; // 정산 대상자 (판매자)
+
+  // 세금계산서 관계 추가
+  @OneToMany(mappedBy = "settlement", fetch = FetchType.LAZY)
+  private List<TaxInvoice> taxInvoices = new ArrayList<>();
+
+  // 세금계산서 발급 가능 여부 (수동 관리)
+  @Column(name = "tax_invoice_eligible", nullable = false)
+  private Boolean taxInvoiceEligible = false;
 
   // 정산 기간 (시작일)
   @Column(name = "settlement_start_date", nullable = false)
@@ -309,5 +319,17 @@ public class Settlement extends BaseTimeEntity {
   // 종료일 기준 다음달 1일 계산
   private static LocalDate computeScheduledDate(LocalDate endDate) {
     return endDate.plusMonths(1).withDayOfMonth(1);
+  }
+
+  // 가장 최근 유효한 세금계산서 조회
+  public Optional<TaxInvoice> getCurrentTaxInvoice() {
+    return taxInvoices.stream()
+        .filter(inv -> inv.getStatus() == TaxInvoice.InvoiceStatus.ISSUED)
+        .max(Comparator.comparing(TaxInvoice::getIssuedDate));
+  }
+
+  // 세금계산서 발급 가능 여부 수동 설정
+  public void setTaxInvoiceEligible(boolean eligible) {
+    this.taxInvoiceEligible = eligible;
   }
 }

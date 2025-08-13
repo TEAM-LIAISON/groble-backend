@@ -58,4 +58,27 @@ public class SettlementDetailResponse {
       type = "number",
       requiredMode = Schema.RequiredMode.REQUIRED)
   private BigDecimal platformFee; // 플랫폼 수수료 (1.5%)
+
+  @Schema(
+      description = "세금계산서 버튼 활성화 여부",
+      example = "true",
+      type = "boolean",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private Boolean isTaxInvoiceButtonEnabled; // 세금계산서 버튼 활성화 여부
+
+  // 세금계산서 버튼이 활성화 되더라도 간이과세자나 비사업자는 발행 불가
+  @Schema(
+      description = "세금계산서 발행 가능 여부",
+      example = "true",
+      type = "boolean",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private Boolean isTaxInvoiceIssuable; // 세금계산서 발행 가능 여부
+
+  // 세금계산서 URL
+  @Schema(
+      description = "세금계산서 URL",
+      example = "https://example.com/tax-invoice/12345",
+      type = "string",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private String taxInvoiceUrl; // 세금계산서 URL
 }
