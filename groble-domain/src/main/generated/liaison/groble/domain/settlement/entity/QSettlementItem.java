@@ -57,6 +57,10 @@ public class QSettlementItem extends EntityPathBase<SettlementItem> {
 
     public final NumberPath<java.math.BigDecimal> settlementAmount = createNumber("settlementAmount", java.math.BigDecimal.class);
 
+    public final BooleanPath taxInvoiceEligible = createBoolean("taxInvoiceEligible");
+
+    public final ListPath<TaxInvoice, QTaxInvoice> taxInvoices = this.<TaxInvoice, QTaxInvoice>createList("taxInvoices", TaxInvoice.class, QTaxInvoice.class, PathInits.DIRECT2);
+
     public final NumberPath<java.math.BigDecimal> totalFee = createNumber("totalFee", java.math.BigDecimal.class);
 
     //inherited

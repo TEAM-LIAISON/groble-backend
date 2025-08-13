@@ -5,7 +5,9 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 
 import jakarta.persistence.*;
 
@@ -43,12 +45,25 @@ public class Settlement extends BaseTimeEntity {
   @JoinColumn(name = "user_id", nullable = false)
   private User user; // 정산 대상자 (판매자)
 
-  // 정산 기간
+  // 세금계산서 관계 추가
+  @OneToMany(mappedBy = "settlement", fetch = FetchType.LAZY)
+  private List<TaxInvoice> taxInvoices = new ArrayList<>();
+
+  // 세금계산서 발급 가능 여부 (수동 관리)
+  @Column(name = "tax_invoice_eligible", nullable = false)
+  private Boolean taxInvoiceEligible = false;
+
+  // 정산 기간 (시작일)
   @Column(name = "settlement_start_date", nullable = false)
   private LocalDate settlementStartDate;
 
+  // 정산 기간 (종료일)
   @Column(name = "settlement_end_date", nullable = false)
   private LocalDate settlementEndDate;
+
+  // 필드 추가
+  @Column(name = "scheduled_settlement_date", nullable = false)
+  private LocalDate scheduledSettlementDate;
 
   // 금액 정보 - DECIMAL(14,2)로 확대
   @Column(name = "total_sales_amount", nullable = false, precision = 14, scale = 2)
@@ -138,6 +153,7 @@ public class Settlement extends BaseTimeEntity {
         platformFeeRate != null ? platformFeeRate : new BigDecimal("0.0150"); // 기본 1.5%
     this.pgFeeRate = pgFeeRate != null ? pgFeeRate : new BigDecimal("0.0170"); // 기본 1.7%
     this.status = SettlementStatus.PENDING;
+    this.scheduledSettlementDate = computeScheduledDate(this.settlementEndDate);
   }
 
   // === 비즈니스 메서드 ===
@@ -298,5 +314,22 @@ public class Settlement extends BaseTimeEntity {
     this.settlementAmount = net; // 이미 원 단위
     this.totalRefundAmount = refund; // 이미 원 단위
     this.refundCount = refundCnt;
+  }
+
+  // 종료일 기준 다음달 1일 계산
+  private static LocalDate computeScheduledDate(LocalDate endDate) {
+    return endDate.plusMonths(1).withDayOfMonth(1);
+  }
+
+  // 가장 최근 유효한 세금계산서 조회
+  public Optional<TaxInvoice> getCurrentTaxInvoice() {
+    return taxInvoices.stream()
+        .filter(inv -> inv.getStatus() == TaxInvoice.InvoiceStatus.ISSUED)
+        .max(Comparator.comparing(TaxInvoice::getIssuedDate));
+  }
+
+  // 세금계산서 발급 가능 여부 수동 설정
+  public void setTaxInvoiceEligible(boolean eligible) {
+    this.taxInvoiceEligible = eligible;
   }
 }
