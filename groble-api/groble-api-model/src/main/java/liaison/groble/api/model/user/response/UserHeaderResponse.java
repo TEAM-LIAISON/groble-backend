@@ -17,6 +17,9 @@ public class UserHeaderResponse {
   @Schema(description = "사용자 닉네임", example = "홍길동")
   private String nickname;
 
+  @Schema(description = "사용자 이메일", example = "email@email.com")
+  private String email;
+
   @Schema(description = "프로필 이미지 URL", example = "https://example.com/profile.jpg")
   private String profileImageUrl;
 

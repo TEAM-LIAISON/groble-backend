@@ -45,6 +45,8 @@ public class QSettlement extends EntityPathBase<Settlement> {
 
     public final NumberPath<Integer> refundCount = createNumber("refundCount", Integer.class);
 
+    public final DatePath<java.time.LocalDate> scheduledSettlementDate = createDate("scheduledSettlementDate", java.time.LocalDate.class);
+
     public final DateTimePath<java.time.LocalDateTime> settledAt = createDateTime("settledAt", java.time.LocalDateTime.class);
 
     public final NumberPath<java.math.BigDecimal> settlementAmount = createNumber("settlementAmount", java.math.BigDecimal.class);
@@ -58,6 +60,10 @@ public class QSettlement extends EntityPathBase<Settlement> {
     public final DatePath<java.time.LocalDate> settlementStartDate = createDate("settlementStartDate", java.time.LocalDate.class);
 
     public final EnumPath<Settlement.SettlementStatus> status = createEnum("status", Settlement.SettlementStatus.class);
+
+    public final BooleanPath taxInvoiceEligible = createBoolean("taxInvoiceEligible");
+
+    public final ListPath<TaxInvoice, QTaxInvoice> taxInvoices = this.<TaxInvoice, QTaxInvoice>createList("taxInvoices", TaxInvoice.class, QTaxInvoice.class, PathInits.DIRECT2);
 
     public final NumberPath<java.math.BigDecimal> totalFee = createNumber("totalFee", java.math.BigDecimal.class);
 

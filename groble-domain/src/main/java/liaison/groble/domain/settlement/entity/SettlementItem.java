@@ -3,6 +3,10 @@ package liaison.groble.domain.settlement.entity;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -13,6 +17,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
@@ -48,6 +53,10 @@ public class SettlementItem extends BaseTimeEntity {
   @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "purchase_id", nullable = false, unique = true)
   private Purchase purchase; // 구매 정보와 1:1 매핑
+
+  // 세금계산서 관계 추가
+  @OneToMany(mappedBy = "settlementItem", fetch = FetchType.LAZY)
+  private List<TaxInvoice> taxInvoices = new ArrayList<>();
 
   // 정산 금액 정보 - DECIMAL(14,2)로 확대
   @Column(name = "sales_amount", nullable = false, precision = 14, scale = 2)
@@ -91,6 +100,10 @@ public class SettlementItem extends BaseTimeEntity {
 
   @Column(name = "refunded_at")
   private LocalDateTime refundedAt;
+
+  // 세금계산서 발급 가능 여부 (수동 관리)
+  @Column(name = "tax_invoice_eligible", nullable = false)
+  private Boolean taxInvoiceEligible = false;
 
   // 동시성 제어를 위한 버전
   @Version private Long version;
@@ -227,6 +240,11 @@ public class SettlementItem extends BaseTimeEntity {
     this.settlement = settlement;
   }
 
+  // 세금계산서 발급 가능 여부 수동 설정
+  public void setTaxInvoiceEligible(boolean eligible) {
+    this.taxInvoiceEligible = eligible;
+  }
+
   // === 조회 메서드 ===
 
   /** 환불 여부 확인 (null-safe) */
@@ -242,5 +260,12 @@ public class SettlementItem extends BaseTimeEntity {
   /** 총 수수료율 조회 */
   public BigDecimal getTotalFeeRate() {
     return capturedPlatformFeeRate.add(capturedPgFeeRate).setScale(4, RoundingMode.HALF_UP);
+  }
+
+  // 가장 최근 유효한 세금계산서 조회
+  public Optional<TaxInvoice> getCurrentTaxInvoice() {
+    return taxInvoices.stream()
+        .filter(inv -> inv.getStatus() == TaxInvoice.InvoiceStatus.ISSUED)
+        .max(Comparator.comparing(TaxInvoice::getIssuedDate));
   }
 }

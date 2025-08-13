@@ -173,6 +173,7 @@ public class UserServiceImpl implements UserService {
     return UserHeaderDTO.builder()
         .isLogin(isLogin)
         .nickname(user.getNickname())
+        .email(user.getEmail())
         .profileImageUrl(user.getProfileImageUrl())
         .canSwitchToSeller(user.isSeller())
         .unreadNotificationCount(unreadNotificationCount)

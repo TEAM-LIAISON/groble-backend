@@ -146,6 +146,7 @@ public class UserController {
           UserHeaderResponse.builder()
               .isLogin(false)
               .nickname(null)
+              .email(null)
               .profileImageUrl(null)
               .canSwitchToSeller(false)
               .unreadNotificationCount(0)
