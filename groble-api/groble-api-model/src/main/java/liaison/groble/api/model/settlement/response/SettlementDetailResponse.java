@@ -3,6 +3,8 @@ package liaison.groble.api.model.settlement.response;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
@@ -17,6 +19,7 @@ public class SettlementDetailResponse {
       example = "2023-01-01",
       type = "string",
       requiredMode = Schema.RequiredMode.REQUIRED)
+  @JsonFormat(pattern = "yyyy-MM-dd")
   private LocalDate settlementStartDate;
 
   // 정산 종료일 (년도 + 월) - Settlement class
@@ -25,6 +28,7 @@ public class SettlementDetailResponse {
       example = "2023-01-31",
       type = "string",
       requiredMode = Schema.RequiredMode.REQUIRED)
+  @JsonFormat(pattern = "yyyy-MM-dd")
   private LocalDate settlementEndDate;
 
   // 정산(예정)일
@@ -33,6 +37,7 @@ public class SettlementDetailResponse {
       example = "2023-02-01",
       type = "string",
       requiredMode = Schema.RequiredMode.REQUIRED)
+  @JsonFormat(pattern = "yyyy-MM-dd")
   private LocalDate scheduledSettlementDate;
 
   // 정산(예정)금액
