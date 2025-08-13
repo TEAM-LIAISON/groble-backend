@@ -11,7 +11,6 @@ import lombok.Getter;
 public class SettlementDetailDTO {
   // 정산 시작일 (년도 + 월) - Settlement class
   private LocalDate settlementStartDate;
-
   // 정산 종료일 (년도 + 월) - Settlement class
   private LocalDate settlementEndDate;
   // 정산(예정)일
