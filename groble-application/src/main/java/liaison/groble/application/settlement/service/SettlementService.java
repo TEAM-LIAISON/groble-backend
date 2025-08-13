@@ -11,6 +11,8 @@ import liaison.groble.application.settlement.reader.TaxInvoiceReader;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.domain.settlement.entity.Settlement;
 import liaison.groble.domain.settlement.entity.TaxInvoice;
+import liaison.groble.domain.user.entity.SellerInfo;
+import liaison.groble.domain.user.enums.BusinessType;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,7 +36,13 @@ public class SettlementService {
     // 수동으로 관리
     Boolean isTaxInvoiceButtonEnabled = settlement.getTaxInvoiceEligible();
     // isBusinessSeller인 경우에 세금계산서 발행 가능 (모달 관리)
-    Boolean isTaxInvoiceIssuable = userReader.getSellerInfoWithUser(userId).getIsBusinessSeller();
+    SellerInfo sellerInfo = userReader.getSellerInfoWithUser(userId);
+    boolean isTaxInvoiceIssuable =
+        sellerInfo != null
+            && Boolean.TRUE.equals(sellerInfo.getIsBusinessSeller()) // 사업자 판매자
+            && (sellerInfo.getBusinessType() == BusinessType.CORPORATE
+                || sellerInfo.getBusinessType() == BusinessType.INDIVIDUAL_NORMAL);
+
     String taxInvoiceUrl = null;
 
     // 세금계산서가 발행이 가능하다면

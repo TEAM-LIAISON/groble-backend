@@ -69,7 +69,7 @@ public class SettlementDetailResponse {
       example = "true",
       type = "boolean",
       requiredMode = Schema.RequiredMode.REQUIRED)
-  private Boolean isTaxInvoiceButtonEnabled; // 세금계산서 버튼 활성화 여부
+  private Boolean isTaxInvoiceButtonEnabled; // 세금계산서 버튼 활성화 여부 (settlement - taxInvoiceEligible)
 
   // 세금계산서 버튼이 활성화 되더라도 간이과세자나 비사업자는 발행 불가
   @Schema(
