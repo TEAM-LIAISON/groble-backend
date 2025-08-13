@@ -1,6 +1,7 @@
 package liaison.groble.application.settlement.reader;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Component;
@@ -53,6 +54,10 @@ public class SettlementReader {
   public Optional<Settlement> findSettlementByUserIdAndPeriod(
       Long sellerId, LocalDate periodStart, LocalDate periodEnd) {
     return settlementRepository.findByUserIdAndPeriod(sellerId, periodStart, periodEnd);
+  }
+
+  public List<Settlement> findAllByUserId(Long userId) {
+    return settlementRepository.findAllByUserId(userId);
   }
 
   /** 정산 항목 존재 여부 확인 */

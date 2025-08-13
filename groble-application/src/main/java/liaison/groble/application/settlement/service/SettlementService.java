@@ -1,11 +1,15 @@
 package liaison.groble.application.settlement.service;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.time.ZoneId;
+import java.util.Objects;
 
 import org.springframework.stereotype.Service;
 
 import liaison.groble.application.settlement.dto.SettlementDetailDTO;
+import liaison.groble.application.settlement.dto.SettlementOverviewDTO;
 import liaison.groble.application.settlement.reader.SettlementReader;
 import liaison.groble.application.settlement.reader.TaxInvoiceReader;
 import liaison.groble.application.user.service.UserReader;
@@ -27,6 +31,38 @@ public class SettlementService {
   private final SettlementReader settlementReader;
   private final TaxInvoiceReader taxInvoiceReader;
 
+  private static final ZoneId KST = ZoneId.of("Asia/Seoul");
+
+  public SettlementOverviewDTO getSettlementOverview(Long userId) {
+
+    SellerInfo sellerInfo = userReader.getSellerInfoWithUser(userId);
+
+    // 2) 누적 정산 금액 = 모든 Settlement의 settlementAmount 합계
+    BigDecimal totalSettlementAmount =
+        settlementReader.findAllByUserId(userId).stream()
+            .map(Settlement::getSettlementAmount)
+            .filter(Objects::nonNull)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+    // 3) 이번 달 정산 예정 금액 = 이번 달 기간 Settlement의 settlementAmount (없으면 0)
+    YearMonth nowYm = YearMonth.now(KST);
+    LocalDate start = nowYm.atDay(1);
+    LocalDate end = nowYm.atEndOfMonth();
+
+    BigDecimal currentMonthSettlementAmount =
+        settlementReader
+            .findSettlementByUserIdAndPeriod(userId, start, end)
+            .map(Settlement::getSettlementAmount)
+            .orElse(BigDecimal.ZERO);
+
+    return SettlementOverviewDTO.builder()
+        .verificationStatus(sellerInfo.getVerificationStatus().name())
+        .totalSettlementAmount(totalSettlementAmount)
+        .currentMonthSettlementAmount(currentMonthSettlementAmount)
+        .build();
+  }
+
+  // 세금계산서 상세 내역 조회
   public SettlementDetailDTO getSettlementDetail(Long userId, YearMonth yearMonth) {
     LocalDate startDate = yearMonth.atDay(1);
     LocalDate endDate = yearMonth.atEndOfMonth();
