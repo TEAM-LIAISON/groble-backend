@@ -4,12 +4,16 @@ import javax.annotation.processing.Generated;
 
 import org.springframework.stereotype.Component;
 
+import liaison.groble.api.model.settlement.response.MonthlySettlementOverviewResponse;
 import liaison.groble.api.model.settlement.response.SettlementDetailResponse;
+import liaison.groble.api.model.settlement.response.SettlementOverviewResponse;
+import liaison.groble.application.settlement.dto.MonthlySettlementOverviewDTO;
 import liaison.groble.application.settlement.dto.SettlementDetailDTO;
+import liaison.groble.application.settlement.dto.SettlementOverviewDTO;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-08-13T15:04:14+0900",
+    date = "2025-08-13T17:34:21+0900",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.10 (Amazon.com Inc.)")
 @Component
 public class SettlementMapperImpl implements SettlementMapper {
@@ -42,7 +46,72 @@ public class SettlementMapperImpl implements SettlementMapper {
     if (settlementDetailDTO.getPlatformFee() != null) {
       settlementDetailResponse.platformFee(settlementDetailDTO.getPlatformFee());
     }
+    if (settlementDetailDTO.getIsTaxInvoiceButtonEnabled() != null) {
+      settlementDetailResponse.isTaxInvoiceButtonEnabled(
+          settlementDetailDTO.getIsTaxInvoiceButtonEnabled());
+    }
+    if (settlementDetailDTO.getIsTaxInvoiceIssuable() != null) {
+      settlementDetailResponse.isTaxInvoiceIssuable(settlementDetailDTO.getIsTaxInvoiceIssuable());
+    }
+    if (settlementDetailDTO.getTaxInvoiceUrl() != null) {
+      settlementDetailResponse.taxInvoiceUrl(settlementDetailDTO.getTaxInvoiceUrl());
+    }
 
     return settlementDetailResponse.build();
+  }
+
+  @Override
+  public SettlementOverviewResponse toSettlementOverviewResponse(
+      SettlementOverviewDTO settlementOverviewDTO) {
+    if (settlementOverviewDTO == null) {
+      return null;
+    }
+
+    SettlementOverviewResponse.SettlementOverviewResponseBuilder settlementOverviewResponse =
+        SettlementOverviewResponse.builder();
+
+    if (settlementOverviewDTO.getVerificationStatus() != null) {
+      settlementOverviewResponse.verificationStatus(settlementOverviewDTO.getVerificationStatus());
+    }
+    if (settlementOverviewDTO.getTotalSettlementAmount() != null) {
+      settlementOverviewResponse.totalSettlementAmount(
+          settlementOverviewDTO.getTotalSettlementAmount());
+    }
+    if (settlementOverviewDTO.getCurrentMonthSettlementAmount() != null) {
+      settlementOverviewResponse.currentMonthSettlementAmount(
+          settlementOverviewDTO.getCurrentMonthSettlementAmount());
+    }
+
+    return settlementOverviewResponse.build();
+  }
+
+  @Override
+  public MonthlySettlementOverviewResponse toMonthlySettlementOverviewResponse(
+      MonthlySettlementOverviewDTO monthlySettlementOverviewDTO) {
+    if (monthlySettlementOverviewDTO == null) {
+      return null;
+    }
+
+    MonthlySettlementOverviewResponse.MonthlySettlementOverviewResponseBuilder
+        monthlySettlementOverviewResponse = MonthlySettlementOverviewResponse.builder();
+
+    if (monthlySettlementOverviewDTO.getSettlementStartDate() != null) {
+      monthlySettlementOverviewResponse.settlementStartDate(
+          monthlySettlementOverviewDTO.getSettlementStartDate());
+    }
+    if (monthlySettlementOverviewDTO.getSettlementEndDate() != null) {
+      monthlySettlementOverviewResponse.settlementEndDate(
+          monthlySettlementOverviewDTO.getSettlementEndDate());
+    }
+    if (monthlySettlementOverviewDTO.getSettlementAmount() != null) {
+      monthlySettlementOverviewResponse.settlementAmount(
+          monthlySettlementOverviewDTO.getSettlementAmount());
+    }
+    if (monthlySettlementOverviewDTO.getSettlementStatus() != null) {
+      monthlySettlementOverviewResponse.settlementStatus(
+          monthlySettlementOverviewDTO.getSettlementStatus());
+    }
+
+    return monthlySettlementOverviewResponse.build();
   }
 }

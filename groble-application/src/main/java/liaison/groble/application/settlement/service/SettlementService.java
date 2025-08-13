@@ -4,15 +4,21 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.ZoneId;
+import java.util.List;
 import java.util.Objects;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import liaison.groble.application.settlement.dto.MonthlySettlementOverviewDTO;
 import liaison.groble.application.settlement.dto.SettlementDetailDTO;
 import liaison.groble.application.settlement.dto.SettlementOverviewDTO;
 import liaison.groble.application.settlement.reader.SettlementReader;
 import liaison.groble.application.settlement.reader.TaxInvoiceReader;
 import liaison.groble.application.user.service.UserReader;
+import liaison.groble.common.response.PageResponse;
+import liaison.groble.domain.settlement.dto.FlatMonthlySettlement;
 import liaison.groble.domain.settlement.entity.Settlement;
 import liaison.groble.domain.settlement.entity.TaxInvoice;
 import liaison.groble.domain.user.entity.SellerInfo;
@@ -59,6 +65,32 @@ public class SettlementService {
         .verificationStatus(sellerInfo.getVerificationStatus().name())
         .totalSettlementAmount(totalSettlementAmount)
         .currentMonthSettlementAmount(currentMonthSettlementAmount)
+        .build();
+  }
+
+  public PageResponse<MonthlySettlementOverviewDTO> getMonthlySettlements(
+      Long userId, Pageable pageable) {
+    Page<FlatMonthlySettlement> page =
+        settlementReader.findMonthlySettlementsByUserId(userId, pageable);
+
+    List<MonthlySettlementOverviewDTO> items =
+        page.getContent().stream().map(this::convertFlatDTOToMonthlyDTO).toList();
+
+    PageResponse.MetaData meta =
+        PageResponse.MetaData.builder()
+            .sortBy(pageable.getSort().iterator().next().getProperty())
+            .sortDirection(pageable.getSort().iterator().next().getDirection().name())
+            .build();
+
+    return PageResponse.from(page, items, meta);
+  }
+
+  private MonthlySettlementOverviewDTO convertFlatDTOToMonthlyDTO(FlatMonthlySettlement flat) {
+    return MonthlySettlementOverviewDTO.builder()
+        .settlementStartDate(flat.getSettlementStartDate())
+        .settlementEndDate(flat.getSettlementEndDate())
+        .settlementAmount(flat.getSettlementAmount())
+        .settlementStatus(flat.getSettlementStatus())
         .build();
   }
 
