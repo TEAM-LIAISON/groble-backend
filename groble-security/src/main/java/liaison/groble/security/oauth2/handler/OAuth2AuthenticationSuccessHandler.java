@@ -117,6 +117,8 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     // 인증 속성 정리
     clearAuthenticationAttributes(request);
 
+    log.info("targetUrl 결정: {}", targetUrl);
+
     // 프론트엔드로 리다이렉트
     getRedirectStrategy().sendRedirect(request, response, targetUrl);
   }
