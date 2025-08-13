@@ -12,9 +12,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import liaison.groble.api.model.settlement.response.MonthlySettlementOverviewResponse;
+import liaison.groble.api.model.settlement.response.PerTransactionSettlementOverviewResponse;
 import liaison.groble.api.model.settlement.response.SettlementDetailResponse;
 import liaison.groble.api.model.settlement.response.SettlementOverviewResponse;
 import liaison.groble.application.settlement.dto.MonthlySettlementOverviewDTO;
+import liaison.groble.application.settlement.dto.PerTransactionSettlementOverviewDTO;
 import liaison.groble.application.settlement.dto.SettlementDetailDTO;
 import liaison.groble.application.settlement.dto.SettlementOverviewDTO;
 import liaison.groble.application.settlement.service.SettlementService;
@@ -41,7 +43,7 @@ public class SettlementController {
   private static final String SETTLEMENT_OVERVIEW_PATH = "/settlements/overview";
   private static final String SETTLEMENT_LIST_PATH = "/settlements";
   private static final String SETTLEMENT_DETAIL_PATH = "/settlements/{yearMonth}";
-  private static final String SALES_LIST_PATH = "/settlements/sales";
+  private static final String SALES_LIST_PATH = "/settlements/sales/{yearMonth}";
 
   // 응답 메시지 상수화
   private static final String SETTLEMENT_OVERVIEW_SUCCESS_MESSAGE = "정산 개요 조회 성공";
@@ -76,7 +78,6 @@ public class SettlementController {
   }
 
   // TODO: (2) 정산 내역 전체 조회 (페이징) - 월별 정산 상태, 정산 금액 제공
-
   @RequireRole("ROLE_SELLER")
   @Operation(
       summary = "[💰 정산] 정산 내역 전체 조회",
@@ -92,7 +93,7 @@ public class SettlementController {
           @Auth Accessor accessor,
           @RequestParam(value = "page", defaultValue = "0") int page,
           @RequestParam(value = "size", defaultValue = "12") int size,
-          @RequestParam(value = "sort", defaultValue = "createdAt,popular") String sort) {
+          @RequestParam(value = "sort", defaultValue = "createdAt") String sort) {
     Pageable pageable = PageUtils.createPageable(page, size, sort);
     PageResponse<MonthlySettlementOverviewDTO> dtoPage =
         settlementService.getMonthlySettlements(accessor.getUserId(), pageable);
@@ -125,6 +126,25 @@ public class SettlementController {
   }
 
   // TODO: (4) 총 판매 내역 조회 (페이징) - 콘텐츠별 정산 금액, 콘텐츠별 판매 시각
+  @RequireRole("ROLE_SELLER")
+  @Operation(
+      summary = "[💰 정산] 총 판매 내역 조회",
+      description = "총 판매 내역을 콘텐츠별로 조회합니다. 페이지네이션 및 정렬 기능을 지원합니다.")
+  @GetMapping(SALES_LIST_PATH)
+  @Logging(item = "Settlement", action = "getSalesList", includeParam = true, includeResult = true)
+  public ResponseEntity<GrobleResponse<PageResponse<PerTransactionSettlementOverviewResponse>>>
+      getSalesList(
+          @Auth Accessor accessor,
+          @PathVariable("yearMonth") YearMonth yearMonth,
+          @RequestParam(value = "page", defaultValue = "0") int page,
+          @RequestParam(value = "size", defaultValue = "12") int size,
+          @RequestParam(value = "sort", defaultValue = "createdAt") String sort) {
+    Pageable pageable = PageUtils.createPageable(page, size, sort);
+    PageResponse<PerTransactionSettlementOverviewDTO> dtoPage =
+        settlementService.getPerTransactionSettlements(accessor.getUserId(), yearMonth, pageable);
+    PageResponse<PerTransactionSettlementOverviewResponse> responsePage =
+        settlementMapper.toPerTransactionSettlementOverviewResponsePage(dtoPage);
 
-  // TODO: 세금계산서 다운로드
+    return responseHelper.success(responsePage, SALES_LIST_SUCCESS_MESSAGE, HttpStatus.OK);
+  }
 }

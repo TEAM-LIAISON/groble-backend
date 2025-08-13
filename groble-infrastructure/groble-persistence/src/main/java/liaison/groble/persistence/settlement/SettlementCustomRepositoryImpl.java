@@ -1,5 +1,6 @@
 package liaison.groble.persistence.settlement;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,7 +15,9 @@ import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
 import liaison.groble.domain.settlement.dto.FlatMonthlySettlement;
+import liaison.groble.domain.settlement.dto.FlatPerTransactionSettlement;
 import liaison.groble.domain.settlement.entity.QSettlement;
+import liaison.groble.domain.settlement.entity.QSettlementItem;
 import liaison.groble.domain.settlement.repository.SettlementCustomRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -61,5 +64,54 @@ public class SettlementCustomRepositoryImpl implements SettlementCustomRepositor
             .orElse(0L);
 
     return new PageImpl<>(items, pageable, total);
+  }
+
+  @Override
+  public Page<FlatPerTransactionSettlement> findPerTransactionSettlementsByUserIdAndYearMonth(
+      Long userId, LocalDate periodStart, LocalDate periodEnd, Pageable pageable) {
+
+    QSettlementItem qSettlementItem = QSettlementItem.settlementItem;
+    QSettlement qSettlement = QSettlement.settlement;
+
+    // [기간] purchasedAt ∈ [periodStart 00:00, periodEnd+1 00:00)
+    BooleanExpression cond =
+        qSettlementItem
+            .settlement
+            .user
+            .id
+            .eq(userId)
+            .and(qSettlementItem.purchasedAt.goe(periodStart.atStartOfDay()))
+            .and(qSettlementItem.purchasedAt.lt(periodEnd.plusDays(1).atStartOfDay()));
+
+    // 메인 조회
+    JPAQuery<FlatPerTransactionSettlement> query =
+        jpaQueryFactory
+            .select(
+                Projections.fields(
+                    FlatPerTransactionSettlement.class,
+                    qSettlementItem.contentTitle.as("contentTitle"),
+                    qSettlementItem.settlementAmount.as("settlementAmount"),
+                    qSettlementItem.purchasedAt.as("purchasedAt")))
+            .from(qSettlementItem)
+            .leftJoin(qSettlementItem.settlement, qSettlement)
+            .where(cond)
+            .orderBy(qSettlementItem.purchasedAt.desc());
+
+    // 페이징
+    List<FlatPerTransactionSettlement> content =
+        query.offset(pageable.getOffset()).limit(pageable.getPageSize()).fetch();
+
+    // 카운트
+    Long total =
+        Optional.ofNullable(
+                jpaQueryFactory
+                    .select(qSettlementItem.count())
+                    .from(qSettlementItem)
+                    .join(qSettlementItem.settlement, qSettlement)
+                    .where(cond)
+                    .fetchOne())
+            .orElse(0L);
+
+    return new PageImpl<>(content, pageable, total);
   }
 }

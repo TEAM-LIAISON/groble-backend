@@ -10,8 +10,10 @@ import java.util.Objects;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import liaison.groble.application.settlement.dto.MonthlySettlementOverviewDTO;
+import liaison.groble.application.settlement.dto.PerTransactionSettlementOverviewDTO;
 import liaison.groble.application.settlement.dto.SettlementDetailDTO;
 import liaison.groble.application.settlement.dto.SettlementOverviewDTO;
 import liaison.groble.application.settlement.reader.SettlementReader;
@@ -19,6 +21,7 @@ import liaison.groble.application.settlement.reader.TaxInvoiceReader;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.common.response.PageResponse;
 import liaison.groble.domain.settlement.dto.FlatMonthlySettlement;
+import liaison.groble.domain.settlement.dto.FlatPerTransactionSettlement;
 import liaison.groble.domain.settlement.entity.Settlement;
 import liaison.groble.domain.settlement.entity.TaxInvoice;
 import liaison.groble.domain.user.entity.SellerInfo;
@@ -39,6 +42,7 @@ public class SettlementService {
 
   private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
+  @Transactional
   public SettlementOverviewDTO getSettlementOverview(Long userId) {
 
     SellerInfo sellerInfo = userReader.getSellerInfoWithUser(userId);
@@ -68,6 +72,7 @@ public class SettlementService {
         .build();
   }
 
+  @Transactional
   public PageResponse<MonthlySettlementOverviewDTO> getMonthlySettlements(
       Long userId, Pageable pageable) {
     Page<FlatMonthlySettlement> page =
@@ -129,6 +134,37 @@ public class SettlementService {
         .isTaxInvoiceButtonEnabled(isTaxInvoiceButtonEnabled)
         .isTaxInvoiceIssuable(isTaxInvoiceIssuable)
         .taxInvoiceUrl(taxInvoiceUrl)
+        .build();
+  }
+
+  @Transactional
+  public PageResponse<PerTransactionSettlementOverviewDTO> getPerTransactionSettlements(
+      Long userId, YearMonth yearMonth, Pageable pageable) {
+    LocalDate startDate = yearMonth.atDay(1);
+    LocalDate endDate = yearMonth.atEndOfMonth();
+
+    Page<FlatPerTransactionSettlement> page =
+        settlementReader.findPerTransactionSettlementsByUserIdAndYearMonth(
+            userId, startDate, endDate, pageable);
+
+    List<PerTransactionSettlementOverviewDTO> items =
+        page.getContent().stream().map(this::convertFlatDTOToPerTransactionDTO).toList();
+
+    PageResponse.MetaData meta =
+        PageResponse.MetaData.builder()
+            .sortBy(pageable.getSort().iterator().next().getProperty())
+            .sortDirection(pageable.getSort().iterator().next().getDirection().name())
+            .build();
+
+    return PageResponse.from(page, items, meta);
+  }
+
+  private PerTransactionSettlementOverviewDTO convertFlatDTOToPerTransactionDTO(
+      FlatPerTransactionSettlement flat) {
+    return PerTransactionSettlementOverviewDTO.builder()
+        .contentTitle(flat.getContentTitle())
+        .settlementAmount(flat.getSettlementAmount())
+        .purchasedAt(flat.getPurchasedAt())
         .build();
   }
 }
