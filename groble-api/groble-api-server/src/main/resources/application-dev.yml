@@ -1,32 +1,32 @@
 spring:
   profiles:
     group:
-      blue: blue, common, secret-dev, proxy
-      green: green, common, secret-dev, proxy
+      blue: blue, common, secret-dev
+      green: green, common, secret-dev
 
 server:
   env: blue
 
 ---
-spring:
-  config:
-    activate:
-      on-profile: proxy
-
-# 프록시 설정
-http:
-  proxy:
-    host: ${HTTP_PROXY_HOST:localhost}
-    port: ${HTTP_PROXY_PORT:3128}
-    enabled: true
-
-# 외부 API 호출용 프록시 설정
-external:
-  api:
-    proxy:
-      enabled: true
-      host: ${HTTP_PROXY_HOST:localhost}
-      port: ${HTTP_PROXY_PORT:3128}
+#spring:
+#  config:
+#    activate:
+#      on-profile: proxy
+#
+## 프록시 설정
+#http:
+#  proxy:
+#    host: ${HTTP_PROXY_HOST:localhost}
+#    port: ${HTTP_PROXY_PORT:3128}
+#    enabled: true
+#
+## 외부 API 호출용 프록시 설정
+#external:
+#  api:
+#    proxy:
+#      enabled: true
+#      host: ${HTTP_PROXY_HOST:localhost}
+#      port: ${HTTP_PROXY_PORT:3128}
 
 ---
 
