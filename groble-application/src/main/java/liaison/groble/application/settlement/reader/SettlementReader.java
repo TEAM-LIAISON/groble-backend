@@ -1,14 +1,20 @@
 package liaison.groble.application.settlement.reader;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import liaison.groble.common.exception.EntityNotFoundException;
+import liaison.groble.domain.settlement.dto.FlatMonthlySettlement;
+import liaison.groble.domain.settlement.dto.FlatPerTransactionSettlement;
 import liaison.groble.domain.settlement.entity.Settlement;
 import liaison.groble.domain.settlement.entity.SettlementItem;
+import liaison.groble.domain.settlement.repository.SettlementCustomRepository;
 import liaison.groble.domain.settlement.repository.SettlementItemRepository;
 import liaison.groble.domain.settlement.repository.SettlementRepository;
 
@@ -26,6 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 @Transactional(readOnly = true)
 public class SettlementReader {
   private final SettlementRepository settlementRepository;
+  private final SettlementCustomRepository settlementCustomRepository;
   private final SettlementItemRepository settlementItemRepository;
 
   /**
@@ -53,6 +60,21 @@ public class SettlementReader {
   public Optional<Settlement> findSettlementByUserIdAndPeriod(
       Long sellerId, LocalDate periodStart, LocalDate periodEnd) {
     return settlementRepository.findByUserIdAndPeriod(sellerId, periodStart, periodEnd);
+  }
+
+  public Page<FlatMonthlySettlement> findMonthlySettlementsByUserId(
+      Long userId, Pageable pageable) {
+    return settlementCustomRepository.findMonthlySettlementsByUserId(userId, pageable);
+  }
+
+  public Page<FlatPerTransactionSettlement> findPerTransactionSettlementsByUserIdAndYearMonth(
+      Long userId, LocalDate periodStart, LocalDate periodEnd, Pageable pageable) {
+    return settlementCustomRepository.findPerTransactionSettlementsByUserIdAndYearMonth(
+        userId, periodStart, periodEnd, pageable);
+  }
+
+  public List<Settlement> findAllByUserId(Long userId) {
+    return settlementRepository.findAllByUserId(userId);
   }
 
   /** 정산 항목 존재 여부 확인 */

@@ -1,6 +1,7 @@
 package liaison.groble.persistence.settlement;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -19,4 +20,6 @@ public interface JpaSettlementRepository extends JpaRepository<Settlement, Long>
       @Param("userId") Long userId,
       @Param("startDate") LocalDate startDate,
       @Param("endDate") LocalDate endDate);
+
+  List<Settlement> findAllByUserId(Long userId);
 }

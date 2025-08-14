@@ -16,7 +16,7 @@ import liaison.groble.application.user.dto.UserMyPageSummaryDTO;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-08-12T01:08:05+0900",
+    date = "2025-08-14T15:45:55+0900",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.10 (Amazon.com Inc.)")
 @Component
 public class UserMapperImpl implements UserMapper {
@@ -51,6 +51,9 @@ public class UserMapperImpl implements UserMapper {
     }
     if (userHeaderDTO.getNickname() != null) {
       userHeaderResponse.nickname(userHeaderDTO.getNickname());
+    }
+    if (userHeaderDTO.getEmail() != null) {
+      userHeaderResponse.email(userHeaderDTO.getEmail());
     }
     if (userHeaderDTO.getProfileImageUrl() != null) {
       userHeaderResponse.profileImageUrl(userHeaderDTO.getProfileImageUrl());
