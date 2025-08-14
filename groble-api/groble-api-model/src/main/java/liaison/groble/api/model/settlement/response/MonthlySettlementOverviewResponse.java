@@ -5,8 +5,6 @@ import java.time.LocalDate;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 
-import liaison.groble.domain.settlement.entity.Settlement;
-
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
@@ -45,5 +43,5 @@ public class MonthlySettlementOverviewResponse {
       example = "COMPLETED",
       allowableValues = {"PENDING", "PROCESSING", "COMPLETED", "ON_HOLD", "CANCELLED"},
       requiredMode = Schema.RequiredMode.REQUIRED)
-  private Settlement.SettlementStatus settlementStatus;
+  private String settlementStatus;
 }

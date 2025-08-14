@@ -1,6 +1,9 @@
 package liaison.groble.api.model.settlement.response;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
@@ -24,7 +27,7 @@ public class PerTransactionSettlementOverviewResponse {
       example = "9980000",
       type = "string",
       requiredMode = Schema.RequiredMode.REQUIRED)
-  private String settlementAmount;
+  private BigDecimal settlementAmount;
 
   // 판매일
   @Schema(
@@ -32,5 +35,6 @@ public class PerTransactionSettlementOverviewResponse {
       example = "2023-01-15T10:30:00",
       type = "date-time",
       requiredMode = Schema.RequiredMode.REQUIRED)
+  @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
   private LocalDateTime purchasedAt;
 }

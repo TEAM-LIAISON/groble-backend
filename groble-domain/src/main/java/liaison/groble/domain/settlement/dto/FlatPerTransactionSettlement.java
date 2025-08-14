@@ -1,5 +1,6 @@
 package liaison.groble.domain.settlement.dto;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import lombok.AllArgsConstructor;
@@ -13,6 +14,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class FlatPerTransactionSettlement {
   private String contentTitle;
-  private String settlementAmount;
+  private BigDecimal settlementAmount;
   private LocalDateTime purchasedAt;
 }
