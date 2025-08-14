@@ -15,6 +15,8 @@ import liaison.groble.api.model.settlement.response.MonthlySettlementOverviewRes
 import liaison.groble.api.model.settlement.response.PerTransactionSettlementOverviewResponse;
 import liaison.groble.api.model.settlement.response.SettlementDetailResponse;
 import liaison.groble.api.model.settlement.response.SettlementOverviewResponse;
+import liaison.groble.api.model.settlement.response.swagger.MonthlySettlementOverviewListResponse;
+import liaison.groble.api.model.settlement.response.swagger.PerTransactionSettlementOverviewListResponse;
 import liaison.groble.application.settlement.dto.MonthlySettlementOverviewDTO;
 import liaison.groble.application.settlement.dto.PerTransactionSettlementOverviewDTO;
 import liaison.groble.application.settlement.dto.SettlementDetailDTO;
@@ -31,6 +33,10 @@ import liaison.groble.common.utils.PageUtils;
 import liaison.groble.mapping.settlement.SettlementMapper;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
@@ -61,6 +67,13 @@ public class SettlementController {
   // TODO: (1) 정산 개요 조회 (메이커 인증 여부 / 누적 정산 금액 / 정산 예정 금액)
   @RequireRole("ROLE_SELLER")
   @Operation(summary = "[💰 정산] 정산 개요 조회", description = "메이커 인증 여부, 누적 정산 금액, 정산 예정 금액을 조회합니다.")
+  @ApiResponse(
+      responseCode = "200",
+      description = SETTLEMENT_OVERVIEW_SUCCESS_MESSAGE,
+      content =
+          @Content(
+              mediaType = "application/json",
+              schema = @Schema(implementation = SettlementOverviewResponse.class)))
   @GetMapping(SETTLEMENT_OVERVIEW_PATH)
   @Logging(
       item = "Settlement",
@@ -82,6 +95,13 @@ public class SettlementController {
   @Operation(
       summary = "[💰 정산] 정산 내역 전체 조회",
       description = "정산 내역을 월별로 조회합니다. 페이지네이션 및 정렬 기능을 지원합니다.")
+  @ApiResponse(
+      responseCode = "200",
+      description = SETTLEMENT_LIST_SUCCESS_MESSAGE,
+      content =
+          @Content(
+              mediaType = "application/json",
+              schema = @Schema(implementation = MonthlySettlementOverviewListResponse.class)))
   @GetMapping(SETTLEMENT_LIST_PATH)
   @Logging(
       item = "Settlement",
@@ -92,7 +112,7 @@ public class SettlementController {
       getSettlementList(
           @Auth Accessor accessor,
           @RequestParam(value = "page", defaultValue = "0") int page,
-          @RequestParam(value = "size", defaultValue = "12") int size,
+          @RequestParam(value = "size", defaultValue = "20") int size,
           @RequestParam(value = "sort", defaultValue = "createdAt") String sort) {
     Pageable pageable = PageUtils.createPageable(page, size, sort);
     PageResponse<MonthlySettlementOverviewDTO> dtoPage =
@@ -108,6 +128,13 @@ public class SettlementController {
   @Operation(
       summary = "[💰 정산] 정산 상세 내역 조회",
       description = "월별 정산 상세 내역 조회, 세금계산서 다운로드 가능 여부를 조회합니다.")
+  @ApiResponse(
+      responseCode = "200",
+      description = SETTLEMENT_DETAIL_SUCCESS_MESSAGE,
+      content =
+          @Content(
+              mediaType = "application/json",
+              schema = @Schema(implementation = SettlementDetailResponse.class)))
   @GetMapping(SETTLEMENT_DETAIL_PATH)
   @Logging(
       item = "Settlement",
@@ -115,7 +142,14 @@ public class SettlementController {
       includeParam = true,
       includeResult = true)
   public ResponseEntity<GrobleResponse<SettlementDetailResponse>> getSettlementDetail(
-      @Auth Accessor accessor, @PathVariable("yearMonth") YearMonth yearMonth) {
+      @Auth Accessor accessor,
+      @Parameter(
+              name = "yearMonth",
+              description = "yyyy-MM 형식",
+              example = "2025-08",
+              schema = @Schema(type = "string", pattern = "^\\d{4}-(0[1-9]|1[0-2])$"))
+          @PathVariable("yearMonth")
+          YearMonth yearMonth) {
 
     SettlementDetailDTO settlementDetailDTO =
         settlementService.getSettlementDetail(accessor.getUserId(), yearMonth);
@@ -130,14 +164,28 @@ public class SettlementController {
   @Operation(
       summary = "[💰 정산] 총 판매 내역 조회",
       description = "총 판매 내역을 콘텐츠별로 조회합니다. 페이지네이션 및 정렬 기능을 지원합니다.")
+  @ApiResponse(
+      responseCode = "200",
+      description = SALES_LIST_SUCCESS_MESSAGE,
+      content =
+          @Content(
+              mediaType = "application/json",
+              schema =
+                  @Schema(implementation = PerTransactionSettlementOverviewListResponse.class)))
   @GetMapping(SALES_LIST_PATH)
   @Logging(item = "Settlement", action = "getSalesList", includeParam = true, includeResult = true)
   public ResponseEntity<GrobleResponse<PageResponse<PerTransactionSettlementOverviewResponse>>>
       getSalesList(
           @Auth Accessor accessor,
-          @PathVariable("yearMonth") YearMonth yearMonth,
+          @Parameter(
+                  name = "yearMonth",
+                  description = "yyyy-MM 형식",
+                  example = "2025-08",
+                  schema = @Schema(type = "string", pattern = "^\\d{4}-(0[1-9]|1[0-2])$"))
+              @PathVariable("yearMonth")
+              YearMonth yearMonth,
           @RequestParam(value = "page", defaultValue = "0") int page,
-          @RequestParam(value = "size", defaultValue = "12") int size,
+          @RequestParam(value = "size", defaultValue = "20") int size,
           @RequestParam(value = "sort", defaultValue = "createdAt") String sort) {
     Pageable pageable = PageUtils.createPageable(page, size, sort);
     PageResponse<PerTransactionSettlementOverviewDTO> dtoPage =

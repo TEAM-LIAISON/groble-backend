@@ -121,11 +121,11 @@ springdoc:
 logging:
   level:
     root: INFO
-    liaison: DEBUG
-    org.springdoc: DEBUG
-    io.swagger.v3: DEBUG
-    software.amazon.awssdk: DEBUG
-    org.apache.http: DEBUG
+    liaison: INFO
+    org.springdoc: INFO
+    io.swagger.v3: INFO
+    software.amazon.awssdk: INFO
+    org.apache.http: INFO
   file:
     path: ./logs
 
