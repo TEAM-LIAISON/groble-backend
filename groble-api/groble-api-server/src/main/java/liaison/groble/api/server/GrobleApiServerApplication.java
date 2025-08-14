@@ -43,8 +43,6 @@ public class GrobleApiServerApplication {
     // Spring 애플리케이션 실행 및 컨텍스트 받기
     //    ApplicationContext context =
     SpringApplication.run(GrobleApiServerApplication.class, args);
-    //    // 프록시 설정 적용
-    //    setGlobalProxy(context.getEnvironment());
   }
   //
   //  private static void setGlobalProxy(Environment env) {
