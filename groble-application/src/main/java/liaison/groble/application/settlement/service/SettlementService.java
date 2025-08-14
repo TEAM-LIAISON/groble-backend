@@ -72,7 +72,7 @@ public class SettlementService {
         .build();
   }
 
-  @Transactional
+  @Transactional(readOnly = true)
   public PageResponse<MonthlySettlementOverviewDTO> getMonthlySettlements(
       Long userId, Pageable pageable) {
     Page<FlatMonthlySettlement> page =
@@ -155,6 +155,14 @@ public class SettlementService {
             .sortBy(pageable.getSort().iterator().next().getProperty())
             .sortDirection(pageable.getSort().iterator().next().getDirection().name())
             .build();
+
+    log.info(
+        "Per transaction settlements retrieved for userId: {}, yearMonth: {}, page: {}, size: {}, totalElements: {}",
+        userId,
+        yearMonth,
+        pageable.getPageNumber(),
+        pageable.getPageSize(),
+        page.getTotalElements());
 
     return PageResponse.from(page, items, meta);
   }

@@ -19,6 +19,7 @@ import liaison.groble.domain.settlement.dto.FlatPerTransactionSettlement;
 import liaison.groble.domain.settlement.entity.QSettlement;
 import liaison.groble.domain.settlement.entity.QSettlementItem;
 import liaison.groble.domain.settlement.repository.SettlementCustomRepository;
+import liaison.groble.domain.user.entity.QUser;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +34,8 @@ public class SettlementCustomRepositoryImpl implements SettlementCustomRepositor
   public Page<FlatMonthlySettlement> findMonthlySettlementsByUserId(
       Long userId, Pageable pageable) {
     QSettlement qSettlement = QSettlement.settlement;
+    QUser user = QUser.user;
+
     BooleanExpression cond = qSettlement.user.id.eq(userId);
     // 메인 쿼리
     JPAQuery<FlatMonthlySettlement> query =
@@ -45,6 +48,7 @@ public class SettlementCustomRepositoryImpl implements SettlementCustomRepositor
                     qSettlement.settlementAmount.as("settlementAmount"),
                     qSettlement.status.stringValue().as("settlementStatus")))
             .from(qSettlement)
+            .leftJoin(qSettlement.user, user)
             .where(cond);
     // 정렬 적용
     query.orderBy(qSettlement.createdAt.desc());
@@ -59,6 +63,7 @@ public class SettlementCustomRepositoryImpl implements SettlementCustomRepositor
                 jpaQueryFactory
                     .select(qSettlement.count())
                     .from(qSettlement)
+                    .leftJoin(qSettlement.user, user)
                     .where(cond)
                     .fetchOne())
             .orElse(0L);
@@ -72,6 +77,7 @@ public class SettlementCustomRepositoryImpl implements SettlementCustomRepositor
 
     QSettlementItem qSettlementItem = QSettlementItem.settlementItem;
     QSettlement qSettlement = QSettlement.settlement;
+    QUser qUser = QUser.user;
 
     // [기간] purchasedAt ∈ [periodStart 00:00, periodEnd+1 00:00)
     BooleanExpression cond =
@@ -94,6 +100,7 @@ public class SettlementCustomRepositoryImpl implements SettlementCustomRepositor
                     qSettlementItem.purchasedAt.as("purchasedAt")))
             .from(qSettlementItem)
             .leftJoin(qSettlementItem.settlement, qSettlement)
+            .leftJoin(qSettlement.user, qUser)
             .where(cond)
             .orderBy(qSettlementItem.purchasedAt.desc());
 

@@ -5,15 +5,17 @@ import javax.annotation.processing.Generated;
 import org.springframework.stereotype.Component;
 
 import liaison.groble.api.model.settlement.response.MonthlySettlementOverviewResponse;
+import liaison.groble.api.model.settlement.response.PerTransactionSettlementOverviewResponse;
 import liaison.groble.api.model.settlement.response.SettlementDetailResponse;
 import liaison.groble.api.model.settlement.response.SettlementOverviewResponse;
 import liaison.groble.application.settlement.dto.MonthlySettlementOverviewDTO;
+import liaison.groble.application.settlement.dto.PerTransactionSettlementOverviewDTO;
 import liaison.groble.application.settlement.dto.SettlementDetailDTO;
 import liaison.groble.application.settlement.dto.SettlementOverviewDTO;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-08-13T17:34:21+0900",
+    date = "2025-08-14T15:45:54+0900",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.10 (Amazon.com Inc.)")
 @Component
 public class SettlementMapperImpl implements SettlementMapper {
@@ -113,5 +115,32 @@ public class SettlementMapperImpl implements SettlementMapper {
     }
 
     return monthlySettlementOverviewResponse.build();
+  }
+
+  @Override
+  public PerTransactionSettlementOverviewResponse toPerTransactionSettlementOverviewResponse(
+      PerTransactionSettlementOverviewDTO perTransactionSettlementOverviewDTO) {
+    if (perTransactionSettlementOverviewDTO == null) {
+      return null;
+    }
+
+    PerTransactionSettlementOverviewResponse.PerTransactionSettlementOverviewResponseBuilder
+        perTransactionSettlementOverviewResponse =
+            PerTransactionSettlementOverviewResponse.builder();
+
+    if (perTransactionSettlementOverviewDTO.getContentTitle() != null) {
+      perTransactionSettlementOverviewResponse.contentTitle(
+          perTransactionSettlementOverviewDTO.getContentTitle());
+    }
+    if (perTransactionSettlementOverviewDTO.getSettlementAmount() != null) {
+      perTransactionSettlementOverviewResponse.settlementAmount(
+          perTransactionSettlementOverviewDTO.getSettlementAmount());
+    }
+    if (perTransactionSettlementOverviewDTO.getPurchasedAt() != null) {
+      perTransactionSettlementOverviewResponse.purchasedAt(
+          perTransactionSettlementOverviewDTO.getPurchasedAt());
+    }
+
+    return perTransactionSettlementOverviewResponse.build();
   }
 }
