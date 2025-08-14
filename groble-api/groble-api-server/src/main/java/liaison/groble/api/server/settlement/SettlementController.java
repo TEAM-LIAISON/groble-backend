@@ -66,7 +66,9 @@ public class SettlementController {
 
   // TODO: (1) 정산 개요 조회 (메이커 인증 여부 / 누적 정산 금액 / 정산 예정 금액)
   @RequireRole("ROLE_SELLER")
-  @Operation(summary = "[💰 정산] 정산 개요 조회", description = "메이커 인증 여부, 누적 정산 금액, 정산 예정 금액을 조회합니다.")
+  @Operation(
+      summary = "[💰 정산 개요 조회] 정산 개요 조회",
+      description = "메이커 인증 여부, 누적 정산 금액, 정산 예정 금액을 조회합니다.")
   @ApiResponse(
       responseCode = "200",
       description = SETTLEMENT_OVERVIEW_SUCCESS_MESSAGE,
@@ -93,7 +95,7 @@ public class SettlementController {
   // TODO: (2) 정산 내역 전체 조회 (페이징) - 월별 정산 상태, 정산 금액 제공
   @RequireRole("ROLE_SELLER")
   @Operation(
-      summary = "[💰 정산] 정산 내역 전체 조회",
+      summary = "[💰 정산 내역 전체 조회] 정산 내역 전체 조회",
       description = "정산 내역을 월별로 조회합니다. 페이지네이션 및 정렬 기능을 지원합니다.")
   @ApiResponse(
       responseCode = "200",
@@ -126,7 +128,7 @@ public class SettlementController {
   // TODO: (3) 정산 상세 내역 조회 (월 요약 정보 / 세금계산서 다운로드 가능 여부)
   @RequireRole("ROLE_SELLER")
   @Operation(
-      summary = "[💰 정산] 정산 상세 내역 조회",
+      summary = "[💰 정산 상세 내역 조회] 정산 상세 내역 조회",
       description = "월별 정산 상세 내역 조회, 세금계산서 다운로드 가능 여부를 조회합니다.")
   @ApiResponse(
       responseCode = "200",
@@ -162,7 +164,7 @@ public class SettlementController {
   // TODO: (4) 총 판매 내역 조회 (페이징) - 콘텐츠별 정산 금액, 콘텐츠별 판매 시각
   @RequireRole("ROLE_SELLER")
   @Operation(
-      summary = "[💰 정산] 총 판매 내역 조회",
+      summary = "[💰 정산 총 판매 내역 조회] 총 판매 내역 조회",
       description = "총 판매 내역을 콘텐츠별로 조회합니다. 페이지네이션 및 정렬 기능을 지원합니다.")
   @ApiResponse(
       responseCode = "200",
