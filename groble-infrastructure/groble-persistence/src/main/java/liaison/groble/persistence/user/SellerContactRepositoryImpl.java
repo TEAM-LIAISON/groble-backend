@@ -31,4 +31,9 @@ public class SellerContactRepositoryImpl implements SellerContactRepository {
   public Optional<SellerContact> findByUserAndContactType(User user, ContactType contactType) {
     return jpaSellerContactRepository.findByUserAndContactType(user, contactType);
   }
+
+  @Override
+  public void deleteAllByUser(User user) {
+    jpaSellerContactRepository.deleteAllByUser(user);
+  }
 }
