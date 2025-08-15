@@ -13,4 +13,6 @@ public interface JpaSellerContactRepository extends JpaRepository<SellerContact,
   List<SellerContact> findAllByUser(User user);
 
   Optional<SellerContact> findByUserAndContactType(User user, ContactType contactType);
+
+  void deleteAllByUser(User user);
 }

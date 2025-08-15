@@ -13,4 +13,6 @@ public interface SellerContactRepository {
   SellerContact save(SellerContact sellerContact);
 
   Optional<SellerContact> findByUserAndContactType(User user, ContactType contactType);
+
+  void deleteAllByUser(User user);
 }

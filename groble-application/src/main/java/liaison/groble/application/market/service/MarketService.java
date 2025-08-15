@@ -153,43 +153,38 @@ public class MarketService {
   }
 
   private void updateSellerContacts(User user, ContactInfoDTO contactInfo) {
+    // 기존 연락처 모두 삭제
+    sellerContactRepository.deleteAllByUser(user);
+
     // Instagram 처리
     if (contactInfo.getInstagram() != null && !contactInfo.getInstagram().isBlank()) {
-      updateOrCreateSellerContact(user, ContactType.INSTAGRAM, contactInfo.getInstagram());
+      saveSellerContact(user, ContactType.INSTAGRAM, contactInfo.getInstagram());
     }
 
     // Email 처리
     if (contactInfo.getEmail() != null && !contactInfo.getEmail().isBlank()) {
-      updateOrCreateSellerContact(user, ContactType.EMAIL, contactInfo.getEmail());
+      saveSellerContact(user, ContactType.EMAIL, contactInfo.getEmail());
     }
 
     // OpenChat 처리
     if (contactInfo.getOpenChat() != null && !contactInfo.getOpenChat().isBlank()) {
-      updateOrCreateSellerContact(user, ContactType.OPENCHAT, contactInfo.getOpenChat());
+      saveSellerContact(user, ContactType.OPENCHAT, contactInfo.getOpenChat());
     }
 
     // Etc 처리
     if (contactInfo.getEtc() != null && !contactInfo.getEtc().isBlank()) {
-      updateOrCreateSellerContact(user, ContactType.ETC, contactInfo.getEtc());
+      saveSellerContact(user, ContactType.ETC, contactInfo.getEtc());
     }
   }
 
-  private void updateOrCreateSellerContact(
-      User user, ContactType contactType, String contactValue) {
+  private void saveSellerContact(User user, ContactType contactType, String contactValue) {
     SellerContact sellerContact =
-        sellerContactReader.findByUserAndContactType(user, contactType).orElse(null);
-
-    if (sellerContact != null) {
-      sellerContact.changeContactValue(contactValue);
-    } else {
-      sellerContact =
-          SellerContact.builder()
-              .user(user)
-              .contactType(contactType)
-              .contactValue(contactValue)
-              .build();
-      sellerContactRepository.save(sellerContact);
-    }
+        SellerContact.builder()
+            .user(user)
+            .contactType(contactType)
+            .contactValue(contactValue)
+            .build();
+    sellerContactRepository.save(sellerContact);
   }
 
   // TODO : 2회 이상 재사용되는 메서드 MarketService, PurchaseService 2곳에서 사용
