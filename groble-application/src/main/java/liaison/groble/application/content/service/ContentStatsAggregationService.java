@@ -66,7 +66,7 @@ public class ContentStatsAggregationService {
     // 1) 하루치 로그 조회
     List<ContentViewLog> logs = contentViewLogRepository.findByViewedAtBetween(start, end);
 
-    // 2) 마켓별로 그룹핑
+    // 2) 콘텐츠 별로 그룹핑
     Map<Long, List<ContentViewLog>> grouped =
         logs.stream().collect(Collectors.groupingBy(ContentViewLog::getContentId));
 

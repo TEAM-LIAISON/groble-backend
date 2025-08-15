@@ -9,7 +9,7 @@ import liaison.groble.application.dashboard.dto.DashboardOverviewDTO;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-08-16T00:52:52+0900",
+    date = "2025-08-16T02:08:23+0900",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.10 (Amazon.com Inc.)")
 @Component
 public class DashboardMapperImpl implements DashboardMapper {
@@ -46,11 +46,11 @@ public class DashboardMapperImpl implements DashboardMapper {
     if (dashboardOverviewDTO.getTotalContentViews() != null) {
       dashboardOverviewResponse.totalContentViews(dashboardOverviewDTO.getTotalContentViews());
     }
-    if (dashboardOverviewDTO.getTotalCustomerViews() != null) {
-      dashboardOverviewResponse.totalCustomerViews(dashboardOverviewDTO.getTotalCustomerViews());
+    if (dashboardOverviewDTO.getTotalCustomers() != null) {
+      dashboardOverviewResponse.totalCustomers(dashboardOverviewDTO.getTotalCustomers());
     }
-    if (dashboardOverviewDTO.getRecentCustomerViews() != null) {
-      dashboardOverviewResponse.recentCustomerViews(dashboardOverviewDTO.getRecentCustomerViews());
+    if (dashboardOverviewDTO.getRecentCustomers() != null) {
+      dashboardOverviewResponse.recentCustomers(dashboardOverviewDTO.getRecentCustomers());
     }
 
     return dashboardOverviewResponse.build();

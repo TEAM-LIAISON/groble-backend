@@ -10,4 +10,6 @@ public interface ContentViewStatsRepository {
   void saveAll(List<ContentViewStats> stats);
 
   void deleteByStatDateAndPeriodType(LocalDate date, PeriodType periodType);
+
+  Long getTotalContentViews(List<Long> contentIds, LocalDate startDate, LocalDate endDate);
 }

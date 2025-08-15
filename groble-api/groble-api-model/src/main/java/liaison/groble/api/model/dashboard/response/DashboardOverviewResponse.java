@@ -78,7 +78,7 @@ public class DashboardOverviewResponse {
       type = "integer",
       format = "int64",
       requiredMode = Schema.RequiredMode.REQUIRED)
-  private Long totalCustomerViews;
+  private Long totalCustomers;
 
   @Schema(
       description = "고객 신규 조회수 (최근 30일 기준)",
@@ -86,5 +86,5 @@ public class DashboardOverviewResponse {
       type = "integer",
       format = "int64",
       requiredMode = Schema.RequiredMode.REQUIRED)
-  private Long recentCustomerViews;
+  private Long recentCustomers;
 }

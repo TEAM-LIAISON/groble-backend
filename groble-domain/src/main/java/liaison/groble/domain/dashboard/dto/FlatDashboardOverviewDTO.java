@@ -1,20 +1,21 @@
-package liaison.groble.application.dashboard.dto;
+package liaison.groble.domain.dashboard.dto;
 
 import java.math.BigDecimal;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
 @Builder
-public class DashboardOverviewDTO {
-  private String verificationStatus;
+@NoArgsConstructor
+@AllArgsConstructor
+public class FlatDashboardOverviewDTO {
   private BigDecimal totalRevenue;
   private Long totalSalesCount;
   private BigDecimal currentMonthRevenue;
   private Long currentMonthSalesCount;
-  private Long totalMarketViews;
-  private Long totalContentViews;
   private Long totalCustomers;
   private Long recentCustomers;
 }

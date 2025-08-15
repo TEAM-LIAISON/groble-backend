@@ -1,5 +1,6 @@
 package liaison.groble.persistence.content;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -20,6 +21,9 @@ public interface JpaContentRepository extends JpaRepository<Content, Long> {
   Optional<Content> findByIdAndStatus(Long contentId, ContentStatus status);
 
   Optional<Content> findByUserAndIsRepresentativeTrue(User user);
+
+  @Query("SELECT c.id FROM Content c WHERE c.user.id = :userId")
+  List<Long> findIdsByUserId(@Param("userId") Long userId);
 
   boolean existsByUserAndStatus(User user, ContentStatus status);
 }

@@ -25,4 +25,9 @@ public class ContentViewStatsRepositoryImpl implements ContentViewStatsRepositor
   public void deleteByStatDateAndPeriodType(LocalDate date, PeriodType periodType) {
     jpaContentViewStatsRepository.deleteByStatDateAndPeriodType(date, periodType);
   }
+
+  @Override
+  public Long getTotalContentViews(List<Long> contentIds, LocalDate startDate, LocalDate endDate) {
+    return jpaContentViewStatsRepository.getTotalContentViews(contentIds, startDate, endDate);
+  }
 }

@@ -62,6 +62,10 @@ public class ContentReader {
         .orElseThrow(() -> new EntityNotFoundException("콘텐츠를 찾을 수 없습니다. ID: " + contentId));
   }
 
+  public List<Long> findIdsByUserId(Long userId) {
+    return contentRepository.findIdsByUserId(userId);
+  }
+
   // ===== 메이커의 대표 Content 조회 =====
   public FlatContentPreviewDTO getRepresentativeContentByUser(Long userId) {
     return contentCustomRepository.findRepresentativeContentByUser(userId).orElse(null);
