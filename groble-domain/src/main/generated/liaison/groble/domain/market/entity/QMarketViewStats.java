@@ -30,7 +30,7 @@ public class QMarketViewStats extends EntityPathBase<MarketViewStats> {
 
     public final NumberPath<Long> marketId = createNumber("marketId", Long.class);
 
-    public final EnumPath<MarketViewStats.PeriodType> periodType = createEnum("periodType", MarketViewStats.PeriodType.class);
+    public final EnumPath<liaison.groble.domain.common.enums.PeriodType> periodType = createEnum("periodType", liaison.groble.domain.common.enums.PeriodType.class);
 
     public final DatePath<java.time.LocalDate> statDate = createDate("statDate", java.time.LocalDate.class);
 

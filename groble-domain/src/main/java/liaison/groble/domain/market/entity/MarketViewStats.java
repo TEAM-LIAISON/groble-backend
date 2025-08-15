@@ -13,6 +13,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 
 import liaison.groble.domain.common.entity.BaseTimeEntity;
+import liaison.groble.domain.common.enums.PeriodType;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -47,9 +48,4 @@ public class MarketViewStats extends BaseTimeEntity {
 
   @Column(name = "logged_in_viewer_count", nullable = false)
   private Long loggedInViewerCount;
-
-  public enum PeriodType {
-    DAILY,
-    MONTHLY
-  }
 }

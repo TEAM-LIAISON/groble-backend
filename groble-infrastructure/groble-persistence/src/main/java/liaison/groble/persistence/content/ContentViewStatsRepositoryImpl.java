@@ -5,8 +5,9 @@ import java.util.List;
 
 import org.springframework.stereotype.Repository;
 
-import liaison.groble.domain.content.entity.ContentViewStats;
-import liaison.groble.domain.content.repository.ContentViewStatsRepository;
+import liaison.groble.domain.common.enums.PeriodType;
+import liaison.groble.domain.dashboard.entity.ContentViewStats;
+import liaison.groble.domain.dashboard.repository.ContentViewStatsRepository;
 
 import lombok.AllArgsConstructor;
 
@@ -21,8 +22,7 @@ public class ContentViewStatsRepositoryImpl implements ContentViewStatsRepositor
   }
 
   @Override
-  public void deleteByStatDateAndPeriodType(
-      LocalDate date, ContentViewStats.PeriodType periodType) {
+  public void deleteByStatDateAndPeriodType(LocalDate date, PeriodType periodType) {
     jpaContentViewStatsRepository.deleteByStatDateAndPeriodType(date, periodType);
   }
 }

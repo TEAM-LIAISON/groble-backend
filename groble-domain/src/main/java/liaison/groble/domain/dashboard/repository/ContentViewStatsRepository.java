@@ -1,12 +1,13 @@
-package liaison.groble.persistence.content;
+package liaison.groble.domain.dashboard.repository;
 
 import java.time.LocalDate;
-
-import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.List;
 
 import liaison.groble.domain.common.enums.PeriodType;
 import liaison.groble.domain.dashboard.entity.ContentViewStats;
 
-public interface JpaContentViewStatsRepository extends JpaRepository<ContentViewStats, Long> {
+public interface ContentViewStatsRepository {
+  void saveAll(List<ContentViewStats> stats);
+
   void deleteByStatDateAndPeriodType(LocalDate date, PeriodType periodType);
 }

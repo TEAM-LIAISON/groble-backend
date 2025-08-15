@@ -1,4 +1,4 @@
-package liaison.groble.domain.content.entity;
+package liaison.groble.domain.dashboard.entity;
 
 import static com.querydsl.core.types.PathMetadataFactory.*;
 
@@ -15,7 +15,7 @@ import com.querydsl.core.types.Path;
 @Generated("com.querydsl.codegen.DefaultEntitySerializer")
 public class QContentViewStats extends EntityPathBase<ContentViewStats> {
 
-    private static final long serialVersionUID = -1775761309L;
+    private static final long serialVersionUID = -1925174658L;
 
     public static final QContentViewStats contentViewStats = new QContentViewStats("contentViewStats");
 
@@ -30,7 +30,7 @@ public class QContentViewStats extends EntityPathBase<ContentViewStats> {
 
     public final NumberPath<Long> loggedInViewerCount = createNumber("loggedInViewerCount", Long.class);
 
-    public final EnumPath<ContentViewStats.PeriodType> periodType = createEnum("periodType", ContentViewStats.PeriodType.class);
+    public final EnumPath<liaison.groble.domain.common.enums.PeriodType> periodType = createEnum("periodType", liaison.groble.domain.common.enums.PeriodType.class);
 
     public final DatePath<java.time.LocalDate> statDate = createDate("statDate", java.time.LocalDate.class);
 

@@ -1,4 +1,4 @@
-package liaison.groble.domain.content.entity;
+package liaison.groble.domain.dashboard.entity;
 
 import static com.querydsl.core.types.PathMetadataFactory.*;
 
@@ -15,7 +15,7 @@ import com.querydsl.core.types.Path;
 @Generated("com.querydsl.codegen.DefaultEntitySerializer")
 public class QContentViewLog extends EntityPathBase<ContentViewLog> {
 
-    private static final long serialVersionUID = -1159395320L;
+    private static final long serialVersionUID = 172291299L;
 
     public static final QContentViewLog contentViewLog = new QContentViewLog("contentViewLog");
 
@@ -32,6 +32,8 @@ public class QContentViewLog extends EntityPathBase<ContentViewLog> {
     public final NumberPath<Long> viewerId = createNumber("viewerId", Long.class);
 
     public final StringPath viewerIp = createString("viewerIp");
+
+    public final StringPath visitorHash = createString("visitorHash");
 
     public QContentViewLog(String variable) {
         super(ContentViewLog.class, forVariable(variable));

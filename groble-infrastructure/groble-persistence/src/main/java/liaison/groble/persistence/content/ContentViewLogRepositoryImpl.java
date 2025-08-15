@@ -5,8 +5,8 @@ import java.util.List;
 
 import org.springframework.stereotype.Repository;
 
-import liaison.groble.domain.content.entity.ContentViewLog;
-import liaison.groble.domain.content.repository.ContentViewLogRepository;
+import liaison.groble.domain.dashboard.entity.ContentViewLog;
+import liaison.groble.domain.dashboard.repository.ContentViewLogRepository;
 
 import lombok.AllArgsConstructor;
 

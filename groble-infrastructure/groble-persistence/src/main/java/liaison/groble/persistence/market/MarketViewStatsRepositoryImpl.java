@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.springframework.stereotype.Repository;
 
+import liaison.groble.domain.common.enums.PeriodType;
 import liaison.groble.domain.market.entity.MarketViewStats;
 import liaison.groble.domain.market.repository.MarketViewStatsRepository;
 
@@ -21,7 +22,7 @@ public class MarketViewStatsRepositoryImpl implements MarketViewStatsRepository 
   }
 
   @Override
-  public void deleteByStatDateAndPeriodType(LocalDate date, MarketViewStats.PeriodType periodType) {
+  public void deleteByStatDateAndPeriodType(LocalDate date, PeriodType periodType) {
     jpaMarketViewStatsRepository.deleteByStatDateAndPeriodType(date, periodType);
   }
 }

@@ -11,10 +11,11 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import liaison.groble.domain.content.entity.ContentViewLog;
-import liaison.groble.domain.content.entity.ContentViewStats;
-import liaison.groble.domain.content.repository.ContentViewLogRepository;
-import liaison.groble.domain.content.repository.ContentViewStatsRepository;
+import liaison.groble.domain.common.enums.PeriodType;
+import liaison.groble.domain.dashboard.entity.ContentViewLog;
+import liaison.groble.domain.dashboard.entity.ContentViewStats;
+import liaison.groble.domain.dashboard.repository.ContentViewLogRepository;
+import liaison.groble.domain.dashboard.repository.ContentViewStatsRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,8 +34,7 @@ public class ContentStatsAggregationService {
     log.info("Daily stats aggregation for {}", yesterday);
 
     // 기존 집계 삭제 → 없으면 무시
-    contentViewStatsRepository.deleteByStatDateAndPeriodType(
-        yesterday, ContentViewStats.PeriodType.DAILY);
+    contentViewStatsRepository.deleteByStatDateAndPeriodType(yesterday, PeriodType.DAILY);
 
     // 로그에서 새 집계 수집
     List<ContentViewStats> stats = aggregateFromLogs(yesterday);
@@ -50,8 +50,7 @@ public class ContentStatsAggregationService {
     log.info("Monthly stats aggregation for {} ~ {}", monthStart, monthEnd);
 
     // 1) 기존 월별 집계 삭제
-    contentViewStatsRepository.deleteByStatDateAndPeriodType(
-        monthStart, ContentViewStats.PeriodType.MONTHLY);
+    contentViewStatsRepository.deleteByStatDateAndPeriodType(monthStart, PeriodType.MONTHLY);
 
     // 2) 로그에서 새 집계 수집
     List<ContentViewStats> stats = aggregateMonthlyFromLogs(monthStart, monthEnd);
@@ -103,7 +102,7 @@ public class ContentStatsAggregationService {
               return ContentViewStats.builder()
                   .contentId(contentId)
                   .statDate(date)
-                  .periodType(ContentViewStats.PeriodType.DAILY)
+                  .periodType(PeriodType.DAILY)
                   .viewCount(viewCount)
                   .uniqueViewerCount(uniqueViewerCount)
                   .loggedInViewerCount(loggedInViewerCount)
@@ -155,7 +154,7 @@ public class ContentStatsAggregationService {
               return ContentViewStats.builder()
                   .contentId(contentId)
                   .statDate(monthStart) // 월별 통계는 ‘그 달의 첫날’ 기준으로 저장
-                  .periodType(ContentViewStats.PeriodType.MONTHLY)
+                  .periodType(PeriodType.MONTHLY)
                   .viewCount(viewCount)
                   .uniqueViewerCount(uniqueViewerCount)
                   .loggedInViewerCount(loggedInViewerCount)

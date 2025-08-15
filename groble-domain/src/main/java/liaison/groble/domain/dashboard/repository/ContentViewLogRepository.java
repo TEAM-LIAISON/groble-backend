@@ -1,9 +1,9 @@
-package liaison.groble.domain.content.repository;
+package liaison.groble.domain.dashboard.repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
-import liaison.groble.domain.content.entity.ContentViewLog;
+import liaison.groble.domain.dashboard.entity.ContentViewLog;
 
 public interface ContentViewLogRepository {
   ContentViewLog save(ContentViewLog contentViewLog);
