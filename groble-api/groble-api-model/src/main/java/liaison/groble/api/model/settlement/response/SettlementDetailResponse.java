@@ -65,7 +65,7 @@ public class SettlementDetailResponse {
   private BigDecimal platformFee; // 플랫폼 수수료 (1.5%)
 
   @Schema(
-      description = "세금계산서 버튼 활성화 여부",
+      description = "세금계산서 버튼 활성화 여부 - (활성화되더라도 모달 2개 관리는 아래 isTaxInvoiceIssuable에서 관리)",
       example = "true",
       type = "boolean",
       requiredMode = Schema.RequiredMode.REQUIRED)
@@ -73,7 +73,8 @@ public class SettlementDetailResponse {
 
   // 세금계산서 버튼이 활성화 되더라도 간이과세자나 비사업자는 발행 불가
   @Schema(
-      description = "세금계산서 발행 가능 여부 (모달 2개 관리용)",
+      description =
+          "세금계산서 발행 가능 여부 (모달 2개 관리용) [true -> 세금계산서 발행이 가능하고 URL 값이 존재, false -> 세금계산서 발행이 불가능]",
       example = "true",
       type = "boolean",
       requiredMode = Schema.RequiredMode.REQUIRED)
