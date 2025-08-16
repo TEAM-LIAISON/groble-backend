@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import liaison.groble.common.response.CursorResponse;
+import liaison.groble.domain.dashboard.dto.FlatDashboardOverviewDTO;
 import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.purchase.dto.FlatContentSellDetailDTO;
 import liaison.groble.domain.purchase.dto.FlatPurchaseContentDetailDTO;
@@ -35,4 +36,6 @@ public interface PurchaseCustomRepository {
   Optional<FlatSellManageDetailDTO> getSellManageDetail(Long userId, Long contentId);
 
   boolean existsByUserAndContent(Long userId, Long contentId);
+
+  FlatDashboardOverviewDTO getDashboardOverviewStats(Long sellerId);
 }

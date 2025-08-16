@@ -2,6 +2,7 @@ package liaison.groble.persistence.content;
 
 import static com.querydsl.jpa.JPAExpressions.select;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -30,6 +31,7 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 
 import liaison.groble.common.response.CursorResponse;
 import liaison.groble.domain.content.dto.FlatAdminContentSummaryInfoDTO;
+import liaison.groble.domain.content.dto.FlatContentOverviewDTO;
 import liaison.groble.domain.content.dto.FlatContentPreviewDTO;
 import liaison.groble.domain.content.dto.FlatDynamicContentDTO;
 import liaison.groble.domain.content.entity.Content;
@@ -882,6 +884,50 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
             .orElse(0L);
 
     return new PageImpl<>(items, pageable, total);
+  }
+
+  @Override
+  public Page<FlatContentOverviewDTO> findMyContentsBySellerId(Long sellerId, Pageable pageable) {
+    QContent qContent = QContent.content;
+
+    // 1. 전체 콘텐츠 개수 조회
+    Long totalContentsCount =
+        queryFactory
+            .select(qContent.count())
+            .from(qContent)
+            .where(qContent.user.id.eq(sellerId), qContent.status.ne(ContentStatus.DELETED))
+            .fetchOne();
+
+    // NULL 안전 처리
+    if (totalContentsCount == null) {
+      totalContentsCount = 0L;
+    }
+
+    // 2. 페이징된 콘텐츠 목록 조회
+    final Long finalTotalCount = totalContentsCount; // lambda에서 사용하기 위한 final 변수
+
+    List<FlatContentOverviewDTO> contents =
+        queryFactory
+            .select(
+                Projections.constructor(
+                    FlatContentOverviewDTO.class,
+                    Expressions.constant(finalTotalCount), // 전체 개수
+                    qContent.id, // 콘텐츠 ID
+                    qContent.title // 콘텐츠 제목
+                    ))
+            .from(qContent)
+            .where(qContent.user.id.eq(sellerId), qContent.status.ne(ContentStatus.DELETED))
+            .orderBy(qContent.createdAt.desc())
+            .offset(pageable.getOffset())
+            .limit(pageable.getPageSize())
+            .fetch();
+
+    // 3. 결과가 없는 경우 빈 리스트 처리
+    if (contents == null || contents.isEmpty()) {
+      contents = new ArrayList<>();
+    }
+
+    return new PageImpl<>(contents, pageable, totalContentsCount);
   }
 
   @Override

@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import liaison.groble.common.exception.EntityNotFoundException;
+import liaison.groble.domain.dashboard.dto.FlatDashboardOverviewDTO;
 import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.purchase.dto.FlatContentSellDetailDTO;
 import liaison.groble.domain.purchase.dto.FlatPurchaseContentDetailDTO;
@@ -81,6 +82,11 @@ public class PurchaseReader {
             () ->
                 new EntityNotFoundException(
                     "판매 관리 정보를 찾을 수 없습니다. User ID: " + userId + ", Content ID: " + contentId));
+  }
+
+  // 대시보드 개요 조회
+  public FlatDashboardOverviewDTO getDashboardOverviewStats(Long sellerId) {
+    return purchaseCustomRepository.getDashboardOverviewStats(sellerId);
   }
 
   public boolean isContentPurchasedByUser(Long userId, Long contentId) {

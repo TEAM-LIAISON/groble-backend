@@ -27,5 +27,7 @@ public interface ContentRepository {
 
   List<FlatContentPreviewDTO> findFlatContentsByUserId(Long userId);
 
+  List<Long> findIdsByUserId(Long userId);
+
   boolean existsByUserAndStatus(User user, ContentStatus status);
 }

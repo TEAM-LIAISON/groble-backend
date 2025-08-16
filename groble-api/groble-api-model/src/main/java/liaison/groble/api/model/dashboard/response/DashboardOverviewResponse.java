@@ -28,13 +28,63 @@ public class DashboardOverviewResponse {
   private BigDecimal totalRevenue;
 
   // 전체 총 판매 건수
+  @Schema(
+      description = "전체 총 판매 건수",
+      example = "128",
+      type = "integer",
+      format = "int64",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private Long totalSalesCount;
 
   // N월 총 수익
+  @Schema(
+      description = "이번 달 총 수익 (원)",
+      example = "850000",
+      type = "number",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private BigDecimal currentMonthRevenue;
+
   // N월 총 판매 건수
+  @Schema(
+      description = "이번 달 총 판매 건수",
+      example = "23",
+      type = "integer",
+      format = "int64",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private Long currentMonthSalesCount;
 
-  // 마켓 전체 조회수
+  // ========== 조회수 정보 - 마켓/콘텐츠 ==========
+  @Schema(
+      description = "마켓 전체 조회수",
+      example = "15420",
+      type = "integer",
+      format = "int64",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private Long totalMarketViews;
+
   // 콘텐츠 전체 조회수
+  @Schema(
+      description = "콘텐츠 전체 조회수",
+      example = "28350",
+      type = "integer",
+      format = "int64",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private Long totalContentViews;
 
-  // 고객 전체 조회수
-  // 고객 신규 조회수 (최근 30일 기준)
+  // ========== 조회수 정보 - 고객 ==========
+  @Schema(
+      description = "고객 전체 조회수 (프로필 조회수)",
+      example = "8920",
+      type = "integer",
+      format = "int64",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private Long totalCustomers;
+
+  @Schema(
+      description = "고객 신규 조회수 (최근 30일 기준)",
+      example = "1250",
+      type = "integer",
+      format = "int64",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private Long recentCustomers;
 }

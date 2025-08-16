@@ -60,6 +60,11 @@ public class ContentRepositoryImpl implements ContentRepository {
     jpaContentRepository.delete(content);
   }
 
+  @Override
+  public List<Long> findIdsByUserId(Long userId) {
+    return jpaContentRepository.findIdsByUserId(userId);
+  }
+
   public boolean existsSellingContentByUser(Long userId) {
     return contentCustomRepository.existsSellingContentByUser(userId);
   }
