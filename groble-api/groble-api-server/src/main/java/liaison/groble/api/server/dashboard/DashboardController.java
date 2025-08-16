@@ -39,10 +39,20 @@ public class DashboardController {
   // API 경로 상수화
   private static final String DASHBOARD_OVERVIEW_PATH = "/dashboard/overview";
   private static final String DASHBOARD_CONTENTS_LIST_PATH = "/dashboard/my-contents";
+  private static final String DASHBOARD_CONTENT_VIEW_STATS_PATH =
+      "/dashboard/content/{contentId}/view-stats";
+
+  private static final String DASHBOARD_MARKET_VIEW_STATS_PATH =
+      "/dashboard/market/{marketId}/view-stats";
+  private static final String DASHBOARD_MARKET_REFERRER_STATS_PATH =
+      "/dashboard/market/{marketId}/referrer-stats";
 
   // 응답 메시지 상수화
   private static final String DASHBOARD_OVERVIEW_SUCCESS_MESSAGE = "대시보드 개요 조회 성공";
   private static final String DASHBOARD_CONTENTS_LIST_SUCCESS_MESSAGE = "대시보드 내 콘텐츠 전체 목록 조회 성공";
+
+  private static final String DASHBOARD_MARKET_DETAIL_STATS_SUCCESS_MESSAGE =
+      "대시보드 마켓 상세 조회수 및 유입 경로 조회 성공";
 
   // Service
   private final DashboardService dashboardService;
@@ -114,5 +124,8 @@ public class DashboardController {
 
   // TODO(3): 오늘/지난 7일/최근 30일/이번 달/지난 달 선택에 따른 마켓과 콘텐츠 조회 [콘텐츠는 목록 제공]
   // TODO(4): 오늘/지난 7일/최근 30일/이번 달/지난 달 선택에 따른 마켓 상세 조회수 제공 + 유입 경로 제공
+
+  //    public ResponseEntity<GrobleResponse<PageResponse<MarketViewStatsResponse>>>
+
   // TODO(5): 오늘/지난 7일/최근 30일/이번 달/지난 달 선택에 따른 콘텐츠 상세 조회수 제공 + 유입 경로 제공
 }

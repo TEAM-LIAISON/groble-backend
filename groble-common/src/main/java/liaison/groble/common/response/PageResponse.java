@@ -174,5 +174,8 @@ public class PageResponse<T> {
 
     @Schema(description = "카테고리 ID 목록", example = "[\"1\", \"2\", \"3\"]")
     private List<String> categoryIds;
+
+    @Schema(description = "기간 내 총 조회수", example = "3000")
+    private Long totalViews;
   }
 }
