@@ -10,9 +10,11 @@ import org.springframework.stereotype.Repository;
 
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
 import liaison.groble.domain.common.enums.PeriodType;
+import liaison.groble.domain.dashboard.dto.FlatContentTotalViewStatsDTO;
 import liaison.groble.domain.dashboard.dto.FlatContentViewStatsDTO;
 import liaison.groble.domain.dashboard.entity.QContentViewStats;
 import liaison.groble.domain.dashboard.repository.ContentViewStatsCustomRepository;
@@ -62,6 +64,63 @@ public class ContentViewStatsCustomRepositoryImpl implements ContentViewStatsCus
             .offset(pageable.getOffset())
             .limit(pageable.getPageSize())
             .fetch();
+
+    return new PageImpl<>(content, pageable, total != null ? total : 0L);
+  }
+
+  @Override
+  public Page<FlatContentTotalViewStatsDTO> findTotalViewsByPeriodTypeAndStatDateBetween(
+      PeriodType periodType, LocalDate startDate, LocalDate endDate, Pageable pageable) {
+
+    QContentViewStats stats = QContentViewStats.contentViewStats;
+
+    // 서브쿼리로 그룹화된 결과 카운트
+    JPAQuery<Long> countQuery =
+        jpaQueryFactory
+            .select(stats.contentId)
+            .from(stats)
+            .where(stats.periodType.eq(periodType), stats.statDate.between(startDate, endDate))
+            .groupBy(stats.contentId);
+
+    Long total =
+        jpaQueryFactory
+            .select(stats.contentId.count())
+            .from(stats)
+            .where(stats.contentId.in(countQuery))
+            .fetchOne();
+
+    // 데이터 조회 - 동적 정렬 처리
+    JPAQuery<FlatContentTotalViewStatsDTO> query =
+        jpaQueryFactory
+            .select(
+                Projections.constructor(
+                    FlatContentTotalViewStatsDTO.class,
+                    stats.contentId,
+                    stats.viewCount.sum().coalesce(0L),
+                    stats.uniqueViewerCount.sum().coalesce(0L)))
+            .from(stats)
+            .where(stats.periodType.eq(periodType), stats.statDate.between(startDate, endDate))
+            .groupBy(stats.contentId);
+
+    // Pageable의 Sort 적용
+    if (pageable.getSort().isSorted()) {
+      pageable
+          .getSort()
+          .forEach(
+              order -> {
+                if (order.getProperty().equals("viewCount")) {
+                  query.orderBy(
+                      order.isAscending()
+                          ? stats.viewCount.sum().asc()
+                          : stats.viewCount.sum().desc());
+                }
+              });
+    } else {
+      query.orderBy(stats.viewCount.sum().desc()); // 기본 정렬
+    }
+
+    List<FlatContentTotalViewStatsDTO> content =
+        query.offset(pageable.getOffset()).limit(pageable.getPageSize()).fetch();
 
     return new PageImpl<>(content, pageable, total != null ? total : 0L);
   }

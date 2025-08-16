@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import liaison.groble.domain.common.enums.PeriodType;
+import liaison.groble.domain.dashboard.dto.FlatContentTotalViewStatsDTO;
 import liaison.groble.domain.dashboard.dto.FlatContentViewStatsDTO;
 
 public interface ContentViewStatsCustomRepository {
@@ -15,4 +16,7 @@ public interface ContentViewStatsCustomRepository {
       LocalDate startDate,
       LocalDate endDate,
       Pageable pageable);
+
+  Page<FlatContentTotalViewStatsDTO> findTotalViewsByPeriodTypeAndStatDateBetween(
+      PeriodType periodType, LocalDate startDate, LocalDate endDate, Pageable pageable);
 }

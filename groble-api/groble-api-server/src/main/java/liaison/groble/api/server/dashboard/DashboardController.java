@@ -15,11 +15,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import liaison.groble.api.model.dashboard.response.ContentOverviewResponse;
+import liaison.groble.api.model.dashboard.response.ContentTotalViewStatsResponse;
 import liaison.groble.api.model.dashboard.response.ContentViewStatsResponse;
 import liaison.groble.api.model.dashboard.response.DashboardOverviewResponse;
 import liaison.groble.api.model.dashboard.response.DashboardViewStatsResponse;
 import liaison.groble.api.model.dashboard.response.MarketViewStatsResponse;
 import liaison.groble.api.model.dashboard.response.swagger.ContentOverviewListResponse;
+import liaison.groble.application.dashboard.dto.ContentTotalViewStatsDTO;
 import liaison.groble.application.dashboard.dto.ContentViewStatsDTO;
 import liaison.groble.application.dashboard.dto.DashboardContentOverviewDTO;
 import liaison.groble.application.dashboard.dto.DashboardOverviewDTO;
@@ -52,11 +54,11 @@ public class DashboardController {
   private static final String DASHBOARD_OVERVIEW_PATH = "/dashboard/overview";
   private static final String DASHBOARD_CONTENTS_LIST_PATH = "/dashboard/my-contents";
   private static final String DASHBOARD_VIEW_STATS_PATH = "/dashboard/view-stats";
+  private static final String DASHBOARD_CONTENT_VIEWS_LIST_PATH = "/dashboard/content/view-stats";
   private static final String DASHBOARD_CONTENT_VIEW_STATS_PATH =
       "/dashboard/content/{contentId}/view-stats";
   private static final String DASHBOARD_MARKET_VIEW_STATS_PATH =
       "/dashboard/market/{marketId}/view-stats";
-
   private static final String DASHBOARD_MARKET_REFERRER_STATS_PATH =
       "/dashboard/market/{marketId}/referrer-stats";
 
@@ -64,6 +66,8 @@ public class DashboardController {
   private static final String DASHBOARD_OVERVIEW_SUCCESS_MESSAGE = "대시보드 개요 조회 성공";
   private static final String DASHBOARD_CONTENTS_LIST_SUCCESS_MESSAGE = "대시보드 내 콘텐츠 전체 목록 조회 성공";
   private static final String DASHBOARD_VIEW_STATS_SUCCESS_MESSAGE = "대시보드 마켓과 콘텐츠 조회수 조회 성공";
+  private static final String DASHBOARD_CONTENTS_VIEW_STATS_SUCCESS_MESSAGE =
+      "대시보드 콘텐츠 개별 전체 조회수 목록 조회 성공";
   private static final String DASHBOARD_CONTENT_VIEW_STATS_SUCCESS_MESSAGE =
       "대시보드 콘텐츠 날짜별 조회수 조회 성공";
   private static final String DASHBOARD_MARKET_DETAIL_STATS_SUCCESS_MESSAGE =
@@ -157,22 +161,44 @@ public class DashboardController {
         dashboardViewStatsResponse, DASHBOARD_VIEW_STATS_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 
-  //  @RequireRole("ROLE_SELLER")
-  //  @Operation(
-  //          summary = "[📊 대시보드 - 전체 조회수 조회] 전체 조회수 조회",
-  //          description = "마켓 전체 조회수와 콘텐츠 전체 조회수, 모든 콘텐츠의 개별 전체 조회수를 반환합니다.")
-  //  @GetMapping(DASHBOARD_VIEW_STATS_PATH)
-  //  @Logging(
-  //          item = "Dashboard",
-  //          action = "getViewStats",
-  //          includeParam = true,
-  //          includeResult = true)
-  //  public ResponseEntity<GrobleResponse<PageResponse<DashboardViewStatsResponse>>> getViewStats(
-  //      @Auth Accessor accessor,
-  //      @RequestParam(value = "period") String period,
-  //      @RequestParam(defaultValue = "0") int page) {
-  //
-  //  }
+  @RequireRole("ROLE_SELLER")
+  @Operation(
+      summary = "[📊 대시보드 - 콘텐츠 개별 전체 조회수 목록 조회] 콘텐츠의 전체 조회수 목록 조회",
+      description = "조회수 내림차순으로 모든 콘텐츠의 조회수를 반환합니다.")
+  @GetMapping(DASHBOARD_CONTENT_VIEWS_LIST_PATH)
+  @Logging(
+      item = "Dashboard",
+      action = "getContentViewsList",
+      includeParam = true,
+      includeResult = true)
+  public ResponseEntity<GrobleResponse<PageResponse<ContentTotalViewStatsResponse>>>
+      getContentViewsList(
+          @Auth Accessor accessor,
+          @RequestParam(value = "period") String period,
+          @RequestParam(defaultValue = "0") int page) {
+    // Period별 페이지 사이즈 동적 결정
+    int expectedDays =
+        switch (period) {
+          case "TODAY" -> 1;
+          case "LAST_7_DAYS" -> 7;
+          case "LAST_30_DAYS" -> 30;
+          case "THIS_MONTH" -> LocalDate.now().getDayOfMonth();
+          case "LAST_MONTH" -> YearMonth.now().minusMonths(1).lengthOfMonth();
+          default -> throw new IllegalArgumentException("Invalid period: " + period);
+        };
+
+    int pageSize = Math.min(expectedDays, 20); // 최대 20개
+    Pageable pageable = PageRequest.of(page, pageSize, Sort.by(Sort.Direction.DESC, "statDate"));
+
+    PageResponse<ContentTotalViewStatsDTO> dtoPage =
+        dashboardService.getContentTotalViewStats(accessor.getUserId(), period, pageable);
+
+    PageResponse<ContentTotalViewStatsResponse> responsePage =
+        dashboardMapper.toContentTotalViewStatsResponsePage(dtoPage);
+
+    return responseHelper.success(
+        responsePage, DASHBOARD_CONTENTS_VIEW_STATS_SUCCESS_MESSAGE, HttpStatus.OK);
+  }
 
   // TODO(4): 오늘/지난 7일/최근 30일/이번 달/지난 달 선택에 따른 마켓 상세 조회수 제공 + 유입 경로 제공
   @RequireRole("ROLE_SELLER")
