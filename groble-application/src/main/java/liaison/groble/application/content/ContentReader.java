@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import liaison.groble.common.exception.EntityNotFoundException;
 import liaison.groble.domain.content.dto.FlatAdminContentSummaryInfoDTO;
+import liaison.groble.domain.content.dto.FlatContentOverviewDTO;
 import liaison.groble.domain.content.dto.FlatContentPreviewDTO;
 import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.content.enums.ContentStatus;
@@ -88,6 +89,10 @@ public class ContentReader {
   public Page<FlatContentPreviewDTO> findMyContentsWithStatus(
       Pageable pageable, Long userId, List<ContentStatus> contentStatuses) {
     return contentCustomRepository.findMyContentsWithStatus(pageable, userId, contentStatuses);
+  }
+
+  public Page<FlatContentOverviewDTO> findMyContentsBySellerId(Long sellerId, Pageable pageable) {
+    return contentCustomRepository.findMyContentsBySellerId(sellerId, pageable);
   }
 
   public boolean existsSellingContentByUser(Long userId) {
