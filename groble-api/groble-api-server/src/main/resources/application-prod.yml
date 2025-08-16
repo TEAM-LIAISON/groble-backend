@@ -189,6 +189,20 @@ logging:
     com.amazonaws: INFO
 
 management:
+  tracing:
+    sampling:
+      probability: 1.0  # 샘플링 비율 (1.0 = 100%)
+  metrics:
+    export:
+      otlp:
+        enabled: true
+  otlp:
+    metrics:
+      export:
+        url: http://localhost:4318/v1/metrics  # OTLP 수집기 엔드포인트
+        step: 10s
+    tracing:
+      endpoint: http://localhost:4318/v1/traces  # OTLP 수집기 엔드포인트
   endpoints:
     web:
       exposure:
@@ -212,3 +226,17 @@ management:
     observations:
       key-values:
         application: ${spring.application.name}
+
+otel:
+  resource:
+    attributes:
+      service.name: ${spring.application.name}
+      service.version: ${version:0.0.1}
+      deployment.environment: ${spring.profiles.active:default}
+  exporter:
+    otlp:
+      protocol: http/protobuf
+      endpoint: http://localhost:4318  # OTLP Collector 엔드포인트
+  logs:
+    export:
+      endpoint: http://localhost:4318/v1/logs
