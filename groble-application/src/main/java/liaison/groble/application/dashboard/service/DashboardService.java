@@ -17,6 +17,7 @@ import liaison.groble.common.response.PageResponse;
 import liaison.groble.domain.content.dto.FlatContentOverviewDTO;
 import liaison.groble.domain.dashboard.dto.FlatDashboardOverviewDTO;
 import liaison.groble.domain.dashboard.repository.ContentViewStatsRepository;
+import liaison.groble.domain.dashboard.repository.MarketViewStatsRepository;
 import liaison.groble.domain.user.entity.SellerInfo;
 
 import lombok.RequiredArgsConstructor;
@@ -31,6 +32,7 @@ public class DashboardService {
   private final ContentReader contentReader;
   private final PurchaseReader purchaseReader;
   private final ContentViewStatsRepository contentViewStatsRepository;
+  private final MarketViewStatsRepository marketViewStatsRepository;
 
   @Transactional(readOnly = true)
   public DashboardOverviewDTO getDashboardOverview(Long userId) {
@@ -39,6 +41,7 @@ public class DashboardService {
         purchaseReader.getDashboardOverviewStats(userId);
 
     Long totalContentViews = getTotalContentViews(userId);
+    Long totalMarketViews = getTotalMarketViews(userId);
 
     return DashboardOverviewDTO.builder()
         .verificationStatus(sellerInfo.getVerificationStatus().name())
@@ -46,7 +49,7 @@ public class DashboardService {
         .totalSalesCount(flatDashboardOverviewDTO.getTotalSalesCount())
         .currentMonthRevenue(flatDashboardOverviewDTO.getCurrentMonthRevenue())
         .currentMonthSalesCount(flatDashboardOverviewDTO.getCurrentMonthSalesCount())
-        .totalMarketViews(0L)
+        .totalMarketViews(totalMarketViews)
         .totalContentViews(totalContentViews)
         .totalCustomers(flatDashboardOverviewDTO.getTotalCustomers())
         .recentCustomers(flatDashboardOverviewDTO.getRecentCustomers())
@@ -74,6 +77,11 @@ public class DashboardService {
     List<Long> contentIds = contentReader.findIdsByUserId(sellerId);
     return contentViewStatsRepository.getTotalContentViews(
         contentIds, LocalDate.of(2025, 8, 1), LocalDate.now());
+  }
+
+  private Long getTotalMarketViews(Long sellerId) {
+    return marketViewStatsRepository.getTotalMarketViews(
+        sellerId, LocalDate.of(2025, 8, 1), LocalDate.now());
   }
 
   private DashboardContentOverviewDTO toDashboardContentOverviewDTO(

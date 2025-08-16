@@ -25,4 +25,9 @@ public class MarketViewStatsRepositoryImpl implements MarketViewStatsRepository 
   public void deleteByStatDateAndPeriodType(LocalDate date, PeriodType periodType) {
     jpaMarketViewStatsRepository.deleteByStatDateAndPeriodType(date, periodType);
   }
+
+  @Override
+  public Long getTotalMarketViews(Long sellerId, LocalDate startDate, LocalDate endDate) {
+    return jpaMarketViewStatsRepository.getTotalMarketViews(sellerId, startDate, endDate);
+  }
 }

@@ -10,4 +10,6 @@ public interface MarketViewStatsRepository {
   void saveAll(List<MarketViewStats> stats);
 
   void deleteByStatDateAndPeriodType(LocalDate date, PeriodType periodType);
+
+  Long getTotalMarketViews(Long sellerId, LocalDate startDate, LocalDate endDate);
 }
