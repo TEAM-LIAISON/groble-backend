@@ -9,14 +9,17 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import liaison.groble.api.model.dashboard.response.ContentOverviewResponse;
+import liaison.groble.api.model.dashboard.response.ContentViewStatsResponse;
 import liaison.groble.api.model.dashboard.response.DashboardOverviewResponse;
 import liaison.groble.api.model.dashboard.response.MarketViewStatsResponse;
 import liaison.groble.api.model.dashboard.response.swagger.ContentOverviewListResponse;
+import liaison.groble.application.dashboard.dto.ContentViewStatsDTO;
 import liaison.groble.application.dashboard.dto.DashboardContentOverviewDTO;
 import liaison.groble.application.dashboard.dto.DashboardOverviewDTO;
 import liaison.groble.application.dashboard.dto.MarketViewStatsDTO;
@@ -48,7 +51,6 @@ public class DashboardController {
   private static final String DASHBOARD_CONTENTS_LIST_PATH = "/dashboard/my-contents";
   private static final String DASHBOARD_CONTENT_VIEW_STATS_PATH =
       "/dashboard/content/{contentId}/view-stats";
-
   private static final String DASHBOARD_MARKET_VIEW_STATS_PATH =
       "/dashboard/market/{marketId}/view-stats";
   private static final String DASHBOARD_MARKET_REFERRER_STATS_PATH =
@@ -57,7 +59,8 @@ public class DashboardController {
   // 응답 메시지 상수화
   private static final String DASHBOARD_OVERVIEW_SUCCESS_MESSAGE = "대시보드 개요 조회 성공";
   private static final String DASHBOARD_CONTENTS_LIST_SUCCESS_MESSAGE = "대시보드 내 콘텐츠 전체 목록 조회 성공";
-
+  private static final String DASHBOARD_CONTENT_VIEW_STATS_SUCCESS_MESSAGE =
+      "대시보드 콘텐츠 날짜별 조회수 조회 성공";
   private static final String DASHBOARD_MARKET_DETAIL_STATS_SUCCESS_MESSAGE =
       "대시보드 마켓 상세 조회수 및 유입 경로 조회 성공";
 
@@ -138,12 +141,12 @@ public class DashboardController {
   @GetMapping(DASHBOARD_MARKET_VIEW_STATS_PATH)
   @Logging(
       item = "Dashboard",
-      action = "getMyContentsList",
+      action = "getMarketViewStats",
       includeParam = true,
       includeResult = true)
   public ResponseEntity<GrobleResponse<PageResponse<MarketViewStatsResponse>>> getMarketViewStats(
       @Auth Accessor accessor,
-      @RequestParam(value = "marketId") Long marketId,
+      @PathVariable("marketId") Long marketId,
       @RequestParam(value = "period") String period,
       @RequestParam(defaultValue = "0") int page) {
 
@@ -170,5 +173,46 @@ public class DashboardController {
     return responseHelper.success(
         responsePage, DASHBOARD_MARKET_DETAIL_STATS_SUCCESS_MESSAGE, HttpStatus.OK);
   }
+
   // TODO(5): 오늘/지난 7일/최근 30일/이번 달/지난 달 선택에 따른 콘텐츠 상세 조회수 제공 + 유입 경로 제공
+
+  @RequireRole("ROLE_SELLER")
+  @Operation(
+      summary = "[📊 대시보드 - 콘텐츠 날짜 유형별 조회수 조회] 콘텐츠 조회수 조회",
+      description = "조회 날짜, 조회 일, 조회수를 반환합니다.")
+  @GetMapping(DASHBOARD_CONTENT_VIEW_STATS_PATH)
+  @Logging(
+      item = "Dashboard",
+      action = "getContentViewStats",
+      includeParam = true,
+      includeResult = true)
+  public ResponseEntity<GrobleResponse<PageResponse<ContentViewStatsResponse>>> getContentViewStats(
+      @Auth Accessor accessor,
+      @PathVariable("contentId") Long contentId,
+      @RequestParam(value = "period") String period,
+      @RequestParam(defaultValue = "0") int page) {
+
+    // Period별 페이지 사이즈 동적 결정
+    int expectedDays =
+        switch (period) {
+          case "TODAY" -> 1;
+          case "LAST_7_DAYS" -> 7;
+          case "LAST_30_DAYS" -> 30;
+          case "THIS_MONTH" -> LocalDate.now().getDayOfMonth();
+          case "LAST_MONTH" -> YearMonth.now().minusMonths(1).lengthOfMonth();
+          default -> throw new IllegalArgumentException("Invalid period: " + period);
+        };
+
+    int pageSize = Math.min(expectedDays, 20); // 최대 20개
+    Pageable pageable = PageRequest.of(page, pageSize, Sort.by(Sort.Direction.DESC, "statDate"));
+
+    PageResponse<ContentViewStatsDTO> dtoPage =
+        dashboardService.getContentViewStats(accessor.getUserId(), contentId, period, pageable);
+
+    PageResponse<ContentViewStatsResponse> responsePage =
+        dashboardMapper.toContentViewStatsResponsePage(dtoPage);
+
+    return responseHelper.success(
+        responsePage, DASHBOARD_CONTENT_VIEW_STATS_SUCCESS_MESSAGE, HttpStatus.OK);
+  }
 }

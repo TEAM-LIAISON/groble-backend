@@ -1,4 +1,4 @@
-package liaison.groble.persistence.market;
+package liaison.groble.persistence.dashboard;
 
 import java.time.LocalDate;
 import java.util.List;
