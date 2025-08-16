@@ -1,6 +1,11 @@
 package liaison.groble.api.server.dashboard;
 
+import java.time.LocalDate;
+import java.time.YearMonth;
+
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,9 +15,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import liaison.groble.api.model.dashboard.response.ContentOverviewResponse;
 import liaison.groble.api.model.dashboard.response.DashboardOverviewResponse;
+import liaison.groble.api.model.dashboard.response.MarketViewStatsResponse;
 import liaison.groble.api.model.dashboard.response.swagger.ContentOverviewListResponse;
 import liaison.groble.application.dashboard.dto.DashboardContentOverviewDTO;
 import liaison.groble.application.dashboard.dto.DashboardOverviewDTO;
+import liaison.groble.application.dashboard.dto.MarketViewStatsDTO;
 import liaison.groble.application.dashboard.service.DashboardService;
 import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.annotation.Logging;
@@ -124,8 +131,44 @@ public class DashboardController {
 
   // TODO(3): 오늘/지난 7일/최근 30일/이번 달/지난 달 선택에 따른 마켓과 콘텐츠 조회 [콘텐츠는 목록 제공]
   // TODO(4): 오늘/지난 7일/최근 30일/이번 달/지난 달 선택에 따른 마켓 상세 조회수 제공 + 유입 경로 제공
+  @RequireRole("ROLE_SELLER")
+  @Operation(
+      summary = "[📊 대시보드 - 마켓 날짜별 조회수 조회] 마켓 조회수 조회",
+      description = "조회 날짜, 조회 일, 조회수를 반환합니다.")
+  @GetMapping(DASHBOARD_MARKET_VIEW_STATS_PATH)
+  @Logging(
+      item = "Dashboard",
+      action = "getMyContentsList",
+      includeParam = true,
+      includeResult = true)
+  public ResponseEntity<GrobleResponse<PageResponse<MarketViewStatsResponse>>> getMarketViewStats(
+      @Auth Accessor accessor,
+      @RequestParam(value = "marketId") Long marketId,
+      @RequestParam(value = "period") String period,
+      @RequestParam(defaultValue = "0") int page) {
 
-  //    public ResponseEntity<GrobleResponse<PageResponse<MarketViewStatsResponse>>>
+    // Period별 페이지 사이즈 동적 결정
+    int expectedDays =
+        switch (period) {
+          case "TODAY" -> 1;
+          case "LAST_7_DAYS" -> 7;
+          case "LAST_30_DAYS" -> 30;
+          case "THIS_MONTH" -> LocalDate.now().getDayOfMonth();
+          case "LAST_MONTH" -> YearMonth.now().minusMonths(1).lengthOfMonth();
+          default -> throw new IllegalArgumentException("Invalid period: " + period);
+        };
 
+    int pageSize = Math.min(expectedDays, 20); // 최대 20개
+    Pageable pageable = PageRequest.of(page, pageSize, Sort.by(Sort.Direction.DESC, "statDate"));
+
+    PageResponse<MarketViewStatsDTO> dtoPage =
+        dashboardService.getMarketViewStats(accessor.getUserId(), marketId, period, pageable);
+
+    PageResponse<MarketViewStatsResponse> responsePage =
+        dashboardMapper.toMarketViewStatsResponsePage(dtoPage);
+
+    return responseHelper.success(
+        responsePage, DASHBOARD_MARKET_DETAIL_STATS_SUCCESS_MESSAGE, HttpStatus.OK);
+  }
   // TODO(5): 오늘/지난 7일/최근 30일/이번 달/지난 달 선택에 따른 콘텐츠 상세 조회수 제공 + 유입 경로 제공
 }

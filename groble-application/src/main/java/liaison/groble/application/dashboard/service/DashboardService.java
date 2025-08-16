@@ -1,7 +1,9 @@
 package liaison.groble.application.dashboard.service;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -11,12 +13,16 @@ import org.springframework.transaction.annotation.Transactional;
 import liaison.groble.application.content.ContentReader;
 import liaison.groble.application.dashboard.dto.DashboardContentOverviewDTO;
 import liaison.groble.application.dashboard.dto.DashboardOverviewDTO;
+import liaison.groble.application.dashboard.dto.MarketViewStatsDTO;
 import liaison.groble.application.purchase.service.PurchaseReader;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.common.response.PageResponse;
+import liaison.groble.domain.common.enums.PeriodType;
 import liaison.groble.domain.content.dto.FlatContentOverviewDTO;
 import liaison.groble.domain.dashboard.dto.FlatDashboardOverviewDTO;
+import liaison.groble.domain.dashboard.dto.FlatMarketViewStatsDTO;
 import liaison.groble.domain.dashboard.repository.ContentViewStatsRepository;
+import liaison.groble.domain.dashboard.repository.MarketViewStatsCustomRepository;
 import liaison.groble.domain.dashboard.repository.MarketViewStatsRepository;
 import liaison.groble.domain.user.entity.SellerInfo;
 
@@ -33,6 +39,7 @@ public class DashboardService {
   private final PurchaseReader purchaseReader;
   private final ContentViewStatsRepository contentViewStatsRepository;
   private final MarketViewStatsRepository marketViewStatsRepository;
+  private final MarketViewStatsCustomRepository marketViewStatsCustomRepository;
 
   @Transactional(readOnly = true)
   public DashboardOverviewDTO getDashboardOverview(Long userId) {
@@ -71,6 +78,58 @@ public class DashboardService {
             .build();
 
     return PageResponse.from(page, items, meta);
+  }
+
+  @Transactional(readOnly = true)
+  public PageResponse<MarketViewStatsDTO> getMarketViewStats(
+      Long userId, Long marketId, String period, Pageable pageable) {
+    LocalDate endDate = LocalDate.now();
+    LocalDate startDate =
+        switch (period) {
+          case "TODAY" -> endDate;
+          case "LAST_7_DAYS" -> endDate.minusDays(6);
+          case "LAST_30_DAYS" -> endDate.minusDays(29);
+          case "THIS_MONTH" -> endDate.withDayOfMonth(1);
+          case "LAST_MONTH" -> {
+            YearMonth lastMonth = YearMonth.now().minusMonths(1);
+            yield lastMonth.atDay(1);
+          }
+          default -> throw new IllegalArgumentException("Invalid period: " + period);
+        };
+
+    Page<FlatMarketViewStatsDTO> page =
+        marketViewStatsCustomRepository.findByMarketIdAndPeriodTypeAndStatDateBetween(
+            marketId, PeriodType.DAILY, startDate, endDate, pageable);
+
+    // 총 조회수 계산
+    long totalViews =
+        page.getContent().stream()
+            .mapToLong(dto -> dto.getViewCount() != null ? dto.getViewCount() : 0L)
+            .sum();
+
+    List<MarketViewStatsDTO> items =
+        page.getContent().stream().map(this::toMarketViewStatsDTO).collect(Collectors.toList());
+
+    PageResponse.MetaData meta =
+        PageResponse.MetaData.builder()
+            .sortBy(pageable.getSort().iterator().next().getProperty())
+            .sortDirection(pageable.getSort().iterator().next().getDirection().name())
+            .totalViews(totalViews)
+            .build();
+
+    return PageResponse.from(page, items, meta);
+  }
+
+  private MarketViewStatsDTO toMarketViewStatsDTO(FlatMarketViewStatsDTO flatMarketViewStatsDTO) {
+    return MarketViewStatsDTO.builder()
+        .viewDate(flatMarketViewStatsDTO.getViewDate())
+        .dayOfWeek(
+            flatMarketViewStatsDTO
+                .getViewDate()
+                .getDayOfWeek()
+                .getDisplayName(java.time.format.TextStyle.SHORT, java.util.Locale.KOREAN))
+        .viewCount(flatMarketViewStatsDTO.getViewCount())
+        .build();
   }
 
   private Long getTotalContentViews(Long sellerId) {
