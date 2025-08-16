@@ -1,4 +1,4 @@
-package liaison.groble.domain.market.entity;
+package liaison.groble.domain.dashboard.entity;
 
 import static com.querydsl.core.types.PathMetadataFactory.*;
 
@@ -15,7 +15,7 @@ import com.querydsl.core.types.Path;
 @Generated("com.querydsl.codegen.DefaultEntitySerializer")
 public class QMarketViewStats extends EntityPathBase<MarketViewStats> {
 
-    private static final long serialVersionUID = -145489807L;
+    private static final long serialVersionUID = 876021377L;
 
     public static final QMarketViewStats marketViewStats = new QMarketViewStats("marketViewStats");
 

@@ -1,4 +1,4 @@
-package liaison.groble.domain.market.entity;
+package liaison.groble.domain.dashboard.entity;
 
 import static jakarta.persistence.GenerationType.IDENTITY;
 import static lombok.AccessLevel.PROTECTED;
@@ -9,6 +9,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 
 import org.springframework.data.annotation.CreatedDate;
@@ -25,7 +26,12 @@ import lombok.NoArgsConstructor;
  * @since 2025-07-27
  */
 @Entity
-@Table(name = "market_view_logs")
+@Table(
+    name = "market_view_logs",
+    indexes = {
+      @Index(name = "idx_mvl_market_viewed", columnList = "market_id, viewed_at"),
+      @Index(name = "idx_mvl_visitor_hash", columnList = "market_id, viewed_at, visitor_hash")
+    })
 @Getter
 @Builder
 @NoArgsConstructor(access = PROTECTED)
@@ -35,53 +41,24 @@ public class MarketViewLog {
   @GeneratedValue(strategy = IDENTITY)
   private Long id;
 
-  // 특정 마켓 ID
   @Column(name = "market_id", nullable = false)
   private Long marketId;
 
-  /**
-   * 조회한 사용자 ID
-   *
-   * <p>- 로그인 사용자: User 엔티티의 ID
-   *
-   * <p>- 비로그인 사용자: null
-   */
   @Column(name = "viewer_id")
   private Long viewerId;
 
-  /**
-   * 조회자 IP 주소
-   *
-   * <p>- 비로그인 사용자 식별에 사용
-   *
-   * <p>- IPv6 지원 (최대 45자)
-   */
   @Column(name = "viewer_ip", length = 45)
   private String viewerIp;
 
-  /**
-   * 브라우저 User-Agent
-   *
-   * <p>- 비로그인 사용자의 경우 IP와 함께 유니크 사용자 판별
-   *
-   * <p>- 동일 IP에서 다른 브라우저로 접속 시 구분 가능
-   */
   @Column(name = "user_agent", length = 500)
   private String userAgent;
 
-  /**
-   * 유입 경로 (이전 페이지 URL)
-   *
-   * <p>- 트래픽 분석용
-   */
+  @Column(name = "visitor_hash", length = 64)
+  private String visitorHash; // SHA-256(salt|ip|userAgent)
+
   @Column(name = "referer", length = 500)
   private String referer;
 
-  /**
-   * 조회 시각
-   *
-   * <p>- 자동 생성되며 수정 불가
-   */
   @CreatedDate
   @Column(name = "viewed_at", nullable = false, updatable = false)
   private LocalDateTime viewedAt;

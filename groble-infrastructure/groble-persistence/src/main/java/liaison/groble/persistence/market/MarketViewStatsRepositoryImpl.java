@@ -6,8 +6,8 @@ import java.util.List;
 import org.springframework.stereotype.Repository;
 
 import liaison.groble.domain.common.enums.PeriodType;
-import liaison.groble.domain.market.entity.MarketViewStats;
-import liaison.groble.domain.market.repository.MarketViewStatsRepository;
+import liaison.groble.domain.dashboard.entity.MarketViewStats;
+import liaison.groble.domain.dashboard.repository.MarketViewStatsRepository;
 
 import lombok.AllArgsConstructor;
 

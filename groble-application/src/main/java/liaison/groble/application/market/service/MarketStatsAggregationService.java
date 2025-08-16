@@ -12,10 +12,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import liaison.groble.domain.common.enums.PeriodType;
-import liaison.groble.domain.market.entity.MarketViewLog;
-import liaison.groble.domain.market.entity.MarketViewStats;
-import liaison.groble.domain.market.repository.MarketViewLogRepository;
-import liaison.groble.domain.market.repository.MarketViewStatsRepository;
+import liaison.groble.domain.dashboard.entity.MarketViewLog;
+import liaison.groble.domain.dashboard.entity.MarketViewStats;
+import liaison.groble.domain.dashboard.repository.MarketViewLogRepository;
+import liaison.groble.domain.dashboard.repository.MarketViewStatsRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

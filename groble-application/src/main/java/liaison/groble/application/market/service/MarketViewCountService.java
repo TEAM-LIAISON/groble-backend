@@ -7,9 +7,9 @@ import org.springframework.stereotype.Service;
 
 import liaison.groble.application.market.dto.MarketViewCountDTO;
 import liaison.groble.application.user.service.UserReader;
+import liaison.groble.domain.dashboard.entity.MarketViewLog;
+import liaison.groble.domain.dashboard.repository.MarketViewLogRepository;
 import liaison.groble.domain.market.entity.Market;
-import liaison.groble.domain.market.entity.MarketViewLog;
-import liaison.groble.domain.market.repository.MarketViewLogRepository;
 import liaison.groble.domain.port.DailyViewPort;
 
 import lombok.RequiredArgsConstructor;

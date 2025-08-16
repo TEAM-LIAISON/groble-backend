@@ -1,9 +1,9 @@
-package liaison.groble.domain.market.repository;
+package liaison.groble.domain.dashboard.repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
-import liaison.groble.domain.market.entity.MarketViewLog;
+import liaison.groble.domain.dashboard.entity.MarketViewLog;
 
 public interface MarketViewLogRepository {
   MarketViewLog save(MarketViewLog marketViewLog);
