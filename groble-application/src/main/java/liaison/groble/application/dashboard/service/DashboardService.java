@@ -14,6 +14,7 @@ import liaison.groble.application.content.ContentReader;
 import liaison.groble.application.dashboard.dto.ContentViewStatsDTO;
 import liaison.groble.application.dashboard.dto.DashboardContentOverviewDTO;
 import liaison.groble.application.dashboard.dto.DashboardOverviewDTO;
+import liaison.groble.application.dashboard.dto.DashboardViewStatsDTO;
 import liaison.groble.application.dashboard.dto.MarketViewStatsDTO;
 import liaison.groble.application.purchase.service.PurchaseReader;
 import liaison.groble.application.user.service.UserReader;
@@ -82,6 +83,17 @@ public class DashboardService {
             .build();
 
     return PageResponse.from(page, items, meta);
+  }
+
+  @Transactional(readOnly = true)
+  public DashboardViewStatsDTO getViewStats(Long userId) {
+    Long totalContentViews = getTotalContentViews(userId);
+    Long totalMarketViews = getTotalMarketViews(userId);
+
+    return DashboardViewStatsDTO.builder()
+        .totalContentViews(totalContentViews)
+        .totalMarketViews(totalMarketViews)
+        .build();
   }
 
   @Transactional(readOnly = true)

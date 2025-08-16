@@ -5,10 +5,12 @@ import org.mapstruct.Mapper;
 import liaison.groble.api.model.dashboard.response.ContentOverviewResponse;
 import liaison.groble.api.model.dashboard.response.ContentViewStatsResponse;
 import liaison.groble.api.model.dashboard.response.DashboardOverviewResponse;
+import liaison.groble.api.model.dashboard.response.DashboardViewStatsResponse;
 import liaison.groble.api.model.dashboard.response.MarketViewStatsResponse;
 import liaison.groble.application.dashboard.dto.ContentViewStatsDTO;
 import liaison.groble.application.dashboard.dto.DashboardContentOverviewDTO;
 import liaison.groble.application.dashboard.dto.DashboardOverviewDTO;
+import liaison.groble.application.dashboard.dto.DashboardViewStatsDTO;
 import liaison.groble.application.dashboard.dto.MarketViewStatsDTO;
 import liaison.groble.common.response.PageResponse;
 import liaison.groble.mapping.common.PageResponseMapper;
@@ -39,4 +41,7 @@ public interface DashboardMapper extends PageResponseMapper {
   ContentViewStatsResponse toContentViewStatsResponse(ContentViewStatsDTO contentViewStatsDTO);
 
   MarketViewStatsResponse toMarketViewStatsResponse(MarketViewStatsDTO marketViewStatsDTO);
+
+  DashboardViewStatsResponse toDashboardViewStatsResponse(
+      DashboardViewStatsDTO dashboardViewStatsDTO);
 }

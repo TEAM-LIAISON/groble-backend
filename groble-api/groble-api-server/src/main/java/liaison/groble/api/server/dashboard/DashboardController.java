@@ -17,11 +17,13 @@ import org.springframework.web.bind.annotation.RestController;
 import liaison.groble.api.model.dashboard.response.ContentOverviewResponse;
 import liaison.groble.api.model.dashboard.response.ContentViewStatsResponse;
 import liaison.groble.api.model.dashboard.response.DashboardOverviewResponse;
+import liaison.groble.api.model.dashboard.response.DashboardViewStatsResponse;
 import liaison.groble.api.model.dashboard.response.MarketViewStatsResponse;
 import liaison.groble.api.model.dashboard.response.swagger.ContentOverviewListResponse;
 import liaison.groble.application.dashboard.dto.ContentViewStatsDTO;
 import liaison.groble.application.dashboard.dto.DashboardContentOverviewDTO;
 import liaison.groble.application.dashboard.dto.DashboardOverviewDTO;
+import liaison.groble.application.dashboard.dto.DashboardViewStatsDTO;
 import liaison.groble.application.dashboard.dto.MarketViewStatsDTO;
 import liaison.groble.application.dashboard.service.DashboardService;
 import liaison.groble.common.annotation.Auth;
@@ -49,16 +51,19 @@ public class DashboardController {
   // API 경로 상수화
   private static final String DASHBOARD_OVERVIEW_PATH = "/dashboard/overview";
   private static final String DASHBOARD_CONTENTS_LIST_PATH = "/dashboard/my-contents";
+  private static final String DASHBOARD_VIEW_STATS_PATH = "/dashboard/view-stats";
   private static final String DASHBOARD_CONTENT_VIEW_STATS_PATH =
       "/dashboard/content/{contentId}/view-stats";
   private static final String DASHBOARD_MARKET_VIEW_STATS_PATH =
       "/dashboard/market/{marketId}/view-stats";
+
   private static final String DASHBOARD_MARKET_REFERRER_STATS_PATH =
       "/dashboard/market/{marketId}/referrer-stats";
 
   // 응답 메시지 상수화
   private static final String DASHBOARD_OVERVIEW_SUCCESS_MESSAGE = "대시보드 개요 조회 성공";
   private static final String DASHBOARD_CONTENTS_LIST_SUCCESS_MESSAGE = "대시보드 내 콘텐츠 전체 목록 조회 성공";
+  private static final String DASHBOARD_VIEW_STATS_SUCCESS_MESSAGE = "대시보드 마켓과 콘텐츠 조회수 조회 성공";
   private static final String DASHBOARD_CONTENT_VIEW_STATS_SUCCESS_MESSAGE =
       "대시보드 콘텐츠 날짜별 조회수 조회 성공";
   private static final String DASHBOARD_MARKET_DETAIL_STATS_SUCCESS_MESSAGE =
@@ -133,6 +138,42 @@ public class DashboardController {
   }
 
   // TODO(3): 오늘/지난 7일/최근 30일/이번 달/지난 달 선택에 따른 마켓과 콘텐츠 조회 [콘텐츠는 목록 제공]
+  @RequireRole("ROLE_SELLER")
+  @Operation(
+      summary = "[📊 대시보드 - 마켓/콘텐츠 전체 조회수 조회] 내 마켓과 콘텐츠 전체 조회수 조회",
+      description = "전체 기간 안에서 마켓과 콘텐츠 조회수를 반환합니다.")
+  @GetMapping(DASHBOARD_VIEW_STATS_PATH)
+  @Logging(item = "Dashboard", action = "getViewStats", includeParam = true, includeResult = true)
+  public ResponseEntity<GrobleResponse<DashboardViewStatsResponse>> getViewStats(
+      @Auth Accessor accessor) {
+
+    DashboardViewStatsDTO dashboardViewStatsDTO =
+        dashboardService.getViewStats(accessor.getUserId());
+
+    DashboardViewStatsResponse dashboardViewStatsResponse =
+        dashboardMapper.toDashboardViewStatsResponse(dashboardViewStatsDTO);
+
+    return responseHelper.success(
+        dashboardViewStatsResponse, DASHBOARD_VIEW_STATS_SUCCESS_MESSAGE, HttpStatus.OK);
+  }
+
+  //  @RequireRole("ROLE_SELLER")
+  //  @Operation(
+  //          summary = "[📊 대시보드 - 전체 조회수 조회] 전체 조회수 조회",
+  //          description = "마켓 전체 조회수와 콘텐츠 전체 조회수, 모든 콘텐츠의 개별 전체 조회수를 반환합니다.")
+  //  @GetMapping(DASHBOARD_VIEW_STATS_PATH)
+  //  @Logging(
+  //          item = "Dashboard",
+  //          action = "getViewStats",
+  //          includeParam = true,
+  //          includeResult = true)
+  //  public ResponseEntity<GrobleResponse<PageResponse<DashboardViewStatsResponse>>> getViewStats(
+  //      @Auth Accessor accessor,
+  //      @RequestParam(value = "period") String period,
+  //      @RequestParam(defaultValue = "0") int page) {
+  //
+  //  }
+
   // TODO(4): 오늘/지난 7일/최근 30일/이번 달/지난 달 선택에 따른 마켓 상세 조회수 제공 + 유입 경로 제공
   @RequireRole("ROLE_SELLER")
   @Operation(
