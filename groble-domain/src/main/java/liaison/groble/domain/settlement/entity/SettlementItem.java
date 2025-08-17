@@ -68,6 +68,10 @@ public class SettlementItem extends BaseTimeEntity {
   @Column(name = "pg_fee", nullable = false, precision = 14, scale = 2)
   private BigDecimal pgFee; // PG사 수수료 (1.7%)
 
+  // 수수료 VAT ((플랫폼수수료 + PG수수료) * 10%) - 신규 필드
+  @Column(name = "fee_vat", nullable = false, precision = 14, scale = 2)
+  private BigDecimal feeVat;
+
   @Column(name = "total_fee", nullable = false, precision = 14, scale = 2)
   private BigDecimal totalFee; // 총 수수료 (플랫폼 + PG)
 
@@ -80,6 +84,10 @@ public class SettlementItem extends BaseTimeEntity {
 
   @Column(name = "captured_pg_fee_rate", nullable = false, precision = 5, scale = 4)
   private BigDecimal capturedPgFeeRate; // 정산 시점의 PG 수수료율
+
+  // VAT율 스냅샷 - 신규 필드
+  @Column(name = "captured_vat_rate", nullable = false, precision = 5, scale = 4)
+  private BigDecimal capturedVatRate; // 정산 시점의 VAT율
 
   // 구매 정보 스냅샷 (나중에 Purchase가 변경되어도 정산 시점의 정보 유지)
   @Column(name = "content_title", length = 255)
@@ -110,7 +118,11 @@ public class SettlementItem extends BaseTimeEntity {
 
   @Builder
   public SettlementItem(
-      Settlement settlement, Purchase purchase, BigDecimal platformFeeRate, BigDecimal pgFeeRate) {
+      Settlement settlement,
+      Purchase purchase,
+      BigDecimal platformFeeRate,
+      BigDecimal pgFeeRate,
+      BigDecimal vatRate) {
 
     if (settlement == null) {
       throw new IllegalArgumentException("정산 정보는 필수입니다.");
@@ -126,17 +138,21 @@ public class SettlementItem extends BaseTimeEntity {
     if (pgFeeRate == null) {
       pgFeeRate = new BigDecimal("0.0170"); // 기본 1.7%
     }
+    if (vatRate == null) {
+      vatRate = new BigDecimal("0.1000"); // 기본 10%
+    }
 
     this.settlement = settlement;
     this.purchase = purchase;
     this.capturedPlatformFeeRate = platformFeeRate;
     this.capturedPgFeeRate = pgFeeRate;
+    this.capturedVatRate = vatRate;
 
     // Purchase에서 정보 복사
     BigDecimal finalPrice =
         purchase.getFinalPrice() != null ? purchase.getFinalPrice() : BigDecimal.ZERO;
 
-    // ============ 원화 반올림 처리 수정 ============
+    // ============ VAT 포함 수수료 계산 ============
 
     // 판매 금액 (이미 원 단위라고 가정)
     this.salesAmount = finalPrice.setScale(0, RoundingMode.UNNECESSARY);
@@ -145,15 +161,22 @@ public class SettlementItem extends BaseTimeEntity {
     BigDecimal platformFeeRaw = this.salesAmount.multiply(platformFeeRate);
     BigDecimal pgFeeRaw = this.salesAmount.multiply(pgFeeRate);
 
-    // 원 단위로 반올림 (소수점 없음)
+    // 각 수수료를 원 단위로 반올림
     this.platformFee = platformFeeRaw.setScale(0, RoundingMode.HALF_UP);
     this.pgFee = pgFeeRaw.setScale(0, RoundingMode.HALF_UP);
-    this.totalFee = this.platformFee.add(this.pgFee);
+
+    // 수수료 VAT 계산 (수수료 합계의 10%)
+    BigDecimal baseFee = this.platformFee.add(this.pgFee);
+    BigDecimal feeVatRaw = baseFee.multiply(vatRate);
+    this.feeVat = feeVatRaw.setScale(0, RoundingMode.HALF_UP);
+
+    // 총 수수료 (플랫폼 + PG + VAT)
+    this.totalFee = this.platformFee.add(this.pgFee).add(this.feeVat);
 
     // 실 정산 금액 계산
     this.settlementAmount = this.salesAmount.subtract(this.totalFee);
 
-    // ============ 반올림 처리 수정 끝 ============
+    // ============ VAT 계산 완료 ============
 
     // 스냅샷 정보 저장
     this.contentTitle = purchase.getContent() != null ? purchase.getContent().getTitle() : null;
@@ -169,8 +192,25 @@ public class SettlementItem extends BaseTimeEntity {
     this.refundedAt = purchase.getCancelledAt();
   }
 
-  // === 비즈니스 메서드 ===
-  /** 환불 취소 */
+  /** 환불 처리 - 원화 처리 환불시 정산금액을 0으로 설정 */
+  public void processRefund() {
+    if (Boolean.TRUE.equals(this.isRefunded)) {
+      throw new IllegalStateException("이미 환불 처리된 항목입니다.");
+    }
+
+    this.isRefunded = true;
+    this.refundedAt = LocalDateTime.now();
+
+    // 환불 시 정산 금액을 0으로 설정
+    this.settlementAmount = BigDecimal.ZERO;
+
+    // Settlement의 금액 재계산 호출
+    if (settlement != null) {
+      settlement.recalcFromItems();
+    }
+  }
+
+  /** 환불 취소 환불을 취소하고 정산금액을 복원 */
   public void cancelRefund() {
     if (!Boolean.TRUE.equals(this.isRefunded)) {
       throw new IllegalStateException("환불되지 않은 항목입니다.");
@@ -180,26 +220,7 @@ public class SettlementItem extends BaseTimeEntity {
     this.refundedAt = null;
 
     // 정산 금액 복원 (원래 수수료 적용)
-    this.settlementAmount =
-        this.salesAmount.subtract(this.totalFee).setScale(2, RoundingMode.HALF_UP);
-
-    // Settlement의 금액 재계산 호출 (public 메서드)
-    if (settlement != null) {
-      settlement.recalcFromItems();
-    }
-  }
-
-  /** 환불 처리 - 원화 처리 */
-  public void processRefund() {
-    if (Boolean.TRUE.equals(this.isRefunded)) {
-      throw new IllegalStateException("이미 환불 처리된 항목입니다.");
-    }
-
-    this.isRefunded = true;
-    this.refundedAt = LocalDateTime.now();
-
-    // 환불 시 정산 금액을 0으로 설정 (원 단위)
-    this.settlementAmount = BigDecimal.ZERO;
+    this.settlementAmount = this.salesAmount.subtract(this.totalFee);
 
     // Settlement의 금액 재계산 호출
     if (settlement != null) {
@@ -207,14 +228,18 @@ public class SettlementItem extends BaseTimeEntity {
     }
   }
 
-  /** 정산 금액 재계산 (수수료율 변경 시) - 원화 반올림 처리 */
-  public void recalculateWithNewFeeRates(BigDecimal newPlatformFeeRate, BigDecimal newPgFeeRate) {
+  /** 정산 금액 재계산 (수수료율 변경 시) - VAT 처리 포함 */
+  public void recalculateWithNewFeeRates(
+      BigDecimal newPlatformFeeRate, BigDecimal newPgFeeRate, BigDecimal newVatRate) {
+
     if (Boolean.TRUE.equals(this.isRefunded)) {
-      return;
+      return; // 환불된 항목은 재계산하지 않음
     }
 
+    // 새로운 수수료율 저장
     this.capturedPlatformFeeRate = newPlatformFeeRate;
     this.capturedPgFeeRate = newPgFeeRate;
+    this.capturedVatRate = newVatRate != null ? newVatRate : new BigDecimal("0.1000");
 
     // 수수료 재계산 - 원 단위로 반올림
     BigDecimal platformFeeRaw = this.salesAmount.multiply(newPlatformFeeRate);
@@ -222,7 +247,14 @@ public class SettlementItem extends BaseTimeEntity {
 
     this.platformFee = platformFeeRaw.setScale(0, RoundingMode.HALF_UP);
     this.pgFee = pgFeeRaw.setScale(0, RoundingMode.HALF_UP);
-    this.totalFee = this.platformFee.add(this.pgFee);
+
+    // 수수료 VAT 재계산
+    BigDecimal baseFee = this.platformFee.add(this.pgFee);
+    BigDecimal feeVatRaw = baseFee.multiply(this.capturedVatRate);
+    this.feeVat = feeVatRaw.setScale(0, RoundingMode.HALF_UP);
+
+    // 총 수수료 재계산
+    this.totalFee = this.platformFee.add(this.pgFee).add(this.feeVat);
 
     // 실 정산 금액 재계산
     this.settlementAmount = this.salesAmount.subtract(this.totalFee);
@@ -234,7 +266,6 @@ public class SettlementItem extends BaseTimeEntity {
   }
 
   // === 연관관계 메서드 ===
-
   /** Settlement 설정 (양방향 관계) Settlement.addSettlementItem()에서 호출됨 */
   protected void setSettlement(Settlement settlement) {
     this.settlement = settlement;
@@ -252,13 +283,22 @@ public class SettlementItem extends BaseTimeEntity {
     return Boolean.TRUE.equals(this.isRefunded);
   }
 
-  /** 실제 정산 가능 금액 */
+  /** 실제 정산 가능 금액 환불된 경우 0, 아니면 정산금액 반환 */
   public BigDecimal getActualSettlementAmount() {
     return isRefundedSafe() ? BigDecimal.ZERO : this.settlementAmount;
   }
 
-  /** 총 수수료율 조회 */
+  /** 총 수수료율 조회 (VAT 포함 실효율) */
   public BigDecimal getTotalFeeRate() {
+    BigDecimal baseFeeRate = capturedPlatformFeeRate.add(capturedPgFeeRate);
+    // 실효 수수료율 = 기본수수료율 * (1 + VAT율)
+    return baseFeeRate
+        .multiply(BigDecimal.ONE.add(capturedVatRate))
+        .setScale(4, RoundingMode.HALF_UP);
+  }
+
+  /** 기본 수수료율 조회 (VAT 제외) */
+  public BigDecimal getBaseFeeRate() {
     return capturedPlatformFeeRate.add(capturedPgFeeRate).setScale(4, RoundingMode.HALF_UP);
   }
 

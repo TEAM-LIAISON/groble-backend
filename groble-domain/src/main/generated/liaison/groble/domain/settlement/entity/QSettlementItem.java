@@ -28,10 +28,14 @@ public class QSettlementItem extends EntityPathBase<SettlementItem> {
 
     public final NumberPath<java.math.BigDecimal> capturedPlatformFeeRate = createNumber("capturedPlatformFeeRate", java.math.BigDecimal.class);
 
+    public final NumberPath<java.math.BigDecimal> capturedVatRate = createNumber("capturedVatRate", java.math.BigDecimal.class);
+
     public final StringPath contentTitle = createString("contentTitle");
 
     //inherited
     public final DateTimePath<java.time.LocalDateTime> createdAt = _super.createdAt;
+
+    public final NumberPath<java.math.BigDecimal> feeVat = createNumber("feeVat", java.math.BigDecimal.class);
 
     public final NumberPath<Long> id = createNumber("id", Long.class);
 
