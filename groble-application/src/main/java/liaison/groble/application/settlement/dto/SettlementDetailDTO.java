@@ -21,6 +21,8 @@ public class SettlementDetailDTO {
   private BigDecimal pgFee; // PG사 수수료 (1.7%)
   // 그로블 수수료(1.5%)
   private BigDecimal platformFee; // 플랫폼 수수료 (1.5%)
+  // VAT
+  private BigDecimal vatAmount;
 
   // 세금계산서 버튼 활성화 값
   private Boolean isTaxInvoiceButtonEnabled; // 세금계산서 버튼 활성화 여부
