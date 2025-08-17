@@ -132,6 +132,7 @@ public class SettlementService {
         .settlementAmount(settlement.getSettlementAmount())
         .pgFee(settlement.getPgFee())
         .platformFee(settlement.getPlatformFee())
+        .vatAmount(settlement.getFeeVat())
         .isTaxInvoiceButtonEnabled(isTaxInvoiceButtonEnabled)
         .isTaxInvoiceIssuable(isTaxInvoiceIssuable)
         .taxInvoiceUrl(taxInvoiceUrl)
@@ -170,7 +171,20 @@ public class SettlementService {
 
   @Transactional(readOnly = true)
   public TaxInvoiceDTO getTaxInvoice(Long userId, YearMonth yearMonth) {
-    return null;
+
+    SellerInfo sellerInfo = userReader.getSellerInfoWithUser(userId);
+    TaxInvoice taxInvoice = taxInvoiceReader.findByUserAndYearMonth(userId, yearMonth);
+
+    return TaxInvoiceDTO.builder()
+        .supplierName("리에종")
+        .recipientName(sellerInfo.getBusinessName())
+        .supplyAmount(taxInvoice.getSupplyAmount())
+        .vatAmount(taxInvoice.getVatAmount())
+        .totalAmount(taxInvoice.getTotalAmount())
+        .invoiceNumber(taxInvoice.getInvoiceNumber())
+        .issuedDate(taxInvoice.getIssuedDate())
+        .taxInvoiceUrl(taxInvoice.getInvoiceUrl())
+        .build();
   }
 
   private PerTransactionSettlementOverviewDTO convertFlatDTOToPerTransactionDTO(
