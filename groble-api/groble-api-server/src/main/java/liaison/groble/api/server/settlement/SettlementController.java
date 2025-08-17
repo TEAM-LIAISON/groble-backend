@@ -15,12 +15,14 @@ import liaison.groble.api.model.settlement.response.MonthlySettlementOverviewRes
 import liaison.groble.api.model.settlement.response.PerTransactionSettlementOverviewResponse;
 import liaison.groble.api.model.settlement.response.SettlementDetailResponse;
 import liaison.groble.api.model.settlement.response.SettlementOverviewResponse;
+import liaison.groble.api.model.settlement.response.TaxInvoiceResponse;
 import liaison.groble.api.model.settlement.response.swagger.MonthlySettlementOverviewListResponse;
 import liaison.groble.api.model.settlement.response.swagger.PerTransactionSettlementOverviewListResponse;
 import liaison.groble.application.settlement.dto.MonthlySettlementOverviewDTO;
 import liaison.groble.application.settlement.dto.PerTransactionSettlementOverviewDTO;
 import liaison.groble.application.settlement.dto.SettlementDetailDTO;
 import liaison.groble.application.settlement.dto.SettlementOverviewDTO;
+import liaison.groble.application.settlement.dto.TaxInvoiceDTO;
 import liaison.groble.application.settlement.service.SettlementService;
 import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.annotation.Logging;
@@ -50,12 +52,14 @@ public class SettlementController {
   private static final String SETTLEMENT_LIST_PATH = "/settlements";
   private static final String SETTLEMENT_DETAIL_PATH = "/settlements/{yearMonth}";
   private static final String SALES_LIST_PATH = "/settlements/sales/{yearMonth}";
+  private static final String TAX_INVOICE_PATH = "/settlements/tax-invoice/{yearMonth}";
 
   // 응답 메시지 상수화
   private static final String SETTLEMENT_OVERVIEW_SUCCESS_MESSAGE = "정산 개요 조회 성공";
   private static final String SETTLEMENT_LIST_SUCCESS_MESSAGE = "정산 내역 전체 조회 성공";
   private static final String SETTLEMENT_DETAIL_SUCCESS_MESSAGE = "정산 상세 내역 조회 성공";
   private static final String SALES_LIST_SUCCESS_MESSAGE = "총 판매 내역 조회 성공";
+  private static final String TAX_INVOICE_SUCCESS_MESSAGE = "세금계산서 발행 성공";
 
   // Service
   private final SettlementService settlementService;
@@ -196,5 +200,36 @@ public class SettlementController {
         settlementMapper.toPerTransactionSettlementOverviewResponsePage(dtoPage);
 
     return responseHelper.success(responsePage, SALES_LIST_SUCCESS_MESSAGE, HttpStatus.OK);
+  }
+
+  // 세금계산서 발행 받기
+  @RequireRole("ROLE_SELLER")
+  @Operation(
+      summary = "[💰 세금계산서 상세 정보 조회] 세금계산서 데이터를 조회합니다.",
+      description = "월별 세금계산서 상세 데이터를 조회합니다.")
+  @ApiResponse(
+      responseCode = "200",
+      description = TAX_INVOICE_SUCCESS_MESSAGE,
+      content =
+          @Content(
+              mediaType = "application/json",
+              schema = @Schema(implementation = TaxInvoiceResponse.class)))
+  @GetMapping(TAX_INVOICE_PATH)
+  @Logging(item = "Settlement", action = "getTaxInvoice", includeParam = true, includeResult = true)
+  public ResponseEntity<GrobleResponse<TaxInvoiceResponse>> getTaxInvoice(
+      @Auth Accessor accessor,
+      @Parameter(
+              name = "yearMonth",
+              description = "yyyy-MM 형식",
+              example = "2025-08",
+              schema = @Schema(type = "string", pattern = "^\\d{4}-(0[1-9]|1[0-2])$"))
+          @PathVariable("yearMonth")
+          YearMonth yearMonth) {
+
+    TaxInvoiceDTO taxInvoiceDTO = settlementService.getTaxInvoice(accessor.getUserId(), yearMonth);
+
+    TaxInvoiceResponse taxInvoiceResponse = settlementMapper.toTaxInvoiceResponse(taxInvoiceDTO);
+
+    return responseHelper.success(taxInvoiceResponse, TAX_INVOICE_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 }

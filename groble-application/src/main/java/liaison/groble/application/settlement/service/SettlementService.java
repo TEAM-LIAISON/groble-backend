@@ -16,6 +16,7 @@ import liaison.groble.application.settlement.dto.MonthlySettlementOverviewDTO;
 import liaison.groble.application.settlement.dto.PerTransactionSettlementOverviewDTO;
 import liaison.groble.application.settlement.dto.SettlementDetailDTO;
 import liaison.groble.application.settlement.dto.SettlementOverviewDTO;
+import liaison.groble.application.settlement.dto.TaxInvoiceDTO;
 import liaison.groble.application.settlement.reader.SettlementReader;
 import liaison.groble.application.settlement.reader.TaxInvoiceReader;
 import liaison.groble.application.user.service.UserReader;
@@ -165,6 +166,11 @@ public class SettlementService {
         page.getTotalElements());
 
     return PageResponse.from(page, items, meta);
+  }
+
+  @Transactional(readOnly = true)
+  public TaxInvoiceDTO getTaxInvoice(Long userId, YearMonth yearMonth) {
+    return null;
   }
 
   private PerTransactionSettlementOverviewDTO convertFlatDTOToPerTransactionDTO(
