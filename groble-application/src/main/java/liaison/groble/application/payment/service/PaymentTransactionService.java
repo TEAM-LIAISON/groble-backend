@@ -346,6 +346,7 @@ public class PaymentTransactionService {
             .purchase(purchase)
             .platformFeeRate(settlement.getPlatformFeeRate())
             .pgFeeRate(settlement.getPgFeeRate())
+            .vatRate(settlement.getVatRate())
             .build();
 
     // Settlement에 항목 추가
@@ -405,6 +406,7 @@ public class PaymentTransactionService {
       // ========== 수수료율 설정 시 검증 ==========
       BigDecimal platformFeeRate = new BigDecimal("0.0150"); // 1.5%
       BigDecimal pgFeeRate = new BigDecimal("0.0170"); // 1.7%
+      BigDecimal vatRate = new BigDecimal("0.1000"); // 10%
 
       log.info(
           "새 정산 생성 - sellerId: {}, period: {} ~ {}, " + "플랫폼수수료율: {}%, PG수수료율: {}%",
@@ -415,7 +417,7 @@ public class PaymentTransactionService {
           pgFeeRate.multiply(new BigDecimal("100")).toPlainString());
 
       return settlementWriter.createSettlement(
-          seller, periodStart, periodEnd, platformFeeRate, pgFeeRate);
+          seller, periodStart, periodEnd, platformFeeRate, pgFeeRate, vatRate);
 
     } catch (DataIntegrityViolationException e) {
       // 3차: UNIQUE 제약 위반 (동시 생성) - Reader로 재조회

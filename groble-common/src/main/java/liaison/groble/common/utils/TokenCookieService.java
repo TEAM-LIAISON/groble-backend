@@ -277,7 +277,7 @@ public class TokenCookieService {
         sameSite = "Lax";
       } else {
         // 운영 환경 (admin.groble.im -> api.groble.im)
-        sameSite = "Strict";
+        sameSite = "None";
       }
     }
 
