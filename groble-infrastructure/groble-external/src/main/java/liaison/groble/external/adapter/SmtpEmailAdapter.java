@@ -268,7 +268,7 @@ public class SmtpEmailAdapter implements EmailSenderPort {
               + "        </a>\n"
               + "      </td></tr>\n"
               + "      <tr><td style=\"padding:0 20px 16px;color:#111827;font-size:24px;font-weight:700;\">\n"
-              + "        상품 판매 알림\n"
+              + "        콘텐츠 판매 알림\n"
               + "      </td></tr>\n"
               + "      <tr>\n"
               + "        <td style=\"padding:0 24px 32px; margin:0; color:#222; font-size:16px; font-weight:500;\">\n"
