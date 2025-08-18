@@ -322,6 +322,7 @@ public class PaymentTransactionService {
     // 수수료 계산 미리보기 (디버그용)
     BigDecimal platformFeeRate = settlement.getPlatformFeeRate();
     BigDecimal pgFeeRate = settlement.getPgFeeRate();
+    BigDecimal vatRate = settlement.getVatRate();
 
     // 예상 수수료 계산 (반올림 전)
     BigDecimal expectedPlatformFeeRaw = salesAmount.multiply(platformFeeRate);
@@ -361,6 +362,7 @@ public class PaymentTransactionService {
             + "판매액: {}원, "
             + "플랫폼수수료: {}원 ({}%), "
             + "PG수수료: {}원 ({}%), "
+            + "수수료 VAT: {}원, "
             + "총수수료: {}원, "
             + "정산액: {}원",
         settlement.getId(),
@@ -370,6 +372,7 @@ public class PaymentTransactionService {
         platformFeeRate.multiply(new BigDecimal("100")).toPlainString(),
         settlementItem.getPgFee().toPlainString(),
         pgFeeRate.multiply(new BigDecimal("100")).toPlainString(),
+        vatRate.multiply(new BigDecimal("100")).toPlainString(),
         settlementItem.getTotalFee().toPlainString(),
         settlementItem.getSettlementAmount().toPlainString());
 
