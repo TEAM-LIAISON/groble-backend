@@ -3,6 +3,8 @@ package liaison.groble.persistence.purchase;
 import static com.querydsl.jpa.JPAExpressions.select;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -13,6 +15,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 
+import com.querydsl.core.Tuple;
 import com.querydsl.core.types.Expression;
 import com.querydsl.core.types.ExpressionUtils;
 import com.querydsl.core.types.OrderSpecifier;
@@ -33,6 +36,7 @@ import liaison.groble.domain.content.entity.QContentOption;
 import liaison.groble.domain.content.entity.QContentReview;
 import liaison.groble.domain.content.entity.QDocumentOption;
 import liaison.groble.domain.content.enums.ContentType;
+import liaison.groble.domain.dashboard.dto.FlatDashboardOverviewDTO;
 import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.order.entity.QOrder;
 import liaison.groble.domain.payment.entity.QPayplePayment;
@@ -555,5 +559,77 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
             .where(conditions)
             .fetchFirst()
         != null;
+  }
+
+  @Override
+  public FlatDashboardOverviewDTO getDashboardOverviewStats(Long sellerId) {
+    LocalDateTime currentMonthStart = LocalDate.now().withDayOfMonth(1).atStartOfDay();
+
+    QPurchase purchase = QPurchase.purchase;
+    QContent content = QContent.content;
+
+    // 전체 통계 - NULL 안전 처리
+    Tuple totalStats =
+        queryFactory
+            .select(
+                purchase.finalPrice.sum().coalesce(BigDecimal.ZERO),
+                purchase.count(),
+                purchase.user.id.countDistinct() // 전체 고유 고객 수
+                )
+            .from(purchase)
+            .join(purchase.content, content)
+            .where(
+                content.user.id.eq(sellerId),
+                purchase.cancelledAt.isNull(),
+                purchase.purchasedAt.isNotNull())
+            .fetchOne();
+
+    // 이번 달 통계
+    Tuple monthStats =
+        queryFactory
+            .select(
+                purchase.finalPrice.sum().coalesce(BigDecimal.ZERO),
+                purchase.count(),
+                purchase.user.id.countDistinct() // 이번 달 고유 고객 수
+                )
+            .from(purchase)
+            .join(purchase.content, content)
+            .where(
+                content.user.id.eq(sellerId),
+                purchase.cancelledAt.isNull(),
+                purchase.purchasedAt.isNotNull(),
+                purchase.purchasedAt.goe(currentMonthStart))
+            .fetchOne();
+
+    // NULL 안전 처리
+    BigDecimal totalRevenue = BigDecimal.ZERO;
+    Long totalSalesCount = 0L;
+    Long totalCustomers = 0L;
+    BigDecimal monthRevenue = BigDecimal.ZERO;
+    Long monthSalesCount = 0L;
+    Long recentCustomers = 0L;
+
+    if (totalStats != null) {
+      totalRevenue =
+          Optional.ofNullable(totalStats.get(0, BigDecimal.class)).orElse(BigDecimal.ZERO);
+      totalSalesCount = Optional.ofNullable(totalStats.get(1, Long.class)).orElse(0L);
+      totalCustomers = Optional.ofNullable(totalStats.get(2, Long.class)).orElse(0L);
+    }
+
+    if (monthStats != null) {
+      monthRevenue =
+          Optional.ofNullable(monthStats.get(0, BigDecimal.class)).orElse(BigDecimal.ZERO);
+      monthSalesCount = Optional.ofNullable(monthStats.get(1, Long.class)).orElse(0L);
+      recentCustomers = Optional.ofNullable(monthStats.get(2, Long.class)).orElse(0L);
+    }
+
+    return FlatDashboardOverviewDTO.builder()
+        .totalRevenue(totalRevenue)
+        .totalSalesCount(totalSalesCount)
+        .currentMonthRevenue(monthRevenue)
+        .currentMonthSalesCount(monthSalesCount)
+        .totalCustomers(totalCustomers)
+        .recentCustomers(recentCustomers)
+        .build();
   }
 }

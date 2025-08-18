@@ -64,6 +64,14 @@ public class SettlementDetailResponse {
       requiredMode = Schema.RequiredMode.REQUIRED)
   private BigDecimal platformFee; // 플랫폼 수수료 (1.5%)
 
+  // VAT (10%)
+  @Schema(
+      description = "부가세 (10%)",
+      example = "1500",
+      type = "number",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private BigDecimal vatAmount;
+
   @Schema(
       description = "세금계산서 버튼 활성화 여부 - (활성화되더라도 모달 2개 관리는 아래 isTaxInvoiceIssuable에서 관리)",
       example = "true",

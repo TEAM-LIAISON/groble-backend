@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import liaison.groble.common.exception.EntityNotFoundException;
 import liaison.groble.domain.content.dto.FlatAdminContentSummaryInfoDTO;
+import liaison.groble.domain.content.dto.FlatContentOverviewDTO;
 import liaison.groble.domain.content.dto.FlatContentPreviewDTO;
 import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.content.enums.ContentStatus;
@@ -62,6 +63,10 @@ public class ContentReader {
         .orElseThrow(() -> new EntityNotFoundException("콘텐츠를 찾을 수 없습니다. ID: " + contentId));
   }
 
+  public List<Long> findIdsByUserId(Long userId) {
+    return contentRepository.findIdsByUserId(userId);
+  }
+
   // ===== 메이커의 대표 Content 조회 =====
   public FlatContentPreviewDTO getRepresentativeContentByUser(Long userId) {
     return contentCustomRepository.findRepresentativeContentByUser(userId).orElse(null);
@@ -84,6 +89,10 @@ public class ContentReader {
   public Page<FlatContentPreviewDTO> findMyContentsWithStatus(
       Pageable pageable, Long userId, List<ContentStatus> contentStatuses) {
     return contentCustomRepository.findMyContentsWithStatus(pageable, userId, contentStatuses);
+  }
+
+  public Page<FlatContentOverviewDTO> findMyContentsBySellerId(Long sellerId, Pageable pageable) {
+    return contentCustomRepository.findMyContentsBySellerId(sellerId, pageable);
   }
 
   public boolean existsSellingContentByUser(Long userId) {

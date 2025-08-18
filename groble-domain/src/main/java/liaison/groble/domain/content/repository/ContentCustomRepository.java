@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 
 import liaison.groble.common.response.CursorResponse;
 import liaison.groble.domain.content.dto.FlatAdminContentSummaryInfoDTO;
+import liaison.groble.domain.content.dto.FlatContentOverviewDTO;
 import liaison.groble.domain.content.dto.FlatContentPreviewDTO;
 import liaison.groble.domain.content.dto.FlatDynamicContentDTO;
 import liaison.groble.domain.content.enums.ContentStatus;
@@ -54,6 +55,8 @@ public interface ContentCustomRepository {
 
   Page<FlatContentPreviewDTO> findMyContentsWithStatus(
       Pageable pageable, Long userId, List<ContentStatus> contentStatuses);
+
+  Page<FlatContentOverviewDTO> findMyContentsBySellerId(Long sellerId, Pageable pageable);
 
   boolean existsSellingContentByUser(Long userId);
 

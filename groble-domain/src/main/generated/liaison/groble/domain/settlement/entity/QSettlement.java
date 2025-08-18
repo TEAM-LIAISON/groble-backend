@@ -33,6 +33,8 @@ public class QSettlement extends EntityPathBase<Settlement> {
     //inherited
     public final DateTimePath<java.time.LocalDateTime> createdAt = _super.createdAt;
 
+    public final NumberPath<java.math.BigDecimal> feeVat = createNumber("feeVat", java.math.BigDecimal.class);
+
     public final NumberPath<Long> id = createNumber("id", Long.class);
 
     public final NumberPath<java.math.BigDecimal> pgFee = createNumber("pgFee", java.math.BigDecimal.class);
@@ -75,6 +77,8 @@ public class QSettlement extends EntityPathBase<Settlement> {
     public final DateTimePath<java.time.LocalDateTime> updatedAt = _super.updatedAt;
 
     public final liaison.groble.domain.user.entity.QUser user;
+
+    public final NumberPath<java.math.BigDecimal> vatRate = createNumber("vatRate", java.math.BigDecimal.class);
 
     public final NumberPath<Long> version = createNumber("version", Long.class);
 

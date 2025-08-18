@@ -6,10 +6,12 @@ import liaison.groble.api.model.settlement.response.MonthlySettlementOverviewRes
 import liaison.groble.api.model.settlement.response.PerTransactionSettlementOverviewResponse;
 import liaison.groble.api.model.settlement.response.SettlementDetailResponse;
 import liaison.groble.api.model.settlement.response.SettlementOverviewResponse;
+import liaison.groble.api.model.settlement.response.TaxInvoiceResponse;
 import liaison.groble.application.settlement.dto.MonthlySettlementOverviewDTO;
 import liaison.groble.application.settlement.dto.PerTransactionSettlementOverviewDTO;
 import liaison.groble.application.settlement.dto.SettlementDetailDTO;
 import liaison.groble.application.settlement.dto.SettlementOverviewDTO;
+import liaison.groble.application.settlement.dto.TaxInvoiceDTO;
 import liaison.groble.common.response.PageResponse;
 import liaison.groble.mapping.common.PageResponseMapper;
 import liaison.groble.mapping.config.GrobleMapperConfig;
@@ -39,4 +41,6 @@ public interface SettlementMapper extends PageResponseMapper {
 
   PerTransactionSettlementOverviewResponse toPerTransactionSettlementOverviewResponse(
       PerTransactionSettlementOverviewDTO perTransactionSettlementOverviewDTO);
+
+  TaxInvoiceResponse toTaxInvoiceResponse(TaxInvoiceDTO taxInvoiceDTO);
 }

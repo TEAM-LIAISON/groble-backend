@@ -823,7 +823,7 @@ public class ContentService {
     // 필수 필드가 누락된 경우 예외 발생
     if (!missingFields.isEmpty()) {
       throw new IllegalArgumentException(
-          "심사 요청을 위해 다음 필드를 입력해주세요: " + String.join(", ", missingFields));
+          "판매를 위해 다음 필드를 입력해주세요: " + String.join(", ", missingFields));
     }
   }
 

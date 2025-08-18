@@ -8,14 +8,16 @@ import liaison.groble.api.model.settlement.response.MonthlySettlementOverviewRes
 import liaison.groble.api.model.settlement.response.PerTransactionSettlementOverviewResponse;
 import liaison.groble.api.model.settlement.response.SettlementDetailResponse;
 import liaison.groble.api.model.settlement.response.SettlementOverviewResponse;
+import liaison.groble.api.model.settlement.response.TaxInvoiceResponse;
 import liaison.groble.application.settlement.dto.MonthlySettlementOverviewDTO;
 import liaison.groble.application.settlement.dto.PerTransactionSettlementOverviewDTO;
 import liaison.groble.application.settlement.dto.SettlementDetailDTO;
 import liaison.groble.application.settlement.dto.SettlementOverviewDTO;
+import liaison.groble.application.settlement.dto.TaxInvoiceDTO;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-08-14T15:45:54+0900",
+    date = "2025-08-17T17:18:22+0900",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.10 (Amazon.com Inc.)")
 @Component
 public class SettlementMapperImpl implements SettlementMapper {
@@ -47,6 +49,9 @@ public class SettlementMapperImpl implements SettlementMapper {
     }
     if (settlementDetailDTO.getPlatformFee() != null) {
       settlementDetailResponse.platformFee(settlementDetailDTO.getPlatformFee());
+    }
+    if (settlementDetailDTO.getVatAmount() != null) {
+      settlementDetailResponse.vatAmount(settlementDetailDTO.getVatAmount());
     }
     if (settlementDetailDTO.getIsTaxInvoiceButtonEnabled() != null) {
       settlementDetailResponse.isTaxInvoiceButtonEnabled(
@@ -142,5 +147,38 @@ public class SettlementMapperImpl implements SettlementMapper {
     }
 
     return perTransactionSettlementOverviewResponse.build();
+  }
+
+  @Override
+  public TaxInvoiceResponse toTaxInvoiceResponse(TaxInvoiceDTO taxInvoiceDTO) {
+    if (taxInvoiceDTO == null) {
+      return null;
+    }
+
+    TaxInvoiceResponse.TaxInvoiceResponseBuilder taxInvoiceResponse = TaxInvoiceResponse.builder();
+
+    if (taxInvoiceDTO.getSupplierName() != null) {
+      taxInvoiceResponse.supplierName(taxInvoiceDTO.getSupplierName());
+    }
+    if (taxInvoiceDTO.getRecipientName() != null) {
+      taxInvoiceResponse.recipientName(taxInvoiceDTO.getRecipientName());
+    }
+    if (taxInvoiceDTO.getSupplyAmount() != null) {
+      taxInvoiceResponse.supplyAmount(taxInvoiceDTO.getSupplyAmount());
+    }
+    if (taxInvoiceDTO.getVatAmount() != null) {
+      taxInvoiceResponse.vatAmount(taxInvoiceDTO.getVatAmount());
+    }
+    if (taxInvoiceDTO.getTotalAmount() != null) {
+      taxInvoiceResponse.totalAmount(taxInvoiceDTO.getTotalAmount());
+    }
+    if (taxInvoiceDTO.getInvoiceNumber() != null) {
+      taxInvoiceResponse.invoiceNumber(taxInvoiceDTO.getInvoiceNumber());
+    }
+    if (taxInvoiceDTO.getIssuedDate() != null) {
+      taxInvoiceResponse.issuedDate(taxInvoiceDTO.getIssuedDate());
+    }
+
+    return taxInvoiceResponse.build();
   }
 }
