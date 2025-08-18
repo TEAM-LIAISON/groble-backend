@@ -49,15 +49,17 @@ public class SettlementCustomRepositoryImpl implements SettlementCustomRepositor
                     qSettlement.status.stringValue().as("settlementStatus")))
             .from(qSettlement)
             .leftJoin(qSettlement.user, user)
-            .where(cond);
-    // 정렬 적용
-    query.orderBy(qSettlement.createdAt.desc());
+            .where(cond)
+            // ✅ 2025.08 → 2025.07 → 2025.06 ...
+            .orderBy(
+                qSettlement.settlementStartDate.desc(),
+                qSettlement.settlementEndDate.desc(),
+                qSettlement.id.desc() // tie-breaker
+                );
 
-    // 페이징 적용
     List<FlatMonthlySettlement> items =
         query.offset(pageable.getOffset()).limit(pageable.getPageSize()).fetch();
 
-    // 카운트 쿼리
     long total =
         Optional.ofNullable(
                 jpaQueryFactory

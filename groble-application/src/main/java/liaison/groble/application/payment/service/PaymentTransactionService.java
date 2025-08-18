@@ -322,6 +322,7 @@ public class PaymentTransactionService {
     // 수수료 계산 미리보기 (디버그용)
     BigDecimal platformFeeRate = settlement.getPlatformFeeRate();
     BigDecimal pgFeeRate = settlement.getPgFeeRate();
+    BigDecimal vatRate = settlement.getVatRate();
 
     // 예상 수수료 계산 (반올림 전)
     BigDecimal expectedPlatformFeeRaw = salesAmount.multiply(platformFeeRate);
@@ -346,6 +347,7 @@ public class PaymentTransactionService {
             .purchase(purchase)
             .platformFeeRate(settlement.getPlatformFeeRate())
             .pgFeeRate(settlement.getPgFeeRate())
+            .vatRate(settlement.getVatRate())
             .build();
 
     // Settlement에 항목 추가
@@ -360,6 +362,7 @@ public class PaymentTransactionService {
             + "판매액: {}원, "
             + "플랫폼수수료: {}원 ({}%), "
             + "PG수수료: {}원 ({}%), "
+            + "수수료 VAT: {}원, "
             + "총수수료: {}원, "
             + "정산액: {}원",
         settlement.getId(),
@@ -369,6 +372,7 @@ public class PaymentTransactionService {
         platformFeeRate.multiply(new BigDecimal("100")).toPlainString(),
         settlementItem.getPgFee().toPlainString(),
         pgFeeRate.multiply(new BigDecimal("100")).toPlainString(),
+        vatRate.multiply(new BigDecimal("100")).toPlainString(),
         settlementItem.getTotalFee().toPlainString(),
         settlementItem.getSettlementAmount().toPlainString());
 
@@ -405,6 +409,7 @@ public class PaymentTransactionService {
       // ========== 수수료율 설정 시 검증 ==========
       BigDecimal platformFeeRate = new BigDecimal("0.0150"); // 1.5%
       BigDecimal pgFeeRate = new BigDecimal("0.0170"); // 1.7%
+      BigDecimal vatRate = new BigDecimal("0.1000"); // 10%
 
       log.info(
           "새 정산 생성 - sellerId: {}, period: {} ~ {}, " + "플랫폼수수료율: {}%, PG수수료율: {}%",
@@ -415,7 +420,7 @@ public class PaymentTransactionService {
           pgFeeRate.multiply(new BigDecimal("100")).toPlainString());
 
       return settlementWriter.createSettlement(
-          seller, periodStart, periodEnd, platformFeeRate, pgFeeRate);
+          seller, periodStart, periodEnd, platformFeeRate, pgFeeRate, vatRate);
 
     } catch (DataIntegrityViolationException e) {
       // 3차: UNIQUE 제약 위반 (동시 생성) - Reader로 재조회

@@ -75,6 +75,10 @@ public class Settlement extends BaseTimeEntity {
   @Column(name = "pg_fee", nullable = false, precision = 14, scale = 2)
   private BigDecimal pgFee = BigDecimal.ZERO; // PG사 수수료 (1.7%)
 
+  // 수수료 VAT (수수료 합계의 10%) - 신규 필드
+  @Column(name = "fee_vat", nullable = false, precision = 14, scale = 2)
+  private BigDecimal feeVat = BigDecimal.ZERO;
+
   @Column(name = "total_fee", nullable = false, precision = 14, scale = 2)
   private BigDecimal totalFee = BigDecimal.ZERO; // 총 수수료 (플랫폼 + PG)
 
@@ -115,6 +119,10 @@ public class Settlement extends BaseTimeEntity {
   @Column(name = "pg_fee_rate", nullable = false, precision = 5, scale = 4)
   private BigDecimal pgFeeRate = new BigDecimal("0.0170"); // 1.7%
 
+  // VAT율 - 신규 필드
+  @Column(name = "vat_rate", nullable = false, precision = 5, scale = 4)
+  private BigDecimal vatRate = new BigDecimal("0.1000"); // 10%
+
   // 정산 은행 정보
   @Column(name = "bank_name", length = 100)
   private String bankName;
@@ -134,7 +142,8 @@ public class Settlement extends BaseTimeEntity {
       LocalDate settlementStartDate,
       LocalDate settlementEndDate,
       BigDecimal platformFeeRate,
-      BigDecimal pgFeeRate) {
+      BigDecimal pgFeeRate,
+      BigDecimal vatRate) {
     // 입력 검증
     if (user == null) {
       throw new IllegalArgumentException("사용자는 필수입니다.");
@@ -152,6 +161,7 @@ public class Settlement extends BaseTimeEntity {
     this.platformFeeRate =
         platformFeeRate != null ? platformFeeRate : new BigDecimal("0.0150"); // 기본 1.5%
     this.pgFeeRate = pgFeeRate != null ? pgFeeRate : new BigDecimal("0.0170"); // 기본 1.7%
+    this.vatRate = vatRate != null ? vatRate : new BigDecimal("0.1000"); // 기본 10%
     this.status = SettlementStatus.PENDING;
     this.scheduledSettlementDate = computeScheduledDate(this.settlementEndDate);
   }
@@ -256,9 +266,12 @@ public class Settlement extends BaseTimeEntity {
     }
   }
 
-  /** 총 수수료율 계산 (플랫폼 + PG) */
+  /** 총 수수료율 계산 (플랫폼 + PG + VAT) */
   public BigDecimal getTotalFeeRate() {
-    return platformFeeRate.add(pgFeeRate).setScale(4, RoundingMode.HALF_UP);
+    BigDecimal baseFeeRate = platformFeeRate.add(pgFeeRate);
+    // 수수료에 대한 VAT까지 고려한 실효 수수료율
+    // 실효율 = 기본수수료율 * (1 + VAT율)
+    return baseFeeRate.multiply(BigDecimal.ONE.add(vatRate)).setScale(4, RoundingMode.HALF_UP);
   }
 
   // === Enum ===
@@ -280,11 +293,15 @@ public class Settlement extends BaseTimeEntity {
     }
   }
 
-  /** 항목 스냅샷 기반으로 금액 재계산 - 원화 반올림 처리 */
+  /**
+   * 항목 스냅샷 기반으로 금액 재계산 - VAT 처리 포함 계산식: 1. 수수료 = 판매금액 * 수수료율 2. 수수료 VAT = (플랫폼수수료 + PG수수료) * 10% 3.
+   * 총 차감액 = 플랫폼수수료 + PG수수료 + 수수료VAT 4. 실정산액 = 판매금액 - 총차감액
+   */
   public void recalcFromItems() {
     BigDecimal gross = BigDecimal.ZERO;
     BigDecimal platformFeeSum = BigDecimal.ZERO;
     BigDecimal pgFeeSum = BigDecimal.ZERO;
+    BigDecimal feeVatSum = BigDecimal.ZERO;
     BigDecimal totalFeeSum = BigDecimal.ZERO;
     BigDecimal net = BigDecimal.ZERO;
     BigDecimal refund = BigDecimal.ZERO;
@@ -302,17 +319,19 @@ public class Settlement extends BaseTimeEntity {
       gross = gross.add(nullSafeValue(item.getSalesAmount()));
       platformFeeSum = platformFeeSum.add(nullSafeValue(item.getPlatformFee()));
       pgFeeSum = pgFeeSum.add(nullSafeValue(item.getPgFee()));
+      feeVatSum = feeVatSum.add(nullSafeValue(item.getFeeVat()));
       totalFeeSum = totalFeeSum.add(nullSafeValue(item.getTotalFee()));
       net = net.add(nullSafeValue(item.getSettlementAmount()));
     }
 
-    // ============ 원화 처리 - 소수점 없음 ============
-    this.totalSalesAmount = gross; // 이미 원 단위
-    this.platformFee = platformFeeSum; // 이미 원 단위
-    this.pgFee = pgFeeSum; // 이미 원 단위
-    this.totalFee = totalFeeSum; // 이미 원 단위
-    this.settlementAmount = net; // 이미 원 단위
-    this.totalRefundAmount = refund; // 이미 원 단위
+    // 원화 처리 - 소수점 없음
+    this.totalSalesAmount = gross;
+    this.platformFee = platformFeeSum;
+    this.pgFee = pgFeeSum;
+    this.feeVat = feeVatSum;
+    this.totalFee = totalFeeSum;
+    this.settlementAmount = net;
+    this.totalRefundAmount = refund;
     this.refundCount = refundCnt;
   }
 

@@ -41,6 +41,8 @@ spring:
     baseline-version: 0
     validate-on-migrate: true
     clean-disabled: true
+    placeholders:
+      "visitor.hash.salt": "N58ooxTxrCLvczQ79Ya2eg=="
 
   jpa:
     database-platform: org.hibernate.dialect.MySQL8Dialect
@@ -129,6 +131,7 @@ logging:
   file:
     path: ./logs
 
+# application-local.yml
 management:
   endpoints:
     web:
@@ -140,17 +143,34 @@ management:
       show-details: always
     prometheus:
       enabled: true
+
+  metrics:
+    export:
+      # OTLP 메트릭 완전 비활성화
+      otlp:
+        enabled: false
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+    tags:
+      application: ${spring.application.name}
+      environment: ${server.env:local}
+
+  # 트레이싱 완전 비활성화
+  tracing:
+    enabled: false
+  prometheus:
     metrics:
       export:
-        prometheus:
-          enabled: true
-      distribution:
-        percentiles-histogram:
-          http.server.requests: true
-      tags:
-        application: ${spring.application.name}
-        environment: ${server.env}
-    observations:
-      key-values:
-        application: ${spring.application.name}
+        enabled: true
 
+# OpenTelemetry SDK 자체를 비활성화
+otel:
+  sdk:
+    disabled: true
+  exporter:
+    otlp:
+      enabled: false
+  instrumentation:
+    spring-boot:
+      enabled: false

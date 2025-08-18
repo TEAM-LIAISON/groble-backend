@@ -6,8 +6,8 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import liaison.groble.application.content.dto.ContentViewCountDTO;
-import liaison.groble.domain.content.entity.ContentViewLog;
-import liaison.groble.domain.content.repository.ContentViewLogRepository;
+import liaison.groble.domain.dashboard.entity.ContentViewLog;
+import liaison.groble.domain.dashboard.repository.ContentViewLogRepository;
 import liaison.groble.domain.port.DailyViewPort;
 
 import lombok.RequiredArgsConstructor;

@@ -16,6 +16,7 @@ import liaison.groble.application.settlement.dto.MonthlySettlementOverviewDTO;
 import liaison.groble.application.settlement.dto.PerTransactionSettlementOverviewDTO;
 import liaison.groble.application.settlement.dto.SettlementDetailDTO;
 import liaison.groble.application.settlement.dto.SettlementOverviewDTO;
+import liaison.groble.application.settlement.dto.TaxInvoiceDTO;
 import liaison.groble.application.settlement.reader.SettlementReader;
 import liaison.groble.application.settlement.reader.TaxInvoiceReader;
 import liaison.groble.application.user.service.UserReader;
@@ -131,6 +132,7 @@ public class SettlementService {
         .settlementAmount(settlement.getSettlementAmount())
         .pgFee(settlement.getPgFee())
         .platformFee(settlement.getPlatformFee())
+        .vatAmount(settlement.getFeeVat())
         .isTaxInvoiceButtonEnabled(isTaxInvoiceButtonEnabled)
         .isTaxInvoiceIssuable(isTaxInvoiceIssuable)
         .taxInvoiceUrl(taxInvoiceUrl)
@@ -165,6 +167,24 @@ public class SettlementService {
         page.getTotalElements());
 
     return PageResponse.from(page, items, meta);
+  }
+
+  @Transactional(readOnly = true)
+  public TaxInvoiceDTO getTaxInvoice(Long userId, YearMonth yearMonth) {
+
+    SellerInfo sellerInfo = userReader.getSellerInfoWithUser(userId);
+    TaxInvoice taxInvoice = taxInvoiceReader.findByUserAndYearMonth(userId, yearMonth);
+
+    return TaxInvoiceDTO.builder()
+        .supplierName("리에종")
+        .recipientName(sellerInfo.getBusinessName())
+        .supplyAmount(taxInvoice.getSupplyAmount())
+        .vatAmount(taxInvoice.getVatAmount())
+        .totalAmount(taxInvoice.getTotalAmount())
+        .invoiceNumber(taxInvoice.getInvoiceNumber())
+        .issuedDate(taxInvoice.getIssuedDate())
+        .taxInvoiceUrl(taxInvoice.getInvoiceUrl())
+        .build();
   }
 
   private PerTransactionSettlementOverviewDTO convertFlatDTOToPerTransactionDTO(

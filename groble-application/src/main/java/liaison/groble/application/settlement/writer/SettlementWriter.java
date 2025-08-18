@@ -29,7 +29,8 @@ public class SettlementWriter {
       LocalDate periodStart,
       LocalDate periodEnd,
       BigDecimal platformFeeRate,
-      BigDecimal pgFeeRate) {
+      BigDecimal pgFeeRate,
+      BigDecimal vatRate) {
     Settlement settlement =
         Settlement.builder()
             .user(seller)
@@ -37,6 +38,7 @@ public class SettlementWriter {
             .settlementEndDate(periodEnd)
             .platformFeeRate(platformFeeRate) // 플랫폼 수수료율
             .pgFeeRate(pgFeeRate) // PG 수수료율
+            .vatRate(vatRate) // 부가세율
             .build();
     return settlementRepository.save(settlement);
   }

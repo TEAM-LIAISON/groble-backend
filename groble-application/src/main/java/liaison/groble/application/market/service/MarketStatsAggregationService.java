@@ -11,10 +11,11 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import liaison.groble.domain.market.entity.MarketViewLog;
-import liaison.groble.domain.market.entity.MarketViewStats;
-import liaison.groble.domain.market.repository.MarketViewLogRepository;
-import liaison.groble.domain.market.repository.MarketViewStatsRepository;
+import liaison.groble.domain.common.enums.PeriodType;
+import liaison.groble.domain.dashboard.entity.MarketViewLog;
+import liaison.groble.domain.dashboard.entity.MarketViewStats;
+import liaison.groble.domain.dashboard.repository.MarketViewLogRepository;
+import liaison.groble.domain.dashboard.repository.MarketViewStatsRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,8 +34,7 @@ public class MarketStatsAggregationService {
     log.info("Daily stats aggregation for {}", yesterday);
 
     // 기존 집계 삭제 → 없으면 무시
-    marketViewStatsRepository.deleteByStatDateAndPeriodType(
-        yesterday, MarketViewStats.PeriodType.DAILY);
+    marketViewStatsRepository.deleteByStatDateAndPeriodType(yesterday, PeriodType.DAILY);
 
     // 로그에서 새 집계 수집
     List<MarketViewStats> stats = aggregateFromLogs(yesterday);
@@ -50,8 +50,7 @@ public class MarketStatsAggregationService {
     log.info("Monthly stats aggregation for {} ~ {}", monthStart, monthEnd);
 
     // 1) 기존 월별 집계 삭제
-    marketViewStatsRepository.deleteByStatDateAndPeriodType(
-        monthStart, MarketViewStats.PeriodType.MONTHLY);
+    marketViewStatsRepository.deleteByStatDateAndPeriodType(monthStart, PeriodType.MONTHLY);
 
     // 2) 로그에서 새 집계 수집
     List<MarketViewStats> stats = aggregateMonthlyFromLogs(monthStart, monthEnd);
@@ -103,7 +102,7 @@ public class MarketStatsAggregationService {
               return MarketViewStats.builder()
                   .marketId(marketId)
                   .statDate(date)
-                  .periodType(MarketViewStats.PeriodType.DAILY)
+                  .periodType(PeriodType.DAILY)
                   .viewCount(viewCount)
                   .uniqueViewerCount(uniqueViewerCount)
                   .loggedInViewerCount(loggedInViewerCount)
@@ -154,7 +153,7 @@ public class MarketStatsAggregationService {
               return MarketViewStats.builder()
                   .marketId(marketId)
                   .statDate(monthStart) // 월별 통계는 ‘그 달의 첫날’ 기준으로 저장
-                  .periodType(MarketViewStats.PeriodType.MONTHLY)
+                  .periodType(PeriodType.MONTHLY)
                   .viewCount(viewCount)
                   .uniqueViewerCount(uniqueViewerCount)
                   .loggedInViewerCount(loggedInViewerCount)
