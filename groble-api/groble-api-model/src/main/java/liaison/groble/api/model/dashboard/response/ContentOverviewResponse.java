@@ -10,13 +10,6 @@ import lombok.Getter;
 public class ContentOverviewResponse {
 
   @Schema(
-      description = "판매하고 있는 전체 콘텐츠 개수",
-      example = "true",
-      type = "boolean",
-      requiredMode = Schema.RequiredMode.REQUIRED)
-  private Long totalContentsCount;
-
-  @Schema(
       description = "콘텐츠 ID",
       example = "1",
       type = "integer",
