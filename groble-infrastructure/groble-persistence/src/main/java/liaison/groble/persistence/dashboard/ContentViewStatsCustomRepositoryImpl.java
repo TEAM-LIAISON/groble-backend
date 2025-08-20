@@ -14,6 +14,7 @@ import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
 import liaison.groble.domain.common.enums.PeriodType;
+import liaison.groble.domain.content.entity.QContent;
 import liaison.groble.domain.dashboard.dto.FlatContentTotalViewStatsDTO;
 import liaison.groble.domain.dashboard.dto.FlatContentViewStatsDTO;
 import liaison.groble.domain.dashboard.entity.QContentViewStats;
@@ -72,21 +73,24 @@ public class ContentViewStatsCustomRepositoryImpl implements ContentViewStatsCus
   public Page<FlatContentTotalViewStatsDTO> findTotalViewsByPeriodTypeAndStatDateBetween(
       PeriodType periodType, LocalDate startDate, LocalDate endDate, Pageable pageable) {
 
-    QContentViewStats stats = QContentViewStats.contentViewStats;
+    QContentViewStats qContentViewStats = QContentViewStats.contentViewStats;
+    QContent qContent = QContent.content;
 
     // 서브쿼리로 그룹화된 결과 카운트
     JPAQuery<Long> countQuery =
         jpaQueryFactory
-            .select(stats.contentId)
-            .from(stats)
-            .where(stats.periodType.eq(periodType), stats.statDate.between(startDate, endDate))
-            .groupBy(stats.contentId);
+            .select(qContentViewStats.contentId)
+            .from(qContentViewStats)
+            .where(
+                qContentViewStats.periodType.eq(periodType),
+                qContentViewStats.statDate.between(startDate, endDate))
+            .groupBy(qContentViewStats.contentId);
 
     Long total =
         jpaQueryFactory
-            .select(stats.contentId.count())
-            .from(stats)
-            .where(stats.contentId.in(countQuery))
+            .select(qContentViewStats.contentId.count())
+            .from(qContentViewStats)
+            .where(qContentViewStats.contentId.in(countQuery))
             .fetchOne();
 
     // 데이터 조회 - 동적 정렬 처리
@@ -95,12 +99,16 @@ public class ContentViewStatsCustomRepositoryImpl implements ContentViewStatsCus
             .select(
                 Projections.constructor(
                     FlatContentTotalViewStatsDTO.class,
-                    stats.contentId,
-                    stats.viewCount.sum().coalesce(0L),
-                    stats.uniqueViewerCount.sum().coalesce(0L)))
-            .from(stats)
-            .where(stats.periodType.eq(periodType), stats.statDate.between(startDate, endDate))
-            .groupBy(stats.contentId);
+                    qContentViewStats.contentId,
+                    qContent.title,
+                    qContentViewStats.viewCount.sum().coalesce(0L)))
+            .from(qContentViewStats)
+            .leftJoin(qContent)
+            .on(qContentViewStats.contentId.eq(qContent.id))
+            .where(
+                qContentViewStats.periodType.eq(periodType),
+                qContentViewStats.statDate.between(startDate, endDate))
+            .groupBy(qContentViewStats.contentId);
 
     // Pageable의 Sort 적용
     if (pageable.getSort().isSorted()) {
@@ -111,12 +119,12 @@ public class ContentViewStatsCustomRepositoryImpl implements ContentViewStatsCus
                 if (order.getProperty().equals("viewCount")) {
                   query.orderBy(
                       order.isAscending()
-                          ? stats.viewCount.sum().asc()
-                          : stats.viewCount.sum().desc());
+                          ? qContentViewStats.viewCount.sum().asc()
+                          : qContentViewStats.viewCount.sum().desc());
                 }
               });
     } else {
-      query.orderBy(stats.viewCount.sum().desc()); // 기본 정렬
+      query.orderBy(qContentViewStats.viewCount.sum().desc()); // 기본 정렬
     }
 
     List<FlatContentTotalViewStatsDTO> content =
