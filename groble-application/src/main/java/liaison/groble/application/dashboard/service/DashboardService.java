@@ -261,7 +261,6 @@ public class DashboardService {
   private DashboardContentOverviewDTO toDashboardContentOverviewDTO(
       FlatContentOverviewDTO flatContentOverviewDTO) {
     return DashboardContentOverviewDTO.builder()
-        .totalContentsCount(flatContentOverviewDTO.getTotalContentsCount())
         .contentId(flatContentOverviewDTO.getContentId())
         .contentTitle(flatContentOverviewDTO.getContentTitle())
         .build();

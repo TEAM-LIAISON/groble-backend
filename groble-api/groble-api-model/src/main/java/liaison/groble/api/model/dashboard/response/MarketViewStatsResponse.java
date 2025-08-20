@@ -2,6 +2,8 @@ package liaison.groble.api.model.dashboard.response;
 
 import java.time.LocalDate;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
@@ -15,6 +17,7 @@ public class MarketViewStatsResponse {
       example = "2025-07-08",
       type = "string",
       requiredMode = Schema.RequiredMode.REQUIRED)
+  @JsonFormat(pattern = "yyyy-MM-dd")
   private LocalDate viewDate;
 
   @Schema(

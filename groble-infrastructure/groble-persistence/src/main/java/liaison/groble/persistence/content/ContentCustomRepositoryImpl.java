@@ -890,28 +890,11 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
   public Page<FlatContentOverviewDTO> findMyContentsBySellerId(Long sellerId, Pageable pageable) {
     QContent qContent = QContent.content;
 
-    // 1. 전체 콘텐츠 개수 조회
-    Long totalContentsCount =
-        queryFactory
-            .select(qContent.count())
-            .from(qContent)
-            .where(qContent.user.id.eq(sellerId), qContent.status.ne(ContentStatus.DELETED))
-            .fetchOne();
-
-    // NULL 안전 처리
-    if (totalContentsCount == null) {
-      totalContentsCount = 0L;
-    }
-
-    // 2. 페이징된 콘텐츠 목록 조회
-    final Long finalTotalCount = totalContentsCount; // lambda에서 사용하기 위한 final 변수
-
     List<FlatContentOverviewDTO> contents =
         queryFactory
             .select(
                 Projections.constructor(
                     FlatContentOverviewDTO.class,
-                    Expressions.constant(finalTotalCount), // 전체 개수
                     qContent.id, // 콘텐츠 ID
                     qContent.title // 콘텐츠 제목
                     ))
@@ -926,8 +909,17 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
     if (contents == null || contents.isEmpty()) {
       contents = new ArrayList<>();
     }
+    // 4. 전체 카운트 조회
+    long total =
+        Optional.ofNullable(
+                queryFactory
+                    .select(qContent.count())
+                    .from(qContent)
+                    .where(qContent.user.id.eq(sellerId), qContent.status.ne(ContentStatus.DELETED))
+                    .fetchOne())
+            .orElse(0L);
 
-    return new PageImpl<>(contents, pageable, totalContentsCount);
+    return new PageImpl<>(contents, pageable, total);
   }
 
   @Override
