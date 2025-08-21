@@ -45,7 +45,6 @@ public class ContentViewCountService {
               .viewerId(contentViewCountDTO.getUserId())
               .viewerIp(contentViewCountDTO.getIp())
               .userAgent(contentViewCountDTO.getUserAgent())
-              .referer(contentViewCountDTO.getReferer())
               .viewedAt(LocalDateTime.now())
               .build();
 

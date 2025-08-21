@@ -1,9 +1,6 @@
 package liaison.groble.mapping.dashboard;
 
 import javax.annotation.processing.Generated;
-
-import org.springframework.stereotype.Component;
-
 import liaison.groble.api.model.dashboard.response.ContentOverviewResponse;
 import liaison.groble.api.model.dashboard.response.ContentTotalViewStatsResponse;
 import liaison.groble.api.model.dashboard.response.ContentViewStatsResponse;
@@ -16,165 +13,151 @@ import liaison.groble.application.dashboard.dto.DashboardContentOverviewDTO;
 import liaison.groble.application.dashboard.dto.DashboardOverviewDTO;
 import liaison.groble.application.dashboard.dto.DashboardViewStatsDTO;
 import liaison.groble.application.dashboard.dto.MarketViewStatsDTO;
+import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-08-17T17:18:22+0900",
-    comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.10 (Amazon.com Inc.)")
+    date = "2025-08-21T12:05:29+0900",
+    comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.10 (Amazon.com Inc.)"
+)
 @Component
 public class DashboardMapperImpl implements DashboardMapper {
 
-  @Override
-  public DashboardOverviewResponse toDashboardOverviewResponse(
-      DashboardOverviewDTO dashboardOverviewDTO) {
-    if (dashboardOverviewDTO == null) {
-      return null;
+    @Override
+    public DashboardOverviewResponse toDashboardOverviewResponse(DashboardOverviewDTO dashboardOverviewDTO) {
+        if ( dashboardOverviewDTO == null ) {
+            return null;
+        }
+
+        DashboardOverviewResponse.DashboardOverviewResponseBuilder dashboardOverviewResponse = DashboardOverviewResponse.builder();
+
+        if ( dashboardOverviewDTO.getVerificationStatus() != null ) {
+            dashboardOverviewResponse.verificationStatus( dashboardOverviewDTO.getVerificationStatus() );
+        }
+        if ( dashboardOverviewDTO.getTotalRevenue() != null ) {
+            dashboardOverviewResponse.totalRevenue( dashboardOverviewDTO.getTotalRevenue() );
+        }
+        if ( dashboardOverviewDTO.getTotalSalesCount() != null ) {
+            dashboardOverviewResponse.totalSalesCount( dashboardOverviewDTO.getTotalSalesCount() );
+        }
+        if ( dashboardOverviewDTO.getCurrentMonthRevenue() != null ) {
+            dashboardOverviewResponse.currentMonthRevenue( dashboardOverviewDTO.getCurrentMonthRevenue() );
+        }
+        if ( dashboardOverviewDTO.getCurrentMonthSalesCount() != null ) {
+            dashboardOverviewResponse.currentMonthSalesCount( dashboardOverviewDTO.getCurrentMonthSalesCount() );
+        }
+        if ( dashboardOverviewDTO.getTotalMarketViews() != null ) {
+            dashboardOverviewResponse.totalMarketViews( dashboardOverviewDTO.getTotalMarketViews() );
+        }
+        if ( dashboardOverviewDTO.getTotalContentViews() != null ) {
+            dashboardOverviewResponse.totalContentViews( dashboardOverviewDTO.getTotalContentViews() );
+        }
+        if ( dashboardOverviewDTO.getTotalCustomers() != null ) {
+            dashboardOverviewResponse.totalCustomers( dashboardOverviewDTO.getTotalCustomers() );
+        }
+        if ( dashboardOverviewDTO.getRecentCustomers() != null ) {
+            dashboardOverviewResponse.recentCustomers( dashboardOverviewDTO.getRecentCustomers() );
+        }
+
+        return dashboardOverviewResponse.build();
     }
 
-    DashboardOverviewResponse.DashboardOverviewResponseBuilder dashboardOverviewResponse =
-        DashboardOverviewResponse.builder();
+    @Override
+    public ContentTotalViewStatsResponse toContentTotalViewStatsResponse(ContentTotalViewStatsDTO contentTotalViewStatsDTO) {
+        if ( contentTotalViewStatsDTO == null ) {
+            return null;
+        }
 
-    if (dashboardOverviewDTO.getVerificationStatus() != null) {
-      dashboardOverviewResponse.verificationStatus(dashboardOverviewDTO.getVerificationStatus());
-    }
-    if (dashboardOverviewDTO.getTotalRevenue() != null) {
-      dashboardOverviewResponse.totalRevenue(dashboardOverviewDTO.getTotalRevenue());
-    }
-    if (dashboardOverviewDTO.getTotalSalesCount() != null) {
-      dashboardOverviewResponse.totalSalesCount(dashboardOverviewDTO.getTotalSalesCount());
-    }
-    if (dashboardOverviewDTO.getCurrentMonthRevenue() != null) {
-      dashboardOverviewResponse.currentMonthRevenue(dashboardOverviewDTO.getCurrentMonthRevenue());
-    }
-    if (dashboardOverviewDTO.getCurrentMonthSalesCount() != null) {
-      dashboardOverviewResponse.currentMonthSalesCount(
-          dashboardOverviewDTO.getCurrentMonthSalesCount());
-    }
-    if (dashboardOverviewDTO.getTotalMarketViews() != null) {
-      dashboardOverviewResponse.totalMarketViews(dashboardOverviewDTO.getTotalMarketViews());
-    }
-    if (dashboardOverviewDTO.getTotalContentViews() != null) {
-      dashboardOverviewResponse.totalContentViews(dashboardOverviewDTO.getTotalContentViews());
-    }
-    if (dashboardOverviewDTO.getTotalCustomers() != null) {
-      dashboardOverviewResponse.totalCustomers(dashboardOverviewDTO.getTotalCustomers());
-    }
-    if (dashboardOverviewDTO.getRecentCustomers() != null) {
-      dashboardOverviewResponse.recentCustomers(dashboardOverviewDTO.getRecentCustomers());
+        ContentTotalViewStatsResponse.ContentTotalViewStatsResponseBuilder contentTotalViewStatsResponse = ContentTotalViewStatsResponse.builder();
+
+        if ( contentTotalViewStatsDTO.getContentId() != null ) {
+            contentTotalViewStatsResponse.contentId( contentTotalViewStatsDTO.getContentId() );
+        }
+        if ( contentTotalViewStatsDTO.getContentTitle() != null ) {
+            contentTotalViewStatsResponse.contentTitle( contentTotalViewStatsDTO.getContentTitle() );
+        }
+        if ( contentTotalViewStatsDTO.getTotalViews() != null ) {
+            contentTotalViewStatsResponse.totalViews( contentTotalViewStatsDTO.getTotalViews() );
+        }
+
+        return contentTotalViewStatsResponse.build();
     }
 
-    return dashboardOverviewResponse.build();
-  }
+    @Override
+    public ContentOverviewResponse toContentOverviewResponse(DashboardContentOverviewDTO dashboardContentOverviewDTO) {
+        if ( dashboardContentOverviewDTO == null ) {
+            return null;
+        }
 
-  @Override
-  public ContentTotalViewStatsResponse toContentTotalViewStatsResponse(
-      ContentTotalViewStatsDTO contentTotalViewStatsDTO) {
-    if (contentTotalViewStatsDTO == null) {
-      return null;
+        ContentOverviewResponse.ContentOverviewResponseBuilder contentOverviewResponse = ContentOverviewResponse.builder();
+
+        if ( dashboardContentOverviewDTO.getContentId() != null ) {
+            contentOverviewResponse.contentId( dashboardContentOverviewDTO.getContentId() );
+        }
+        if ( dashboardContentOverviewDTO.getContentTitle() != null ) {
+            contentOverviewResponse.contentTitle( dashboardContentOverviewDTO.getContentTitle() );
+        }
+
+        return contentOverviewResponse.build();
     }
 
-    ContentTotalViewStatsResponse.ContentTotalViewStatsResponseBuilder
-        contentTotalViewStatsResponse = ContentTotalViewStatsResponse.builder();
+    @Override
+    public ContentViewStatsResponse toContentViewStatsResponse(ContentViewStatsDTO contentViewStatsDTO) {
+        if ( contentViewStatsDTO == null ) {
+            return null;
+        }
 
-    if (contentTotalViewStatsDTO.getContentId() != null) {
-      contentTotalViewStatsResponse.contentId(contentTotalViewStatsDTO.getContentId());
-    }
-    if (contentTotalViewStatsDTO.getContentTitle() != null) {
-      contentTotalViewStatsResponse.contentTitle(contentTotalViewStatsDTO.getContentTitle());
-    }
-    if (contentTotalViewStatsDTO.getTotalViews() != null) {
-      contentTotalViewStatsResponse.totalViews(contentTotalViewStatsDTO.getTotalViews());
-    }
+        ContentViewStatsResponse.ContentViewStatsResponseBuilder contentViewStatsResponse = ContentViewStatsResponse.builder();
 
-    return contentTotalViewStatsResponse.build();
-  }
+        if ( contentViewStatsDTO.getViewDate() != null ) {
+            contentViewStatsResponse.viewDate( contentViewStatsDTO.getViewDate() );
+        }
+        if ( contentViewStatsDTO.getDayOfWeek() != null ) {
+            contentViewStatsResponse.dayOfWeek( contentViewStatsDTO.getDayOfWeek() );
+        }
+        if ( contentViewStatsDTO.getViewCount() != null ) {
+            contentViewStatsResponse.viewCount( contentViewStatsDTO.getViewCount() );
+        }
 
-  @Override
-  public ContentOverviewResponse toContentOverviewResponse(
-      DashboardContentOverviewDTO dashboardContentOverviewDTO) {
-    if (dashboardContentOverviewDTO == null) {
-      return null;
+        return contentViewStatsResponse.build();
     }
 
-    ContentOverviewResponse.ContentOverviewResponseBuilder contentOverviewResponse =
-        ContentOverviewResponse.builder();
+    @Override
+    public MarketViewStatsResponse toMarketViewStatsResponse(MarketViewStatsDTO marketViewStatsDTO) {
+        if ( marketViewStatsDTO == null ) {
+            return null;
+        }
 
-    if (dashboardContentOverviewDTO.getTotalContentsCount() != null) {
-      contentOverviewResponse.totalContentsCount(
-          dashboardContentOverviewDTO.getTotalContentsCount());
-    }
-    if (dashboardContentOverviewDTO.getContentId() != null) {
-      contentOverviewResponse.contentId(dashboardContentOverviewDTO.getContentId());
-    }
-    if (dashboardContentOverviewDTO.getContentTitle() != null) {
-      contentOverviewResponse.contentTitle(dashboardContentOverviewDTO.getContentTitle());
-    }
+        MarketViewStatsResponse.MarketViewStatsResponseBuilder marketViewStatsResponse = MarketViewStatsResponse.builder();
 
-    return contentOverviewResponse.build();
-  }
+        if ( marketViewStatsDTO.getViewDate() != null ) {
+            marketViewStatsResponse.viewDate( marketViewStatsDTO.getViewDate() );
+        }
+        if ( marketViewStatsDTO.getDayOfWeek() != null ) {
+            marketViewStatsResponse.dayOfWeek( marketViewStatsDTO.getDayOfWeek() );
+        }
+        if ( marketViewStatsDTO.getViewCount() != null ) {
+            marketViewStatsResponse.viewCount( marketViewStatsDTO.getViewCount() );
+        }
 
-  @Override
-  public ContentViewStatsResponse toContentViewStatsResponse(
-      ContentViewStatsDTO contentViewStatsDTO) {
-    if (contentViewStatsDTO == null) {
-      return null;
+        return marketViewStatsResponse.build();
     }
 
-    ContentViewStatsResponse.ContentViewStatsResponseBuilder contentViewStatsResponse =
-        ContentViewStatsResponse.builder();
+    @Override
+    public DashboardViewStatsResponse toDashboardViewStatsResponse(DashboardViewStatsDTO dashboardViewStatsDTO) {
+        if ( dashboardViewStatsDTO == null ) {
+            return null;
+        }
 
-    if (contentViewStatsDTO.getViewDate() != null) {
-      contentViewStatsResponse.viewDate(contentViewStatsDTO.getViewDate());
-    }
-    if (contentViewStatsDTO.getDayOfWeek() != null) {
-      contentViewStatsResponse.dayOfWeek(contentViewStatsDTO.getDayOfWeek());
-    }
-    if (contentViewStatsDTO.getViewCount() != null) {
-      contentViewStatsResponse.viewCount(contentViewStatsDTO.getViewCount());
-    }
+        DashboardViewStatsResponse.DashboardViewStatsResponseBuilder dashboardViewStatsResponse = DashboardViewStatsResponse.builder();
 
-    return contentViewStatsResponse.build();
-  }
+        if ( dashboardViewStatsDTO.getTotalMarketViews() != null ) {
+            dashboardViewStatsResponse.totalMarketViews( dashboardViewStatsDTO.getTotalMarketViews() );
+        }
+        if ( dashboardViewStatsDTO.getTotalContentViews() != null ) {
+            dashboardViewStatsResponse.totalContentViews( dashboardViewStatsDTO.getTotalContentViews() );
+        }
 
-  @Override
-  public MarketViewStatsResponse toMarketViewStatsResponse(MarketViewStatsDTO marketViewStatsDTO) {
-    if (marketViewStatsDTO == null) {
-      return null;
+        return dashboardViewStatsResponse.build();
     }
-
-    MarketViewStatsResponse.MarketViewStatsResponseBuilder marketViewStatsResponse =
-        MarketViewStatsResponse.builder();
-
-    if (marketViewStatsDTO.getViewDate() != null) {
-      marketViewStatsResponse.viewDate(marketViewStatsDTO.getViewDate());
-    }
-    if (marketViewStatsDTO.getDayOfWeek() != null) {
-      marketViewStatsResponse.dayOfWeek(marketViewStatsDTO.getDayOfWeek());
-    }
-    if (marketViewStatsDTO.getViewCount() != null) {
-      marketViewStatsResponse.viewCount(marketViewStatsDTO.getViewCount());
-    }
-
-    return marketViewStatsResponse.build();
-  }
-
-  @Override
-  public DashboardViewStatsResponse toDashboardViewStatsResponse(
-      DashboardViewStatsDTO dashboardViewStatsDTO) {
-    if (dashboardViewStatsDTO == null) {
-      return null;
-    }
-
-    DashboardViewStatsResponse.DashboardViewStatsResponseBuilder dashboardViewStatsResponse =
-        DashboardViewStatsResponse.builder();
-
-    if (dashboardViewStatsDTO.getTotalMarketViews() != null) {
-      dashboardViewStatsResponse.totalMarketViews(dashboardViewStatsDTO.getTotalMarketViews());
-    }
-    if (dashboardViewStatsDTO.getTotalContentViews() != null) {
-      dashboardViewStatsResponse.totalContentViews(dashboardViewStatsDTO.getTotalContentViews());
-    }
-
-    return dashboardViewStatsResponse.build();
-  }
 }
