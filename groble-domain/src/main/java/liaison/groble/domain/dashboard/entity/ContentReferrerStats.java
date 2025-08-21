@@ -77,4 +77,72 @@ public class ContentReferrerStats extends BaseTimeEntity {
   @Column(name = "term")
   @Comment("검색어 (utm_term)")
   private String term;
+
+  // 유틸리티 메서드
+  public void parseReferrerUrl() {
+    if (this.referrerUrl == null || this.referrerUrl.isEmpty()) {
+      this.referrerDomain = "(direct)";
+      if (this.source == null) this.source = "(direct)";
+      if (this.medium == null) this.medium = "(none)";
+      return;
+    }
+
+    // 도메인 추출
+    this.referrerDomain = extractDomain(this.referrerUrl);
+
+    // SNS인 경우 세부 경로 저장
+    if (isSocialDomain(this.referrerDomain)) {
+      this.referrerPath = extractPath(this.referrerUrl);
+    }
+
+    // UTM이 없고 source가 비어있으면 도메인 기반으로 설정
+    if ((this.source == null || "(direct)".equals(this.source))
+        && !"(direct)".equals(this.referrerDomain)) {
+      this.source = mapDomainToSource(this.referrerDomain);
+      this.medium =
+          this.medium == null || "(none)".equals(this.medium)
+              ? (isSocialDomain(this.referrerDomain) ? "social" : "referral")
+              : this.medium;
+    }
+  }
+
+  private String extractDomain(String url) {
+    try {
+      String clean = url.replaceAll("^https?://", "").replaceAll("^www\\.", "");
+      int idx = clean.indexOf('/');
+      return idx > 0 ? clean.substring(0, idx).toLowerCase() : clean.toLowerCase();
+    } catch (Exception e) {
+      return "(unknown)";
+    }
+  }
+
+  private String extractPath(String url) {
+    try {
+      String clean = url.replaceAll("^https?://[^/]+", "");
+      int idx = clean.indexOf('?');
+      return idx > 0 ? clean.substring(0, idx) : clean;
+    } catch (Exception e) {
+      return "/";
+    }
+  }
+
+  private boolean isSocialDomain(String domain) {
+    return domain != null
+        && (domain.contains("instagram.com")
+            || domain.contains("threads.com")
+            || domain.contains("facebook.com")
+            || domain.contains("twitter.com")
+            || domain.contains("linkedin.com")
+            || domain.contains("youtube.com")
+            || domain.contains("tiktok.com"));
+  }
+
+  private String mapDomainToSource(String domain) {
+    if (domain.contains("instagram.com")) return "instagram";
+    if (domain.contains("threads.com")) return "threads";
+    if (domain.contains("facebook.com")) return "facebook";
+    if (domain.contains("google.com")) return "google";
+    if (domain.contains("naver.com")) return "naver";
+    return domain.replaceAll("\\.com$|\\.co\\.kr$|\\.net$", "");
+  }
 }

@@ -417,6 +417,7 @@ public class ContentController {
       @Valid @RequestBody ContentReferrerRequest contentReferrerRequest) {
     ContentReferrerDTO contentReferrerDTO =
         contentReferrerMapper.toContentReferrerDTO(contentReferrerRequest);
+    contentReferrerService.recordContentReferrer(contentId, contentReferrerDTO);
     return responseHelper.success(null, CONTENT_REFERRAL_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 
