@@ -21,7 +21,6 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import liaison.groble.api.model.content.request.referrer.ContentReferrerRequest;
 import liaison.groble.api.model.content.response.ContentDetailResponse;
 import liaison.groble.api.model.content.response.ContentPreviewCardResponse;
 import liaison.groble.api.model.content.response.HomeContentsResponse;
@@ -31,17 +30,18 @@ import liaison.groble.api.model.content.response.swagger.ContentsDocumentCategor
 import liaison.groble.api.model.content.response.swagger.HomeContents;
 import liaison.groble.api.model.content.response.swagger.UploadContentDownloadFile;
 import liaison.groble.api.model.content.response.swagger.UploadContentThumbnail;
+import liaison.groble.api.model.dashboard.request.referrer.ReferrerRequest;
 import liaison.groble.api.model.file.response.FileUploadResponse;
 import liaison.groble.api.model.maker.response.ContactInfoResponse;
 import liaison.groble.api.server.util.FileUtil;
 import liaison.groble.application.content.dto.ContentCardDTO;
 import liaison.groble.application.content.dto.ContentDetailDTO;
 import liaison.groble.application.content.dto.ContentViewCountDTO;
-import liaison.groble.application.content.dto.referrer.ContentReferrerDTO;
 import liaison.groble.application.content.dto.review.ContentReviewDTO;
-import liaison.groble.application.content.service.ContentReferrerService;
 import liaison.groble.application.content.service.ContentService;
 import liaison.groble.application.content.service.ContentViewCountService;
+import liaison.groble.application.dashboard.dto.referrer.ReferrerDTO;
+import liaison.groble.application.dashboard.service.ReferrerService;
 import liaison.groble.application.file.FileService;
 import liaison.groble.application.file.dto.FileDTO;
 import liaison.groble.application.file.dto.FileUploadDTO;
@@ -55,8 +55,8 @@ import liaison.groble.common.response.PageResponse;
 import liaison.groble.common.response.ResponseHelper;
 import liaison.groble.common.utils.PageUtils;
 import liaison.groble.mapping.content.ContentMapper;
-import liaison.groble.mapping.content.ContentReferrerMapper;
 import liaison.groble.mapping.content.ContentReviewMapper;
+import liaison.groble.mapping.dashboard.ReferrerMapper;
 import liaison.groble.mapping.market.MarketMapper;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -101,7 +101,7 @@ public class ContentController {
   private final ContentService contentService;
   private final FileService fileService;
   private final ContentViewCountService contentViewCountService;
-  private final ContentReferrerService contentReferrerService;
+  private final ReferrerService referrerService;
 
   // Mapper
   private final MarketMapper marketMapper;
@@ -114,7 +114,7 @@ public class ContentController {
 
   // Helper
   private final ResponseHelper responseHelper;
-  private final ContentReferrerMapper contentReferrerMapper;
+  private final ReferrerMapper referrerMapper;
 
   @Operation(summary = "[✅ 콘텐츠 리뷰 목록 조회]")
   @ApiResponse(
@@ -414,10 +414,9 @@ public class ContentController {
   @PostMapping(CONTENT_REFERRER_PATH)
   public ResponseEntity<GrobleResponse<Void>> recordContentReferrer(
       @PathVariable("contentId") Long contentId,
-      @Valid @RequestBody ContentReferrerRequest contentReferrerRequest) {
-    ContentReferrerDTO contentReferrerDTO =
-        contentReferrerMapper.toContentReferrerDTO(contentReferrerRequest);
-    contentReferrerService.recordContentReferrer(contentId, contentReferrerDTO);
+      @Valid @RequestBody ReferrerRequest referrerRequest) {
+    ReferrerDTO referrerDTO = referrerMapper.toContentReferrerDTO(referrerRequest);
+    referrerService.recordContentReferrer(contentId, referrerDTO);
     return responseHelper.success(null, CONTENT_REFERRAL_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 

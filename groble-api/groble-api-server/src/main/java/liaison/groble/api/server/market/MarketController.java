@@ -15,9 +15,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 import liaison.groble.api.model.content.response.ContentPreviewCardResponse;
 import liaison.groble.api.model.content.response.swagger.ContentListResponse;
+import liaison.groble.api.model.dashboard.request.referrer.ReferrerRequest;
 import liaison.groble.api.model.maker.request.MarketEditRequest;
 import liaison.groble.api.model.maker.response.MakerIntroSectionResponse;
 import liaison.groble.application.content.dto.ContentCardDTO;
+import liaison.groble.application.dashboard.dto.referrer.ReferrerDTO;
+import liaison.groble.application.dashboard.service.ReferrerService;
 import liaison.groble.application.market.dto.MarketEditDTO;
 import liaison.groble.application.market.dto.MarketIntroSectionDTO;
 import liaison.groble.application.market.dto.MarketViewCountDTO;
@@ -32,6 +35,7 @@ import liaison.groble.common.response.PageResponse;
 import liaison.groble.common.response.ResponseHelper;
 import liaison.groble.common.utils.PageUtils;
 import liaison.groble.mapping.content.ContentMapper;
+import liaison.groble.mapping.dashboard.ReferrerMapper;
 import liaison.groble.mapping.market.MarketMapper;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -56,6 +60,7 @@ public class MarketController {
   private static final String MARKET_EDIT_PATH = "/edit";
   private static final String MARKET_LINK_CHECK_PATH = "/link-check";
   private static final String MARKET_VIEW_PATH = "/view/{marketLinkUrl}";
+  private static final String MARKET_REFERRER_PATH = "/referrer/{marketLinkUrl}";
 
   // 응답 메시지 상수화
   private static final String MARKET_EDIT_INTRO_SUCCESS_MESSAGE =
@@ -66,6 +71,7 @@ public class MarketController {
   private static final String MARKET_EDIT_SUCCESS_MESSAGE = "마켓 관리 수정창에서 수정 완료 항목을 저장했습니다.";
   private static final String MARKET_LINK_CHECK_SUCCESS_MESSAGE = "사용 가능한 마켓 링크입니다.";
   private static final String MARKET_VIEW_SUCCESS_MESSAGE = "마켓 뷰어 화면을 성공적으로 조회했습니다.";
+  private static final String MARKET_REFERRER_SUCCESS_MESSAGE = "마켓 유입경로 저장에 성공하였습니다.";
 
   // Service
   private final MarketService marketService;
@@ -74,12 +80,14 @@ public class MarketController {
   // Mapper
   private final ContentMapper contentMapper;
   private final MarketMapper marketMapper;
+  private final ReferrerMapper referrerMapper;
 
   // Helper
   private final ResponseHelper responseHelper;
 
   // Util
   private final RequestUtil requestUtil;
+  private final ReferrerService referrerService;
 
   @Operation(
       summary = "[✅ 마켓 관리] 마켓 수정창 화면에서 메이커 정보 및 대표 콘텐츠 조회",
@@ -194,5 +202,19 @@ public class MarketController {
     marketViewCountService.recordMarketView(marketLinkUrl, marketViewCountDTO);
 
     return responseHelper.success(null, MARKET_VIEW_SUCCESS_MESSAGE, HttpStatus.OK);
+  }
+
+  @Logging(
+      item = "Market",
+      action = "recordMarketReferrer",
+      includeParam = true,
+      includeResult = true)
+  @PostMapping(MARKET_REFERRER_PATH)
+  public ResponseEntity<GrobleResponse<Void>> recordMarketReferrer(
+      @Valid @PathVariable("marketLinkUrl") String marketLinkUrl,
+      @Valid @RequestBody ReferrerRequest referrerRequest) {
+    ReferrerDTO referrerDTO = referrerMapper.toContentReferrerDTO(referrerRequest);
+    referrerService.recordMarketReferrer(marketLinkUrl, referrerDTO);
+    return responseHelper.success(null, MARKET_REFERRER_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 }

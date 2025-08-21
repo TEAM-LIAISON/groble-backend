@@ -1,15 +1,11 @@
-package liaison.groble.api.model.content.request.referrer;
+package liaison.groble.application.dashboard.dto.referrer;
 
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 @Getter
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class ContentReferrerRequest {
+public class ReferrerDTO {
   private String pageUrl;
   private String referrerUrl;
   private String utmSource;
