@@ -59,11 +59,13 @@ public class DashboardController {
   private static final String DASHBOARD_CONTENT_VIEWS_LIST_PATH = "/dashboard/content/view-stats";
   private static final String DASHBOARD_CONTENT_VIEW_STATS_PATH =
       "/dashboard/content/{contentId}/view-stats";
-  private static final String DASHBOARD_CONTENT_REFERRER_STATS_PATH =
-      "/dashboard/content/{contentId}/referrer-stats";
 
+  // 날짜별 조회수 조회 (콘텐츠/마켓)
   private static final String DASHBOARD_MARKET_VIEW_STATS_PATH =
       "/dashboard/market/{marketId}/view-stats";
+  // 날짜별 유입경로 조회 (콘텐츠/마켓)
+  private static final String DASHBOARD_CONTENT_REFERRER_STATS_PATH =
+      "/dashboard/content/{contentId}/referrer-stats";
   private static final String DASHBOARD_MARKET_REFERRER_STATS_PATH =
       "/dashboard/market/{marketLinkUrl}/referrer-stats";
 
@@ -75,10 +77,14 @@ public class DashboardController {
       "대시보드 콘텐츠 개별 전체 조회수 목록 조회 성공";
   private static final String DASHBOARD_CONTENT_VIEW_STATS_SUCCESS_MESSAGE =
       "대시보드 콘텐츠 날짜별 조회수 조회 성공";
-  private static final String DASHBOARD_MARKET_DETAIL_STATS_SUCCESS_MESSAGE =
-      "대시보드 마켓 상세 조회수 및 유입 경로 조회 성공";
+  private static final String DASHBOARD_MARKET_VIEW_STATS_SUCCESS_MESSAGE = "대시보드 마켓 날짜별 조회수 조회 성공";
+
+  // 유입 경로 조회 성공 메시지
   private static final String DASHBOARD_CONTENT_REFERRER_STATS_SUCCESS_MESSAGE =
       "대시보드 콘텐츠 유입 경로 조회 성공";
+  private static final String DASHBOARD_MARKET_REFERRER_STATS_SUCCESS_MESSAGE =
+      "대시보드 마켓 유입 경로 조회 성공";
+
   // Service
   private final DashboardService dashboardService;
   // Mapper
@@ -244,7 +250,7 @@ public class DashboardController {
         dashboardMapper.toMarketViewStatsResponsePage(dtoPage);
 
     return responseHelper.success(
-        responsePage, DASHBOARD_MARKET_DETAIL_STATS_SUCCESS_MESSAGE, HttpStatus.OK);
+        responsePage, DASHBOARD_MARKET_VIEW_STATS_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 
   // TODO(5): 오늘/지난 7일/최근 30일/이번 달/지난 달 선택에 따른 콘텐츠 상세 조회수 제공 + 유입 경로 제공
@@ -307,5 +313,25 @@ public class DashboardController {
 
     return responseHelper.success(
         responsePage, DASHBOARD_CONTENT_REFERRER_STATS_SUCCESS_MESSAGE, HttpStatus.OK);
+  }
+
+  @RequireRole("ROLE_SELLER")
+  @GetMapping(DASHBOARD_MARKET_REFERRER_STATS_PATH)
+  public ResponseEntity<GrobleResponse<PageResponse<ReferrerStatsResponse>>> getMarketReferrerStats(
+      @Auth Accessor accessor,
+      @PathVariable("marketLinkUrl") String marketLinkUrl,
+      @RequestParam(value = "period") String period,
+      @RequestParam(value = "page", defaultValue = "0") int page) {
+    Pageable pageable = PageRequest.of(page, 20, Sort.by(Sort.Direction.DESC, "visitCount"));
+
+    PageResponse<ReferrerStatsDTO> dtoPage =
+        dashboardService.getMarketReferrerStats(
+            accessor.getUserId(), marketLinkUrl, period, pageable);
+
+    PageResponse<ReferrerStatsResponse> responsePage =
+        dashboardMapper.toReferrerStatsResponsePage(dtoPage);
+
+    return responseHelper.success(
+        responsePage, DASHBOARD_MARKET_REFERRER_STATS_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 }
