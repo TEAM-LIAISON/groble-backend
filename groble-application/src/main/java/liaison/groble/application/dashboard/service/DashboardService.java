@@ -141,7 +141,7 @@ public class DashboardService {
 
   @Transactional(readOnly = true)
   public PageResponse<MarketViewStatsDTO> getMarketViewStats(
-      Long userId, Long marketId, String period, Pageable pageable) {
+      Long userId, String marketLinkUrl, String period, Pageable pageable) {
     LocalDate endDate = LocalDate.now();
     LocalDate startDate =
         switch (period) {
@@ -158,7 +158,7 @@ public class DashboardService {
 
     Page<FlatMarketViewStatsDTO> page =
         marketViewStatsCustomRepository.findByMarketIdAndPeriodTypeAndStatDateBetween(
-            marketId, PeriodType.DAILY, startDate, endDate, pageable);
+            marketLinkUrl, PeriodType.DAILY, startDate, endDate, pageable);
 
     // 총 조회수 계산
     long totalViews =
