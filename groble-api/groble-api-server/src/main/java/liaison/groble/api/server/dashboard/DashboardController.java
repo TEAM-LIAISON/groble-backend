@@ -95,7 +95,7 @@ public class DashboardController {
   /* TODO(1): 대시보드 홈화면 개요 [메이커 인증 여부, 총 수익(수익, 건수), N월 수익(수익, 건수), 조회수(마켓, 콘텐츠), 고객수(전체, 신규 -> 최근 30일 기준 신규 구매자)] */
   @RequireRole("ROLE_SELLER")
   @Operation(
-      summary = "[📊 대시보드 개요 조회] 대시보드 개요 조회",
+      summary = "[📊 대시보드 개요 조회] 대시보드 개요 조회 ✅",
       description =
           "메이커 인증 여부, 총 수익(수익, 건수), N월 수익(수익, 건수), 조회수(마켓, 콘텐츠), 고객수(전체, 신규 -> 최근 30일 기준 신규 구매자)를 조회합니다.")
   @ApiResponse(
@@ -124,7 +124,7 @@ public class DashboardController {
   // TODO(2): 내 콘텐츠 전체 목록 조회 (20개씩, 최신순 정렬 페이징)
   @RequireRole("ROLE_SELLER")
   @Operation(
-      summary = "[📊 대시보드 내 콘텐츠 목록 조회] 내 콘텐츠 목록 조회",
+      summary = "[📊 대시보드 내 콘텐츠 목록 조회] 내 콘텐츠 목록 조회 ✅",
       description = "전체 콘텐츠 개수와 콘텐츠 ID, 제목을 반환합니다.")
   @ApiResponse(
       responseCode = "200",
@@ -156,8 +156,15 @@ public class DashboardController {
   // TODO(3): 오늘/지난 7일/최근 30일/이번 달/지난 달 선택에 따른 마켓과 콘텐츠 조회 [콘텐츠는 목록 제공]
   @RequireRole("ROLE_SELLER")
   @Operation(
-      summary = "[📊 대시보드 - 마켓/콘텐츠 전체 조회수 조회] 내 마켓과 콘텐츠 전체 조회수 조회",
+      summary = "[📊 대시보드 - 마켓/콘텐츠 전체 조회수 조회] 내 마켓과 콘텐츠 전체 조회수 조회 ✅",
       description = "전체 기간 안에서 마켓과 콘텐츠 조회수를 반환합니다.")
+  @ApiResponse(
+      responseCode = "200",
+      description = DASHBOARD_VIEW_STATS_SUCCESS_MESSAGE,
+      content =
+          @Content(
+              mediaType = "application/json",
+              schema = @Schema(implementation = DashboardViewStatsResponse.class)))
   @GetMapping(DASHBOARD_VIEW_STATS_PATH)
   @Logging(item = "Dashboard", action = "getViewStats", includeParam = true, includeResult = true)
   public ResponseEntity<GrobleResponse<DashboardViewStatsResponse>> getViewStats(
