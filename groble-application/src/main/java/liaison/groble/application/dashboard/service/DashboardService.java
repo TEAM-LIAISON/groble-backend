@@ -17,6 +17,7 @@ import liaison.groble.application.dashboard.dto.DashboardContentOverviewDTO;
 import liaison.groble.application.dashboard.dto.DashboardOverviewDTO;
 import liaison.groble.application.dashboard.dto.DashboardViewStatsDTO;
 import liaison.groble.application.dashboard.dto.MarketViewStatsDTO;
+import liaison.groble.application.dashboard.dto.referrer.ReferrerStatsDTO;
 import liaison.groble.application.purchase.service.PurchaseReader;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.common.response.PageResponse;
@@ -26,6 +27,8 @@ import liaison.groble.domain.dashboard.dto.FlatContentTotalViewStatsDTO;
 import liaison.groble.domain.dashboard.dto.FlatContentViewStatsDTO;
 import liaison.groble.domain.dashboard.dto.FlatDashboardOverviewDTO;
 import liaison.groble.domain.dashboard.dto.FlatMarketViewStatsDTO;
+import liaison.groble.domain.dashboard.dto.FlatReferrerStatsDTO;
+import liaison.groble.domain.dashboard.repository.ContentReferrerStatsCustomRepository;
 import liaison.groble.domain.dashboard.repository.ContentViewStatsCustomRepository;
 import liaison.groble.domain.dashboard.repository.ContentViewStatsRepository;
 import liaison.groble.domain.dashboard.repository.MarketViewStatsCustomRepository;
@@ -45,6 +48,7 @@ public class DashboardService {
   private final PurchaseReader purchaseReader;
   private final ContentViewStatsRepository contentViewStatsRepository;
   private final ContentViewStatsCustomRepository contentViewStatsCustomRepository;
+  private final ContentReferrerStatsCustomRepository contentReferrerStatsCustomRepository;
   private final MarketViewStatsRepository marketViewStatsRepository;
   private final MarketViewStatsCustomRepository marketViewStatsCustomRepository;
 
@@ -211,6 +215,46 @@ public class DashboardService {
             .build();
 
     return PageResponse.from(page, items, meta);
+  }
+
+  @Transactional(readOnly = true)
+  public PageResponse<ReferrerStatsDTO> getContentReferrerStats(
+      Long userId, Long contentId, String period, Pageable pageable) {
+    LocalDate endDate = LocalDate.now();
+    LocalDate startDate =
+        switch (period) {
+          case "TODAY" -> endDate;
+          case "LAST_7_DAYS" -> endDate.minusDays(6);
+          case "LAST_30_DAYS" -> endDate.minusDays(29);
+          case "THIS_MONTH" -> endDate.withDayOfMonth(1);
+          case "LAST_MONTH" -> {
+            YearMonth lastMonth = YearMonth.now().minusMonths(1);
+            yield lastMonth.atDay(1);
+          }
+          default -> throw new IllegalArgumentException("Invalid period: " + period);
+        };
+
+    Page<FlatReferrerStatsDTO> page =
+        contentReferrerStatsCustomRepository.findContentReferrerStats(
+            contentId, startDate, endDate, pageable);
+
+    List<ReferrerStatsDTO> items =
+        page.getContent().stream().map(this::toReferrerStatsDTO).toList();
+
+    PageResponse.MetaData meta =
+        PageResponse.MetaData.builder()
+            .sortBy(pageable.getSort().iterator().next().getProperty())
+            .sortDirection(pageable.getSort().iterator().next().getDirection().name())
+            .build();
+
+    return PageResponse.from(page, items, meta);
+  }
+
+  private ReferrerStatsDTO toReferrerStatsDTO(FlatReferrerStatsDTO flatReferrerStatsDTO) {
+    return ReferrerStatsDTO.builder()
+        .referrerUrl(flatReferrerStatsDTO.getReferrerUrl())
+        .visitCount(flatReferrerStatsDTO.getVisitCount())
+        .build();
   }
 
   private MarketViewStatsDTO toMarketViewStatsDTO(FlatMarketViewStatsDTO flatMarketViewStatsDTO) {

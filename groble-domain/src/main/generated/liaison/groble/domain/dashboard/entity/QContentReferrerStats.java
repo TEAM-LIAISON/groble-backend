@@ -47,6 +47,8 @@ public class QContentReferrerStats extends EntityPathBase<ContentReferrerStats> 
     //inherited
     public final DateTimePath<java.time.LocalDateTime> updatedAt = _super.updatedAt;
 
+    public final NumberPath<Integer> visitCount = createNumber("visitCount", Integer.class);
+
     public QContentReferrerStats(String variable) {
         super(ContentReferrerStats.class, forVariable(variable));
     }

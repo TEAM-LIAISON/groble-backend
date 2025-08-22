@@ -9,6 +9,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 
 import org.hibernate.annotations.Comment;
 
@@ -20,6 +21,10 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(
     name = "market_referrer_stats",
+    uniqueConstraints =
+        @UniqueConstraint(
+            name = "uk_mrs_unique_referrer",
+            columnNames = {"market_id", "referrer_domain", "source", "medium", "campaign"}),
     indexes = {
       @Index(name = "idx_mrs_market_created", columnList = "market_id, created_at"),
       @Index(name = "idx_mrs_source_medium", columnList = "source, medium"),
@@ -75,6 +80,11 @@ public class MarketReferrerStats {
   @Column(name = "term")
   @Comment("검색어 (utm_term)")
   private String term;
+
+  @Column(name = "visit_count", nullable = false, columnDefinition = "int default 1")
+  @Comment("해당 경로로부터의 유입 횟수")
+  @Builder.Default
+  private Integer visitCount = 1;
 
   // 유틸리티 메서드
   public void parseReferrerUrl() {

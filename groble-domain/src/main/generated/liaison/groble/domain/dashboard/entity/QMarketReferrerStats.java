@@ -39,6 +39,8 @@ public class QMarketReferrerStats extends EntityPathBase<MarketReferrerStats> {
 
     public final StringPath term = createString("term");
 
+    public final NumberPath<Integer> visitCount = createNumber("visitCount", Integer.class);
+
     public QMarketReferrerStats(String variable) {
         super(MarketReferrerStats.class, forVariable(variable));
     }

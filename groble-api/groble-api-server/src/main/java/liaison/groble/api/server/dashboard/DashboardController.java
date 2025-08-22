@@ -20,6 +20,7 @@ import liaison.groble.api.model.dashboard.response.ContentViewStatsResponse;
 import liaison.groble.api.model.dashboard.response.DashboardOverviewResponse;
 import liaison.groble.api.model.dashboard.response.DashboardViewStatsResponse;
 import liaison.groble.api.model.dashboard.response.MarketViewStatsResponse;
+import liaison.groble.api.model.dashboard.response.ReferrerStatsResponse;
 import liaison.groble.api.model.dashboard.response.swagger.ContentOverviewListResponse;
 import liaison.groble.application.dashboard.dto.ContentTotalViewStatsDTO;
 import liaison.groble.application.dashboard.dto.ContentViewStatsDTO;
@@ -27,6 +28,7 @@ import liaison.groble.application.dashboard.dto.DashboardContentOverviewDTO;
 import liaison.groble.application.dashboard.dto.DashboardOverviewDTO;
 import liaison.groble.application.dashboard.dto.DashboardViewStatsDTO;
 import liaison.groble.application.dashboard.dto.MarketViewStatsDTO;
+import liaison.groble.application.dashboard.dto.referrer.ReferrerStatsDTO;
 import liaison.groble.application.dashboard.service.DashboardService;
 import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.annotation.Logging;
@@ -57,10 +59,13 @@ public class DashboardController {
   private static final String DASHBOARD_CONTENT_VIEWS_LIST_PATH = "/dashboard/content/view-stats";
   private static final String DASHBOARD_CONTENT_VIEW_STATS_PATH =
       "/dashboard/content/{contentId}/view-stats";
+  private static final String DASHBOARD_CONTENT_REFERRER_STATS_PATH =
+      "/dashboard/content/{contentId}/referrer-stats";
+
   private static final String DASHBOARD_MARKET_VIEW_STATS_PATH =
       "/dashboard/market/{marketId}/view-stats";
   private static final String DASHBOARD_MARKET_REFERRER_STATS_PATH =
-      "/dashboard/market/{marketId}/referrer-stats";
+      "/dashboard/market/{marketLinkUrl}/referrer-stats";
 
   // 응답 메시지 상수화
   private static final String DASHBOARD_OVERVIEW_SUCCESS_MESSAGE = "대시보드 개요 조회 성공";
@@ -278,6 +283,38 @@ public class DashboardController {
 
     PageResponse<ContentViewStatsResponse> responsePage =
         dashboardMapper.toContentViewStatsResponsePage(dtoPage);
+
+    return responseHelper.success(
+        responsePage, DASHBOARD_CONTENT_VIEW_STATS_SUCCESS_MESSAGE, HttpStatus.OK);
+  }
+
+  @RequireRole("ROLE_SELLER")
+  @GetMapping(DASHBOARD_CONTENT_REFERRER_STATS_PATH)
+  public ResponseEntity<GrobleResponse<PageResponse<ReferrerStatsResponse>>>
+      getContentReferrerStats(
+          @Auth Accessor accessor,
+          @PathVariable("contentId") Long contentId,
+          @RequestParam(value = "period") String period,
+          @RequestParam(defaultValue = "0") int page) {
+    // Period별 페이지 사이즈 동적 결정
+    int expectedDays =
+        switch (period) {
+          case "TODAY" -> 1;
+          case "LAST_7_DAYS" -> 7;
+          case "LAST_30_DAYS" -> 30;
+          case "THIS_MONTH" -> LocalDate.now().getDayOfMonth();
+          case "LAST_MONTH" -> YearMonth.now().minusMonths(1).lengthOfMonth();
+          default -> throw new IllegalArgumentException("Invalid period: " + period);
+        };
+
+    int pageSize = Math.min(expectedDays, 20); // 최대 20개
+    Pageable pageable = PageRequest.of(page, pageSize, Sort.by(Sort.Direction.DESC, "statDate"));
+
+    PageResponse<ReferrerStatsDTO> dtoPage =
+        dashboardService.getContentReferrerStats(accessor.getUserId(), contentId, period, pageable);
+
+    PageResponse<ReferrerStatsResponse> responsePage =
+        dashboardMapper.toReferrerStatsResponsePage(dtoPage);
 
     return responseHelper.success(
         responsePage, DASHBOARD_CONTENT_VIEW_STATS_SUCCESS_MESSAGE, HttpStatus.OK);
