@@ -33,17 +33,17 @@ public class ContentReferrerStatsCustomRepositoryImpl
     QContentReferrerStats qStats = QContentReferrerStats.contentReferrerStats;
     QContentReferrerEvent qEvent = QContentReferrerEvent.contentReferrerEvent;
 
-    // [start, end+1day) 형태의 반개구간으로 집계 (between의 양끝 포함 문제 방지)
+    // [start, end+1day) 형태의 반개구간으로 집계
     LocalDateTime startDateTime = startDate.atStartOfDay();
     LocalDateTime endExclusive = endDate.plusDays(1).atStartOfDay();
 
-    // 방문수 집계식(재사용)
+    // 방문수 집계식
     NumberExpression<Long> visitCount = qEvent.id.count();
 
-    // 전체 개수: 그룹 기준이 stats.id 이므로 id의 distinct 개수를 사용
+    // 전체 개수: 유니크한 referrerUrl 개수
     Long total =
         jpaQueryFactory
-            .select(qStats.id.countDistinct()) // ❗ 기존 qStats.countDistinct()는 컴파일 오류
+            .select(qStats.id.countDistinct())
             .from(qStats)
             .join(qEvent)
             .on(qEvent.referrerStatsId.eq(qStats.id))
@@ -57,11 +57,7 @@ public class ContentReferrerStatsCustomRepositoryImpl
     List<FlatReferrerStatsDTO> content =
         jpaQueryFactory
             .select(
-                Projections.constructor(
-                    FlatReferrerStatsDTO.class,
-                    qStats.referrerUrl,
-                    visitCount // alias 없이도 생성자 매핑이면 OK
-                    ))
+                Projections.constructor(FlatReferrerStatsDTO.class, qStats.referrerUrl, visitCount))
             .from(qStats)
             .join(qEvent)
             .on(qEvent.referrerStatsId.eq(qStats.id))
@@ -69,15 +65,8 @@ public class ContentReferrerStatsCustomRepositoryImpl
                 qStats.contentId.eq(contentId),
                 qEvent.eventDate.goe(startDateTime),
                 qEvent.eventDate.lt(endExclusive))
-            // id 단위(=한 referrer 레코드 단위)로 묶고 보조적으로 표시 컬럼도 그룹에 포함
-            .groupBy(
-                qStats.id,
-                qStats.referrerDomain,
-                qStats.referrerPath,
-                qStats.source,
-                qStats.medium,
-                qStats.campaign)
-            .orderBy(visitCount.desc()) // 재사용한 식으로 정렬
+            .groupBy(qStats.id, qStats.referrerUrl) // referrerUrl만 필요하므로 간소화
+            .orderBy(visitCount.desc())
             .offset(pageable.getOffset())
             .limit(pageable.getPageSize())
             .fetch();

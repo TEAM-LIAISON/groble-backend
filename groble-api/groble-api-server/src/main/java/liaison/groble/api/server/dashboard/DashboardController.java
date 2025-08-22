@@ -77,7 +77,8 @@ public class DashboardController {
       "대시보드 콘텐츠 날짜별 조회수 조회 성공";
   private static final String DASHBOARD_MARKET_DETAIL_STATS_SUCCESS_MESSAGE =
       "대시보드 마켓 상세 조회수 및 유입 경로 조회 성공";
-
+  private static final String DASHBOARD_CONTENT_REFERRER_STATS_SUCCESS_MESSAGE =
+      "대시보드 콘텐츠 유입 경로 조회 성공";
   // Service
   private final DashboardService dashboardService;
   // Mapper
@@ -295,20 +296,8 @@ public class DashboardController {
           @Auth Accessor accessor,
           @PathVariable("contentId") Long contentId,
           @RequestParam(value = "period") String period,
-          @RequestParam(defaultValue = "0") int page) {
-    // Period별 페이지 사이즈 동적 결정
-    int expectedDays =
-        switch (period) {
-          case "TODAY" -> 1;
-          case "LAST_7_DAYS" -> 7;
-          case "LAST_30_DAYS" -> 30;
-          case "THIS_MONTH" -> LocalDate.now().getDayOfMonth();
-          case "LAST_MONTH" -> YearMonth.now().minusMonths(1).lengthOfMonth();
-          default -> throw new IllegalArgumentException("Invalid period: " + period);
-        };
-
-    int pageSize = Math.min(expectedDays, 20); // 최대 20개
-    Pageable pageable = PageRequest.of(page, pageSize, Sort.by(Sort.Direction.DESC, "statDate"));
+          @RequestParam(value = "page", defaultValue = "0") int page) {
+    Pageable pageable = PageRequest.of(page, 20, Sort.by(Sort.Direction.DESC, "visitCount"));
 
     PageResponse<ReferrerStatsDTO> dtoPage =
         dashboardService.getContentReferrerStats(accessor.getUserId(), contentId, period, pageable);
@@ -317,6 +306,6 @@ public class DashboardController {
         dashboardMapper.toReferrerStatsResponsePage(dtoPage);
 
     return responseHelper.success(
-        responsePage, DASHBOARD_CONTENT_VIEW_STATS_SUCCESS_MESSAGE, HttpStatus.OK);
+        responsePage, DASHBOARD_CONTENT_REFERRER_STATS_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 }
