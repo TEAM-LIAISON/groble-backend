@@ -69,7 +69,7 @@ public class BizppurioMessageService {
             .type(MessageType.ALIMTALK.getCode())
             .from(config.getDefaultSender())
             .to(formatPhoneNumber(to))
-            .atContent(atContent) // 방법1의 경우
+            .content(atContent) // 방법1의 경우
             .templateCode(templateCode)
             .senderKey(senderKey)
             .refKey(generateRefKey())
