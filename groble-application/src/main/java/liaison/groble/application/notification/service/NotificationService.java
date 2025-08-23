@@ -429,4 +429,12 @@ public class NotificationService {
     return String.format(
         "%s님, 결제가 완료되었어요!\n\n- 상품명: %s\n- 가격: %s원", buyerName, contentTitle, formattedPrice);
   }
+
+  private String buildSaleCompleteMessage(
+      String sellerName, String contentTitle, BigDecimal price) {
+    String formattedPrice = NumberFormat.getNumberInstance(Locale.KOREA).format(price);
+    return String.format(
+        "%s님이 상품을 구매했어요!\n" + "\n" + "- 상품명: %s\n" + "- 가격: %s",
+        sellerName, contentTitle, formattedPrice);
+  }
 }

@@ -60,21 +60,27 @@ public class BizppurioMessageService {
    */
   public MessageResponse sendAlimtalk(
       String to, String templateCode, String content, String senderKey, List<ButtonInfo> buttons) {
+
+    MessageRequest.ItemHighlight itemHighlight =
+        MessageRequest.ItemHighlight.builder()
+            .title("[Groble] 회원가입 완료")
+            .description("회원가입이 완료되었습니다")
+            .build();
+
     // 1. 알림톡 메시지 구조 생성
-    // content.at 내부에 모든 알림톡 관련 정보를 포함
     MessageRequest.AtMessage atMessage =
         MessageRequest.AtMessage.builder()
             .message(content) // 메시지 내용
             .senderkey(senderKey) // 발신프로필키 (필수)
             .templatecode(templateCode) // 템플릿 코드 (필수)
             .button(buttons) // 버튼 (선택)
+            .itemhighlight(itemHighlight)
             .build();
 
     // 2. AtContent로 감싸기
-    // 비즈뿌리오 API는 content.at 구조를 요구
     MessageRequest.AtContent atContent = MessageRequest.AtContent.builder().at(atMessage).build();
 
-    // 3. 메시지 요청 생성 (대체발송 설정 없음)
+    // 3. 메시지 요청 생성
     MessageRequest request =
         MessageRequest.builder()
             .account(config.getAccount())
