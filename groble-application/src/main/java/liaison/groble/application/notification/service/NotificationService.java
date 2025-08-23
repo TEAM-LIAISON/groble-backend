@@ -1,11 +1,15 @@
 package liaison.groble.application.notification.service;
 
+import java.math.BigDecimal;
+import java.text.NumberFormat;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import liaison.groble.application.notification.dto.NotificationDetailsDTO;
 import liaison.groble.application.notification.dto.NotificationItemDTO;
@@ -36,7 +40,13 @@ public class NotificationService {
   // 설정 파일에서 템플릿 정보를 가져옵니다
   // 이렇게 하면 템플릿이 변경되어도 코드 수정 없이 설정만 변경하면 됩니다
   @Value("${bizppurio.templates.welcome.code}")
-  private String welcomeTemplateCode; // 예: "WELCOME_001"
+  private String welcomeTemplateCode;
+
+  @Value("${bizppurio.templates.purchase-complete.code}")
+  private String purchaseCompleteTemplateCode;
+
+  @Value("${bizppurio.templates.sale-complete.code}")
+  private String saleCompleteTemplateCode;
 
   @Value("${bizppurio.kakao-sender-key}")
   private String kakaoSenderKey; // 카카오톡 발신프로필키
@@ -315,7 +325,7 @@ public class NotificationService {
               ButtonInfo.builder()
                   .name("상품 등록하기")
                   .type("WL") // 웹링크
-                  .urlMobile("https://www.groble.com")
+                  .urlMobile("https://www.groble.im")
                   .urlPc("https://www.groble.im")
                   .build());
       log.info("환영 알림톡 발송 시작 - 메이커: {}, 템플릿코드: {}", userName, welcomeTemplateCode);
@@ -340,18 +350,58 @@ public class NotificationService {
     }
   }
 
+  public void sendPurchaseCompleteMessage(
+      String phoneNumber,
+      String buyerName,
+      String contentTitle,
+      BigDecimal price,
+      String merchantUid) {
+    try {
+      String messageContent = buildPurchaseCompleteMessage(buyerName, contentTitle, price);
+
+      // 3) 주문 상세 URL (경로 세그먼트 안전 인코딩)
+      String orderUrl =
+          UriComponentsBuilder.fromHttpUrl("https://www.groble.im")
+              .path("/manage/purchase/{merchantUid}")
+              .buildAndExpand(merchantUid)
+              .encode()
+              .toUriString();
+
+      List<ButtonInfo> buttons =
+          Arrays.asList(
+              ButtonInfo.builder()
+                  .name("구매 내역 확인")
+                  .type("WL") // 웹링크
+                  .urlMobile(orderUrl)
+                  .urlPc(orderUrl)
+                  .build());
+      log.info("구매 완료 알림톡 발송 시작 - 구매자: {}, 템플릿코드: {}", buyerName, purchaseCompleteTemplateCode);
+
+      // 알림톡 발송
+      MessageResponse response =
+          messageService.sendAlimtalk(
+              phoneNumber, purchaseCompleteTemplateCode, messageContent, kakaoSenderKey, buttons);
+
+      if (response.isSuccess()) {
+        log.info("구매 완료 메시지 발송 성공 - 구매자: {}, 메시지키: {}", buyerName, response.getMessageKey());
+      } else {
+        log.warn("구매 완료 메시지 발송 실패 - 구매자: {}, 오류: {}", buyerName, response.getErrorMessage());
+      }
+
+    } catch (Exception e) {
+      // 메시지 발송 실패가 구매를 막아서는 안됩니다
+      log.error("구매 완료 메시지 발송 중 오류 발생 - 구매자: {}", buyerName, e);
+      // 실패한 발송은 별도로 기록하여 나중에 재발송할 수 있도록 합니다
+      recordFailedMessage(phoneNumber, buyerName, "PURCHASE_COMPLETE", e.getMessage());
+    }
+  }
+
   /** 실패한 메시지 기록 (재발송을 위해) */
   private void recordFailedMessage(
       String phoneNumber, String content, String type, String errorMessage) {
     // 실제로는 데이터베이스에 저장
     log.info(
         "실패 메시지 기록 - 번호: {}, 유형: {}, 오류: {}", maskPhoneNumber(phoneNumber), type, errorMessage);
-  }
-
-  /** 발송 이력 저장 */
-  private void saveMessageHistory(String referenceId, String type, String messageKey) {
-    // 실제로는 데이터베이스에 저장
-    log.info("발송 이력 저장 - 참조ID: {}, 유형: {}, 메시지키: {}", referenceId, type, messageKey);
   }
 
   private String maskPhoneNumber(String phoneNumber) {
@@ -368,10 +418,15 @@ public class NotificationService {
    * @return 변수가 치환된 메시지 내용
    */
   private String buildWelcomeMessage(String makerName) {
-    // 템플릿 변수 #{메이커명}을 실제 이름으로 치환
-    // 주의: 템플릿에 등록된 내용과 완전히 일치해야 함
     return String.format(
-        "%s님, 환영합니다🎉\n" + "그로블에 가입해 주셔서 감사합니다.\n" + "이제 단 5분 만에 첫 상품을 등록하고, 판매를 시작할 수 있어요.",
+        "%s님, 환영합니다🎉\n" + "그로블에 가입해 주셔서 감사합니다.\n\n" + "이제 단 5분 만에 첫 상품을 등록하고, 판매를 시작할 수 있어요.",
         makerName);
+  }
+
+  private String buildPurchaseCompleteMessage(
+      String buyerName, String contentTitle, BigDecimal price) {
+    String formattedPrice = NumberFormat.getNumberInstance(Locale.KOREA).format(price);
+    return String.format(
+        "%s님, 결제가 완료되었어요!\n\n- 상품명: %s\n- 가격: %s원", buyerName, contentTitle, formattedPrice);
   }
 }
