@@ -61,8 +61,9 @@ public class DashboardService {
     FlatDashboardOverviewDTO flatDashboardOverviewDTO =
         purchaseReader.getDashboardOverviewStats(userId);
 
-    Long totalContentViews = getTotalContentViews(userId);
-    Long totalMarketViews = getTotalMarketViews(userId);
+    Long totalContentViews =
+        getTotalContentViews(userId, LocalDate.of(2025, 8, 1), LocalDate.now());
+    Long totalMarketViews = getTotalMarketViews(userId, LocalDate.of(2025, 8, 1), LocalDate.now());
 
     return DashboardOverviewDTO.builder()
         .verificationStatus(sellerInfo.getVerificationStatus().name())
@@ -96,8 +97,21 @@ public class DashboardService {
 
   @Transactional(readOnly = true)
   public DashboardViewStatsDTO getViewStats(Long userId, String period) {
-    Long totalContentViews = getTotalContentViews(userId);
-    Long totalMarketViews = getTotalMarketViews(userId);
+    LocalDate endDate = LocalDate.now();
+    LocalDate startDate =
+        switch (period) {
+          case "TODAY" -> endDate;
+          case "LAST_7_DAYS" -> endDate.minusDays(6);
+          case "LAST_30_DAYS" -> endDate.minusDays(29);
+          case "THIS_MONTH" -> endDate.withDayOfMonth(1);
+          case "LAST_MONTH" -> {
+            YearMonth lastMonth = YearMonth.now().minusMonths(1);
+            yield lastMonth.atDay(1);
+          }
+          default -> throw new IllegalArgumentException("Invalid period: " + period);
+        };
+    Long totalContentViews = getTotalContentViews(userId, startDate, endDate);
+    Long totalMarketViews = getTotalMarketViews(userId, startDate, endDate);
 
     return DashboardViewStatsDTO.builder()
         .totalContentViews(totalContentViews)
@@ -331,15 +345,13 @@ public class DashboardService {
         .build();
   }
 
-  private Long getTotalContentViews(Long sellerId) {
+  private Long getTotalContentViews(Long sellerId, LocalDate startDate, LocalDate endDate) {
     List<Long> contentIds = contentReader.findIdsByUserId(sellerId);
-    return contentViewStatsRepository.getTotalContentViews(
-        contentIds, LocalDate.of(2025, 8, 1), LocalDate.now());
+    return contentViewStatsRepository.getTotalContentViews(contentIds, startDate, endDate);
   }
 
-  private Long getTotalMarketViews(Long sellerId) {
-    return marketViewStatsRepository.getTotalMarketViews(
-        sellerId, LocalDate.of(2025, 8, 1), LocalDate.now());
+  private Long getTotalMarketViews(Long sellerId, LocalDate startDate, LocalDate endDate) {
+    return marketViewStatsRepository.getTotalMarketViews(sellerId, startDate, endDate);
   }
 
   private DashboardContentOverviewDTO toDashboardContentOverviewDTO(
