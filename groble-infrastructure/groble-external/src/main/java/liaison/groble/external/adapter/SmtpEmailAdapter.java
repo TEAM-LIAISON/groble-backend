@@ -36,8 +36,6 @@ public class SmtpEmailAdapter implements EmailSenderPort {
   @Value("${spring.mail.username}")
   private String fromEmail;
 
-  // SOCKS 프록시 관련 필드 모두 제거
-
   @Override
   @Async("mailExecutor")
   @Retryable(
@@ -118,9 +116,6 @@ public class SmtpEmailAdapter implements EmailSenderPort {
     } catch (MessagingException e) {
       log.error("인증 이메일 발송 실패 - 수신자: {}, 에러: {}", to, e.getMessage(), e);
       throw new RuntimeException("이메일 발송 중 오류가 발생했습니다.", e);
-    } catch (MailException e) {
-      log.error("메일 서버 연결 실패 - 수신자: {}, 에러: {}", to, e.getMessage(), e);
-      throw new RuntimeException("메일 서버 연결에 실패했습니다. SOCKS 프록시 설정을 확인해주세요.", e);
     }
   }
 
@@ -204,9 +199,6 @@ public class SmtpEmailAdapter implements EmailSenderPort {
     } catch (MessagingException e) {
       log.error("비밀번호 재설정 이메일 발송 실패 - 수신자: {}, 에러: {}", to, e.getMessage(), e);
       throw new RuntimeException("이메일 발송 중 오류가 발생했습니다.", e);
-    } catch (MailException e) {
-      log.error("메일 서버 연결 실패 - 수신자: {}, 에러: {}", to, e.getMessage(), e);
-      throw new RuntimeException("메일 서버 연결에 실패했습니다. SOCKS 프록시 설정을 확인해주세요.", e);
     }
   }
 
@@ -312,13 +304,9 @@ public class SmtpEmailAdapter implements EmailSenderPort {
     } catch (MessagingException e) {
       log.error("판매 알림 이메일 발송 실패 - 수신자: {}, 에러: {}", to, e.getMessage(), e);
       throw new RuntimeException("이메일 발송 중 오류가 발생했습니다.", e);
-    } catch (MailException e) {
-      log.error("메일 서버 연결 실패 - 수신자: {}, 에러: {}", to, e.getMessage(), e);
-      throw new RuntimeException("메일 서버 연결에 실패했습니다. SOCKS 프록시 설정을 확인해주세요.", e);
     }
   }
 
-  /** MimeMessage 생성 SOCKS 프록시는 시스템 프로퍼티로 이미 설정되어 있어야 함 */
   private MimeMessage createMimeMessage() {
     return emailSender.createMimeMessage();
   }
