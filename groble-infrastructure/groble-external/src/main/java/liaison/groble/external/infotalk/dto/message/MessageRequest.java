@@ -58,23 +58,10 @@ public class MessageRequest {
   @JsonProperty("button")
   private List<ButtonInfo> buttons; // 버튼 정보
 
-  // ===== 대체발송 설정 =====
-
-  @JsonProperty("resend")
-  private String resend; // 대체발송 타입 (sms, lms, mms)
-
-  @JsonProperty("recontent")
-  private String reContent; // 대체발송 메시지 내용
-
   // ===== MMS 전용 =====
 
   @JsonProperty("file")
   private List<FileInfo> files; // 첨부파일 정보
-
-  // ===== 리셀러 전용 =====
-
-  @JsonProperty("resellercode")
-  private String resellerCode; // 리셀러 식별코드
 
   // 알림톡용 내부 클래스들
   @Data

@@ -60,9 +60,8 @@ public class BizppurioMessageService {
    */
   public MessageResponse sendAlimtalk(
       String to, String templateCode, String content, String senderKey, List<ButtonInfo> buttons) {
-
-    // 알림톡 메시지 구조 생성
-    // content.at.senderkey와 content.at.templatecode는 필수!
+    // 1. 알림톡 메시지 구조 생성
+    // content.at 내부에 모든 알림톡 관련 정보를 포함
     MessageRequest.AtMessage atMessage =
         MessageRequest.AtMessage.builder()
             .message(content) // 메시지 내용
@@ -71,24 +70,19 @@ public class BizppurioMessageService {
             .button(buttons) // 버튼 (선택)
             .build();
 
-    // AtContent로 감싸기
+    // 2. AtContent로 감싸기
+    // 비즈뿌리오 API는 content.at 구조를 요구
     MessageRequest.AtContent atContent = MessageRequest.AtContent.builder().at(atMessage).build();
 
-    // 메시지 요청 생성
-    // 주의: 알림톡은 content 필드에 AtContent 객체를 넣어야 함
-    // 최상위 레벨의 senderKey, templateCode는 사용하지 않음
+    // 3. 메시지 요청 생성 (대체발송 설정 없음)
     MessageRequest request =
         MessageRequest.builder()
             .account(config.getAccount())
             .type(MessageType.ALIMTALK.getCode()) // "at"
-            .from(config.getDefaultSender())
-            .to(formatPhoneNumber(to))
-            .content(atContent) // AtContent 객체 사용 (중요!)
-            .refKey(generateRefKey())
-            // 알림톡 실패 시 SMS로 대체발송
-            .resend(MessageType.SMS.getCode())
-            .reContent(content) // 대체발송 내용 (SMS용)
-            // 최상위 senderKey, templateCode는 설정하지 않음 (content.at 내부에 있음)
+            .from(config.getDefaultSender()) // 발신번호
+            .to(formatPhoneNumber(to)) // 수신번호
+            .content(atContent) // AtContent 객체 사용
+            .refKey(generateRefKey()) // 고유 참조키
             .build();
 
     log.debug("알림톡 요청 생성 - Template: {}, SenderKey: {}", templateCode, senderKey);
