@@ -55,7 +55,6 @@ public class MarketViewCountService {
               .viewerId(marketViewCountDTO.getUserId())
               .viewerIp(marketViewCountDTO.getIp())
               .userAgent(marketViewCountDTO.getUserAgent())
-              .referer(marketViewCountDTO.getReferer())
               .viewedAt(LocalDateTime.now())
               .build();
 

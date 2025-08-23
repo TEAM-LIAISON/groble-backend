@@ -10,16 +10,18 @@ import liaison.groble.api.model.dashboard.response.ContentViewStatsResponse;
 import liaison.groble.api.model.dashboard.response.DashboardOverviewResponse;
 import liaison.groble.api.model.dashboard.response.DashboardViewStatsResponse;
 import liaison.groble.api.model.dashboard.response.MarketViewStatsResponse;
+import liaison.groble.api.model.dashboard.response.ReferrerStatsResponse;
 import liaison.groble.application.dashboard.dto.ContentTotalViewStatsDTO;
 import liaison.groble.application.dashboard.dto.ContentViewStatsDTO;
 import liaison.groble.application.dashboard.dto.DashboardContentOverviewDTO;
 import liaison.groble.application.dashboard.dto.DashboardOverviewDTO;
 import liaison.groble.application.dashboard.dto.DashboardViewStatsDTO;
 import liaison.groble.application.dashboard.dto.MarketViewStatsDTO;
+import liaison.groble.application.dashboard.dto.referrer.ReferrerStatsDTO;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-08-17T17:18:22+0900",
+    date = "2025-08-22T16:42:22+0900",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.10 (Amazon.com Inc.)")
 @Component
 public class DashboardMapperImpl implements DashboardMapper {
@@ -67,6 +69,25 @@ public class DashboardMapperImpl implements DashboardMapper {
   }
 
   @Override
+  public ReferrerStatsResponse toReferrerStatsResponse(ReferrerStatsDTO referrerStatsDTO) {
+    if (referrerStatsDTO == null) {
+      return null;
+    }
+
+    ReferrerStatsResponse.ReferrerStatsResponseBuilder referrerStatsResponse =
+        ReferrerStatsResponse.builder();
+
+    if (referrerStatsDTO.getReferrerUrl() != null) {
+      referrerStatsResponse.referrerUrl(referrerStatsDTO.getReferrerUrl());
+    }
+    if (referrerStatsDTO.getVisitCount() != null) {
+      referrerStatsResponse.visitCount(referrerStatsDTO.getVisitCount());
+    }
+
+    return referrerStatsResponse.build();
+  }
+
+  @Override
   public ContentTotalViewStatsResponse toContentTotalViewStatsResponse(
       ContentTotalViewStatsDTO contentTotalViewStatsDTO) {
     if (contentTotalViewStatsDTO == null) {
@@ -99,10 +120,6 @@ public class DashboardMapperImpl implements DashboardMapper {
     ContentOverviewResponse.ContentOverviewResponseBuilder contentOverviewResponse =
         ContentOverviewResponse.builder();
 
-    if (dashboardContentOverviewDTO.getTotalContentsCount() != null) {
-      contentOverviewResponse.totalContentsCount(
-          dashboardContentOverviewDTO.getTotalContentsCount());
-    }
     if (dashboardContentOverviewDTO.getContentId() != null) {
       contentOverviewResponse.contentId(dashboardContentOverviewDTO.getContentId());
     }

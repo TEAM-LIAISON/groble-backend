@@ -54,9 +54,6 @@ public class ContentViewLog {
   @Column(name = "visitor_hash", length = 64)
   private String visitorHash; // SHA-256(salt|ip|userAgent)
 
-  @Column(name = "referer", length = 500)
-  private String referer;
-
   @CreatedDate
   @Column(name = "viewed_at", nullable = false, updatable = false)
   private LocalDateTime viewedAt;

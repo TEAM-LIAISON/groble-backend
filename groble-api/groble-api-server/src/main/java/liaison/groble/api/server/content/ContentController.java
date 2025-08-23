@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
@@ -29,6 +30,7 @@ import liaison.groble.api.model.content.response.swagger.ContentsDocumentCategor
 import liaison.groble.api.model.content.response.swagger.HomeContents;
 import liaison.groble.api.model.content.response.swagger.UploadContentDownloadFile;
 import liaison.groble.api.model.content.response.swagger.UploadContentThumbnail;
+import liaison.groble.api.model.dashboard.request.referrer.ReferrerRequest;
 import liaison.groble.api.model.file.response.FileUploadResponse;
 import liaison.groble.api.model.maker.response.ContactInfoResponse;
 import liaison.groble.api.server.util.FileUtil;
@@ -38,6 +40,8 @@ import liaison.groble.application.content.dto.ContentViewCountDTO;
 import liaison.groble.application.content.dto.review.ContentReviewDTO;
 import liaison.groble.application.content.service.ContentService;
 import liaison.groble.application.content.service.ContentViewCountService;
+import liaison.groble.application.dashboard.dto.referrer.ReferrerDTO;
+import liaison.groble.application.dashboard.service.ReferrerService;
 import liaison.groble.application.file.FileService;
 import liaison.groble.application.file.dto.FileDTO;
 import liaison.groble.application.file.dto.FileUploadDTO;
@@ -52,6 +56,7 @@ import liaison.groble.common.response.ResponseHelper;
 import liaison.groble.common.utils.PageUtils;
 import liaison.groble.mapping.content.ContentMapper;
 import liaison.groble.mapping.content.ContentReviewMapper;
+import liaison.groble.mapping.dashboard.ReferrerMapper;
 import liaison.groble.mapping.market.MarketMapper;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -81,6 +86,7 @@ public class ContentController {
   private static final String CONTENT_DOCUMENT_CATEGORY_PATH = "/contents/document/category";
   private static final String CONTENT_REVIEWS_PATH = "/content/{contentId}/reviews";
   private static final String CONTENT_VIEW_PATH = "/content/view/{contentId}";
+  private static final String CONTENT_REFERRER_PATH = "/content/referrer/{contentId}";
 
   // 응답 메시지 상수화
   private static final String CONTENT_DETAIL_SUCCESS_MESSAGE = "콘텐츠 상세 조회에 성공하였습니다.";
@@ -89,11 +95,13 @@ public class ContentController {
       "콘텐츠 썸네일 이미지 업로드가 성공적으로 완료되었습니다.";
   private static final String CONTENT_REVIEWS_SUCCESS_MESSAGE = "콘텐츠 리뷰 목록 조회에 성공하였습니다.";
   private static final String CONTENT_VIEW_SUCCESS_MESSAGE = "콘텐츠 뷰어 화면을 성공적으로 조회했습니다.";
+  private static final String CONTENT_REFERRAL_SUCCESS_MESSAGE = "콘텐츠 유입경로 저장에 성공하였습니다.";
 
   // Service
   private final ContentService contentService;
   private final FileService fileService;
   private final ContentViewCountService contentViewCountService;
+  private final ReferrerService referrerService;
 
   // Mapper
   private final MarketMapper marketMapper;
@@ -106,6 +114,7 @@ public class ContentController {
 
   // Helper
   private final ResponseHelper responseHelper;
+  private final ReferrerMapper referrerMapper;
 
   @Operation(summary = "[✅ 콘텐츠 리뷰 목록 조회]")
   @ApiResponse(
@@ -349,6 +358,7 @@ public class ContentController {
     return responseHelper.success(null, CONTENT_VIEW_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 
+  @Logging(item = "Content", action = "viewContent", includeParam = true, includeResult = true)
   @PostMapping(UPLOAD_CONTENT_DETAIL_IMAGES_PATH)
   public ResponseEntity<GrobleResponse<?>> addContentDetailImages(
       @Auth Accessor accessor,
@@ -394,6 +404,20 @@ public class ContentController {
         .body(
             GrobleResponse.success(
                 responses, "상세 이미지 업로드가 성공적으로 완료되었습니다.", HttpStatus.CREATED.value()));
+  }
+
+  @Logging(
+      item = "Content",
+      action = "recordContentReferrer",
+      includeParam = true,
+      includeResult = true)
+  @PostMapping(CONTENT_REFERRER_PATH)
+  public ResponseEntity<GrobleResponse<Void>> recordContentReferrer(
+      @PathVariable("contentId") Long contentId,
+      @Valid @RequestBody ReferrerRequest referrerRequest) {
+    ReferrerDTO referrerDTO = referrerMapper.toContentReferrerDTO(referrerRequest);
+    referrerService.recordContentReferrer(contentId, referrerDTO);
+    return responseHelper.success(null, CONTENT_REFERRAL_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 
   /** 이미지 파일 여부 확인 */

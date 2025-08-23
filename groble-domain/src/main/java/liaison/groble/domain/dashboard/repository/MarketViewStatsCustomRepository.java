@@ -10,7 +10,7 @@ import liaison.groble.domain.dashboard.dto.FlatMarketViewStatsDTO;
 
 public interface MarketViewStatsCustomRepository {
   Page<FlatMarketViewStatsDTO> findByMarketIdAndPeriodTypeAndStatDateBetween(
-      Long marketId,
+      String marketId,
       PeriodType periodType,
       LocalDate startDate,
       LocalDate endDate,

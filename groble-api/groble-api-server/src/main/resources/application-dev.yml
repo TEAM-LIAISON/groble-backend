@@ -180,6 +180,7 @@ logging:
   file:
     name: /dev/null  # 로그 파일 쓰기를 막음 (또는 경로를 로그 수집 서버로 지정)
 
+# application-dev.yml
 management:
   tracing:
     sampling:
@@ -191,10 +192,10 @@ management:
   otlp:
     metrics:
       export:
-        url: http://localhost:4318/v1/metrics  # OTLP 수집기 엔드포인트
+        url: http://otelcol.groble.local:4318/v1/metrics
         step: 10s
     tracing:
-      endpoint: http://localhost:4318/v1/traces  # OTLP 수집기 엔드포인트
+      endpoint: http://otelcol.groble.local:4318/v1/traces
   endpoints:
     web:
       exposure:
@@ -218,7 +219,6 @@ management:
     observations:
       key-values:
         application: ${spring.application.name}
-
 otel:
   resource:
     attributes:
@@ -228,7 +228,7 @@ otel:
   exporter:
     otlp:
       protocol: http/protobuf
-      endpoint: http://localhost:4318  # OTLP Collector 엔드포인트
+      endpoint: http://otelcol.groble.local:4318/
   logs:
     export:
-      endpoint: http://localhost:4318/v1/logs
+      endpoint: http://otelcol.groble.local:4318/v1/logs

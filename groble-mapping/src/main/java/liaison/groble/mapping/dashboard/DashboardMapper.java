@@ -8,12 +8,14 @@ import liaison.groble.api.model.dashboard.response.ContentViewStatsResponse;
 import liaison.groble.api.model.dashboard.response.DashboardOverviewResponse;
 import liaison.groble.api.model.dashboard.response.DashboardViewStatsResponse;
 import liaison.groble.api.model.dashboard.response.MarketViewStatsResponse;
+import liaison.groble.api.model.dashboard.response.ReferrerStatsResponse;
 import liaison.groble.application.dashboard.dto.ContentTotalViewStatsDTO;
 import liaison.groble.application.dashboard.dto.ContentViewStatsDTO;
 import liaison.groble.application.dashboard.dto.DashboardContentOverviewDTO;
 import liaison.groble.application.dashboard.dto.DashboardOverviewDTO;
 import liaison.groble.application.dashboard.dto.DashboardViewStatsDTO;
 import liaison.groble.application.dashboard.dto.MarketViewStatsDTO;
+import liaison.groble.application.dashboard.dto.referrer.ReferrerStatsDTO;
 import liaison.groble.common.response.PageResponse;
 import liaison.groble.mapping.common.PageResponseMapper;
 import liaison.groble.mapping.config.GrobleMapperConfig;
@@ -41,6 +43,13 @@ public interface DashboardMapper extends PageResponseMapper {
       PageResponse<ContentTotalViewStatsDTO> dtoPage) {
     return toPageResponse(dtoPage, this::toContentTotalViewStatsResponse);
   }
+
+  default PageResponse<ReferrerStatsResponse> toReferrerStatsResponsePage(
+      PageResponse<ReferrerStatsDTO> dtoPage) {
+    return toPageResponse(dtoPage, this::toReferrerStatsResponse);
+  }
+
+  ReferrerStatsResponse toReferrerStatsResponse(ReferrerStatsDTO referrerStatsDTO);
 
   ContentTotalViewStatsResponse toContentTotalViewStatsResponse(
       ContentTotalViewStatsDTO contentTotalViewStatsDTO);
