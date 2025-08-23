@@ -2,6 +2,7 @@ package liaison.groble.application.notification.service;
 
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +21,8 @@ import liaison.groble.domain.notification.enums.SubNotificationType;
 import liaison.groble.domain.notification.repository.NotificationCustomRepository;
 import liaison.groble.domain.notification.repository.NotificationRepository;
 import liaison.groble.domain.user.entity.User;
+import liaison.groble.external.infotalk.dto.message.MessageResponse;
+import liaison.groble.external.infotalk.service.BizppurioMessageService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,10 +31,20 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 public class NotificationService {
+  // 설정 파일에서 템플릿 정보를 가져옵니다
+  // 이렇게 하면 템플릿이 변경되어도 코드 수정 없이 설정만 변경하면 됩니다
+  @Value("${bizppurio.templates.welcome.code}")
+  private String welcomeTemplateCode; // 예: "WELCOME_001"
+
+  @Value("${bizppurio.kakao-sender-key}")
+  private String kakaoSenderKey; // 카카오톡 발신프로필키
+
   private final NotificationCustomRepository notificationCustomRepository;
   private final NotificationRepository notificationRepository;
   private final NotificationReader notificationReader;
   private final NotificationMapper notificationMapper;
+
+  private final BizppurioMessageService messageService;
 
   public NotificationItemsDTO getNotificationItems(final Long userId) {
     List<Notification> notifications =
@@ -284,5 +297,72 @@ public class NotificationService {
     Notification notification =
         notificationReader.getNotificationByIdAndUserId(notificationId, userId);
     notification.markAsRead();
+  }
+
+  // 카카오 알림톡 관련 메서드
+  /**
+   * 1. 회원가입 환영 메시지 발송
+   *
+   * <p>가장 기본적인 사용 사례입니다. 회원가입이 완료되면 즉시 환영 메시지를 발송합니다.
+   */
+  public void sendWelcomeMessage(String phoneNumber, String userName) {
+    try {
+      String messageContent = buildWelcomeMessage(userName);
+
+      log.info("환영 알림톡 발송 시작 - 메이커: {}, 템플릿코드: {}", userName, welcomeTemplateCode);
+
+      // 알림톡 발송
+      // 알림톡이 실패하면 자동으로 SMS로 대체발송됩니다
+      MessageResponse response =
+          messageService.sendAlimtalk(
+              phoneNumber, welcomeTemplateCode, messageContent, kakaoSenderKey);
+
+      if (response.isSuccess()) {
+        log.info("환영 메시지 발송 성공 - 회원: {}, 메시지키: {}", userName, response.getMessageKey());
+      } else {
+        log.warn("환영 메시지 발송 실패 - 회원: {}, 오류: {}", userName, response.getErrorMessage());
+      }
+
+    } catch (Exception e) {
+      // 메시지 발송 실패가 회원가입을 막아서는 안됩니다
+      log.error("환영 메시지 발송 중 오류 발생 - 회원: {}", userName, e);
+      // 실패한 발송은 별도로 기록하여 나중에 재발송할 수 있도록 합니다
+      recordFailedMessage(phoneNumber, userName, "WELCOME", e.getMessage());
+    }
+  }
+
+  /** 실패한 메시지 기록 (재발송을 위해) */
+  private void recordFailedMessage(
+      String phoneNumber, String content, String type, String errorMessage) {
+    // 실제로는 데이터베이스에 저장
+    log.info(
+        "실패 메시지 기록 - 번호: {}, 유형: {}, 오류: {}", maskPhoneNumber(phoneNumber), type, errorMessage);
+  }
+
+  /** 발송 이력 저장 */
+  private void saveMessageHistory(String referenceId, String type, String messageKey) {
+    // 실제로는 데이터베이스에 저장
+    log.info("발송 이력 저장 - 참조ID: {}, 유형: {}, 메시지키: {}", referenceId, type, messageKey);
+  }
+
+  private String maskPhoneNumber(String phoneNumber) {
+    if (phoneNumber == null || phoneNumber.length() < 8) return "****";
+    return phoneNumber.substring(0, 3) + "****" + phoneNumber.substring(phoneNumber.length() - 4);
+  }
+
+  /**
+   * 환영 메시지 내용을 생성합니다
+   *
+   * <p>템플릿에 등록된 내용과 정확히 일치해야 합니다. 한 글자라도 다르면 알림톡 발송이 실패합니다.
+   *
+   * @param makerName 메이커 이름
+   * @return 변수가 치환된 메시지 내용
+   */
+  private String buildWelcomeMessage(String makerName) {
+    // 템플릿 변수 #{메이커명}을 실제 이름으로 치환
+    // 주의: 템플릿에 등록된 내용과 완전히 일치해야 함
+    return String.format(
+        "%s님, 환영합니다🎉\n" + "그로블에 가입해 주셔서 감사합니다.\n" + "이제 단 5분 만에 첫 상품을 등록하고, 판매를 시작할 수 있어요.",
+        makerName);
   }
 }

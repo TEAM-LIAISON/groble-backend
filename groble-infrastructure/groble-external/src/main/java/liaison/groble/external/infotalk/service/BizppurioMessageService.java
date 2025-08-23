@@ -52,13 +52,12 @@ public class BizppurioMessageService {
    * <p>알림톡은 사전에 승인된 템플릿을 사용해야 합니다. 템플릿의 변수 부분은 #{변수명} 형태로 치환하여 content에 전달합니다.
    *
    * @param to 수신번호
-   * @param templateCode 템플릿 코드
    * @param content 메시지 내용 (템플릿 변수 치환 완료)
-   * @param senderKey 발신프로필키
    * @return 발송 응답
    */
   public MessageResponse sendAlimtalk(
       String to, String templateCode, String content, String senderKey) {
+
     MessageRequest request =
         MessageRequest.builder()
             .account(config.getAccount())
