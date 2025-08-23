@@ -1,7 +1,8 @@
 package liaison.groble.external.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.stereotype.Component;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.retry.annotation.EnableRetry;
 
 import lombok.Data;
 
@@ -11,17 +12,29 @@ import lombok.Data;
  * <p>application.yml의 설정값을 자동으로 바인딩합니다.
  */
 @Data
-@Component
+@Configuration
+@EnableRetry
 @ConfigurationProperties(prefix = "bizppurio")
 public class BizppurioConfig {
-  private String apiUrl;
+  private String baseUrl;
   private String account;
   private String password;
 
-  // 토큰 갱신 여유 시간 (분 단위)
+  // 토큰 관련 설정
   private int tokenRefreshMarginMinutes = 60;
 
   // HTTP 연결 타임아웃 설정 (밀리초)
   private int connectTimeout = 5000;
   private int readTimeout = 30000;
+
+  // 메시지 발송 설정
+  private String defaultSender;
+  private String defaultCountry = "82";
+
+  // 알림톡/친구톡 설정
+  private String kakaoSenderKey; // 카카오톡 발신프로필키
+
+  // 재시도 설정
+  private int maxRetryAttempts = 3;
+  private long retryDelay = 1000; // 밀리초
 }
