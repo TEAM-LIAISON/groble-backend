@@ -61,12 +61,6 @@ public class BizppurioMessageService {
   public MessageResponse sendAlimtalk(
       String to, String templateCode, String content, String senderKey, List<ButtonInfo> buttons) {
 
-    MessageRequest.ItemHighlight itemHighlight =
-        MessageRequest.ItemHighlight.builder()
-            .title("[Groble] 회원가입 완료")
-            .description("회원가입이 완료되었습니다")
-            .build();
-
     // 1. 알림톡 메시지 구조 생성
     MessageRequest.AtMessage atMessage =
         MessageRequest.AtMessage.builder()

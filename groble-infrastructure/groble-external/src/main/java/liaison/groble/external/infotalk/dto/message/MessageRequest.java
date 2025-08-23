@@ -36,33 +36,6 @@ public class MessageRequest {
   @JsonProperty("refkey")
   private String refKey; // 고객사 메시지 고유키 (중복 발송 방지용)
 
-  // ===== 선택 파라미터 =====
-
-  @JsonProperty("country")
-  private String country; // 국가코드 (기본값: 82)
-
-  @JsonProperty("userinfo")
-  private String userInfo; // 정산용 부서코드
-
-  @JsonProperty("sendtime")
-  private String sendTime; // 예약발송 시간 (YYYYMMDDHHmmss)
-
-  // ===== 알림톡/친구톡 전용 =====
-
-  @JsonProperty("senderkey")
-  private String senderKey; // 발신프로필키 (카카오톡 채널)
-
-  @JsonProperty("templatecode")
-  private String templateCode; // 템플릿 코드 (사전 승인 필요)
-
-  @JsonProperty("button")
-  private List<ButtonInfo> buttons; // 버튼 정보
-
-  // ===== MMS 전용 =====
-
-  @JsonProperty("file")
-  private List<FileInfo> files; // 첨부파일 정보
-
   // 알림톡용 내부 클래스들
   @Data
   @Builder
@@ -85,64 +58,10 @@ public class MessageRequest {
     @JsonProperty("templatecode")
     private String templatecode;
 
-    @JsonProperty("header")
-    private String header; // 선택 필드
-
     @JsonProperty("title")
     private String title;
 
     @JsonProperty("button")
     private List<ButtonInfo> button; // 기존 ButtonInfo 재사용
-
-    @JsonProperty("item")
-    private ItemInfo item; // 아이템 리스트용
-
-    @JsonProperty("itemhighlight")
-    private ItemHighlight itemhighlight; // 아이템 하이라이트용
-  }
-
-  // 추가 내부 클래스들
-  @Data
-  @Builder
-  @JsonInclude(JsonInclude.Include.NON_NULL)
-  public static class ItemInfo {
-    @JsonProperty("list")
-    private List<ItemDetail> list;
-
-    @JsonProperty("summary")
-    private ItemSummary summary;
-  }
-
-  @Data
-  @Builder
-  @JsonInclude(JsonInclude.Include.NON_NULL)
-  public static class ItemDetail {
-    @JsonProperty("title")
-    private String title;
-
-    @JsonProperty("description")
-    private String description;
-  }
-
-  @Data
-  @Builder
-  @JsonInclude(JsonInclude.Include.NON_NULL)
-  public static class ItemSummary {
-    @JsonProperty("title")
-    private String title;
-
-    @JsonProperty("description")
-    private String description;
-  }
-
-  @Data
-  @Builder
-  @JsonInclude(JsonInclude.Include.NON_NULL)
-  public static class ItemHighlight {
-    @JsonProperty("title")
-    private String title;
-
-    @JsonProperty("description")
-    private String description;
   }
 }
