@@ -88,6 +88,9 @@ public class MessageRequest {
     @JsonProperty("header")
     private String header; // 선택 필드
 
+    @JsonProperty("title")
+    private String title;
+
     @JsonProperty("button")
     private List<ButtonInfo> button; // 기존 ButtonInfo 재사용
 

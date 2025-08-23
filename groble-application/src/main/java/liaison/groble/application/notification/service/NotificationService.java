@@ -323,7 +323,7 @@ public class NotificationService {
       List<ButtonInfo> buttons =
           Arrays.asList(
               ButtonInfo.builder()
-                  .name("상품 등록하기")
+                  .name("상품 등록하러 가기")
                   .type("WL") // 웹링크
                   .urlMobile("https://www.groble.im")
                   .urlPc("https://www.groble.im")

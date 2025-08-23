@@ -74,7 +74,7 @@ public class BizppurioMessageService {
             .senderkey(senderKey) // 발신프로필키 (필수)
             .templatecode(templateCode) // 템플릿 코드 (필수)
             .button(buttons) // 버튼 (선택)
-            .itemhighlight(itemHighlight)
+            .title("[Groble] 회원가입 완료")
             .build();
 
     // 2. AtContent로 감싸기
