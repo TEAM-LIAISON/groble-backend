@@ -8,7 +8,7 @@ import lombok.Data;
 /**
  * 비즈뿌리오 API 설정 관리 클래스
  *
- * <p>application.yml의 설정값을 자동으로 바인딩합니다. 환경별(개발/운영) 설정을 쉽게 관리할 수 있도록 구조화했습니다.
+ * <p>application.yml의 설정값을 자동으로 바인딩합니다.
  */
 @Data
 @Component
