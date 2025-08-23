@@ -124,7 +124,7 @@ public class BizppurioTokenService {
   private void issueNewToken() {
     try {
       // API URL 구성
-      String url = config.getBaseUrl() + TOKEN_ENDPOINT;
+      String url = config.getApiUrl() + TOKEN_ENDPOINT;
 
       // HTTP 헤더 설정
       HttpHeaders headers = createTokenRequestHeaders();

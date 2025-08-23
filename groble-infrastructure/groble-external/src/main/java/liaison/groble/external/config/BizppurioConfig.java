@@ -14,7 +14,7 @@ import lombok.Data;
 @Component
 @ConfigurationProperties(prefix = "bizppurio")
 public class BizppurioConfig {
-  private String baseUrl = "https://api.bizppurio.com";
+  private String apiUrl;
   private String account;
   private String password;
 
