@@ -16,6 +16,9 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import liaison.groble.external.config.BizppurioConfig;
 import liaison.groble.external.infotalk.dto.message.ButtonInfo;
 import liaison.groble.external.infotalk.dto.message.MessageRequest;
@@ -40,6 +43,7 @@ public class BizppurioMessageService {
   private final BizppurioConfig config;
   private final BizppurioTokenService tokenService;
   private final RestTemplate restTemplate;
+  private final ObjectMapper objectMapper;
 
   // API 엔드포인트
   private static final String MESSAGE_ENDPOINT = "/v3/message";
@@ -59,7 +63,8 @@ public class BizppurioMessageService {
    * @return 발송 응답
    */
   public MessageResponse sendAlimtalk(
-      String to, String templateCode, String content, String senderKey, List<ButtonInfo> buttons) {
+      String to, String templateCode, String content, String senderKey, List<ButtonInfo> buttons)
+      throws JsonProcessingException {
 
     // 1. 알림톡 메시지 구조 생성
     MessageRequest.AtMessage atMessage =
@@ -86,7 +91,7 @@ public class BizppurioMessageService {
             .build();
 
     log.debug("알림톡 요청 생성 - Template: {}, SenderKey: {}", templateCode, senderKey);
-
+    log.debug("bizppurio payload={}", objectMapper.writeValueAsString(request));
     return sendMessage(request);
   }
 

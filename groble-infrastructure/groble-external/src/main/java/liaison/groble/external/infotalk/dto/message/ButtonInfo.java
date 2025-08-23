@@ -26,7 +26,4 @@ public class ButtonInfo {
 
   @JsonProperty("url_pc")
   private String urlPc; // PC URL (선택)
-
-  @JsonProperty("scheme")
-  private String scheme; // 앱 스킴 (앱링크용)
 }

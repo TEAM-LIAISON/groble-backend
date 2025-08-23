@@ -325,8 +325,8 @@ public class NotificationService {
               ButtonInfo.builder()
                   .name("상품 등록하러 가기")
                   .type("WL") // 웹링크
-                  .urlMobile("https://www.groble.im")
-                  .urlPc("https://www.groble.im")
+                  .urlMobile("https://www.groble.im/")
+                  .urlPc("https://www.groble.im/")
                   .build());
       log.info("환영 알림톡 발송 시작 - 메이커: {}, 템플릿코드: {}", userName, welcomeTemplateCode);
 

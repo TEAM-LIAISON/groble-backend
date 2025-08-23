@@ -34,6 +34,7 @@ import liaison.groble.domain.dashboard.repository.ContentViewStatsRepository;
 import liaison.groble.domain.dashboard.repository.MarketReferrerStatsCustomRepository;
 import liaison.groble.domain.dashboard.repository.MarketViewStatsCustomRepository;
 import liaison.groble.domain.dashboard.repository.MarketViewStatsRepository;
+import liaison.groble.domain.market.entity.Market;
 import liaison.groble.domain.user.entity.SellerInfo;
 
 import lombok.RequiredArgsConstructor;
@@ -94,7 +95,7 @@ public class DashboardService {
   }
 
   @Transactional(readOnly = true)
-  public DashboardViewStatsDTO getViewStats(Long userId) {
+  public DashboardViewStatsDTO getViewStats(Long userId, String period) {
     Long totalContentViews = getTotalContentViews(userId);
     Long totalMarketViews = getTotalMarketViews(userId);
 
@@ -141,7 +142,8 @@ public class DashboardService {
 
   @Transactional(readOnly = true)
   public PageResponse<MarketViewStatsDTO> getMarketViewStats(
-      Long userId, String marketLinkUrl, String period, Pageable pageable) {
+      Long userId, String period, Pageable pageable) {
+    Market market = userReader.getMarket(userId);
     LocalDate endDate = LocalDate.now();
     LocalDate startDate =
         switch (period) {
@@ -158,7 +160,7 @@ public class DashboardService {
 
     Page<FlatMarketViewStatsDTO> page =
         marketViewStatsCustomRepository.findByMarketIdAndPeriodTypeAndStatDateBetween(
-            marketLinkUrl, PeriodType.DAILY, startDate, endDate, pageable);
+            market.getMarketLinkUrl(), PeriodType.DAILY, startDate, endDate, pageable);
 
     // 총 조회수 계산
     long totalViews =
@@ -254,7 +256,10 @@ public class DashboardService {
 
   @Transactional(readOnly = true)
   public PageResponse<ReferrerStatsDTO> getMarketReferrerStats(
-      Long userId, String marketLinkUrl, String period, Pageable pageable) {
+      Long userId, String period, Pageable pageable) {
+
+    Market market = userReader.getMarket(userId);
+
     LocalDate endDate = LocalDate.now();
     LocalDate startDate =
         switch (period) {
@@ -271,7 +276,7 @@ public class DashboardService {
 
     Page<FlatReferrerStatsDTO> page =
         marketReferrerStatsCustomRepository.findMarketReferrerStats(
-            marketLinkUrl, startDate, endDate, pageable);
+            market.getMarketLinkUrl(), startDate, endDate, pageable);
 
     List<ReferrerStatsDTO> items =
         page.getContent().stream().map(this::toReferrerStatsDTO).toList();
