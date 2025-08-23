@@ -12,11 +12,11 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum MessageType {
-  SMS("sms", "단문 메시지", 90),
-  LMS("lms", "장문 메시지", 2000),
-  MMS("mms", "멀티미디어 메시지", 2000),
-  ALIMTALK("at", "알림톡", 1000),
-  FRIENDTALK("ft", "친구톡", 1000);
+  SMS("SMS", "단문 메시지", 90),
+  LMS("LMS", "장문 메시지", 2000),
+  MMS("MMS", "멀티미디어 메시지", 2000),
+  ALIMTALK("AT", "알림톡", 1000),
+  FRIENDTALK("FT", "친구톡", 1000);
 
   private final String code;
   private final String description;
