@@ -58,13 +58,18 @@ public class BizppurioMessageService {
   public MessageResponse sendAlimtalk(
       String to, String templateCode, String content, String senderKey) {
 
+    MessageRequest.AtContent atContent =
+        MessageRequest.AtContent.builder()
+            .at(MessageRequest.AtMessage.builder().message(content).build())
+            .build();
+
     MessageRequest request =
         MessageRequest.builder()
             .account(config.getAccount())
             .type(MessageType.ALIMTALK.getCode())
             .from(config.getDefaultSender())
             .to(formatPhoneNumber(to))
-            .content(content)
+            .atContent(atContent) // 방법1의 경우
             .templateCode(templateCode)
             .senderKey(senderKey)
             .refKey(generateRefKey())

@@ -33,6 +33,10 @@ public class MessageRequest {
   @JsonProperty("content")
   private String content; // 메시지 내용
 
+  // 알림톡용 content 구조 추가
+  @JsonProperty("content")
+  private AtContent atContent; // 알림톡용
+
   @JsonProperty("refkey")
   private String refKey; // 고객사 메시지 고유키 (중복 발송 방지용)
 
@@ -75,4 +79,21 @@ public class MessageRequest {
 
   @JsonProperty("resellercode")
   private String resellerCode; // 리셀러 식별코드
+
+  // 알림톡용 내부 클래스들
+  @Data
+  @Builder
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  public static class AtContent {
+    @JsonProperty("at")
+    private AtMessage at;
+  }
+
+  @Data
+  @Builder
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  public static class AtMessage {
+    @JsonProperty("message")
+    private String message;
+  }
 }
