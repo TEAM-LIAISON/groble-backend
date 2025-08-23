@@ -38,10 +38,10 @@ public class PaymentNotificationService {
     try {
       // 1. 판매자에게 알림 발송
       sendSellerNotification(event);
-
+      sendSellerATNotification(event);
       // 2. 구매자에게 알림 발송
       sendBuyerNotification(event);
-
+      sendBuyerATNotification(event);
       // 3. 판매자에게 이메일 발송
       sendSaleNotificationEmail(event);
 
@@ -116,6 +116,20 @@ public class PaymentNotificationService {
     }
   }
 
+  private void sendBuyerATNotification(PaymentCompletedEvent event) {
+    try {
+      User buyer = userReader.getUserById(event.getUserId());
+      notificationService.sendPurchaseCompleteMessage(
+          buyer.getPhoneNumber(),
+          buyer.getNickname(),
+          event.getContentTitle(),
+          event.getAmount(),
+          event.getMerchantUid());
+    } catch (Exception e) {
+      log.error("구매자 알림 발송 실패 - buyerId: {}", event.getUserId(), e);
+    }
+  }
+
   /** 구매자 무료 결제 알림 발송 */
   private void sendBuyerFreePayNotification(FreePaymentCompletedEvent event) {
     try {
@@ -141,6 +155,20 @@ public class PaymentNotificationService {
           seller, event.getContentId(), event.getPurchaseId(), content.getThumbnailUrl());
       log.debug(
           "판매자 알림 발송 완료 - sellerId: {}, contentId: {}", event.getSellerId(), event.getContentId());
+    } catch (Exception e) {
+      log.error("판매자 알림 발송 실패 - sellerId: {}", event.getSellerId(), e);
+    }
+  }
+
+  private void sendSellerATNotification(PaymentCompletedEvent event) {
+    try {
+      User seller = userReader.getUserById(event.getSellerId());
+      notificationService.sendSaleCompleteMessage(
+          seller.getPhoneNumber(),
+          seller.getNickname(),
+          event.getContentTitle(),
+          event.getAmount(),
+          event.getContentId());
     } catch (Exception e) {
       log.error("판매자 알림 발송 실패 - sellerId: {}", event.getSellerId(), e);
     }

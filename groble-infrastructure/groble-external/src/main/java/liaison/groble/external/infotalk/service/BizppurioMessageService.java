@@ -63,7 +63,12 @@ public class BizppurioMessageService {
    * @return 발송 응답
    */
   public MessageResponse sendAlimtalk(
-      String to, String templateCode, String content, String senderKey, List<ButtonInfo> buttons)
+      String to,
+      String templateCode,
+      String title,
+      String content,
+      String senderKey,
+      List<ButtonInfo> buttons)
       throws JsonProcessingException {
 
     // 1. 알림톡 메시지 구조 생성
@@ -73,7 +78,7 @@ public class BizppurioMessageService {
             .senderkey(senderKey) // 발신프로필키 (필수)
             .templatecode(templateCode) // 템플릿 코드 (필수)
             .button(buttons) // 버튼 (선택)
-            .title("[Groble] 회원가입 완료")
+            .title(title)
             .build();
 
     // 2. AtContent로 감싸기

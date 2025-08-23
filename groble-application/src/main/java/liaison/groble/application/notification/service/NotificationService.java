@@ -319,6 +319,7 @@ public class NotificationService {
    */
   public void sendWelcomeMessage(String phoneNumber, String userName) {
     try {
+      String title = "[Groble] 회원가입 완료";
       String messageContent = buildWelcomeMessage(userName);
       List<ButtonInfo> buttons =
           Arrays.asList(
@@ -334,7 +335,7 @@ public class NotificationService {
       // 알림톡이 실패하면 자동으로 SMS로 대체발송됩니다
       MessageResponse response =
           messageService.sendAlimtalk(
-              phoneNumber, welcomeTemplateCode, messageContent, kakaoSenderKey, buttons);
+              phoneNumber, welcomeTemplateCode, title, messageContent, kakaoSenderKey, buttons);
 
       if (response.isSuccess()) {
         log.info("환영 메시지 발송 성공 - 회원: {}, 메시지키: {}", userName, response.getMessageKey());
@@ -350,6 +351,7 @@ public class NotificationService {
     }
   }
 
+  /** 2. 구매자 - 결제 알림 */
   public void sendPurchaseCompleteMessage(
       String phoneNumber,
       String buyerName,
@@ -358,7 +360,7 @@ public class NotificationService {
       String merchantUid) {
     try {
       String messageContent = buildPurchaseCompleteMessage(buyerName, contentTitle, price);
-
+      String title = "[Groble] 결제 알림";
       // 3) 주문 상세 URL (경로 세그먼트 안전 인코딩)
       String orderUrl =
           UriComponentsBuilder.fromHttpUrl("https://www.groble.im")
@@ -370,7 +372,7 @@ public class NotificationService {
       List<ButtonInfo> buttons =
           Arrays.asList(
               ButtonInfo.builder()
-                  .name("구매 내역 확인")
+                  .name("내 콘텐츠 보러 가기")
                   .type("WL") // 웹링크
                   .urlMobile(orderUrl)
                   .urlPc(orderUrl)
@@ -380,7 +382,12 @@ public class NotificationService {
       // 알림톡 발송
       MessageResponse response =
           messageService.sendAlimtalk(
-              phoneNumber, purchaseCompleteTemplateCode, messageContent, kakaoSenderKey, buttons);
+              phoneNumber,
+              purchaseCompleteTemplateCode,
+              title,
+              messageContent,
+              kakaoSenderKey,
+              buttons);
 
       if (response.isSuccess()) {
         log.info("구매 완료 메시지 발송 성공 - 구매자: {}, 메시지키: {}", buyerName, response.getMessageKey());
@@ -393,6 +400,58 @@ public class NotificationService {
       log.error("구매 완료 메시지 발송 중 오류 발생 - 구매자: {}", buyerName, e);
       // 실패한 발송은 별도로 기록하여 나중에 재발송할 수 있도록 합니다
       recordFailedMessage(phoneNumber, buyerName, "PURCHASE_COMPLETE", e.getMessage());
+    }
+  }
+
+  /** 3. 판매자 - 판매 알림 */
+  public void sendSaleCompleteMessage(
+      String phoneNumber,
+      String sellerName,
+      String contentTitle,
+      BigDecimal price,
+      Long contentId) {
+    try {
+      String messageContent = buildSaleCompleteMessage(sellerName, contentTitle, price);
+      String title = "[Groble] 판매 알림";
+      // 3) 콘텐츠 상세 URL (경로 세그먼트 안전 인코딩)
+      String contentUrl =
+          UriComponentsBuilder.fromHttpUrl("https://www.groble.im")
+              .path("/manage/store/products/{contentId}")
+              .buildAndExpand(contentId)
+              .encode()
+              .toUriString();
+
+      List<ButtonInfo> buttons =
+          Arrays.asList(
+              ButtonInfo.builder()
+                  .name("내 콘텐츠 보러 가기")
+                  .type("WL") // 웹링크
+                  .urlMobile(contentUrl)
+                  .urlPc(contentUrl)
+                  .build());
+      log.info("판매 완료 알림톡 발송 시작 - 판매자: {}, 템플릿코드: {}", sellerName, saleCompleteTemplateCode);
+
+      // 알림톡 발송
+      MessageResponse response =
+          messageService.sendAlimtalk(
+              phoneNumber,
+              saleCompleteTemplateCode,
+              title,
+              messageContent,
+              kakaoSenderKey,
+              buttons);
+
+      if (response.isSuccess()) {
+        log.info("판매 완료 메시지 발송 성공 - 판매자: {}, 메시지키: {}", sellerName, response.getMessageKey());
+      } else {
+        log.warn("판매 완료 메시지 발송 실패 - 판매자: {}, 오류: {}", sellerName, response.getErrorMessage());
+      }
+
+    } catch (Exception e) {
+      // 메시지 발송 실패가 판매를 막아서는 안됩니다
+      log.error("판매 완료 메시지 발송 중 오류 발생 - 판매자: {}", sellerName, e);
+      // 실패한 발송은 별도로 기록하여 나중에 재발송할 수 있도록 합니다
+      recordFailedMessage(phoneNumber, sellerName, "SALE_COMPLETE", e.getMessage());
     }
   }
 
