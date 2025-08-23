@@ -163,9 +163,10 @@ public class PaymentNotificationService {
   private void sendSellerATNotification(PaymentCompletedEvent event) {
     try {
       User seller = userReader.getUserById(event.getSellerId());
+      User buyer = userReader.getUserById(event.getUserId());
       notificationService.sendSaleCompleteMessage(
           seller.getPhoneNumber(),
-          seller.getNickname(),
+          buyer.getNickname(),
           event.getContentTitle(),
           event.getAmount(),
           event.getContentId());

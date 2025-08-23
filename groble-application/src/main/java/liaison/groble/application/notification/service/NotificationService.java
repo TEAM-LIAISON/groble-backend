@@ -405,13 +405,9 @@ public class NotificationService {
 
   /** 3. 판매자 - 판매 알림 */
   public void sendSaleCompleteMessage(
-      String phoneNumber,
-      String sellerName,
-      String contentTitle,
-      BigDecimal price,
-      Long contentId) {
+      String phoneNumber, String buyerName, String contentTitle, BigDecimal price, Long contentId) {
     try {
-      String messageContent = buildSaleCompleteMessage(sellerName, contentTitle, price);
+      String messageContent = buildSaleCompleteMessage(buyerName, contentTitle, price);
       String title = "[Groble] 판매 알림";
       // 3) 콘텐츠 상세 URL (경로 세그먼트 안전 인코딩)
       String contentUrl =
@@ -424,12 +420,12 @@ public class NotificationService {
       List<ButtonInfo> buttons =
           Arrays.asList(
               ButtonInfo.builder()
-                  .name("내 콘텐츠 보러 가기")
+                  .name("내역 확인하기")
                   .type("WL") // 웹링크
                   .urlMobile(contentUrl)
                   .urlPc(contentUrl)
                   .build());
-      log.info("판매 완료 알림톡 발송 시작 - 판매자: {}, 템플릿코드: {}", sellerName, saleCompleteTemplateCode);
+      log.info("판매 완료 알림톡 발송 시작 - 구매자: {}, 템플릿코드: {}", buyerName, saleCompleteTemplateCode);
 
       // 알림톡 발송
       MessageResponse response =
@@ -442,16 +438,16 @@ public class NotificationService {
               buttons);
 
       if (response.isSuccess()) {
-        log.info("판매 완료 메시지 발송 성공 - 판매자: {}, 메시지키: {}", sellerName, response.getMessageKey());
+        log.info("판매 완료 메시지 발송 성공 - 구매자: {}, 메시지키: {}", buyerName, response.getMessageKey());
       } else {
-        log.warn("판매 완료 메시지 발송 실패 - 판매자: {}, 오류: {}", sellerName, response.getErrorMessage());
+        log.warn("판매 완료 메시지 발송 실패 - 구매자: {}, 오류: {}", buyerName, response.getErrorMessage());
       }
 
     } catch (Exception e) {
       // 메시지 발송 실패가 판매를 막아서는 안됩니다
-      log.error("판매 완료 메시지 발송 중 오류 발생 - 판매자: {}", sellerName, e);
+      log.error("판매 완료 메시지 발송 중 오류 발생 - 구매자: {}", buyerName, e);
       // 실패한 발송은 별도로 기록하여 나중에 재발송할 수 있도록 합니다
-      recordFailedMessage(phoneNumber, sellerName, "SALE_COMPLETE", e.getMessage());
+      recordFailedMessage(phoneNumber, buyerName, "SALE_COMPLETE", e.getMessage());
     }
   }
 
