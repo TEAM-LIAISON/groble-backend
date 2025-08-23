@@ -91,5 +91,68 @@ public class MessageRequest {
   public static class AtMessage {
     @JsonProperty("message")
     private String message;
+
+    @JsonProperty("senderkey")
+    private String senderkey;
+
+    @JsonProperty("templatecode")
+    private String templatecode;
+
+    @JsonProperty("header")
+    private String header; // 선택 필드
+
+    @JsonProperty("button")
+    private List<ButtonInfo> button; // 기존 ButtonInfo 재사용
+
+    @JsonProperty("item")
+    private ItemInfo item; // 아이템 리스트용
+
+    @JsonProperty("itemhighlight")
+    private ItemHighlight itemhighlight; // 아이템 하이라이트용
+  }
+
+  // 추가 내부 클래스들
+  @Data
+  @Builder
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  public static class ItemInfo {
+    @JsonProperty("list")
+    private List<ItemDetail> list;
+
+    @JsonProperty("summary")
+    private ItemSummary summary;
+  }
+
+  @Data
+  @Builder
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  public static class ItemDetail {
+    @JsonProperty("title")
+    private String title;
+
+    @JsonProperty("description")
+    private String description;
+  }
+
+  @Data
+  @Builder
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  public static class ItemSummary {
+    @JsonProperty("title")
+    private String title;
+
+    @JsonProperty("description")
+    private String description;
+  }
+
+  @Data
+  @Builder
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  public static class ItemHighlight {
+    @JsonProperty("title")
+    private String title;
+
+    @JsonProperty("description")
+    private String description;
   }
 }

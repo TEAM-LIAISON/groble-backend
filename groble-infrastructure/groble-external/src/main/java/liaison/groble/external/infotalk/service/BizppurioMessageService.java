@@ -1,6 +1,7 @@
 package liaison.groble.external.infotalk.service;
 
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.http.HttpEntity;
@@ -16,6 +17,7 @@ import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import liaison.groble.external.config.BizppurioConfig;
+import liaison.groble.external.infotalk.dto.message.ButtonInfo;
 import liaison.groble.external.infotalk.dto.message.MessageRequest;
 import liaison.groble.external.infotalk.dto.message.MessageResponse;
 import liaison.groble.external.infotalk.dto.message.MessageType;
@@ -47,36 +49,49 @@ public class BizppurioMessageService {
       DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
 
   /**
-   * 알림톡 발송 - 정보성 메시지 (광고 불가)
-   *
-   * <p>알림톡은 사전에 승인된 템플릿을 사용해야 합니다. 템플릿의 변수 부분은 #{변수명} 형태로 치환하여 content에 전달합니다.
+   * 알림톡 발송 - 버튼 포함 버전
    *
    * @param to 수신번호
+   * @param templateCode 템플릿 코드
    * @param content 메시지 내용 (템플릿 변수 치환 완료)
+   * @param senderKey 발신프로필키
+   * @param buttons 버튼 정보 (선택)
    * @return 발송 응답
    */
   public MessageResponse sendAlimtalk(
-      String to, String templateCode, String content, String senderKey) {
+      String to, String templateCode, String content, String senderKey, List<ButtonInfo> buttons) {
 
-    MessageRequest.AtContent atContent =
-        MessageRequest.AtContent.builder()
-            .at(MessageRequest.AtMessage.builder().message(content).build())
+    // 알림톡 메시지 구조 생성
+    // content.at.senderkey와 content.at.templatecode는 필수!
+    MessageRequest.AtMessage atMessage =
+        MessageRequest.AtMessage.builder()
+            .message(content) // 메시지 내용
+            .senderkey(senderKey) // 발신프로필키 (필수)
+            .templatecode(templateCode) // 템플릿 코드 (필수)
+            .button(buttons) // 버튼 (선택)
             .build();
 
+    // AtContent로 감싸기
+    MessageRequest.AtContent atContent = MessageRequest.AtContent.builder().at(atMessage).build();
+
+    // 메시지 요청 생성
+    // 주의: 알림톡은 content 필드에 AtContent 객체를 넣어야 함
+    // 최상위 레벨의 senderKey, templateCode는 사용하지 않음
     MessageRequest request =
         MessageRequest.builder()
             .account(config.getAccount())
-            .type(MessageType.ALIMTALK.getCode())
+            .type(MessageType.ALIMTALK.getCode()) // "at"
             .from(config.getDefaultSender())
             .to(formatPhoneNumber(to))
-            .content(atContent) // 방법1의 경우
-            .templateCode(templateCode)
-            .senderKey(senderKey)
+            .content(atContent) // AtContent 객체 사용 (중요!)
             .refKey(generateRefKey())
             // 알림톡 실패 시 SMS로 대체발송
             .resend(MessageType.SMS.getCode())
-            .reContent(content) // 대체발송 내용
+            .reContent(content) // 대체발송 내용 (SMS용)
+            // 최상위 senderKey, templateCode는 설정하지 않음 (content.at 내부에 있음)
             .build();
+
+    log.debug("알림톡 요청 생성 - Template: {}, SenderKey: {}", templateCode, senderKey);
 
     return sendMessage(request);
   }

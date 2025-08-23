@@ -1,5 +1,6 @@
 package liaison.groble.application.notification.service;
 
+import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -21,6 +22,7 @@ import liaison.groble.domain.notification.enums.SubNotificationType;
 import liaison.groble.domain.notification.repository.NotificationCustomRepository;
 import liaison.groble.domain.notification.repository.NotificationRepository;
 import liaison.groble.domain.user.entity.User;
+import liaison.groble.external.infotalk.dto.message.ButtonInfo;
 import liaison.groble.external.infotalk.dto.message.MessageResponse;
 import liaison.groble.external.infotalk.service.BizppurioMessageService;
 
@@ -308,14 +310,21 @@ public class NotificationService {
   public void sendWelcomeMessage(String phoneNumber, String userName) {
     try {
       String messageContent = buildWelcomeMessage(userName);
-
+      List<ButtonInfo> buttons =
+          Arrays.asList(
+              ButtonInfo.builder()
+                  .name("상품 등록하기")
+                  .type("WL") // 웹링크
+                  .urlMobile("https://www.groble.com")
+                  .urlPc("https://www.groble.im")
+                  .build());
       log.info("환영 알림톡 발송 시작 - 메이커: {}, 템플릿코드: {}", userName, welcomeTemplateCode);
 
       // 알림톡 발송
       // 알림톡이 실패하면 자동으로 SMS로 대체발송됩니다
       MessageResponse response =
           messageService.sendAlimtalk(
-              phoneNumber, welcomeTemplateCode, messageContent, kakaoSenderKey);
+              phoneNumber, welcomeTemplateCode, messageContent, kakaoSenderKey, buttons);
 
       if (response.isSuccess()) {
         log.info("환영 메시지 발송 성공 - 회원: {}, 메시지키: {}", userName, response.getMessageKey());
