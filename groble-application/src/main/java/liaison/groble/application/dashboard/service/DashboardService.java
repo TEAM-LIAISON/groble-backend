@@ -27,6 +27,7 @@ import liaison.groble.application.user.service.UserReader;
 import liaison.groble.common.response.PageResponse;
 import liaison.groble.domain.common.enums.PeriodType;
 import liaison.groble.domain.content.dto.FlatContentOverviewDTO;
+import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.dashboard.dto.FlatContentTotalViewStatsDTO;
 import liaison.groble.domain.dashboard.dto.FlatContentViewStatsDTO;
 import liaison.groble.domain.dashboard.dto.FlatDashboardOverviewDTO;
@@ -234,6 +235,7 @@ public class DashboardService {
             .sortBy(pageable.getSort().iterator().next().getProperty())
             .sortDirection(pageable.getSort().iterator().next().getDirection().name())
             .totalViews(totalViews)
+            .marketName(market.getMarketName())
             .build();
 
     return PageResponse.from(completePage, items, meta);
@@ -242,6 +244,8 @@ public class DashboardService {
   @Transactional(readOnly = true)
   public PageResponse<ContentViewStatsDTO> getContentViewStats(
       Long userId, Long contentId, String period, Pageable pageable) {
+
+    Content content = contentReader.getContentById(contentId);
     LocalDate endDate = LocalDate.now();
     LocalDate startDate =
         switch (period) {
@@ -274,6 +278,7 @@ public class DashboardService {
             .sortBy(pageable.getSort().iterator().next().getProperty())
             .sortDirection(pageable.getSort().iterator().next().getDirection().name())
             .totalViews(totalViews)
+            .contentTitle(content.getTitle())
             .build();
 
     return PageResponse.from(page, items, meta);
