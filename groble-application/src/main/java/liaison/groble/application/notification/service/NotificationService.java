@@ -54,7 +54,7 @@ public class NotificationService {
   @Value("${bizppurio.templates.verification-complete.code}")
   private String verificationCompleteTemplateCode;
 
-  @Value("${bizppurio.templates.review-registered.code}")
+  @Value("${bizppurio.templates.review-register.code}")
   private String reviewRegisteredTemplateCode;
 
   @Value("${bizppurio.templates.content-discontinued.code}")
