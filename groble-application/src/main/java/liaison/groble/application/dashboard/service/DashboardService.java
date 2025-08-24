@@ -263,15 +263,53 @@ public class DashboardService {
     Page<FlatContentViewStatsDTO> page =
         contentViewStatsCustomRepository.findByContentIdAndPeriodTypeAndStatDateBetween(
             contentId, PeriodType.DAILY, startDate, endDate, pageable);
+    // ========== 여기서부터 추가/수정 ==========
+    // 1. 전체 날짜 리스트 생성
+    List<LocalDate> allDates =
+        startDate
+            .datesUntil(endDate.plusDays(1))
+            .sorted(Comparator.reverseOrder()) // 내림차순 정렬
+            .collect(Collectors.toList());
 
-    // 총 조회수 계산
-    long totalViews =
+    // 2. DB에서 조회한 데이터를 Map으로 변환
+    Map<LocalDate, FlatContentViewStatsDTO> dataMap =
         page.getContent().stream()
+            .collect(Collectors.toMap(FlatContentViewStatsDTO::getViewDate, Function.identity()));
+
+    // 3. 페이징 처리
+    int start = (int) pageable.getOffset();
+    int end = Math.min(start + pageable.getPageSize(), allDates.size());
+    List<LocalDate> pagedDates = allDates.subList(start, end);
+
+    // 4. 모든 날짜에 대한 데이터 생성 (없는 날짜는 0으로)
+    List<FlatContentViewStatsDTO> completeData =
+        pagedDates.stream()
+            .map(
+                date ->
+                    dataMap.getOrDefault(
+                        date,
+                        FlatContentViewStatsDTO.builder()
+                            .viewDate(date)
+                            .dayOfWeek("") // toContentViewStatsDTO에서 계산하므로 빈 문자열
+                            .viewCount(0L)
+                            .build()))
+            .collect(Collectors.toList());
+
+    // 5. 새로운 Page 객체 생성
+    Page<FlatContentViewStatsDTO> completePage =
+        new PageImpl<>(completeData, pageable, allDates.size());
+    // ========== 여기까지 추가/수정 ==========
+
+    // 총 조회수 계산 (completePage 사용)
+    long totalViews =
+        completePage.getContent().stream()
             .mapToLong(dto -> dto.getViewCount() != null ? dto.getViewCount() : 0L)
             .sum();
 
     List<ContentViewStatsDTO> items =
-        page.getContent().stream().map(this::toContentViewStatsDTO).collect(Collectors.toList());
+        completePage.getContent().stream()
+            .map(this::toContentViewStatsDTO)
+            .collect(Collectors.toList());
 
     PageResponse.MetaData meta =
         PageResponse.MetaData.builder()
@@ -281,7 +319,7 @@ public class DashboardService {
             .contentTitle(content.getTitle())
             .build();
 
-    return PageResponse.from(page, items, meta);
+    return PageResponse.from(completePage, items, meta);
   }
 
   @Transactional(readOnly = true)
