@@ -68,6 +68,13 @@ public class PurchaserReviewService {
     notificationService.sendContentReviewNotification(
         content.getUser(), content.getId(), savedContentReview.getId(), content.getThumbnailUrl());
 
+    notificationService.sendReviewRegisteredMessage(
+        content.getUser().getPhoneNumber(),
+        user.getNickname(),
+        content.getTitle(),
+        content.getId(),
+        savedContentReview.getId());
+
     return PurchaserContentReviewDTO.builder()
         .rating(savedContentReview.getRating())
         .reviewContent(savedContentReview.getReviewContent())

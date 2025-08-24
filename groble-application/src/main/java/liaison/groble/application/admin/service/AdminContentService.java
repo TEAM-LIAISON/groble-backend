@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import liaison.groble.application.admin.dto.AdminContentSummaryInfoDTO;
 import liaison.groble.application.content.ContentReader;
 import liaison.groble.application.notification.mapper.NotificationMapper;
+import liaison.groble.application.notification.service.NotificationService;
 import liaison.groble.common.response.PageResponse;
 import liaison.groble.domain.content.dto.FlatAdminContentSummaryInfoDTO;
 import liaison.groble.domain.content.entity.Content;
@@ -33,6 +34,7 @@ public class AdminContentService {
   private final ContentRepository contentRepository;
   private final NotificationMapper notificationMapper;
   private final NotificationRepository notificationRepository;
+  private final NotificationService notificationService;
 
   public PageResponse<AdminContentSummaryInfoDTO> getAllContents(Pageable pageable) {
     Page<FlatAdminContentSummaryInfoDTO> contentPage =
@@ -81,6 +83,12 @@ public class AdminContentService {
             NotificationType.SELL,
             SubNotificationType.CONTENT_SOLD_STOPPED,
             sellDetails));
+
+    notificationService.sendContentDiscontinuedMessage(
+        content.getUser().getPhoneNumber(),
+        content.getUser().getNickname(),
+        content.getTitle(),
+        content.getId());
   }
 
   private AdminContentSummaryInfoDTO convertFlatDTOToInfoResponse(
