@@ -105,19 +105,35 @@ public class DashboardService {
 
   @Transactional(readOnly = true)
   public DashboardViewStatsDTO getViewStats(Long userId, String period) {
-    LocalDate endDate = LocalDate.now();
-    LocalDate startDate =
-        switch (period) {
-          case "TODAY" -> endDate;
-          case "LAST_7_DAYS" -> endDate.minusDays(6);
-          case "LAST_30_DAYS" -> endDate.minusDays(29);
-          case "THIS_MONTH" -> endDate.withDayOfMonth(1);
-          case "LAST_MONTH" -> {
-            YearMonth lastMonth = YearMonth.now().minusMonths(1);
-            yield lastMonth.atDay(1);
-          }
-          default -> throw new IllegalArgumentException("Invalid period: " + period);
-        };
+    LocalDate endDate;
+    LocalDate startDate;
+
+    // LAST_MONTH의 경우 endDate도 지난달 마지막 날로 설정
+    switch (period) {
+      case "TODAY" -> {
+        startDate = LocalDate.now();
+        endDate = LocalDate.now();
+      }
+      case "LAST_7_DAYS" -> {
+        endDate = LocalDate.now();
+        startDate = endDate.minusDays(6);
+      }
+      case "LAST_30_DAYS" -> {
+        endDate = LocalDate.now();
+        startDate = endDate.minusDays(29);
+      }
+      case "THIS_MONTH" -> {
+        endDate = LocalDate.now();
+        startDate = endDate.withDayOfMonth(1);
+      }
+      case "LAST_MONTH" -> {
+        YearMonth lastMonth = YearMonth.now().minusMonths(1);
+        startDate = lastMonth.atDay(1);
+        endDate = lastMonth.atEndOfMonth(); // 지난달 마지막 날
+      }
+      default -> throw new IllegalArgumentException("Invalid period: " + period);
+    }
+
     Long totalContentViews = getTotalContentViews(userId, startDate, endDate);
     Long totalMarketViews = getTotalMarketViews(userId, startDate, endDate);
 
@@ -130,19 +146,34 @@ public class DashboardService {
   @Transactional(readOnly = true)
   public PageResponse<ContentTotalViewStatsDTO> getContentTotalViewStats(
       Long userId, String period, Pageable pageable) {
-    LocalDate endDate = LocalDate.now();
-    LocalDate startDate =
-        switch (period) {
-          case "TODAY" -> endDate;
-          case "LAST_7_DAYS" -> endDate.minusDays(6);
-          case "LAST_30_DAYS" -> endDate.minusDays(29);
-          case "THIS_MONTH" -> endDate.withDayOfMonth(1);
-          case "LAST_MONTH" -> {
-            YearMonth lastMonth = YearMonth.now().minusMonths(1);
-            yield lastMonth.atDay(1);
-          }
-          default -> throw new IllegalArgumentException("Invalid period: " + period);
-        };
+    LocalDate endDate;
+    LocalDate startDate;
+
+    // LAST_MONTH의 경우 endDate도 지난달 마지막 날로 설정
+    switch (period) {
+      case "TODAY" -> {
+        startDate = LocalDate.now();
+        endDate = LocalDate.now();
+      }
+      case "LAST_7_DAYS" -> {
+        endDate = LocalDate.now();
+        startDate = endDate.minusDays(6);
+      }
+      case "LAST_30_DAYS" -> {
+        endDate = LocalDate.now();
+        startDate = endDate.minusDays(29);
+      }
+      case "THIS_MONTH" -> {
+        endDate = LocalDate.now();
+        startDate = endDate.withDayOfMonth(1);
+      }
+      case "LAST_MONTH" -> {
+        YearMonth lastMonth = YearMonth.now().minusMonths(1);
+        startDate = lastMonth.atDay(1);
+        endDate = lastMonth.atEndOfMonth(); // 지난달 마지막 날
+      }
+      default -> throw new IllegalArgumentException("Invalid period: " + period);
+    }
 
     Page<FlatContentTotalViewStatsDTO> page =
         contentViewStatsCustomRepository.findTotalViewsByPeriodTypeAndStatDateBetween(
@@ -389,19 +420,34 @@ public class DashboardService {
   @Transactional(readOnly = true)
   public PageResponse<ReferrerStatsDTO> getContentReferrerStats(
       Long userId, Long contentId, String period, Pageable pageable) {
-    LocalDate endDate = LocalDate.now();
-    LocalDate startDate =
-        switch (period) {
-          case "TODAY" -> endDate;
-          case "LAST_7_DAYS" -> endDate.minusDays(6);
-          case "LAST_30_DAYS" -> endDate.minusDays(29);
-          case "THIS_MONTH" -> endDate.withDayOfMonth(1);
-          case "LAST_MONTH" -> {
-            YearMonth lastMonth = YearMonth.now().minusMonths(1);
-            yield lastMonth.atDay(1);
-          }
-          default -> throw new IllegalArgumentException("Invalid period: " + period);
-        };
+    LocalDate endDate;
+    LocalDate startDate;
+
+    // LAST_MONTH의 경우 endDate도 지난달 마지막 날로 설정
+    switch (period) {
+      case "TODAY" -> {
+        startDate = LocalDate.now();
+        endDate = LocalDate.now();
+      }
+      case "LAST_7_DAYS" -> {
+        endDate = LocalDate.now();
+        startDate = endDate.minusDays(6);
+      }
+      case "LAST_30_DAYS" -> {
+        endDate = LocalDate.now();
+        startDate = endDate.minusDays(29);
+      }
+      case "THIS_MONTH" -> {
+        endDate = LocalDate.now();
+        startDate = endDate.withDayOfMonth(1);
+      }
+      case "LAST_MONTH" -> {
+        YearMonth lastMonth = YearMonth.now().minusMonths(1);
+        startDate = lastMonth.atDay(1);
+        endDate = lastMonth.atEndOfMonth(); // 지난달 마지막 날
+      }
+      default -> throw new IllegalArgumentException("Invalid period: " + period);
+    }
 
     Page<FlatReferrerStatsDTO> page =
         contentReferrerStatsCustomRepository.findContentReferrerStats(
@@ -425,19 +471,34 @@ public class DashboardService {
 
     Market market = userReader.getMarket(userId);
 
-    LocalDate endDate = LocalDate.now();
-    LocalDate startDate =
-        switch (period) {
-          case "TODAY" -> endDate;
-          case "LAST_7_DAYS" -> endDate.minusDays(6);
-          case "LAST_30_DAYS" -> endDate.minusDays(29);
-          case "THIS_MONTH" -> endDate.withDayOfMonth(1);
-          case "LAST_MONTH" -> {
-            YearMonth lastMonth = YearMonth.now().minusMonths(1);
-            yield lastMonth.atDay(1);
-          }
-          default -> throw new IllegalArgumentException("Invalid period: " + period);
-        };
+    LocalDate endDate;
+    LocalDate startDate;
+
+    // LAST_MONTH의 경우 endDate도 지난달 마지막 날로 설정
+    switch (period) {
+      case "TODAY" -> {
+        startDate = LocalDate.now();
+        endDate = LocalDate.now();
+      }
+      case "LAST_7_DAYS" -> {
+        endDate = LocalDate.now();
+        startDate = endDate.minusDays(6);
+      }
+      case "LAST_30_DAYS" -> {
+        endDate = LocalDate.now();
+        startDate = endDate.minusDays(29);
+      }
+      case "THIS_MONTH" -> {
+        endDate = LocalDate.now();
+        startDate = endDate.withDayOfMonth(1);
+      }
+      case "LAST_MONTH" -> {
+        YearMonth lastMonth = YearMonth.now().minusMonths(1);
+        startDate = lastMonth.atDay(1);
+        endDate = lastMonth.atEndOfMonth(); // 지난달 마지막 날
+      }
+      default -> throw new IllegalArgumentException("Invalid period: " + period);
+    }
 
     Page<FlatReferrerStatsDTO> page =
         marketReferrerStatsCustomRepository.findMarketReferrerStats(
