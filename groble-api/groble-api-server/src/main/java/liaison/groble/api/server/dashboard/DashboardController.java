@@ -64,17 +64,14 @@ public class DashboardController {
   private static final String DASHBOARD_CONTENTS_LIST_PATH = "/dashboard/my-contents";
   private static final String DASHBOARD_VIEW_STATS_PATH = "/dashboard/view-stats";
   private static final String DASHBOARD_CONTENT_VIEWS_LIST_PATH = "/dashboard/content/view-stats";
-
-  // 날짜별 조회수 조회 (콘텐츠/마켓)
   private static final String DASHBOARD_MARKET_VIEW_STATS_PATH = "/dashboard/market/view-stats";
-  private static final String DASHBOARD_CONTENT_VIEW_STATS_PATH =
-      "/dashboard/content/{contentId}/view-stats";
-
-  // 날짜별 유입경로 조회 (콘텐츠/마켓)
-  private static final String DASHBOARD_CONTENT_REFERRER_STATS_PATH =
-      "/dashboard/content/{contentId}/referrer-stats";
   private static final String DASHBOARD_MARKET_REFERRER_STATS_PATH =
       "/dashboard/market/referrer-stats";
+
+  private static final String DASHBOARD_CONTENT_VIEW_STATS_PATH =
+      "/dashboard/content/{contentId}/view-stats";
+  private static final String DASHBOARD_CONTENT_REFERRER_STATS_PATH =
+      "/dashboard/content/{contentId}/referrer-stats";
 
   // 응답 메시지 상수화
   private static final String DASHBOARD_OVERVIEW_SUCCESS_MESSAGE = "대시보드 개요 조회 성공";
