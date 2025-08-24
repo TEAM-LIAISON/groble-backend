@@ -64,18 +64,14 @@ public class DashboardController {
   private static final String DASHBOARD_CONTENTS_LIST_PATH = "/dashboard/my-contents";
   private static final String DASHBOARD_VIEW_STATS_PATH = "/dashboard/view-stats";
   private static final String DASHBOARD_CONTENT_VIEWS_LIST_PATH = "/dashboard/content/view-stats";
+  private static final String DASHBOARD_MARKET_VIEW_STATS_PATH = "/dashboard/market/view-stats";
+  private static final String DASHBOARD_MARKET_REFERRER_STATS_PATH =
+      "/dashboard/market/referrer-stats";
 
-  // 날짜별 조회수 조회 (콘텐츠/마켓)
-  private static final String DASHBOARD_MARKET_VIEW_STATS_PATH =
-      "/dashboard/market/{marketLinkUrl}/view-stats";
   private static final String DASHBOARD_CONTENT_VIEW_STATS_PATH =
       "/dashboard/content/{contentId}/view-stats";
-
-  // 날짜별 유입경로 조회 (콘텐츠/마켓)
   private static final String DASHBOARD_CONTENT_REFERRER_STATS_PATH =
       "/dashboard/content/{contentId}/referrer-stats";
-  private static final String DASHBOARD_MARKET_REFERRER_STATS_PATH =
-      "/dashboard/market/{marketLinkUrl}/referrer-stats";
 
   // 응답 메시지 상수화
   private static final String DASHBOARD_OVERVIEW_SUCCESS_MESSAGE = "대시보드 개요 조회 성공";
@@ -166,6 +162,35 @@ public class DashboardController {
   @Operation(
       summary = "[📊 대시보드 - 마켓/콘텐츠 전체 조회수 조회] 내 마켓과 콘텐츠 전체 조회수 조회 ✅",
       description = "전체 기간 안에서 마켓과 콘텐츠 조회수를 반환합니다.")
+  @Parameters({
+    @Parameter(
+        name = "period",
+        required = true,
+        description =
+            """
+                        조회 기간(필수).
+                        - TODAY: 오늘
+                        - LAST_7_DAYS: 최근 7일
+                        - LAST_30_DAYS: 최근 30일
+                        - THIS_MONTH: 이번 달(1일~오늘)
+                        - LAST_MONTH: 지난 달(1일~말일)
+                      """,
+        schema =
+            @Schema(
+                type = "string",
+                allowableValues = {
+                  "TODAY",
+                  "LAST_7_DAYS",
+                  "LAST_30_DAYS",
+                  "THIS_MONTH",
+                  "LAST_MONTH"
+                }),
+        examples = {
+          @ExampleObject(name = "오늘", value = "TODAY"),
+          @ExampleObject(name = "최근7일", value = "LAST_7_DAYS")
+        }),
+    @Parameter(name = "accessor", hidden = true)
+  })
   @ApiResponse(
       responseCode = "200",
       description = DASHBOARD_VIEW_STATS_SUCCESS_MESSAGE,
@@ -176,10 +201,10 @@ public class DashboardController {
   @GetMapping(DASHBOARD_VIEW_STATS_PATH)
   @Logging(item = "Dashboard", action = "getViewStats", includeParam = true, includeResult = true)
   public ResponseEntity<GrobleResponse<DashboardViewStatsResponse>> getViewStats(
-      @Auth Accessor accessor) {
+      @Auth Accessor accessor, @RequestParam(value = "period") String period) {
 
     DashboardViewStatsDTO dashboardViewStatsDTO =
-        dashboardService.getViewStats(accessor.getUserId());
+        dashboardService.getViewStats(accessor.getUserId(), period);
 
     DashboardViewStatsResponse dashboardViewStatsResponse =
         dashboardMapper.toDashboardViewStatsResponse(dashboardViewStatsDTO);
@@ -314,8 +339,6 @@ public class DashboardController {
       includeResult = true)
   public ResponseEntity<GrobleResponse<PageResponse<MarketViewStatsResponse>>> getMarketViewStats(
       @Auth Accessor accessor,
-      @Parameter(description = "마켓 링크 URL", example = "groble") @PathVariable("marketLinkUrl")
-          String marketLinkUrl,
       @RequestParam(value = "period") String period,
       @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
           @RequestParam(value = "page", defaultValue = "0")
@@ -336,7 +359,7 @@ public class DashboardController {
     Pageable pageable = PageRequest.of(page, pageSize, Sort.by(Sort.Direction.DESC, "statDate"));
 
     PageResponse<MarketViewStatsDTO> dtoPage =
-        dashboardService.getMarketViewStats(accessor.getUserId(), marketLinkUrl, period, pageable);
+        dashboardService.getMarketViewStats(accessor.getUserId(), period, pageable);
 
     PageResponse<MarketViewStatsResponse> responsePage =
         dashboardMapper.toMarketViewStatsResponsePage(dtoPage);
@@ -540,8 +563,6 @@ public class DashboardController {
       includeResult = true)
   public ResponseEntity<GrobleResponse<PageResponse<ReferrerStatsResponse>>> getMarketReferrerStats(
       @Auth Accessor accessor,
-      @Parameter(description = "마켓 링크 URL", example = "groble") @PathVariable("marketLinkUrl")
-          String marketLinkUrl,
       @RequestParam(value = "period") String period,
       @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
           @RequestParam(value = "page", defaultValue = "0")
@@ -549,8 +570,7 @@ public class DashboardController {
     Pageable pageable = PageRequest.of(page, 20, Sort.by(Sort.Direction.DESC, "visitCount"));
 
     PageResponse<ReferrerStatsDTO> dtoPage =
-        dashboardService.getMarketReferrerStats(
-            accessor.getUserId(), marketLinkUrl, period, pageable);
+        dashboardService.getMarketReferrerStats(accessor.getUserId(), period, pageable);
 
     PageResponse<ReferrerStatsResponse> responsePage =
         dashboardMapper.toReferrerStatsResponsePage(dtoPage);

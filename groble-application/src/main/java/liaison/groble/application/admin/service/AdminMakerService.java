@@ -85,6 +85,8 @@ public class AdminMakerService {
         sellerInfo.isBusinessMakerVerificationRequested(), SellerVerificationStatus.VERIFIED);
 
     notificationService.sendMakerCertifiedVerificationNotification(sellerInfo.getUser());
+    notificationService.sendMakerCertifiedMessage(
+        sellerInfo.getUser().getPhoneNumber(), sellerInfo.getUser().getNickname());
   }
 
   // 메이커 인증 반려 처리

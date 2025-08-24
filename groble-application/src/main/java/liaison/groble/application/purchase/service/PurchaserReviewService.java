@@ -3,7 +3,6 @@ package liaison.groble.application.purchase.service;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import liaison.groble.application.content.ContentReader;
 import liaison.groble.application.content.ContentReviewReader;
 import liaison.groble.application.content.ContentReviewWriter;
 import liaison.groble.application.notification.service.NotificationService;
@@ -27,7 +26,6 @@ public class PurchaserReviewService {
 
   // Reader
   private final UserReader userReader;
-  private final ContentReader contentReader;
   private final ContentReviewReader contentReviewReader;
   private final PurchaseReader purchaseReader;
 
@@ -67,6 +65,13 @@ public class PurchaserReviewService {
 
     notificationService.sendContentReviewNotification(
         content.getUser(), content.getId(), savedContentReview.getId(), content.getThumbnailUrl());
+
+    notificationService.sendReviewRegisteredMessage(
+        content.getUser().getPhoneNumber(),
+        user.getNickname(),
+        content.getTitle(),
+        content.getId(),
+        savedContentReview.getId());
 
     return PurchaserContentReviewDTO.builder()
         .rating(savedContentReview.getRating())

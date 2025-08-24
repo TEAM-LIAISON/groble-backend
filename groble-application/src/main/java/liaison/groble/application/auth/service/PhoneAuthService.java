@@ -90,6 +90,7 @@ public class PhoneAuthService {
       }
       user.updatePhoneNumber(phoneNumber);
       notificationService.sendWelcomeNotification(user);
+      notificationService.sendWelcomeMessage(user.getPhoneNumber(), user.getNickname());
       sendDiscordMemberReport(user);
       userRepository.save(user);
     }
