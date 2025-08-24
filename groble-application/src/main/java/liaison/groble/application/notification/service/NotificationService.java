@@ -37,6 +37,9 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 public class NotificationService {
+  @Value("${bizppurio.kakao-sender-key}")
+  private String kakaoSenderKey; // 카카오톡 발신프로필키
+
   // 설정 파일에서 템플릿 정보를 가져옵니다
   // 이렇게 하면 템플릿이 변경되어도 코드 수정 없이 설정만 변경하면 됩니다
   @Value("${bizppurio.templates.welcome.code}")
@@ -48,14 +51,21 @@ public class NotificationService {
   @Value("${bizppurio.templates.sale-complete.code}")
   private String saleCompleteTemplateCode;
 
-  @Value("${bizppurio.kakao-sender-key}")
-  private String kakaoSenderKey; // 카카오톡 발신프로필키
+  @Value("${bizppurio.templates.verification-complete.code}")
+  private String verificationCompleteTemplateCode;
+
+  @Value("${bizppurio.templates.review-registered.code}")
+  private String reviewRegisteredTemplateCode;
+
+  @Value("${bizppurio.templates.content-discontinued.code}")
+  private String contentDiscontinuedTemplateCode;
 
   private final NotificationCustomRepository notificationCustomRepository;
   private final NotificationRepository notificationRepository;
   private final NotificationReader notificationReader;
   private final NotificationMapper notificationMapper;
 
+  // 카카오 알림톡 발송 서비스
   private final BizppurioMessageService messageService;
 
   public NotificationItemsDTO getNotificationItems(final Long userId) {
@@ -464,20 +474,14 @@ public class NotificationService {
     return phoneNumber.substring(0, 3) + "****" + phoneNumber.substring(phoneNumber.length() - 4);
   }
 
-  /**
-   * 환영 메시지 내용을 생성합니다
-   *
-   * <p>템플릿에 등록된 내용과 정확히 일치해야 합니다. 한 글자라도 다르면 알림톡 발송이 실패합니다.
-   *
-   * @param makerName 메이커 이름
-   * @return 변수가 치환된 메시지 내용
-   */
+  // [메이커 - 회원가입 완료]
   private String buildWelcomeMessage(String makerName) {
     return String.format(
         "%s님, 환영합니다🎉\n" + "그로블에 가입해 주셔서 감사합니다.\n" + "\n" + "이제 단 5분 만에 첫 상품을 등록하고, 판매를 시작할 수 있어요.",
         makerName);
   }
 
+  // [구매자 - 결제 알림]
   private String buildPurchaseCompleteMessage(
       String buyerName, String contentTitle, BigDecimal price) {
     String formattedPrice = NumberFormat.getNumberInstance(Locale.KOREA).format(price);
@@ -485,11 +489,27 @@ public class NotificationService {
         "%s님, 결제가 완료되었어요!\n\n- 상품명: %s\n- 가격: %s원", buyerName, contentTitle, formattedPrice);
   }
 
+  // [메이커 - 판매 알림]
   private String buildSaleCompleteMessage(
       String sellerName, String contentTitle, BigDecimal price) {
     String formattedPrice = NumberFormat.getNumberInstance(Locale.KOREA).format(price);
     return String.format(
         "%s님이 상품을 구매했어요!\n" + "\n" + "- 상품명: %s\n" + "- 가격: %s",
         sellerName, contentTitle, formattedPrice);
+  }
+
+  // [메이커 - 판매 중단 알림]
+  private String buildContentDiscontinuedMessage(String makerName, String contentTitle) {
+    return String.format("%s님, 판매가 중단되었습니다.\n" + "\n" + "- 상품명: %s", makerName, contentTitle);
+  }
+
+  // [메이커 - 리뷰 등록 알림]
+  private String buildReviewRegisteredMessage(String buyerName, String contentTitle) {
+    return String.format("%s님이 리뷰를 남겼어요! \n" + "\n" + "- 상품명: %s", buyerName, contentTitle);
+  }
+
+  // [메이커 - 인증 완료]
+  private String buildVerificationCompleteMessage(String makerName) {
+    return String.format("%s님, 메이커 인증이 완료되었습니다!", makerName);
   }
 }
