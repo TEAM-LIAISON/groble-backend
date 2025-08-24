@@ -461,6 +461,142 @@ public class NotificationService {
     }
   }
 
+  // 판매 중단 알림
+  public void sendContentDiscontinuedMessage(
+      String phoneNumber, String makerName, String contentTitle, Long contentId) {
+    try {
+      String messageContent = buildContentDiscontinuedMessage(makerName, contentTitle);
+      String title = "[Groble] 판매 중단 알림";
+      // 3) 콘텐츠 상세 URL (경로 세그먼트 안전 인코딩)
+      String contentUrl =
+          UriComponentsBuilder.fromHttpUrl("https://www.groble.im")
+              .path("/products/{contentId}")
+              .buildAndExpand(contentId)
+              .encode()
+              .toUriString();
+
+      List<ButtonInfo> buttons =
+          Arrays.asList(
+              ButtonInfo.builder()
+                  .name("확인하러 가기")
+                  .type("WL") // 웹링크
+                  .urlMobile(contentUrl)
+                  .urlPc(contentUrl)
+                  .build());
+      log.info("판매 중단 알림톡 발송 시작 - 메이커: {}, 템플릿코드: {}", makerName, contentDiscontinuedTemplateCode);
+
+      // 알림톡 발송
+      MessageResponse response =
+          messageService.sendAlimtalk(
+              phoneNumber,
+              contentDiscontinuedTemplateCode,
+              title,
+              messageContent,
+              kakaoSenderKey,
+              buttons);
+
+      if (response.isSuccess()) {
+        log.info("판매 중단 메시지 발송 성공 - 메이커: {}, 메시지키: {}", makerName, response.getMessageKey());
+      } else {
+        log.warn("판매 중단 메시지 발송 실패 - 메이커: {}, 오류: {}", makerName, response.getErrorMessage());
+      }
+
+    } catch (Exception e) {
+      // 메시지 발송 실패가 판매를 막아서는 안됩니다
+      log.error("판매 중단 메시지 발송 중 오류 발생 - 메이커: {}", makerName, e);
+      // 실패한 발송은 별도로 기록하여 나중에 재발송할 수 있도록 합니다
+      recordFailedMessage(phoneNumber, makerName, "CONTENT_DISCONTINUED", e.getMessage());
+    }
+  }
+
+  public void sendReviewRegisteredMessage(
+      String phoneNumber, String buyerName, String contentTitle, Long contentId, Long reviewId) {
+    try {
+      String messageContent = buildReviewRegisteredMessage(buyerName, contentTitle);
+      String title = "[Groble] 리뷰 등록 알림";
+
+      // 3) 콘텐츠 상세 URL
+      String contentUrl =
+          UriComponentsBuilder.fromHttpUrl("https://www.groble.im")
+              .path("/manage/store/products/{contentId}/reviews/{reviewId}")
+              .buildAndExpand(contentId, reviewId) // ✅ 둘 다 전달
+              .encode()
+              .toUriString();
+
+      List<ButtonInfo> buttons =
+          Arrays.asList(
+              ButtonInfo.builder()
+                  .name("확인하러 가기")
+                  .type("WL") // 웹링크
+                  .urlMobile(contentUrl)
+                  .urlPc(contentUrl)
+                  .build());
+      log.info("리뷰 등록 알림톡 발송 시작 - 구매자: {}, 템플릿코드: {}", buyerName, reviewRegisteredTemplateCode);
+
+      // 알림톡 발송
+      MessageResponse response =
+          messageService.sendAlimtalk(
+              phoneNumber,
+              reviewRegisteredTemplateCode,
+              title,
+              messageContent,
+              kakaoSenderKey,
+              buttons);
+
+      if (response.isSuccess()) {
+        log.info("리뷰 등록 메시지 발송 성공 - 구매자: {}, 메시지키: {}", buyerName, response.getMessageKey());
+      } else {
+        log.warn("리뷰 등록 메시지 발송 실패 - 구매자: {}, 오류: {}", buyerName, response.getErrorMessage());
+      }
+
+    } catch (Exception e) {
+      // 메시지 발송 실패가 리뷰 등록을 막아서는 안됩니다
+      log.error("리뷰 등록 메시지 발송 중 오류 발생 - 구매자: {}", buyerName, e);
+      // 실패한 발송은 별도로 기록하여 나중에 재발송할 수 있도록 합니다
+      recordFailedMessage(phoneNumber, buyerName, "REVIEW_REGISTERED", e.getMessage());
+    }
+  }
+
+  public void sendMakerCertifiedMessage(String phoneNumber, String makerName) {
+    try {
+      String messageContent = buildVerificationCompleteMessage(makerName);
+      String title = "[Groble] 인증 완료";
+      List<ButtonInfo> buttons =
+          Arrays.asList(
+              ButtonInfo.builder()
+                  .name("마이페이지 바로가기")
+                  .type("WL") // 웹링크
+                  .urlMobile("https://www.groble.im/users/profile/info")
+                  .urlPc("https://www.groble.im/users/profile/info")
+                  .build());
+
+      log.info(
+          "메이커 인증 완료 알림톡 발송 시작 - 메이커: {}, 템플릿코드: {}", makerName, verificationCompleteTemplateCode);
+
+      // 알림톡 발송
+      MessageResponse response =
+          messageService.sendAlimtalk(
+              phoneNumber,
+              verificationCompleteTemplateCode,
+              title,
+              messageContent,
+              kakaoSenderKey,
+              buttons);
+
+      if (response.isSuccess()) {
+        log.info("메이커 인증 완료 메시지 발송 성공 - 메이커: {}, 메시지키: {}", makerName, response.getMessageKey());
+      } else {
+        log.warn("메이커 인증 완료 메시지 발송 실패 - 메이커: {}, 오류: {}", makerName, response.getErrorMessage());
+      }
+
+    } catch (Exception e) {
+      // 메시지 발송 실패가 인증을 막아서는 안됩니다
+      log.error("메이커 인증 완료 메시지 발송 중 오류 발생 - 메이커: {}", makerName, e);
+      // 실패한 발송은 별도로 기록하여 나중에 재발송할 수 있도록 합니다
+      recordFailedMessage(phoneNumber, makerName, "VERIFICATION_COMPLETE", e.getMessage());
+    }
+  }
+
   /** 실패한 메시지 기록 (재발송을 위해) */
   private void recordFailedMessage(
       String phoneNumber, String content, String type, String errorMessage) {
