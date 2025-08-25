@@ -71,7 +71,7 @@ public class ContentViewStatsCustomRepositoryImpl implements ContentViewStatsCus
 
   @Override
   public Page<FlatContentTotalViewStatsDTO> findTotalViewsByPeriodTypeAndStatDateBetween(
-      Long userId, // 사용자 ID 파라미터 추가
+      Long userId,
       PeriodType periodType,
       LocalDate startDate,
       LocalDate endDate,
@@ -107,28 +107,33 @@ public class ContentViewStatsCustomRepositoryImpl implements ContentViewStatsCus
                     .and(qContentViewStats.periodType.eq(periodType))
                     .and(qContentViewStats.statDate.between(startDate, endDate)))
             .where(qContent.user.id.eq(userId))
-            .groupBy(qContent.id, qContent.title);
+            .groupBy(qContent.id, qContent.title, qContent.createdAt); // createdAt 추가
 
-    // 3. 정렬 처리
+    // 3. 정렬 처리 (간소화)
     if (pageable.getSort().isSorted()) {
       pageable
           .getSort()
           .forEach(
               order -> {
                 if (order.getProperty().equals("viewCount")) {
-                  // 조회수 정렬
-                  query.orderBy(
-                      order.isAscending()
-                          ? qContentViewStats.viewCount.sum().coalesce(0L).asc()
-                          : qContentViewStats.viewCount.sum().coalesce(0L).desc());
-                } else if (order.getProperty().equals("title")) {
-                  // 제목 정렬
-                  query.orderBy(order.isAscending() ? qContent.title.asc() : qContent.title.desc());
+                  // 조회수 정렬 + 생성일 정렬
+                  if (order.isAscending()) {
+                    query.orderBy(
+                        qContentViewStats.viewCount.sum().coalesce(0L).asc(),
+                        qContent.createdAt.desc() // 조회수가 같으면 최신순
+                        );
+                  } else {
+                    query.orderBy(
+                        qContentViewStats.viewCount.sum().coalesce(0L).desc(),
+                        qContent.createdAt.desc() // 조회수가 같으면 최신순
+                        );
+                  }
                 }
               });
     } else {
-      // 기본 정렬: 조회수 내림차순, 같으면 제목 오름차순
-      query.orderBy(qContentViewStats.viewCount.sum().coalesce(0L).desc(), qContent.title.asc());
+      // 기본 정렬: 조회수 내림차순 → 생성일 내림차순(최신순)
+      query.orderBy(
+          qContentViewStats.viewCount.sum().coalesce(0L).desc(), qContent.createdAt.desc());
     }
 
     // 4. 페이징 처리
