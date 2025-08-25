@@ -510,9 +510,14 @@ public class NotificationService {
   }
 
   public void sendReviewRegisteredMessage(
-      String phoneNumber, String buyerName, String contentTitle, Long contentId, Long reviewId) {
+      String phoneNumber,
+      String buyerName,
+      String sellerName,
+      String contentTitle,
+      Long contentId,
+      Long reviewId) {
     try {
-      String messageContent = buildReviewRegisteredMessage(buyerName, contentTitle);
+      String messageContent = buildReviewRegisteredMessage(buyerName, sellerName, contentTitle);
       String title = "[Groble] 리뷰 등록 알림";
 
       // 3) 콘텐츠 상세 URL
@@ -640,8 +645,10 @@ public class NotificationService {
   }
 
   // [메이커 - 리뷰 등록 알림]
-  private String buildReviewRegisteredMessage(String buyerName, String contentTitle) {
-    return String.format("%s님이 리뷰를 남겼어요! \n" + "\n" + "- 상품명: %s", buyerName, contentTitle);
+  private String buildReviewRegisteredMessage(
+      String buyerName, String sellerName, String contentTitle) {
+    return String.format(
+        "%s님이 %s님의 상품에 리뷰를 남겼어요! \n" + "\n" + "- 상품명: %s", buyerName, sellerName, contentTitle);
   }
 
   // [메이커 - 인증 완료]
