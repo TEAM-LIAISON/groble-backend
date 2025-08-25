@@ -71,62 +71,67 @@ public class ContentViewStatsCustomRepositoryImpl implements ContentViewStatsCus
 
   @Override
   public Page<FlatContentTotalViewStatsDTO> findTotalViewsByPeriodTypeAndStatDateBetween(
-      PeriodType periodType, LocalDate startDate, LocalDate endDate, Pageable pageable) {
+      Long userId, // 사용자 ID 파라미터 추가
+      PeriodType periodType,
+      LocalDate startDate,
+      LocalDate endDate,
+      Pageable pageable) {
 
     QContentViewStats qContentViewStats = QContentViewStats.contentViewStats;
     QContent qContent = QContent.content;
 
-    // 서브쿼리로 그룹화된 결과 카운트
-    JPAQuery<Long> countQuery =
-        jpaQueryFactory
-            .select(qContentViewStats.contentId)
-            .from(qContentViewStats)
-            .where(
-                qContentViewStats.periodType.eq(periodType),
-                qContentViewStats.statDate.between(startDate, endDate))
-            .groupBy(qContentViewStats.contentId);
-
+    // 1. 전체 콘텐츠 수 조회 (사용자가 소유한 모든 콘텐츠)
     Long total =
         jpaQueryFactory
-            .select(qContentViewStats.contentId.count())
-            .from(qContentViewStats)
-            .where(qContentViewStats.contentId.in(countQuery))
+            .select(qContent.count())
+            .from(qContent)
+            .where(qContent.user.id.eq(userId))
             .fetchOne();
 
-    // 데이터 조회 - 동적 정렬 처리
+    // 2. 데이터 조회 - Content를 기준으로 LEFT JOIN
     JPAQuery<FlatContentTotalViewStatsDTO> query =
         jpaQueryFactory
             .select(
                 Projections.constructor(
                     FlatContentTotalViewStatsDTO.class,
-                    qContentViewStats.contentId,
+                    qContent.id,
                     qContent.title,
-                    qContentViewStats.viewCount.sum().coalesce(0L)))
-            .from(qContentViewStats)
-            .leftJoin(qContent)
-            .on(qContentViewStats.contentId.eq(qContent.id))
-            .where(
-                qContentViewStats.periodType.eq(periodType),
-                qContentViewStats.statDate.between(startDate, endDate))
-            .groupBy(qContentViewStats.contentId);
+                    qContentViewStats.viewCount.sum().coalesce(0L) // null인 경우 0으로 처리
+                    ))
+            .from(qContent)
+            .leftJoin(qContentViewStats)
+            .on(
+                qContent
+                    .id
+                    .eq(qContentViewStats.contentId)
+                    .and(qContentViewStats.periodType.eq(periodType))
+                    .and(qContentViewStats.statDate.between(startDate, endDate)))
+            .where(qContent.user.id.eq(userId))
+            .groupBy(qContent.id, qContent.title);
 
-    // Pageable의 Sort 적용
+    // 3. 정렬 처리
     if (pageable.getSort().isSorted()) {
       pageable
           .getSort()
           .forEach(
               order -> {
                 if (order.getProperty().equals("viewCount")) {
+                  // 조회수 정렬
                   query.orderBy(
                       order.isAscending()
-                          ? qContentViewStats.viewCount.sum().asc()
-                          : qContentViewStats.viewCount.sum().desc());
+                          ? qContentViewStats.viewCount.sum().coalesce(0L).asc()
+                          : qContentViewStats.viewCount.sum().coalesce(0L).desc());
+                } else if (order.getProperty().equals("title")) {
+                  // 제목 정렬
+                  query.orderBy(order.isAscending() ? qContent.title.asc() : qContent.title.desc());
                 }
               });
     } else {
-      query.orderBy(qContentViewStats.viewCount.sum().desc()); // 기본 정렬
+      // 기본 정렬: 조회수 내림차순, 같으면 제목 오름차순
+      query.orderBy(qContentViewStats.viewCount.sum().coalesce(0L).desc(), qContent.title.asc());
     }
 
+    // 4. 페이징 처리
     List<FlatContentTotalViewStatsDTO> content =
         query.offset(pageable.getOffset()).limit(pageable.getPageSize()).fetch();
 

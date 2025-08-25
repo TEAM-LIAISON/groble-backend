@@ -177,7 +177,7 @@ public class DashboardService {
 
     Page<FlatContentTotalViewStatsDTO> page =
         contentViewStatsCustomRepository.findTotalViewsByPeriodTypeAndStatDateBetween(
-            PeriodType.DAILY, startDate, endDate, pageable);
+            userId, PeriodType.DAILY, startDate, endDate, pageable);
 
     List<ContentTotalViewStatsDTO> items =
         page.getContent().stream()
