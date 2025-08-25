@@ -69,6 +69,7 @@ public class PurchaserReviewService {
     notificationService.sendReviewRegisteredMessage(
         content.getUser().getPhoneNumber(),
         user.getNickname(),
+        content.getUser().getNickname(),
         content.getTitle(),
         content.getId(),
         savedContentReview.getId());

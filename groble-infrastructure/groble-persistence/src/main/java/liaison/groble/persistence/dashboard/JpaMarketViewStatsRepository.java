@@ -13,7 +13,7 @@ public interface JpaMarketViewStatsRepository extends JpaRepository<MarketViewSt
   void deleteByStatDateAndPeriodType(LocalDate date, PeriodType periodType);
 
   @Query(
-      "SELECT SUM(mvs.viewCount) FROM MarketViewStats mvs "
+      "SELECT COALESCE(SUM(mvs.viewCount), 0) FROM MarketViewStats mvs "
           + "JOIN Market m ON m.id = mvs.marketId "
           + "WHERE m.user.id = :sellerId "
           + "AND mvs.periodType = 'DAILY' "

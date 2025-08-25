@@ -14,12 +14,20 @@ public interface JpaContentViewStatsRepository extends JpaRepository<ContentView
   void deleteByStatDateAndPeriodType(LocalDate date, PeriodType periodType);
 
   @Query(
-      "SELECT SUM(cvs.viewCount) FROM ContentViewStats cvs "
+      "SELECT COALESCE(SUM(cvs.viewCount), 0) FROM ContentViewStats cvs "
           + "WHERE cvs.contentId IN :contentIds "
           + "AND cvs.periodType = 'DAILY' "
           + "AND cvs.statDate BETWEEN :startDate AND :endDate")
-  Long getTotalContentViews(
+  Long getTotalContentViewsQuery(
       @Param("contentIds") List<Long> contentIds,
       @Param("startDate") LocalDate startDate,
       @Param("endDate") LocalDate endDate);
+
+  // 빈 리스트 체크를 포함한 default 메서드
+  default Long getTotalContentViews(List<Long> contentIds, LocalDate startDate, LocalDate endDate) {
+    if (contentIds == null || contentIds.isEmpty()) {
+      return 0L;
+    }
+    return getTotalContentViewsQuery(contentIds, startDate, endDate);
+  }
 }
