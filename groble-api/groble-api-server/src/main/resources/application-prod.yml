@@ -137,6 +137,7 @@ springdoc:
     - liaison.groble.api.server
   show-actuator: false
   model-and-view-allowed: true
+
 # Logging - 운영 환경 (더 많은 로그 확보)
 logging:
   level:

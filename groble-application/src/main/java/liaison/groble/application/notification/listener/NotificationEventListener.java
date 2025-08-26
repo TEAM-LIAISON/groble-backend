@@ -2,7 +2,6 @@ package liaison.groble.application.notification.listener;
 
 import org.springframework.stereotype.Component;
 
-import liaison.groble.application.notification.service.InAppNotificationService;
 import liaison.groble.application.notification.service.KakaoNotificationService;
 
 import lombok.RequiredArgsConstructor;
@@ -12,7 +11,6 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @RequiredArgsConstructor
 public class NotificationEventListener {
-  private final InAppNotificationService inAppNotificationService;
   private final KakaoNotificationService kakaoNotificationService;
 
   //    @EventListener
