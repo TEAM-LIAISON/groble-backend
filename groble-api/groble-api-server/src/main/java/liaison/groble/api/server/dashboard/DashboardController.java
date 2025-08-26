@@ -266,19 +266,7 @@ public class DashboardController {
           @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
               @RequestParam(value = "page", defaultValue = "0")
               int page) {
-    // Period별 페이지 사이즈 동적 결정
-    int expectedDays =
-        switch (period) {
-          case "TODAY" -> 1;
-          case "LAST_7_DAYS" -> 7;
-          case "LAST_30_DAYS" -> 30;
-          case "THIS_MONTH" -> LocalDate.now().getDayOfMonth();
-          case "LAST_MONTH" -> YearMonth.now().minusMonths(1).lengthOfMonth();
-          default -> throw new IllegalArgumentException("Invalid period: " + period);
-        };
-
-    int pageSize = Math.min(expectedDays, 20); // 최대 20개
-    Pageable pageable = PageRequest.of(page, pageSize, Sort.by(Sort.Direction.DESC, "statDate"));
+    Pageable pageable = PageRequest.of(page, 20, Sort.by(Sort.Direction.DESC, "statDate"));
 
     PageResponse<ContentTotalViewStatsDTO> dtoPage =
         dashboardService.getContentTotalViewStats(accessor.getUserId(), period, pageable);

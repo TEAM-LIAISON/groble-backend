@@ -5,6 +5,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import liaison.groble.application.content.ContentReviewReader;
 import liaison.groble.application.content.ContentReviewWriter;
+import liaison.groble.application.notification.dto.KakaoNotificationDTO;
+import liaison.groble.application.notification.enums.KakaoNotificationType;
+import liaison.groble.application.notification.service.KakaoNotificationService;
 import liaison.groble.application.notification.service.NotificationService;
 import liaison.groble.application.order.service.OrderReader;
 import liaison.groble.application.purchase.dto.PurchaserContentReviewDTO;
@@ -33,6 +36,7 @@ public class PurchaserReviewService {
   private final ContentReviewWriter contentReviewWriter;
   private final OrderReader orderReader;
   private final NotificationService notificationService;
+  private final KakaoNotificationService kakaoNotificationService;
 
   @Transactional
   public PurchaserContentReviewDTO addReview(
@@ -66,12 +70,16 @@ public class PurchaserReviewService {
     notificationService.sendContentReviewNotification(
         content.getUser(), content.getId(), savedContentReview.getId(), content.getThumbnailUrl());
 
-    notificationService.sendReviewRegisteredMessage(
-        content.getUser().getPhoneNumber(),
-        user.getNickname(),
-        content.getTitle(),
-        content.getId(),
-        savedContentReview.getId());
+    kakaoNotificationService.sendNotification(
+        KakaoNotificationDTO.builder()
+            .type(KakaoNotificationType.REVIEW_REGISTERED)
+            .phoneNumber(content.getUser().getPhoneNumber())
+            .buyerName(user.getNickname())
+            .sellerName(content.getUser().getNickname())
+            .contentTitle(content.getTitle())
+            .contentId(content.getId())
+            .reviewId(savedContentReview.getId())
+            .build());
 
     return PurchaserContentReviewDTO.builder()
         .rating(savedContentReview.getRating())

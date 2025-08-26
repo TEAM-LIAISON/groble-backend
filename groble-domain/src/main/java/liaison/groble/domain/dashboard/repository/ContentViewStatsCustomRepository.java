@@ -18,5 +18,9 @@ public interface ContentViewStatsCustomRepository {
       Pageable pageable);
 
   Page<FlatContentTotalViewStatsDTO> findTotalViewsByPeriodTypeAndStatDateBetween(
-      PeriodType periodType, LocalDate startDate, LocalDate endDate, Pageable pageable);
+      Long userId,
+      PeriodType periodType,
+      LocalDate startDate,
+      LocalDate endDate,
+      Pageable pageable);
 }

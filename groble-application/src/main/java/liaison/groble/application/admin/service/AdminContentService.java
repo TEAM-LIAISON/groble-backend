@@ -9,7 +9,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import liaison.groble.application.admin.dto.AdminContentSummaryInfoDTO;
 import liaison.groble.application.content.ContentReader;
+import liaison.groble.application.notification.dto.KakaoNotificationDTO;
+import liaison.groble.application.notification.enums.KakaoNotificationType;
 import liaison.groble.application.notification.mapper.NotificationMapper;
+import liaison.groble.application.notification.service.KakaoNotificationService;
 import liaison.groble.application.notification.service.NotificationService;
 import liaison.groble.common.response.PageResponse;
 import liaison.groble.domain.content.dto.FlatAdminContentSummaryInfoDTO;
@@ -35,6 +38,7 @@ public class AdminContentService {
   private final NotificationMapper notificationMapper;
   private final NotificationRepository notificationRepository;
   private final NotificationService notificationService;
+  private final KakaoNotificationService kakaoNotificationService;
 
   public PageResponse<AdminContentSummaryInfoDTO> getAllContents(Pageable pageable) {
     Page<FlatAdminContentSummaryInfoDTO> contentPage =
@@ -84,11 +88,14 @@ public class AdminContentService {
             SubNotificationType.CONTENT_SOLD_STOPPED,
             sellDetails));
 
-    notificationService.sendContentDiscontinuedMessage(
-        content.getUser().getPhoneNumber(),
-        content.getUser().getNickname(),
-        content.getTitle(),
-        content.getId());
+    kakaoNotificationService.sendNotification(
+        KakaoNotificationDTO.builder()
+            .type(KakaoNotificationType.CONTENT_DISCONTINUED)
+            .phoneNumber(content.getUser().getPhoneNumber())
+            .sellerName(content.getUser().getNickname())
+            .contentTitle(content.getTitle())
+            .contentId(content.getId())
+            .build());
   }
 
   private AdminContentSummaryInfoDTO convertFlatDTOToInfoResponse(

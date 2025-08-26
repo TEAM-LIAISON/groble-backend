@@ -14,6 +14,7 @@ public interface JpaSellerInfoRepository extends JpaRepository<SellerInfo, Long>
   @Query("SELECT s FROM SellerInfo s JOIN FETCH s.user WHERE s.user.id = :userId")
   Optional<SellerInfo> findByUserIdWithUser(@Param("userId") Long userId);
 
-  @Query("SELECT s FROM SellerInfo s JOIN FETCH s.user u WHERE u.userProfile.nickname = :nickname")
+  @Query(
+      "SELECT s FROM SellerInfo s JOIN FETCH s.user u WHERE u.userProfile.nickname = :nickname AND u.userStatusInfo.status = 'ACTIVE'")
   Optional<SellerInfo> findByUserNicknameWithUser(@Param("nickname") String nickname);
 }

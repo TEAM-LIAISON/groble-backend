@@ -16,7 +16,6 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import liaison.groble.external.config.BizppurioConfig;
@@ -68,8 +67,7 @@ public class BizppurioMessageService {
       String title,
       String content,
       String senderKey,
-      List<ButtonInfo> buttons)
-      throws JsonProcessingException {
+      List<ButtonInfo> buttons) {
 
     // 1. 알림톡 메시지 구조 생성
     MessageRequest.AtMessage atMessage =
@@ -96,7 +94,6 @@ public class BizppurioMessageService {
             .build();
 
     log.debug("알림톡 요청 생성 - Template: {}, SenderKey: {}", templateCode, senderKey);
-    log.debug("bizppurio payload={}", objectMapper.writeValueAsString(request));
     return sendMessage(request);
   }
 
