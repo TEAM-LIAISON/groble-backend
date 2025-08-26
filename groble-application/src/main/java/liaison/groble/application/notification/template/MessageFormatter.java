@@ -9,10 +9,10 @@ public class MessageFormatter {
   private static final NumberFormat CURRENCY_FORMAT = NumberFormat.getNumberInstance(KOREA);
 
   // [Groble] 회원가입 완료
-  public static String welcome(String sellerName) {
+  public static String welcome(String userName) {
     return String.format(
         "%s님, 환영합니다🎉\n" + "그로블에 가입해 주셔서 감사합니다.\n\n" + "이제 단 5분 만에 첫 상품을 등록하고, 판매를 시작할 수 있어요.",
-        sellerName);
+        userName);
   }
 
   // [Groble] 결제 알림

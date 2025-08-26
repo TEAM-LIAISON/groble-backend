@@ -5,4 +5,8 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public class KakaoNotificationDTO {}
+public class KakaoNotificationDTO {
+  private String userName;
+  private String sellerName;
+  private String buyerName;
+}
