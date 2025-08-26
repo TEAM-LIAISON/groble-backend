@@ -5,6 +5,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import liaison.groble.application.admin.dto.AdminMakerDetailInfoDTO;
 import liaison.groble.application.admin.dto.AdminMemoDTO;
+import liaison.groble.application.notification.dto.KakaoNotificationDTO;
+import liaison.groble.application.notification.enums.KakaoNotificationType;
+import liaison.groble.application.notification.service.KakaoNotificationService;
 import liaison.groble.application.notification.service.NotificationService;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.application.user.service.UserWriter;
@@ -27,6 +30,7 @@ public class AdminMakerService {
   private final FileRepository fileRepository;
   private final NotificationService notificationService;
   private final UserWriter userWriter;
+  private final KakaoNotificationService kakaoNotificationService;
 
   @Transactional(readOnly = true)
   public AdminMakerDetailInfoDTO getMakerDetailInfo(Long userId, String nickname) {
@@ -85,6 +89,13 @@ public class AdminMakerService {
         sellerInfo.isBusinessMakerVerificationRequested(), SellerVerificationStatus.VERIFIED);
 
     notificationService.sendMakerCertifiedVerificationNotification(sellerInfo.getUser());
+
+    kakaoNotificationService.sendNotification(
+        KakaoNotificationDTO.builder()
+            .type(KakaoNotificationType.VERIFICATION_COMPLETE)
+            .phoneNumber(sellerInfo.getUser().getPhoneNumber())
+            .sellerName(sellerInfo.getUser().getNickname())
+            .build());
   }
 
   // 메이커 인증 반려 처리

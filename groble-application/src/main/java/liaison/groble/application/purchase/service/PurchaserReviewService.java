@@ -3,9 +3,11 @@ package liaison.groble.application.purchase.service;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import liaison.groble.application.content.ContentReader;
 import liaison.groble.application.content.ContentReviewReader;
 import liaison.groble.application.content.ContentReviewWriter;
+import liaison.groble.application.notification.dto.KakaoNotificationDTO;
+import liaison.groble.application.notification.enums.KakaoNotificationType;
+import liaison.groble.application.notification.service.KakaoNotificationService;
 import liaison.groble.application.notification.service.NotificationService;
 import liaison.groble.application.order.service.OrderReader;
 import liaison.groble.application.purchase.dto.PurchaserContentReviewDTO;
@@ -27,7 +29,6 @@ public class PurchaserReviewService {
 
   // Reader
   private final UserReader userReader;
-  private final ContentReader contentReader;
   private final ContentReviewReader contentReviewReader;
   private final PurchaseReader purchaseReader;
 
@@ -35,6 +36,7 @@ public class PurchaserReviewService {
   private final ContentReviewWriter contentReviewWriter;
   private final OrderReader orderReader;
   private final NotificationService notificationService;
+  private final KakaoNotificationService kakaoNotificationService;
 
   @Transactional
   public PurchaserContentReviewDTO addReview(
@@ -67,6 +69,17 @@ public class PurchaserReviewService {
 
     notificationService.sendContentReviewNotification(
         content.getUser(), content.getId(), savedContentReview.getId(), content.getThumbnailUrl());
+
+    kakaoNotificationService.sendNotification(
+        KakaoNotificationDTO.builder()
+            .type(KakaoNotificationType.REVIEW_REGISTERED)
+            .phoneNumber(content.getUser().getPhoneNumber())
+            .buyerName(user.getNickname())
+            .sellerName(content.getUser().getNickname())
+            .contentTitle(content.getTitle())
+            .contentId(content.getId())
+            .reviewId(savedContentReview.getId())
+            .build());
 
     return PurchaserContentReviewDTO.builder()
         .rating(savedContentReview.getRating())

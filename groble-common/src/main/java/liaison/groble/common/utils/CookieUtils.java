@@ -37,6 +37,17 @@ public class CookieUtils {
     return Optional.empty();
   }
 
+  /**
+   * 요청에서 특정 이름의 쿠키 값 가져오기
+   *
+   * @param request HTTP 요청
+   * @param name 쿠키 이름
+   * @return 쿠키 값 (없으면 null)
+   */
+  public static String getCookieValue(HttpServletRequest request, String name) {
+    return getCookie(request, name).map(Cookie::getValue).orElse(null);
+  }
+
   /** 응답에 쿠키 추가 (기본 설정) */
   public static void addCookie(
       HttpServletResponse response, String name, String value, int maxAge) {

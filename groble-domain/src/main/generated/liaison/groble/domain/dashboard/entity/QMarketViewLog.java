@@ -23,8 +23,6 @@ public class QMarketViewLog extends EntityPathBase<MarketViewLog> {
 
     public final NumberPath<Long> marketId = createNumber("marketId", Long.class);
 
-    public final StringPath referer = createString("referer");
-
     public final StringPath userAgent = createString("userAgent");
 
     public final DateTimePath<java.time.LocalDateTime> viewedAt = createDateTime("viewedAt", java.time.LocalDateTime.class);

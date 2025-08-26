@@ -7,6 +7,9 @@ import java.time.ZoneId;
 import org.springframework.stereotype.Service;
 
 import liaison.groble.application.auth.helper.UserHelper;
+import liaison.groble.application.notification.dto.KakaoNotificationDTO;
+import liaison.groble.application.notification.enums.KakaoNotificationType;
+import liaison.groble.application.notification.service.KakaoNotificationService;
 import liaison.groble.application.notification.service.NotificationService;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.common.utils.CodeGenerator;
@@ -40,6 +43,7 @@ public class PhoneAuthService {
   private final UserReader userReader;
 
   // Service
+  private final KakaoNotificationService kakaoNotificationService;
   private final NotificationService notificationService;
   private final DiscordMemberReportService discordMemberReportService;
   private final UserHelper userHelper;
@@ -90,6 +94,12 @@ public class PhoneAuthService {
       }
       user.updatePhoneNumber(phoneNumber);
       notificationService.sendWelcomeNotification(user);
+      kakaoNotificationService.sendNotification(
+          KakaoNotificationDTO.builder()
+              .type(KakaoNotificationType.WELCOME)
+              .userName(user.getNickname())
+              .phoneNumber(sanitized)
+              .build());
       sendDiscordMemberReport(user);
       userRepository.save(user);
     }

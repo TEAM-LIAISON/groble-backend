@@ -1,78 +1,163 @@
-// package liaison.groble.domain.dashboard.entity;
-//
-// import static jakarta.persistence.EnumType.STRING;
-// import static jakarta.persistence.GenerationType.IDENTITY;
-// import static lombok.AccessLevel.PROTECTED;
-//
-// import java.time.LocalDate;
-//
-// import jakarta.persistence.Column;
-// import jakarta.persistence.Entity;
-// import jakarta.persistence.Enumerated;
-// import jakarta.persistence.GeneratedValue;
-// import jakarta.persistence.Id;
-// import jakarta.persistence.Index;
-// import jakarta.persistence.Table;
-// import jakarta.persistence.UniqueConstraint;
-//
-// import org.hibernate.annotations.Comment;
-//
-// import liaison.groble.domain.common.entity.BaseTimeEntity;
-// import liaison.groble.domain.common.enums.PeriodType;
-//
-// import lombok.AllArgsConstructor;
-// import lombok.Builder;
-// import lombok.Getter;
-// import lombok.NoArgsConstructor;
-//
-/// ** 콘텐츠 유입경로 통계 */
-// @Entity
-// @Table(
-//    name = "content_referrer_stats",
-//    uniqueConstraints =
-//        @UniqueConstraint(
-//            name = "uk_crs_content_date_domain_period",
-//            columnNames = {"content_id", "stat_date", "referrer_domain", "period_type"}),
-//    indexes = {
-//      @Index(name = "idx_crs_lookup", columnList = "content_id, stat_date, period_type"),
-//      @Index(name = "idx_crs_domain", columnList = "referrer_domain")
-//    })
-// @Comment("콘텐츠별 유입 경로 통계")
-// @Getter
-// @Builder
-// @AllArgsConstructor
-// @NoArgsConstructor(access = PROTECTED)
-// public class ContentReferrerStats extends BaseTimeEntity {
-//  @Id
-//  @GeneratedValue(strategy = IDENTITY)
-//  private Long id;
-//
-//  @Column(name = "content_id", nullable = false)
-//  @Comment("콘텐츠 ID")
-//  private Long contentId;
-//
-//  @Column(name = "stat_date", nullable = false)
-//  @Comment("통계 기준 일자")
-//  private LocalDate statDate;
-//
-//  @Enumerated(STRING)
-//  @Column(name = "period_type", nullable = false, length = 16)
-//  @Comment("집계 기간 유형: DAILY, WEEKLY, MONTHLY")
-//  private PeriodType periodType;
-//
-//  @Column(name = "referrer_domain", nullable = false, length = 255)
-//  @Comment("정규화된 유입 도메인 (예: instagram.com, google.com, (direct))")
-//  private String referrerDomain;
-//
-//  @Column(name = "referrer_path", length = 2048)
-//  @Comment("선택적: 유입 경로 전체 URL (트래킹 파라미터 제거)")
-//  private String referrerPath;
-//
-//  @Column(name = "view_count", nullable = false, columnDefinition = "bigint default 0")
-//  @Comment("총 조회수")
-//  private Long viewCount = 0L;
-//
-//  @Column(name = "unique_visitor_count", nullable = false, columnDefinition = "bigint default 0")
-//  @Comment("고유 방문자수 (ContentVisitorTracking 기반 집계)")
-//  private Long uniqueVisitorCount = 0L;
-// }
+package liaison.groble.domain.dashboard.entity;
+
+import static jakarta.persistence.GenerationType.IDENTITY;
+import static lombok.AccessLevel.PROTECTED;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
+
+import org.hibernate.annotations.Comment;
+
+import liaison.groble.domain.common.entity.BaseTimeEntity;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+@Entity
+@Table(
+    name = "content_referrer_stats",
+    uniqueConstraints =
+        @UniqueConstraint(
+            name = "uk_crs_unique_referrer",
+            columnNames = {"content_id", "referrer_domain", "source", "medium", "campaign"}),
+    indexes = {
+      @Index(name = "idx_crs_content_created", columnList = "content_id, created_at"),
+      @Index(name = "idx_crs_source_medium", columnList = "source, medium"),
+      @Index(name = "idx_crs_domain", columnList = "referrer_domain")
+    })
+@Comment("콘텐츠별 유입 경로 수집 데이터")
+@Getter
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor(access = PROTECTED)
+public class ContentReferrerStats extends BaseTimeEntity {
+  @Id
+  @GeneratedValue(strategy = IDENTITY)
+  private Long id;
+
+  @Column(name = "content_id", nullable = false)
+  @Comment("콘텐츠 ID")
+  private Long contentId;
+
+  // 리퍼러 정보
+  @Column(name = "referrer_url", length = 1024)
+  @Comment("원본 리퍼러 URL")
+  private String referrerUrl;
+
+  @Column(name = "referrer_domain", nullable = false)
+  @Comment("리퍼러 도메인 (예: instagram.com, google.com)")
+  @Builder.Default
+  private String referrerDomain = "(direct)";
+
+  @Column(name = "referrer_path", length = 500)
+  @Comment("리퍼러 경로 (SNS 세부 경로)")
+  private String referrerPath;
+
+  // UTM 파라미터
+  @Column(name = "source", nullable = false, length = 100)
+  @Comment("트래픽 소스 (utm_source 또는 도메인 기반)")
+  @Builder.Default
+  private String source = "(direct)";
+
+  @Column(name = "medium", nullable = false, length = 50)
+  @Comment("트래픽 매체 (utm_medium)")
+  @Builder.Default
+  private String medium = "(none)";
+
+  @Column(name = "campaign")
+  @Comment("캠페인명 (utm_campaign)")
+  private String campaign;
+
+  @Column(name = "content")
+  @Comment("콘텐츠 구분 (utm_content)")
+  private String content;
+
+  @Column(name = "term")
+  @Comment("검색어 (utm_term)")
+  private String term;
+
+  @Column(name = "visit_count", nullable = false, columnDefinition = "int default 1")
+  @Comment("해당 경로로부터의 유입 횟수")
+  @Builder.Default
+  private Integer visitCount = 1;
+
+  // 유틸리티 메서드
+  public void parseReferrerUrl() {
+    if (this.referrerUrl == null || this.referrerUrl.isEmpty()) {
+      this.referrerDomain = "(direct)";
+      if (this.source == null) this.source = "(direct)";
+      if (this.medium == null) this.medium = "(none)";
+      return;
+    }
+
+    // 도메인 추출
+    this.referrerDomain = extractDomain(this.referrerUrl);
+
+    // SNS인 경우 세부 경로 저장
+    if (isSocialDomain(this.referrerDomain)) {
+      this.referrerPath = extractPath(this.referrerUrl);
+    }
+
+    // UTM이 없고 source가 비어있으면 도메인 기반으로 설정
+    if ((this.source == null || "(direct)".equals(this.source))
+        && !"(direct)".equals(this.referrerDomain)) {
+      this.source = mapDomainToSource(this.referrerDomain);
+      this.medium =
+          this.medium == null || "(none)".equals(this.medium)
+              ? (isSocialDomain(this.referrerDomain) ? "social" : "referral")
+              : this.medium;
+    }
+  }
+
+  // 카운트 증가 메서드
+  public void incrementVisitCount() {
+    this.visitCount++;
+  }
+
+  private String extractDomain(String url) {
+    try {
+      String clean = url.replaceAll("^https?://", "").replaceAll("^www\\.", "");
+      int idx = clean.indexOf('/');
+      return idx > 0 ? clean.substring(0, idx).toLowerCase() : clean.toLowerCase();
+    } catch (Exception e) {
+      return "(unknown)";
+    }
+  }
+
+  private String extractPath(String url) {
+    try {
+      String clean = url.replaceAll("^https?://[^/]+", "");
+      int idx = clean.indexOf('?');
+      return idx > 0 ? clean.substring(0, idx) : clean;
+    } catch (Exception e) {
+      return "/";
+    }
+  }
+
+  private boolean isSocialDomain(String domain) {
+    return domain != null
+        && (domain.contains("instagram.com")
+            || domain.contains("threads.com")
+            || domain.contains("facebook.com")
+            || domain.contains("twitter.com")
+            || domain.contains("linkedin.com")
+            || domain.contains("youtube.com")
+            || domain.contains("tiktok.com"));
+  }
+
+  private String mapDomainToSource(String domain) {
+    if (domain.contains("instagram.com")) return "instagram";
+    if (domain.contains("threads.com")) return "threads";
+    if (domain.contains("facebook.com")) return "facebook";
+    if (domain.contains("google.com")) return "google";
+    if (domain.contains("naver.com")) return "naver";
+    return domain.replaceAll("\\.com$|\\.co\\.kr$|\\.net$", "");
+  }
+}

@@ -71,9 +71,9 @@ public class DashboardOverviewResponse {
       requiredMode = Schema.RequiredMode.REQUIRED)
   private Long totalContentViews;
 
-  // ========== 조회수 정보 - 고객 ==========
+  // ========== 카운팅 정보 - 고객 ==========
   @Schema(
-      description = "고객 전체 조회수 (프로필 조회수)",
+      description = "고객 전체수",
       example = "8920",
       type = "integer",
       format = "int64",
@@ -81,7 +81,7 @@ public class DashboardOverviewResponse {
   private Long totalCustomers;
 
   @Schema(
-      description = "고객 신규 조회수 (최근 30일 기준)",
+      description = "신규 고객수 (최근 30일 기준)",
       example = "1250",
       type = "integer",
       format = "int64",

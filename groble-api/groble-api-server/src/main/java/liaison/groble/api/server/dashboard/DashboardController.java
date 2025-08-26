@@ -20,13 +20,19 @@ import liaison.groble.api.model.dashboard.response.ContentViewStatsResponse;
 import liaison.groble.api.model.dashboard.response.DashboardOverviewResponse;
 import liaison.groble.api.model.dashboard.response.DashboardViewStatsResponse;
 import liaison.groble.api.model.dashboard.response.MarketViewStatsResponse;
+import liaison.groble.api.model.dashboard.response.ReferrerStatsResponse;
 import liaison.groble.api.model.dashboard.response.swagger.ContentOverviewListResponse;
+import liaison.groble.api.model.dashboard.response.swagger.ContentTotalViewStatsListResponse;
+import liaison.groble.api.model.dashboard.response.swagger.ContentViewStatsListResponse;
+import liaison.groble.api.model.dashboard.response.swagger.MarketViewStatsListResponse;
+import liaison.groble.api.model.dashboard.response.swagger.ReferrerStatsListResponse;
 import liaison.groble.application.dashboard.dto.ContentTotalViewStatsDTO;
 import liaison.groble.application.dashboard.dto.ContentViewStatsDTO;
 import liaison.groble.application.dashboard.dto.DashboardContentOverviewDTO;
 import liaison.groble.application.dashboard.dto.DashboardOverviewDTO;
 import liaison.groble.application.dashboard.dto.DashboardViewStatsDTO;
 import liaison.groble.application.dashboard.dto.MarketViewStatsDTO;
+import liaison.groble.application.dashboard.dto.referrer.ReferrerStatsDTO;
 import liaison.groble.application.dashboard.service.DashboardService;
 import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.annotation.Logging;
@@ -39,7 +45,10 @@ import liaison.groble.common.utils.PageUtils;
 import liaison.groble.mapping.dashboard.DashboardMapper;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -55,12 +64,14 @@ public class DashboardController {
   private static final String DASHBOARD_CONTENTS_LIST_PATH = "/dashboard/my-contents";
   private static final String DASHBOARD_VIEW_STATS_PATH = "/dashboard/view-stats";
   private static final String DASHBOARD_CONTENT_VIEWS_LIST_PATH = "/dashboard/content/view-stats";
+  private static final String DASHBOARD_MARKET_VIEW_STATS_PATH = "/dashboard/market/view-stats";
+  private static final String DASHBOARD_MARKET_REFERRER_STATS_PATH =
+      "/dashboard/market/referrer-stats";
+
   private static final String DASHBOARD_CONTENT_VIEW_STATS_PATH =
       "/dashboard/content/{contentId}/view-stats";
-  private static final String DASHBOARD_MARKET_VIEW_STATS_PATH =
-      "/dashboard/market/{marketId}/view-stats";
-  private static final String DASHBOARD_MARKET_REFERRER_STATS_PATH =
-      "/dashboard/market/{marketId}/referrer-stats";
+  private static final String DASHBOARD_CONTENT_REFERRER_STATS_PATH =
+      "/dashboard/content/{contentId}/referrer-stats";
 
   // 응답 메시지 상수화
   private static final String DASHBOARD_OVERVIEW_SUCCESS_MESSAGE = "대시보드 개요 조회 성공";
@@ -70,8 +81,13 @@ public class DashboardController {
       "대시보드 콘텐츠 개별 전체 조회수 목록 조회 성공";
   private static final String DASHBOARD_CONTENT_VIEW_STATS_SUCCESS_MESSAGE =
       "대시보드 콘텐츠 날짜별 조회수 조회 성공";
-  private static final String DASHBOARD_MARKET_DETAIL_STATS_SUCCESS_MESSAGE =
-      "대시보드 마켓 상세 조회수 및 유입 경로 조회 성공";
+  private static final String DASHBOARD_MARKET_VIEW_STATS_SUCCESS_MESSAGE = "대시보드 마켓 날짜별 조회수 조회 성공";
+
+  // 유입 경로 조회 성공 메시지
+  private static final String DASHBOARD_CONTENT_REFERRER_STATS_SUCCESS_MESSAGE =
+      "대시보드 콘텐츠 유입 경로 조회 성공";
+  private static final String DASHBOARD_MARKET_REFERRER_STATS_SUCCESS_MESSAGE =
+      "대시보드 마켓 유입 경로 조회 성공";
 
   // Service
   private final DashboardService dashboardService;
@@ -83,7 +99,7 @@ public class DashboardController {
   /* TODO(1): 대시보드 홈화면 개요 [메이커 인증 여부, 총 수익(수익, 건수), N월 수익(수익, 건수), 조회수(마켓, 콘텐츠), 고객수(전체, 신규 -> 최근 30일 기준 신규 구매자)] */
   @RequireRole("ROLE_SELLER")
   @Operation(
-      summary = "[📊 대시보드 개요 조회] 대시보드 개요 조회",
+      summary = "[📊 대시보드 개요 조회] 대시보드 개요 조회 ✅",
       description =
           "메이커 인증 여부, 총 수익(수익, 건수), N월 수익(수익, 건수), 조회수(마켓, 콘텐츠), 고객수(전체, 신규 -> 최근 30일 기준 신규 구매자)를 조회합니다.")
   @ApiResponse(
@@ -112,7 +128,7 @@ public class DashboardController {
   // TODO(2): 내 콘텐츠 전체 목록 조회 (20개씩, 최신순 정렬 페이징)
   @RequireRole("ROLE_SELLER")
   @Operation(
-      summary = "[📊 대시보드 내 콘텐츠 목록 조회] 내 콘텐츠 목록 조회",
+      summary = "[📊 대시보드 내 콘텐츠 목록 조회] 내 콘텐츠 목록 조회 ✅",
       description = "전체 콘텐츠 개수와 콘텐츠 ID, 제목을 반환합니다.")
   @ApiResponse(
       responseCode = "200",
@@ -144,15 +160,51 @@ public class DashboardController {
   // TODO(3): 오늘/지난 7일/최근 30일/이번 달/지난 달 선택에 따른 마켓과 콘텐츠 조회 [콘텐츠는 목록 제공]
   @RequireRole("ROLE_SELLER")
   @Operation(
-      summary = "[📊 대시보드 - 마켓/콘텐츠 전체 조회수 조회] 내 마켓과 콘텐츠 전체 조회수 조회",
+      summary = "[📊 대시보드 - 마켓/콘텐츠 전체 조회수 조회] 내 마켓과 콘텐츠 전체 조회수 조회 ✅",
       description = "전체 기간 안에서 마켓과 콘텐츠 조회수를 반환합니다.")
+  @Parameters({
+    @Parameter(
+        name = "period",
+        required = true,
+        description =
+            """
+                        조회 기간(필수).
+                        - TODAY: 오늘
+                        - LAST_7_DAYS: 최근 7일
+                        - LAST_30_DAYS: 최근 30일
+                        - THIS_MONTH: 이번 달(1일~오늘)
+                        - LAST_MONTH: 지난 달(1일~말일)
+                      """,
+        schema =
+            @Schema(
+                type = "string",
+                allowableValues = {
+                  "TODAY",
+                  "LAST_7_DAYS",
+                  "LAST_30_DAYS",
+                  "THIS_MONTH",
+                  "LAST_MONTH"
+                }),
+        examples = {
+          @ExampleObject(name = "오늘", value = "TODAY"),
+          @ExampleObject(name = "최근7일", value = "LAST_7_DAYS")
+        }),
+    @Parameter(name = "accessor", hidden = true)
+  })
+  @ApiResponse(
+      responseCode = "200",
+      description = DASHBOARD_VIEW_STATS_SUCCESS_MESSAGE,
+      content =
+          @Content(
+              mediaType = "application/json",
+              schema = @Schema(implementation = DashboardViewStatsResponse.class)))
   @GetMapping(DASHBOARD_VIEW_STATS_PATH)
   @Logging(item = "Dashboard", action = "getViewStats", includeParam = true, includeResult = true)
   public ResponseEntity<GrobleResponse<DashboardViewStatsResponse>> getViewStats(
-      @Auth Accessor accessor) {
+      @Auth Accessor accessor, @RequestParam(value = "period") String period) {
 
     DashboardViewStatsDTO dashboardViewStatsDTO =
-        dashboardService.getViewStats(accessor.getUserId());
+        dashboardService.getViewStats(accessor.getUserId(), period);
 
     DashboardViewStatsResponse dashboardViewStatsResponse =
         dashboardMapper.toDashboardViewStatsResponse(dashboardViewStatsDTO);
@@ -163,8 +215,44 @@ public class DashboardController {
 
   @RequireRole("ROLE_SELLER")
   @Operation(
-      summary = "[📊 대시보드 - 콘텐츠 개별 전체 조회수 목록 조회] 콘텐츠의 전체 조회수 목록 조회",
+      summary = "[📊 대시보드 - 콘텐츠 개별 전체 조회수 목록 조회] 콘텐츠의 전체 조회수 목록 조회 ✅",
       description = "조회수 내림차순으로 모든 콘텐츠의 조회수를 반환합니다.")
+  @Parameters({
+    @Parameter(
+        name = "period",
+        required = true,
+        description =
+            """
+          조회 기간(필수).
+          - TODAY: 오늘
+          - LAST_7_DAYS: 최근 7일
+          - LAST_30_DAYS: 최근 30일
+          - THIS_MONTH: 이번 달(1일~오늘)
+          - LAST_MONTH: 지난 달(1일~말일)
+        """,
+        schema =
+            @Schema(
+                type = "string",
+                allowableValues = {
+                  "TODAY",
+                  "LAST_7_DAYS",
+                  "LAST_30_DAYS",
+                  "THIS_MONTH",
+                  "LAST_MONTH"
+                }),
+        examples = {
+          @ExampleObject(name = "오늘", value = "TODAY"),
+          @ExampleObject(name = "최근7일", value = "LAST_7_DAYS")
+        }),
+    @Parameter(name = "accessor", hidden = true)
+  })
+  @ApiResponse(
+      responseCode = "200",
+      description = DASHBOARD_CONTENTS_VIEW_STATS_SUCCESS_MESSAGE,
+      content =
+          @Content(
+              mediaType = "application/json",
+              schema = @Schema(implementation = ContentTotalViewStatsListResponse.class)))
   @GetMapping(DASHBOARD_CONTENT_VIEWS_LIST_PATH)
   @Logging(
       item = "Dashboard",
@@ -175,20 +263,10 @@ public class DashboardController {
       getContentViewsList(
           @Auth Accessor accessor,
           @RequestParam(value = "period") String period,
-          @RequestParam(defaultValue = "0") int page) {
-    // Period별 페이지 사이즈 동적 결정
-    int expectedDays =
-        switch (period) {
-          case "TODAY" -> 1;
-          case "LAST_7_DAYS" -> 7;
-          case "LAST_30_DAYS" -> 30;
-          case "THIS_MONTH" -> LocalDate.now().getDayOfMonth();
-          case "LAST_MONTH" -> YearMonth.now().minusMonths(1).lengthOfMonth();
-          default -> throw new IllegalArgumentException("Invalid period: " + period);
-        };
-
-    int pageSize = Math.min(expectedDays, 20); // 최대 20개
-    Pageable pageable = PageRequest.of(page, pageSize, Sort.by(Sort.Direction.DESC, "statDate"));
+          @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
+              @RequestParam(value = "page", defaultValue = "0")
+              int page) {
+    Pageable pageable = PageRequest.of(page, 20, Sort.by(Sort.Direction.DESC, "statDate"));
 
     PageResponse<ContentTotalViewStatsDTO> dtoPage =
         dashboardService.getContentTotalViewStats(accessor.getUserId(), period, pageable);
@@ -203,8 +281,44 @@ public class DashboardController {
   // TODO(4): 오늘/지난 7일/최근 30일/이번 달/지난 달 선택에 따른 마켓 상세 조회수 제공 + 유입 경로 제공
   @RequireRole("ROLE_SELLER")
   @Operation(
-      summary = "[📊 대시보드 - 마켓 날짜별 조회수 조회] 마켓 조회수 조회",
+      summary = "[📊 대시보드 - 마켓 날짜별 조회수 조회] 마켓 조회수 조회 ✅",
       description = "조회 날짜, 조회 일, 조회수를 반환합니다.")
+  @Parameters({
+    @Parameter(
+        name = "period",
+        required = true,
+        description =
+            """
+                        조회 기간(필수).
+                        - TODAY: 오늘
+                        - LAST_7_DAYS: 최근 7일
+                        - LAST_30_DAYS: 최근 30일
+                        - THIS_MONTH: 이번 달(1일~오늘)
+                        - LAST_MONTH: 지난 달(1일~말일)
+                      """,
+        schema =
+            @Schema(
+                type = "string",
+                allowableValues = {
+                  "TODAY",
+                  "LAST_7_DAYS",
+                  "LAST_30_DAYS",
+                  "THIS_MONTH",
+                  "LAST_MONTH"
+                }),
+        examples = {
+          @ExampleObject(name = "오늘", value = "TODAY"),
+          @ExampleObject(name = "최근7일", value = "LAST_7_DAYS")
+        }),
+    @Parameter(name = "accessor", hidden = true)
+  })
+  @ApiResponse(
+      responseCode = "200",
+      description = DASHBOARD_MARKET_VIEW_STATS_SUCCESS_MESSAGE,
+      content =
+          @Content(
+              mediaType = "application/json",
+              schema = @Schema(implementation = MarketViewStatsListResponse.class)))
   @GetMapping(DASHBOARD_MARKET_VIEW_STATS_PATH)
   @Logging(
       item = "Dashboard",
@@ -213,9 +327,10 @@ public class DashboardController {
       includeResult = true)
   public ResponseEntity<GrobleResponse<PageResponse<MarketViewStatsResponse>>> getMarketViewStats(
       @Auth Accessor accessor,
-      @PathVariable("marketId") Long marketId,
       @RequestParam(value = "period") String period,
-      @RequestParam(defaultValue = "0") int page) {
+      @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
+          @RequestParam(value = "page", defaultValue = "0")
+          int page) {
 
     // Period별 페이지 사이즈 동적 결정
     int expectedDays =
@@ -232,22 +347,58 @@ public class DashboardController {
     Pageable pageable = PageRequest.of(page, pageSize, Sort.by(Sort.Direction.DESC, "statDate"));
 
     PageResponse<MarketViewStatsDTO> dtoPage =
-        dashboardService.getMarketViewStats(accessor.getUserId(), marketId, period, pageable);
+        dashboardService.getMarketViewStats(accessor.getUserId(), period, pageable);
 
     PageResponse<MarketViewStatsResponse> responsePage =
         dashboardMapper.toMarketViewStatsResponsePage(dtoPage);
 
     return responseHelper.success(
-        responsePage, DASHBOARD_MARKET_DETAIL_STATS_SUCCESS_MESSAGE, HttpStatus.OK);
+        responsePage, DASHBOARD_MARKET_VIEW_STATS_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 
   // TODO(5): 오늘/지난 7일/최근 30일/이번 달/지난 달 선택에 따른 콘텐츠 상세 조회수 제공 + 유입 경로 제공
 
   @RequireRole("ROLE_SELLER")
   @Operation(
-      summary = "[📊 대시보드 - 콘텐츠 날짜 유형별 조회수 조회] 콘텐츠 조회수 조회",
+      summary = "[📊 대시보드 - 콘텐츠 날짜 유형별 조회수 조회] 콘텐츠 조회수 조회 ✅",
       description = "조회 날짜, 조회 일, 조회수를 반환합니다.")
   @GetMapping(DASHBOARD_CONTENT_VIEW_STATS_PATH)
+  @Parameters({
+    @Parameter(
+        name = "period",
+        required = true,
+        description =
+            """
+                                                    조회 기간(필수).
+                                                    - TODAY: 오늘
+                                                    - LAST_7_DAYS: 최근 7일
+                                                    - LAST_30_DAYS: 최근 30일
+                                                    - THIS_MONTH: 이번 달(1일~오늘)
+                                                    - LAST_MONTH: 지난 달(1일~말일)
+                                                  """,
+        schema =
+            @Schema(
+                type = "string",
+                allowableValues = {
+                  "TODAY",
+                  "LAST_7_DAYS",
+                  "LAST_30_DAYS",
+                  "THIS_MONTH",
+                  "LAST_MONTH"
+                }),
+        examples = {
+          @ExampleObject(name = "오늘", value = "TODAY"),
+          @ExampleObject(name = "최근7일", value = "LAST_7_DAYS")
+        }),
+    @Parameter(name = "accessor", hidden = true)
+  })
+  @ApiResponse(
+      responseCode = "200",
+      description = DASHBOARD_CONTENT_REFERRER_STATS_SUCCESS_MESSAGE,
+      content =
+          @Content(
+              mediaType = "application/json",
+              schema = @Schema(implementation = ContentViewStatsListResponse.class)))
   @Logging(
       item = "Dashboard",
       action = "getContentViewStats",
@@ -255,9 +406,11 @@ public class DashboardController {
       includeResult = true)
   public ResponseEntity<GrobleResponse<PageResponse<ContentViewStatsResponse>>> getContentViewStats(
       @Auth Accessor accessor,
-      @PathVariable("contentId") Long contentId,
+      @Parameter(description = "콘텐츠 ID", example = "1") @PathVariable("contentId") Long contentId,
       @RequestParam(value = "period") String period,
-      @RequestParam(defaultValue = "0") int page) {
+      @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
+          @RequestParam(value = "page", defaultValue = "0")
+          int page) {
 
     // Period별 페이지 사이즈 동적 결정
     int expectedDays =
@@ -281,5 +434,136 @@ public class DashboardController {
 
     return responseHelper.success(
         responsePage, DASHBOARD_CONTENT_VIEW_STATS_SUCCESS_MESSAGE, HttpStatus.OK);
+  }
+
+  @RequireRole("ROLE_SELLER")
+  @Operation(
+      summary = "[📊 대시보드 - 콘텐츠 날짜 유형별 유입경로 조회] 콘텐츠 유입경로 페이지네이션 조회 ✅",
+      description = "유입경로, 유입경로별 방문 횟수를 반환합니다.")
+  @GetMapping(DASHBOARD_CONTENT_REFERRER_STATS_PATH)
+  @Parameters({
+    @Parameter(
+        name = "period",
+        required = true,
+        description =
+            """
+                                      조회 기간(필수).
+                                      - TODAY: 오늘
+                                      - LAST_7_DAYS: 최근 7일
+                                      - LAST_30_DAYS: 최근 30일
+                                      - THIS_MONTH: 이번 달(1일~오늘)
+                                      - LAST_MONTH: 지난 달(1일~말일)
+                                    """,
+        schema =
+            @Schema(
+                type = "string",
+                allowableValues = {
+                  "TODAY",
+                  "LAST_7_DAYS",
+                  "LAST_30_DAYS",
+                  "THIS_MONTH",
+                  "LAST_MONTH"
+                }),
+        examples = {
+          @ExampleObject(name = "오늘", value = "TODAY"),
+          @ExampleObject(name = "최근7일", value = "LAST_7_DAYS")
+        }),
+    @Parameter(name = "accessor", hidden = true)
+  })
+  @ApiResponse(
+      responseCode = "200",
+      description = DASHBOARD_CONTENT_REFERRER_STATS_SUCCESS_MESSAGE,
+      content =
+          @Content(
+              mediaType = "application/json",
+              schema = @Schema(implementation = ReferrerStatsListResponse.class)))
+  @Logging(
+      item = "Dashboard",
+      action = "getContentReferrerStats",
+      includeParam = true,
+      includeResult = true)
+  public ResponseEntity<GrobleResponse<PageResponse<ReferrerStatsResponse>>>
+      getContentReferrerStats(
+          @Auth Accessor accessor,
+          @Parameter(description = "콘텐츠 ID", example = "1") @PathVariable("contentId")
+              Long contentId,
+          @RequestParam(value = "period") String period,
+          @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
+              @RequestParam(value = "page", defaultValue = "0")
+              int page) {
+    Pageable pageable = PageRequest.of(page, 20, Sort.by(Sort.Direction.DESC, "visitCount"));
+
+    PageResponse<ReferrerStatsDTO> dtoPage =
+        dashboardService.getContentReferrerStats(accessor.getUserId(), contentId, period, pageable);
+
+    PageResponse<ReferrerStatsResponse> responsePage =
+        dashboardMapper.toReferrerStatsResponsePage(dtoPage);
+
+    return responseHelper.success(
+        responsePage, DASHBOARD_CONTENT_REFERRER_STATS_SUCCESS_MESSAGE, HttpStatus.OK);
+  }
+
+  @RequireRole("ROLE_SELLER")
+  @GetMapping(DASHBOARD_MARKET_REFERRER_STATS_PATH)
+  @Operation(
+      summary = "[📊 대시보드 - 마켓 날짜 유형별 유입경로 조회] 마켓 유입경로 페이지네이션 조회 ✅",
+      description = "유입경로, 유입경로별 방문 횟수를 반환합니다.")
+  @Parameters({
+    @Parameter(
+        name = "period",
+        required = true,
+        description =
+            """
+                                      조회 기간(필수).
+                                      - TODAY: 오늘
+                                      - LAST_7_DAYS: 최근 7일
+                                      - LAST_30_DAYS: 최근 30일
+                                      - THIS_MONTH: 이번 달(1일~오늘)
+                                      - LAST_MONTH: 지난 달(1일~말일)
+                                    """,
+        schema =
+            @Schema(
+                type = "string",
+                allowableValues = {
+                  "TODAY",
+                  "LAST_7_DAYS",
+                  "LAST_30_DAYS",
+                  "THIS_MONTH",
+                  "LAST_MONTH"
+                }),
+        examples = {
+          @ExampleObject(name = "오늘", value = "TODAY"),
+          @ExampleObject(name = "최근7일", value = "LAST_7_DAYS")
+        }),
+    @Parameter(name = "accessor", hidden = true)
+  })
+  @ApiResponse(
+      responseCode = "200",
+      description = DASHBOARD_MARKET_REFERRER_STATS_SUCCESS_MESSAGE,
+      content =
+          @Content(
+              mediaType = "application/json",
+              schema = @Schema(implementation = ReferrerStatsListResponse.class)))
+  @Logging(
+      item = "Dashboard",
+      action = "getMarketReferrerStats",
+      includeParam = true,
+      includeResult = true)
+  public ResponseEntity<GrobleResponse<PageResponse<ReferrerStatsResponse>>> getMarketReferrerStats(
+      @Auth Accessor accessor,
+      @RequestParam(value = "period") String period,
+      @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
+          @RequestParam(value = "page", defaultValue = "0")
+          int page) {
+    Pageable pageable = PageRequest.of(page, 20, Sort.by(Sort.Direction.DESC, "visitCount"));
+
+    PageResponse<ReferrerStatsDTO> dtoPage =
+        dashboardService.getMarketReferrerStats(accessor.getUserId(), period, pageable);
+
+    PageResponse<ReferrerStatsResponse> responsePage =
+        dashboardMapper.toReferrerStatsResponsePage(dtoPage);
+
+    return responseHelper.success(
+        responsePage, DASHBOARD_MARKET_REFERRER_STATS_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 }

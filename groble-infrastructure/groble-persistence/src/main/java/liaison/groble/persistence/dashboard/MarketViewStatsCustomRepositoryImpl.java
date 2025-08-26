@@ -16,6 +16,7 @@ import liaison.groble.domain.common.enums.PeriodType;
 import liaison.groble.domain.dashboard.dto.FlatMarketViewStatsDTO;
 import liaison.groble.domain.dashboard.entity.QMarketViewStats;
 import liaison.groble.domain.dashboard.repository.MarketViewStatsCustomRepository;
+import liaison.groble.domain.market.entity.QMarket;
 
 import lombok.RequiredArgsConstructor;
 
@@ -26,20 +27,22 @@ public class MarketViewStatsCustomRepositoryImpl implements MarketViewStatsCusto
 
   @Override
   public Page<FlatMarketViewStatsDTO> findByMarketIdAndPeriodTypeAndStatDateBetween(
-      Long marketId,
+      String marketLinkUrl,
       PeriodType periodType,
       LocalDate startDate,
       LocalDate endDate,
       Pageable pageable) {
     QMarketViewStats qMarketViewStats = QMarketViewStats.marketViewStats;
-
+    QMarket qMarket = QMarket.market;
     // 전체 카운트
     Long total =
         jpaQueryFactory
             .select(qMarketViewStats.count())
             .from(qMarketViewStats)
+            .join(qMarket)
+            .on(qMarket.id.eq(qMarketViewStats.marketId))
             .where(
-                qMarketViewStats.marketId.eq(marketId),
+                qMarket.marketLinkUrl.eq(marketLinkUrl),
                 qMarketViewStats.periodType.eq(periodType),
                 qMarketViewStats.statDate.between(startDate, endDate))
             .fetchOne();
@@ -54,8 +57,10 @@ public class MarketViewStatsCustomRepositoryImpl implements MarketViewStatsCusto
                     Expressions.constant(""),
                     qMarketViewStats.viewCount))
             .from(qMarketViewStats)
+            .join(qMarket)
+            .on(qMarket.id.eq(qMarketViewStats.marketId))
             .where(
-                qMarketViewStats.marketId.eq(marketId),
+                qMarket.marketLinkUrl.eq(marketLinkUrl),
                 qMarketViewStats.periodType.eq(periodType),
                 qMarketViewStats.statDate.between(startDate, endDate))
             .orderBy(qMarketViewStats.statDate.desc())

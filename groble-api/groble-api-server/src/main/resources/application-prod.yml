@@ -9,28 +9,6 @@ server:
 
 ---
 
-#spring:
-#  config:
-#    activate:
-#      on-profile: proxy
-
-# 프록시 설정
-#http:
-#  proxy:
-#    enabled: true
-#    host: ${HTTP_PROXY_HOST:localhost}
-#    port: ${HTTP_PROXY_PORT:3128}
-
-# 외부 API 호출용 프록시 설정
-#external:
-#  api:
-#    proxy:
-#      enabled: true
-#      host: ${HTTP_PROXY_HOST:localhost}
-#      port: ${HTTP_PROXY_PORT:3128}
-
----
-
 spring:
   config:
     activate:

@@ -4,6 +4,9 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import liaison.groble.application.content.ContentReader;
+import liaison.groble.application.notification.dto.KakaoNotificationDTO;
+import liaison.groble.application.notification.enums.KakaoNotificationType;
+import liaison.groble.application.notification.service.KakaoNotificationService;
 import liaison.groble.application.notification.service.NotificationService;
 import liaison.groble.application.payment.event.FreePaymentCompletedEvent;
 import liaison.groble.application.payment.event.PaymentCompletedEvent;
@@ -27,6 +30,7 @@ public class PaymentNotificationService {
   private final UserReader userReader;
   private final ContentReader contentReader;
   private final ContentPaymentSuccessReportService contentPaymentSuccessReportService;
+  private final KakaoNotificationService kakaoNotificationService;
 
   @Async("defaultAsyncExecutor") // 명시적으로 Executor 지정
   public void processAsyncPaymentCompletedEvent(PaymentCompletedEvent event) {
@@ -38,10 +42,10 @@ public class PaymentNotificationService {
     try {
       // 1. 판매자에게 알림 발송
       sendSellerNotification(event);
-
+      sendSellerATNotification(event);
       // 2. 구매자에게 알림 발송
       sendBuyerNotification(event);
-
+      sendBuyerATNotification(event);
       // 3. 판매자에게 이메일 발송
       sendSaleNotificationEmail(event);
 
@@ -116,6 +120,23 @@ public class PaymentNotificationService {
     }
   }
 
+  private void sendBuyerATNotification(PaymentCompletedEvent event) {
+    try {
+      User buyer = userReader.getUserById(event.getUserId());
+      kakaoNotificationService.sendNotification(
+          KakaoNotificationDTO.builder()
+              .type(KakaoNotificationType.PURCHASE_COMPLETE)
+              .phoneNumber(buyer.getPhoneNumber())
+              .buyerName(buyer.getNickname())
+              .contentTitle(event.getContentTitle())
+              .price(event.getAmount())
+              .merchantUid(event.getMerchantUid())
+              .build());
+    } catch (Exception e) {
+      log.error("구매자 알림 발송 실패 - buyerId: {}", event.getUserId(), e);
+    }
+  }
+
   /** 구매자 무료 결제 알림 발송 */
   private void sendBuyerFreePayNotification(FreePaymentCompletedEvent event) {
     try {
@@ -141,6 +162,24 @@ public class PaymentNotificationService {
           seller, event.getContentId(), event.getPurchaseId(), content.getThumbnailUrl());
       log.debug(
           "판매자 알림 발송 완료 - sellerId: {}, contentId: {}", event.getSellerId(), event.getContentId());
+    } catch (Exception e) {
+      log.error("판매자 알림 발송 실패 - sellerId: {}", event.getSellerId(), e);
+    }
+  }
+
+  private void sendSellerATNotification(PaymentCompletedEvent event) {
+    try {
+      User seller = userReader.getUserById(event.getSellerId());
+      User buyer = userReader.getUserById(event.getUserId());
+      kakaoNotificationService.sendNotification(
+          KakaoNotificationDTO.builder()
+              .type(KakaoNotificationType.SALE_COMPLETE)
+              .phoneNumber(seller.getPhoneNumber())
+              .buyerName(buyer.getNickname())
+              .contentTitle(event.getContentTitle())
+              .price(event.getAmount())
+              .contentId(event.getContentId())
+              .build());
     } catch (Exception e) {
       log.error("판매자 알림 발송 실패 - sellerId: {}", event.getSellerId(), e);
     }

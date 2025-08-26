@@ -1,0 +1,76 @@
+package liaison.groble.persistence.dashboard;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Repository;
+
+import com.querydsl.core.types.Projections;
+import com.querydsl.core.types.dsl.NumberExpression;
+import com.querydsl.jpa.impl.JPAQueryFactory;
+
+import liaison.groble.domain.dashboard.dto.FlatReferrerStatsDTO;
+import liaison.groble.domain.dashboard.entity.QContentReferrerEvent;
+import liaison.groble.domain.dashboard.entity.QContentReferrerStats;
+import liaison.groble.domain.dashboard.repository.ContentReferrerStatsCustomRepository;
+
+import lombok.RequiredArgsConstructor;
+
+@Repository
+@RequiredArgsConstructor
+public class ContentReferrerStatsCustomRepositoryImpl
+    implements ContentReferrerStatsCustomRepository {
+
+  private final JPAQueryFactory jpaQueryFactory;
+
+  @Override
+  public Page<FlatReferrerStatsDTO> findContentReferrerStats(
+      Long contentId, LocalDate startDate, LocalDate endDate, Pageable pageable) {
+    QContentReferrerStats qStats = QContentReferrerStats.contentReferrerStats;
+    QContentReferrerEvent qEvent = QContentReferrerEvent.contentReferrerEvent;
+
+    // [start, end+1day) 형태의 반개구간으로 집계
+    LocalDateTime startDateTime = startDate.atStartOfDay();
+    LocalDateTime endExclusive = endDate.plusDays(1).atStartOfDay();
+
+    // 방문수 집계식
+    NumberExpression<Long> visitCount = qEvent.id.count();
+
+    // 전체 개수: 유니크한 referrerUrl 개수
+    Long total =
+        jpaQueryFactory
+            .select(qStats.id.countDistinct())
+            .from(qStats)
+            .join(qEvent)
+            .on(qEvent.referrerStatsId.eq(qStats.id))
+            .where(
+                qStats.contentId.eq(contentId),
+                qEvent.eventDate.goe(startDateTime),
+                qEvent.eventDate.lt(endExclusive))
+            .fetchOne();
+
+    // 데이터 조회
+    List<FlatReferrerStatsDTO> content =
+        jpaQueryFactory
+            .select(
+                Projections.constructor(FlatReferrerStatsDTO.class, qStats.referrerUrl, visitCount))
+            .from(qStats)
+            .join(qEvent)
+            .on(qEvent.referrerStatsId.eq(qStats.id))
+            .where(
+                qStats.contentId.eq(contentId),
+                qEvent.eventDate.goe(startDateTime),
+                qEvent.eventDate.lt(endExclusive))
+            .groupBy(qStats.id, qStats.referrerUrl) // referrerUrl만 필요하므로 간소화
+            .orderBy(visitCount.desc())
+            .offset(pageable.getOffset())
+            .limit(pageable.getPageSize())
+            .fetch();
+
+    return new PageImpl<>(content, pageable, (total != null ? total : 0L));
+  }
+}

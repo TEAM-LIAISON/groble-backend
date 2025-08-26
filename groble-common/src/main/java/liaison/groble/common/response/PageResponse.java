@@ -177,5 +177,11 @@ public class PageResponse<T> {
 
     @Schema(description = "기간 내 총 조회수", example = "3000")
     private Long totalViews;
+
+    @Schema(description = "마켓 이름", example = "프리미엄 마켓")
+    private String marketName;
+
+    @Schema(description = "콘텐츠 제목", example = "자바 프로그래밍 코칭")
+    private String contentTitle;
   }
 }
