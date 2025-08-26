@@ -1,10 +1,8 @@
 package liaison.groble.application.notification.service;
 
 import java.math.BigDecimal;
-import java.text.NumberFormat;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -322,45 +320,6 @@ public class NotificationService {
   }
 
   // 카카오 알림톡 관련 메서드
-  /**
-   * 1. 회원가입 환영 메시지 발송
-   *
-   * <p>가장 기본적인 사용 사례입니다. 회원가입이 완료되면 즉시 환영 메시지를 발송합니다.
-   */
-  public void sendWelcomeMessage(String phoneNumber, String userName) {
-    try {
-      String title = "[Groble] 회원가입 완료";
-      String messageContent = buildWelcomeMessage(userName);
-      List<ButtonInfo> buttons =
-          Arrays.asList(
-              ButtonInfo.builder()
-                  .name("상품 등록하러 가기")
-                  .type("WL") // 웹링크
-                  .urlMobile("https://www.groble.im/")
-                  .urlPc("https://www.groble.im/")
-                  .build());
-      log.info("환영 알림톡 발송 시작 - 메이커: {}, 템플릿코드: {}", userName, welcomeTemplateCode);
-
-      // 알림톡 발송
-      // 알림톡이 실패하면 자동으로 SMS로 대체발송됩니다
-      MessageResponse response =
-          messageService.sendAlimtalk(
-              phoneNumber, welcomeTemplateCode, title, messageContent, kakaoSenderKey, buttons);
-
-      if (response.isSuccess()) {
-        log.info("환영 메시지 발송 성공 - 회원: {}, 메시지키: {}", userName, response.getMessageKey());
-      } else {
-        log.warn("환영 메시지 발송 실패 - 회원: {}, 오류: {}", userName, response.getErrorMessage());
-      }
-
-    } catch (Exception e) {
-      // 메시지 발송 실패가 회원가입을 막아서는 안됩니다
-      log.error("환영 메시지 발송 중 오류 발생 - 회원: {}", userName, e);
-      // 실패한 발송은 별도로 기록하여 나중에 재발송할 수 있도록 합니다
-      recordFailedMessage(phoneNumber, userName, "WELCOME", e.getMessage());
-    }
-  }
-
   /** 2. 구매자 - 결제 알림 */
   public void sendPurchaseCompleteMessage(
       String phoneNumber,
@@ -369,7 +328,7 @@ public class NotificationService {
       BigDecimal price,
       String merchantUid) {
     try {
-      String messageContent = buildPurchaseCompleteMessage(buyerName, contentTitle, price);
+      String messageContent = null;
       String title = "[Groble] 결제 알림";
       // 3) 주문 상세 URL (경로 세그먼트 안전 인코딩)
       String orderUrl =
@@ -408,8 +367,6 @@ public class NotificationService {
     } catch (Exception e) {
       // 메시지 발송 실패가 구매를 막아서는 안됩니다
       log.error("구매 완료 메시지 발송 중 오류 발생 - 구매자: {}", buyerName, e);
-      // 실패한 발송은 별도로 기록하여 나중에 재발송할 수 있도록 합니다
-      recordFailedMessage(phoneNumber, buyerName, "PURCHASE_COMPLETE", e.getMessage());
     }
   }
 
@@ -417,7 +374,7 @@ public class NotificationService {
   public void sendSaleCompleteMessage(
       String phoneNumber, String buyerName, String contentTitle, BigDecimal price, Long contentId) {
     try {
-      String messageContent = buildSaleCompleteMessage(buyerName, contentTitle, price);
+      String messageContent = null;
       String title = "[Groble] 판매 알림";
       // 3) 콘텐츠 상세 URL (경로 세그먼트 안전 인코딩)
       String contentUrl =
@@ -456,8 +413,6 @@ public class NotificationService {
     } catch (Exception e) {
       // 메시지 발송 실패가 판매를 막아서는 안됩니다
       log.error("판매 완료 메시지 발송 중 오류 발생 - 구매자: {}", buyerName, e);
-      // 실패한 발송은 별도로 기록하여 나중에 재발송할 수 있도록 합니다
-      recordFailedMessage(phoneNumber, buyerName, "SALE_COMPLETE", e.getMessage());
     }
   }
 
@@ -465,7 +420,7 @@ public class NotificationService {
   public void sendContentDiscontinuedMessage(
       String phoneNumber, String makerName, String contentTitle, Long contentId) {
     try {
-      String messageContent = buildContentDiscontinuedMessage(makerName, contentTitle);
+      String messageContent = null;
       String title = "[Groble] 판매 중단 알림";
       // 3) 콘텐츠 상세 URL (경로 세그먼트 안전 인코딩)
       String contentUrl =
@@ -504,8 +459,6 @@ public class NotificationService {
     } catch (Exception e) {
       // 메시지 발송 실패가 판매를 막아서는 안됩니다
       log.error("판매 중단 메시지 발송 중 오류 발생 - 메이커: {}", makerName, e);
-      // 실패한 발송은 별도로 기록하여 나중에 재발송할 수 있도록 합니다
-      recordFailedMessage(phoneNumber, makerName, "CONTENT_DISCONTINUED", e.getMessage());
     }
   }
 
@@ -517,7 +470,7 @@ public class NotificationService {
       Long contentId,
       Long reviewId) {
     try {
-      String messageContent = buildReviewRegisteredMessage(buyerName, sellerName, contentTitle);
+      String messageContent = null;
       String title = "[Groble] 리뷰 등록 알림";
 
       // 3) 콘텐츠 상세 URL
@@ -557,14 +510,12 @@ public class NotificationService {
     } catch (Exception e) {
       // 메시지 발송 실패가 리뷰 등록을 막아서는 안됩니다
       log.error("리뷰 등록 메시지 발송 중 오류 발생 - 구매자: {}", buyerName, e);
-      // 실패한 발송은 별도로 기록하여 나중에 재발송할 수 있도록 합니다
-      recordFailedMessage(phoneNumber, buyerName, "REVIEW_REGISTERED", e.getMessage());
     }
   }
 
   public void sendMakerCertifiedMessage(String phoneNumber, String makerName) {
     try {
-      String messageContent = buildVerificationCompleteMessage(makerName);
+      String messageContent = null;
       String title = "[Groble] 인증 완료";
       List<ButtonInfo> buttons =
           Arrays.asList(
@@ -597,62 +548,6 @@ public class NotificationService {
     } catch (Exception e) {
       // 메시지 발송 실패가 인증을 막아서는 안됩니다
       log.error("메이커 인증 완료 메시지 발송 중 오류 발생 - 메이커: {}", makerName, e);
-      // 실패한 발송은 별도로 기록하여 나중에 재발송할 수 있도록 합니다
-      recordFailedMessage(phoneNumber, makerName, "VERIFICATION_COMPLETE", e.getMessage());
     }
-  }
-
-  /** 실패한 메시지 기록 (재발송을 위해) */
-  private void recordFailedMessage(
-      String phoneNumber, String content, String type, String errorMessage) {
-    // 실제로는 데이터베이스에 저장
-    log.info(
-        "실패 메시지 기록 - 번호: {}, 유형: {}, 오류: {}", maskPhoneNumber(phoneNumber), type, errorMessage);
-  }
-
-  private String maskPhoneNumber(String phoneNumber) {
-    if (phoneNumber == null || phoneNumber.length() < 8) return "****";
-    return phoneNumber.substring(0, 3) + "****" + phoneNumber.substring(phoneNumber.length() - 4);
-  }
-
-  // [메이커 - 회원가입 완료]
-  private String buildWelcomeMessage(String makerName) {
-    return String.format(
-        "%s님, 환영합니다🎉\n" + "그로블에 가입해 주셔서 감사합니다.\n" + "\n" + "이제 단 5분 만에 첫 상품을 등록하고, 판매를 시작할 수 있어요.",
-        makerName);
-  }
-
-  // [구매자 - 결제 알림]
-  private String buildPurchaseCompleteMessage(
-      String buyerName, String contentTitle, BigDecimal price) {
-    String formattedPrice = NumberFormat.getNumberInstance(Locale.KOREA).format(price);
-    return String.format(
-        "%s님, 결제가 완료되었어요!\n\n- 상품명: %s\n- 가격: %s원", buyerName, contentTitle, formattedPrice);
-  }
-
-  // [메이커 - 판매 알림]
-  private String buildSaleCompleteMessage(
-      String sellerName, String contentTitle, BigDecimal price) {
-    String formattedPrice = NumberFormat.getNumberInstance(Locale.KOREA).format(price);
-    return String.format(
-        "%s님이 상품을 구매했어요!\n" + "\n" + "- 상품명: %s\n" + "- 가격: %s",
-        sellerName, contentTitle, formattedPrice);
-  }
-
-  // [메이커 - 판매 중단 알림]
-  private String buildContentDiscontinuedMessage(String makerName, String contentTitle) {
-    return String.format("%s님, 판매가 중단되었습니다.\n" + "\n" + "- 상품명: %s", makerName, contentTitle);
-  }
-
-  // [메이커 - 리뷰 등록 알림]
-  private String buildReviewRegisteredMessage(
-      String buyerName, String sellerName, String contentTitle) {
-    return String.format(
-        "%s님이 %s님의 상품에 리뷰를 남겼어요! \n" + "\n" + "- 상품명: %s", buyerName, sellerName, contentTitle);
-  }
-
-  // [메이커 - 인증 완료]
-  private String buildVerificationCompleteMessage(String makerName) {
-    return String.format("%s님, 메이커 인증이 완료되었습니다!", makerName);
   }
 }

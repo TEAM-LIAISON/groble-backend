@@ -1,12 +1,16 @@
 package liaison.groble.application.notification.dto;
 
+import liaison.groble.application.notification.enums.KakaoNotificationType;
+
 import lombok.Builder;
 import lombok.Getter;
 
 @Getter
 @Builder
 public class KakaoNotificationDTO {
+  private KakaoNotificationType type;
   private String userName;
   private String sellerName;
   private String buyerName;
+  private String phoneNumber;
 }
