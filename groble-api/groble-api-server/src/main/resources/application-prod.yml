@@ -138,33 +138,33 @@ springdoc:
   show-actuator: false
   model-and-view-allowed: true
 
-# Logging
+# Logging (운영 환경)
 logging:
   level:
     root: INFO
-    liaison: DEBUG
+    liaison: INFO                              # 애플리케이션 로그는 INFO로
+
     # Spring 전반
-    org.springframework: INFO
-    org.springframework.web: DEBUG            # 요청 매핑/핸들러 흐름
-    org.springframework.http: INFO
-    org.springframework.web.client: INFO      # RestTemplate
-    org.springframework.web.reactive.function.client: INFO  # WebClient
-    reactor.netty.http.client: INFO
+    org.springframework: WARN                 # 경고 이상만
+    org.springframework.web: WARN             # 웹 관련 경고만
+    org.springframework.http: WARN
+    org.springframework.web.client: WARN      # RestTemplate
+    org.springframework.web.reactive.function.client: WARN  # WebClient
+    reactor.netty.http.client: WARN
 
-    # DB 쿼리
-    org.springframework.jdbc.core: DEBUG      # JdbcTemplate가 실행하는 SQL
-    org.hibernate.SQL: DEBUG                  # Hibernate가 만든 SQL
-    org.hibernate.orm.jdbc.bind: TRACE        # 바인딩 파라미터 (Boot 3+)
-    # (Boot 2.x면) org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    # DB 쿼리 - 운영에선 끄기
+    org.springframework.jdbc.core: WARN       # SQL 로그 끄기
+    org.hibernate.SQL: WARN                   # SQL 로그 끄기
+    org.hibernate.orm.jdbc.bind: WARN         # 바인딩 파라미터 끄기
 
-    # HTTP 클라이언트 (Apache)
-    org.apache.http: INFO
-    org.apache.http.wire: WARN                # 너무 시끄러우니 기본은 WARN
+    # HTTP 클라이언트
+    org.apache.http: WARN
+    org.apache.http.wire: ERROR               # 매우 중요한 에러만
 
     # 문서/외부
-    org.springdoc: INFO
-    io.swagger.v3: INFO
-    com.amazonaws: INFO
+    org.springdoc: WARN
+    io.swagger.v3: WARN
+    com.amazonaws: WARN
 
 management:
   tracing:
@@ -177,10 +177,10 @@ management:
   otlp:
     metrics:
       export:
-        url: http://localhost:4318/v1/metrics  # OTLP 수집기 엔드포인트
+        url: http://otelcol.groble.local:4318/v1/metrics  # ✅ 변경됨
         step: 10s
     tracing:
-      endpoint: http://localhost:4318/v1/traces  # OTLP 수집기 엔드포인트
+      endpoint: http://otelcol.groble.local:4318/v1/traces  # ✅ 변경됨
   endpoints:
     web:
       exposure:
@@ -204,7 +204,6 @@ management:
     observations:
       key-values:
         application: ${spring.application.name}
-
 otel:
   resource:
     attributes:
@@ -214,7 +213,7 @@ otel:
   exporter:
     otlp:
       protocol: http/protobuf
-      endpoint: http://localhost:4318  # OTLP Collector 엔드포인트
+      endpoint: http://otelcol.groble.local:4318/  # ✅ 변경됨
   logs:
     export:
-      endpoint: http://localhost:4318/v1/logs
+      endpoint: http://otelcol.groble.local:4318/v1/logs  # ✅ 변경됨
