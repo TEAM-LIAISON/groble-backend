@@ -173,7 +173,7 @@ public class PaymentNotificationService {
       User buyer = userReader.getUserById(event.getUserId());
       kakaoNotificationService.sendNotification(
           KakaoNotificationDTO.builder()
-              .type(KakaoNotificationType.PURCHASE_COMPLETE)
+              .type(KakaoNotificationType.SALE_COMPLETE)
               .phoneNumber(seller.getPhoneNumber())
               .buyerName(buyer.getNickname())
               .contentTitle(event.getContentTitle())

@@ -1,6 +1,10 @@
 package liaison.groble.application.notification.service;
 
 import java.util.List;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import liaison.groble.application.notification.dto.NotificationDetailsDTO;
 import liaison.groble.application.notification.dto.NotificationItemDTO;
 import liaison.groble.application.notification.dto.NotificationItemsDTO;
@@ -16,10 +20,9 @@ import liaison.groble.domain.notification.enums.SubNotificationType;
 import liaison.groble.domain.notification.repository.NotificationCustomRepository;
 import liaison.groble.domain.notification.repository.NotificationRepository;
 import liaison.groble.domain.user.entity.User;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
