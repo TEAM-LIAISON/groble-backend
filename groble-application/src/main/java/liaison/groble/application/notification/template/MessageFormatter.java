@@ -30,7 +30,7 @@ public class MessageFormatter {
   }
 
   // [Groble] 판매 중단 알림
-  public static String saleDiscontinued(String sellerName, String contentTitle) {
+  public static String contentDiscontinued(String sellerName, String contentTitle) {
     return String.format("%s님, 판매가 중단되었습니다.\n" + "\n" + "- 상품명: %s", sellerName, contentTitle);
   }
 

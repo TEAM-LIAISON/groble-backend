@@ -1,5 +1,6 @@
 package liaison.groble.application.notification.dto;
 
+import java.math.BigDecimal;
 import liaison.groble.application.notification.enums.KakaoNotificationType;
 
 import lombok.Builder;
@@ -13,4 +14,10 @@ public class KakaoNotificationDTO {
   private String sellerName;
   private String buyerName;
   private String phoneNumber;
+
+
+
+  // Purchase_Complete_Template
+    private String contentTitle;
+    private BigDecimal price;
 }

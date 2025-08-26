@@ -35,29 +35,6 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 public class NotificationService {
-  @Value("${bizppurio.kakao-sender-key}")
-  private String kakaoSenderKey; // 카카오톡 발신프로필키
-
-  // 설정 파일에서 템플릿 정보를 가져옵니다
-  // 이렇게 하면 템플릿이 변경되어도 코드 수정 없이 설정만 변경하면 됩니다
-  @Value("${bizppurio.templates.welcome.code}")
-  private String welcomeTemplateCode;
-
-  @Value("${bizppurio.templates.purchase-complete.code}")
-  private String purchaseCompleteTemplateCode;
-
-  @Value("${bizppurio.templates.sale-complete.code}")
-  private String saleCompleteTemplateCode;
-
-  @Value("${bizppurio.templates.verification-complete.code}")
-  private String verificationCompleteTemplateCode;
-
-  @Value("${bizppurio.templates.review-register.code}")
-  private String reviewRegisteredTemplateCode;
-
-  @Value("${bizppurio.templates.content-discontinued.code}")
-  private String contentDiscontinuedTemplateCode;
-
   private final NotificationCustomRepository notificationCustomRepository;
   private final NotificationRepository notificationRepository;
   private final NotificationReader notificationReader;
