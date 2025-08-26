@@ -1,14 +1,6 @@
 package liaison.groble.application.notification.service;
 
-import java.math.BigDecimal;
-import java.util.Arrays;
 import java.util.List;
-
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.util.UriComponentsBuilder;
-
 import liaison.groble.application.notification.dto.NotificationDetailsDTO;
 import liaison.groble.application.notification.dto.NotificationItemDTO;
 import liaison.groble.application.notification.dto.NotificationItemsDTO;
@@ -24,12 +16,10 @@ import liaison.groble.domain.notification.enums.SubNotificationType;
 import liaison.groble.domain.notification.repository.NotificationCustomRepository;
 import liaison.groble.domain.notification.repository.NotificationRepository;
 import liaison.groble.domain.user.entity.User;
-import liaison.groble.external.infotalk.dto.message.ButtonInfo;
-import liaison.groble.external.infotalk.dto.message.MessageResponse;
-import liaison.groble.external.infotalk.service.BizppurioMessageService;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -39,9 +29,6 @@ public class NotificationService {
   private final NotificationRepository notificationRepository;
   private final NotificationReader notificationReader;
   private final NotificationMapper notificationMapper;
-
-  // 카카오 알림톡 발송 서비스
-  private final BizppurioMessageService messageService;
 
   public NotificationItemsDTO getNotificationItems(final Long userId) {
     List<Notification> notifications =
@@ -294,237 +281,5 @@ public class NotificationService {
     Notification notification =
         notificationReader.getNotificationByIdAndUserId(notificationId, userId);
     notification.markAsRead();
-  }
-
-  // 카카오 알림톡 관련 메서드
-  /** 2. 구매자 - 결제 알림 */
-  public void sendPurchaseCompleteMessage(
-      String phoneNumber,
-      String buyerName,
-      String contentTitle,
-      BigDecimal price,
-      String merchantUid) {
-    try {
-      String messageContent = null;
-      String title = "[Groble] 결제 알림";
-      // 3) 주문 상세 URL (경로 세그먼트 안전 인코딩)
-      String orderUrl =
-          UriComponentsBuilder.fromHttpUrl("https://www.groble.im")
-              .path("/manage/purchase/{merchantUid}")
-              .buildAndExpand(merchantUid)
-              .encode()
-              .toUriString();
-
-      List<ButtonInfo> buttons =
-          Arrays.asList(
-              ButtonInfo.builder()
-                  .name("내 콘텐츠 보러 가기")
-                  .type("WL") // 웹링크
-                  .urlMobile(orderUrl)
-                  .urlPc(orderUrl)
-                  .build());
-      log.info("구매 완료 알림톡 발송 시작 - 구매자: {}, 템플릿코드: {}", buyerName, purchaseCompleteTemplateCode);
-
-      // 알림톡 발송
-      MessageResponse response =
-          messageService.sendAlimtalk(
-              phoneNumber,
-              purchaseCompleteTemplateCode,
-              title,
-              messageContent,
-              kakaoSenderKey,
-              buttons);
-
-      if (response.isSuccess()) {
-        log.info("구매 완료 메시지 발송 성공 - 구매자: {}, 메시지키: {}", buyerName, response.getMessageKey());
-      } else {
-        log.warn("구매 완료 메시지 발송 실패 - 구매자: {}, 오류: {}", buyerName, response.getErrorMessage());
-      }
-
-    } catch (Exception e) {
-      // 메시지 발송 실패가 구매를 막아서는 안됩니다
-      log.error("구매 완료 메시지 발송 중 오류 발생 - 구매자: {}", buyerName, e);
-    }
-  }
-
-  /** 3. 판매자 - 판매 알림 */
-  public void sendSaleCompleteMessage(
-      String phoneNumber, String buyerName, String contentTitle, BigDecimal price, Long contentId) {
-    try {
-      String messageContent = null;
-      String title = "[Groble] 판매 알림";
-      // 3) 콘텐츠 상세 URL (경로 세그먼트 안전 인코딩)
-      String contentUrl =
-          UriComponentsBuilder.fromHttpUrl("https://www.groble.im")
-              .path("/manage/store/products/{contentId}")
-              .buildAndExpand(contentId)
-              .encode()
-              .toUriString();
-
-      List<ButtonInfo> buttons =
-          Arrays.asList(
-              ButtonInfo.builder()
-                  .name("내역 확인하기")
-                  .type("WL") // 웹링크
-                  .urlMobile(contentUrl)
-                  .urlPc(contentUrl)
-                  .build());
-      log.info("판매 완료 알림톡 발송 시작 - 구매자: {}, 템플릿코드: {}", buyerName, saleCompleteTemplateCode);
-
-      // 알림톡 발송
-      MessageResponse response =
-          messageService.sendAlimtalk(
-              phoneNumber,
-              saleCompleteTemplateCode,
-              title,
-              messageContent,
-              kakaoSenderKey,
-              buttons);
-
-      if (response.isSuccess()) {
-        log.info("판매 완료 메시지 발송 성공 - 구매자: {}, 메시지키: {}", buyerName, response.getMessageKey());
-      } else {
-        log.warn("판매 완료 메시지 발송 실패 - 구매자: {}, 오류: {}", buyerName, response.getErrorMessage());
-      }
-
-    } catch (Exception e) {
-      // 메시지 발송 실패가 판매를 막아서는 안됩니다
-      log.error("판매 완료 메시지 발송 중 오류 발생 - 구매자: {}", buyerName, e);
-    }
-  }
-
-  // 판매 중단 알림
-  public void sendContentDiscontinuedMessage(
-      String phoneNumber, String makerName, String contentTitle, Long contentId) {
-    try {
-      String messageContent = null;
-      String title = "[Groble] 판매 중단 알림";
-      // 3) 콘텐츠 상세 URL (경로 세그먼트 안전 인코딩)
-      String contentUrl =
-          UriComponentsBuilder.fromHttpUrl("https://www.groble.im")
-              .path("/products/{contentId}")
-              .buildAndExpand(contentId)
-              .encode()
-              .toUriString();
-
-      List<ButtonInfo> buttons =
-          Arrays.asList(
-              ButtonInfo.builder()
-                  .name("확인하러 가기")
-                  .type("WL") // 웹링크
-                  .urlMobile(contentUrl)
-                  .urlPc(contentUrl)
-                  .build());
-      log.info("판매 중단 알림톡 발송 시작 - 메이커: {}, 템플릿코드: {}", makerName, contentDiscontinuedTemplateCode);
-
-      // 알림톡 발송
-      MessageResponse response =
-          messageService.sendAlimtalk(
-              phoneNumber,
-              contentDiscontinuedTemplateCode,
-              title,
-              messageContent,
-              kakaoSenderKey,
-              buttons);
-
-      if (response.isSuccess()) {
-        log.info("판매 중단 메시지 발송 성공 - 메이커: {}, 메시지키: {}", makerName, response.getMessageKey());
-      } else {
-        log.warn("판매 중단 메시지 발송 실패 - 메이커: {}, 오류: {}", makerName, response.getErrorMessage());
-      }
-
-    } catch (Exception e) {
-      // 메시지 발송 실패가 판매를 막아서는 안됩니다
-      log.error("판매 중단 메시지 발송 중 오류 발생 - 메이커: {}", makerName, e);
-    }
-  }
-
-  public void sendReviewRegisteredMessage(
-      String phoneNumber,
-      String buyerName,
-      String sellerName,
-      String contentTitle,
-      Long contentId,
-      Long reviewId) {
-    try {
-      String messageContent = null;
-      String title = "[Groble] 리뷰 등록 알림";
-
-      // 3) 콘텐츠 상세 URL
-      String contentUrl =
-          UriComponentsBuilder.fromHttpUrl("https://www.groble.im")
-              .path("/manage/store/products/{contentId}/reviews/{reviewId}")
-              .buildAndExpand(contentId, reviewId) // ✅ 둘 다 전달
-              .encode()
-              .toUriString();
-
-      List<ButtonInfo> buttons =
-          Arrays.asList(
-              ButtonInfo.builder()
-                  .name("확인하러 가기")
-                  .type("WL") // 웹링크
-                  .urlMobile(contentUrl)
-                  .urlPc(contentUrl)
-                  .build());
-      log.info("리뷰 등록 알림톡 발송 시작 - 구매자: {}, 템플릿코드: {}", buyerName, reviewRegisteredTemplateCode);
-
-      // 알림톡 발송
-      MessageResponse response =
-          messageService.sendAlimtalk(
-              phoneNumber,
-              reviewRegisteredTemplateCode,
-              title,
-              messageContent,
-              kakaoSenderKey,
-              buttons);
-
-      if (response.isSuccess()) {
-        log.info("리뷰 등록 메시지 발송 성공 - 구매자: {}, 메시지키: {}", buyerName, response.getMessageKey());
-      } else {
-        log.warn("리뷰 등록 메시지 발송 실패 - 구매자: {}, 오류: {}", buyerName, response.getErrorMessage());
-      }
-
-    } catch (Exception e) {
-      // 메시지 발송 실패가 리뷰 등록을 막아서는 안됩니다
-      log.error("리뷰 등록 메시지 발송 중 오류 발생 - 구매자: {}", buyerName, e);
-    }
-  }
-
-  public void sendMakerCertifiedMessage(String phoneNumber, String makerName) {
-    try {
-      String messageContent = null;
-      String title = "[Groble] 인증 완료";
-      List<ButtonInfo> buttons =
-          Arrays.asList(
-              ButtonInfo.builder()
-                  .name("마이페이지 바로가기")
-                  .type("WL") // 웹링크
-                  .urlMobile("https://www.groble.im/users/profile/info")
-                  .urlPc("https://www.groble.im/users/profile/info")
-                  .build());
-
-      log.info(
-          "메이커 인증 완료 알림톡 발송 시작 - 메이커: {}, 템플릿코드: {}", makerName, verificationCompleteTemplateCode);
-
-      // 알림톡 발송
-      MessageResponse response =
-          messageService.sendAlimtalk(
-              phoneNumber,
-              verificationCompleteTemplateCode,
-              title,
-              messageContent,
-              kakaoSenderKey,
-              buttons);
-
-      if (response.isSuccess()) {
-        log.info("메이커 인증 완료 메시지 발송 성공 - 메이커: {}, 메시지키: {}", makerName, response.getMessageKey());
-      } else {
-        log.warn("메이커 인증 완료 메시지 발송 실패 - 메이커: {}, 오류: {}", makerName, response.getErrorMessage());
-      }
-
-    } catch (Exception e) {
-      // 메시지 발송 실패가 인증을 막아서는 안됩니다
-      log.error("메이커 인증 완료 메시지 발송 중 오류 발생 - 메이커: {}", makerName, e);
-    }
   }
 }

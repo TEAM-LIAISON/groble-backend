@@ -98,7 +98,7 @@ public class PhoneAuthService {
           KakaoNotificationDTO.builder()
               .type(KakaoNotificationType.WELCOME)
               .userName(user.getNickname())
-                  .phoneNumber(sanitized)
+              .phoneNumber(sanitized)
               .build());
       sendDiscordMemberReport(user);
       userRepository.save(user);

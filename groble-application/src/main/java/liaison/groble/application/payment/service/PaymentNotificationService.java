@@ -4,6 +4,9 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import liaison.groble.application.content.ContentReader;
+import liaison.groble.application.notification.dto.KakaoNotificationDTO;
+import liaison.groble.application.notification.enums.KakaoNotificationType;
+import liaison.groble.application.notification.service.KakaoNotificationService;
 import liaison.groble.application.notification.service.NotificationService;
 import liaison.groble.application.payment.event.FreePaymentCompletedEvent;
 import liaison.groble.application.payment.event.PaymentCompletedEvent;
@@ -27,6 +30,7 @@ public class PaymentNotificationService {
   private final UserReader userReader;
   private final ContentReader contentReader;
   private final ContentPaymentSuccessReportService contentPaymentSuccessReportService;
+  private final KakaoNotificationService kakaoNotificationService;
 
   @Async("defaultAsyncExecutor") // 명시적으로 Executor 지정
   public void processAsyncPaymentCompletedEvent(PaymentCompletedEvent event) {
@@ -119,12 +123,15 @@ public class PaymentNotificationService {
   private void sendBuyerATNotification(PaymentCompletedEvent event) {
     try {
       User buyer = userReader.getUserById(event.getUserId());
-      notificationService.sendPurchaseCompleteMessage(
-          buyer.getPhoneNumber(),
-          buyer.getNickname(),
-          event.getContentTitle(),
-          event.getAmount(),
-          event.getMerchantUid());
+      kakaoNotificationService.sendNotification(
+          KakaoNotificationDTO.builder()
+              .type(KakaoNotificationType.PURCHASE_COMPLETE)
+              .phoneNumber(buyer.getPhoneNumber())
+              .buyerName(buyer.getNickname())
+              .contentTitle(event.getContentTitle())
+              .price(event.getAmount())
+              .merchantUid(event.getMerchantUid())
+              .build());
     } catch (Exception e) {
       log.error("구매자 알림 발송 실패 - buyerId: {}", event.getUserId(), e);
     }
@@ -164,12 +171,15 @@ public class PaymentNotificationService {
     try {
       User seller = userReader.getUserById(event.getSellerId());
       User buyer = userReader.getUserById(event.getUserId());
-      notificationService.sendSaleCompleteMessage(
-          seller.getPhoneNumber(),
-          buyer.getNickname(),
-          event.getContentTitle(),
-          event.getAmount(),
-          event.getContentId());
+      kakaoNotificationService.sendNotification(
+          KakaoNotificationDTO.builder()
+              .type(KakaoNotificationType.PURCHASE_COMPLETE)
+              .phoneNumber(seller.getPhoneNumber())
+              .buyerName(buyer.getNickname())
+              .contentTitle(event.getContentTitle())
+              .price(event.getAmount())
+              .contentId(event.getContentId())
+              .build());
     } catch (Exception e) {
       log.error("판매자 알림 발송 실패 - sellerId: {}", event.getSellerId(), e);
     }
