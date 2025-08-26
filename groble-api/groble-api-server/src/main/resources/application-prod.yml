@@ -137,50 +137,201 @@ springdoc:
     - liaison.groble.api.server
   show-actuator: false
   model-and-view-allowed: true
+spring:
+  profiles:
+    group:
+      blue: blue, common, secret-prod
+      green: green, common, secret-prod
 
-# Logging (운영 환경)
+server:
+  env: blue
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: blue
+
+server:
+  port: 8080
+  servlet:
+    context-path: /
+  error:
+    include-message: always
+    include-binding-errors: always
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: green
+
+server:
+  port: 8080
+  servlet:
+    context-path: /
+  error:
+    include-message: always
+    include-binding-errors: always
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: common
+
+  application:
+    name: groble
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 0
+    validate-on-migrate: true
+    clean-disabled: true
+    placeholders:
+      "visitor.hash.salt": "N58ooxTxrCLvczQ79Ya2eg=="
+
+  jpa:
+    database-platform: org.hibernate.dialect.MySQL8Dialect
+    properties:
+      hibernate:
+        format_sql: false
+        show_sql: false
+        use_sql_comments: false
+        default_batch_fetch_size: 100
+        generate_statistics: false   # 성능 모니터링 설정
+        jdbc:
+          batch_size: 50
+          time_zone: Asia/Seoul
+        order_inserts: true
+        order_updates: true
+    hibernate:
+      ddl-auto: validate
+  mvc:
+    path match:
+      matching-strategy: ant_path_matcher
+    async:
+      request-timeout: 120s            # 멀티파트 처리 대기 시간
+
+  servlet:
+    multipart:
+      enabled: true
+      file-size-threshold: 2MB            # 2MB 초과 시 디스크로 스필
+      max-file-size: 60MB                  # 단일 파일 최대 용량
+      max-request-size: 60MB               # 요청 전체 최대 용량
+      resolve-lazily: true                 # 실제 파일 접근 시 파싱 (메모리 절약)
+
+server:
+  timezone: Asia/Seoul
+
+  tomcat:
+    connection-timeout: 120000       # 120초 - 업로드 연결 타임아웃
+    keep-alive-timeout: 90000        # 90초 - 장시간 아이들 커넥션 방지
+    max-swallow-size: -1             # 무제한 (Spring이 한도 관리)
+    max-http-form-post-size: -1      # 무제한 (Spring이 한도 관리)
+    max-http-header-size: 16384      # 16KB를 바이트로
+    max-connections: 2000            # 동시 연결 수 (서버 스펙에 맞춰 조정)
+    accept-count: 100                # 큐에 대기할 수 있는 최대 연결 수
+    threads:
+      max: 300                       # 요청 처리 스레드 수 (CPU/메모리에 맞춰 조정)
+
+  error:
+    include-message: always
+    include-stacktrace: on-param
+
+storage:
+  provider: s3
+  s3:
+    bucket: image.groble.im
+
+app:
+  frontend-url: https://groble.im
+  backend-url: https://api.groble.im
+  cookie:
+    domain: groble.im
+    admin-domain: groble.im
+  reset:
+    base-url: https://groble.im
+    path: /reset-password
+    expiration-ms: 200000 # 2 minutes
+
+# Springdoc OpenAPI Configuration
+springdoc:
+  swagger-ui:
+    path: /swagger-ui
+    tags-sorter: alpha
+    operations-sorter: alpha
+    doc-expansion: none
+    disable-swagger-default-url: true
+  api-docs:
+    path: /v3/api-docs
+  default-consumes-media-type: application/json
+  default-produces-media-type: application/json
+  paths-to-match:
+    - /api/**
+  packages-to-scan:
+    - liaison.groble.api.server
+  show-actuator: false
+  model-and-view-allowed: true
+
+# Logging - 운영 환경 (더 많은 로그 확보)
 logging:
   level:
     root: INFO
-    liaison: INFO                              # 애플리케이션 로그는 INFO로
+    liaison: INFO                              # 애플리케이션 로그
 
-    # Spring 전반
-    org.springframework: WARN                 # 경고 이상만
-    org.springframework.web: WARN             # 웹 관련 경고만
-    org.springframework.http: WARN
-    org.springframework.web.client: WARN      # RestTemplate
-    org.springframework.web.reactive.function.client: WARN  # WebClient
-    reactor.netty.http.client: WARN
+    # Spring 주요 컴포넌트 - INFO로 상향
+    org.springframework: INFO                 # Spring 기본 로그
+    org.springframework.web: INFO             # HTTP 요청/응답 로그
+    org.springframework.security: INFO        # 보안 관련 로그
+    org.springframework.boot: INFO            # 부트 관련 로그
+    org.springframework.context: INFO         # 컨텍스트 로그
 
-    # DB 쿼리 - 운영에선 끄기
-    org.springframework.jdbc.core: WARN       # SQL 로그 끄기
-    org.hibernate.SQL: WARN                   # SQL 로그 끄기
-    org.hibernate.orm.jdbc.bind: WARN         # 바인딩 파라미터 끄기
+    # HTTP 상세 로그 (필요시)
+    org.springframework.http: DEBUG           # HTTP 상세 디버그
+    org.springframework.web.client: INFO      # RestTemplate 로그
+    org.springframework.web.reactive.function.client: INFO  # WebClient
+    reactor.netty.http.client: INFO
+
+    # DB 쿼리 - 운영에서도 최소 INFO
+    org.springframework.jdbc.core: INFO       # JDBC 작업 로그
+    org.springframework.transaction: INFO     # 트랜잭션 로그
+    org.hibernate: INFO                       # Hibernate 일반 로그
+    org.hibernate.SQL: WARN                   # SQL 쿼리는 WARN (성능 이슈시만)
+    org.hibernate.orm.jdbc.bind: WARN         # 바인딩 파라미터 숨김
+    org.hibernate.stat: INFO                  # 통계 정보
 
     # HTTP 클라이언트
-    org.apache.http: WARN
-    org.apache.http.wire: ERROR               # 매우 중요한 에러만
+    org.apache.http: INFO
+    org.apache.http.wire: WARN                # 상세 wire 로그는 WARN
 
     # 문서/외부
-    org.springdoc: WARN
-    io.swagger.v3: WARN
-    com.amazonaws: WARN
+    org.springdoc: INFO
+    io.swagger.v3: INFO
+    com.amazonaws: INFO                        # AWS SDK 로그
 
+    # 애플리케이션 특정 패키지 (더 상세히)
+    liaison.groble: DEBUG                     # 애플리케이션 코드는 DEBUG로
+
+# OpenTelemetry 설정 비활성화 (운영)
 management:
   tracing:
+    enabled: false                            # 트레이싱 비활성화
     sampling:
-      probability: 1.0  # 샘플링 비율 (1.0 = 100%)
+      probability: 0.0                        # 샘플링 0%
   metrics:
     export:
       otlp:
-        enabled: true
+        enabled: false                        # OTLP 메트릭 비활성화
   otlp:
     metrics:
       export:
-        url: http://otelcol.groble.local:4318/v1/metrics  # ✅ 변경됨
-        step: 10s
+        enabled: false                        # 메트릭 export 비활성화
     tracing:
-      endpoint: http://otelcol.groble.local:4318/v1/traces  # ✅ 변경됨
+      enabled: false                          # 트레이싱 비활성화
   endpoints:
     web:
       exposure:
@@ -190,8 +341,9 @@ management:
     health:
       show-details: always
     prometheus:
-      enabled: true
+      enabled: true                           # Prometheus는 유지 (모니터링용)
     metrics:
+      enabled: true
       export:
         prometheus:
           enabled: true
@@ -201,19 +353,14 @@ management:
       tags:
         application: ${spring.application.name}
         environment: ${server.env}
-    observations:
-      key-values:
-        application: ${spring.application.name}
+
+# OpenTelemetry 완전 비활성화
 otel:
-  resource:
-    attributes:
-      service.name: ${spring.application.name}
-      service.version: ${version:0.0.1}
-      deployment.environment: ${spring.profiles.active:default}
-  exporter:
-    otlp:
-      protocol: http/protobuf
-      endpoint: http://otelcol.groble.local:4318/  # ✅ 변경됨
+  sdk:
+    disabled: true                            # SDK 자체 비활성화
+  traces:
+    exporter: none                            # 트레이스 내보내지 않음
+  metrics:
+    exporter: none                            # 메트릭 내보내지 않음
   logs:
-    export:
-      endpoint: http://otelcol.groble.local:4318/v1/logs  # ✅ 변경됨
+    exporter: none                            # 로그 내보내지 않음
