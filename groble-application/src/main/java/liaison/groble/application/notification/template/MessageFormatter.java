@@ -18,7 +18,7 @@ public class MessageFormatter {
   // [Groble] 결제 알림
   public static String purchaseComplete(String buyerName, String contentTitle, BigDecimal price) {
     return String.format(
-        "%s님, 결제가 완료되었어요!\n\n" + "- 상품명: %s\n" + "- 가격: %s원",
+        "%s님, 결제가 완료되었어요!\n" + "\n" + "- 상품명: %s\n" + "- 결제금액: %s원",
         buyerName, contentTitle, formatCurrency(price));
   }
 
