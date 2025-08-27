@@ -1,7 +1,6 @@
 package liaison.groble.application.settlement.service;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.ZoneId;
 import java.util.List;
@@ -55,21 +54,12 @@ public class SettlementService {
             .filter(Objects::nonNull)
             .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-    // 3) 이번 달 정산 예정 금액 = 이번 달 기간 Settlement의 settlementAmount (없으면 0)
-    YearMonth nowYm = YearMonth.now(KST);
-    LocalDate start = nowYm.atDay(1);
-    LocalDate end = nowYm.atEndOfMonth();
-
-    BigDecimal currentMonthSettlementAmount =
-        settlementReader
-            .findSettlementByUserIdAndPeriod(userId, start, end)
-            .map(Settlement::getSettlementAmount)
-            .orElse(BigDecimal.ZERO);
+    BigDecimal pendingSettlementAmount = settlementReader.getPendingSettlementAmount(userId);
 
     return SettlementOverviewDTO.builder()
         .verificationStatus(sellerInfo.getVerificationStatus().name())
         .totalSettlementAmount(totalSettlementAmount)
-        .currentMonthSettlementAmount(currentMonthSettlementAmount)
+        .pendingSettlementAmount(pendingSettlementAmount)
         .build();
   }
 

@@ -27,11 +27,10 @@ public class SettlementOverviewResponse {
       requiredMode = Schema.RequiredMode.REQUIRED)
   private BigDecimal totalSettlementAmount;
 
-  // 정산 예정 금액 (이번 달 한정) -> 서버에서 자동으로 이번 달을 처리해서 반환하도록 구현
   @Schema(
-      description = "정산 예정 금액 (이번 달 한정)",
-      example = "1000000",
+      description = "정산 예정 금액",
+      example = "900000",
       type = "number",
       requiredMode = Schema.RequiredMode.REQUIRED)
-  private BigDecimal currentMonthSettlementAmount;
+  private BigDecimal pendingSettlementAmount;
 }

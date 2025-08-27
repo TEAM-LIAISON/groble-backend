@@ -1,5 +1,6 @@
 package liaison.groble.application.settlement.reader;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -71,6 +72,10 @@ public class SettlementReader {
   public Optional<Settlement> findSettlementByUserIdAndPeriod(
       Long sellerId, LocalDate periodStart, LocalDate periodEnd) {
     return settlementRepository.findByUserIdAndPeriod(sellerId, periodStart, periodEnd);
+  }
+
+  public BigDecimal getPendingSettlementAmount(Long sellerId) {
+    return settlementRepository.getPendingSettlementAmount(sellerId);
   }
 
   public Page<FlatSettlementsDTO> findSettlementsByUserId(Long userId, Pageable pageable) {

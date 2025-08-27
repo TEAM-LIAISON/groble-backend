@@ -1,5 +1,6 @@
 package liaison.groble.persistence.settlement;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -25,6 +26,11 @@ public class SettlementRepositoryImpl implements SettlementRepository {
   @Override
   public Optional<Settlement> findByIdAndUserId(Long sellerId, Long settlementId) {
     return jpaSettlementRepository.findByIdAndUserId(sellerId, settlementId);
+  }
+
+  @Override
+  public BigDecimal getPendingSettlementAmount(Long sellerId) {
+    return jpaSettlementRepository.calculatePendingSettlementAmount(sellerId);
   }
 
   @Override
