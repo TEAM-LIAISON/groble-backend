@@ -93,6 +93,9 @@ public class SettlementItem extends BaseTimeEntity {
   @Column(name = "content_title", length = 255)
   private String contentTitle;
 
+  @Column(name = "content_type", length = 20)
+  private String capturedContentType;
+
   @Column(name = "option_name", length = 255)
   private String optionName;
 
@@ -180,6 +183,11 @@ public class SettlementItem extends BaseTimeEntity {
 
     // 스냅샷 정보 저장
     this.contentTitle = purchase.getContent() != null ? purchase.getContent().getTitle() : null;
+    // 콘텐츠 타입 캡처 (null 체크 포함)
+    if (purchase.getContent() != null && purchase.getContent().getContentType() != null) {
+      // ContentType enum을 문자열로 저장
+      this.capturedContentType = purchase.getContent().getContentType().name();
+    }
     this.optionName = purchase.getSelectedOptionName();
     this.purchaserName =
         purchase.getOrder() != null && purchase.getOrder().getPurchaser() != null

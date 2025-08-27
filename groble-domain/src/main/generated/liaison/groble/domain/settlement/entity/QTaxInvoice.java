@@ -38,6 +38,10 @@ public class QTaxInvoice extends EntityPathBase<TaxInvoice> {
 
     public final QSettlementItem settlementItem;
 
+    public final NumberPath<Integer> settlementRound = createNumber("settlementRound", Integer.class);
+
+    public final StringPath settlementType = createString("settlementType");
+
     public final EnumPath<TaxInvoice.InvoiceStatus> status = createEnum("status", TaxInvoice.InvoiceStatus.class);
 
     public final NumberPath<java.math.BigDecimal> supplyAmount = createNumber("supplyAmount", java.math.BigDecimal.class);

@@ -53,13 +53,19 @@ public class QSettlement extends EntityPathBase<Settlement> {
 
     public final NumberPath<java.math.BigDecimal> settlementAmount = createNumber("settlementAmount", java.math.BigDecimal.class);
 
+    public final EnumPath<liaison.groble.domain.settlement.enums.SettlementCycle> settlementCycle = createEnum("settlementCycle", liaison.groble.domain.settlement.enums.SettlementCycle.class);
+
     public final DatePath<java.time.LocalDate> settlementEndDate = createDate("settlementEndDate", java.time.LocalDate.class);
 
     public final ListPath<SettlementItem, QSettlementItem> settlementItems = this.<SettlementItem, QSettlementItem>createList("settlementItems", SettlementItem.class, QSettlementItem.class, PathInits.DIRECT2);
 
     public final StringPath settlementNote = createString("settlementNote");
 
+    public final NumberPath<Integer> settlementRound = createNumber("settlementRound", Integer.class);
+
     public final DatePath<java.time.LocalDate> settlementStartDate = createDate("settlementStartDate", java.time.LocalDate.class);
+
+    public final EnumPath<liaison.groble.domain.settlement.enums.SettlementType> settlementType = createEnum("settlementType", liaison.groble.domain.settlement.enums.SettlementType.class);
 
     public final EnumPath<Settlement.SettlementStatus> status = createEnum("status", Settlement.SettlementStatus.class);
 
