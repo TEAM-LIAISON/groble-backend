@@ -9,7 +9,7 @@ import liaison.groble.domain.settlement.dto.FlatPerTransactionSettlement;
 import liaison.groble.domain.settlement.dto.FlatSettlementsDTO;
 
 public interface SettlementCustomRepository {
-  Page<FlatSettlementsDTO> findMonthlySettlementsByUserId(Long userId, Pageable pageable);
+  Page<FlatSettlementsDTO> findSettlementsByUserId(Long userId, Pageable pageable);
 
   Page<FlatPerTransactionSettlement> findPerTransactionSettlementsByUserIdAndYearMonth(
       Long userId, LocalDate periodStart, LocalDate periodEnd, Pageable pageable);

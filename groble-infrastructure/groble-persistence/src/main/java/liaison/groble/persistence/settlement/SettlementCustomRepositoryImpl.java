@@ -31,7 +31,7 @@ public class SettlementCustomRepositoryImpl implements SettlementCustomRepositor
   private final JPAQueryFactory jpaQueryFactory;
 
   @Override
-  public Page<FlatSettlementsDTO> findMonthlySettlementsByUserId(Long userId, Pageable pageable) {
+  public Page<FlatSettlementsDTO> findSettlementsByUserId(Long userId, Pageable pageable) {
     QSettlement qSettlement = QSettlement.settlement;
     QUser user = QUser.user;
 

@@ -62,8 +62,8 @@ public class SettlementReader {
     return settlementRepository.findByUserIdAndPeriod(sellerId, periodStart, periodEnd);
   }
 
-  public Page<FlatSettlementsDTO> findMonthlySettlementsByUserId(Long userId, Pageable pageable) {
-    return settlementCustomRepository.findMonthlySettlementsByUserId(userId, pageable);
+  public Page<FlatSettlementsDTO> findSettlementsByUserId(Long userId, Pageable pageable) {
+    return settlementCustomRepository.findSettlementsByUserId(userId, pageable);
   }
 
   public Page<FlatPerTransactionSettlement> findPerTransactionSettlementsByUserIdAndYearMonth(

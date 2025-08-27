@@ -76,11 +76,10 @@ public class SettlementService {
   @Transactional(readOnly = true)
   public PageResponse<SettlementsOverviewDTO> getMonthlySettlements(
       Long userId, Pageable pageable) {
-    Page<FlatSettlementsDTO> page =
-        settlementReader.findMonthlySettlementsByUserId(userId, pageable);
+    Page<FlatSettlementsDTO> page = settlementReader.findSettlementsByUserId(userId, pageable);
 
     List<SettlementsOverviewDTO> items =
-        page.getContent().stream().map(this::convertFlatDTOToMonthlyDTO).toList();
+        page.getContent().stream().map(this::convertFlatDTOToSettlementsDTO).toList();
 
     PageResponse.MetaData meta =
         PageResponse.MetaData.builder()
@@ -91,10 +90,13 @@ public class SettlementService {
     return PageResponse.from(page, items, meta);
   }
 
-  private SettlementsOverviewDTO convertFlatDTOToMonthlyDTO(FlatSettlementsDTO flat) {
+  private SettlementsOverviewDTO convertFlatDTOToSettlementsDTO(FlatSettlementsDTO flat) {
     return SettlementsOverviewDTO.builder()
+        .settlementId(flat.getSettlementId())
         .settlementStartDate(flat.getSettlementStartDate())
         .settlementEndDate(flat.getSettlementEndDate())
+        .scheduledSettlementDate(flat.getScheduledSettlementDate())
+        .contentType(flat.getContentType())
         .settlementAmount(flat.getSettlementAmount())
         .settlementStatus(flat.getSettlementStatus())
         .build();
