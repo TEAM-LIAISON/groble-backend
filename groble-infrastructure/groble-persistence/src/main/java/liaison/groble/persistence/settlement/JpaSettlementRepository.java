@@ -24,7 +24,7 @@ public interface JpaSettlementRepository extends JpaRepository<Settlement, Long>
 
   @Query("SELECT s FROM Settlement s WHERE s.id = :settlementId AND s.user.id = :userId")
   Optional<Settlement> findByIdAndUserId(
-      @Param("settlementId") Long settlementId, @Param("userId") Long userId);
+      @Param("userId") Long userId, @Param("settlementId") Long settlementId);
 
   @Query(
       "SELECT COALESCE(SUM(s.settlementAmount), 0) FROM Settlement s "
