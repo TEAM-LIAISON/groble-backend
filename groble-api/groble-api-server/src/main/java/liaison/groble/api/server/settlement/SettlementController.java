@@ -204,6 +204,7 @@ public class SettlementController {
   }
 
   // 세금계산서 발행 받기
+  @Deprecated
   @RequireRole("ROLE_SELLER")
   @Operation(
       summary = "[💰 세금계산서 상세 정보 조회] 세금계산서 데이터를 조회합니다.",
