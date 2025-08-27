@@ -11,6 +11,8 @@ import org.springframework.stereotype.Repository;
 
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.CaseBuilder;
+import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
@@ -18,6 +20,7 @@ import liaison.groble.domain.settlement.dto.FlatPerTransactionSettlement;
 import liaison.groble.domain.settlement.dto.FlatSettlementsDTO;
 import liaison.groble.domain.settlement.entity.QSettlement;
 import liaison.groble.domain.settlement.entity.QSettlementItem;
+import liaison.groble.domain.settlement.enums.SettlementType;
 import liaison.groble.domain.settlement.repository.SettlementCustomRepository;
 import liaison.groble.domain.user.entity.QUser;
 
@@ -36,6 +39,15 @@ public class SettlementCustomRepositoryImpl implements SettlementCustomRepositor
     QUser user = QUser.user;
 
     BooleanExpression cond = qSettlement.user.id.eq(userId);
+
+    // settlementType에 따른 정렬 우선순위 설정 (COACHING = 0, DOCUMENT = 1)
+    NumberExpression<Integer> typeOrder =
+        new CaseBuilder()
+            .when(qSettlement.settlementType.eq(SettlementType.COACHING))
+            .then(0)
+            .when(qSettlement.settlementType.eq(SettlementType.DOCUMENT))
+            .then(1)
+            .otherwise(2);
     // 메인 쿼리
     JPAQuery<FlatSettlementsDTO> query =
         jpaQueryFactory
@@ -52,10 +64,9 @@ public class SettlementCustomRepositoryImpl implements SettlementCustomRepositor
             .from(qSettlement)
             .leftJoin(qSettlement.user, user)
             .where(cond)
-            // ✅ 2025.08 → 2025.07 → 2025.06 ...
             .orderBy(
-                qSettlement.settlementStartDate.desc(),
-                qSettlement.settlementEndDate.desc(),
+                qSettlement.scheduledSettlementDate.desc(), // 정산 예정일 기준 정렬
+                typeOrder.asc(), // COACHING이 먼저 (0 < 1)
                 qSettlement.id.desc() // tie-breaker
                 );
 
