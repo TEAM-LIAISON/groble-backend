@@ -103,11 +103,8 @@ public class SettlementService {
   }
 
   // 세금계산서 상세 내역 조회
-  public SettlementDetailDTO getSettlementDetail(Long userId, YearMonth yearMonth) {
-    LocalDate startDate = yearMonth.atDay(1);
-    LocalDate endDate = yearMonth.atEndOfMonth();
-    Settlement settlement =
-        settlementReader.getSettlementByUserIdAndPeriod(userId, startDate, endDate);
+  public SettlementDetailDTO getSettlementDetail(Long userId, Long settlementId) {
+    Settlement settlement = settlementReader.getSettlementByIdAndUserId(userId, settlementId);
 
     // 수동으로 관리
     Boolean isTaxInvoiceButtonEnabled = settlement.getTaxInvoiceEligible();
@@ -143,13 +140,11 @@ public class SettlementService {
 
   @Transactional
   public PageResponse<PerTransactionSettlementOverviewDTO> getPerTransactionSettlements(
-      Long userId, YearMonth yearMonth, Pageable pageable) {
-    LocalDate startDate = yearMonth.atDay(1);
-    LocalDate endDate = yearMonth.atEndOfMonth();
+      Long userId, Long settlementId, Pageable pageable) {
 
     Page<FlatPerTransactionSettlement> page =
         settlementReader.findPerTransactionSettlementsByUserIdAndYearMonth(
-            userId, startDate, endDate, pageable);
+            userId, settlementId, pageable);
 
     List<PerTransactionSettlementOverviewDTO> items =
         page.getContent().stream().map(this::convertFlatDTOToPerTransactionDTO).toList();

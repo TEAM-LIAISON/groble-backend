@@ -50,8 +50,8 @@ public class SettlementController {
   // API 경로 상수화
   private static final String SETTLEMENT_OVERVIEW_PATH = "/settlements/overview";
   private static final String SETTLEMENT_LIST_PATH = "/settlements";
-  private static final String SETTLEMENT_DETAIL_PATH = "/settlements/{yearMonth}";
-  private static final String SALES_LIST_PATH = "/settlements/sales/{yearMonth}";
+  private static final String SETTLEMENT_DETAIL_PATH = "/settlements/{settlementId}";
+  private static final String SALES_LIST_PATH = "/settlements/sales/{settlementId}";
   private static final String TAX_INVOICE_PATH = "/settlements/tax-invoice/{yearMonth}";
 
   // 응답 메시지 상수화
@@ -150,15 +150,15 @@ public class SettlementController {
   public ResponseEntity<GrobleResponse<SettlementDetailResponse>> getSettlementDetail(
       @Auth Accessor accessor,
       @Parameter(
-              name = "yearMonth",
-              description = "yyyy-MM 형식",
-              example = "2025-08",
-              schema = @Schema(type = "string", pattern = "^\\d{4}-(0[1-9]|1[0-2])$"))
-          @PathVariable("yearMonth")
-          YearMonth yearMonth) {
+              name = "settlementId",
+              description = "숫자 형식",
+              example = "265",
+              schema = @Schema(type = "number"))
+          @PathVariable("settlementId")
+          Long settlementId) {
 
     SettlementDetailDTO settlementDetailDTO =
-        settlementService.getSettlementDetail(accessor.getUserId(), yearMonth);
+        settlementService.getSettlementDetail(accessor.getUserId(), settlementId);
     SettlementDetailResponse settlementDetailResponse =
         settlementMapper.toSettlementResponse(settlementDetailDTO);
     return responseHelper.success(
@@ -184,18 +184,18 @@ public class SettlementController {
       getSalesList(
           @Auth Accessor accessor,
           @Parameter(
-                  name = "yearMonth",
-                  description = "yyyy-MM 형식",
-                  example = "2025-08",
-                  schema = @Schema(type = "string", pattern = "^\\d{4}-(0[1-9]|1[0-2])$"))
-              @PathVariable("yearMonth")
-              YearMonth yearMonth,
+                  name = "settlementId",
+                  description = "숫자 형식",
+                  example = "265",
+                  schema = @Schema(type = "number"))
+          @PathVariable("settlementId")
+          Long settlementId,
           @RequestParam(value = "page", defaultValue = "0") int page,
           @RequestParam(value = "size", defaultValue = "20") int size,
           @RequestParam(value = "sort", defaultValue = "createdAt") String sort) {
     Pageable pageable = PageUtils.createPageable(page, size, sort);
     PageResponse<PerTransactionSettlementOverviewDTO> dtoPage =
-        settlementService.getPerTransactionSettlements(accessor.getUserId(), yearMonth, pageable);
+        settlementService.getPerTransactionSettlements(accessor.getUserId(), settlementId, pageable);
     PageResponse<PerTransactionSettlementOverviewResponse> responsePage =
         settlementMapper.toPerTransactionSettlementOverviewResponsePage(dtoPage);
 

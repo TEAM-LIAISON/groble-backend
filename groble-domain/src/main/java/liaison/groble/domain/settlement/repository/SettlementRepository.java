@@ -10,6 +10,8 @@ public interface SettlementRepository {
   Optional<Settlement> findByUserIdAndPeriod(
       Long sellerId, LocalDate periodStart, LocalDate periodEnd);
 
+  Optional<Settlement> findByIdAndUserId(Long sellerId, Long settlementId);
+
   List<Settlement> findAllByUserId(Long userId);
 
   Settlement save(Settlement settlement);

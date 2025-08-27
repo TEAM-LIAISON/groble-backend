@@ -21,5 +21,9 @@ public interface JpaSettlementRepository extends JpaRepository<Settlement, Long>
       @Param("startDate") LocalDate startDate,
       @Param("endDate") LocalDate endDate);
 
+  @Query("SELECT s FROM Settlement s WHERE s.id = :settlementId AND s.user.id = :userId")
+  Optional<Settlement> findByIdAndUserId(
+      @Param("settlementId") Long settlementId, @Param("userId") Long userId);
+
   List<Settlement> findAllByUserId(Long userId);
 }

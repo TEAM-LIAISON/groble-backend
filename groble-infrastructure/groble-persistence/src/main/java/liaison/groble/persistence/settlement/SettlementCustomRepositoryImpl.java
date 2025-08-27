@@ -1,6 +1,5 @@
 package liaison.groble.persistence.settlement;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -88,7 +87,7 @@ public class SettlementCustomRepositoryImpl implements SettlementCustomRepositor
 
   @Override
   public Page<FlatPerTransactionSettlement> findPerTransactionSettlementsByUserIdAndYearMonth(
-      Long userId, LocalDate periodStart, LocalDate periodEnd, Pageable pageable) {
+      Long userId, Long settlementId, Pageable pageable) {
 
     QSettlementItem qSettlementItem = QSettlementItem.settlementItem;
     QSettlement qSettlement = QSettlement.settlement;
@@ -96,13 +95,7 @@ public class SettlementCustomRepositoryImpl implements SettlementCustomRepositor
 
     // [기간] purchasedAt ∈ [periodStart 00:00, periodEnd+1 00:00)
     BooleanExpression cond =
-        qSettlementItem
-            .settlement
-            .user
-            .id
-            .eq(userId)
-            .and(qSettlementItem.purchasedAt.goe(periodStart.atStartOfDay()))
-            .and(qSettlementItem.purchasedAt.lt(periodEnd.plusDays(1).atStartOfDay()));
+        qSettlementItem.settlement.user.id.eq(userId).and(qSettlement.id.eq(settlementId));
 
     // 메인 조회
     JPAQuery<FlatPerTransactionSettlement> query =

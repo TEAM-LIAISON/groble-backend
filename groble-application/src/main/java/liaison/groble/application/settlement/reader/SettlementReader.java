@@ -52,6 +52,17 @@ public class SettlementReader {
                         sellerId, periodStart, periodEnd)));
   }
 
+  public Settlement getSettlementByIdAndUserId(Long sellerId, Long settlementId) {
+    return settlementRepository
+        .findByIdAndUserId(sellerId, settlementId)
+        .orElseThrow(
+            () ->
+                new EntityNotFoundException(
+                    String.format(
+                        "정산 정보를 찾을 수 없습니다 - sellerId: %d, settlementId: %d",
+                        sellerId, settlementId)));
+  }
+
   /**
    * 정산 정보 조회 (Optional)
    *
@@ -67,9 +78,9 @@ public class SettlementReader {
   }
 
   public Page<FlatPerTransactionSettlement> findPerTransactionSettlementsByUserIdAndYearMonth(
-      Long userId, LocalDate periodStart, LocalDate periodEnd, Pageable pageable) {
+      Long userId, Long settlementId, Pageable pageable) {
     return settlementCustomRepository.findPerTransactionSettlementsByUserIdAndYearMonth(
-        userId, periodStart, periodEnd, pageable);
+        userId, settlementId, pageable);
   }
 
   public List<Settlement> findAllByUserId(Long userId) {

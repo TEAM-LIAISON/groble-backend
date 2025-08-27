@@ -23,6 +23,11 @@ public class SettlementRepositoryImpl implements SettlementRepository {
   }
 
   @Override
+  public Optional<Settlement> findByIdAndUserId(Long sellerId, Long settlementId) {
+    return jpaSettlementRepository.findByIdAndUserId(sellerId, settlementId);
+  }
+
+  @Override
   public List<Settlement> findAllByUserId(Long userId) {
     return jpaSettlementRepository.findAllByUserId(userId);
   }
