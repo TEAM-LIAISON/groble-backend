@@ -11,17 +11,17 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import liaison.groble.api.model.settlement.response.MonthlySettlementOverviewResponse;
 import liaison.groble.api.model.settlement.response.PerTransactionSettlementOverviewResponse;
 import liaison.groble.api.model.settlement.response.SettlementDetailResponse;
 import liaison.groble.api.model.settlement.response.SettlementOverviewResponse;
+import liaison.groble.api.model.settlement.response.SettlementsOverviewResponse;
 import liaison.groble.api.model.settlement.response.TaxInvoiceResponse;
 import liaison.groble.api.model.settlement.response.swagger.MonthlySettlementOverviewListResponse;
 import liaison.groble.api.model.settlement.response.swagger.PerTransactionSettlementOverviewListResponse;
-import liaison.groble.application.settlement.dto.MonthlySettlementOverviewDTO;
 import liaison.groble.application.settlement.dto.PerTransactionSettlementOverviewDTO;
 import liaison.groble.application.settlement.dto.SettlementDetailDTO;
 import liaison.groble.application.settlement.dto.SettlementOverviewDTO;
+import liaison.groble.application.settlement.dto.SettlementsOverviewDTO;
 import liaison.groble.application.settlement.dto.TaxInvoiceDTO;
 import liaison.groble.application.settlement.service.SettlementService;
 import liaison.groble.common.annotation.Auth;
@@ -114,16 +114,16 @@ public class SettlementController {
       action = "getSettlementList",
       includeParam = true,
       includeResult = true)
-  public ResponseEntity<GrobleResponse<PageResponse<MonthlySettlementOverviewResponse>>>
+  public ResponseEntity<GrobleResponse<PageResponse<SettlementsOverviewResponse>>>
       getSettlementList(
           @Auth Accessor accessor,
           @RequestParam(value = "page", defaultValue = "0") int page,
           @RequestParam(value = "size", defaultValue = "20") int size,
           @RequestParam(value = "sort", defaultValue = "createdAt") String sort) {
     Pageable pageable = PageUtils.createPageable(page, size, sort);
-    PageResponse<MonthlySettlementOverviewDTO> dtoPage =
+    PageResponse<SettlementsOverviewDTO> dtoPage =
         settlementService.getMonthlySettlements(accessor.getUserId(), pageable);
-    PageResponse<MonthlySettlementOverviewResponse> responsePage =
+    PageResponse<SettlementsOverviewResponse> responsePage =
         settlementMapper.toMonthlySettlementOverviewResponsePage(dtoPage);
 
     return responseHelper.success(responsePage, SETTLEMENT_LIST_SUCCESS_MESSAGE, HttpStatus.OK);

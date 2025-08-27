@@ -14,8 +14,8 @@ import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
-import liaison.groble.domain.settlement.dto.FlatMonthlySettlement;
 import liaison.groble.domain.settlement.dto.FlatPerTransactionSettlement;
+import liaison.groble.domain.settlement.dto.FlatSettlementsDTO;
 import liaison.groble.domain.settlement.entity.QSettlement;
 import liaison.groble.domain.settlement.entity.QSettlementItem;
 import liaison.groble.domain.settlement.repository.SettlementCustomRepository;
@@ -31,20 +31,22 @@ public class SettlementCustomRepositoryImpl implements SettlementCustomRepositor
   private final JPAQueryFactory jpaQueryFactory;
 
   @Override
-  public Page<FlatMonthlySettlement> findMonthlySettlementsByUserId(
-      Long userId, Pageable pageable) {
+  public Page<FlatSettlementsDTO> findMonthlySettlementsByUserId(Long userId, Pageable pageable) {
     QSettlement qSettlement = QSettlement.settlement;
     QUser user = QUser.user;
 
     BooleanExpression cond = qSettlement.user.id.eq(userId);
     // 메인 쿼리
-    JPAQuery<FlatMonthlySettlement> query =
+    JPAQuery<FlatSettlementsDTO> query =
         jpaQueryFactory
             .select(
                 Projections.fields(
-                    FlatMonthlySettlement.class,
+                    FlatSettlementsDTO.class,
+                    qSettlement.id.as("settlementId"),
                     qSettlement.settlementStartDate.as("settlementStartDate"),
                     qSettlement.settlementEndDate.as("settlementEndDate"),
+                    qSettlement.scheduledSettlementDate.as("scheduledSettlementDate"),
+                    qSettlement.settlementType.stringValue().as("contentType"),
                     qSettlement.settlementAmount.as("settlementAmount"),
                     qSettlement.status.stringValue().as("settlementStatus")))
             .from(qSettlement)
@@ -57,7 +59,7 @@ public class SettlementCustomRepositoryImpl implements SettlementCustomRepositor
                 qSettlement.id.desc() // tie-breaker
                 );
 
-    List<FlatMonthlySettlement> items =
+    List<FlatSettlementsDTO> items =
         query.offset(pageable.getOffset()).limit(pageable.getPageSize()).fetch();
 
     long total =

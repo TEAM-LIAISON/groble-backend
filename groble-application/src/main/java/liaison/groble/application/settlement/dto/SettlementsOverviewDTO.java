@@ -8,9 +8,12 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public class MonthlySettlementOverviewDTO {
+public class SettlementsOverviewDTO {
+  private Long settlementId;
   private LocalDate settlementStartDate;
   private LocalDate settlementEndDate;
+  private LocalDate scheduledSettlementDate;
+  private String contentType;
   private BigDecimal settlementAmount;
   private String settlementStatus;
 }

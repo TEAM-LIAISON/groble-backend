@@ -4,15 +4,15 @@ import javax.annotation.processing.Generated;
 
 import org.springframework.stereotype.Component;
 
-import liaison.groble.api.model.settlement.response.MonthlySettlementOverviewResponse;
 import liaison.groble.api.model.settlement.response.PerTransactionSettlementOverviewResponse;
 import liaison.groble.api.model.settlement.response.SettlementDetailResponse;
 import liaison.groble.api.model.settlement.response.SettlementOverviewResponse;
+import liaison.groble.api.model.settlement.response.SettlementsOverviewResponse;
 import liaison.groble.api.model.settlement.response.TaxInvoiceResponse;
-import liaison.groble.application.settlement.dto.MonthlySettlementOverviewDTO;
 import liaison.groble.application.settlement.dto.PerTransactionSettlementOverviewDTO;
 import liaison.groble.application.settlement.dto.SettlementDetailDTO;
 import liaison.groble.application.settlement.dto.SettlementOverviewDTO;
+import liaison.groble.application.settlement.dto.SettlementsOverviewDTO;
 import liaison.groble.application.settlement.dto.TaxInvoiceDTO;
 
 @Generated(
@@ -93,30 +93,30 @@ public class SettlementMapperImpl implements SettlementMapper {
   }
 
   @Override
-  public MonthlySettlementOverviewResponse toMonthlySettlementOverviewResponse(
-      MonthlySettlementOverviewDTO monthlySettlementOverviewDTO) {
-    if (monthlySettlementOverviewDTO == null) {
+  public SettlementsOverviewResponse toSettlementsOverviewResponse(
+      SettlementsOverviewDTO settlementsOverviewDTO) {
+    if (settlementsOverviewDTO == null) {
       return null;
     }
 
-    MonthlySettlementOverviewResponse.MonthlySettlementOverviewResponseBuilder
-        monthlySettlementOverviewResponse = MonthlySettlementOverviewResponse.builder();
+    SettlementsOverviewResponse.MonthlySettlementOverviewResponseBuilder
+        monthlySettlementOverviewResponse = SettlementsOverviewResponse.builder();
 
-    if (monthlySettlementOverviewDTO.getSettlementStartDate() != null) {
+    if (settlementsOverviewDTO.getSettlementStartDate() != null) {
       monthlySettlementOverviewResponse.settlementStartDate(
-          monthlySettlementOverviewDTO.getSettlementStartDate());
+          settlementsOverviewDTO.getSettlementStartDate());
     }
-    if (monthlySettlementOverviewDTO.getSettlementEndDate() != null) {
+    if (settlementsOverviewDTO.getSettlementEndDate() != null) {
       monthlySettlementOverviewResponse.settlementEndDate(
-          monthlySettlementOverviewDTO.getSettlementEndDate());
+          settlementsOverviewDTO.getSettlementEndDate());
     }
-    if (monthlySettlementOverviewDTO.getSettlementAmount() != null) {
+    if (settlementsOverviewDTO.getSettlementAmount() != null) {
       monthlySettlementOverviewResponse.settlementAmount(
-          monthlySettlementOverviewDTO.getSettlementAmount());
+          settlementsOverviewDTO.getSettlementAmount());
     }
-    if (monthlySettlementOverviewDTO.getSettlementStatus() != null) {
+    if (settlementsOverviewDTO.getSettlementStatus() != null) {
       monthlySettlementOverviewResponse.settlementStatus(
-          monthlySettlementOverviewDTO.getSettlementStatus());
+          settlementsOverviewDTO.getSettlementStatus());
     }
 
     return monthlySettlementOverviewResponse.build();

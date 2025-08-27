@@ -12,9 +12,12 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class FlatMonthlySettlement {
+public class FlatSettlementsDTO {
+  private Long settlementId;
   private LocalDate settlementStartDate;
   private LocalDate settlementEndDate;
+  private LocalDate scheduledSettlementDate;
+  private String contentType;
   private BigDecimal settlementAmount;
   private String settlementStatus;
 }
