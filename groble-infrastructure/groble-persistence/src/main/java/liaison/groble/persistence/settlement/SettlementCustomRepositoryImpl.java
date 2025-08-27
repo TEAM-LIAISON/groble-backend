@@ -86,7 +86,7 @@ public class SettlementCustomRepositoryImpl implements SettlementCustomRepositor
   }
 
   @Override
-  public Page<FlatPerTransactionSettlement> findPerTransactionSettlementsByUserIdAndYearMonth(
+  public Page<FlatPerTransactionSettlement> findPerTransactionSettlementsByIdAndUserId(
       Long userId, Long settlementId, Pageable pageable) {
 
     QSettlementItem qSettlementItem = QSettlementItem.settlementItem;

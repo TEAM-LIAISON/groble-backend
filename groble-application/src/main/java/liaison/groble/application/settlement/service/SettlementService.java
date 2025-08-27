@@ -143,8 +143,7 @@ public class SettlementService {
       Long userId, Long settlementId, Pageable pageable) {
 
     Page<FlatPerTransactionSettlement> page =
-        settlementReader.findPerTransactionSettlementsByUserIdAndYearMonth(
-            userId, settlementId, pageable);
+        settlementReader.findPerTransactionSettlementsByIdAndUserId(userId, settlementId, pageable);
 
     List<PerTransactionSettlementOverviewDTO> items =
         page.getContent().stream().map(this::convertFlatDTOToPerTransactionDTO).toList();
@@ -156,9 +155,9 @@ public class SettlementService {
             .build();
 
     log.info(
-        "Per transaction settlements retrieved for userId: {}, yearMonth: {}, page: {}, size: {}, totalElements: {}",
+        "Per transaction settlements retrieved for userId: {}, settlementId: {}, page: {}, size: {}, totalElements: {}",
         userId,
-        yearMonth,
+        settlementId,
         pageable.getPageNumber(),
         pageable.getPageSize(),
         page.getTotalElements());

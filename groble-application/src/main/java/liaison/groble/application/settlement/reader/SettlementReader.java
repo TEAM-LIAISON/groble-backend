@@ -77,9 +77,9 @@ public class SettlementReader {
     return settlementCustomRepository.findSettlementsByUserId(userId, pageable);
   }
 
-  public Page<FlatPerTransactionSettlement> findPerTransactionSettlementsByUserIdAndYearMonth(
+  public Page<FlatPerTransactionSettlement> findPerTransactionSettlementsByIdAndUserId(
       Long userId, Long settlementId, Pageable pageable) {
-    return settlementCustomRepository.findPerTransactionSettlementsByUserIdAndYearMonth(
+    return settlementCustomRepository.findPerTransactionSettlementsByIdAndUserId(
         userId, settlementId, pageable);
   }
 

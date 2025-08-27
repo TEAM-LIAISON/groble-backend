@@ -188,14 +188,15 @@ public class SettlementController {
                   description = "숫자 형식",
                   example = "265",
                   schema = @Schema(type = "number"))
-          @PathVariable("settlementId")
-          Long settlementId,
+              @PathVariable("settlementId")
+              Long settlementId,
           @RequestParam(value = "page", defaultValue = "0") int page,
           @RequestParam(value = "size", defaultValue = "20") int size,
           @RequestParam(value = "sort", defaultValue = "createdAt") String sort) {
     Pageable pageable = PageUtils.createPageable(page, size, sort);
     PageResponse<PerTransactionSettlementOverviewDTO> dtoPage =
-        settlementService.getPerTransactionSettlements(accessor.getUserId(), settlementId, pageable);
+        settlementService.getPerTransactionSettlements(
+            accessor.getUserId(), settlementId, pageable);
     PageResponse<PerTransactionSettlementOverviewResponse> responsePage =
         settlementMapper.toPerTransactionSettlementOverviewResponsePage(dtoPage);
 

@@ -9,6 +9,6 @@ import liaison.groble.domain.settlement.dto.FlatSettlementsDTO;
 public interface SettlementCustomRepository {
   Page<FlatSettlementsDTO> findSettlementsByUserId(Long userId, Pageable pageable);
 
-  Page<FlatPerTransactionSettlement> findPerTransactionSettlementsByUserIdAndYearMonth(
+  Page<FlatPerTransactionSettlement> findPerTransactionSettlementsByIdAndUserId(
       Long userId, Long settlementId, Pageable pageable);
 }
