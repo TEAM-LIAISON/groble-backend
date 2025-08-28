@@ -15,8 +15,8 @@ import lombok.Getter;
 
 /** Spring Security UserDetails와 OAuth2User를 구현한 사용자 주체 클래스 JWT 토큰 생성 및 인증에 사용됨 */
 @Getter
-@AllArgsConstructor
 @Builder
+@AllArgsConstructor
 public class UserPrincipal implements UserDetails, OAuth2User {
   private Long id;
   private String email;
