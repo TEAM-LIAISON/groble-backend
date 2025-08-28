@@ -1,18 +1,14 @@
 package liaison.groble.domain.guest.repository;
 
-import java.util.Optional;
+public interface GuestUserRepository {
 
-import org.springframework.data.jpa.repository.JpaRepository;
+  //  Optional<GuestUser> findByPhoneNumber(String phone);
+  //
+  //  Optional<GuestUser> findByEmail(String email);
+  //
+  //  boolean existsByPhoneNumber(String phone);
+  //
+  //  boolean existsByEmail(String email);
 
-import liaison.groble.domain.guest.entity.GuestUser;
-
-public interface GuestUserRepository extends JpaRepository<GuestUser, Long> {
-
-  Optional<GuestUser> findByPhoneNumber(String phone);
-
-  Optional<GuestUser> findByEmail(String email);
-
-  boolean existsByPhoneNumber(String phone);
-
-  boolean existsByEmail(String email);
+  boolean existsById(Long guestUserId);
 }
