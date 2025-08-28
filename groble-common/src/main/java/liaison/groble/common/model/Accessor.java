@@ -55,4 +55,13 @@ public class Accessor {
   public boolean isIntegratedAccount() {
     return "INTEGRATED".equals(this.accountType);
   }
+
+  /**
+   * 게스트 사용자인지 확인
+   *
+   * @return 게스트 사용자이면 true
+   */
+  public boolean isGuest() {
+    return "GUEST".equals(this.userType);
+  }
 }
