@@ -2,15 +2,15 @@ package liaison.groble.mapping.settlement;
 
 import org.mapstruct.Mapper;
 
-import liaison.groble.api.model.settlement.response.MonthlySettlementOverviewResponse;
 import liaison.groble.api.model.settlement.response.PerTransactionSettlementOverviewResponse;
 import liaison.groble.api.model.settlement.response.SettlementDetailResponse;
 import liaison.groble.api.model.settlement.response.SettlementOverviewResponse;
+import liaison.groble.api.model.settlement.response.SettlementsOverviewResponse;
 import liaison.groble.api.model.settlement.response.TaxInvoiceResponse;
-import liaison.groble.application.settlement.dto.MonthlySettlementOverviewDTO;
 import liaison.groble.application.settlement.dto.PerTransactionSettlementOverviewDTO;
 import liaison.groble.application.settlement.dto.SettlementDetailDTO;
 import liaison.groble.application.settlement.dto.SettlementOverviewDTO;
+import liaison.groble.application.settlement.dto.SettlementsOverviewDTO;
 import liaison.groble.application.settlement.dto.TaxInvoiceDTO;
 import liaison.groble.common.response.PageResponse;
 import liaison.groble.mapping.common.PageResponseMapper;
@@ -25,9 +25,9 @@ public interface SettlementMapper extends PageResponseMapper {
       SettlementOverviewDTO settlementOverviewDTO);
 
   // ====== 📤 PageResponse 변환 ======
-  default PageResponse<MonthlySettlementOverviewResponse> toMonthlySettlementOverviewResponsePage(
-      PageResponse<MonthlySettlementOverviewDTO> dtoPage) {
-    return toPageResponse(dtoPage, this::toMonthlySettlementOverviewResponse);
+  default PageResponse<SettlementsOverviewResponse> toMonthlySettlementOverviewResponsePage(
+      PageResponse<SettlementsOverviewDTO> dtoPage) {
+    return toPageResponse(dtoPage, this::toSettlementsOverviewResponse);
   }
 
   default PageResponse<PerTransactionSettlementOverviewResponse>
@@ -36,8 +36,8 @@ public interface SettlementMapper extends PageResponseMapper {
     return toPageResponse(dtoPage, this::toPerTransactionSettlementOverviewResponse);
   }
 
-  MonthlySettlementOverviewResponse toMonthlySettlementOverviewResponse(
-      MonthlySettlementOverviewDTO monthlySettlementOverviewDTO);
+  SettlementsOverviewResponse toSettlementsOverviewResponse(
+      SettlementsOverviewDTO settlementsOverviewDTO);
 
   PerTransactionSettlementOverviewResponse toPerTransactionSettlementOverviewResponse(
       PerTransactionSettlementOverviewDTO perTransactionSettlementOverviewDTO);

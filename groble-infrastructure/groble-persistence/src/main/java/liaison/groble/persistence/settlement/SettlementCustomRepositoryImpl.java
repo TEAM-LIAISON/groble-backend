@@ -1,6 +1,5 @@
 package liaison.groble.persistence.settlement;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -11,13 +10,16 @@ import org.springframework.stereotype.Repository;
 
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.CaseBuilder;
+import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
-import liaison.groble.domain.settlement.dto.FlatMonthlySettlement;
 import liaison.groble.domain.settlement.dto.FlatPerTransactionSettlement;
+import liaison.groble.domain.settlement.dto.FlatSettlementsDTO;
 import liaison.groble.domain.settlement.entity.QSettlement;
 import liaison.groble.domain.settlement.entity.QSettlementItem;
+import liaison.groble.domain.settlement.enums.SettlementType;
 import liaison.groble.domain.settlement.repository.SettlementCustomRepository;
 import liaison.groble.domain.user.entity.QUser;
 
@@ -31,33 +33,43 @@ public class SettlementCustomRepositoryImpl implements SettlementCustomRepositor
   private final JPAQueryFactory jpaQueryFactory;
 
   @Override
-  public Page<FlatMonthlySettlement> findMonthlySettlementsByUserId(
-      Long userId, Pageable pageable) {
+  public Page<FlatSettlementsDTO> findSettlementsByUserId(Long userId, Pageable pageable) {
     QSettlement qSettlement = QSettlement.settlement;
     QUser user = QUser.user;
 
     BooleanExpression cond = qSettlement.user.id.eq(userId);
+
+    // settlementType에 따른 정렬 우선순위 설정 (COACHING = 0, DOCUMENT = 1)
+    NumberExpression<Integer> typeOrder =
+        new CaseBuilder()
+            .when(qSettlement.settlementType.eq(SettlementType.COACHING))
+            .then(0)
+            .when(qSettlement.settlementType.eq(SettlementType.DOCUMENT))
+            .then(1)
+            .otherwise(2);
     // 메인 쿼리
-    JPAQuery<FlatMonthlySettlement> query =
+    JPAQuery<FlatSettlementsDTO> query =
         jpaQueryFactory
             .select(
                 Projections.fields(
-                    FlatMonthlySettlement.class,
+                    FlatSettlementsDTO.class,
+                    qSettlement.id.as("settlementId"),
                     qSettlement.settlementStartDate.as("settlementStartDate"),
                     qSettlement.settlementEndDate.as("settlementEndDate"),
+                    qSettlement.scheduledSettlementDate.as("scheduledSettlementDate"),
+                    qSettlement.settlementType.stringValue().as("contentType"),
                     qSettlement.settlementAmount.as("settlementAmount"),
                     qSettlement.status.stringValue().as("settlementStatus")))
             .from(qSettlement)
             .leftJoin(qSettlement.user, user)
             .where(cond)
-            // ✅ 2025.08 → 2025.07 → 2025.06 ...
             .orderBy(
-                qSettlement.settlementStartDate.desc(),
-                qSettlement.settlementEndDate.desc(),
+                qSettlement.scheduledSettlementDate.desc(), // 정산 예정일 기준 정렬
+                typeOrder.asc(), // COACHING이 먼저 (0 < 1)
                 qSettlement.id.desc() // tie-breaker
                 );
 
-    List<FlatMonthlySettlement> items =
+    List<FlatSettlementsDTO> items =
         query.offset(pageable.getOffset()).limit(pageable.getPageSize()).fetch();
 
     long total =
@@ -74,8 +86,8 @@ public class SettlementCustomRepositoryImpl implements SettlementCustomRepositor
   }
 
   @Override
-  public Page<FlatPerTransactionSettlement> findPerTransactionSettlementsByUserIdAndYearMonth(
-      Long userId, LocalDate periodStart, LocalDate periodEnd, Pageable pageable) {
+  public Page<FlatPerTransactionSettlement> findPerTransactionSettlementsByIdAndUserId(
+      Long userId, Long settlementId, Pageable pageable) {
 
     QSettlementItem qSettlementItem = QSettlementItem.settlementItem;
     QSettlement qSettlement = QSettlement.settlement;
@@ -83,13 +95,7 @@ public class SettlementCustomRepositoryImpl implements SettlementCustomRepositor
 
     // [기간] purchasedAt ∈ [periodStart 00:00, periodEnd+1 00:00)
     BooleanExpression cond =
-        qSettlementItem
-            .settlement
-            .user
-            .id
-            .eq(userId)
-            .and(qSettlementItem.purchasedAt.goe(periodStart.atStartOfDay()))
-            .and(qSettlementItem.purchasedAt.lt(periodEnd.plusDays(1).atStartOfDay()));
+        qSettlementItem.settlement.user.id.eq(userId).and(qSettlement.id.eq(settlementId));
 
     // 메인 조회
     JPAQuery<FlatPerTransactionSettlement> query =

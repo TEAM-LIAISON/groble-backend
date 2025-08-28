@@ -10,5 +10,5 @@ import lombok.Getter;
 public class SettlementOverviewDTO {
   private String verificationStatus;
   private BigDecimal totalSettlementAmount;
-  private BigDecimal currentMonthSettlementAmount;
+  private BigDecimal pendingSettlementAmount;
 }

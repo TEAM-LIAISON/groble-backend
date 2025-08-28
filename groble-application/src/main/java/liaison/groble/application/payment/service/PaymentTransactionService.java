@@ -31,6 +31,8 @@ import liaison.groble.domain.purchase.entity.Purchase;
 import liaison.groble.domain.purchase.repository.PurchaseRepository;
 import liaison.groble.domain.settlement.entity.Settlement;
 import liaison.groble.domain.settlement.entity.SettlementItem;
+import liaison.groble.domain.settlement.enums.SettlementCycle;
+import liaison.groble.domain.settlement.enums.SettlementType;
 import liaison.groble.domain.user.entity.User;
 
 import lombok.RequiredArgsConstructor;
@@ -152,8 +154,6 @@ public class PaymentTransactionService {
     } catch (Exception e) {
       // 정산 실패는 결제 완료를 롤백하지 않음 (보상 트랜잭션 또는 배치로 처리)
       log.error("정산 데이터 생성 실패 - purchaseId: {}, error: {}", purchase.getId(), e.getMessage());
-      // 실패한 정산은 별도 배치나 수동 처리를 위해 큐에 저장
-      //          settlementFailureQueue.add(purchase.getId());
     }
     // =============== 정산 데이터 관리 로직 끝 ===============
     log.info(
@@ -296,21 +296,29 @@ public class PaymentTransactionService {
   private void createSettlementData(Purchase purchase, Payment payment) {
     Long sellerId = purchase.getContent().getUser().getId();
 
-    // 정산 기간 계산
+    // 구매 시점 기준으로 정산 타입과 기간 결정
     LocalDate purchaseDate = purchase.getPurchasedAt().toLocalDate();
-    LocalDate periodStart = purchaseDate.withDayOfMonth(1);
-    LocalDate periodEnd = purchaseDate.withDayOfMonth(purchaseDate.lengthOfMonth());
 
-    // Settlement 조회 또는 생성
-    Settlement settlement = getOrCreateSettlement(sellerId, periodStart, periodEnd);
+    // 판매자의 정산 타입 결정 (판매자 설정 or 콘텐츠 타입 기반)
+    SettlementType settlementType = determineSettlementType(purchase);
+
+    // 정산 기간과 회차 계산 - 새로운 calculatePeriod 메서드 활용
+    Settlement.SettlementPeriod period = Settlement.calculatePeriod(settlementType, purchaseDate);
+
+    // Settlement 조회 또는 생성 (타입과 회차 포함)
+    Settlement settlement =
+        getOrCreateSettlement(
+            sellerId,
+            period.getStartDate(),
+            period.getEndDate(),
+            settlementType,
+            period.getRound());
 
     // 멱등성 체크
     if (settlementReader.existsSettlementItemByPurchaseId(purchase.getId())) {
       log.info("정산 항목이 이미 존재합니다 - purchaseId: {}", purchase.getId());
       return;
     }
-
-    // ========== 원화 반올림 처리 확인 로직 추가 ==========
 
     // 판매 금액 확인 (원 단위여야 함)
     BigDecimal salesAmount = purchase.getFinalPrice();
@@ -319,28 +327,7 @@ public class PaymentTransactionService {
       salesAmount = salesAmount.setScale(0, RoundingMode.HALF_UP);
     }
 
-    // 수수료 계산 미리보기 (디버그용)
-    BigDecimal platformFeeRate = settlement.getPlatformFeeRate();
-    BigDecimal pgFeeRate = settlement.getPgFeeRate();
-    BigDecimal vatRate = settlement.getVatRate();
-
-    // 예상 수수료 계산 (반올림 전)
-    BigDecimal expectedPlatformFeeRaw = salesAmount.multiply(platformFeeRate);
-    BigDecimal expectedPgFeeRaw = salesAmount.multiply(pgFeeRate);
-
-    log.debug(
-        "수수료 계산 예상 - 판매액: {}원, " + "플랫폼수수료: {}원 → {}원 ({}%), " + "PG수수료: {}원 → {}원 ({}%)",
-        salesAmount.toPlainString(),
-        expectedPlatformFeeRaw.toPlainString(),
-        expectedPlatformFeeRaw.setScale(0, RoundingMode.HALF_UP).toPlainString(),
-        platformFeeRate.multiply(new BigDecimal("100")).toPlainString(),
-        expectedPgFeeRaw.toPlainString(),
-        expectedPgFeeRaw.setScale(0, RoundingMode.HALF_UP).toPlainString(),
-        pgFeeRate.multiply(new BigDecimal("100")).toPlainString());
-
-    // ========== 원화 반올림 처리 확인 끝 ==========
-
-    // SettlementItem 생성 (Builder 내부에서 자동 반올림 처리)
+    // SettlementItem 생성
     SettlementItem settlementItem =
         SettlementItem.builder()
             .settlement(settlement)
@@ -355,45 +342,33 @@ public class PaymentTransactionService {
     settlementWriter.saveSettlementItem(settlementItem);
     settlementWriter.saveSettlement(settlement);
 
-    // ========== 반올림 결과 상세 로그 ==========
     log.info(
-        "정산 생성 완료 [원화 반올림 적용] - "
+        "정산 생성 완료 - "
             + "settlementId: {}, itemId: {}, "
-            + "판매액: {}원, "
-            + "플랫폼수수료: {}원 ({}%), "
-            + "PG수수료: {}원 ({}%), "
-            + "수수료 VAT: {}원, "
-            + "총수수료: {}원, "
-            + "정산액: {}원",
+            + "타입: {}, 주기: {}, 회차: {}, "
+            + "기간: {} ~ {}, "
+            + "예정일: {}, "
+            + "판매액: {}원, 정산액: {}원",
         settlement.getId(),
         settlementItem.getId(),
+        settlement.getSettlementType(),
+        settlement.getSettlementCycle(),
+        settlement.getSettlementRound(),
+        settlement.getSettlementStartDate(),
+        settlement.getSettlementEndDate(),
+        settlement.getScheduledSettlementDate(),
         settlementItem.getSalesAmount().toPlainString(),
-        settlementItem.getPlatformFee().toPlainString(),
-        platformFeeRate.multiply(new BigDecimal("100")).toPlainString(),
-        settlementItem.getPgFee().toPlainString(),
-        pgFeeRate.multiply(new BigDecimal("100")).toPlainString(),
-        vatRate.multiply(new BigDecimal("100")).toPlainString(),
-        settlementItem.getTotalFee().toPlainString(),
         settlementItem.getSettlementAmount().toPlainString());
-
-    // 반올림으로 인한 차이 확인 (디버그 레벨)
-    if (log.isDebugEnabled()) {
-      BigDecimal platformFeeDiff = expectedPlatformFeeRaw.subtract(settlementItem.getPlatformFee());
-      BigDecimal pgFeeDiff = expectedPgFeeRaw.subtract(settlementItem.getPgFee());
-
-      if (platformFeeDiff.abs().compareTo(BigDecimal.ZERO) > 0
-          || pgFeeDiff.abs().compareTo(BigDecimal.ZERO) > 0) {
-        log.debug(
-            "반올림 차이 - 플랫폼: {}원, PG: {}원",
-            platformFeeDiff.toPlainString(),
-            pgFeeDiff.toPlainString());
-      }
-    }
   }
 
-  /** Settlement 조회 또는 생성 - 원화 처리 확인 추가 */
+  /** Settlement 조회 또는 생성 - 타입과 회차 추가 */
   private Settlement getOrCreateSettlement(
-      Long sellerId, LocalDate periodStart, LocalDate periodEnd) {
+      Long sellerId,
+      LocalDate periodStart,
+      LocalDate periodEnd,
+      SettlementType settlementType,
+      Integer settlementRound) {
+
     // 1차: Reader로 조회 시도
     Optional<Settlement> existingSettlement =
         settlementReader.findSettlementByUserIdAndPeriod(sellerId, periodStart, periodEnd);
@@ -406,21 +381,37 @@ public class PaymentTransactionService {
     try {
       User seller = userReader.getUserById(sellerId);
 
-      // ========== 수수료율 설정 시 검증 ==========
       BigDecimal platformFeeRate = new BigDecimal("0.0150"); // 1.5%
       BigDecimal pgFeeRate = new BigDecimal("0.0170"); // 1.7%
       BigDecimal vatRate = new BigDecimal("0.1000"); // 10%
 
-      log.info(
-          "새 정산 생성 - sellerId: {}, period: {} ~ {}, " + "플랫폼수수료율: {}%, PG수수료율: {}%",
-          sellerId,
-          periodStart,
-          periodEnd,
-          platformFeeRate.multiply(new BigDecimal("100")).toPlainString(),
-          pgFeeRate.multiply(new BigDecimal("100")).toPlainString());
+      // 정산 주기 결정
+      SettlementCycle cycle = determineSettlementCycle(settlementType);
 
-      return settlementWriter.createSettlement(
-          seller, periodStart, periodEnd, platformFeeRate, pgFeeRate, vatRate);
+      log.info(
+          "새 정산 생성 - sellerId: {}, " + "타입: {}, 주기: {}, 회차: {}, " + "기간: {} ~ {}",
+          sellerId,
+          settlementType,
+          cycle,
+          settlementRound,
+          periodStart,
+          periodEnd);
+
+      // Builder 패턴으로 생성 (새로운 필드 포함)
+      Settlement settlement =
+          Settlement.builder()
+              .user(seller)
+              .settlementStartDate(periodStart)
+              .settlementEndDate(periodEnd)
+              .platformFeeRate(platformFeeRate)
+              .pgFeeRate(pgFeeRate)
+              .vatRate(vatRate)
+              .settlementType(settlementType)
+              .settlementCycle(cycle)
+              .settlementRound(settlementRound)
+              .build();
+
+      return settlementWriter.saveSettlement(settlement);
 
     } catch (DataIntegrityViolationException e) {
       // 3차: UNIQUE 제약 위반 (동시 생성) - Reader로 재조회
@@ -507,5 +498,30 @@ public class PaymentTransactionService {
         purchaseId,
         settlementItem.getSalesAmount().toPlainString(),
         settlementItem.getSettlementAmount().toPlainString());
+  }
+
+  /** 정산 타입 결정 로직 */
+  private SettlementType determineSettlementType(Purchase purchase) {
+    String contentType = purchase.getContent().getContentType().name();
+    return switch (contentType) {
+      case "DOCUMENT" -> SettlementType.DOCUMENT; // 자료형: 월 4회 정산
+
+      case "COACHING" -> SettlementType.COACHING; // 서비스형: 월 2회 정산
+
+      default -> SettlementType.LEGACY; // 기본: 월 1회 정산
+    };
+  }
+
+  /** 정산 주기 결정 */
+  private SettlementCycle determineSettlementCycle(SettlementType type) {
+    switch (type) {
+      case DOCUMENT:
+        return SettlementCycle.WEEKLY; // 자료형: 주 단위 (월 4회)
+      case COACHING:
+        return SettlementCycle.BIMONTHLY; // 서비스형: 반월 단위 (월 2회)
+      case LEGACY:
+      default:
+        return SettlementCycle.MONTHLY; // 기본: 월 단위
+    }
   }
 }
