@@ -1,7 +1,10 @@
 package liaison.groble.api.server.guest;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import liaison.groble.common.response.GrobleResponse;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +17,10 @@ public class GuestController {
   // TODO: 비회원 주문조회
   // TODO: 비회원 결제
   // TODO: 비회원 인증번호 발송
+  public ResponseEntity<GrobleResponse<Void>> sendGuestAuthCode(String phoneNumber) {
+    // 비회원 인증번호 발송 로직 구현
+    return null;
+  }
   // TODO: 비회원 인증번호 검증
   // TODO: 비회원 리뷰 작성
   // TODO: 비회원 콘텐츠 다운로드
