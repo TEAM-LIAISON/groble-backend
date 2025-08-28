@@ -285,7 +285,7 @@ public class JwtTokenProvider {
   }
 
   // Principal 추출
-  public GuestPrincipal getPrincipalFromToken(String token) {
+  public GuestPrincipal getGuestPrincipalFromToken(String token) {
     Claims claims = getClaims(token);
     String subject = claims.getSubject(); // "guest:123"
 
@@ -320,6 +320,57 @@ public class JwtTokenProvider {
     } catch (IllegalArgumentException e) {
       log.warn("JWT empty/illegal");
       throw new JwtException("토큰 검증에 실패했습니다", e);
+    }
+  }
+
+  /**
+   * 게스트 토큰 유효성 검증
+   *
+   * @param token 검증할 게스트 토큰
+   * @return 유효하면 true, 아니면 false
+   */
+  public boolean validateGuestToken(String token) {
+    try {
+      // 토큰이 없으면 false
+      if (token == null || token.isBlank()) {
+        return false;
+      }
+
+      // Claims 파싱 (만료, 서명 등 자동 검증됨)
+      Claims claims = getClaims(token);
+
+      // 게스트 토큰인지 확인
+      String type = claims.get("type", String.class);
+      if (!"GUEST".equals(type)) {
+        log.warn("토큰 타입이 GUEST가 아님: {}", type);
+        return false;
+      }
+
+      // subject 형식 검증 (guest:숫자 형식인지)
+      String subject = claims.getSubject();
+      if (subject == null || !subject.startsWith("guest:")) {
+        log.warn("잘못된 게스트 토큰 subject 형식: {}", subject);
+        return false;
+      }
+
+      // 만료 시간 체크 (이미 parseClaimsJws에서 체크되지만 명시적으로)
+      Date expiration = claims.getExpiration();
+      if (expiration != null && expiration.before(new Date())) {
+        log.debug("게스트 토큰 만료됨");
+        return false;
+      }
+
+      return true;
+
+    } catch (ExpiredJwtException e) {
+      log.debug("게스트 토큰 만료: {}", e.getMessage());
+      return false;
+    } catch (JwtException e) {
+      log.debug("게스트 토큰 검증 실패: {}", e.getMessage());
+      return false;
+    } catch (Exception e) {
+      log.error("게스트 토큰 검증 중 예상치 못한 오류", e);
+      return false;
     }
   }
 }
