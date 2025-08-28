@@ -273,12 +273,13 @@ public class JwtTokenProvider {
 
   // 비회원 토큰 생성
   private String createGuestToken(Long guestUserId) {
+    LocalDateTime expiryDate = LocalDateTime.now().plusSeconds(guestTokenExpirationMs / 1000);
     return Jwts.builder()
         .setSubject("guest:" + guestUserId)
         .claim("type", "GUEST")
         .claim("roles", List.of("ROLE_GUEST"))
         .setIssuedAt(new Date())
-        .setExpiration(new Date(System.currentTimeMillis() + 3600000))
+        .setExpiration(Date.from(expiryDate.atZone(ZoneId.systemDefault()).toInstant()))
         .signWith(guestTokenKey)
         .compact();
   }
@@ -301,8 +302,6 @@ public class JwtTokenProvider {
       return Jwts.parserBuilder()
           .setSigningKey(guestTokenKey) // secretKey → guestTokenKey로 변경
           .setAllowedClockSkewSeconds(60) // 스큐 허용
-          // .requireIssuer("groble")
-          // .requireAudience("groble-web")
           .build()
           .parseClaimsJws(token)
           .getBody();
@@ -321,13 +320,6 @@ public class JwtTokenProvider {
     } catch (IllegalArgumentException e) {
       log.warn("JWT empty/illegal");
       throw new JwtException("토큰 검증에 실패했습니다", e);
-    }
-  }
-
-  /** 토큰 빈 값 검증 */
-  private void validateTokenNotEmpty(String token) {
-    if (token == null || token.isBlank()) {
-      throw new JwtException("토큰이 비어있습니다");
     }
   }
 }
