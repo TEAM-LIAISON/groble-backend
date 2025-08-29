@@ -52,7 +52,7 @@ public class OrderController {
   private static final String ORDER_SUCCESS_PATH = "/success/{merchantUid}";
 
   // 응답 메시지 상수화
-  private static final String CREATE_ORDER_SUCCESS_MESSAGE = "주문 생성에 성공했습니다.";
+  private static final String CREATE_ORDER_SUCCESS_MESSAGE = "회원 주문 생성에 성공했습니다.";
   private static final String ORDER_SUCCESS_RESPONSE_MESSAGE = "주문 성공 페이지 정보 조회에 성공했습니다.";
 
   // Service
