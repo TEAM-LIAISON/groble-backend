@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import liaison.groble.api.model.guest.request.GuestAuthCodeRequest;
 import liaison.groble.api.model.guest.request.GuestAuthVerifyRequest;
-import liaison.groble.api.model.guest.response.GuestAuthVerifyResponse;
 import liaison.groble.application.guest.dto.GuestAuthDTO;
 import liaison.groble.application.guest.dto.GuestAuthVerifyDTO;
 import liaison.groble.application.guest.dto.GuestTokenDTO;
@@ -51,7 +50,7 @@ public class GuestAuthController {
   }
 
   @PostMapping("/verify-request")
-  public ResponseEntity<GrobleResponse<GuestAuthVerifyResponse>> verifyGuestAuthCode(
+  public ResponseEntity<GrobleResponse<Void>> verifyGuestAuthCode(
       @Valid @RequestBody GuestAuthVerifyRequest guestAuthVerifyRequest,
       HttpServletResponse response) {
     GuestAuthVerifyDTO guestAuthVerifyDTO =
@@ -61,16 +60,6 @@ public class GuestAuthController {
     // 게스트 토큰 쿠키 설정
     tokenCookieService.addGuestTokenCookie(response, guestTokenDTO.getGuestToken());
 
-    // 응답 생성
-    GuestAuthVerifyResponse guestAuthVerifyResponse =
-        GuestAuthVerifyResponse.builder()
-            .phoneNumber(guestTokenDTO.getPhoneNumber())
-            .email(guestTokenDTO.getEmail())
-            .username(guestTokenDTO.getUsername())
-            .authenticated(guestTokenDTO.isAuthenticated())
-            .build();
-
-    return responseHelper.success(
-        guestAuthVerifyResponse, "비회원 전화번호 인증 검증이 성공적으로 완료되었습니다.", HttpStatus.OK);
+    return responseHelper.success(null, "비회원 전화번호 인증 검증이 성공적으로 완료되었습니다.", HttpStatus.OK);
   }
 }

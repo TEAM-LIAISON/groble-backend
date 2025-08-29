@@ -75,6 +75,12 @@ public class PurchaseReader {
     return purchaseCustomRepository.findMyPurchasedContents(userId, orderStatuses, pageable);
   }
 
+  public Page<FlatPurchaseContentPreviewDTO> findMyPurchasedContentsForGuest(
+      Long guestUserId, List<Order.OrderStatus> orderStatuses, Pageable pageable) {
+    return purchaseCustomRepository.findMyPurchasedContentsForGuest(
+        guestUserId, orderStatuses, pageable);
+  }
+
   public FlatSellManageDetailDTO getSellManageDetail(Long userId, Long contentId) {
     return purchaseCustomRepository
         .getSellManageDetail(userId, contentId)

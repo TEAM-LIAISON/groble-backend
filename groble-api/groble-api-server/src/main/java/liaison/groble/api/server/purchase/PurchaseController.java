@@ -19,6 +19,7 @@ import liaison.groble.api.model.sell.response.ContentReviewDetailResponse;
 import liaison.groble.application.market.dto.ContactInfoDTO;
 import liaison.groble.application.purchase.dto.PurchaseContentCardDTO;
 import liaison.groble.application.purchase.dto.PurchasedContentDetailDTO;
+import liaison.groble.application.purchase.exception.PurchaseAuthenticationRequiredException;
 import liaison.groble.application.purchase.service.PurchaseService;
 import liaison.groble.application.sell.dto.ContentReviewDetailDTO;
 import liaison.groble.application.sell.service.SellContentService;
@@ -47,8 +48,8 @@ import lombok.extern.slf4j.Slf4j;
 @RequestMapping("/api/v1/purchase")
 @RequiredArgsConstructor
 @Tag(
-    name = "[🧾 내 콘텐츠 - 구매 관리] 구매 콘텐츠 조회, 다운로드, 문의하기 API",
-    description = "내가 구매한 콘텐츠 (상세)조회, 내가 구매한 콘텐츠 다운로드, 문의하기 조회 등")
+    name = "[🧾 통합 구매 관리] 회원/비회원 구매 콘텐츠 조회, 다운로드, 문의하기 API",
+    description = "토큰 종류에 따라 회원/비회원을 자동 판단하여 구매한 콘텐츠 (상세)조회, 다운로드, 문의하기 등을 처리합니다.")
 public class PurchaseController {
 
   // API 경로 상수화
@@ -174,8 +175,8 @@ public class PurchaseController {
   }
 
   @Operation(
-      summary = "[✅ 내 콘텐츠 - 구매 관리] 내가 구매한 콘텐츠 목록 조회",
-      description = "내가 구매한 콘텐츠 목록을 조회합니다. 구매 상태에 따라 필터링할 수 있습니다.")
+      summary = "[✅ 통합 구매 관리] 내가 구매한 콘텐츠 목록 조회",
+      description = "토큰 종류에 따라 회원/비회원을 자동 판단하여 내가 구매한 콘텐츠 목록을 조회합니다. 구매 상태에 따라 필터링할 수 있습니다.")
   @ApiResponse(
       responseCode = "200",
       description = "[내 콘텐츠 - 구매 관리] 주문 상태에 따른 내가 구매한 콘텐츠 목록 조회 성공",
@@ -191,7 +192,7 @@ public class PurchaseController {
       includeResult = true)
   public ResponseEntity<GrobleResponse<PageResponse<PurchaserContentPreviewCardResponse>>>
       getMyPurchasedContents(
-          @Parameter @Auth Accessor accessor,
+          @Parameter @Auth(required = false) Accessor accessor,
           @RequestParam(value = "page", defaultValue = "0") int page,
           @RequestParam(value = "size", defaultValue = "9") int size,
           @RequestParam(value = "sort", defaultValue = "purchasedAt") String sort,
@@ -203,14 +204,35 @@ public class PurchaseController {
                           allowableValues = {"PAID", "CANCEL"}))
               @RequestParam(value = "state", required = false)
               String state) {
+
     Pageable pageable = PageUtils.createPageable(page, size, sort);
-    PageResponse<PurchaseContentCardDTO> DTOPageResponse =
-        purchaseService.getMyPurchasedContents(accessor.getUserId(), state, pageable);
+    PageResponse<PurchaseContentCardDTO> DTOPageResponse;
+    String userTypeInfo;
+
+    // 토큰 종류에 따른 분기 처리
+    if (accessor.isAuthenticated() && !accessor.isGuest()) {
+      // 회원 구매 목록 조회
+      log.info("회원 구매 목록 조회 - userId: {}, state: {}", accessor.getUserId(), state);
+      DTOPageResponse =
+          purchaseService.getMyPurchasedContents(accessor.getUserId(), state, pageable);
+      userTypeInfo = "회원";
+
+    } else if (accessor.isGuest()) {
+      // 비회원 구매 목록 조회
+      log.info("비회원 구매 목록 조회 - guestUserId: {}, state: {}", accessor.getId(), state);
+      DTOPageResponse =
+          purchaseService.getMyPurchasedContentsForGuest(accessor.getId(), state, pageable);
+      userTypeInfo = "비회원";
+
+    } else {
+      // 인증되지 않은 사용자
+      throw PurchaseAuthenticationRequiredException.forPurchaseList();
+    }
 
     PageResponse<PurchaserContentPreviewCardResponse> responsePage =
         purchaseMapper.toPurchaserContentPreviewCardResponsePage(DTOPageResponse);
 
     return responseHelper.success(
-        responsePage, MY_PURCHASING_CONTENT_SUCCESS_MESSAGE, HttpStatus.OK);
+        responsePage, userTypeInfo + " " + MY_PURCHASING_CONTENT_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 }

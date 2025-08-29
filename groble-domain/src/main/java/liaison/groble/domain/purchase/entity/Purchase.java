@@ -24,6 +24,7 @@ import liaison.groble.domain.common.entity.BaseTimeEntity;
 import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.content.entity.ContentOption;
 import liaison.groble.domain.coupon.entity.UserCoupon;
+import liaison.groble.domain.guest.entity.GuestUser;
 import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.payment.entity.Payment;
 import liaison.groble.domain.purchase.enums.CancelReason;
@@ -39,6 +40,7 @@ import lombok.NoArgsConstructor;
     name = "purchases",
     indexes = {
       @Index(name = "idx_purchase_user", columnList = "user_id"),
+      @Index(name = "idx_purchase_guest_user", columnList = "guest_user_id"),
       @Index(name = "idx_purchase_content", columnList = "content_id"),
       @Index(name = "idx_purchase_order", columnList = "order_id", unique = true),
       @Index(name = "idx_purchase_created_at", columnList = "created_at")
@@ -55,8 +57,12 @@ public class Purchase extends BaseTimeEntity {
 
   // 구매자 정보 (누가 상품을 구매했는지)
   @ManyToOne(fetch = LAZY)
-  @JoinColumn(name = "user_id", nullable = false)
+  @JoinColumn(name = "user_id")
   private User user;
+
+  @ManyToOne(fetch = LAZY)
+  @JoinColumn(name = "guest_user_id")
+  private GuestUser guestUser;
 
   // 구매한 콘텐츠 정보 (어떤 콘텐츠를 구매했는지)
   @ManyToOne(fetch = LAZY)
@@ -137,6 +143,7 @@ public class Purchase extends BaseTimeEntity {
 
     return Purchase.builder()
         .user(order.getUser())
+        .guestUser(order.getGuestUser())
         .content(orderItem.getContent())
         .order(order)
         .payment(order.getPayment())
@@ -173,5 +180,52 @@ public class Purchase extends BaseTimeEntity {
 
   public void cancelPayment() {
     this.cancelledAt = LocalDateTime.now();
+  }
+
+  // 유틸리티 메서드들
+  /**
+   * 회원 구매인지 확인
+   *
+   * @return 회원 구매이면 true, 비회원 구매이면 false
+   */
+  public boolean isMemberPurchase() {
+    return this.user != null;
+  }
+
+  /**
+   * 비회원 구매인지 확인
+   *
+   * @return 비회원 구매이면 true, 회원 구매이면 false
+   */
+  public boolean isGuestPurchase() {
+    return this.guestUser != null;
+  }
+
+  /**
+   * 구매자 ID 반환 (회원이면 userId, 비회원이면 guestUserId)
+   *
+   * @return 구매자 ID
+   */
+  public Long getPurchaserId() {
+    if (isMemberPurchase()) {
+      return this.user.getId();
+    } else if (isGuestPurchase()) {
+      return this.guestUser.getId();
+    }
+    return null;
+  }
+
+  /**
+   * 구매자 이름 반환 (회원이면 닉네임, 비회원이면 사용자명)
+   *
+   * @return 구매자 이름
+   */
+  public String getPurchaserName() {
+    if (isMemberPurchase()) {
+      return this.user.getNickname();
+    } else if (isGuestPurchase()) {
+      return this.guestUser.getUsername();
+    }
+    return null;
   }
 }

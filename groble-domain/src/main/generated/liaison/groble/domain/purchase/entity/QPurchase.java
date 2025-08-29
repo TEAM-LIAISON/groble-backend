@@ -43,6 +43,8 @@ public class QPurchase extends EntityPathBase<Purchase> {
 
     public final NumberPath<java.math.BigDecimal> finalPrice = createNumber("finalPrice", java.math.BigDecimal.class);
 
+    public final liaison.groble.domain.guest.entity.QGuestUser guestUser;
+
     public final NumberPath<Long> id = createNumber("id", Long.class);
 
     public final liaison.groble.domain.order.entity.QOrder order;
@@ -85,6 +87,7 @@ public class QPurchase extends EntityPathBase<Purchase> {
     public QPurchase(Class<? extends Purchase> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
         this.content = inits.isInitialized("content") ? new liaison.groble.domain.content.entity.QContent(forProperty("content"), inits.get("content")) : null;
+        this.guestUser = inits.isInitialized("guestUser") ? new liaison.groble.domain.guest.entity.QGuestUser(forProperty("guestUser")) : null;
         this.order = inits.isInitialized("order") ? new liaison.groble.domain.order.entity.QOrder(forProperty("order"), inits.get("order")) : null;
         this.payment = inits.isInitialized("payment") ? new liaison.groble.domain.payment.entity.QPayment(forProperty("payment"), inits.get("payment")) : null;
         this.usedCoupon = inits.isInitialized("usedCoupon") ? new liaison.groble.domain.coupon.entity.QUserCoupon(forProperty("usedCoupon"), inits.get("usedCoupon")) : null;

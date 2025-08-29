@@ -33,7 +33,7 @@ public class PurchaseService {
   private final PurchaseReader purchaseReader;
   private final SellerContactReader sellerContactReader;
 
-  // 내가 구매한 콘텐츠 목록 조회
+  // 내가 구매한 콘텐츠 목록 조회 (회원용)
   @Transactional(readOnly = true)
   public PageResponse<PurchaseContentCardDTO> getMyPurchasedContents(
       Long userId, String state, Pageable pageable) {
@@ -41,6 +41,27 @@ public class PurchaseService {
 
     Page<FlatPurchaseContentPreviewDTO> page =
         purchaseReader.findMyPurchasedContents(userId, orderStatuses, pageable);
+
+    List<PurchaseContentCardDTO> items =
+        page.getContent().stream().map(this::convertFlatDTOToCardDTO).toList();
+
+    PageResponse.MetaData meta =
+        PageResponse.MetaData.builder()
+            .sortBy(pageable.getSort().iterator().next().getProperty())
+            .sortDirection(pageable.getSort().iterator().next().getDirection().name())
+            .build();
+
+    return PageResponse.from(page, items, meta);
+  }
+
+  // 내가 구매한 콘텐츠 목록 조회 (비회원용)
+  @Transactional(readOnly = true)
+  public PageResponse<PurchaseContentCardDTO> getMyPurchasedContentsForGuest(
+      Long guestUserId, String state, Pageable pageable) {
+    List<Order.OrderStatus> orderStatuses = parseOrderStatuses(state);
+
+    Page<FlatPurchaseContentPreviewDTO> page =
+        purchaseReader.findMyPurchasedContentsForGuest(guestUserId, orderStatuses, pageable);
 
     List<PurchaseContentCardDTO> items =
         page.getContent().stream().map(this::convertFlatDTOToCardDTO).toList();

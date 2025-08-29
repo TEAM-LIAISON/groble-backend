@@ -37,6 +37,7 @@ import liaison.groble.domain.content.entity.QContentReview;
 import liaison.groble.domain.content.entity.QDocumentOption;
 import liaison.groble.domain.content.enums.ContentType;
 import liaison.groble.domain.dashboard.dto.FlatDashboardOverviewDTO;
+import liaison.groble.domain.guest.entity.QGuestUser;
 import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.order.entity.QOrder;
 import liaison.groble.domain.payment.entity.QPayplePayment;
@@ -493,6 +494,87 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
                     .select(qPurchase.count())
                     .from(qPurchase)
                     .leftJoin(qPurchase.order, qOrder) // 이 라인 추가
+                    .where(conditions)
+                    .fetchOne())
+            .orElse(0L);
+
+    return new PageImpl<>(items, pageable, total);
+  }
+
+  @Override
+  public Page<FlatPurchaseContentPreviewDTO> findMyPurchasedContentsForGuest(
+      Long guestUserId, List<Order.OrderStatus> orderStatuses, Pageable pageable) {
+    QPurchase qPurchase = QPurchase.purchase;
+    QOrder qOrder = QOrder.order;
+    QContent qContent = QContent.content;
+    QContentOption qContentOption = QContentOption.contentOption;
+    QGuestUser qGuestUser = QGuestUser.guestUser;
+
+    BooleanExpression conditions = qPurchase.guestUser.id.eq(guestUserId);
+    if (orderStatuses != null) {
+      conditions = conditions.and(qOrder.status.in(orderStatuses));
+    }
+
+    JPAQuery<FlatPurchaseContentPreviewDTO> query =
+        queryFactory
+            .select(
+                Projections.fields(
+                    FlatPurchaseContentPreviewDTO.class,
+                    qOrder.merchantUid.as("merchantUid"),
+                    qContent.id.as("contentId"),
+                    qContent.contentType.stringValue().as("contentType"),
+                    qPurchase.purchasedAt.as("purchasedAt"),
+                    qContent.title.as("title"),
+                    qContent.thumbnailUrl.as("thumbnailUrl"),
+                    qContent.user.userProfile.nickname.as("sellerName"),
+                    qPurchase.originalPrice.as("originalPrice"),
+                    qPurchase.finalPrice.as("finalPrice"),
+                    ExpressionUtils.as(
+                        select(qContentOption.count().intValue())
+                            .from(qContentOption)
+                            .where(qContentOption.content.eq(qContent)),
+                        "priceOptionLength"),
+                    qOrder.status.stringValue().as("orderStatus")))
+            .from(qPurchase)
+            .leftJoin(qPurchase.guestUser, qGuestUser)
+            .leftJoin(qPurchase.content, qContent)
+            .leftJoin(qPurchase.order, qOrder)
+            .where(conditions);
+
+    // 3) Pageable의 Sort 적용
+    if (pageable.getSort().isUnsorted()) {
+      query.orderBy(qPurchase.purchasedAt.desc());
+    } else {
+      for (Sort.Order order : pageable.getSort()) {
+        com.querydsl.core.types.Order direction =
+            order.isAscending()
+                ? com.querydsl.core.types.Order.ASC
+                : com.querydsl.core.types.Order.DESC;
+
+        // purchasedAt은 Purchase 엔티티에서 처리
+        if ("purchasedAt".equals(order.getProperty())) {
+          query.orderBy(new OrderSpecifier<>(direction, qPurchase.purchasedAt));
+        } else {
+          // 다른 필드는 Content에서 처리
+          PathBuilder<Content> path = new PathBuilder<>(Content.class, qContent.getMetadata());
+          ComparableExpressionBase<?> expr =
+              path.getComparable(order.getProperty(), Comparable.class);
+          query.orderBy(new OrderSpecifier<>(direction, expr));
+        }
+      }
+    }
+
+    // 4) 페이징(Offset + Limit)
+    List<FlatPurchaseContentPreviewDTO> items =
+        query.offset(pageable.getOffset()).limit(pageable.getPageSize()).fetch();
+
+    // 5) 전체 카운트
+    long total =
+        Optional.ofNullable(
+                queryFactory
+                    .select(qPurchase.count())
+                    .from(qPurchase)
+                    .leftJoin(qPurchase.order, qOrder)
                     .where(conditions)
                     .fetchOne())
             .orElse(0L);
