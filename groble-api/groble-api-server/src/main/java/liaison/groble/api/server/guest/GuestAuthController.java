@@ -1,8 +1,11 @@
 package liaison.groble.api.server.guest;
 
+import jakarta.validation.Valid;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -29,7 +32,8 @@ public class GuestAuthController {
 
   // TODO: 비회원 인증번호 발송
   @PostMapping("/verify-request")
-  public ResponseEntity<GrobleResponse<Void>> sendGuestAuthCode(GuestAuthRequest guestAuthRequest) {
+  public ResponseEntity<GrobleResponse<Void>> sendGuestAuthCode(
+      @Valid @RequestBody GuestAuthRequest guestAuthRequest) {
     GuestAuthDTO guestAuthDTO = guestAuthMapper.toGuestAuthDTO(guestAuthRequest);
     guestAuthService.sendGuestAuthCode(guestAuthDTO);
     // 비회원 인증번호 발송 로직 구현

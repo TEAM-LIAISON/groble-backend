@@ -7,12 +7,13 @@ import jakarta.validation.constraints.Size;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
-@Builder
+@NoArgsConstructor
 @AllArgsConstructor
+@Schema(description = "비회원 전화번호 인증 요청 DTO")
 public class GuestAuthRequest {
 
   @NotBlank(message = "이름은 필수 입력값입니다.")

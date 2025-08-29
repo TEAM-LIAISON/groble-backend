@@ -32,8 +32,8 @@ public class GuestAuthService {
 
   public void sendGuestAuthCode(GuestAuthDTO guestAuthDTO) {
     String sanitized = PhoneUtils.sanitizePhoneNumber(guestAuthDTO.getPhoneNumber());
-    // 1. 기존 GuestUser 상태 확인 및 처리
 
+    // 1. 기존 GuestUser 상태 확인 및 처리
     handleExistingGuestUser(sanitized);
     String code = CodeGenerator.generateVerificationCode(4);
     verificationCodePort.saveVerificationCodeForGuest(

@@ -7,6 +7,6 @@ import lombok.Getter;
 @Builder
 public class GuestAuthDTO {
   private String username;
-  private String phoneNumber;
   private String email;
+  private String phoneNumber;
 }
