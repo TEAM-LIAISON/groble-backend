@@ -14,7 +14,7 @@ import liaison.groble.api.model.auth.request.ResetPasswordRequest;
 import liaison.groble.api.model.auth.request.VerifyEmailCodeRequest;
 import liaison.groble.application.auth.dto.EmailVerificationDTO;
 import liaison.groble.application.auth.dto.VerifyEmailCodeDTO;
-import liaison.groble.application.verification.VerificationService;
+import liaison.groble.application.verification.service.VerificationService;
 import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.model.Accessor;
 import liaison.groble.common.response.GrobleResponse;

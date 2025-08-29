@@ -71,7 +71,7 @@ public class GuestUser extends BaseTimeEntity {
 
     this.phoneVerificationStatus = PhoneVerificationStatus.VERIFIED;
     this.phoneVerifiedAt = LocalDateTime.now();
-    this.verificationExpiresAt = LocalDateTime.now().plusHours(2); // 2시간 유효
+    this.verificationExpiresAt = LocalDateTime.now().plusHours(1); // 1시간 유효
   }
 
   public void expireVerification() {
@@ -88,5 +88,14 @@ public class GuestUser extends BaseTimeEntity {
   public boolean isVerificationExpired() {
     return this.verificationExpiresAt != null
         && this.verificationExpiresAt.isBefore(LocalDateTime.now());
+  }
+
+  public void updateUserInfo(String username, String email) {
+    if (username != null && !username.trim().isEmpty()) {
+      this.username = username;
+    }
+    if (email != null && !email.trim().isEmpty()) {
+      this.email = email;
+    }
   }
 }

@@ -1,4 +1,4 @@
-package liaison.groble.application.verification;
+package liaison.groble.application.verification.service;
 
 import java.util.UUID;
 

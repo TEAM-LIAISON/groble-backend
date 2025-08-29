@@ -7,6 +7,8 @@ import org.springframework.stereotype.Service;
 import liaison.groble.application.common.enums.SmsTemplate;
 import liaison.groble.application.common.service.SmsService;
 import liaison.groble.application.guest.dto.GuestAuthDTO;
+import liaison.groble.application.guest.dto.GuestAuthVerifyDTO;
+import liaison.groble.application.guest.exception.InvalidGuestAuthCodeException;
 import liaison.groble.application.guest.reader.GuestUserReader;
 import liaison.groble.application.guest.writer.GuestUserWriter;
 import liaison.groble.common.utils.CodeGenerator;
@@ -43,6 +45,52 @@ public class GuestAuthService {
     smsService.sendSms(sanitized, SmsTemplate.VERIFICATION_CODE, code);
   }
 
+  public void verifyGuestAuthCode(GuestAuthVerifyDTO guestAuthVerifyDTO) {
+    String sanitized = PhoneUtils.sanitizePhoneNumber(guestAuthVerifyDTO.getPhoneNumber());
+    String authCode = guestAuthVerifyDTO.getAuthCode();
+    String email = guestAuthVerifyDTO.getEmail();
+    String username = guestAuthVerifyDTO.getUsername();
+
+    // 1. 인증 코드 검증
+    boolean isValidCode =
+        verificationCodePort.validateVerificationCodeForGuest(sanitized, authCode);
+    if (!isValidCode) {
+      throw new InvalidGuestAuthCodeException();
+    }
+
+    // 2. 기존 GuestUser 조회 또는 생성 처리
+    GuestUser guestUser;
+    if (guestUserReader.existsByPhoneNumber(sanitized)) {
+      guestUser = guestUserReader.getByPhoneNumber(sanitized);
+
+      // 기존 사용자의 정보와 요청 정보가 다른 경우 업데이트
+      if (!guestUser.getEmail().equals(email) || !guestUser.getUsername().equals(username)) {
+        log.info(
+            "기존 비회원 정보 업데이트: phoneNumber={}, oldEmail={}, newEmail={}, oldUsername={}, newUsername={}",
+            sanitized,
+            guestUser.getEmail(),
+            email,
+            guestUser.getUsername(),
+            username);
+        guestUser.updateUserInfo(username, email);
+      }
+    } else {
+      // 새로운 GuestUser 생성
+      guestUser =
+          GuestUser.builder().username(username).phoneNumber(sanitized).email(email).build();
+    }
+
+    // 3. 전화번호 인증 완료 처리
+    guestUser.verifyPhone();
+    guestUserWriter.save(guestUser);
+
+    // 4. 인증 코드 삭제
+    verificationCodePort.removeVerificationCodeForGuest(sanitized);
+
+    log.info("비회원 전화번호 인증 완료: phoneNumber={}, email={}, username={}", sanitized, email, username);
+  }
+
+  // 기존 GuestUser 상태 확인 및 처리
   private void handleExistingGuestUser(String phoneNumber) {
     boolean existingGuest = guestUserReader.existsByPhoneNumber(phoneNumber);
 
