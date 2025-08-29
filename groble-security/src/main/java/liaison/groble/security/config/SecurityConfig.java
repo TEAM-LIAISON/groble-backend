@@ -196,6 +196,8 @@ public class SecurityConfig {
                     .permitAll()
                     .requestMatchers("/api/v1/auth/nickname/check")
                     .permitAll()
+                    .requestMatchers("/api/v1/guest/auth/verify-request")
+                    .permitAll()
                     .requestMatchers("/login/**")
                     .permitAll()
                     .requestMatchers("/error")

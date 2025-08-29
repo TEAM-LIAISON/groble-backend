@@ -74,6 +74,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
           "/api/v1/verification/email/code/verify/sign-up",
           "/api/v1/verification/email/code/password-reset",
           "/api/v1/verification/password/reset",
+          "/api/v1/guest/auth/verify-request",
           "/payment/**",
           "/payple-payment",
           "/api/v1/groble/contents",
