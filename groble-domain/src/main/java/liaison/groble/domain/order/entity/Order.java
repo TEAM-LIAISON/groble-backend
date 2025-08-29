@@ -29,6 +29,7 @@ import liaison.groble.domain.common.entity.BaseTimeEntity;
 import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.content.enums.ContentStatus;
 import liaison.groble.domain.coupon.entity.UserCoupon;
+import liaison.groble.domain.guest.entity.GuestUser;
 import liaison.groble.domain.order.vo.OrderOptionInfo;
 import liaison.groble.domain.payment.entity.Payment;
 import liaison.groble.domain.user.entity.User;
@@ -43,6 +44,7 @@ import lombok.NoArgsConstructor;
     name = "orders",
     indexes = {
       @Index(name = "idx_order_user", columnList = "user_id"),
+      @Index(name = "idx_order_guest_user", columnList = "guest_user_id"),
       @Index(name = "idx_order_status", columnList = "status"),
       @Index(name = "idx_order_created_at", columnList = "created_at"),
       @Index(name = "idx_order_coupon", columnList = "applied_coupon_id")
@@ -58,6 +60,10 @@ public class Order extends BaseTimeEntity {
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "user_id")
   private User user;
+
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "guest_user_id")
+  private GuestUser guestUser;
 
   @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<OrderItem> orderItems = new ArrayList<>();
@@ -101,11 +107,13 @@ public class Order extends BaseTimeEntity {
   @Builder(access = AccessLevel.PACKAGE)
   private Order(
       User user,
+      GuestUser guestUser,
       BigDecimal originalPrice,
       UserCoupon appliedCoupon,
       Purchaser purchaser,
       String orderNote) {
     this.user = user;
+    this.guestUser = guestUser;
     this.originalPrice = originalPrice;
     this.appliedCoupon = appliedCoupon;
     this.purchaser = purchaser;
@@ -272,6 +280,7 @@ public class Order extends BaseTimeEntity {
     Order order =
         Order.builder()
             .user(user)
+            .guestUser(null) // 회원 주문은 guestUser null
             .originalPrice(price)
             .appliedCoupon(coupon)
             .purchaser(purchaser)
@@ -329,6 +338,7 @@ public class Order extends BaseTimeEntity {
     Order order =
         Order.builder()
             .user(user)
+            .guestUser(null) // 회원 주문은 guestUser null
             .originalPrice(totalPrice)
             .appliedCoupon(null) // 초기 주문에서는 쿠폰 미적용
             .purchaser(purchaser)
@@ -349,7 +359,7 @@ public class Order extends BaseTimeEntity {
   }
 
   /**
-   * 비회원 주문 생성을 위한 팩토리 메서드
+   * 비회원 주문 생성을 위한 팩토리 메서드 (기존 방식)
    *
    * @param content 구매할 콘텐츠
    * @param options 검증된 옵션 정보 리스트
@@ -379,6 +389,7 @@ public class Order extends BaseTimeEntity {
     Order order =
         Order.builder()
             .user(null) // 비회원은 null
+            .guestUser(null) // 기존 방식은 guestUser도 null
             .originalPrice(totalPrice)
             .appliedCoupon(null) // 비회원은 쿠폰 사용 불가
             .purchaser(purchaser)
@@ -395,6 +406,86 @@ public class Order extends BaseTimeEntity {
     }
 
     return order;
+  }
+
+  /**
+   * GuestUser와 연계된 비회원 주문 생성 팩토리 메서드
+   *
+   * @param guestUser 게스트 사용자 (전화번호 인증 완료)
+   * @param content 구매할 콘텐츠
+   * @param options 검증된 옵션 정보 리스트
+   * @return 생성된 비회원 주문
+   */
+  public static Order createGuestOrderWithMultipleOptions(
+      GuestUser guestUser, Content content, List<OrderOptionInfo> options) {
+
+    // 콘텐츠 판매 상태 검증
+    if (content.getStatus() != ContentStatus.ACTIVE) {
+      throw new IllegalArgumentException("판매중인 콘텐츠만 구매할 수 있습니다: " + content.getTitle());
+    }
+
+    // 옵션이 비어있는지 검증
+    if (options == null || options.isEmpty()) {
+      throw new IllegalArgumentException("최소 하나 이상의 옵션을 선택해야 합니다");
+    }
+
+    // GuestUser 검증
+    if (guestUser == null) {
+      throw new IllegalArgumentException("게스트 사용자 정보가 필요합니다");
+    }
+
+    if (!guestUser.isVerified()) {
+      throw new IllegalArgumentException("전화번호 인증이 완료되지 않았습니다");
+    }
+
+    // 총 금액 계산 - 각 옵션의 (가격 × 수량)의 합계
+    BigDecimal totalPrice =
+        options.stream()
+            .map(OrderOptionInfo::getTotalPrice)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+    // GuestUser 정보로 Purchaser 생성
+    Purchaser purchaser =
+        Purchaser.builder()
+            .name(guestUser.getUsername())
+            .email(guestUser.getEmail())
+            .phone(guestUser.getPhoneNumber())
+            .build();
+
+    // 비회원 주문 엔티티 생성 - GuestUser 연결
+    Order order =
+        Order.builder()
+            .user(null) // 비회원은 null
+            .guestUser(guestUser) // GuestUser 연결
+            .originalPrice(totalPrice)
+            .appliedCoupon(null) // 비회원은 쿠폰 사용 불가
+            .purchaser(purchaser)
+            .build();
+
+    // 각 옵션에 대해 OrderItem 추가
+    for (OrderOptionInfo optionInfo : options) {
+      order.addOrderItem(
+          content,
+          optionInfo.getPrice(),
+          optionInfo.getOptionType(),
+          optionInfo.getOptionId(),
+          optionInfo.getQuantity());
+    }
+
+    return order;
+  }
+
+  // 주문 유형 확인 메서드들
+  public boolean isGuestOrder() {
+    return this.user == null && this.guestUser != null;
+  }
+
+  public boolean isMemberOrder() {
+    return this.user != null && this.guestUser == null;
+  }
+
+  public boolean isPublicOrder() {
+    return this.user == null && this.guestUser == null;
   }
 
   // Getter 메서드들 추가
