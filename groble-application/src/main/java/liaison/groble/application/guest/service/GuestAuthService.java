@@ -8,9 +8,11 @@ import liaison.groble.application.common.enums.SmsTemplate;
 import liaison.groble.application.common.service.SmsService;
 import liaison.groble.application.guest.dto.GuestAuthDTO;
 import liaison.groble.application.guest.dto.GuestAuthVerifyDTO;
+import liaison.groble.application.guest.dto.GuestTokenDTO;
 import liaison.groble.application.guest.exception.InvalidGuestAuthCodeException;
 import liaison.groble.application.guest.reader.GuestUserReader;
 import liaison.groble.application.guest.writer.GuestUserWriter;
+import liaison.groble.common.port.security.SecurityPort;
 import liaison.groble.common.utils.CodeGenerator;
 import liaison.groble.common.utils.PhoneUtils;
 import liaison.groble.domain.guest.entity.GuestUser;
@@ -27,6 +29,7 @@ public class GuestAuthService {
   private final GuestUserReader guestUserReader;
   private final GuestUserWriter guestUserWriter;
   // Port
+  private final SecurityPort securityPort;
   private final VerificationCodePort verificationCodePort;
 
   // Service
@@ -45,7 +48,7 @@ public class GuestAuthService {
     smsService.sendSms(sanitized, SmsTemplate.VERIFICATION_CODE, code);
   }
 
-  public void verifyGuestAuthCode(GuestAuthVerifyDTO guestAuthVerifyDTO) {
+  public GuestTokenDTO verifyGuestAuthCode(GuestAuthVerifyDTO guestAuthVerifyDTO) {
     String sanitized = PhoneUtils.sanitizePhoneNumber(guestAuthVerifyDTO.getPhoneNumber());
     String authCode = guestAuthVerifyDTO.getAuthCode();
     String email = guestAuthVerifyDTO.getEmail();
@@ -87,7 +90,18 @@ public class GuestAuthService {
     // 4. 인증 코드 삭제
     verificationCodePort.removeVerificationCodeForGuest(sanitized);
 
+    // 5. 게스트 토큰 생성
+    String guestToken = securityPort.createGuestToken(guestUser.getId());
+
     log.info("비회원 전화번호 인증 완료: phoneNumber={}, email={}, username={}", sanitized, email, username);
+
+    return GuestTokenDTO.builder()
+        .phoneNumber(sanitized)
+        .email(email)
+        .username(username)
+        .guestToken(guestToken)
+        .authenticated(true)
+        .build();
   }
 
   // 기존 GuestUser 상태 확인 및 처리

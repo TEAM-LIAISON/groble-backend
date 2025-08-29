@@ -1,5 +1,6 @@
 package liaison.groble.api.server.guest;
 
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 
 import org.springframework.http.HttpStatus;
@@ -11,11 +12,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 import liaison.groble.api.model.guest.request.GuestAuthCodeRequest;
 import liaison.groble.api.model.guest.request.GuestAuthVerifyRequest;
+import liaison.groble.api.model.guest.response.GuestAuthVerifyResponse;
 import liaison.groble.application.guest.dto.GuestAuthDTO;
 import liaison.groble.application.guest.dto.GuestAuthVerifyDTO;
+import liaison.groble.application.guest.dto.GuestTokenDTO;
 import liaison.groble.application.guest.service.GuestAuthService;
 import liaison.groble.common.response.GrobleResponse;
 import liaison.groble.common.response.ResponseHelper;
+import liaison.groble.common.utils.TokenCookieService;
 import liaison.groble.mapping.guest.GuestAuthMapper;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -35,6 +39,7 @@ public class GuestAuthController {
 
   // Helper
   private final ResponseHelper responseHelper;
+  private final TokenCookieService tokenCookieService;
 
   @PostMapping("/code-request")
   public ResponseEntity<GrobleResponse<Void>> sendGuestAuthCode(
@@ -46,12 +51,26 @@ public class GuestAuthController {
   }
 
   @PostMapping("/verify-request")
-  public ResponseEntity<GrobleResponse<Void>> verifyGuestAuthCode(
-      @Valid @RequestBody GuestAuthVerifyRequest guestAuthVerifyRequest) {
+  public ResponseEntity<GrobleResponse<GuestAuthVerifyResponse>> verifyGuestAuthCode(
+      @Valid @RequestBody GuestAuthVerifyRequest guestAuthVerifyRequest,
+      HttpServletResponse response) {
     GuestAuthVerifyDTO guestAuthVerifyDTO =
         guestAuthMapper.toGuestAuthVerifyDTO(guestAuthVerifyRequest);
-    guestAuthService.verifyGuestAuthCode(guestAuthVerifyDTO);
+    GuestTokenDTO guestTokenDTO = guestAuthService.verifyGuestAuthCode(guestAuthVerifyDTO);
 
-    return responseHelper.success(null, "비회원 전화번호 인증 검증이 성공적으로 완료되었습니다.", HttpStatus.OK);
+    // 게스트 토큰 쿠키 설정
+    tokenCookieService.addGuestTokenCookie(response, guestTokenDTO.getGuestToken());
+
+    // 응답 생성
+    GuestAuthVerifyResponse guestAuthVerifyResponse =
+        GuestAuthVerifyResponse.builder()
+            .phoneNumber(guestTokenDTO.getPhoneNumber())
+            .email(guestTokenDTO.getEmail())
+            .username(guestTokenDTO.getUsername())
+            .authenticated(guestTokenDTO.isAuthenticated())
+            .build();
+
+    return responseHelper.success(
+        guestAuthVerifyResponse, "비회원 전화번호 인증 검증이 성공적으로 완료되었습니다.", HttpStatus.OK);
   }
 }
