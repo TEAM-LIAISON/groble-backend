@@ -539,7 +539,7 @@ public class OrderService {
   }
 
   /**
-   * 결제 성공 후 주문 정보 조회
+   * 결제 성공 후 주문 정보 조회 (회원용)
    *
    * <p>결제가 완료된 주문의 상세 정보를 조회합니다. 본인의 주문인지 권한을 검증하고, 결제 완료 상태인지 확인합니다.
    *
@@ -564,6 +564,38 @@ public class OrderService {
     Purchase purchase = purchaseReader.getPurchaseByOrderId(order.getId());
 
     // 5. 응답 생성
+    return buildOrderSuccessResponse(order, purchase);
+  }
+
+  /**
+   * 결제 성공 후 주문 정보 조회 (비회원용)
+   *
+   * <p>결제가 완료된 비회원 주문의 상세 정보를 조회합니다. 게스트 사용자의 주문인지 권한을 검증하고, 결제 완료 상태인지 확인합니다.
+   *
+   * @param merchantUid 주문 고유 식별자
+   * @param guestUserId 요청한 게스트 사용자 ID (권한 검증용)
+   * @return 주문 성공 정보
+   * @throws IllegalArgumentException 주문을 찾을 수 없는 경우
+   * @throws IllegalStateException 권한이 없거나 결제가 완료되지 않은 경우
+   */
+  @Transactional(readOnly = true)
+  public OrderSuccessDTO getGuestOrderSuccess(String merchantUid, Long guestUserId) {
+    // 1. 주문 조회
+    Order order = findOrderByMerchantUid(merchantUid);
+
+    // 2. 게스트 사용자 조회
+    GuestUser guestUser = guestUserReader.getGuestUserById(guestUserId);
+
+    // 3. 권한 검증 (비회원용)
+    validateGuestOrderAccess(order, guestUser);
+
+    // 4. 주문 상태 검증
+    validateOrderPaidStatus(order);
+
+    // 5. 구매 정보 조회
+    Purchase purchase = purchaseReader.getPurchaseByOrderId(order.getId());
+
+    // 6. 응답 생성
     return buildOrderSuccessResponse(order, purchase);
   }
 

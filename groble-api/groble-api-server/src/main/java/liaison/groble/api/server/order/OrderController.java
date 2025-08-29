@@ -144,11 +144,8 @@ public class OrderController {
       log.info("회원 주문 성공 페이지 조회 - userId: {}, merchantUid: {}", accessor.getUserId(), merchantUid);
 
     } else if (accessor.isGuest()) {
-      // 비회원 주문 조회 (게스트용 메서드가 있다고 가정)
-      // orderSuccessDTO = orderService.getGuestOrderSuccess(merchantUid, accessor.getId());
-
-      // 임시로 회원용 메서드 사용 (실제로는 게스트용 메서드가 필요)
-      orderSuccessDTO = orderService.getOrderSuccess(merchantUid, accessor.getId());
+      // 비회원 주문 조회
+      orderSuccessDTO = orderService.getGuestOrderSuccess(merchantUid, accessor.getId());
       log.info(
           "비회원 주문 성공 페이지 조회 - guestUserId: {}, merchantUid: {}", accessor.getId(), merchantUid);
 
