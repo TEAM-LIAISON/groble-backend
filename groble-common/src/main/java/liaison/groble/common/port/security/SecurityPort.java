@@ -9,6 +9,8 @@ public interface SecurityPort {
 
   String createRefreshToken(Long userId, String email);
 
+  String createGuestToken(Long guestUserId);
+
   long getAccessTokenExpirationTime();
 
   LocalDateTime getRefreshTokenExpirationTime(String refreshToken);

@@ -1,14 +1,21 @@
 package liaison.groble.domain.guest.repository;
 
+import java.util.Optional;
+
+import liaison.groble.domain.guest.entity.GuestUser;
+
 public interface GuestUserRepository {
 
-  //  Optional<GuestUser> findByPhoneNumber(String phone);
-  //
   //  Optional<GuestUser> findByEmail(String email);
-  //
-  //  boolean existsByPhoneNumber(String phone);
+
+  Optional<GuestUser> findByPhoneNumber(String phoneNumber);
+
+  boolean existsByPhoneNumber(String phone);
+
   //
   //  boolean existsByEmail(String email);
 
   boolean existsById(Long guestUserId);
+
+  GuestUser save(GuestUser guestUser);
 }

@@ -21,7 +21,7 @@ public class UserPrincipal implements UserDetails, OAuth2User {
   private Long id;
   private String email;
   private String password;
-  private String userName;
+  private String username;
   private boolean isSocialLogin;
   private ProviderType providerType;
   private Collection<? extends GrantedAuthority> authorities;

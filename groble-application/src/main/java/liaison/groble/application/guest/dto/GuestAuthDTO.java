@@ -1,0 +1,12 @@
+package liaison.groble.application.guest.dto;
+
+import lombok.Builder;
+import lombok.Getter;
+
+@Getter
+@Builder
+public class GuestAuthDTO {
+  private String username;
+  private String phoneNumber;
+  private String email;
+}

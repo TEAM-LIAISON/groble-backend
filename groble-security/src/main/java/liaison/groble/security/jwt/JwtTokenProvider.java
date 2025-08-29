@@ -272,7 +272,7 @@ public class JwtTokenProvider {
   }
 
   // 비회원 토큰 생성
-  private String createGuestToken(Long guestUserId) {
+  public String createGuestToken(Long guestUserId) {
     LocalDateTime expiryDate = LocalDateTime.now().plusSeconds(guestTokenExpirationMs / 1000);
     return Jwts.builder()
         .setSubject("guest:" + guestUserId)

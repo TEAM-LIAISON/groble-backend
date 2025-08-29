@@ -35,4 +35,14 @@ public interface VerificationCodePort {
 
   /** 로그인한 사용자의 전화번호 인증 코드 삭제 */
   void removeVerificationCodeForUser(Long userId, String phoneNumber);
+
+  // === 비회원 전화번호 인증 관련 ===
+  /** 비회원 전화번호 인증 코드 저장 Redis Key: phone:auth:guest:{phoneNumber} */
+  void saveVerificationCodeForGuest(String phoneNumber, String code, long expirationTimeInMinutes);
+
+  /** 비회원 전화번호 인증 코드 검증 */
+  boolean validateVerificationCodeForGuest(String phoneNumber, String code);
+
+  /** 비회원 전화번호 인증 코드 삭제 */
+  void removeVerificationCodeForGuest(String phoneNumber);
 }

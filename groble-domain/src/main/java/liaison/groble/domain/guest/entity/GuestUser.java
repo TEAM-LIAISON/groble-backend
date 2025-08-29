@@ -38,7 +38,7 @@ public class GuestUser extends BaseTimeEntity {
   private Long id;
 
   @Column(name = "user_name", nullable = false, length = 50)
-  private String userName;
+  private String username;
 
   @Column(name = "phone_number", nullable = false, length = 20, unique = true)
   private String phoneNumber;
@@ -57,8 +57,8 @@ public class GuestUser extends BaseTimeEntity {
   private LocalDateTime verificationExpiresAt;
 
   @Builder
-  public GuestUser(String userName, String phoneNumber, String email) {
-    this.userName = userName;
+  public GuestUser(String username, String phoneNumber, String email) {
+    this.username = username;
     this.phoneNumber = phoneNumber;
     this.email = email;
     this.phoneVerificationStatus = PhoneVerificationStatus.PENDING;

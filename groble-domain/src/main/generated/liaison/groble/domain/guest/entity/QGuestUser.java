@@ -37,7 +37,7 @@ public class QGuestUser extends EntityPathBase<GuestUser> {
     //inherited
     public final DateTimePath<java.time.LocalDateTime> updatedAt = _super.updatedAt;
 
-    public final StringPath userName = createString("userName");
+    public final StringPath username = createString("username");
 
     public final DateTimePath<java.time.LocalDateTime> verificationExpiresAt = createDateTime("verificationExpiresAt", java.time.LocalDateTime.class);
 

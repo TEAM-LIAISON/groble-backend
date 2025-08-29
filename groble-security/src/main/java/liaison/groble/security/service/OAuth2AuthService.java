@@ -120,7 +120,7 @@ public class OAuth2AuthService extends DefaultOAuth2UserService {
     String registrationId = userRequest.getClientRegistration().getRegistrationId();
     ProviderType providerType = getProviderType(registrationId);
 
-    String userNameAttributeName =
+    String usernameAttributeName =
         userRequest
             .getClientRegistration()
             .getProviderDetails()
@@ -129,9 +129,9 @@ public class OAuth2AuthService extends DefaultOAuth2UserService {
 
     Map<String, Object> attributes = oAuth2User.getAttributes();
 
-    if (!attributes.containsKey(userNameAttributeName)) {
+    if (!attributes.containsKey(usernameAttributeName)) {
       throw new IllegalArgumentException(
-          "Missing attribute '" + userNameAttributeName + "' in attributes");
+          "Missing attribute '" + usernameAttributeName + "' in attributes");
     }
 
     // OAuth2UserInfo 객체 생성 (제공자별 데이터 구조 차이 처리)
