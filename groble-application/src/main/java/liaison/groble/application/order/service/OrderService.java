@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import liaison.groble.application.content.ContentReader;
+import liaison.groble.application.guest.reader.GuestUserReader;
 import liaison.groble.application.order.dto.CreateOrderRequestDTO;
 import liaison.groble.application.order.dto.CreateOrderSuccessDTO;
 import liaison.groble.application.order.dto.OrderSuccessDTO;
@@ -21,6 +22,7 @@ import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.content.entity.ContentOption;
 import liaison.groble.domain.coupon.entity.UserCoupon;
 import liaison.groble.domain.coupon.repository.UserCouponRepository;
+import liaison.groble.domain.guest.entity.GuestUser;
 import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.order.entity.OrderItem;
 import liaison.groble.domain.order.entity.Purchaser;
@@ -58,6 +60,7 @@ public class OrderService {
 
   // Reader
   private final UserReader userReader;
+  private final GuestUserReader guestUserReader;
   private final ContentReader contentReader;
   private final PurchaseReader purchaseReader;
 
@@ -72,10 +75,40 @@ public class OrderService {
 
   @Transactional
   public CreateOrderSuccessDTO createOrderForUser(CreateOrderRequestDTO dto, Long userId) {
-    log.info("주문 생성 시작 - userId: {}, contentId: {}", userId, dto.getContentId());
+    log.info("회원 주문 생성 시작 - userId: {}, contentId: {}", userId, dto.getContentId());
 
-    // 1. 주문에 필요한 기본 정보 조회
+    // 1. 사용자 조회
     final User user = userReader.getUserById(userId);
+
+    // 2. 공통 로직으로 주문 생성
+    return createOrderInternal(dto, user, null);
+  }
+
+  @Transactional
+  public CreateOrderSuccessDTO createOrderForGuest(CreateOrderRequestDTO dto, Long guestUserId) {
+    log.info("비회원 주문 생성 시작 - guestUserId: {}, contentId: {}", guestUserId, dto.getContentId());
+    GuestUser guestUser = guestUserReader.getGuestUserById(guestUserId);
+
+    // GuestUser 인증 상태 확인
+    if (!guestUser.isVerified()) {
+      throw new IllegalStateException("전화번호 인증이 완료되지 않은 게스트 사용자입니다.");
+    }
+
+    // 공통 로직으로 주문 생성 (쿠폰은 비회원이므로 처리하지 않음)
+    return createOrderInternal(dto, null, guestUser);
+  }
+
+  /**
+   * 주문 생성 공통 로직
+   *
+   * @param dto 주문 요청 정보
+   * @param user 회원 (회원 주문시에만 제공)
+   * @param guestUser 비회원 (비회원 주문시에만 제공)
+   * @return 주문 생성 결과
+   */
+  private CreateOrderSuccessDTO createOrderInternal(
+      CreateOrderRequestDTO dto, User user, GuestUser guestUser) {
+    // 1. 콘텐츠 조회
     final Content content = contentReader.getContentById(dto.getContentId());
 
     // 2. 주문 옵션 검증 및 변환
@@ -83,32 +116,25 @@ public class OrderService {
         validateAndEnrichOptions(content, dto.getOptions());
     final List<OrderOptionInfo> orderOptions = convertToDomainOptions(validatedOptions);
 
-    // 3. 구매자 정보 생성
-    final Purchaser purchaser = buildPurchaserFromUser(user);
+    // 3. 주문 객체 생성
+    Order order = createOrderByUserType(user, guestUser, content, orderOptions);
 
-    // 4. 주문 객체 생성 (저장하지 않음)
-    Order order = Order.createOrderWithMultipleOptions(user, content, orderOptions, purchaser);
-
-    // 5. 쿠폰 적용 (메모리상에서만)
+    // 4. 회원인 경우에만 쿠폰 적용
     UserCoupon appliedCoupon = null;
-    if (dto.getCouponCodes() != null && !dto.getCouponCodes().isEmpty()) {
+    if (user != null && dto.getCouponCodes() != null && !dto.getCouponCodes().isEmpty()) {
       appliedCoupon = findAndValidateBestCoupon(order, user, dto.getCouponCodes());
       if (appliedCoupon != null) {
         order.applyCoupon(appliedCoupon);
       }
     }
 
-    // 6. 무료 주문 여부 확인 (실제 처리는 저장 후)
+    // 5. 무료 주문 여부 확인
     final boolean willBeFreePurchase = order.getFinalPrice().compareTo(BigDecimal.ZERO) == 0;
 
-    // 7. 주문 저장 (ID 생성)
-    order = orderRepository.save(order);
+    // 6. 주문 저장 및 merchantUid 생성
+    order = saveOrderWithMerchantUid(order);
 
-    // 8. merchantUid 생성 및 업데이트
-    order.setMerchantUid(Order.generateMerchantUid(order.getId()));
-    order = orderRepository.save(order);
-
-    // 9. 무료 주문 처리 (저장 후 수행)
+    // 7. 무료 주문 처리
     if (willBeFreePurchase) {
       boolean success = processFreeOrderPurchase(order);
       if (!success) {
@@ -116,12 +142,12 @@ public class OrderService {
       }
     }
 
-    // 10. 주문 생성 로그 기록
-    logOrderCreation(
-        order, userId, dto.getContentId(), validatedOptions.size(), willBeFreePurchase);
+    // 8. 주문 생성 로그 기록
+    logOrderCreationByType(
+        order, user, guestUser, dto.getContentId(), validatedOptions.size(), willBeFreePurchase);
 
-    // 11. 응답 생성
-    return buildCreateOrderDTO(order, willBeFreePurchase);
+    // 9. 응답 생성
+    return buildCreateOrderDTOByType(order, user, guestUser, willBeFreePurchase);
   }
 
   /**
@@ -425,26 +451,34 @@ public class OrderService {
       order.completePayment();
       orderRepository.save(order);
 
-      // 5-2. 승인 성공 시 결제 완료 처리
-      FreePaymentCompletionResult freePaymentCompletionResult =
+      // 5-2. 승인 성공 시 결제 완료 처리 (회원/비회원 구분)
+      FreePaymentCompletionResult.FreePaymentCompletionResultBuilder resultBuilder =
           FreePaymentCompletionResult.builder()
               .orderId(order.getId())
               .merchantUid(order.getMerchantUid())
               .paymentId(purchase.getPayment().getId())
               .purchaseId(purchase.getId())
-              .userId(order.getUser().getId())
               .contentId(purchase.getContent().getId())
               .sellerId(purchase.getContent().getUser().getId())
               .amount(purchase.getPayment().getPrice())
               .completedAt(purchase.getPurchasedAt())
               .sellerEmail(purchase.getContent().getUser().getEmail())
               .contentTitle(purchase.getContent().getTitle())
-              .nickname(order.getUser().getNickname())
               .contentType(purchase.getContent().getContentType().name())
               .optionId(purchase.getSelectedOptionId())
               .selectedOptionName(purchase.getSelectedOptionName())
-              .purchasedAt(purchase.getPurchasedAt())
-              .build();
+              .purchasedAt(purchase.getPurchasedAt());
+
+      // 회원/비회원에 따른 정보 설정
+      if (order.isMemberOrder()) {
+        resultBuilder.userId(order.getUser().getId()).nickname(order.getUser().getNickname());
+      } else if (order.isGuestOrder()) {
+        resultBuilder
+            .userId(null) // 비회원은 userId가 없음
+            .nickname(order.getGuestUser().getUsername()); // GuestUser의 username 사용
+      }
+
+      FreePaymentCompletionResult freePaymentCompletionResult = resultBuilder.build();
 
       // 6. 결제 완료 이벤트 발행
       publishFreePaymentCompletedEvent(freePaymentCompletionResult);
@@ -547,7 +581,7 @@ public class OrderService {
   }
 
   /**
-   * 주문 접근 권한 검증
+   * 주문 접근 권한 검증 (회원용)
    *
    * @param order 주문
    * @param userId 사용자 ID
@@ -555,6 +589,19 @@ public class OrderService {
    */
   private void validateOrderAccess(Order order, Long userId) {
     if (order.getUser() == null || !order.getUser().getId().equals(userId)) {
+      throw new IllegalStateException("해당 주문에 대한 접근 권한이 없습니다. orderId=" + order.getId());
+    }
+  }
+
+  /**
+   * 주문 접근 권한 검증 (비회원용)
+   *
+   * @param order 주문
+   * @param guestUser 게스트 사용자
+   * @throws IllegalStateException 접근 권한이 없는 경우
+   */
+  private void validateGuestOrderAccess(Order order, GuestUser guestUser) {
+    if (order.getGuestUser() == null || !order.getGuestUser().getId().equals(guestUser.getId())) {
       throw new IllegalStateException("해당 주문에 대한 접근 권한이 없습니다. orderId=" + order.getId());
     }
   }
@@ -571,27 +618,6 @@ public class OrderService {
           String.format(
               "결제가 완료되지 않은 주문입니다. orderId=%d, status=%s", order.getId(), order.getStatus()));
     }
-  }
-
-  /**
-   * 주문 응답 DTO 생성 (회원 주문용)
-   *
-   * @param order 주문
-   * @param isPurchasedContent 구매 완료 여부 (무료 주문인 경우 true)
-   * @return 주문 생성 응답
-   */
-  private CreateOrderSuccessDTO buildCreateOrderDTO(Order order, boolean isPurchasedContent) {
-    // 첫 번째 주문 항목의 콘텐츠 제목 (현재는 단일 콘텐츠 구매만 지원)
-    String contentTitle = order.getOrderItems().get(0).getContent().getTitle();
-
-    return CreateOrderSuccessDTO.builder()
-        .merchantUid(order.getMerchantUid())
-        .email(order.getUser().getEmail())
-        .phoneNumber(order.getUser().getPhoneNumber())
-        .contentTitle(contentTitle)
-        .totalPrice(order.getTotalPrice())
-        .isPurchasedContent(isPurchasedContent)
-        .build();
   }
 
   /**
@@ -668,6 +694,46 @@ public class OrderService {
   }
 
   /**
+   * 사용자 타입에 따라 주문 생성
+   *
+   * @param user 회원 (null이면 비회원)
+   * @param guestUser 비회원 (null이면 회원)
+   * @param content 콘텐츠
+   * @param orderOptions 주문 옵션들
+   * @return 생성된 주문
+   */
+  private Order createOrderByUserType(
+      User user, GuestUser guestUser, Content content, List<OrderOptionInfo> orderOptions) {
+    if (user != null) {
+      // 회원 주문
+      final Purchaser purchaser = buildPurchaserFromUser(user);
+      return Order.createOrderWithMultipleOptions(user, content, orderOptions, purchaser);
+    } else if (guestUser != null) {
+      // 비회원 주문 (GuestUser 연계)
+      return Order.createGuestOrderWithMultipleOptions(guestUser, content, orderOptions);
+    } else {
+      throw new IllegalArgumentException("User 또는 GuestUser 중 하나는 반드시 제공되어야 합니다.");
+    }
+  }
+
+  /**
+   * 주문 저장 및 merchantUid 생성
+   *
+   * @param order 주문
+   * @return 저장된 주문
+   */
+  private Order saveOrderWithMerchantUid(Order order) {
+    // 1차 저장 (ID 생성)
+    order = orderRepository.save(order);
+
+    // merchantUid 생성 및 업데이트
+    order.setMerchantUid(Order.generateMerchantUid(order.getId()));
+
+    // 2차 저장 (merchantUid 업데이트)
+    return orderRepository.save(order);
+  }
+
+  /**
    * 사용자 정보로부터 구매자 정보 생성
    *
    * <p>회원 주문의 경우에도 구매자 정보를 별도로 관리하여 주문 당시의 사용자 정보를 보존합니다.
@@ -684,30 +750,74 @@ public class OrderService {
   }
 
   /**
-   * 주문 생성 로그 기록
-   *
-   * <p>주문 생성 완료 시 주요 정보를 로그로 기록합니다. 모니터링 및 디버깅에 활용됩니다.
+   * 사용자 타입에 따른 주문 생성 로그 기록
    *
    * @param order 생성된 주문
-   * @param userId 사용자 ID
+   * @param user 회원 (null 가능)
+   * @param guestUser 비회원 (null 가능)
    * @param contentId 콘텐츠 ID
    * @param optionCount 선택한 옵션 개수
    * @param isFree 무료 주문 여부
    */
-  private void logOrderCreation(
-      Order order, Long userId, Long contentId, int optionCount, boolean isFree) {
+  private void logOrderCreationByType(
+      Order order,
+      User user,
+      GuestUser guestUser,
+      Long contentId,
+      int optionCount,
+      boolean isFree) {
+    String userInfo =
+        (user != null) ? "userId: " + user.getId() : "guestUserId: " + guestUser.getId();
+    String userType = (user != null) ? "회원" : "비회원";
+
     log.info(
-        "주문 생성 완료 - orderId: {}, merchantUid: {}, userId: {}, contentId: {}, "
+        "{} 주문 생성 완료 - orderId: {}, merchantUid: {}, {}, contentId: {}, "
             + "옵션수: {}, 원가: {}원, 최종금액: {}원, 할인금액: {}원, 즉시구매: {}",
+        userType,
         order.getId(),
         order.getMerchantUid(),
-        userId,
+        userInfo,
         contentId,
         optionCount,
         order.getOriginalPrice(),
         order.getFinalPrice(),
         order.getDiscountPrice(),
         isFree);
+  }
+
+  /**
+   * 사용자 타입에 따른 주문 응답 DTO 생성
+   *
+   * @param order 주문
+   * @param user 회원 (null 가능)
+   * @param guestUser 비회원 (null 가능)
+   * @param isPurchasedContent 구매 완료 여부
+   * @return 주문 생성 응답
+   */
+  private CreateOrderSuccessDTO buildCreateOrderDTOByType(
+      Order order, User user, GuestUser guestUser, boolean isPurchasedContent) {
+    // 첫 번째 주문 항목의 콘텐츠 제목
+    String contentTitle = order.getOrderItems().get(0).getContent().getTitle();
+
+    String email, phoneNumber;
+    if (user != null) {
+      // 회원 주문
+      email = user.getEmail();
+      phoneNumber = user.getPhoneNumber();
+    } else {
+      // 비회원 주문
+      email = guestUser.getEmail();
+      phoneNumber = guestUser.getPhoneNumber();
+    }
+
+    return CreateOrderSuccessDTO.builder()
+        .merchantUid(order.getMerchantUid())
+        .email(email)
+        .phoneNumber(phoneNumber)
+        .contentTitle(contentTitle)
+        .totalPrice(order.getTotalPrice())
+        .isPurchasedContent(isPurchasedContent)
+        .build();
   }
 
   /** 결제 완료 이벤트 발행 */

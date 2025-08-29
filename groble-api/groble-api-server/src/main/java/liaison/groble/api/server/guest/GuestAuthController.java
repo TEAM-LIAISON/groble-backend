@@ -33,13 +33,13 @@ public class GuestAuthController {
 
   // Service
   private final GuestAuthService guestAuthService;
+  private final TokenCookieService tokenCookieService;
 
   // Mapper
   private final GuestAuthMapper guestAuthMapper;
 
   // Helper
   private final ResponseHelper responseHelper;
-  private final TokenCookieService tokenCookieService;
 
   @PostMapping("/code-request")
   public ResponseEntity<GrobleResponse<Void>> sendGuestAuthCode(

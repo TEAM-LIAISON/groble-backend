@@ -15,6 +15,11 @@ public class GuestUserRepositoryImpl implements GuestUserRepository {
   private final JpaGuestUserRepository jpaGuestUserRepository;
 
   @Override
+  public Optional<GuestUser> findById(Long guestUserId) {
+    return jpaGuestUserRepository.findById(guestUserId);
+  }
+
+  @Override
   public Optional<GuestUser> findByPhoneNumber(String phoneNumber) {
     return jpaGuestUserRepository.findByPhoneNumber(phoneNumber);
   }

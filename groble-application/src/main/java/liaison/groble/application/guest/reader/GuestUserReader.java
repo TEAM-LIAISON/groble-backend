@@ -17,10 +17,16 @@ import lombok.extern.slf4j.Slf4j;
 public class GuestUserReader {
   private final GuestUserRepository guestUserRepository;
 
+  public GuestUser getGuestUserById(Long guestUserId) {
+    return guestUserRepository
+        .findById(guestUserId)
+        .orElseThrow(() -> new EntityNotFoundException("비회원 사용자를 찾을 수 없습니다. ID: " + guestUserId));
+  }
+
   public GuestUser getByPhoneNumber(String phoneNumber) {
     return guestUserRepository
         .findByPhoneNumber(phoneNumber)
-        .orElseThrow(() -> new EntityNotFoundException("해당 전화번호의 게스트 유저를 찾을 수 없습니다."));
+        .orElseThrow(() -> new EntityNotFoundException("해당 전화번호의 비회원 사용자를 찾을 수 없습니다."));
   }
 
   public boolean existsByPhoneNumber(String phoneNumber) {
