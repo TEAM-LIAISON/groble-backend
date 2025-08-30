@@ -37,7 +37,8 @@ import lombok.NoArgsConstructor;
     indexes = {
       @Index(name = "idx_payment_order", columnList = "order_id"),
       @Index(name = "idx_payment_method", columnList = "payment_method"),
-      @Index(name = "idx_payment_created_at", columnList = "created_at")
+      @Index(name = "idx_payment_created_at", columnList = "created_at"),
+      @Index(name = "idx_payment_billing_key", columnList = "billing_key")
     })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -77,6 +78,10 @@ public class Payment extends AggregateRoot {
   /** PG사 거래 고유번호 (PCD_PAY_CARDTRADENUM) */
   @Column(name = "pg_tid")
   private String pgTid;
+
+  /** 빌링키 (정기결제용, 페이플: PCD_PAYER_ID) */
+  @Column(name = "billing_key")
+  private String billingKey;
 
   /** 구매자 정보 */
   @Column(name = "purchaser_name")
@@ -158,6 +163,26 @@ public class Payment extends AggregateRoot {
         .build();
   }
 
+  /**
+   * 빌링 결제용 팩토리 메서드 (정기결제)
+   *
+   * @param order 주문 정보
+   * @param amount 결제 금액 (Value Object)
+   * @param paymentKey PG 결제 키
+   * @return 빌링 결제 엔티티
+   */
+  public static Payment createBillingPayment(Order order, PaymentAmount amount, String paymentKey) {
+    return Payment.builder()
+        .order(order)
+        .price(amount.getValue())
+        .paymentMethod(PaymentMethod.BILLING)
+        .paymentKey(paymentKey)
+        .purchaserName(order.getPurchaser().getName())
+        .purchaserEmail(order.getPurchaser().getEmail())
+        .purchaserPhoneNumber(order.getPurchaser().getPhone())
+        .build();
+  }
+
   // 비즈니스 메서드
 
   /** 무료 결제 즉시 완료 처리 */
@@ -183,6 +208,25 @@ public class Payment extends AggregateRoot {
 
     this.pgTid = pgTid;
     this.methodDetail = methodDetail;
+    this.paidAt = LocalDateTime.now();
+    publishPaymentCompletedEvent();
+  }
+
+  /**
+   * 빌링 결제 완료 처리 (정기결제)
+   *
+   * @param pgTid PG 거래 ID
+   * @param methodDetail 결제 수단 상세
+   * @param billingKey 빌링키
+   */
+  public void completeBillingPayment(String pgTid, String methodDetail, String billingKey) {
+    if (this.paymentMethod != PaymentMethod.BILLING) {
+      throw new IllegalStateException("빌링 결제만 완료 처리가 가능합니다.");
+    }
+
+    this.pgTid = pgTid;
+    this.methodDetail = methodDetail;
+    this.billingKey = billingKey;
     this.paidAt = LocalDateTime.now();
     publishPaymentCompletedEvent();
   }
@@ -217,6 +261,15 @@ public class Payment extends AggregateRoot {
    */
   public boolean isCompleted() {
     return paidAt != null;
+  }
+
+  /**
+   * 빌링키 존재 여부 확인
+   *
+   * @return 빌링키가 있는 경우 true
+   */
+  public boolean hasBillingKey() {
+    return billingKey != null && !billingKey.isEmpty();
   }
 
   // 이벤트 발행 메서드들
@@ -270,7 +323,8 @@ public class Payment extends AggregateRoot {
     FREE("무료"),
     CARD("신용카드"),
     BANK_TRANSFER("계좌이체"),
-    VIRTUAL_ACCOUNT("가상계좌");
+    VIRTUAL_ACCOUNT("가상계좌"),
+    BILLING("정기결제");
 
     private final String description;
 

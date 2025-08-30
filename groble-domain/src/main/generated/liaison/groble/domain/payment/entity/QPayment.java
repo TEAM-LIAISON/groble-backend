@@ -24,6 +24,8 @@ public class QPayment extends EntityPathBase<Payment> {
 
     public final liaison.groble.domain.payment.vo.QPaymentAmount amount;
 
+    public final StringPath billingKey = createString("billingKey");
+
     public final NumberPath<Long> id = createNumber("id", Long.class);
 
     public final StringPath methodDetail = createString("methodDetail");
