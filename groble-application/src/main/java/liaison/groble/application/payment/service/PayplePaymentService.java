@@ -22,6 +22,7 @@ import liaison.groble.domain.payment.entity.Payment;
 import liaison.groble.domain.payment.entity.PayplePayment;
 import liaison.groble.domain.payment.repository.PaymentRepository;
 import liaison.groble.domain.payment.repository.PayplePaymentRepository;
+import liaison.groble.domain.payment.vo.PaymentAmount;
 import liaison.groble.domain.port.EmailSenderPort;
 import liaison.groble.domain.purchase.entity.Purchase;
 import liaison.groble.domain.purchase.repository.PurchaseRepository;
@@ -491,7 +492,10 @@ public class PayplePaymentService {
   private Payment createAndSavePayment(Order order) {
     Payment payment =
         Payment.createPgPayment(
-            order, order.getFinalPrice(), Payment.PaymentMethod.CARD, order.getMerchantUid());
+            order,
+            PaymentAmount.of(order.getFinalPrice()),
+            Payment.PaymentMethod.CARD,
+            order.getMerchantUid());
     return paymentRepository.save(payment);
   }
 
@@ -656,11 +660,14 @@ public class PayplePaymentService {
             .format(java.time.format.DateTimeFormatter.BASIC_ISO_DATE);
 
     return PaypleRefundRequest.builder()
+        .url("https://testcpay.payple.kr/php/auth.php") // 환불 URL 추가
+        .cstId(paypleConfig.getCstId())
+        .custKey(paypleConfig.getCustKey())
         .authKey(authResponse.getAuthKey())
         .payOid(merchantUid)
-        .payDate(payDate)
         .refundTotal(payplePayment.getPcdPayTotal())
-        .refundTaxtotal(payplePayment.getPcdPayTaxTotal()) // 복합과세인 경우
+        .refundTaxfree(payplePayment.getPcdPayTaxTotal()) // 복합과세인 경우
+        .refundReason("사용자 요청") // 기본 환불 사유
         .build();
   }
 

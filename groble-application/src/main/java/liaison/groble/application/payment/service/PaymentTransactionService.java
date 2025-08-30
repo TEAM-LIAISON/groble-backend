@@ -27,6 +27,7 @@ import liaison.groble.domain.payment.entity.Payment;
 import liaison.groble.domain.payment.entity.PayplePayment;
 import liaison.groble.domain.payment.repository.PaymentRepository;
 import liaison.groble.domain.payment.repository.PayplePaymentRepository;
+import liaison.groble.domain.payment.vo.PaymentAmount;
 import liaison.groble.domain.purchase.entity.Purchase;
 import liaison.groble.domain.purchase.repository.PurchaseRepository;
 import liaison.groble.domain.settlement.entity.Settlement;
@@ -279,7 +280,10 @@ public class PaymentTransactionService {
   private Payment createPayment(Order order) {
     Payment payment =
         Payment.createPgPayment(
-            order, order.getFinalPrice(), Payment.PaymentMethod.CARD, order.getMerchantUid());
+            order,
+            PaymentAmount.of(order.getFinalPrice()),
+            Payment.PaymentMethod.CARD,
+            order.getMerchantUid());
     return paymentRepository.save(payment);
   }
 
