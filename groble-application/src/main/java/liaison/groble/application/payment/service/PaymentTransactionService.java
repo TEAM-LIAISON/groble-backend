@@ -284,7 +284,9 @@ public class PaymentTransactionService {
             PaymentAmount.of(order.getFinalPrice()),
             Payment.PaymentMethod.CARD,
             order.getMerchantUid());
-    return paymentRepository.save(payment);
+    Payment savedPayment = paymentRepository.save(payment);
+    savedPayment.publishPaymentCreatedEvent();
+    return savedPayment;
   }
 
   /** Purchase 생성 */

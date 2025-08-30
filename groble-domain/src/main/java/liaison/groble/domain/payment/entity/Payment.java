@@ -117,9 +117,6 @@ public class Payment extends AggregateRoot {
     if (order != null) {
       order.setPayment(this);
     }
-
-    // 결제 생성 이벤트 발행
-    publishPaymentCreatedEvent();
   }
 
   /**
@@ -224,7 +221,7 @@ public class Payment extends AggregateRoot {
 
   // 이벤트 발행 메서드들
 
-  private void publishPaymentCreatedEvent() {
+  public void publishPaymentCreatedEvent() {
     PaymentCreatedEvent event =
         new PaymentCreatedEvent(
             this.id,

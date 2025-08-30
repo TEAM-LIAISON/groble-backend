@@ -509,7 +509,9 @@ public class OrderService {
   private Payment createAndCompleteFreePayment(Order order) {
     Payment freePayment = Payment.createFreePayment(order);
     freePayment.completeFreePayment();
-    return paymentRepository.save(freePayment);
+    Payment savedPayment = paymentRepository.save(freePayment);
+    savedPayment.publishPaymentCreatedEvent();
+    return savedPayment;
   }
 
   /**
