@@ -148,9 +148,18 @@ logging:
     org.springdoc: INFO
     io.swagger.v3: INFO
 
+    # OpenTelemetry 디버깅 활성화
+    io.opentelemetry: DEBUG
+    io.opentelemetry.exporter: DEBUG
+    io.opentelemetry.exporter.otlp: DEBUG
+    io.opentelemetry.exporter.internal: DEBUG
+    io.opentelemetry.sdk: DEBUG
+    
+    # 네트워크 디버깅을 위해 일시적 활성화
+    org.apache.http: DEBUG         # HTTP client 디버깅
+    org.apache.http.wire: DEBUG    # Wire-level log 활성화
+
     # 외부 라이브러리 / 통신 로그 최소화
-    org.apache.http: ERROR         # HTTP client 최소화
-    org.apache.http.wire: OFF      # Wire-level log 완전 차단
     com.amazonaws: ERROR           # AWS SDK
 
   pattern:
@@ -159,42 +168,44 @@ logging:
   file:
     name: /dev/null  # 로그 파일 쓰기를 막음 (또는 경로를 로그 수집 서버로 지정)
 
-# OpenTelemetry 설정 활성화
+# OpenTelemetry 설정 - 단순화 및 디버깅 강화
 otel:
+  metrics:
+    exporter: otlp
+  logs:
+    exporter: otlp
+    
   service:
     name: "groble-api"
     version: "1.0.0"
-  exporter:
-    otlp:
-      # OTLP HTTP 기본 엔드포인트 (경로 제외)
-      endpoint: "http://10.0.1.229:4318"
-      # 프로토콜 변경 시도
-      protocol: "http/protobuf"
-      timeout: "30s"
-      compression: "gzip"
-      # 각 신호별 개별 엔드포인트 설정
-      traces:
-        endpoint: "http://10.0.1.229:4318/v1/traces"
-      metrics:
-        endpoint: "http://10.0.1.229:4318/v1/metrics"
-      logs:
-        endpoint: "http://10.0.1.229:4318/v1/logs"
+    
   resource:
     attributes:
       service.name: "groble-api"
       service.version: "1.0.0"
       environment: "development"
       deployment.environment: "dev"
-  traces:
-    exporter: otlp
-    sampler:
-      probability: 0.1
-  metrics:
-    exporter: otlp
-  logs:
-    exporter: otlp
+      
+  exporter:
+    otlp:
+      # 단순화된 설정
+      endpoint: "http://10.0.1.229:4318"
+      protocol: "http/protobuf"
+      timeout: "30s"
+      
+    # 로컬 로깅 설정 추가
+    logging:
+      enabled: true
+      
   sdk:
-    disabled: false  # 명시적으로 활성화
+    disabled: false
+    
+  # 샘플링 비율을 높여서 테스트 용이하게
+  traces:
+    sampler:
+      probability: 1.0  # 모든 trace 수집
+    # 먼저 로컬 로깅으로 테스트
+    exporter: otlp  # 로컬 로깅 + OTLP 동시 전송
 
 # Management 설정 정리
 management:
