@@ -161,7 +161,8 @@ logging:
 
     # 외부 라이브러리 / 통신 로그 최소화
     com.amazonaws: ERROR           # AWS SDK
-
+    com.sun.mail: WARN                             # JavaMail SMTP 디버그 로그 축약
+    javax.mail: WARN                               # JavaMail 로그 축약
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} %-5level %logger{36} - %msg%n"
 
