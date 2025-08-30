@@ -42,6 +42,8 @@ import lombok.extern.slf4j.Slf4j;
  * 결제 관련 트랜잭션을 관리하는 서비스
  *
  * <p>모든 DB 작업은 이 서비스를 통해 트랜잭션 내에서 수행됩니다. 외부 API 호출은 이 서비스에서 수행하지 않습니다.
+ *
+ * <p>회원/비회원 모두의 결제 처리를 지원합니다.
  */
 @Slf4j
 @Service
@@ -522,5 +524,235 @@ public class PaymentTransactionService {
       default:
         return SettlementCycle.MONTHLY; // 기본: 월 단위
     }
+  }
+
+  /**
+   * 비회원 인증 정보 저장 및 검증
+   *
+   * @param guestUserId 비회원 사용자 ID
+   * @param authResult 인증 결과
+   * @return 결제 인증 정보
+   */
+  @Transactional
+  public PaymentAuthInfo saveAuthAndValidateForGuest(
+      Long guestUserId, PaypleAuthResultDTO authResult) {
+    log.debug(
+        "비회원 인증 정보 저장 시작 - guestUserId: {}, merchantUid: {}", guestUserId, authResult.getPayOid());
+
+    // 1. 주문 조회
+    Order order = orderReader.getOrderByMerchantUid(authResult.getPayOid());
+
+    // 2. 검증
+    paymentValidator.validateOrderOwnershipForGuest(order, guestUserId);
+    paymentValidator.validateOrderStatus(order, Order.OrderStatus.PENDING);
+    paymentValidator.validatePaymentAmount(order.getFinalPrice(), authResult.getPayTotal());
+
+    // 3. PayplePayment 저장
+    PayplePayment payplePayment = createPayplePaymentForGuest(order, authResult);
+    payplePaymentRepository.save(payplePayment);
+
+    log.info(
+        "비회원 인증 정보 저장 완료 - merchantUid: {}, payplePaymentId: {}",
+        authResult.getPayOid(),
+        payplePayment.getId());
+
+    return PaymentAuthInfo.builder()
+        .orderId(order.getId())
+        .guestUserId(guestUserId)
+        .payplePaymentId(payplePayment.getId())
+        .merchantUid(order.getMerchantUid())
+        .amount(order.getFinalPrice())
+        .build();
+  }
+
+  /**
+   * 비회원 결제 완료 처리
+   *
+   * @param authInfo 인증 정보
+   * @param approvalResult 승인 결과
+   * @return 결제 완료 결과
+   */
+  @Transactional
+  public PaymentCompletionResult completePaymentForGuest(
+      PaymentAuthInfo authInfo, PaypleApprovalResult approvalResult) {
+
+    log.info("비회원 결제 완료 처리 시작 - orderId: {}", authInfo.getOrderId());
+
+    // 1. 엔티티 조회
+    Order order = orderReader.getOrderById(authInfo.getOrderId());
+    PayplePayment payplePayment = paymentReader.getPayplePaymentById(authInfo.getPayplePaymentId());
+
+    // 2. 결제 정보 일관성 검증
+    paymentValidator.validatePaymentConsistency(payplePayment, approvalResult);
+
+    // 3. PayplePayment 승인 정보 업데이트
+    updatePayplePaymentApproval(payplePayment, approvalResult);
+
+    // 4. Payment 생성 및 저장
+    Payment payment = createPayment(order);
+
+    // 5. Order 결제 완료 처리
+    order.completePayment();
+
+    // 6. Purchase 생성 및 저장
+    Purchase purchase = createPurchase(order);
+
+    // =============== 정산 데이터 관리 로직 시작 ===============
+    try {
+      createSettlementData(purchase, payment);
+      log.info("비회원 정산 데이터 생성 완료 - purchaseId: {}", purchase.getId());
+    } catch (DataIntegrityViolationException e) {
+      // 멱등성 보장: 이미 정산 데이터가 존재하는 경우 (재시도 등)
+      log.warn("비회원 정산 데이터가 이미 존재합니다 - purchaseId: {}", purchase.getId());
+    } catch (Exception e) {
+      // 정산 실패는 결제 완료를 롤백하지 않음 (보상 트랜잭션 또는 배치로 처리)
+      log.error("비회원 정산 데이터 생성 실패 - purchaseId: {}, error: {}", purchase.getId(), e.getMessage());
+    }
+    // =============== 정산 데이터 관리 로직 끝 ===============
+
+    log.info(
+        "비회원 결제 완료 처리 완료 - orderId: {}, paymentId: {}, purchaseId: {}",
+        order.getId(),
+        payment.getId(),
+        purchase.getId());
+
+    return PaymentCompletionResult.builder()
+        .orderId(order.getId())
+        .merchantUid(order.getMerchantUid())
+        .paymentId(payment.getId())
+        .purchaseId(purchase.getId())
+        .guestUserId(order.getGuestUser().getId())
+        .contentId(purchase.getContent().getId())
+        .sellerId(purchase.getContent().getUser().getId())
+        .amount(payment.getPrice())
+        .completedAt(purchase.getPurchasedAt())
+        .sellerEmail(purchase.getContent().getUser().getEmail())
+        .contentTitle(purchase.getContent().getTitle())
+        .guestUserName(order.getGuestUser().getUsername())
+        .contentType(purchase.getContent().getContentType().name())
+        .optionId(purchase.getSelectedOptionId())
+        .selectedOptionName(purchase.getSelectedOptionName())
+        .purchasedAt(purchase.getPurchasedAt())
+        .build();
+  }
+
+  /**
+   * 비회원 결제 취소 가능 여부 검증
+   *
+   * @param guestUserId 비회원 사용자 ID
+   * @param merchantUid 주문번호
+   * @return 취소 정보
+   */
+  @Transactional(readOnly = true)
+  public PaymentCancelInfo validateCancellationForGuest(Long guestUserId, String merchantUid) {
+    log.debug("비회원 결제 취소 검증 시작 - guestUserId: {}, merchantUid: {}", guestUserId, merchantUid);
+
+    // 1. 주문 조회
+    Order order = orderReader.getOrderByMerchantUid(merchantUid);
+
+    // 2. 권한 검증
+    paymentValidator.validateOrderOwnershipForGuest(order, guestUserId);
+
+    // 3. 취소 가능 상태 검증
+    paymentValidator.validateCancellableStatus(order);
+
+    // 4. 결제 정보 조회
+    PayplePayment payplePayment = paymentReader.getPayplePaymentByOid(merchantUid);
+    Payment payment = paymentReader.getPaymentByOrderId(order.getId());
+
+    return PaymentCancelInfo.builder()
+        .orderId(order.getId())
+        .paymentId(payment.getId())
+        .payplePaymentId(payplePayment.getId())
+        .merchantUid(merchantUid)
+        .payDate(payplePayment.getCreatedAt().toLocalDate())
+        .refundAmount(new BigDecimal(payplePayment.getPcdPayTotal()))
+        .refundTaxAmount(
+            payplePayment.getPcdPayTaxTotal() != null
+                ? new BigDecimal(payplePayment.getPcdPayTaxTotal())
+                : null)
+        .build();
+  }
+
+  /** 비회원 결제 취소 완료 처리 - 정산 환불 처리 추가 */
+  @Transactional
+  public PaymentCancelResult completeCancelForGuest(PaymentCancelInfo cancelInfo, String reason) {
+    log.info("비회원 결제 취소 완료 처리 시작 - orderId: {}", cancelInfo.getOrderId());
+
+    // 1. 엔티티 조회
+    Order order = orderReader.getOrderById(cancelInfo.getOrderId());
+    Payment payment = paymentReader.getPaymentById(cancelInfo.getPaymentId());
+    Purchase purchase = purchaseReader.getPurchaseByOrderId(order.getId());
+
+    // 2. 취소 처리
+    order.cancelOrder(reason);
+    purchase.cancelPayment();
+
+    // ========== 정산 환불 처리 추가 ==========
+    try {
+      processRefundSettlement(purchase.getId());
+      log.info("비회원 정산 환불 처리 완료 - purchaseId: {}", purchase.getId());
+    } catch (Exception e) {
+      log.error("비회원 정산 환불 처리 실패 - purchaseId: {}, error: {}", purchase.getId(), e.getMessage());
+      // 환불 정산 실패는 결제 취소를 롤백하지 않음
+      // 별도 배치나 수동 처리 필요
+    }
+    // ========== 정산 환불 처리 끝 ==========
+
+    log.info(
+        "비회원 결제 취소 완료 - orderId: {}, paymentId: {}, purchaseId: {}",
+        order.getId(),
+        payment.getId(),
+        purchase.getId());
+
+    return PaymentCancelResult.builder()
+        .orderId(order.getId())
+        .paymentId(payment.getId())
+        .guestUserId(order.getGuestUser().getId())
+        .refundAmount(cancelInfo.getRefundAmount())
+        .reason(reason)
+        .refundedAt(LocalDateTime.now())
+        .build();
+  }
+
+  /** 비회원용 PayplePayment 생성 */
+  private PayplePayment createPayplePaymentForGuest(Order order, PaypleAuthResultDTO dto) {
+    return PayplePayment.builder()
+        .pcdPayRst(dto.getPayRst())
+        .pcdPayCode(dto.getPayCode())
+        .pcdPayMsg(dto.getPayMsg())
+        .pcdPayType(dto.getPayType())
+        .pcdPayCardVer(dto.getCardVer())
+        .pcdPayWork(dto.getPayWork())
+        .pcdPayAuthKey(dto.getAuthKey())
+        .pcdPayReqKey(dto.getPayReqKey())
+        .pcdPayHost(dto.getPayHost())
+        .pcdPayCofUrl(dto.getPayCofUrl())
+        .pcdPayerNo(order.getGuestUser().getId().toString())
+        .pcdPayerName(dto.getPayerName())
+        .pcdPayerHp(dto.getPayerHp())
+        .pcdPayerEmail(dto.getPayerEmail())
+        .pcdPayOid(dto.getPayOid())
+        .pcdPayMethod(dto.getPcdPayMethod())
+        .pcdEasyPayMethod(dto.getEasyPayMethod())
+        .pcdPayGoods(dto.getPayGoods())
+        .pcdPayTotal(dto.getPayTotal())
+        .pcdPayTaxTotal(dto.getPayTaxTotal())
+        .pcdPayIsTax(dto.getPayIsTax())
+        .pcdPayCardName(dto.getPayCardName())
+        .pcdPayCardNum(dto.getPayCardNum())
+        .pcdPayCardQuota(normalizeQuota(dto.getPayCardQuota()))
+        .pcdPayCardTradeNum(dto.getPayCardTradeNum())
+        .pcdPayCardAuthNo(dto.getPayCardAuthNo())
+        .pcdPayCardReceipt(dto.getPayCardReceipt())
+        .pcdPayTime(dto.getPayTime())
+        .pcdRegulerFlag(dto.getRegulerFlag())
+        .pcdPayYear(dto.getPayYear())
+        .pcdPayMonth(dto.getPayMonth())
+        .pcdSimpleFlag(dto.getSimpleFlag())
+        .pcdRstUrl(dto.getRstUrl())
+        .pcdUserDefine1(dto.getUserDefine1())
+        .pcdUserDefine2(dto.getUserDefine2())
+        .build();
   }
 }

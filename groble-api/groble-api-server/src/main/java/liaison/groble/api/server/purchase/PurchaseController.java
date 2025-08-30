@@ -210,29 +210,40 @@ public class PurchaseController {
     String userTypeInfo;
 
     // 토큰 종류에 따른 분기 처리
-    if (accessor.isAuthenticated() && !accessor.isGuest()) {
-      // 회원 구매 목록 조회
-      log.info("회원 구매 목록 조회 - userId: {}, state: {}", accessor.getUserId(), state);
-      DTOPageResponse =
-          purchaseService.getMyPurchasedContents(accessor.getUserId(), state, pageable);
-      userTypeInfo = "회원";
-
-    } else if (accessor.isGuest()) {
-      // 비회원 구매 목록 조회
-      log.info("비회원 구매 목록 조회 - guestUserId: {}, state: {}", accessor.getId(), state);
-      DTOPageResponse =
-          purchaseService.getMyPurchasedContentsForGuest(accessor.getId(), state, pageable);
-      userTypeInfo = "비회원";
-
-    } else {
-      // 인증되지 않은 사용자
-      throw PurchaseAuthenticationRequiredException.forPurchaseList();
-    }
+    var result = getPurchasedContentsByUserType(accessor, state, pageable);
+    DTOPageResponse = result.dtoPageResponse;
+    userTypeInfo = result.userTypeInfo;
 
     PageResponse<PurchaserContentPreviewCardResponse> responsePage =
         purchaseMapper.toPurchaserContentPreviewCardResponsePage(DTOPageResponse);
 
     return responseHelper.success(
         responsePage, userTypeInfo + " " + MY_PURCHASING_CONTENT_SUCCESS_MESSAGE, HttpStatus.OK);
+  }
+
+  /** 사용자 타입에 따른 구매 목록 조회 결과 */
+  private record PurchaseContentResult(
+      PageResponse<PurchaseContentCardDTO> dtoPageResponse, String userTypeInfo) {}
+
+  /** 사용자 타입에 따른 구매 콘텐츠 목록 조회 */
+  private PurchaseContentResult getPurchasedContentsByUserType(
+      Accessor accessor, String state, Pageable pageable) {
+
+    if (accessor.isAuthenticated() && !accessor.isGuest()) {
+      // 회원 구매 목록 조회
+      log.info("회원 구매 목록 조회 - userId: {}, state: {}", accessor.getUserId(), state);
+      return new PurchaseContentResult(
+          purchaseService.getMyPurchasedContents(accessor.getUserId(), state, pageable), "회원");
+
+    } else if (accessor.isGuest()) {
+      // 비회원 구매 목록 조회
+      log.info("비회원 구매 목록 조회 - guestUserId: {}, state: {}", accessor.getId(), state);
+      return new PurchaseContentResult(
+          purchaseService.getMyPurchasedContentsForGuest(accessor.getId(), state, pageable), "비회원");
+
+    } else {
+      // 인증되지 않은 사용자
+      throw PurchaseAuthenticationRequiredException.forPurchaseList();
+    }
   }
 }
