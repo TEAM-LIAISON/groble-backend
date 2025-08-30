@@ -166,23 +166,28 @@ otel:
     version: "1.0.0"
   exporter:
     otlp:
-      endpoint: "http://10.0.1.229:4318"  # 모니터링 EC2의 private IP
+      # OTLP HTTP 엔드포인트 (gRPC는 4317, HTTP는 4318)
+      endpoint: "http://10.0.1.229:4318"
+      # 프로토콜 변경 시도
       protocol: "http/protobuf"
-      timeout: "10s"
+      timeout: "30s"
+      compression: "gzip"
   resource:
     attributes:
-      environment: "production"
-      version: "1.0.0"
+      service.name: "groble-api"
+      service.version: "1.0.0"
+      environment: "development"
+      deployment.environment: "dev"
   traces:
+    exporter: otlp
     sampler:
-      probability: 0.1  # 운영환경에서는 10% 샘플링
+      probability: 0.1
   metrics:
     exporter: otlp
   logs:
     exporter: otlp
-  # SDK 비활성화 제거
-  # sdk:
-  #   disabled: true
+  sdk:
+    disabled: false  # 명시적으로 활성화
 
 # Management 설정 정리
 management:
