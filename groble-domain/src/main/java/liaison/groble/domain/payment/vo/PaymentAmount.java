@@ -25,7 +25,7 @@ public class PaymentAmount {
 
   private static final BigDecimal ZERO = BigDecimal.ZERO;
   private static final BigDecimal MAX_AMOUNT = new BigDecimal("100000000.00"); // 1억
-  private static final int SCALE = 0; // 소수점 둘째 자리
+  private static final int SCALE = 2; // 소수점 둘째 자리
 
   private BigDecimal value;
 
