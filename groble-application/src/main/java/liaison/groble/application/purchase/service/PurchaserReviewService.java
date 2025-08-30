@@ -185,7 +185,7 @@ public class PurchaserReviewService {
 
     if (userId != null) {
       contentReviewWriter.deleteContentReview(userId, contentReview.getId());
-    } else if (guestUserId != null) {
+    } else {
       contentReviewWriter.deleteGuestContentReview(guestUserId, contentReview.getId());
     }
   }

@@ -95,7 +95,13 @@ public class SettlementCustomRepositoryImpl implements SettlementCustomRepositor
 
     // [기간] purchasedAt ∈ [periodStart 00:00, periodEnd+1 00:00)
     BooleanExpression cond =
-        qSettlementItem.settlement.user.id.eq(userId).and(qSettlement.id.eq(settlementId));
+        qSettlementItem
+            .settlement
+            .user
+            .id
+            .eq(userId)
+            .and(qSettlement.id.eq(settlementId))
+            .and(qSettlementItem.isRefunded.isFalse());
 
     // 메인 조회
     JPAQuery<FlatPerTransactionSettlement> query =
