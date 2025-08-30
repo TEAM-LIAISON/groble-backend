@@ -32,6 +32,7 @@ import liaison.groble.domain.content.entity.QContentReply;
 import liaison.groble.domain.content.entity.QContentReview;
 import liaison.groble.domain.content.enums.ReviewStatus;
 import liaison.groble.domain.content.repository.ContentReviewCustomRepository;
+import liaison.groble.domain.guest.entity.QGuestUser;
 import liaison.groble.domain.order.entity.QOrder;
 import liaison.groble.domain.purchase.entity.QPurchase;
 import liaison.groble.domain.user.entity.QUser;
@@ -61,6 +62,28 @@ public class ContentReviewCustomRepositoryImpl implements ContentReviewCustomRep
             .selectFrom(qContentReview)
             .leftJoin(qContentReview.content, qContent)
             .leftJoin(qContentReview.user, qUser)
+            .where(conditions)
+            .fetchOne());
+  }
+
+  @Override
+  public Optional<ContentReview> getContentReviewForGuest(Long guestUserId, Long reviewId) {
+    QContentReview qContentReview = QContentReview.contentReview;
+    QContent qContent = QContent.content;
+    QGuestUser qGuestUser = QGuestUser.guestUser;
+
+    BooleanExpression conditions =
+        qContentReview
+            .id
+            .eq(reviewId)
+            .and(qContentReview.guestUser.id.eq(guestUserId))
+            .and(qContentReview.reviewStatus.eq(ReviewStatus.ACTIVE));
+
+    return Optional.ofNullable(
+        jpaQueryFactory
+            .selectFrom(qContentReview)
+            .leftJoin(qContentReview.content, qContent)
+            .leftJoin(qContentReview.guestUser, qGuestUser)
             .where(conditions)
             .fetchOne());
   }
@@ -306,6 +329,17 @@ public class ContentReviewCustomRepositoryImpl implements ContentReviewCustomRep
         .update(qContentReview)
         .set(qContentReview.reviewStatus, ReviewStatus.DELETED)
         .where(qContentReview.id.eq(reviewId).and(qContentReview.user.id.eq(userId)))
+        .execute();
+  }
+
+  @Override
+  public void deleteGuestContentReview(Long guestUserId, Long reviewId) {
+    QContentReview qContentReview = QContentReview.contentReview;
+
+    jpaQueryFactory
+        .update(qContentReview)
+        .set(qContentReview.reviewStatus, ReviewStatus.DELETED)
+        .where(qContentReview.id.eq(reviewId).and(qContentReview.guestUser.id.eq(guestUserId)))
         .execute();
   }
 }

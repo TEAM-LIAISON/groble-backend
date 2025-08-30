@@ -98,4 +98,8 @@ public class PurchaseReader {
   public boolean isContentPurchasedByUser(Long userId, Long contentId) {
     return purchaseCustomRepository.existsByUserAndContent(userId, contentId);
   }
+
+  public boolean isContentPurchasedByGuestUser(Long guestUserId, Long contentId) {
+    return purchaseCustomRepository.existsByGuestUserAndContent(guestUserId, contentId);
+  }
 }

@@ -12,6 +12,9 @@ import liaison.groble.application.notification.service.KakaoNotificationService;
 import liaison.groble.application.notification.service.NotificationService;
 import liaison.groble.application.order.service.OrderReader;
 import liaison.groble.application.purchase.dto.PurchaserContentReviewDTO;
+import liaison.groble.application.purchase.exception.ContentNotPurchasedException;
+import liaison.groble.application.purchase.exception.ReviewAlreadyExistsException;
+import liaison.groble.application.purchase.exception.ReviewAuthenticationRequiredException;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.content.entity.ContentReview;
@@ -60,7 +63,7 @@ public class PurchaserReviewService {
       // 비회원 리뷰 추가
       return addReviewForGuest(guestUserId, order, purchase, content, purchaserContentReviewDTO);
     } else {
-      throw new IllegalArgumentException("userId 또는 guestUserId 중 하나는 반드시 제공되어야 합니다.");
+      throw ReviewAuthenticationRequiredException.forReviewAdd();
     }
   }
 
@@ -74,11 +77,11 @@ public class PurchaserReviewService {
     User user = userReader.getUserById(userId);
 
     if (!purchaseReader.isContentPurchasedByUser(userId, content.getId())) {
-      throw new IllegalArgumentException("사용자가 해당 콘텐츠를 구매하지 않았습니다.");
+      throw ContentNotPurchasedException.forMember(content.getId());
     }
 
     if (contentReviewReader.existsContentReview(userId, content.getId())) {
-      throw new IllegalArgumentException("이미 해당 콘텐츠에 대한 리뷰가 존재합니다.");
+      throw ReviewAlreadyExistsException.forMember(content.getId());
     }
 
     ContentReview contentReview =
@@ -111,7 +114,13 @@ public class PurchaserReviewService {
 
     GuestUser guestUser = guestUserReader.getGuestUserById(guestUserId);
 
-    // 게스트용 구매 확인 및 중복 리뷰 체크 로직 필요 (추후 구현)
+    if (!purchaseReader.isContentPurchasedByGuestUser(guestUserId, content.getId())) {
+      throw ContentNotPurchasedException.forGuest(content.getId());
+    }
+
+    if (contentReviewReader.existsContentReviewForGuest(guestUserId, content.getId())) {
+      throw ReviewAlreadyExistsException.forGuest(content.getId());
+    }
 
     ContentReview contentReview =
         ContentReview.builder()
@@ -169,12 +178,6 @@ public class PurchaserReviewService {
         .build();
   }
 
-  @Transactional
-  public PurchaserContentReviewDTO updateReview(
-      Long userId, Long reviewId, PurchaserContentReviewDTO purchaserContentReviewDTO) {
-    return updateReviewUnified(userId, null, reviewId, purchaserContentReviewDTO);
-  }
-
   // 통합 리뷰 삭제 (회원/비회원 자동 판단)
   @Transactional
   public void deleteReviewUnified(Long userId, Long guestUserId, Long reviewId) {
@@ -183,24 +186,17 @@ public class PurchaserReviewService {
     if (userId != null) {
       contentReviewWriter.deleteContentReview(userId, contentReview.getId());
     } else if (guestUserId != null) {
-      // 게스트용 삭제 로직 (추후 구현 필요)
-      contentReviewWriter.deleteContentReview(null, contentReview.getId());
+      contentReviewWriter.deleteGuestContentReview(guestUserId, contentReview.getId());
     }
-  }
-
-  @Transactional
-  public void deleteReview(Long userId, Long reviewId) {
-    deleteReviewUnified(userId, null, reviewId);
   }
 
   private ContentReview getContentReviewByUserType(Long userId, Long guestUserId, Long reviewId) {
     if (userId != null) {
       return contentReviewReader.getContentReview(userId, reviewId);
     } else if (guestUserId != null) {
-      // 게스트용 리뷰 조회 로직 (추후 구현 필요)
-      return contentReviewReader.getContentReviewById(reviewId);
+      return contentReviewReader.getContentReviewForGuest(guestUserId, reviewId);
     } else {
-      throw new IllegalArgumentException("userId 또는 guestUserId 중 하나는 반드시 제공되어야 합니다.");
+      throw ReviewAuthenticationRequiredException.forReviewUpdate();
     }
   }
 }

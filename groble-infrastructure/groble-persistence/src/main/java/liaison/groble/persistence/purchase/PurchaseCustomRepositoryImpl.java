@@ -644,6 +644,21 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
   }
 
   @Override
+  public boolean existsByGuestUserAndContent(Long guestUserId, Long contentId) {
+    QPurchase qPurchase = QPurchase.purchase;
+    QContent qContent = QContent.content;
+    BooleanExpression conditions =
+        qPurchase.guestUser.id.eq(guestUserId).and(qPurchase.content.id.eq(contentId));
+    return queryFactory
+            .selectOne()
+            .from(qPurchase)
+            .leftJoin(qPurchase.content, qContent)
+            .where(conditions)
+            .fetchFirst()
+        != null;
+  }
+
+  @Override
   public FlatDashboardOverviewDTO getDashboardOverviewStats(Long sellerId) {
     LocalDateTime currentMonthStart = LocalDate.now().withDayOfMonth(1).atStartOfDay();
 

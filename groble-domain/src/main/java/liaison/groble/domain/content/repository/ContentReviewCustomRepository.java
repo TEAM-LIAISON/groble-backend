@@ -13,6 +13,8 @@ import liaison.groble.domain.content.entity.ContentReview;
 public interface ContentReviewCustomRepository {
   Optional<ContentReview> getContentReview(Long userId, Long reviewId);
 
+  Optional<ContentReview> getContentReviewForGuest(Long guestUserId, Long reviewId);
+
   Optional<FlatContentReviewDetailDTO> getContentReviewDetailDTO(
       Long userId, Long contentId, Long reviewId);
 
@@ -24,6 +26,8 @@ public interface ContentReviewCustomRepository {
   void updateContentReviewStatusToDeleteRequested(Long userId, Long reviewId);
 
   void deleteContentReview(Long userId, Long reviewId);
+
+  void deleteGuestContentReview(Long guestUserId, Long reviewId);
 
   Page<FlatContentReviewDetailDTO> getContentReviewPageDTOs(
       Long userId, Long contentId, Pageable pageable);
