@@ -156,14 +156,17 @@ public class PaypleApiClient {
       // 2. 환불 요청 생성
       PaypleRefundRequest refundRequest =
           PaypleRefundRequest.builder()
+              .url("https://testcpay.payple.kr/php/auth.php")
+              .cstId(paypleConfig.getCstId())
+              .custKey(paypleConfig.getCustKey())
               .authKey(authResponse.getAuthKey())
               .payOid(cancelInfo.getMerchantUid())
-              .payDate(cancelInfo.getPayDate().format(DATE_FORMAT))
               .refundTotal(cancelInfo.getRefundAmount().toString())
-              .refundTaxtotal(
+              .refundTaxfree(
                   cancelInfo.getRefundTaxAmount() != null
                       ? cancelInfo.getRefundTaxAmount().toString()
                       : null)
+              .refundReason("사용자 요청")
               .build();
 
       // 3. 환불 API 호출
