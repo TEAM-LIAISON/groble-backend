@@ -32,9 +32,15 @@ public class ReviewAuthenticationRequiredException extends RuntimeException {
         "리뷰 작성을 위해서는 userId 또는 guestUserId 중 하나는 반드시 제공되어야 합니다.");
   }
 
-  /** 리뷰 수정/삭제용 예외 메시지 */
+  /** 리뷰 수정용 예외 메시지 */
   public static ReviewAuthenticationRequiredException forReviewUpdate() {
     return new ReviewAuthenticationRequiredException(
         "리뷰 수정을 위해서는 userId 또는 guestUserId 중 하나는 반드시 제공되어야 합니다.");
+  }
+
+  /** 리뷰 삭제용 예외 메시지 */
+  public static ReviewAuthenticationRequiredException forReviewDelete() {
+    return new ReviewAuthenticationRequiredException(
+        "리뷰 삭제를 위해서는 userId 또는 guestUserId 중 하나는 반드시 제공되어야 합니다.");
   }
 }

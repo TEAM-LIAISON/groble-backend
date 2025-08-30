@@ -12,13 +12,14 @@ import liaison.groble.application.notification.service.KakaoNotificationService;
 import liaison.groble.application.notification.service.NotificationService;
 import liaison.groble.application.order.service.OrderReader;
 import liaison.groble.application.purchase.dto.PurchaserContentReviewDTO;
-import liaison.groble.application.purchase.exception.ContentNotPurchasedException;
-import liaison.groble.application.purchase.exception.ReviewAlreadyExistsException;
 import liaison.groble.application.purchase.exception.ReviewAuthenticationRequiredException;
+import liaison.groble.application.purchase.strategy.ReviewProcessorFactory;
+import liaison.groble.application.purchase.strategy.ReviewProcessorStrategy;
 import liaison.groble.application.user.service.UserReader;
+import liaison.groble.common.context.UserContext;
+import liaison.groble.common.factory.UserContextFactory;
 import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.content.entity.ContentReview;
-import liaison.groble.domain.content.enums.ReviewStatus;
 import liaison.groble.domain.guest.entity.GuestUser;
 import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.purchase.entity.Purchase;
@@ -44,7 +45,10 @@ public class PurchaserReviewService {
   private final NotificationService notificationService;
   private final KakaoNotificationService kakaoNotificationService;
 
-  // 통합 리뷰 추가 (회원/비회원 자동 판단)
+  // Strategy Factory
+  private final ReviewProcessorFactory reviewProcessorFactory;
+
+  // 통합 리뷰 추가 (회원/비회원 자동 판단) - Strategy 패턴 적용
   @Transactional
   public PurchaserContentReviewDTO addReviewUnified(
       Long userId,
@@ -56,111 +60,22 @@ public class PurchaserReviewService {
     Purchase purchase = purchaseReader.getPurchaseByOrderId(order.getId());
     Content content = purchase.getContent();
 
-    if (userId != null) {
-      // 회원 리뷰 추가
-      return addReviewForMember(userId, order, purchase, content, purchaserContentReviewDTO);
-    } else if (guestUserId != null) {
-      // 비회원 리뷰 추가
-      return addReviewForGuest(guestUserId, order, purchase, content, purchaserContentReviewDTO);
-    } else {
-      throw ReviewAuthenticationRequiredException.forReviewAdd();
-    }
+    // UserContext 생성
+    UserContext userContext = createUserContext(userId, guestUserId);
+
+    // Strategy 패턴으로 처리
+    ReviewProcessorStrategy processor = reviewProcessorFactory.getProcessor(userContext);
+    PurchaserContentReviewDTO result =
+        processor.addReview(userContext, order, purchase, content, purchaserContentReviewDTO);
+
+    // 알림 발송 (공통 로직)
+    String reviewerName = getUserDisplayName(userContext);
+    sendReviewNotifications(content, purchase, reviewerName);
+
+    return result;
   }
 
-  private PurchaserContentReviewDTO addReviewForMember(
-      Long userId,
-      Order order,
-      Purchase purchase,
-      Content content,
-      PurchaserContentReviewDTO reviewDTO) {
-
-    User user = userReader.getUserById(userId);
-
-    if (!purchaseReader.isContentPurchasedByUser(userId, content.getId())) {
-      throw ContentNotPurchasedException.forMember(content.getId());
-    }
-
-    if (contentReviewReader.existsContentReview(userId, content.getId())) {
-      throw ReviewAlreadyExistsException.forMember(content.getId());
-    }
-
-    ContentReview contentReview =
-        ContentReview.builder()
-            .user(user)
-            .content(content)
-            .purchase(purchase)
-            .rating(reviewDTO.getRating())
-            .reviewContent(reviewDTO.getReviewContent())
-            .reviewStatus(ReviewStatus.ACTIVE)
-            .build();
-
-    ContentReview savedContentReview = contentReviewWriter.save(contentReview);
-
-    // 알림 발송
-    sendReviewNotifications(content, savedContentReview, user.getNickname());
-
-    return PurchaserContentReviewDTO.builder()
-        .rating(savedContentReview.getRating())
-        .reviewContent(savedContentReview.getReviewContent())
-        .build();
-  }
-
-  private PurchaserContentReviewDTO addReviewForGuest(
-      Long guestUserId,
-      Order order,
-      Purchase purchase,
-      Content content,
-      PurchaserContentReviewDTO reviewDTO) {
-
-    GuestUser guestUser = guestUserReader.getGuestUserById(guestUserId);
-
-    if (!purchaseReader.isContentPurchasedByGuestUser(guestUserId, content.getId())) {
-      throw ContentNotPurchasedException.forGuest(content.getId());
-    }
-
-    if (contentReviewReader.existsContentReviewForGuest(guestUserId, content.getId())) {
-      throw ReviewAlreadyExistsException.forGuest(content.getId());
-    }
-
-    ContentReview contentReview =
-        ContentReview.builder()
-            .guestUser(guestUser)
-            .content(content)
-            .purchase(purchase)
-            .rating(reviewDTO.getRating())
-            .reviewContent(reviewDTO.getReviewContent())
-            .reviewStatus(ReviewStatus.ACTIVE)
-            .build();
-
-    ContentReview savedContentReview = contentReviewWriter.save(contentReview);
-
-    // 알림 발송
-    sendReviewNotifications(content, savedContentReview, guestUser.getUsername());
-
-    return PurchaserContentReviewDTO.builder()
-        .rating(savedContentReview.getRating())
-        .reviewContent(savedContentReview.getReviewContent())
-        .build();
-  }
-
-  private void sendReviewNotifications(
-      Content content, ContentReview savedContentReview, String reviewerName) {
-    notificationService.sendContentReviewNotification(
-        content.getUser(), content.getId(), savedContentReview.getId(), content.getThumbnailUrl());
-
-    kakaoNotificationService.sendNotification(
-        KakaoNotificationDTO.builder()
-            .type(KakaoNotificationType.REVIEW_REGISTERED)
-            .phoneNumber(content.getUser().getPhoneNumber())
-            .buyerName(reviewerName)
-            .sellerName(content.getUser().getNickname())
-            .contentTitle(content.getTitle())
-            .contentId(content.getId())
-            .reviewId(savedContentReview.getId())
-            .build());
-  }
-
-  // 통합 리뷰 수정 (회원/비회원 자동 판단)
+  // 통합 리뷰 수정 (회원/비회원 자동 판단) - Strategy 패턴 적용
   @Transactional
   public PurchaserContentReviewDTO updateReviewUnified(
       Long userId,
@@ -168,7 +83,14 @@ public class PurchaserReviewService {
       Long reviewId,
       PurchaserContentReviewDTO purchaserContentReviewDTO) {
 
-    ContentReview contentReview = getContentReviewByUserType(userId, guestUserId, reviewId);
+    // UserContext 생성
+    UserContext userContext = createUserContext(userId, guestUserId);
+
+    // Strategy 패턴으로 리뷰 조회
+    ReviewProcessorStrategy processor = reviewProcessorFactory.getProcessor(userContext);
+    ContentReview contentReview = processor.getContentReview(userContext, reviewId);
+
+    // 리뷰 업데이트
     contentReview.updateReview(
         purchaserContentReviewDTO.getRating(), purchaserContentReviewDTO.getReviewContent());
 
@@ -178,25 +100,52 @@ public class PurchaserReviewService {
         .build();
   }
 
-  // 통합 리뷰 삭제 (회원/비회원 자동 판단)
+  // 통합 리뷰 삭제 (회원/비회원 자동 판단) - Strategy 패턴 적용
   @Transactional
   public void deleteReviewUnified(Long userId, Long guestUserId, Long reviewId) {
-    ContentReview contentReview = getContentReviewByUserType(userId, guestUserId, reviewId);
+    // UserContext 생성
+    UserContext userContext = createUserContext(userId, guestUserId);
 
-    if (userId != null) {
-      contentReviewWriter.deleteContentReview(userId, contentReview.getId());
-    } else {
-      contentReviewWriter.deleteGuestContentReview(guestUserId, contentReview.getId());
+    // Strategy 패턴으로 삭제 처리
+    ReviewProcessorStrategy processor = reviewProcessorFactory.getProcessor(userContext);
+    processor.deleteReview(userContext, reviewId);
+  }
+
+  /** UserContext 생성 유틸 메서드 */
+  private UserContext createUserContext(Long userId, Long guestUserId) {
+    try {
+      return UserContextFactory.from(userId, guestUserId);
+    } catch (IllegalArgumentException e) {
+      throw ReviewAuthenticationRequiredException.forReviewAdd();
     }
   }
 
-  private ContentReview getContentReviewByUserType(Long userId, Long guestUserId, Long reviewId) {
-    if (userId != null) {
-      return contentReviewReader.getContentReview(userId, reviewId);
-    } else if (guestUserId != null) {
-      return contentReviewReader.getContentReviewForGuest(guestUserId, reviewId);
+  /** 사용자 표시 이름 조회 유틸 메서드 */
+  private String getUserDisplayName(UserContext userContext) {
+    if (userContext.isMember()) {
+      User user = userReader.getUserById(userContext.getId());
+      return user.getNickname();
     } else {
-      throw ReviewAuthenticationRequiredException.forReviewUpdate();
+      GuestUser guestUser = guestUserReader.getGuestUserById(userContext.getId());
+      return guestUser.getUsername();
     }
+  }
+
+  /** 리뷰 알림 발송 (공통 로직) */
+  private void sendReviewNotifications(Content content, Purchase purchase, String reviewerName) {
+    // 기존 알림 발송 로직을 여기로 이동
+    notificationService.sendContentReviewNotification(
+        content.getUser(), content.getId(), purchase.getId(), content.getThumbnailUrl());
+
+    kakaoNotificationService.sendNotification(
+        KakaoNotificationDTO.builder()
+            .type(KakaoNotificationType.REVIEW_REGISTERED)
+            .phoneNumber(content.getUser().getPhoneNumber())
+            .buyerName(reviewerName)
+            .sellerName(content.getUser().getNickname())
+            .contentTitle(content.getTitle())
+            .contentId(content.getId())
+            .reviewId(purchase.getId()) // 실제로는 ContentReview ID가 필요할 수 있습니다
+            .build());
   }
 }
