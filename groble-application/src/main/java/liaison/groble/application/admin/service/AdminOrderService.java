@@ -12,8 +12,7 @@ import liaison.groble.application.admin.dto.AdminOrderCancellationReasonDTO;
 import liaison.groble.application.admin.dto.AdminOrderSummaryInfoDTO;
 import liaison.groble.application.order.service.OrderReader;
 import liaison.groble.application.payment.dto.cancel.PaymentCancelResponse;
-import liaison.groble.application.payment.service.PayplePaymentFacade;
-import liaison.groble.application.payment.service.PayplePaymentService;
+import liaison.groble.application.payment.service.PayplePaymentFacadeV2;
 import liaison.groble.application.purchase.service.PurchaseReader;
 import liaison.groble.common.response.PageResponse;
 import liaison.groble.domain.order.dto.FlatAdminOrderSummaryInfoDTO;
@@ -29,8 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class AdminOrderService {
   private final OrderReader orderReader;
-  private final PayplePaymentService payplePaymentService;
-  private final PayplePaymentFacade payplePaymentFacade;
+  private final PayplePaymentFacadeV2 payplePaymentFacadeV2;
   private final OrderRepository orderRepository;
   private final PurchaseReader purchaseReader;
 
@@ -81,7 +79,7 @@ public class AdminOrderService {
       // 취소 승인 - 페이플 실결제 취소 API 호출
       try {
         PaymentCancelResponse response =
-            payplePaymentFacade.cancelPayment(
+            payplePaymentFacadeV2.cancelPayment(
                 order.getUser().getId(), merchantUid, order.getOrderNote());
 
         // 주문 상태는 PayplePaymentService에서 이미 CANCELLED로 변경됨

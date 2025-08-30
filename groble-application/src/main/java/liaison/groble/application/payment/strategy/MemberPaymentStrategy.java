@@ -1,0 +1,97 @@
+package liaison.groble.application.payment.strategy;
+
+import java.time.LocalDateTime;
+
+import org.springframework.stereotype.Component;
+
+import liaison.groble.application.payment.dto.AppCardPayplePaymentResponse;
+import liaison.groble.application.payment.dto.PaymentCancelInfo;
+import liaison.groble.application.payment.dto.PaymentCancelResult;
+import liaison.groble.application.payment.dto.PaypleAuthResultDTO;
+import liaison.groble.application.payment.dto.PaypleRefundResult;
+import liaison.groble.application.payment.dto.cancel.PaymentCancelResponse;
+import liaison.groble.application.payment.event.PaymentEventPublisher;
+import liaison.groble.application.payment.exception.PaypleRefundException;
+import liaison.groble.application.payment.service.PaymentExecutionService;
+import liaison.groble.application.payment.service.PaymentTransactionService;
+import liaison.groble.application.payment.service.PaypleApiClient;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+/**
+ * 회원 결제 전략
+ *
+ * <p>인증된 일반 회원의 결제 및 취소 로직을 담당합니다.
+ */
+@Slf4j
+@Component
+@RequiredArgsConstructor
+public class MemberPaymentStrategy implements PaymentStrategy {
+
+  private final PaypleApiClient paypleApiClient;
+  private final PaymentTransactionService transactionService;
+  private final PaymentEventPublisher eventPublisher;
+  private final PaymentExecutionService executionService;
+
+  @Override
+  public boolean supports(Long userId, Long guestUserId) {
+    return userId != null && guestUserId == null;
+  }
+
+  @Override
+  public String getStrategyType() {
+    return "MEMBER";
+  }
+
+  @Override
+  public AppCardPayplePaymentResponse processAppCardPayment(
+      PaypleAuthResultDTO authResult, Long userId, Long guestUserId) {
+
+    log.info("회원 앱카드 결제 처리 시작 - userId: {}, merchantUid: {}", userId, authResult.getPayOid());
+
+    return executionService.executePayment(
+        authResult,
+        () -> transactionService.saveAuthAndValidate(userId, authResult),
+        (authInfo, approvalResult) -> transactionService.completePayment(authInfo, approvalResult),
+        completionResult -> eventPublisher.publishPaymentCompleted(completionResult));
+  }
+
+  @Override
+  public PaymentCancelResponse cancelPayment(
+      String merchantUid, String reason, Long userId, Long guestUserId) {
+
+    log.info("회원 결제 취소 처리 시작 - userId: {}, merchantUid: {}", userId, merchantUid);
+
+    // 1. 취소 가능 여부 검증
+    PaymentCancelInfo cancelInfo = transactionService.validateCancellation(userId, merchantUid);
+
+    // 2. 페이플 환불 API 호출
+    PaypleRefundResult refundResult = paypleApiClient.requestRefund(cancelInfo);
+    if (!refundResult.isSuccess()) {
+      throw new PaypleRefundException(
+          String.format(
+              "회원 환불 실패 [%s]: %s", refundResult.getErrorCode(), refundResult.getErrorMessage()));
+    }
+
+    // 3. 취소 완료 처리
+    PaymentCancelResult cancelResult = transactionService.completeCancel(cancelInfo, reason);
+
+    // 4. 환불 완료 이벤트 발행
+    eventPublisher.publishPaymentRefunded(cancelResult);
+
+    // 5. 응답 생성
+    return buildCancelResponse(merchantUid, reason, cancelResult);
+  }
+
+  private PaymentCancelResponse buildCancelResponse(
+      String merchantUid, String reason, PaymentCancelResult cancelResult) {
+    return PaymentCancelResponse.builder()
+        .merchantUid(merchantUid)
+        .status("CANCELLED")
+        .canceledAt(LocalDateTime.now())
+        .cancelReason(reason)
+        .refundAmount(cancelResult.getRefundAmount())
+        .build();
+  }
+}

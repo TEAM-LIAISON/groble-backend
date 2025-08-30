@@ -5,7 +5,7 @@ import org.springframework.util.StopWatch;
 import liaison.groble.application.payment.dto.AppCardPayplePaymentResponse;
 import liaison.groble.application.payment.dto.PaypleAuthResultDTO;
 import liaison.groble.application.payment.dto.cancel.PaymentCancelResponse;
-import liaison.groble.application.payment.service.PayplePaymentFacade;
+import liaison.groble.application.payment.service.PayplePaymentFacadeV2;
 import liaison.groble.common.model.Accessor;
 
 import lombok.RequiredArgsConstructor;
@@ -20,7 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public abstract class AbstractPaymentProcessor implements PaymentProcessor {
 
-  protected final PayplePaymentFacade payplePaymentFacade;
+  protected final PayplePaymentFacadeV2 payplePaymentFacadeV2;
 
   @Override
   public final AppCardPayplePaymentResponse processPayment(

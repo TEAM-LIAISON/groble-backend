@@ -5,7 +5,7 @@ import org.springframework.stereotype.Component;
 import liaison.groble.application.payment.dto.AppCardPayplePaymentResponse;
 import liaison.groble.application.payment.dto.PaypleAuthResultDTO;
 import liaison.groble.application.payment.dto.cancel.PaymentCancelResponse;
-import liaison.groble.application.payment.service.PayplePaymentFacade;
+import liaison.groble.application.payment.service.PayplePaymentFacadeV2;
 import liaison.groble.common.model.Accessor;
 
 /**
@@ -16,8 +16,8 @@ import liaison.groble.common.model.Accessor;
 @Component
 public class GuestPaymentProcessor extends AbstractPaymentProcessor {
 
-  public GuestPaymentProcessor(PayplePaymentFacade payplePaymentFacade) {
-    super(payplePaymentFacade);
+  public GuestPaymentProcessor(PayplePaymentFacadeV2 payplePaymentFacadeV2) {
+    super(payplePaymentFacadeV2);
   }
 
   @Override
@@ -28,13 +28,13 @@ public class GuestPaymentProcessor extends AbstractPaymentProcessor {
   @Override
   protected AppCardPayplePaymentResponse executePayment(
       Accessor accessor, PaypleAuthResultDTO authResult) {
-    return payplePaymentFacade.processAppCardPaymentForGuest(accessor.getId(), authResult);
+    return payplePaymentFacadeV2.processAppCardPaymentForGuest(accessor.getId(), authResult);
   }
 
   @Override
   protected PaymentCancelResponse executeCancel(
       Accessor accessor, String merchantUid, String reason) {
-    return payplePaymentFacade.cancelPaymentForGuest(accessor.getId(), merchantUid, reason);
+    return payplePaymentFacadeV2.cancelPaymentForGuest(accessor.getId(), merchantUid, reason);
   }
 
   @Override
