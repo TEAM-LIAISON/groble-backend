@@ -166,12 +166,19 @@ otel:
     version: "1.0.0"
   exporter:
     otlp:
-      # OTLP HTTP 엔드포인트 (gRPC는 4317, HTTP는 4318)
+      # OTLP HTTP 기본 엔드포인트 (경로 제외)
       endpoint: "http://10.0.1.229:4318"
       # 프로토콜 변경 시도
       protocol: "http/protobuf"
       timeout: "30s"
       compression: "gzip"
+      # 각 신호별 개별 엔드포인트 설정
+      traces:
+        endpoint: "http://10.0.1.229:4318/v1/traces"
+      metrics:
+        endpoint: "http://10.0.1.229:4318/v1/metrics"
+      logs:
+        endpoint: "http://10.0.1.229:4318/v1/logs"
   resource:
     attributes:
       service.name: "groble-api"
