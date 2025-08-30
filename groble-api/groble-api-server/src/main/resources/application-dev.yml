@@ -187,10 +187,10 @@ otel:
       service.version: "1.0.0"
       environment: "development"
       deployment.environment: "dev"
-  traces:
-    exporter: otlp
-    sampler:
-      probability: 0.1
+#  traces:
+#    exporter: otlp
+#    sampler:
+#      probability: 0.1
   metrics:
     exporter: otlp
   logs:
