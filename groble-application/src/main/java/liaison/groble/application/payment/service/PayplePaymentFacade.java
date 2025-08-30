@@ -42,7 +42,6 @@ public class PayplePaymentFacade {
   private final PaymentValidator paymentValidator;
   private final PaypleApiClient paypleApiClient;
   private final PaymentTransactionService transactionService;
-  //    private final PaymentMapper paymentMapper;
   private final EventPublisher eventPublisher;
 
   /**

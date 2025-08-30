@@ -437,7 +437,6 @@ public class PaymentTransactionService {
 
     // 2. 취소 처리
     order.cancelOrder(reason);
-    payment.cancel();
     purchase.cancelPayment();
 
     // ========== 정산 환불 처리 추가 ==========
