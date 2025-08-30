@@ -306,6 +306,7 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
     QPurchase qPurchase = QPurchase.purchase;
     QContent qContent = QContent.content;
     QUser qUser = QUser.user;
+    QGuestUser qGuestUser = QGuestUser.guestUser;
     QIntegratedAccount qIntegratedAccount = QIntegratedAccount.integratedAccount;
     QSocialAccount qSocialAccount = QSocialAccount.socialAccount;
 
@@ -320,20 +321,45 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
                     qPurchase.id.as("purchaseId"),
                     qContent.title.as("contentTitle"),
                     qPurchase.purchasedAt.as("purchasedAt"),
-                    qUser.userProfile.nickname.as("purchaserNickname"),
-                    // 조건부 이메일 처리
+                    // 구매자 닉네임 - 회원/비회원 구분
                     Expressions.cases()
-                        .when(qUser.accountType.eq(AccountType.INTEGRATED))
+                        .when(qPurchase.user.isNotNull())
+                        .then(qUser.userProfile.nickname)
+                        .when(qPurchase.guestUser.isNotNull())
+                        .then(qGuestUser.username)
+                        .otherwise(Expressions.nullExpression(String.class))
+                        .as("purchaserNickname"),
+                    // 구매자 이메일 - 회원/비회원 구분
+                    Expressions.cases()
+                        .when(
+                            qPurchase
+                                .user
+                                .isNotNull()
+                                .and(qUser.accountType.eq(AccountType.INTEGRATED)))
                         .then(qIntegratedAccount.integratedAccountEmail)
-                        .when(qUser.accountType.eq(AccountType.SOCIAL))
+                        .when(
+                            qPurchase
+                                .user
+                                .isNotNull()
+                                .and(qUser.accountType.eq(AccountType.SOCIAL)))
                         .then(qSocialAccount.socialAccountEmail)
+                        .when(qPurchase.guestUser.isNotNull())
+                        .then(qGuestUser.email)
                         .otherwise(Expressions.nullExpression(String.class))
                         .as("purchaserEmail"),
-                    qUser.userProfile.phoneNumber.as("purchaserPhoneNumber"),
+                    // 구매자 전화번호 - 회원/비회원 구분
+                    Expressions.cases()
+                        .when(qPurchase.user.isNotNull())
+                        .then(qUser.userProfile.phoneNumber)
+                        .when(qPurchase.guestUser.isNotNull())
+                        .then(qGuestUser.phoneNumber)
+                        .otherwise(Expressions.nullExpression(String.class))
+                        .as("purchaserPhoneNumber"),
                     qPurchase.selectedOptionName.as("selectedOptionName"),
                     qPurchase.finalPrice.as("finalPrice")))
             .from(qPurchase)
             .leftJoin(qPurchase.user, qUser)
+            .leftJoin(qPurchase.guestUser, qGuestUser)
             .leftJoin(qUser.integratedAccount, qIntegratedAccount)
             .leftJoin(qUser.socialAccount, qSocialAccount)
             .leftJoin(qPurchase.content, qContent)
@@ -350,6 +376,7 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
     QPurchase qPurchase = QPurchase.purchase;
     QContent qContent = QContent.content;
     QUser qUser = QUser.user;
+    QGuestUser qGuestUser = QGuestUser.guestUser;
     QIntegratedAccount qIntegratedAcc = QIntegratedAccount.integratedAccount;
     QSocialAccount qSocialAcc = QSocialAccount.socialAccount;
 
@@ -365,20 +392,45 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
                     qPurchase.id.as("purchaseId"),
                     qContent.title.as("contentTitle"),
                     qPurchase.purchasedAt.as("purchasedAt"),
-                    qUser.userProfile.nickname.as("purchaserNickname"),
-                    // 이메일
+                    // 구매자 닉네임 - 회원/비회원 구분
                     Expressions.cases()
-                        .when(qUser.accountType.eq(AccountType.INTEGRATED))
+                        .when(qPurchase.user.isNotNull())
+                        .then(qUser.userProfile.nickname)
+                        .when(qPurchase.guestUser.isNotNull())
+                        .then(qGuestUser.username)
+                        .otherwise(Expressions.nullExpression(String.class))
+                        .as("purchaserNickname"),
+                    // 구매자 이메일 - 회원/비회원 구분
+                    Expressions.cases()
+                        .when(
+                            qPurchase
+                                .user
+                                .isNotNull()
+                                .and(qUser.accountType.eq(AccountType.INTEGRATED)))
                         .then(qIntegratedAcc.integratedAccountEmail)
-                        .when(qUser.accountType.eq(AccountType.SOCIAL))
+                        .when(
+                            qPurchase
+                                .user
+                                .isNotNull()
+                                .and(qUser.accountType.eq(AccountType.SOCIAL)))
                         .then(qSocialAcc.socialAccountEmail)
+                        .when(qPurchase.guestUser.isNotNull())
+                        .then(qGuestUser.email)
                         .otherwise(Expressions.nullExpression(String.class))
                         .as("purchaserEmail"),
-                    qUser.userProfile.phoneNumber.as("purchaserPhoneNumber"),
+                    // 구매자 전화번호 - 회원/비회원 구분
+                    Expressions.cases()
+                        .when(qPurchase.user.isNotNull())
+                        .then(qUser.userProfile.phoneNumber)
+                        .when(qPurchase.guestUser.isNotNull())
+                        .then(qGuestUser.phoneNumber)
+                        .otherwise(Expressions.nullExpression(String.class))
+                        .as("purchaserPhoneNumber"),
                     qPurchase.selectedOptionName.as("selectedOptionName"),
                     qPurchase.finalPrice.as("finalPrice")))
             .from(qPurchase)
             .leftJoin(qPurchase.user, qUser)
+            .leftJoin(qPurchase.guestUser, qGuestUser)
             .leftJoin(qUser.integratedAccount, qIntegratedAcc)
             .leftJoin(qUser.socialAccount, qSocialAcc)
             .leftJoin(qPurchase.content, qContent)
@@ -598,6 +650,40 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
             .and(qPurchase.content.user.id.eq(userId))
             .and(qOrder.status.eq(Order.OrderStatus.PAID));
 
+    // 회원과 비회원 구매자 수를 따로 계산해서 합침
+    Long memberCount =
+        queryFactory
+            .select(qPurchase.user.id.countDistinct())
+            .from(qPurchase)
+            .leftJoin(qPurchase.order, qOrder)
+            .where(
+                qPurchase
+                    .content
+                    .id
+                    .eq(contentId)
+                    .and(qPurchase.content.user.id.eq(userId))
+                    .and(qOrder.status.eq(Order.OrderStatus.PAID))
+                    .and(qPurchase.user.isNotNull()))
+            .fetchOne();
+
+    Long guestCount =
+        queryFactory
+            .select(qPurchase.guestUser.id.countDistinct())
+            .from(qPurchase)
+            .leftJoin(qPurchase.order, qOrder)
+            .where(
+                qPurchase
+                    .content
+                    .id
+                    .eq(contentId)
+                    .and(qPurchase.content.user.id.eq(userId))
+                    .and(qOrder.status.eq(Order.OrderStatus.PAID))
+                    .and(qPurchase.guestUser.isNotNull()))
+            .fetchOne();
+
+    Long totalCustomers =
+        (memberCount != null ? memberCount : 0L) + (guestCount != null ? guestCount : 0L);
+
     FlatSellManageDetailDTO result =
         queryFactory
             .select(
@@ -605,8 +691,8 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
                     FlatSellManageDetailDTO.class,
                     // BigDecimal 그대로 전달 (데이터 없으면 0)
                     qPurchase.finalPrice.sum().coalesce(BigDecimal.ZERO),
-                    // Long으로, 데이터 없으면 0
-                    qPurchase.user.id.countDistinct().coalesce(0L),
+                    // 회원 + 비회원 구매자 수 (중복 제거)
+                    Expressions.constant(totalCustomers),
                     // 서브쿼리 count() 결과도 Long, 데이터 없으면 0
                     JPAExpressions.select(qContentReview.count().coalesce(0L))
                         .from(qContentReview)
@@ -665,14 +751,10 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
     QPurchase purchase = QPurchase.purchase;
     QContent content = QContent.content;
 
-    // 전체 통계 - NULL 안전 처리
+    // 전체 통계 - 회원과 비회원 합계
     Tuple totalStats =
         queryFactory
-            .select(
-                purchase.finalPrice.sum().coalesce(BigDecimal.ZERO),
-                purchase.count(),
-                purchase.user.id.countDistinct() // 전체 고유 고객 수
-                )
+            .select(purchase.finalPrice.sum().coalesce(BigDecimal.ZERO), purchase.count())
             .from(purchase)
             .join(purchase.content, content)
             .where(
@@ -681,14 +763,35 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
                 purchase.purchasedAt.isNotNull())
             .fetchOne();
 
-    // 이번 달 통계
+    // 전체 고유 고객 수 (회원 + 비회원)
+    Long totalMemberCustomers =
+        queryFactory
+            .select(purchase.user.id.countDistinct())
+            .from(purchase)
+            .join(purchase.content, content)
+            .where(
+                content.user.id.eq(sellerId),
+                purchase.cancelledAt.isNull(),
+                purchase.purchasedAt.isNotNull(),
+                purchase.user.isNotNull())
+            .fetchOne();
+
+    Long totalGuestCustomers =
+        queryFactory
+            .select(purchase.guestUser.id.countDistinct())
+            .from(purchase)
+            .join(purchase.content, content)
+            .where(
+                content.user.id.eq(sellerId),
+                purchase.cancelledAt.isNull(),
+                purchase.purchasedAt.isNotNull(),
+                purchase.guestUser.isNotNull())
+            .fetchOne();
+
+    // 이번 달 통계 - 회원과 비회원 합계
     Tuple monthStats =
         queryFactory
-            .select(
-                purchase.finalPrice.sum().coalesce(BigDecimal.ZERO),
-                purchase.count(),
-                purchase.user.id.countDistinct() // 이번 달 고유 고객 수
-                )
+            .select(purchase.finalPrice.sum().coalesce(BigDecimal.ZERO), purchase.count())
             .from(purchase)
             .join(purchase.content, content)
             .where(
@@ -698,27 +801,62 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
                 purchase.purchasedAt.goe(currentMonthStart))
             .fetchOne();
 
+    // 이번 달 고유 고객 수 (회원 + 비회원)
+    Long monthMemberCustomers =
+        queryFactory
+            .select(purchase.user.id.countDistinct())
+            .from(purchase)
+            .join(purchase.content, content)
+            .where(
+                content.user.id.eq(sellerId),
+                purchase.cancelledAt.isNull(),
+                purchase.purchasedAt.isNotNull(),
+                purchase.purchasedAt.goe(currentMonthStart),
+                purchase.user.isNotNull())
+            .fetchOne();
+
+    Long monthGuestCustomers =
+        queryFactory
+            .select(purchase.guestUser.id.countDistinct())
+            .from(purchase)
+            .join(purchase.content, content)
+            .where(
+                content.user.id.eq(sellerId),
+                purchase.cancelledAt.isNull(),
+                purchase.purchasedAt.isNotNull(),
+                purchase.purchasedAt.goe(currentMonthStart),
+                purchase.guestUser.isNotNull())
+            .fetchOne();
+
     // NULL 안전 처리
     BigDecimal totalRevenue = BigDecimal.ZERO;
     Long totalSalesCount = 0L;
-    Long totalCustomers = 0L;
+    Long totalCustomers;
     BigDecimal monthRevenue = BigDecimal.ZERO;
     Long monthSalesCount = 0L;
-    Long recentCustomers = 0L;
+    Long recentCustomers;
 
     if (totalStats != null) {
       totalRevenue =
           Optional.ofNullable(totalStats.get(0, BigDecimal.class)).orElse(BigDecimal.ZERO);
       totalSalesCount = Optional.ofNullable(totalStats.get(1, Long.class)).orElse(0L);
-      totalCustomers = Optional.ofNullable(totalStats.get(2, Long.class)).orElse(0L);
     }
+
+    // 전체 고유 고객 수 계산
+    totalCustomers =
+        (totalMemberCustomers != null ? totalMemberCustomers : 0L)
+            + (totalGuestCustomers != null ? totalGuestCustomers : 0L);
 
     if (monthStats != null) {
       monthRevenue =
           Optional.ofNullable(monthStats.get(0, BigDecimal.class)).orElse(BigDecimal.ZERO);
       monthSalesCount = Optional.ofNullable(monthStats.get(1, Long.class)).orElse(0L);
-      recentCustomers = Optional.ofNullable(monthStats.get(2, Long.class)).orElse(0L);
     }
+
+    // 이번 달 고유 고객 수 계산
+    recentCustomers =
+        (monthMemberCustomers != null ? monthMemberCustomers : 0L)
+            + (monthGuestCustomers != null ? monthGuestCustomers : 0L);
 
     return FlatDashboardOverviewDTO.builder()
         .totalRevenue(totalRevenue)
