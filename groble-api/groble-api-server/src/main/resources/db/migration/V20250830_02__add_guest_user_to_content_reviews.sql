@@ -13,9 +13,6 @@ ALTER TABLE content_reviews
 -- 3) 인덱스
 ALTER TABLE content_reviews
   ADD INDEX idx_content_reviews_guest_user_active (guest_user_id, review_status);
--- (권장) 회원 리뷰 조회도 많다면 대칭 인덱스 추가
-ALTER TABLE content_reviews
-  ADD INDEX idx_content_reviews_user_active (user_id, review_status);
 
 -- 4) user_id NULL 허용 + 주석
 ALTER TABLE content_reviews

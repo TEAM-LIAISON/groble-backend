@@ -64,12 +64,6 @@ public class PurchaserReviewService {
     }
   }
 
-  @Transactional
-  public PurchaserContentReviewDTO addReview(
-      Long userId, String merchantUid, PurchaserContentReviewDTO purchaserContentReviewDTO) {
-    return addReviewUnified(userId, null, merchantUid, purchaserContentReviewDTO);
-  }
-
   private PurchaserContentReviewDTO addReviewForMember(
       Long userId,
       Order order,
