@@ -109,7 +109,7 @@ public final class GenericResponseSchemas {
   // 예: UserResponse, ContentResponse, MarketResponse 등
   /** 리뷰 작성/수정 응답 */
   @Schema(description = CommonSwaggerDocs.GROBLE_RESPONSE_DESC + " - 리뷰 작성/수정 응답")
-  public static class ContentReviewResponse {
+  public static class ContentReviewRequestResponse {
 
     @Schema(description = "응답 상태", example = CommonSwaggerDocs.STATUS_SUCCESS)
     public String status;

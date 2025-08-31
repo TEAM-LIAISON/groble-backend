@@ -30,7 +30,9 @@ public final class PurchaseReviewApiResponses {
             @Content(
                 mediaType = "application/json",
                 schema =
-                    @Schema(implementation = GenericResponseSchemas.ContentReviewResponse.class))),
+                    @Schema(
+                        implementation =
+                            GenericResponseSchemas.ContentReviewRequestResponse.class))),
     @ApiResponse(
         responseCode = "400",
         description = CommonSwaggerDocs.BAD_REQUEST,
