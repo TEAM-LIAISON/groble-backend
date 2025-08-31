@@ -33,9 +33,14 @@ public interface PurchaseCustomRepository {
   Page<FlatPurchaseContentPreviewDTO> findMyPurchasedContents(
       Long userId, List<Order.OrderStatus> orderStatuses, Pageable pageable);
 
+  Page<FlatPurchaseContentPreviewDTO> findMyPurchasedContentsForGuest(
+      Long guestUserId, List<Order.OrderStatus> orderStatuses, Pageable pageable);
+
   Optional<FlatSellManageDetailDTO> getSellManageDetail(Long userId, Long contentId);
 
   boolean existsByUserAndContent(Long userId, Long contentId);
+
+  boolean existsByGuestUserAndContent(Long guestUserId, Long contentId);
 
   FlatDashboardOverviewDTO getDashboardOverviewStats(Long sellerId);
 }

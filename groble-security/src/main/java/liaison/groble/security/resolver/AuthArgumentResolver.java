@@ -62,6 +62,24 @@ public class AuthArgumentResolver implements HandlerMethodArgumentResolver {
       }
     }
 
+    // 게스트 사용자인 경우 처리 추가
+    if (principal instanceof liaison.groble.security.jwt.GuestPrincipal) {
+      liaison.groble.security.jwt.GuestPrincipal guestPrincipal =
+          (liaison.groble.security.jwt.GuestPrincipal) principal;
+
+      Set<String> roles =
+          guestPrincipal.getAuthorities().stream()
+              .map(GrantedAuthority::getAuthority)
+              .collect(Collectors.toSet());
+
+      return Accessor.builder()
+          .id(guestPrincipal.getGuestUserId())
+          .roles(roles)
+          .userType("GUEST")
+          .accountType("GUEST")
+          .build();
+    }
+
     // UserDetailsImpl이 아닌 경우
     if (!(principal instanceof liaison.groble.security.jwt.UserDetailsImpl)) {
       if (required) {

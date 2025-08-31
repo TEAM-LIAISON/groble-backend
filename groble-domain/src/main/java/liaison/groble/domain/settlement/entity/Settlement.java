@@ -199,14 +199,15 @@ public class Settlement extends BaseTimeEntity {
     this.pgFeeRate = pgFeeRate != null ? pgFeeRate : new BigDecimal("0.0170"); // 기본 1.7%
     this.vatRate = vatRate != null ? vatRate : new BigDecimal("0.1000"); // 기본 10%
     this.status = SettlementStatus.PENDING;
-    // 정산 예정일 계산 로직 변경
-    this.scheduledSettlementDate =
-        calculateScheduledDate(this.settlementEndDate, this.settlementType, this.settlementRound);
 
-    // 신규 필드 설정 (null이면 기존 방식)
+    // 신규 필드 설정 (null이면 기존 방식) - scheduledSettlementDate 계산 전에 먼저 설정
     this.settlementType = settlementType != null ? settlementType : SettlementType.LEGACY;
     this.settlementCycle = settlementCycle != null ? settlementCycle : SettlementCycle.MONTHLY;
     this.settlementRound = settlementRound != null ? settlementRound : 1;
+
+    // 정산 예정일 계산 로직 변경 - 필드들이 초기화된 후에 계산
+    this.scheduledSettlementDate =
+        calculateScheduledDate(this.settlementEndDate, this.settlementType, this.settlementRound);
   }
 
   // === 비즈니스 메서드 ===

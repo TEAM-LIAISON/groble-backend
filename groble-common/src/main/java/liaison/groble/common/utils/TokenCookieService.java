@@ -30,8 +30,10 @@ public class TokenCookieService {
 
   private static final int ACCESS_TOKEN_MAX_AGE = (int) Duration.ofHours(1).toSeconds();
   private static final int REFRESH_TOKEN_MAX_AGE = (int) Duration.ofDays(7).toSeconds();
+  private static final int GUEST_TOKEN_MAX_AGE = (int) Duration.ofMinutes(30).toSeconds();
   private static final String ACCESS_TOKEN_COOKIE_NAME = "accessToken";
   private static final String REFRESH_TOKEN_COOKIE_NAME = "refreshToken";
+  private static final String GUEST_TOKEN_COOKIE_NAME = "guestToken";
 
   // --- Admin 쿠키 추가 ---
   public void addAdminTokenCookies(
@@ -118,6 +120,35 @@ public class TokenCookieService {
   public void addTokenCookies(
       HttpServletResponse response, String accessToken, String refreshToken) {
     addTokenCookies(null, response, accessToken, refreshToken);
+  }
+
+  // --- Guest 쿠키 추가 ---
+  public void addGuestTokenCookie(HttpServletResponse response, String guestToken) {
+    addGuestTokenCookie(null, response, guestToken);
+  }
+
+  public void addGuestTokenCookie(
+      HttpServletRequest request, HttpServletResponse response, String guestToken) {
+    CookieSettings settings = resolveUserSettings(request);
+
+    CookieUtils.addCookie(
+        response,
+        GUEST_TOKEN_COOKIE_NAME,
+        guestToken,
+        GUEST_TOKEN_MAX_AGE,
+        "/",
+        true,
+        settings.secure(),
+        settings.sameSite(),
+        settings.domain());
+
+    log.info(
+        "[Guest] 쿠키 설정: env={}, domain={}, secure={}, sameSite={}, fromLocalhost={}",
+        String.join(",", env.getActiveProfiles()),
+        settings.domain() != null ? settings.domain() : "(host-only)",
+        settings.secure(),
+        settings.sameSite(),
+        settings.fromLocalhost());
   }
 
   // --- Admin 쿠키 제거 ---

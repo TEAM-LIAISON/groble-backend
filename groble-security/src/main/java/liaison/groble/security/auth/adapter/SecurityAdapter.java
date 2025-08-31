@@ -37,6 +37,11 @@ public class SecurityAdapter implements SecurityPort {
   }
 
   @Override
+  public String createGuestToken(Long guestUserId) {
+    return jwtTokenProvider.createGuestToken(guestUserId);
+  }
+
+  @Override
   public long getAccessTokenExpirationTime() {
     return jwtTokenProvider.getAccessTokenValidityInSeconds();
   }

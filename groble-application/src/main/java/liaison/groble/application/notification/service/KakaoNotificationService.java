@@ -46,7 +46,7 @@ public class KakaoNotificationService {
       log.error(
           "Failed to send Kakao notification. type: {}, user: {}",
           kakaoNotificationDTO.getType(),
-          kakaoNotificationDTO.getUserName(),
+          kakaoNotificationDTO.getUsername(),
           e);
       //            failedMessageRecorder.record(kakaoNotificationDTO, e);
     }

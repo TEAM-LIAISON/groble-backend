@@ -128,8 +128,10 @@ logging:
     io.swagger.v3: INFO
     software.amazon.awssdk: INFO
     org.apache.http: INFO
+    com.sun.mail: WARN                             # JavaMail SMTP 디버그 로그 축약
+    javax.mail: WARN                               # JavaMail 로그 축약
   file:
-    path: ./logs
+    path: ${user.dir}/logs
 
 # application-local.yml
 

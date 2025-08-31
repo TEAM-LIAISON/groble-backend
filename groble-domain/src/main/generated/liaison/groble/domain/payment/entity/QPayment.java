@@ -22,10 +22,9 @@ public class QPayment extends EntityPathBase<Payment> {
 
     public static final QPayment payment = new QPayment("payment");
 
-    public final liaison.groble.domain.common.entity.QBaseTimeEntity _super = new liaison.groble.domain.common.entity.QBaseTimeEntity(this);
+    public final liaison.groble.domain.payment.vo.QPaymentAmount amount;
 
-    //inherited
-    public final DateTimePath<java.time.LocalDateTime> createdAt = _super.createdAt;
+    public final StringPath billingKey = createString("billingKey");
 
     public final NumberPath<Long> id = createNumber("id", Long.class);
 
@@ -41,16 +40,11 @@ public class QPayment extends EntityPathBase<Payment> {
 
     public final StringPath pgTid = createString("pgTid");
 
-    public final NumberPath<java.math.BigDecimal> price = createNumber("price", java.math.BigDecimal.class);
-
     public final StringPath purchaserEmail = createString("purchaserEmail");
 
     public final StringPath purchaserName = createString("purchaserName");
 
     public final StringPath purchaserPhoneNumber = createString("purchaserPhoneNumber");
-
-    //inherited
-    public final DateTimePath<java.time.LocalDateTime> updatedAt = _super.updatedAt;
 
     public QPayment(String variable) {
         this(Payment.class, forVariable(variable), INITS);
@@ -70,6 +64,7 @@ public class QPayment extends EntityPathBase<Payment> {
 
     public QPayment(Class<? extends Payment> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
+        this.amount = inits.isInitialized("amount") ? new liaison.groble.domain.payment.vo.QPaymentAmount(forProperty("amount")) : null;
         this.order = inits.isInitialized("order") ? new liaison.groble.domain.order.entity.QOrder(forProperty("order"), inits.get("order")) : null;
     }
 

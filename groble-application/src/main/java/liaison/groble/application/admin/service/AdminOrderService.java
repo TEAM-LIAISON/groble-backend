@@ -11,7 +11,8 @@ import liaison.groble.application.admin.dto.AdminOrderCancelRequestDTO;
 import liaison.groble.application.admin.dto.AdminOrderCancellationReasonDTO;
 import liaison.groble.application.admin.dto.AdminOrderSummaryInfoDTO;
 import liaison.groble.application.order.service.OrderReader;
-import liaison.groble.application.payment.service.PayplePaymentService;
+import liaison.groble.application.payment.dto.cancel.PaymentCancelResponse;
+import liaison.groble.application.payment.service.PayplePaymentFacadeV2;
 import liaison.groble.application.purchase.service.PurchaseReader;
 import liaison.groble.common.response.PageResponse;
 import liaison.groble.domain.order.dto.FlatAdminOrderSummaryInfoDTO;
@@ -27,7 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class AdminOrderService {
   private final OrderReader orderReader;
-  private final PayplePaymentService payplePaymentService;
+  private final PayplePaymentFacadeV2 payplePaymentFacadeV2;
   private final OrderRepository orderRepository;
   private final PurchaseReader purchaseReader;
 
@@ -77,27 +78,17 @@ public class AdminOrderService {
     if ("approve".equalsIgnoreCase(action)) {
       // 취소 승인 - 페이플 실결제 취소 API 호출
       try {
-        // 페이플 인증 정보 획득
-        var authResponse = payplePaymentService.getPaymentAuthForCancel();
-
-        // 결제 취소 처리
-        var cancelResult =
-            payplePaymentService.cancelPayment(
-                authResponse, merchantUid, order.getOrderNote() // 취소 사유
-                );
-
-        String cancelRst = (String) cancelResult.get("PCD_PAY_RST");
-        if (!"success".equalsIgnoreCase(cancelRst)) {
-          throw new RuntimeException("페이플 취소 요청 실패: " + cancelResult.get("PCD_PAY_MSG"));
-        }
+        PaymentCancelResponse response =
+            payplePaymentFacadeV2.cancelPayment(
+                order.getUser().getId(), merchantUid, order.getOrderNote());
 
         // 주문 상태는 PayplePaymentService에서 이미 CANCELLED로 변경됨
         return AdminOrderCancelRequestDTO.builder()
-            .merchantUid(merchantUid)
+            .merchantUid(response.getMerchantUid())
             .action(action)
             .resultStatus(Order.OrderStatus.CANCELLED)
             .message("결제 취소가 승인되었습니다.")
-            .processedAt(java.time.LocalDateTime.now())
+            .processedAt(response.getCanceledAt())
             .build();
 
       } catch (Exception e) {

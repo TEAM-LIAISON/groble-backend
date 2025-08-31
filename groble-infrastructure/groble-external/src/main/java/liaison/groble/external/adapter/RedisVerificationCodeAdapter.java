@@ -225,4 +225,44 @@ public class RedisVerificationCodeAdapter implements VerificationCodePort {
   private String guestPhoneVerifiedKey(String phoneNumber) {
     return PHONE_VERIFIED_GUEST_PREFIX + phoneNumber;
   }
+
+  // === 비회원 전화번호 인증 관련 ===
+
+  @Override
+  public void saveVerificationCodeForGuest(
+      String phoneNumber, String code, long expirationTimeInMinutes) {
+    String key = guestPhoneAuthKey(phoneNumber);
+    try {
+      redisTemplate.opsForValue().set(key, code, expirationTimeInMinutes, TimeUnit.MINUTES);
+      log.debug("비회원 전화번호 인증 코드 저장: key={}", key);
+    } catch (DataAccessException e) {
+      log.error("Redis에 비회원 전화번호 인증 코드 저장 실패: key={}, error={}", key, e.getMessage());
+      throw new RuntimeException("인증 코드를 저장하는 중 오류가 발생했습니다.", e);
+    }
+  }
+
+  @Override
+  public boolean validateVerificationCodeForGuest(String phoneNumber, String code) {
+    String key = guestPhoneAuthKey(phoneNumber);
+    try {
+      String storedCode = redisTemplate.opsForValue().get(key);
+      boolean isValid = storedCode != null && storedCode.equals(code);
+      log.debug("비회원 전화번호 인증 코드 검증: key={}, valid={}", key, isValid);
+      return isValid;
+    } catch (DataAccessException e) {
+      log.error("Redis에서 비회원 전화번호 인증 코드 검증 실패: key={}, error={}", key, e.getMessage());
+      return false;
+    }
+  }
+
+  @Override
+  public void removeVerificationCodeForGuest(String phoneNumber) {
+    String key = guestPhoneAuthKey(phoneNumber);
+    try {
+      redisTemplate.delete(key);
+      log.debug("비회원 전화번호 인증 코드 삭제: key={}", key);
+    } catch (DataAccessException e) {
+      log.warn("Redis에서 비회원 전화번호 인증 코드 삭제 실패: key={}, error={}", key, e.getMessage());
+    }
+  }
 }

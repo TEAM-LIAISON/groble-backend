@@ -21,6 +21,7 @@ import jakarta.persistence.Table;
 
 import liaison.groble.domain.common.entity.BaseTimeEntity;
 import liaison.groble.domain.content.enums.ReviewStatus;
+import liaison.groble.domain.guest.entity.GuestUser;
 import liaison.groble.domain.purchase.entity.Purchase;
 import liaison.groble.domain.user.entity.User;
 
@@ -37,6 +38,9 @@ import lombok.NoArgsConstructor;
           name = "idx_content_reviews_content_active_recent",
           columnList = "content_id, review_status, created_at DESC"),
       @Index(name = "idx_content_reviews_user_active", columnList = "user_id, review_status"),
+      @Index(
+          name = "idx_content_reviews_guest_user_active",
+          columnList = "guest_user_id, review_status"),
       @Index(
           name = "idx_content_reviews_content_rating",
           columnList = "content_id, rating, review_status"),
@@ -56,8 +60,12 @@ public class ContentReview extends BaseTimeEntity {
   private Content content;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "user_id", nullable = false)
+  @JoinColumn(name = "user_id")
   private User user;
+
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "guest_user_id")
+  private GuestUser guestUser;
 
   @OneToOne
   @JoinColumn(name = "purchase_id", nullable = false)
@@ -79,5 +87,52 @@ public class ContentReview extends BaseTimeEntity {
   public void updateReview(BigDecimal rating, String reviewContent) {
     this.rating = rating;
     this.reviewContent = reviewContent;
+  }
+
+  // 유틸리티 메서드들
+  /**
+   * 회원 리뷰인지 확인
+   *
+   * @return 회원 리뷰이면 true, 비회원 리뷰이면 false
+   */
+  public boolean isMemberReview() {
+    return this.user != null;
+  }
+
+  /**
+   * 비회원 리뷰인지 확인
+   *
+   * @return 비회원 리뷰이면 true, 회원 리뷰이면 false
+   */
+  public boolean isGuestReview() {
+    return this.guestUser != null;
+  }
+
+  /**
+   * 리뷰 작성자 ID 반환 (회원이면 userId, 비회원이면 guestUserId)
+   *
+   * @return 리뷰 작성자 ID
+   */
+  public Long getReviewerId() {
+    if (isMemberReview()) {
+      return this.user.getId();
+    } else if (isGuestReview()) {
+      return this.guestUser.getId();
+    }
+    return null;
+  }
+
+  /**
+   * 리뷰 작성자 이름 반환 (회원이면 닉네임, 비회원이면 사용자명)
+   *
+   * @return 리뷰 작성자 이름
+   */
+  public String getReviewerName() {
+    if (isMemberReview()) {
+      return this.user.getNickname();
+    } else if (isGuestReview()) {
+      return this.guestUser.getUsername();
+    }
+    return null;
   }
 }

@@ -39,6 +39,17 @@ public class PaymentValidator {
     }
   }
 
+  public void validateOrderOwnershipForGuest(Order order, Long guestUserId) {
+    if (!order.getGuestUser().getId().equals(guestUserId)) {
+      log.warn(
+          "주문 접근 권한 없음 - orderId: {}, orderGuestUserId: {}, requestGuestUserId: {}",
+          order.getId(),
+          order.getGuestUser().getId(),
+          guestUserId);
+      throw new UnauthorizedPaymentException("주문에 대한 접근 권한이 없습니다");
+    }
+  }
+
   /**
    * 주문 상태 검증
    *

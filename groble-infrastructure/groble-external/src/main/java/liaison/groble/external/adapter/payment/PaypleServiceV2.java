@@ -1,0 +1,205 @@
+package liaison.groble.external.adapter.payment;
+
+import java.util.Map;
+
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
+import org.springframework.stereotype.Service;
+
+import liaison.groble.external.adapter.payment.http.HttpClientAdapter;
+import liaison.groble.external.adapter.payment.http.HttpClientException;
+import liaison.groble.external.adapter.payment.http.HttpRequest;
+import liaison.groble.external.adapter.payment.http.HttpResponse;
+import liaison.groble.external.config.PaypleConfig;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+/**
+ * 리팩토링된 페이플 서비스 구현체
+ *
+ * <p>엔터프라이즈급 HTTP 클라이언트를 사용하여 페이플 API와 통신합니다.
+ *
+ * <p><strong>적용된 엔터프라이즈 패턴:</strong>
+ *
+ * <ul>
+ *   <li>Adapter Pattern: HTTP 클라이언트 추상화
+ *   <li>Template Method Pattern: 공통 요청 처리 플로우
+ *   <li>Strategy Pattern: 다양한 HTTP 클라이언트 전략
+ *   <li>Circuit Breaker Pattern: 장애 격리
+ *   <li>Retry Pattern: 자동 재시도
+ * </ul>
+ */
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class PaypleServiceV2 implements PaypleService {
+
+  private final PaypleConfig paypleConfig;
+  private final HttpClientAdapter httpClient;
+  private final JSONParser jsonParser = new JSONParser();
+
+  @Override
+  public JSONObject payAppCard(Map<String, String> params) {
+    log.info(
+        "페이플 앱카드 결제 요청 시작 - PCD_PAY_REQKEY: {}", maskSensitiveData(params.get("PCD_PAY_REQKEY")));
+
+    try {
+      // 요청 데이터 준비
+      PayplePaymentRequest paymentRequest = createPaymentRequest(params);
+
+      // HTTP 요청 실행
+      HttpResponse response = executePaymentRequest(paymentRequest);
+
+      // 응답 파싱 및 검증
+      return parseAndValidateResponse(response);
+
+    } catch (HttpClientException e) {
+      log.error("페이플 앱카드 결제 HTTP 요청 실패", e);
+      return createErrorResponse("NETWORK_ERROR", "네트워크 오류가 발생했습니다: " + e.getMessage());
+
+    } catch (ParseException e) {
+      log.error("페이플 응답 파싱 실패", e);
+      return createErrorResponse("PARSE_ERROR", "응답 파싱 중 오류가 발생했습니다");
+
+    } catch (Exception e) {
+      log.error("페이플 앱카드 결제 예상치 못한 오류", e);
+      return createErrorResponse("UNKNOWN_ERROR", "예상치 못한 오류가 발생했습니다");
+    }
+  }
+
+  @Override
+  public JSONObject payRefund(PaypleRefundRequest request) {
+    log.info("페이플 결제 환불 요청 시작 - PCD_PAY_OID: {}", request.getPayOid());
+
+    try {
+      // HTTP 요청 실행
+      HttpResponse response = executeRefundRequest(request);
+
+      // 응답 파싱 및 검증
+      return parseAndValidateResponse(response);
+
+    } catch (HttpClientException e) {
+      log.error("페이플 결제 환불 HTTP 요청 실패", e);
+      return createErrorResponse("NETWORK_ERROR", "네트워크 오류가 발생했습니다: " + e.getMessage());
+
+    } catch (ParseException e) {
+      log.error("페이플 환불 응답 파싱 실패", e);
+      return createErrorResponse("PARSE_ERROR", "응답 파싱 중 오류가 발생했습니다");
+
+    } catch (Exception e) {
+      log.error("페이플 결제 환불 예상치 못한 오류", e);
+      return createErrorResponse("UNKNOWN_ERROR", "예상치 못한 오류가 발생했습니다");
+    }
+  }
+
+  @Override
+  public JSONObject payConfirm(Map<String, String> params) {
+    log.info("페이플 결제 승인 요청 - 미구현");
+    return createErrorResponse("NOT_IMPLEMENTED", "결제 승인 기능은 구현되지 않았습니다");
+  }
+
+  @Override
+  public JSONObject payAuth(Map<String, String> params) {
+    log.info("페이플 결제 인증 요청 - 미구현");
+    return createErrorResponse("NOT_IMPLEMENTED", "결제 인증 기능은 구현되지 않았습니다");
+  }
+
+  @Override
+  public JSONObject paySimplePayment(Map<String, String> params) {
+    log.info("페이플 간편결제 요청 - 미구현");
+    return createErrorResponse("NOT_IMPLEMENTED", "간편결제 기능은 구현되지 않았습니다");
+  }
+
+  private PayplePaymentRequest createPaymentRequest(Map<String, String> params) {
+    return PayplePaymentRequest.builder()
+        .url(params.get("PCD_PAY_COFURL"))
+        .cstId(params.get("PCD_CST_ID"))
+        .custKey(params.get("PCD_CUST_KEY"))
+        .authKey(params.get("PCD_AUTH_KEY"))
+        .payReqKey(params.get("PCD_PAY_REQKEY"))
+        .build();
+  }
+
+  private PaypleRefundRequest createRefundRequest(Map<String, String> params) {
+    return PaypleRefundRequest.builder()
+        .url("https://testcpay.payple.kr/php/auth.php") // 테스트 환경 URL
+        .cstId(paypleConfig.getCstId())
+        .custKey(paypleConfig.getCustKey())
+        .authKey("test") // TODO: AuthKey 설정 필요
+        .payOid(params.get("PCD_PAY_OID"))
+        .refundTotal(params.get("PCD_REFUND_TOTAL"))
+        .refundTaxfree(params.getOrDefault("PCD_REFUND_TAXFREE", "0"))
+        .refundReason(params.get("PCD_REFUND_REASON"))
+        .build();
+  }
+
+  private HttpResponse executePaymentRequest(PayplePaymentRequest request)
+      throws HttpClientException {
+    JSONObject requestBody = new JSONObject();
+    requestBody.put("PCD_CST_ID", request.getCstId());
+    requestBody.put("PCD_CUST_KEY", request.getCustKey());
+    requestBody.put("PCD_AUTH_KEY", request.getAuthKey());
+    requestBody.put("PCD_PAY_REQKEY", request.getPayReqKey());
+
+    log.debug("페이플 결제 요청 본문: {}", requestBody.toJSONString());
+
+    HttpRequest httpRequest = HttpRequest.post(request.getUrl(), requestBody.toJSONString());
+    return httpClient.post(httpRequest);
+  }
+
+  private HttpResponse executeRefundRequest(PaypleRefundRequest request)
+      throws HttpClientException {
+    JSONObject requestBody = new JSONObject();
+    requestBody.put("PCD_CST_ID", request.getCstId());
+    requestBody.put("PCD_CUST_KEY", request.getCustKey());
+    requestBody.put("PCD_AUTH_KEY", request.getAuthKey());
+    requestBody.put("PCD_PAY_OID", request.getPayOid());
+    requestBody.put("PCD_REFUND_TOTAL", request.getRefundTotal());
+    requestBody.put("PCD_REFUND_TAXFREE", request.getRefundTaxfree());
+    requestBody.put("PCD_REFUND_REASON", request.getRefundReason());
+
+    log.debug("페이플 환불 요청 본문: {}", requestBody.toJSONString());
+
+    HttpRequest httpRequest = HttpRequest.post(request.getUrl(), requestBody.toJSONString());
+    return httpClient.post(httpRequest);
+  }
+
+  private JSONObject parseAndValidateResponse(HttpResponse response) throws ParseException {
+    if (!response.isSuccess()) {
+      log.warn(
+          "페이플 API 응답 오류 - 상태코드: {}, 응답시간: {}ms",
+          response.getStatusCode(),
+          response.getResponseTimeMs());
+      return createErrorResponse(
+          "API_ERROR", "페이플 API 오류 (상태코드: " + response.getStatusCode() + ")");
+    }
+
+    JSONObject jsonResponse = (JSONObject) jsonParser.parse(response.getBody());
+
+    log.info(
+        "페이플 API 응답 성공 - 응답시간: {}ms, 결과: {}",
+        response.getResponseTimeMs(),
+        jsonResponse.getOrDefault("PCD_PAY_RST", "UNKNOWN"));
+
+    return jsonResponse;
+  }
+
+  private JSONObject createErrorResponse(String errorCode, String errorMessage) {
+    JSONObject errorResponse = new JSONObject();
+    errorResponse.put("PCD_PAY_RST", "error");
+    errorResponse.put("PCD_PAY_CODE", errorCode);
+    errorResponse.put("PCD_PAY_MSG", errorMessage);
+    return errorResponse;
+  }
+
+  private String maskSensitiveData(String sensitiveData) {
+    if (sensitiveData == null || sensitiveData.length() <= 8) {
+      return "***";
+    }
+    return sensitiveData.substring(0, 4)
+        + "***"
+        + sensitiveData.substring(sensitiveData.length() - 4);
+  }
+}

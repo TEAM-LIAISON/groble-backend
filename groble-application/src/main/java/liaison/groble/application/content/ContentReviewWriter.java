@@ -27,4 +27,8 @@ public class ContentReviewWriter {
   public void deleteContentReview(Long userId, Long reviewId) {
     contentReviewCustomRepository.deleteContentReview(userId, reviewId);
   }
+
+  public void deleteGuestContentReview(Long guestUserId, Long reviewId) {
+    contentReviewCustomRepository.deleteGuestContentReview(guestUserId, reviewId);
+  }
 }

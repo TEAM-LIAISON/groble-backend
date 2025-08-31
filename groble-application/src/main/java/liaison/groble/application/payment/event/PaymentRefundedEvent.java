@@ -13,6 +13,7 @@ public class PaymentRefundedEvent {
   private final Long orderId;
   private final Long paymentId;
   private final Long userId;
+  private final Long guestUserId;
   private final BigDecimal refundAmount;
   private final String reason;
   private final LocalDateTime refundedAt;

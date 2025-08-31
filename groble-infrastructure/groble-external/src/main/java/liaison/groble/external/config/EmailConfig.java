@@ -41,7 +41,7 @@ public class EmailConfig {
     properties.setProperty("mail.transport.protocol", "smtp");
     properties.setProperty("mail.smtp.auth", "true");
     properties.setProperty("mail.smtp.starttls.enable", "true");
-    properties.setProperty("mail.debug", "true");
+    properties.setProperty("mail.debug", "false");
 
     // SSL 인증서 검증 비활성화
     properties.setProperty("mail.smtp.ssl.trust", "*");

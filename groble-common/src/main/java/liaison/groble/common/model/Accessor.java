@@ -2,6 +2,10 @@ package liaison.groble.common.model;
 
 import java.util.Set;
 
+import liaison.groble.common.context.GuestUserContext;
+import liaison.groble.common.context.MemberUserContext;
+import liaison.groble.common.context.UserContext;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -54,5 +58,37 @@ public class Accessor {
    */
   public boolean isIntegratedAccount() {
     return "INTEGRATED".equals(this.accountType);
+  }
+
+  /**
+   * 게스트 사용자인지 확인
+   *
+   * @return 게스트 사용자이면 true
+   */
+  public boolean isGuest() {
+    return "GUEST".equals(this.userType);
+  }
+
+  /**
+   * Accessor로부터 UserContext 생성
+   *
+   * @return 사용자 타입에 따른 UserContext 구현체
+   */
+  public UserContext toUserContext() {
+    if (this.isGuest()) {
+      return new GuestUserContext(this.id);
+    } else {
+      return new MemberUserContext(this.id);
+    }
+  }
+
+  /**
+   * Accessor로부터 UserContext 생성하는 정적 팩토리 메서드
+   *
+   * @param accessor Accessor 객체
+   * @return 사용자 타입에 따른 UserContext 구현체
+   */
+  public static UserContext toUserContext(Accessor accessor) {
+    return accessor.toUserContext();
   }
 }
