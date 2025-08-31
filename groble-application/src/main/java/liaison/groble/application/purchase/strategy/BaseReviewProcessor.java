@@ -74,9 +74,11 @@ public abstract class BaseReviewProcessor implements ReviewProcessorStrategy {
     ContentReview contentReview = doGetContentReview(userContext, reviewId);
     contentReview.updateReview(reviewDTO.getRating(), reviewDTO.getReviewContent());
 
+    ContentReview savedContentReview = contentReviewWriter.save(contentReview);
+
     return PurchaserContentReviewDTO.builder()
-        .rating(reviewDTO.getRating())
-        .reviewContent(reviewDTO.getReviewContent())
+        .rating(savedContentReview.getRating())
+        .reviewContent(savedContentReview.getReviewContent())
         .build();
   }
 
