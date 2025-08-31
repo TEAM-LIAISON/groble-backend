@@ -30,11 +30,51 @@ public final class PaymentApiResponses {
                 mediaType = "application/json",
                 schema =
                     @Schema(implementation = GenericResponseSchemas.PaymentRequestResponse.class))),
-    @ApiResponse(responseCode = "400", description = CommonSwaggerDocs.BAD_REQUEST),
-    @ApiResponse(responseCode = "403", description = CommonSwaggerDocs.FORBIDDEN),
-    @ApiResponse(responseCode = "404", description = CommonSwaggerDocs.NOT_FOUND),
-    @ApiResponse(responseCode = "409", description = CommonSwaggerDocs.CONFLICT),
-    @ApiResponse(responseCode = "500", description = CommonSwaggerDocs.SERVER_ERROR)
+    @ApiResponse(
+        responseCode = "400",
+        description = CommonSwaggerDocs.BAD_REQUEST,
+        content =
+            @Content(
+                mediaType = "application/json",
+                examples =
+                    @io.swagger.v3.oas.annotations.media.ExampleObject(
+                        value = CommonSwaggerDocs.BAD_REQUEST_EXAMPLE))),
+    @ApiResponse(
+        responseCode = "403",
+        description = CommonSwaggerDocs.FORBIDDEN,
+        content =
+            @Content(
+                mediaType = "application/json",
+                examples =
+                    @io.swagger.v3.oas.annotations.media.ExampleObject(
+                        value = CommonSwaggerDocs.FORBIDDEN_EXAMPLE))),
+    @ApiResponse(
+        responseCode = "404",
+        description = CommonSwaggerDocs.NOT_FOUND,
+        content =
+            @Content(
+                mediaType = "application/json",
+                examples =
+                    @io.swagger.v3.oas.annotations.media.ExampleObject(
+                        value = CommonSwaggerDocs.NOT_FOUND_EXAMPLE))),
+    @ApiResponse(
+        responseCode = "409",
+        description = CommonSwaggerDocs.CONFLICT,
+        content =
+            @Content(
+                mediaType = "application/json",
+                examples =
+                    @io.swagger.v3.oas.annotations.media.ExampleObject(
+                        value = CommonSwaggerDocs.CONFLICT_EXAMPLE))),
+    @ApiResponse(
+        responseCode = "500",
+        description = CommonSwaggerDocs.SERVER_ERROR,
+        content =
+            @Content(
+                mediaType = "application/json",
+                examples =
+                    @io.swagger.v3.oas.annotations.media.ExampleObject(
+                        value = CommonSwaggerDocs.SERVER_ERROR_EXAMPLE)))
   })
   public @interface PaymentRequestResponses {}
 
@@ -50,11 +90,51 @@ public final class PaymentApiResponses {
                 mediaType = "application/json",
                 schema =
                     @Schema(implementation = GenericResponseSchemas.PaymentCancelResponse.class))),
-    @ApiResponse(responseCode = "400", description = CommonSwaggerDocs.BAD_REQUEST),
-    @ApiResponse(responseCode = "403", description = CommonSwaggerDocs.FORBIDDEN),
-    @ApiResponse(responseCode = "404", description = CommonSwaggerDocs.NOT_FOUND),
-    @ApiResponse(responseCode = "409", description = CommonSwaggerDocs.CONFLICT),
-    @ApiResponse(responseCode = "500", description = CommonSwaggerDocs.SERVER_ERROR)
+    @ApiResponse(
+        responseCode = "400",
+        description = CommonSwaggerDocs.BAD_REQUEST,
+        content =
+            @Content(
+                mediaType = "application/json",
+                examples =
+                    @io.swagger.v3.oas.annotations.media.ExampleObject(
+                        value = CommonSwaggerDocs.BAD_REQUEST_EXAMPLE))),
+    @ApiResponse(
+        responseCode = "403",
+        description = CommonSwaggerDocs.FORBIDDEN,
+        content =
+            @Content(
+                mediaType = "application/json",
+                examples =
+                    @io.swagger.v3.oas.annotations.media.ExampleObject(
+                        value = CommonSwaggerDocs.FORBIDDEN_EXAMPLE))),
+    @ApiResponse(
+        responseCode = "404",
+        description = CommonSwaggerDocs.NOT_FOUND,
+        content =
+            @Content(
+                mediaType = "application/json",
+                examples =
+                    @io.swagger.v3.oas.annotations.media.ExampleObject(
+                        value = CommonSwaggerDocs.NOT_FOUND_EXAMPLE))),
+    @ApiResponse(
+        responseCode = "409",
+        description = CommonSwaggerDocs.CONFLICT,
+        content =
+            @Content(
+                mediaType = "application/json",
+                examples =
+                    @io.swagger.v3.oas.annotations.media.ExampleObject(
+                        value = CommonSwaggerDocs.CONFLICT_EXAMPLE))),
+    @ApiResponse(
+        responseCode = "500",
+        description = CommonSwaggerDocs.SERVER_ERROR,
+        content =
+            @Content(
+                mediaType = "application/json",
+                examples =
+                    @io.swagger.v3.oas.annotations.media.ExampleObject(
+                        value = CommonSwaggerDocs.SERVER_ERROR_EXAMPLE)))
   })
   public @interface PaymentCancelResponses {}
 }

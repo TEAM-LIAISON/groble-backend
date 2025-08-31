@@ -37,4 +37,95 @@ public final class CommonSwaggerDocs {
   public static final String STATUS_SUCCESS = "SUCCESS";
   public static final String STATUS_ERROR = "ERROR";
   public static final String STATUS_FAIL = "FAIL";
+
+  // === 에러 응답 예시 ===
+  public static final String BAD_REQUEST_EXAMPLE =
+      """
+    {
+      "status": "ERROR",
+      "code": 400,
+      "message": "요청 데이터가 올바르지 않습니다.",
+      "data": null,
+      "error": {
+        "code": "VALIDATION_ERROR",
+        "message": "결제 금액이 유효하지 않습니다.",
+        "exception": "PaymentValidationException",
+        "field": "payTotal",
+        "trace": null
+      },
+      "timestamp": "2025-08-31T07:56:33.274Z"
+    }
+    """;
+
+  public static final String FORBIDDEN_EXAMPLE =
+      """
+    {
+      "status": "ERROR",
+      "code": 403,
+      "message": "요청을 처리할 권한이 없습니다.",
+      "data": null,
+      "error": {
+        "code": "PERMISSION_DENIED",
+        "message": "결제 권한이 없습니다.",
+        "exception": "PaymentAuthorizationException",
+        "field": null,
+        "trace": null
+      },
+      "timestamp": "2025-08-31T07:56:33.274Z"
+    }
+    """;
+
+  public static final String NOT_FOUND_EXAMPLE =
+      """
+    {
+      "status": "ERROR",
+      "code": 404,
+      "message": "요청한 리소스를 찾을 수 없습니다.",
+      "data": null,
+      "error": {
+        "code": "RESOURCE_NOT_FOUND",
+        "message": "결제 정보를 찾을 수 없습니다.",
+        "exception": "PaymentNotFoundException",
+        "field": "merchantUid",
+        "trace": null
+      },
+      "timestamp": "2025-08-31T07:56:33.274Z"
+    }
+    """;
+
+  public static final String CONFLICT_EXAMPLE =
+      """
+    {
+      "status": "ERROR",
+      "code": 409,
+      "message": "요청이 현재 상태와 충돌합니다.",
+      "data": null,
+      "error": {
+        "code": "PAYMENT_CONFLICT",
+        "message": "이미 처리된 결제입니다.",
+        "exception": "PaymentConflictException",
+        "field": null,
+        "trace": null
+      },
+      "timestamp": "2025-08-31T07:56:33.274Z"
+    }
+    """;
+
+  public static final String SERVER_ERROR_EXAMPLE =
+      """
+    {
+      "status": "ERROR",
+      "code": 500,
+      "message": "서버 내부 오류가 발생했습니다.",
+      "data": null,
+      "error": {
+        "code": "INTERNAL_SERVER_ERROR",
+        "message": "결제 처리 중 예상치 못한 오류가 발생했습니다.",
+        "exception": "PaymentProcessingException",
+        "field": null,
+        "trace": null
+      },
+      "timestamp": "2025-08-31T07:56:33.274Z"
+    }
+    """;
 }
