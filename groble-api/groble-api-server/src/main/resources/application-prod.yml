@@ -178,6 +178,8 @@ logging:
     liaison.groble: DEBUG                     # 애플리케이션 코드는 DEBUG로
     com.sun.mail: WARN                             # JavaMail SMTP 디버그 로그 축약
     javax.mail: WARN                               # JavaMail 로그 축약
+  file:
+    path: ${user.dir}/logs
 # OpenTelemetry 설정 비활성화 (운영)
 management:
   tracing:

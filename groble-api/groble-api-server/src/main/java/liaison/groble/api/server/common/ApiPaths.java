@@ -6,6 +6,13 @@ public final class ApiPaths {
 
   public static final String API_V1 = "/api/v1";
 
+  public static final class Admin {
+    public static final String BASE = API_V1 + "/admin";
+    public static final String SETTLEMENT_BASE = BASE + "/settlements";
+
+    private Admin() {}
+  }
+
   public static final class Payment {
     public static final String BASE = API_V1 + "/payments";
     public static final String PAYPLE_BASE = BASE + "/payple";

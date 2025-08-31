@@ -2,11 +2,7 @@ package liaison.groble.api.server.payment.docs;
 
 import liaison.groble.api.server.common.swagger.SwaggerTags;
 
-/**
- * 결제 API Swagger 문서 상수 클래스
- *
- * <p>Controller의 가독성을 높이기 위해 Swagger 문서 내용을 별도로 관리합니다.
- */
+/** 결제 API Swagger 문서 상수 클래스 */
 public final class PaymentSwaggerDocs {
 
   private PaymentSwaggerDocs() {}
@@ -15,9 +11,10 @@ public final class PaymentSwaggerDocs {
   public static final String TAG_NAME = SwaggerTags.Payment.PAYPLE;
   public static final String TAG_DESCRIPTION = SwaggerTags.Payment.PAYPLE_DESC;
 
-  // === 결제 요청 API ===
-  public static final String PAYMENT_SUMMARY = "[✅ 통합 앱카드 결제 승인] 회원/비회원 페이플 앱카드 결제를 진행합니다.";
-  public static final String PAYMENT_DESCRIPTION =
+  // === 앱카드 결제 요청 API ===
+  public static final String PAYMENT_APP_CARD_SUMMARY =
+      "[✅ 통합 앱카드 결제 승인] 회원/비회원 페이플 앱카드 결제를 진행합니다.";
+  public static final String PAYMENT_APP_CARD_DESCRIPTION =
       """
             토큰 종류에 따라 회원/비회원을 자동 판단하여 앱카드 결제 인증 결과를 수신하고, Payple 서버에 승인 요청을 보냅니다.
 
@@ -28,7 +25,22 @@ public final class PaymentSwaggerDocs {
             - 회원 로그인 또는 비회원 인증이 필요합니다
             """;
 
-  // === 결제 취소 API ===
+  // === 정기(빌링) 결제 요청 API ===
+  public static final String PAYMENT_BILLING_SUMMARY =
+      "[✅ 통합 정기(빌링) 결제 승인] 회원 페이플 정기(빌링) 결제를 진행합니다.";
+  public static final String PAYMENT_BILLING_DESCRIPTION =
+      """
+            회원 빌링키를 기반으로 페이플 서버에 정기(빌링) 결제 승인 요청을 보냅니다.
+
+            **주의사항:**
+            - 정기(빌링) 결제는 회원만 이용 가능합니다
+            - 결제 승인은 비동기로 처리되며, 완료 시 이벤트가 발행됩니다
+            - 회원 로그인이 필요합니다
+            - 빌링키는 별도 API 통해 발급받아야 합니다
+            - 매달 자동 결제되는 구독형 콘텐츠에 한해 결제가 진행됩니다
+            """;
+
+  // === 앱카드 결제 취소 API ===
   public static final String CANCEL_SUMMARY = "[❌ 통합 결제 취소] 관리자가 서비스 유형에 한해 회원/비회원 결제를 취소합니다.";
   public static final String CANCEL_DESCRIPTION =
       """

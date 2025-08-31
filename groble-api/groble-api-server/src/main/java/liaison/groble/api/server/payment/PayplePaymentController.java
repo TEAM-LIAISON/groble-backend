@@ -57,8 +57,8 @@ public class PayplePaymentController extends BaseController {
   }
 
   @Operation(
-      summary = PaymentSwaggerDocs.PAYMENT_SUMMARY,
-      description = PaymentSwaggerDocs.PAYMENT_DESCRIPTION)
+      summary = PaymentSwaggerDocs.PAYMENT_APP_CARD_SUMMARY,
+      description = PaymentSwaggerDocs.PAYMENT_APP_CARD_DESCRIPTION)
   @PaymentApiResponses.PaymentRequestResponses
   @Logging(
       item = "Payment",

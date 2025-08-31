@@ -15,7 +15,9 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * 결제 처리 전략을 선택하는 팩토리 클래스
  *
- * <p>UserContext에 따라 적절한 PaymentProcessor를 반환합니다. Strategy 패턴의 Context 역할을 수행하며, 확장 가능한 구조를 제공합니다.
+ * <p>UserContext에 따라 적절한 PaymentProcessor를 반환합니다.
+ *
+ * <p>Strategy 패턴의 Context 역할을 수행하며, 확장 가능한 구조를 제공합니다.
  */
 @Slf4j
 @Component

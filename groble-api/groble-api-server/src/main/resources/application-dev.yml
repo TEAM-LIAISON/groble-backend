@@ -167,7 +167,7 @@ logging:
     console: "%d{yyyy-MM-dd HH:mm:ss} %-5level %logger{36} - %msg%n"
 
   file:
-    name: /dev/null  # 로그 파일 쓰기를 막음 (또는 경로를 로그 수집 서버로 지정)
+    path: ${user.dir}/logs
 
 # OpenTelemetry 설정 활성화
 otel:
