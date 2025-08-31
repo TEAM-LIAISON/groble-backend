@@ -4,6 +4,11 @@ public final class SwaggerTags {
 
   private SwaggerTags() {}
 
+  public static final class Purchase {
+    public static final String REVIEW = "[🧾 통합 리뷰 관리] 회원/비회원 구매자 리뷰 작성, 수정, 삭제 API";
+    public static final String REVIEW_DESC = "회원/비회원 구매자 리뷰 작성, 수정, 삭제 기능을 제공합니다.";
+  }
+
   public static final class Payment {
     public static final String PAYPLE =
         "[💰 페이플 결제] 회원/비회원 앱카드 결제 진행, 회원 정기(빌링) 결제 진행, 결제 취소 기능 API";

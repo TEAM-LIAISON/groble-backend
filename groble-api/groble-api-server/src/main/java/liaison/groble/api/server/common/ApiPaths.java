@@ -59,4 +59,13 @@ public final class ApiPaths {
 
     private Market() {}
   }
+
+  public static final class Purchase {
+    public static final String BASE = API_V1 + "/purchase";
+
+    public static final String REVIEW_BASE = BASE + "/review";
+    public static final String ADD_REVIEW = "/{merchantUid}";
+    public static final String UPDATE_REVIEW = "/update/{reviewId}";
+    public static final String DELETE_REVIEW = "/delete/{reviewId}";
+  }
 }

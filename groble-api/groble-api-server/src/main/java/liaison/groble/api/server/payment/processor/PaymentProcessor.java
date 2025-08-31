@@ -4,13 +4,14 @@ import liaison.groble.application.payment.dto.AppCardPayplePaymentDTO;
 import liaison.groble.application.payment.dto.PaypleAuthResultDTO;
 import liaison.groble.application.payment.dto.cancel.PaymentCancelResponse;
 import liaison.groble.common.context.UserContext;
+import liaison.groble.common.strategy.UserTypeProcessor;
 
 /**
  * 결제 처리 전략 인터페이스
  *
  * <p>회원/비회원 등 다양한 사용자 타입에 대한 결제 처리를 추상화합니다. Strategy 패턴을 통해 각 사용자 타입별 결제 로직을 분리하고 확장 가능하게 합니다.
  */
-public interface PaymentProcessor {
+public interface PaymentProcessor extends UserTypeProcessor {
 
   /**
    * 앱카드 결제를 처리합니다.
@@ -30,11 +31,4 @@ public interface PaymentProcessor {
    * @return 취소 처리 결과
    */
   PaymentCancelResponse cancelPayment(UserContext userContext, String merchantUid, String reason);
-
-  /**
-   * 지원하는 사용자 타입을 반환합니다.
-   *
-   * @return 사용자 타입 ("MEMBER" 또는 "GUEST")
-   */
-  String getSupportedUserType();
 }

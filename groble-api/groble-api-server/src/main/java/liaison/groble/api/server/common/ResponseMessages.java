@@ -38,4 +38,12 @@ public final class ResponseMessages {
 
     private Content() {}
   }
+
+  public static final class Purchase {
+    public static final String PURCHASE_REVIEW_ADD_SUCCESS = "구매자가 콘텐츠에 대한 리뷰 작성에 성공했습니다.";
+    public static final String PURCHASE_REVIEW_UPDATE_SUCCESS = "구매자가 콘텐츠에 대한 리뷰 수정에 성공했습니다.";
+    public static final String PURCHASE_REVIEW_DELETE_SUCCESS = "구매자가 콘텐츠에 대한 리뷰 삭제에 성공했습니다.";
+
+    private Purchase() {}
+  }
 }
