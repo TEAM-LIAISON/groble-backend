@@ -14,6 +14,7 @@ import liaison.groble.api.model.purchase.response.PurchaserContentReviewResponse
 import liaison.groble.api.server.common.ApiPaths;
 import liaison.groble.api.server.common.BaseController;
 import liaison.groble.api.server.common.ResponseMessages;
+import liaison.groble.api.server.purchase.docs.PurchaseReviewApiResponses;
 import liaison.groble.api.server.purchase.docs.PurchaseReviewSwaggerDocs;
 import liaison.groble.application.purchase.dto.PurchaserContentReviewDTO;
 import liaison.groble.application.purchase.strategy.ReviewProcessorFactory;
@@ -54,6 +55,7 @@ public class PurchaserReviewController extends BaseController {
   @Operation(
       summary = PurchaseReviewSwaggerDocs.PURCHASER_REVIEW_ADD_SUMMARY,
       description = PurchaseReviewSwaggerDocs.PURCHASER_REVIEW_ADD_DESCRIPTION)
+  @PurchaseReviewApiResponses.ContentReviewResponses
   @Logging(
       item = "PurchaserReview",
       action = "addReview",
@@ -82,6 +84,7 @@ public class PurchaserReviewController extends BaseController {
   @Operation(
       summary = PurchaseReviewSwaggerDocs.PURCHASER_REVIEW_UPDATE_SUMMARY,
       description = PurchaseReviewSwaggerDocs.PURCHASER_REVIEW_UPDATE_DESCRIPTION)
+  @PurchaseReviewApiResponses.ContentReviewResponses
   @Logging(
       item = "PurchaserReview",
       action = "updateReview",

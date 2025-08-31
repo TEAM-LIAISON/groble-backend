@@ -1,6 +1,7 @@
 package liaison.groble.api.server.common.swagger;
 
-import liaison.groble.application.payment.dto.AppCardPayplePaymentDTO;
+import liaison.groble.api.model.payment.response.AppCardPayplePaymentResponse;
+import liaison.groble.api.model.purchase.response.PurchaserContentReviewResponse;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -72,7 +73,7 @@ public final class GenericResponseSchemas {
     public String message;
 
     @Schema(description = "결제 승인 결과 데이터")
-    public AppCardPayplePaymentDTO data;
+    public AppCardPayplePaymentResponse data;
 
     @Schema(description = "에러 정보 (성공 시 null)")
     public ErrorInfo error;
@@ -106,4 +107,26 @@ public final class GenericResponseSchemas {
 
   // 다른 도메인 응답들도 필요에 따라 여기에 추가할 수 있습니다.
   // 예: UserResponse, ContentResponse, MarketResponse 등
+  /** 리뷰 작성/수정 응답 */
+  @Schema(description = CommonSwaggerDocs.GROBLE_RESPONSE_DESC + " - 리뷰 작성/수정 응답")
+  public static class ContentReviewResponse {
+
+    @Schema(description = "응답 상태", example = CommonSwaggerDocs.STATUS_SUCCESS)
+    public String status;
+
+    @Schema(description = "HTTP 상태 코드", example = "200")
+    public int code;
+
+    @Schema(description = "응답 메시지", example = "리뷰 작성/수정이 성공적으로 처리되었습니다.")
+    public String message;
+
+    @Schema(description = "리뷰 작성/수정 결과 데이터")
+    public PurchaserContentReviewResponse data;
+
+    @Schema(description = "에러 정보 (성공 시 null)")
+    public ErrorInfo error;
+
+    @Schema(description = "응답 시간", example = "2025-08-31T07:06:06.312Z")
+    public String timestamp;
+  }
 }
