@@ -7,7 +7,7 @@ import java.util.function.Supplier;
 
 import org.springframework.stereotype.Service;
 
-import liaison.groble.application.payment.dto.AppCardPayplePaymentResponse;
+import liaison.groble.application.payment.dto.AppCardPayplePaymentDTO;
 import liaison.groble.application.payment.dto.PaymentAuthInfo;
 import liaison.groble.application.payment.dto.PaymentCancelInfo;
 import liaison.groble.application.payment.dto.PaymentCancelResult;
@@ -56,7 +56,7 @@ public class PayplePaymentFacade {
    * @param paypleAuthResultDTO 인증 결과 요청
    * @return 결제 승인 응답
    */
-  public AppCardPayplePaymentResponse processAppCardPayment(
+  public AppCardPayplePaymentDTO processAppCardPayment(
       Long userId, PaypleAuthResultDTO paypleAuthResultDTO) {
     return processPaymentInternal(
         paypleAuthResultDTO,
@@ -130,8 +130,8 @@ public class PayplePaymentFacade {
   }
 
   /** 결제 응답 생성 */
-  private AppCardPayplePaymentResponse buildPaymentResponse(PaypleApprovalResult result) {
-    return AppCardPayplePaymentResponse.builder()
+  private AppCardPayplePaymentDTO buildPaymentResponse(PaypleApprovalResult result) {
+    return AppCardPayplePaymentDTO.builder()
         .payRst(result.getPayRst())
         .payCode(result.getPayCode())
         .payMsg(result.getPayMsg())
@@ -209,7 +209,7 @@ public class PayplePaymentFacade {
    * @param paypleAuthResultDTO 인증 결과 요청
    * @return 결제 승인 응답
    */
-  public AppCardPayplePaymentResponse processAppCardPaymentForGuest(
+  public AppCardPayplePaymentDTO processAppCardPaymentForGuest(
       Long guestUserId, PaypleAuthResultDTO paypleAuthResultDTO) {
     return processPaymentInternal(
         paypleAuthResultDTO,
@@ -332,7 +332,7 @@ public class PayplePaymentFacade {
   }
 
   /** 공통 결제 처리 로직 */
-  private AppCardPayplePaymentResponse processPaymentInternal(
+  private AppCardPayplePaymentDTO processPaymentInternal(
       PaypleAuthResultDTO paypleAuthResultDTO,
       Long userId,
       Long guestUserId,
@@ -348,7 +348,7 @@ public class PayplePaymentFacade {
     if (paypleAuthResultDTO.isClosed()) {
       String logId = userId != null ? "userId: " + userId : "guestUserId: " + guestUserId;
       log.info("{} 결제창 닫힘 - {}, merchantUid: {}", userType, logId, paypleAuthResultDTO.getPayOid());
-      return AppCardPayplePaymentResponse.builder().build();
+      return AppCardPayplePaymentDTO.builder().build();
     }
 
     try {

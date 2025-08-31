@@ -1,6 +1,6 @@
 package liaison.groble.application.payment.command;
 
-import liaison.groble.application.payment.dto.AppCardPayplePaymentResponse;
+import liaison.groble.application.payment.dto.AppCardPayplePaymentDTO;
 import liaison.groble.application.payment.dto.PaypleAuthResultDTO;
 import liaison.groble.application.payment.strategy.PaymentStrategy;
 
@@ -16,7 +16,7 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @Builder
 @RequiredArgsConstructor
-public class AppCardPaymentCommand implements PaymentCommand<AppCardPayplePaymentResponse> {
+public class AppCardPaymentCommand implements PaymentCommand<AppCardPayplePaymentDTO> {
 
   private final PaymentStrategy paymentStrategy;
   private final PaypleAuthResultDTO authResult;
@@ -24,7 +24,7 @@ public class AppCardPaymentCommand implements PaymentCommand<AppCardPayplePaymen
   private final Long guestUserId;
 
   @Override
-  public AppCardPayplePaymentResponse execute() {
+  public AppCardPayplePaymentDTO execute() {
     return paymentStrategy.processAppCardPayment(authResult, userId, guestUserId);
   }
 

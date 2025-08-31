@@ -3,7 +3,7 @@ package liaison.groble.application.payment.service;
 import org.springframework.stereotype.Service;
 
 import liaison.groble.application.payment.command.PaymentCommandExecutor;
-import liaison.groble.application.payment.dto.AppCardPayplePaymentResponse;
+import liaison.groble.application.payment.dto.AppCardPayplePaymentDTO;
 import liaison.groble.application.payment.dto.PaypleAuthResultDTO;
 import liaison.groble.application.payment.dto.cancel.PaymentCancelResponse;
 
@@ -42,7 +42,7 @@ public class PayplePaymentFacadeV2 {
    * @param authResult 페이플 인증 결과
    * @return 결제 처리 결과
    */
-  public AppCardPayplePaymentResponse processAppCardPayment(
+  public AppCardPayplePaymentDTO processAppCardPayment(
       Long userId, PaypleAuthResultDTO authResult) {
 
     var command = commandExecutor.createAppCardPaymentCommand(authResult, userId, null);
@@ -56,7 +56,7 @@ public class PayplePaymentFacadeV2 {
    * @param authResult 페이플 인증 결과
    * @return 결제 처리 결과
    */
-  public AppCardPayplePaymentResponse processAppCardPaymentForGuest(
+  public AppCardPayplePaymentDTO processAppCardPaymentForGuest(
       Long guestUserId, PaypleAuthResultDTO authResult) {
 
     var command = commandExecutor.createAppCardPaymentCommand(authResult, null, guestUserId);

@@ -1,6 +1,6 @@
 package liaison.groble.application.payment.strategy;
 
-import liaison.groble.application.payment.dto.AppCardPayplePaymentResponse;
+import liaison.groble.application.payment.dto.AppCardPayplePaymentDTO;
 import liaison.groble.application.payment.dto.PaypleAuthResultDTO;
 import liaison.groble.application.payment.dto.cancel.PaymentCancelResponse;
 
@@ -19,7 +19,7 @@ public interface PaymentStrategy {
    * @param guestUserId 비회원 ID (비회원인 경우)
    * @return 결제 처리 결과
    */
-  AppCardPayplePaymentResponse processAppCardPayment(
+  AppCardPayplePaymentDTO processAppCardPayment(
       PaypleAuthResultDTO authResult, Long userId, Long guestUserId);
 
   /**

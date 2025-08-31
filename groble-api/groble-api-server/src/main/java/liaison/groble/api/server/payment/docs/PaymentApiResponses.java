@@ -5,9 +5,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import liaison.groble.application.payment.dto.AppCardPayplePaymentResponse;
-import liaison.groble.application.payment.dto.cancel.PaymentCancelResponse;
-import liaison.groble.common.response.GrobleResponse;
+import liaison.groble.api.server.common.swagger.CommonSwaggerDocs;
+import liaison.groble.api.server.common.swagger.GenericResponseSchemas;
 
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -25,27 +24,17 @@ public final class PaymentApiResponses {
   @ApiResponses({
     @ApiResponse(
         responseCode = "200",
-        description = PaymentSwaggerDocs.SUCCESS_200,
+        description = CommonSwaggerDocs.SUCCESS_200,
         content =
             @Content(
                 mediaType = "application/json",
-                schema = @Schema(implementation = AppCardPayplePaymentResponse.class))),
-    @ApiResponse(
-        responseCode = "400",
-        description = PaymentSwaggerDocs.BAD_REQUEST_400,
-        content = @Content(schema = @Schema(implementation = GrobleResponse.class))),
-    @ApiResponse(
-        responseCode = "403",
-        description = PaymentSwaggerDocs.FORBIDDEN_403,
-        content = @Content(schema = @Schema(implementation = GrobleResponse.class))),
-    @ApiResponse(
-        responseCode = "409",
-        description = PaymentSwaggerDocs.CONFLICT_409,
-        content = @Content(schema = @Schema(implementation = GrobleResponse.class))),
-    @ApiResponse(
-        responseCode = "500",
-        description = PaymentSwaggerDocs.SERVER_ERROR_500,
-        content = @Content(schema = @Schema(implementation = GrobleResponse.class)))
+                schema =
+                    @Schema(implementation = GenericResponseSchemas.PaymentRequestResponse.class))),
+    @ApiResponse(responseCode = "400", description = CommonSwaggerDocs.BAD_REQUEST),
+    @ApiResponse(responseCode = "403", description = CommonSwaggerDocs.FORBIDDEN),
+    @ApiResponse(responseCode = "404", description = CommonSwaggerDocs.NOT_FOUND),
+    @ApiResponse(responseCode = "409", description = CommonSwaggerDocs.CONFLICT),
+    @ApiResponse(responseCode = "500", description = CommonSwaggerDocs.SERVER_ERROR)
   })
   public @interface PaymentRequestResponses {}
 
@@ -55,31 +44,17 @@ public final class PaymentApiResponses {
   @ApiResponses({
     @ApiResponse(
         responseCode = "200",
-        description = PaymentSwaggerDocs.SUCCESS_200,
+        description = CommonSwaggerDocs.SUCCESS_200,
         content =
             @Content(
                 mediaType = "application/json",
-                schema = @Schema(implementation = PaymentCancelResponse.class))),
-    @ApiResponse(
-        responseCode = "400",
-        description = PaymentSwaggerDocs.BAD_REQUEST_400,
-        content = @Content(schema = @Schema(implementation = GrobleResponse.class))),
-    @ApiResponse(
-        responseCode = "403",
-        description = PaymentSwaggerDocs.FORBIDDEN_403,
-        content = @Content(schema = @Schema(implementation = GrobleResponse.class))),
-    @ApiResponse(
-        responseCode = "404",
-        description = PaymentSwaggerDocs.NOT_FOUND_404,
-        content = @Content(schema = @Schema(implementation = GrobleResponse.class))),
-    @ApiResponse(
-        responseCode = "409",
-        description = PaymentSwaggerDocs.CONFLICT_409,
-        content = @Content(schema = @Schema(implementation = GrobleResponse.class))),
-    @ApiResponse(
-        responseCode = "500",
-        description = PaymentSwaggerDocs.SERVER_ERROR_500,
-        content = @Content(schema = @Schema(implementation = GrobleResponse.class)))
+                schema =
+                    @Schema(implementation = GenericResponseSchemas.PaymentCancelResponse.class))),
+    @ApiResponse(responseCode = "400", description = CommonSwaggerDocs.BAD_REQUEST),
+    @ApiResponse(responseCode = "403", description = CommonSwaggerDocs.FORBIDDEN),
+    @ApiResponse(responseCode = "404", description = CommonSwaggerDocs.NOT_FOUND),
+    @ApiResponse(responseCode = "409", description = CommonSwaggerDocs.CONFLICT),
+    @ApiResponse(responseCode = "500", description = CommonSwaggerDocs.SERVER_ERROR)
   })
   public @interface PaymentCancelResponses {}
 }

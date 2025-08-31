@@ -1,5 +1,7 @@
 package liaison.groble.api.server.payment.docs;
 
+import liaison.groble.api.server.common.swagger.SwaggerTags;
+
 /**
  * 결제 API Swagger 문서 상수 클래스
  *
@@ -10,9 +12,8 @@ public final class PaymentSwaggerDocs {
   private PaymentSwaggerDocs() {}
 
   // === 공통 태그 ===
-  public static final String TAG_NAME = "[💰 페이플 결제] 회원/비회원 앱카드 결제 진행 및 결제 취소 기능 API";
-  public static final String TAG_DESCRIPTION =
-      "토큰 종류에 따라 회원/비회원을 자동 판단하여 앱카드 결제를 진행하고, 결제 취소 기능을 제공합니다.";
+  public static final String TAG_NAME = SwaggerTags.Payment.PAYPLE;
+  public static final String TAG_DESCRIPTION = SwaggerTags.Payment.PAYPLE_DESC;
 
   // === 결제 요청 API ===
   public static final String PAYMENT_SUMMARY = "[✅ 통합 앱카드 결제 승인] 회원/비회원 페이플 앱카드 결제를 진행합니다.";
@@ -28,13 +29,14 @@ public final class PaymentSwaggerDocs {
             """;
 
   // === 결제 취소 API ===
-  public static final String CANCEL_SUMMARY = "[❌ 통합 결제 취소] 회원/비회원 결제를 취소합니다.";
+  public static final String CANCEL_SUMMARY = "[❌ 통합 결제 취소] 관리자가 서비스 유형에 한해 회원/비회원 결제를 취소합니다.";
   public static final String CANCEL_DESCRIPTION =
       """
-            토큰 종류에 따라 회원/비회원을 자동 판단하여 완료된 결제를 취소하고 환불 처리합니다.
+            토큰 종류에 따라 회원/비회원을 자동 판단하여 완료된 서비스형 콘텐츠에 대해 결제를 취소하고 환불 처리합니다.
 
             **취소 가능 조건:**
             - 주문 상태가 CANCEL_REQUEST인 경우만 가능
+            - 서비스(type=COACHING) 콘텐츠에 한함
             - 본인의 주문만 취소 가능
             - 회원 로그인 또는 비회원 인증이 필요합니다
 
@@ -45,15 +47,7 @@ public final class PaymentSwaggerDocs {
             4. 환불 완료 이벤트 발행
             """;
 
-  // === 공통 응답 메시지 ===
-  public static final String SUCCESS_200 = "요청 성공";
-  public static final String BAD_REQUEST_400 = "잘못된 요청 (인증 실패, 금액 불일치 등)";
-  public static final String FORBIDDEN_403 = "권한 없음 (다른 사용자의 주문)";
-  public static final String NOT_FOUND_404 = "주문을 찾을 수 없음";
-  public static final String CONFLICT_409 = "충돌 (이미 처리된 주문 또는 취소 불가능한 상태)";
-  public static final String SERVER_ERROR_500 = "서버 오류";
-
   // === Parameter 설명 ===
   public static final String MERCHANT_UID_DESC = "주문번호";
-  public static final String MERCHANT_UID_EXAMPLE = "ORDER-20240101-000001";
+  public static final String MERCHANT_UID_EXAMPLE = "20240101000001";
 }

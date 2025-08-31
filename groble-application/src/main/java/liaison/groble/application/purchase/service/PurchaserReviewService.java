@@ -3,8 +3,6 @@ package liaison.groble.application.purchase.service;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import liaison.groble.application.content.ContentReviewReader;
-import liaison.groble.application.content.ContentReviewWriter;
 import liaison.groble.application.guest.reader.GuestUserReader;
 import liaison.groble.application.notification.dto.KakaoNotificationDTO;
 import liaison.groble.application.notification.enums.KakaoNotificationType;
@@ -36,11 +34,9 @@ public class PurchaserReviewService {
   // Reader
   private final UserReader userReader;
   private final GuestUserReader guestUserReader;
-  private final ContentReviewReader contentReviewReader;
   private final PurchaseReader purchaseReader;
 
   // Writer
-  private final ContentReviewWriter contentReviewWriter;
   private final OrderReader orderReader;
   private final NotificationService notificationService;
   private final KakaoNotificationService kakaoNotificationService;

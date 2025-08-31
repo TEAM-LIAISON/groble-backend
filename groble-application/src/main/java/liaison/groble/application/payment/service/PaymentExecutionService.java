@@ -6,7 +6,7 @@ import java.util.function.Supplier;
 
 import org.springframework.stereotype.Service;
 
-import liaison.groble.application.payment.dto.AppCardPayplePaymentResponse;
+import liaison.groble.application.payment.dto.AppCardPayplePaymentDTO;
 import liaison.groble.application.payment.dto.PaymentAuthInfo;
 import liaison.groble.application.payment.dto.PaypleApprovalResult;
 import liaison.groble.application.payment.dto.PaypleAuthResultDTO;
@@ -40,7 +40,7 @@ public class PaymentExecutionService {
    * @param eventPublisher 이벤트 발행 로직
    * @return 결제 처리 결과
    */
-  public AppCardPayplePaymentResponse executePayment(
+  public AppCardPayplePaymentDTO executePayment(
       PaypleAuthResultDTO authResult,
       Supplier<PaymentAuthInfo> authInfoSupplier,
       BiFunction<PaymentAuthInfo, PaypleApprovalResult, PaymentCompletionResult> completionFunction,
@@ -53,7 +53,7 @@ public class PaymentExecutionService {
       // 2. 결제창이 닫힌 경우 빈 응답 반환
       if (authResult.isClosed()) {
         log.info("결제창 닫힘 - merchantUid: {}", authResult.getPayOid());
-        return AppCardPayplePaymentResponse.builder().build();
+        return AppCardPayplePaymentDTO.builder().build();
       }
 
       // 3. 인증 정보 저장 및 검증
@@ -98,8 +98,8 @@ public class PaymentExecutionService {
         authInfo.getOrderId(), approvalResult.getErrorCode(), approvalResult.getErrorMessage());
   }
 
-  private AppCardPayplePaymentResponse buildPaymentResponse(PaypleApprovalResult result) {
-    return AppCardPayplePaymentResponse.builder()
+  private AppCardPayplePaymentDTO buildPaymentResponse(PaypleApprovalResult result) {
+    return AppCardPayplePaymentDTO.builder()
         .payRst(result.getPayRst())
         .payCode(result.getPayCode())
         .payMsg(result.getPayMsg())

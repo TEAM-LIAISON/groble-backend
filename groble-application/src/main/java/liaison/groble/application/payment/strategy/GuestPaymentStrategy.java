@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 
 import org.springframework.stereotype.Component;
 
-import liaison.groble.application.payment.dto.AppCardPayplePaymentResponse;
+import liaison.groble.application.payment.dto.AppCardPayplePaymentDTO;
 import liaison.groble.application.payment.dto.PaymentCancelInfo;
 import liaison.groble.application.payment.dto.PaymentCancelResult;
 import liaison.groble.application.payment.dto.PaypleAuthResultDTO;
@@ -45,7 +45,7 @@ public class GuestPaymentStrategy implements PaymentStrategy {
   }
 
   @Override
-  public AppCardPayplePaymentResponse processAppCardPayment(
+  public AppCardPayplePaymentDTO processAppCardPayment(
       PaypleAuthResultDTO authResult, Long userId, Long guestUserId) {
 
     log.info(
