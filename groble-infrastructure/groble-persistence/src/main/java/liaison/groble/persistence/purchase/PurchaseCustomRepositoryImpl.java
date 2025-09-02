@@ -639,67 +639,24 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
     QPurchase qPurchase = QPurchase.purchase;
     QOrder qOrder = QOrder.order;
     QContent qContent = QContent.content;
-    QUser qUser = QUser.user;
     QContentReview qContentReview = QContentReview.contentReview;
 
-    BooleanExpression conditions =
-        qPurchase
-            .content
-            .id
-            .eq(contentId)
-            .and(qPurchase.content.user.id.eq(userId))
-            .and(qOrder.status.eq(Order.OrderStatus.PAID));
-
-    // 회원과 비회원 구매자 수를 따로 계산해서 합침
-    Long memberCount =
-        queryFactory
-            .select(qPurchase.user.id.countDistinct())
-            .from(qPurchase)
-            .leftJoin(qPurchase.order, qOrder)
-            .where(
-                qPurchase
-                    .content
-                    .id
-                    .eq(contentId)
-                    .and(qPurchase.content.user.id.eq(userId))
-                    .and(qOrder.status.eq(Order.OrderStatus.PAID))
-                    .and(qPurchase.user.isNotNull()))
-            .fetchOne();
-
-    Long guestCount =
-        queryFactory
-            .select(qPurchase.guestUser.id.countDistinct())
-            .from(qPurchase)
-            .leftJoin(qPurchase.order, qOrder)
-            .where(
-                qPurchase
-                    .content
-                    .id
-                    .eq(contentId)
-                    .and(qPurchase.content.user.id.eq(userId))
-                    .and(qOrder.status.eq(Order.OrderStatus.PAID))
-                    .and(qPurchase.guestUser.isNotNull()))
-            .fetchOne();
-
-    Long totalCustomers =
-        (memberCount != null ? memberCount : 0L) + (guestCount != null ? guestCount : 0L);
-
-    FlatSellManageDetailDTO result =
+    // 1번의 쿼리로 모든 통계 데이터를 가져오기
+    Tuple result =
         queryFactory
             .select(
-                Projections.constructor(
-                    FlatSellManageDetailDTO.class,
-                    // BigDecimal 그대로 전달 (데이터 없으면 0)
-                    qPurchase.finalPrice.sum().coalesce(BigDecimal.ZERO),
-                    // 회원 + 비회원 구매자 수 (중복 제거)
-                    Expressions.constant(totalCustomers),
-                    // 서브쿼리 count() 결과도 Long, 데이터 없으면 0
-                    JPAExpressions.select(qContentReview.count().coalesce(0L))
-                        .from(qContentReview)
-                        .where(qContentReview.content.id.eq(contentId))))
+                // 총 결제 금액
+                qPurchase.finalPrice.sum().coalesce(BigDecimal.ZERO),
+                // 고유한 회원 구매자 수 (NULL 값 제외)
+                qPurchase.user.id.countDistinct(),
+                // 고유한 비회원 구매자 수 (NULL 값 제외)
+                qPurchase.guestUser.id.countDistinct(),
+                // 리뷰 총 개수 (서브쿼리)
+                JPAExpressions.select(qContentReview.count().coalesce(0L))
+                    .from(qContentReview)
+                    .where(qContentReview.content.id.eq(contentId)))
             .from(qPurchase)
             .leftJoin(qPurchase.content, qContent)
-            .leftJoin(qPurchase.user, qUser)
             .leftJoin(qPurchase.order, qOrder)
             .where(
                 qPurchase
@@ -710,7 +667,32 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
                     .and(qOrder.status.eq(Order.OrderStatus.PAID)))
             .fetchOne();
 
-    return Optional.ofNullable(result);
+    if (result == null) {
+      // 데이터가 없는 경우 기본값 반환
+      return Optional.of(
+          FlatSellManageDetailDTO.builder()
+              .totalPaymentPrice(BigDecimal.ZERO)
+              .totalPurchaseCustomer(0L)
+              .totalReviewCount(0L)
+              .build());
+    }
+
+    // 결과 추출 및 NULL 안전 처리
+    BigDecimal totalPaymentPrice =
+        Optional.ofNullable(result.get(0, BigDecimal.class)).orElse(BigDecimal.ZERO);
+    Long memberCount = Optional.ofNullable(result.get(1, Long.class)).orElse(0L);
+    Long guestCount = Optional.ofNullable(result.get(2, Long.class)).orElse(0L);
+    Long totalReviewCount = Optional.ofNullable(result.get(3, Long.class)).orElse(0L);
+
+    // 총 고유 구매자 수 = 회원 + 비회원
+    Long totalPurchaseCustomer = memberCount + guestCount;
+
+    return Optional.of(
+        FlatSellManageDetailDTO.builder()
+            .totalPaymentPrice(totalPaymentPrice)
+            .totalPurchaseCustomer(totalPurchaseCustomer)
+            .totalReviewCount(totalReviewCount)
+            .build());
   }
 
   @Override
