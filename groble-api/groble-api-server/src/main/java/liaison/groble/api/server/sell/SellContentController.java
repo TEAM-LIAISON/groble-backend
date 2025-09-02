@@ -1,8 +1,8 @@
 package liaison.groble.api.server.sell;
 
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,12 +18,17 @@ import liaison.groble.api.model.sell.response.ReplyContentResponse;
 import liaison.groble.api.model.sell.response.SellManagePageResponse;
 import liaison.groble.api.model.sell.response.swagger.ContentReviewListResponse;
 import liaison.groble.api.model.sell.response.swagger.ContentSellListResponse;
+import liaison.groble.api.server.common.ApiPaths;
+import liaison.groble.api.server.common.BaseController;
+import liaison.groble.api.server.common.ResponseMessages;
+import liaison.groble.api.server.sell.docs.SellContentSwaggerDocs;
 import liaison.groble.application.sell.dto.ContentReviewDetailDTO;
 import liaison.groble.application.sell.dto.ContentSellDetailDTO;
 import liaison.groble.application.sell.dto.ReplyContentDTO;
 import liaison.groble.application.sell.dto.SellManagePageDTO;
 import liaison.groble.application.sell.service.SellContentService;
 import liaison.groble.common.annotation.Auth;
+import liaison.groble.common.annotation.Logging;
 import liaison.groble.common.annotation.RequireRole;
 import liaison.groble.common.model.Accessor;
 import liaison.groble.common.response.GrobleResponse;
@@ -37,53 +42,28 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
 
+@Validated
 @RestController
-@RequestMapping("/api/v1/sell/content/manage")
-@RequiredArgsConstructor
-@Tag(
-    name = "[🎁 상품 관리의 판매 관리] 상품 관리 페이지 내 판매 관리 기능",
-    description = "특정 콘텐츠 판매 정보에 대한 모든 기능을 제공합니다.")
-public class SellContentController {
-
-  // API 경로 상수화
-  private static final String CONTENT_HOME_PATH = "/{contentId}";
-  private static final String CONTENT_SELL_LIST_PATH = "/{contentId}/sell-list";
-  private static final String CONTENT_SELL_DETAIL_PATH = "/{contentId}/sell-detail/{purchaseId}";
-  private static final String CONTENT_REVIEW_LIST_PATH = "/{contentId}/review-list";
-  private static final String CONTENT_REVIEW_DETAIL_PATH = "/{contentId}/review-detail/{reviewId}";
-  private static final String DELETE_REVIEW_REQUEST_PATH = "/{reviewId}/review-delete-request";
-
-  private static final String ADD_REVIEW_REPLY_PATH = "/{reviewId}/review-reply";
-  private static final String UPDATE_REVIEW_REPLY_PATH = "/{reviewId}/review-reply/{replyId}";
-  private static final String DELETE_REVIEW_REPLY_PATH =
-      "/{reviewId}/review-reply/{replyId}/delete";
-
-  // 응답 메시지 상수화
-  private static final String CONTENT_HOME_SUCCESS_MESSAGE = "콘텐츠 판매 관리 페이지 조회에 성공하였습니다.";
-  private static final String CONTENT_SELL_LIST_SUCCESS_MESSAGE = "콘텐츠 판매 리스트 조회에 성공하였습니다.";
-  private static final String CONTENT_SELL_DETAIL_SUCCESS_MESSAGE = "콘텐츠 판매 상세 조회에 성공하였습니다.";
-  private static final String CONTENT_REVIEW_LIST_SUCCESS_MESSAGE = "콘텐츠 리뷰 리스트 조회에 성공하였습니다.";
-  private static final String CONTENT_REVIEW_DETAIL_SUCCESS_MESSAGE = "콘텐츠 리뷰 상세 조회에 성공하였습니다.";
-  private static final String DELETE_REVIEW_REQUEST_SUCCESS_MESSAGE = "리뷰 삭제 요청에 성공하였습니다.";
-
-  private static final String ADD_REVIEW_REPLY_SUCCESS_MESSAGE = "리뷰 답글 달기에 성공하였습니다.";
-  private static final String UPDATE_REVIEW_REPLY_SUCCESS_MESSAGE = "리뷰 답글 수정에 성공하였습니다.";
-  private static final String DELETE_REVIEW_REPLY_SUCCESS_MESSAGE = "리뷰 답글 삭제에 성공하였습니다.";
-
+@RequestMapping(ApiPaths.Sell.SELL_CONTENT_BASE)
+@Tag(name = SellContentSwaggerDocs.TAG_NAME, description = SellContentSwaggerDocs.TAG_DESCRIPTION)
+public class SellContentController extends BaseController {
   // Service
   private final SellContentService sellContentService;
 
   // Mapper
   private final SellMapper sellMapper;
 
-  // Helper
-  private final ResponseHelper responseHelper;
+  public SellContentController(
+      ResponseHelper responseHelper, SellContentService sellContentService, SellMapper sellMapper) {
+    super(responseHelper);
+    this.sellContentService = sellContentService;
+    this.sellMapper = sellMapper;
+  }
 
   @Operation(
-      summary = "[✅ 내 스토어 - 상품 관리 - 판매 관리] 판매 관리 페이지 조회",
-      description = "특정 상품의 판매 관리, 상위 판매 리스트, 상위 리뷰 내역을 모두 조회합니다.")
+      summary = SellContentSwaggerDocs.SELL_CONTENT_HOME,
+      description = SellContentSwaggerDocs.SELL_CONTENT_HOME_DESC)
   @ApiResponse(
       responseCode = "200",
       description = "판매 관리 페이지 조회 성공",
@@ -92,7 +72,12 @@ public class SellContentController {
               mediaType = "application/json",
               schema = @Schema(implementation = SellManagePageResponse.class)))
   @RequireRole("ROLE_SELLER")
-  @GetMapping(CONTENT_HOME_PATH)
+  @Logging(
+      item = "SellContent",
+      action = "getContentHome",
+      includeParam = true,
+      includeResult = true)
+  @GetMapping(ApiPaths.Sell.CONTENT_HOME)
   public ResponseEntity<GrobleResponse<SellManagePageResponse>> getContentHome(
       @Auth Accessor accessor, @PathVariable("contentId") Long contentId) {
     SellManagePageDTO sellManagePageDTO =
@@ -100,7 +85,7 @@ public class SellContentController {
 
     SellManagePageResponse response = sellMapper.toSellManagePageResponse(sellManagePageDTO);
 
-    return responseHelper.success(response, CONTENT_HOME_SUCCESS_MESSAGE, HttpStatus.OK);
+    return success(response, ResponseMessages.Sell.SELL_CONTENT_HOME_SUCCESS);
   }
 
   // 내 스토어 - 상품 관리 - 리뷰 내역 전체보기
@@ -115,7 +100,7 @@ public class SellContentController {
               mediaType = "application/json",
               schema = @Schema(implementation = ContentReviewListResponse.class)))
   @RequireRole("ROLE_SELLER")
-  @GetMapping(CONTENT_REVIEW_LIST_PATH)
+  @GetMapping(ApiPaths.Sell.CONTENT_REVIEW_LIST)
   public ResponseEntity<GrobleResponse<PageResponse<ContentReviewDetailResponse>>>
       getContentReviewList(
           @Auth Accessor accessor,
@@ -130,7 +115,7 @@ public class SellContentController {
 
     PageResponse<ContentReviewDetailResponse> responsePage =
         sellMapper.toContentReviewResponsePage(dtoPageResponse);
-    return responseHelper.success(responsePage, CONTENT_REVIEW_LIST_SUCCESS_MESSAGE, HttpStatus.OK);
+    return success(responsePage, ResponseMessages.Sell.SELL_CONTENT_REVIEW_LIST_SUCCESS);
   }
 
   // 내 스토어 - 상품 관리 - 리뷰 내역 상세
@@ -145,7 +130,7 @@ public class SellContentController {
               mediaType = "application/json",
               schema = @Schema(implementation = ContentReviewDetailResponse.class)))
   @RequireRole("ROLE_SELLER")
-  @GetMapping(CONTENT_REVIEW_DETAIL_PATH)
+  @GetMapping(ApiPaths.Sell.CONTENT_REVIEW_DETAIL)
   public ResponseEntity<GrobleResponse<ContentReviewDetailResponse>> getContentReviewDetail(
       @Auth Accessor accessor,
       @PathVariable("contentId") Long contentId,
@@ -156,7 +141,7 @@ public class SellContentController {
 
     ContentReviewDetailResponse response =
         sellMapper.toContentReviewDetailResponse(contentReviewDetailDTO);
-    return responseHelper.success(response, CONTENT_REVIEW_DETAIL_SUCCESS_MESSAGE, HttpStatus.OK);
+    return success(response, ResponseMessages.Sell.SELL_CONTENT_REVIEW_DETAIL_SUCCESS);
   }
 
   // 내 스토어 - 상품 관리 - 리뷰 내역 상세 - 리뷰 삭제 요청
@@ -165,12 +150,12 @@ public class SellContentController {
       description = "특정 상품에 달린 리뷰를 삭제 요청합니다.")
   @ApiResponse(responseCode = "200", description = "리뷰 삭제 요청에 성공하였습니다.")
   @RequireRole("ROLE_SELLER")
-  @PostMapping(DELETE_REVIEW_REQUEST_PATH)
+  @PostMapping(ApiPaths.Sell.DELETE_REVIEW_REQUEST)
   public ResponseEntity<GrobleResponse<Void>> deleteReviewRequest(
       @Auth Accessor accessor, @PathVariable("reviewId") Long reviewId) {
 
     sellContentService.deleteReviewRequest(accessor.getUserId(), reviewId);
-    return responseHelper.success(null, DELETE_REVIEW_REQUEST_SUCCESS_MESSAGE, HttpStatus.OK);
+    return success(null, ResponseMessages.Sell.SELL_CONTENT_REVIEW_DELETE_SUCCESS);
   }
 
   // 내 스토어 - 상품 관리 - 리뷰 내역 상세 - 리뷰 답글 달기 [해당 콘텐츠의 게시자만 가능]
@@ -179,13 +164,13 @@ public class SellContentController {
       description = "특정 콘텐츠에 달린 리뷰에 답글을 작성합니다.")
   @ApiResponse(
       responseCode = "200",
-      description = ADD_REVIEW_REPLY_SUCCESS_MESSAGE,
+      description = ResponseMessages.Sell.REVIEW_REPLY_ADD_SUCCESS,
       content =
           @Content(
               mediaType = "application/json",
               schema = @Schema(implementation = ReplyContentResponse.class)))
   @RequireRole("ROLE_SELLER")
-  @PostMapping(ADD_REVIEW_REPLY_PATH)
+  @PostMapping(ApiPaths.Sell.ADD_REVIEW_REPLY)
   public ResponseEntity<GrobleResponse<ReplyContentResponse>> addReviewReply(
       @Auth Accessor accessor,
       @PathVariable("reviewId") Long reviewId,
@@ -196,8 +181,7 @@ public class SellContentController {
     ReplyContentDTO response =
         sellContentService.addReviewReply(accessor.getUserId(), reviewId, replyContentDTO);
     ReplyContentResponse replyContentResponse = sellMapper.toReplyContentResponse(response);
-    return responseHelper.success(
-        replyContentResponse, ADD_REVIEW_REPLY_SUCCESS_MESSAGE, HttpStatus.OK);
+    return success(replyContentResponse, ResponseMessages.Sell.REVIEW_REPLY_ADD_SUCCESS);
   }
 
   // 내 스토어 - 상품 관리 - 리뷰 내역 상세 - 리뷰 댓글 수정
@@ -205,7 +189,7 @@ public class SellContentController {
       summary = "[✅ 내 스토어 - 상품 관리 - 리뷰 내역 상세 - 리뷰 답글 수정] 리뷰 답글 수정",
       description = "특정 콘텐츠에 달린 리뷰에 답글을 수정합니다.")
   @RequireRole("ROLE_SELLER")
-  @PostMapping(UPDATE_REVIEW_REPLY_PATH)
+  @PostMapping(ApiPaths.Sell.UPDATE_REVIEW_REPLY)
   public ResponseEntity<GrobleResponse<ReplyContentResponse>> updateReviewReply(
       @Auth Accessor accessor,
       @PathVariable("reviewId") Long reviewId,
@@ -216,8 +200,7 @@ public class SellContentController {
         sellContentService.updateReviewReply(
             accessor.getUserId(), reviewId, replyId, replyContentDTO);
     ReplyContentResponse replyContentResponse = sellMapper.toReplyContentResponse(response);
-    return responseHelper.success(
-        replyContentResponse, UPDATE_REVIEW_REPLY_SUCCESS_MESSAGE, HttpStatus.OK);
+    return success(replyContentResponse, ResponseMessages.Sell.REVIEW_REPLY_UPDATE_SUCCESS);
   }
 
   // 내 스토어 - 상품 관리 - 리뷰 내역 상세 - 리뷰 댓글 삭제
@@ -225,13 +208,13 @@ public class SellContentController {
       summary = "[✅ 내 스토어 - 상품 관리 - 리뷰 내역 상세 - 리뷰 답글 삭제] 리뷰 답글 삭제",
       description = "특정 콘텐츠에 달린 리뷰에 답글을 삭제합니다.")
   @RequireRole("ROLE_SELLER")
-  @PostMapping(DELETE_REVIEW_REPLY_PATH)
+  @PostMapping(ApiPaths.Sell.DELETE_REVIEW_REPLY)
   public ResponseEntity<GrobleResponse<Void>> deleteReviewReply(
       @Auth Accessor accessor,
       @PathVariable("reviewId") Long reviewId,
       @PathVariable("replyId") Long replyId) {
     sellContentService.deleteReviewReply(accessor.getUserId(), reviewId, replyId);
-    return responseHelper.success(null, DELETE_REVIEW_REPLY_SUCCESS_MESSAGE, HttpStatus.OK);
+    return success(null, ResponseMessages.Sell.REVIEW_REPLY_DELETE_SUCCESS);
   }
 
   // TODO : 내 스토어 - 상품 관리 - 판매 리스트 전체보기
@@ -246,7 +229,7 @@ public class SellContentController {
               mediaType = "application/json",
               schema = @Schema(implementation = ContentSellListResponse.class)))
   @RequireRole("ROLE_SELLER")
-  @GetMapping(CONTENT_SELL_LIST_PATH)
+  @GetMapping(ApiPaths.Sell.CONTENT_SELL_LIST)
   public ResponseEntity<GrobleResponse<PageResponse<ContentSellDetailResponse>>> getContentSellList(
       @Auth Accessor accessor,
       @PathVariable("contentId") Long contentId,
@@ -259,7 +242,7 @@ public class SellContentController {
 
     PageResponse<ContentSellDetailResponse> responsePage =
         sellMapper.toContentSellResponsePage(dtoPageResponse);
-    return responseHelper.success(responsePage, CONTENT_SELL_LIST_SUCCESS_MESSAGE, HttpStatus.OK);
+    return success(responsePage, ResponseMessages.Sell.SELL_CONTENT_LIST_SUCCESS);
   }
 
   // 내 스토어 - 상품 관리 - 판매 관리 - 판매 리스트 상세
@@ -274,7 +257,7 @@ public class SellContentController {
               mediaType = "application/json",
               schema = @Schema(implementation = ContentSellDetailResponse.class)))
   @RequireRole("ROLE_SELLER")
-  @GetMapping(CONTENT_SELL_DETAIL_PATH)
+  @GetMapping(ApiPaths.Sell.CONTENT_SELL_DETAIL)
   public ResponseEntity<GrobleResponse<ContentSellDetailResponse>> getContentSellDetail(
       @Auth Accessor accessor,
       @PathVariable("contentId") Long contentId,
@@ -283,6 +266,6 @@ public class SellContentController {
         sellContentService.getContentSellDetail(accessor.getUserId(), contentId, purchaseId);
     ContentSellDetailResponse response =
         sellMapper.toContentSellDetailResponse(contentSellDetailDTO);
-    return responseHelper.success(response, CONTENT_SELL_DETAIL_SUCCESS_MESSAGE, HttpStatus.OK);
+    return success(response, ResponseMessages.Sell.SELL_CONTENT_DETAIL_SUCCESS);
   }
 }

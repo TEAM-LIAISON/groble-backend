@@ -68,4 +68,22 @@ public final class ApiPaths {
     public static final String UPDATE_REVIEW = "/update/{reviewId}";
     public static final String DELETE_REVIEW = "/delete/{reviewId}";
   }
+
+  public static final class Sell {
+    public static final String BASE = API_V1 + "/sell";
+
+    public static final String SELL_CONTENT_BASE = BASE + "/content/manage";
+
+    public static final String CONTENT_HOME = "/{contentId}";
+    public static final String CONTENT_SELL_LIST = "/{contentId}/sell-list";
+    public static final String CONTENT_SELL_DETAIL = "/{contentId}/sell-detail/{purchaseId}";
+    public static final String CONTENT_REVIEW_LIST = "/{contentId}/review-list";
+    public static final String CONTENT_REVIEW_DETAIL = "/{contentId}/review-detail/{reviewId}";
+    public static final String DELETE_REVIEW_REQUEST = "/{reviewId}/review-delete-request";
+    public static final String ADD_REVIEW_REPLY = "/{reviewId}/review-reply";
+    public static final String UPDATE_REVIEW_REPLY = "/{reviewId}/review-reply/{replyId}";
+    public static final String DELETE_REVIEW_REPLY = "/{reviewId}/review-reply/{replyId}/delete";
+
+    private Sell() {}
+  }
 }
