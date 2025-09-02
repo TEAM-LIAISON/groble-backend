@@ -226,14 +226,31 @@ public class PaypleServiceV2 implements PaypleService {
           "API_ERROR", "페이플 API 오류 (상태코드: " + response.getStatusCode() + ")");
     }
 
-    JSONObject jsonResponse = (JSONObject) jsonParser.parse(response.getBody());
+    String responseBody = response.getBody();
 
-    log.info(
-        "페이플 API 응답 성공 - 응답시간: {}ms, 결과: {}",
-        response.getResponseTimeMs(),
-        jsonResponse.getOrDefault("PCD_PAY_RST", "UNKNOWN"));
+    // 응답 본문 검증 및 로깅
+    if (responseBody == null || responseBody.trim().isEmpty()) {
+      log.error("페이플 API 응답이 비어있음 - 상태코드: {}", response.getStatusCode());
+      return createErrorResponse("EMPTY_RESPONSE", "페이플 API 응답이 비어있습니다");
+    }
 
-    return jsonResponse;
+    log.debug("페이플 API 응답 원문 길이: {}, 내용: {}", responseBody.length(), responseBody);
+
+    try {
+      JSONObject jsonResponse = (JSONObject) jsonParser.parse(responseBody);
+
+      log.info(
+          "페이플 API 응답 성공 - 응답시간: {}ms, 결과: {}",
+          response.getResponseTimeMs(),
+          jsonResponse.getOrDefault("PCD_PAY_RST", "UNKNOWN"));
+
+      return jsonResponse;
+
+    } catch (ParseException e) {
+      log.error(
+          "페이플 API 응답 JSON 파싱 실패 - 응답 길이: {}, 응답 내용: [{}]", responseBody.length(), responseBody, e);
+      return createErrorResponse("PARSE_ERROR", "응답 파싱 중 오류가 발생했습니다: " + responseBody);
+    }
   }
 
   private JSONObject createErrorResponse(String errorCode, String errorMessage) {
