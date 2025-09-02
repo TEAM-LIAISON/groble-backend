@@ -660,7 +660,7 @@ public class PayplePaymentService {
             .format(java.time.format.DateTimeFormatter.BASIC_ISO_DATE);
 
     return PaypleRefundRequest.builder()
-        .url("https://testcpay.payple.kr/php/auth.php") // 환불 URL 추가
+        .url(paypleConfig.getCancelApiUrl())
         .cstId(paypleConfig.getCstId())
         .custKey(paypleConfig.getCustKey())
         .authKey(authResponse.getAuthKey())

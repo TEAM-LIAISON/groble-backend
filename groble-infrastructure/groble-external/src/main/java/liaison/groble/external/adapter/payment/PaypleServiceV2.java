@@ -144,7 +144,7 @@ public class PaypleServiceV2 implements PaypleService {
 
   private PaypleRefundRequest createRefundRequest(Map<String, String> params) {
     return PaypleRefundRequest.builder()
-        .url("https://testcpay.payple.kr/php/auth.php") // 테스트 환경 URL
+        .url(paypleConfig.getCancelApiUrl()) // 올바른 환불 API URL 사용
         .cstId(paypleConfig.getCstId())
         .custKey(paypleConfig.getCustKey())
         .authKey("test") // TODO: AuthKey 설정 필요

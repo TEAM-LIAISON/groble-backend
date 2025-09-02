@@ -157,7 +157,7 @@ public class PaypleApiClient {
       // 2. 환불 요청 생성
       PaypleRefundRequest refundRequest =
           PaypleRefundRequest.builder()
-              .url("https://testcpay.payple.kr/php/auth.php")
+              .url(paypleConfig.getCancelApiUrl())
               .cstId(paypleConfig.getCstId())
               .custKey(paypleConfig.getCustKey())
               .authKey(authResponse.getAuthKey())
