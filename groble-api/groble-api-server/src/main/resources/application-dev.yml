@@ -148,33 +148,63 @@ logging:
     org.springdoc: INFO
     io.swagger.v3: INFO
 
-    # 외부 라이브러리 / 통신 로그 최소화
-    org.apache.http: ERROR         # HTTP client 최소화
-    org.apache.http.wire: OFF      # Wire-level log 완전 차단
-    com.amazonaws: ERROR           # AWS SDK
+    # OpenTelemetry 디버깅 활성화
+    io.opentelemetry: DEBUG
+    io.opentelemetry.exporter: DEBUG
+    io.opentelemetry.exporter.otlp: DEBUG
+    io.opentelemetry.exporter.internal: DEBUG
+    io.opentelemetry.sdk: DEBUG
+    
+    # 네트워크 디버깅을 위해 일시적 활성화
+    org.apache.http: DEBUG         # HTTP client 디버깅
+    org.apache.http.wire: DEBUG    # Wire-level log 활성화
 
+    # 외부 라이브러리 / 통신 로그 최소화
+    com.amazonaws: ERROR           # AWS SDK
+    com.sun.mail: WARN                             # JavaMail SMTP 디버그 로그 축약
+    javax.mail: WARN                               # JavaMail 로그 축약
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} %-5level %logger{36} - %msg%n"
 
   file:
-    name: /dev/null  # 로그 파일 쓰기를 막음 (또는 경로를 로그 수집 서버로 지정)
+    path: ${user.dir}/logs
 
-# application-dev.yml
+# OpenTelemetry 설정 활성화
+otel:
+  service:
+    name: "groble-api"
+    version: "1.0.0"
+  exporter:
+    otlp:
+      # OTLP HTTP 엔드포인트 (gRPC는 4317, HTTP는 4318)
+      endpoint: "http://10.0.1.229:4318"
+      # 프로토콜 변경 시도
+      protocol: "http/protobuf"
+      timeout: "30s"
+      compression: "gzip"
+  resource:
+    attributes:
+      service.name: "groble-api"
+      service.version: "1.0.0"
+      environment: "development"
+      deployment.environment: "dev"
+#  traces:
+#    exporter: otlp
+#    sampler:
+#      probability: 0.1
+  metrics:
+    exporter: otlp
+  logs:
+    exporter: otlp
+  sdk:
+    disabled: false  # 명시적으로 활성화
+
+# Management 설정 정리
 management:
   tracing:
+    enabled: true     # 트레이싱 활성화로 변경
     sampling:
-      probability: 1.0  # 샘플링 비율 (1.0 = 100%)
-  metrics:
-    export:
-      otlp:
-        enabled: true
-  otlp:
-    metrics:
-      export:
-        url: http://otelcol.groble.local:4318/v1/metrics
-        step: 10s
-    tracing:
-      endpoint: http://otelcol.groble.local:4318/v1/traces
+      probability: 0.1  # otel 설정과 동일하게
   endpoints:
     web:
       exposure:
@@ -186,28 +216,15 @@ management:
     prometheus:
       enabled: true
     metrics:
+      enabled: true
+  metrics:
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+    tags:
+      application: ${spring.application.name}
+      environment: ${server.env}
+  prometheus:
+    metrics:
       export:
-        prometheus:
-          enabled: true
-      distribution:
-        percentiles-histogram:
-          http.server.requests: true
-      tags:
-        application: ${spring.application.name}
-        environment: ${server.env}
-    observations:
-      key-values:
-        application: ${spring.application.name}
-otel:
-  resource:
-    attributes:
-      service.name: ${spring.application.name}
-      service.version: ${version:0.0.1}
-      deployment.environment: ${spring.profiles.active:default}
-  exporter:
-    otlp:
-      protocol: http/protobuf
-      endpoint: http://otelcol.groble.local:4318/
-  logs:
-    export:
-      endpoint: http://otelcol.groble.local:4318/v1/logs
+        enabled: true

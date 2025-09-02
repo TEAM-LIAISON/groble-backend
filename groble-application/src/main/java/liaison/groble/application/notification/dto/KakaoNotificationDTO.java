@@ -11,7 +11,7 @@ import lombok.Getter;
 @Builder
 public class KakaoNotificationDTO {
   private KakaoNotificationType type;
-  private String userName;
+  private String username;
   private String sellerName;
   private String buyerName;
   private String phoneNumber;
@@ -26,4 +26,7 @@ public class KakaoNotificationDTO {
 
   // Review_Registered_Template
   private Long reviewId;
+
+  // Approve_Cancel_Template
+  private BigDecimal refundedAmount;
 }

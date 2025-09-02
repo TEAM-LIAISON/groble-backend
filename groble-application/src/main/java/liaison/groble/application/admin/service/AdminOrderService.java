@@ -10,10 +10,12 @@ import org.springframework.transaction.annotation.Transactional;
 import liaison.groble.application.admin.dto.AdminOrderCancelRequestDTO;
 import liaison.groble.application.admin.dto.AdminOrderCancellationReasonDTO;
 import liaison.groble.application.admin.dto.AdminOrderSummaryInfoDTO;
+import liaison.groble.application.notification.dto.KakaoNotificationDTO;
+import liaison.groble.application.notification.enums.KakaoNotificationType;
+import liaison.groble.application.notification.service.KakaoNotificationService;
 import liaison.groble.application.order.service.OrderReader;
 import liaison.groble.application.payment.dto.cancel.PaymentCancelResponse;
-import liaison.groble.application.payment.service.PayplePaymentFacade;
-import liaison.groble.application.payment.service.PayplePaymentService;
+import liaison.groble.application.payment.service.PayplePaymentFacadeV2;
 import liaison.groble.application.purchase.service.PurchaseReader;
 import liaison.groble.common.response.PageResponse;
 import liaison.groble.domain.order.dto.FlatAdminOrderSummaryInfoDTO;
@@ -29,10 +31,10 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class AdminOrderService {
   private final OrderReader orderReader;
-  private final PayplePaymentService payplePaymentService;
-  private final PayplePaymentFacade payplePaymentFacade;
+  private final PayplePaymentFacadeV2 payplePaymentFacadeV2;
   private final OrderRepository orderRepository;
   private final PurchaseReader purchaseReader;
+  private final KakaoNotificationService kakaoNotificationService;
 
   // 모든 주문 목록 전체 조회 메서드
   public PageResponse<AdminOrderSummaryInfoDTO> getAllOrders(Pageable pageable) {
@@ -76,13 +78,23 @@ public class AdminOrderService {
       throw new IllegalStateException("취소 요청 상태의 주문만 처리할 수 있습니다. 현재 상태: " + order.getStatus());
     }
 
+    Purchase purchase = purchaseReader.getPurchaseByOrderId(order.getId());
+
     // 2. action에 따른 처리
     if ("approve".equalsIgnoreCase(action)) {
       // 취소 승인 - 페이플 실결제 취소 API 호출
       try {
         PaymentCancelResponse response =
-            payplePaymentFacade.cancelPayment(
+            payplePaymentFacadeV2.cancelPayment(
                 order.getUser().getId(), merchantUid, order.getOrderNote());
+
+        kakaoNotificationService.sendNotification(
+            KakaoNotificationDTO.builder()
+                .type(KakaoNotificationType.APPROVE_CANCEL)
+                .buyerName(purchase.getPurchaserName())
+                .contentTitle(purchase.getContent().getTitle())
+                .refundedAmount(order.getFinalPrice())
+                .build());
 
         // 주문 상태는 PayplePaymentService에서 이미 CANCELLED로 변경됨
         return AdminOrderCancelRequestDTO.builder()

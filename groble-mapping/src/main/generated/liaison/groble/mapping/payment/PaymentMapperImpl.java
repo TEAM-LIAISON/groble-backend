@@ -6,14 +6,16 @@ import org.springframework.stereotype.Component;
 
 import liaison.groble.api.model.payment.request.PaymentCancelRequest;
 import liaison.groble.api.model.payment.request.PaypleAuthResultRequest;
+import liaison.groble.api.model.payment.response.AppCardPayplePaymentResponse;
 import liaison.groble.api.model.payment.response.PaymentCancelInfoResponse;
+import liaison.groble.application.payment.dto.AppCardPayplePaymentDTO;
 import liaison.groble.application.payment.dto.PaypleAuthResultDTO;
 import liaison.groble.application.payment.dto.cancel.PaymentCancelDTO;
 import liaison.groble.application.payment.dto.cancel.PaymentCancelInfoDTO;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-08-21T12:48:50+0900",
+    date = "2025-09-02T17:55:20+0900",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.10 (Amazon.com Inc.)")
 @Component
 public class PaymentMapperImpl implements PaymentMapper {
@@ -209,5 +211,58 @@ public class PaymentMapperImpl implements PaymentMapper {
     }
 
     return paymentCancelInfoResponse.build();
+  }
+
+  @Override
+  public AppCardPayplePaymentResponse toAppCardPayplePaymentResponse(
+      AppCardPayplePaymentDTO appCardPayplePaymentDTO) {
+    if (appCardPayplePaymentDTO == null) {
+      return null;
+    }
+
+    AppCardPayplePaymentResponse.AppCardPayplePaymentResponseBuilder appCardPayplePaymentResponse =
+        AppCardPayplePaymentResponse.builder();
+
+    if (appCardPayplePaymentDTO.getPayRst() != null) {
+      appCardPayplePaymentResponse.payRst(appCardPayplePaymentDTO.getPayRst());
+    }
+    if (appCardPayplePaymentDTO.getPayCode() != null) {
+      appCardPayplePaymentResponse.payCode(appCardPayplePaymentDTO.getPayCode());
+    }
+    if (appCardPayplePaymentDTO.getPayMsg() != null) {
+      appCardPayplePaymentResponse.payMsg(appCardPayplePaymentDTO.getPayMsg());
+    }
+    if (appCardPayplePaymentDTO.getPayOid() != null) {
+      appCardPayplePaymentResponse.payOid(appCardPayplePaymentDTO.getPayOid());
+    }
+    if (appCardPayplePaymentDTO.getPayType() != null) {
+      appCardPayplePaymentResponse.payType(appCardPayplePaymentDTO.getPayType());
+    }
+    if (appCardPayplePaymentDTO.getPayTime() != null) {
+      appCardPayplePaymentResponse.payTime(appCardPayplePaymentDTO.getPayTime());
+    }
+    if (appCardPayplePaymentDTO.getPayTotal() != null) {
+      appCardPayplePaymentResponse.payTotal(appCardPayplePaymentDTO.getPayTotal());
+    }
+    if (appCardPayplePaymentDTO.getPayCardName() != null) {
+      appCardPayplePaymentResponse.payCardName(appCardPayplePaymentDTO.getPayCardName());
+    }
+    if (appCardPayplePaymentDTO.getPayCardNum() != null) {
+      appCardPayplePaymentResponse.payCardNum(appCardPayplePaymentDTO.getPayCardNum());
+    }
+    if (appCardPayplePaymentDTO.getPayCardQuota() != null) {
+      appCardPayplePaymentResponse.payCardQuota(appCardPayplePaymentDTO.getPayCardQuota());
+    }
+    if (appCardPayplePaymentDTO.getPayCardTradeNum() != null) {
+      appCardPayplePaymentResponse.payCardTradeNum(appCardPayplePaymentDTO.getPayCardTradeNum());
+    }
+    if (appCardPayplePaymentDTO.getPayCardAuthNo() != null) {
+      appCardPayplePaymentResponse.payCardAuthNo(appCardPayplePaymentDTO.getPayCardAuthNo());
+    }
+    if (appCardPayplePaymentDTO.getPayCardReceipt() != null) {
+      appCardPayplePaymentResponse.payCardReceipt(appCardPayplePaymentDTO.getPayCardReceipt());
+    }
+
+    return appCardPayplePaymentResponse.build();
   }
 }

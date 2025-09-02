@@ -11,17 +11,17 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import liaison.groble.api.model.settlement.response.MonthlySettlementOverviewResponse;
 import liaison.groble.api.model.settlement.response.PerTransactionSettlementOverviewResponse;
 import liaison.groble.api.model.settlement.response.SettlementDetailResponse;
 import liaison.groble.api.model.settlement.response.SettlementOverviewResponse;
+import liaison.groble.api.model.settlement.response.SettlementsOverviewResponse;
 import liaison.groble.api.model.settlement.response.TaxInvoiceResponse;
 import liaison.groble.api.model.settlement.response.swagger.MonthlySettlementOverviewListResponse;
 import liaison.groble.api.model.settlement.response.swagger.PerTransactionSettlementOverviewListResponse;
-import liaison.groble.application.settlement.dto.MonthlySettlementOverviewDTO;
 import liaison.groble.application.settlement.dto.PerTransactionSettlementOverviewDTO;
 import liaison.groble.application.settlement.dto.SettlementDetailDTO;
 import liaison.groble.application.settlement.dto.SettlementOverviewDTO;
+import liaison.groble.application.settlement.dto.SettlementsOverviewDTO;
 import liaison.groble.application.settlement.dto.TaxInvoiceDTO;
 import liaison.groble.application.settlement.service.SettlementService;
 import liaison.groble.common.annotation.Auth;
@@ -50,8 +50,8 @@ public class SettlementController {
   // API 경로 상수화
   private static final String SETTLEMENT_OVERVIEW_PATH = "/settlements/overview";
   private static final String SETTLEMENT_LIST_PATH = "/settlements";
-  private static final String SETTLEMENT_DETAIL_PATH = "/settlements/{yearMonth}";
-  private static final String SALES_LIST_PATH = "/settlements/sales/{yearMonth}";
+  private static final String SETTLEMENT_DETAIL_PATH = "/settlements/{settlementId}";
+  private static final String SALES_LIST_PATH = "/settlements/sales/{settlementId}";
   private static final String TAX_INVOICE_PATH = "/settlements/tax-invoice/{yearMonth}";
 
   // 응답 메시지 상수화
@@ -114,16 +114,16 @@ public class SettlementController {
       action = "getSettlementList",
       includeParam = true,
       includeResult = true)
-  public ResponseEntity<GrobleResponse<PageResponse<MonthlySettlementOverviewResponse>>>
+  public ResponseEntity<GrobleResponse<PageResponse<SettlementsOverviewResponse>>>
       getSettlementList(
           @Auth Accessor accessor,
           @RequestParam(value = "page", defaultValue = "0") int page,
           @RequestParam(value = "size", defaultValue = "20") int size,
           @RequestParam(value = "sort", defaultValue = "createdAt") String sort) {
     Pageable pageable = PageUtils.createPageable(page, size, sort);
-    PageResponse<MonthlySettlementOverviewDTO> dtoPage =
+    PageResponse<SettlementsOverviewDTO> dtoPage =
         settlementService.getMonthlySettlements(accessor.getUserId(), pageable);
-    PageResponse<MonthlySettlementOverviewResponse> responsePage =
+    PageResponse<SettlementsOverviewResponse> responsePage =
         settlementMapper.toMonthlySettlementOverviewResponsePage(dtoPage);
 
     return responseHelper.success(responsePage, SETTLEMENT_LIST_SUCCESS_MESSAGE, HttpStatus.OK);
@@ -150,15 +150,15 @@ public class SettlementController {
   public ResponseEntity<GrobleResponse<SettlementDetailResponse>> getSettlementDetail(
       @Auth Accessor accessor,
       @Parameter(
-              name = "yearMonth",
-              description = "yyyy-MM 형식",
-              example = "2025-08",
-              schema = @Schema(type = "string", pattern = "^\\d{4}-(0[1-9]|1[0-2])$"))
-          @PathVariable("yearMonth")
-          YearMonth yearMonth) {
+              name = "settlementId",
+              description = "숫자 형식",
+              example = "265",
+              schema = @Schema(type = "number"))
+          @PathVariable("settlementId")
+          Long settlementId) {
 
     SettlementDetailDTO settlementDetailDTO =
-        settlementService.getSettlementDetail(accessor.getUserId(), yearMonth);
+        settlementService.getSettlementDetail(accessor.getUserId(), settlementId);
     SettlementDetailResponse settlementDetailResponse =
         settlementMapper.toSettlementResponse(settlementDetailDTO);
     return responseHelper.success(
@@ -184,18 +184,19 @@ public class SettlementController {
       getSalesList(
           @Auth Accessor accessor,
           @Parameter(
-                  name = "yearMonth",
-                  description = "yyyy-MM 형식",
-                  example = "2025-08",
-                  schema = @Schema(type = "string", pattern = "^\\d{4}-(0[1-9]|1[0-2])$"))
-              @PathVariable("yearMonth")
-              YearMonth yearMonth,
+                  name = "settlementId",
+                  description = "숫자 형식",
+                  example = "265",
+                  schema = @Schema(type = "number"))
+              @PathVariable("settlementId")
+              Long settlementId,
           @RequestParam(value = "page", defaultValue = "0") int page,
           @RequestParam(value = "size", defaultValue = "20") int size,
           @RequestParam(value = "sort", defaultValue = "createdAt") String sort) {
     Pageable pageable = PageUtils.createPageable(page, size, sort);
     PageResponse<PerTransactionSettlementOverviewDTO> dtoPage =
-        settlementService.getPerTransactionSettlements(accessor.getUserId(), yearMonth, pageable);
+        settlementService.getPerTransactionSettlements(
+            accessor.getUserId(), settlementId, pageable);
     PageResponse<PerTransactionSettlementOverviewResponse> responsePage =
         settlementMapper.toPerTransactionSettlementOverviewResponsePage(dtoPage);
 
@@ -203,6 +204,7 @@ public class SettlementController {
   }
 
   // 세금계산서 발행 받기
+  @Deprecated
   @RequireRole("ROLE_SELLER")
   @Operation(
       summary = "[💰 세금계산서 상세 정보 조회] 세금계산서 데이터를 조회합니다.",

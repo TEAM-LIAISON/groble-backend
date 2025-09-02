@@ -24,6 +24,8 @@ public class QSettlementItem extends EntityPathBase<SettlementItem> {
 
     public final liaison.groble.domain.common.entity.QBaseTimeEntity _super = new liaison.groble.domain.common.entity.QBaseTimeEntity(this);
 
+    public final StringPath capturedContentType = createString("capturedContentType");
+
     public final NumberPath<java.math.BigDecimal> capturedPgFeeRate = createNumber("capturedPgFeeRate", java.math.BigDecimal.class);
 
     public final NumberPath<java.math.BigDecimal> capturedPlatformFeeRate = createNumber("capturedPlatformFeeRate", java.math.BigDecimal.class);

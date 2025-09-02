@@ -163,9 +163,11 @@ project(':groble-api:groble-api-server') {
         // Retry
         implementation 'org.springframework.retry:spring-retry'
 
-        // OpenTelemetry 추가
+        // OpenTelemetry 추가 - 버전 통일 및 로깅 지원 추가
         implementation 'io.opentelemetry.instrumentation:opentelemetry-spring-boot-starter:2.6.0'
         implementation 'io.opentelemetry:opentelemetry-exporter-otlp:1.40.0'
+        implementation 'io.opentelemetry:opentelemetry-exporter-logging-otlp:1.40.0'
+        implementation 'io.opentelemetry:opentelemetry-exporter-logging:1.40.0'
     }
 
     tasks.named('bootJar') {

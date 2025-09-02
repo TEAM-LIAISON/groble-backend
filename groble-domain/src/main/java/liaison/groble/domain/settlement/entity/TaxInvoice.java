@@ -29,7 +29,10 @@ import lombok.NoArgsConstructor;
       @Index(name = "idx_tax_invoice_settlement", columnList = "settlement_id"),
       @Index(name = "idx_tax_invoice_settlement_item", columnList = "settlement_item_id"),
       @Index(name = "idx_tax_invoice_number", columnList = "invoice_number", unique = true),
-      @Index(name = "idx_tax_invoice_issued_date", columnList = "issued_date")
+      @Index(name = "idx_tax_invoice_issued_date", columnList = "issued_date"),
+      @Index(
+          name = "idx_tax_invoices_cycle_round",
+          columnList = "settlement_cycle, settlement_round")
     })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -81,6 +84,14 @@ public class TaxInvoice {
   @Column(columnDefinition = "TEXT")
   private String note;
 
+  // 정산 주기 정보 (월 내 몇 번째 정산인지)
+  @Column(name = "settlement_round")
+  private Integer settlementRound;
+
+  // 정산 타입 정보
+  @Column(name = "settlement_type", length = 20)
+  private String settlementType;
+
   @Builder
   public TaxInvoice(
       Settlement settlement,
@@ -110,6 +121,13 @@ public class TaxInvoice {
         this.supplyAmount.multiply(new BigDecimal("0.1")).setScale(0, RoundingMode.HALF_UP);
     this.totalAmount = this.supplyAmount.add(this.vatAmount);
     this.status = InvoiceStatus.ISSUED;
+
+    // Settlement에서 정산 정보 가져오기
+    if (settlement != null) {
+      this.settlementRound = settlement.getSettlementRound();
+      this.settlementType =
+          settlement.getSettlementType() != null ? settlement.getSettlementType().name() : "LEGACY";
+    }
   }
 
   // 세금계산서 취소

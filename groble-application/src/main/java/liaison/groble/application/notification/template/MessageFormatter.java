@@ -9,10 +9,10 @@ public class MessageFormatter {
   private static final NumberFormat CURRENCY_FORMAT = NumberFormat.getNumberInstance(KOREA);
 
   // [Groble] 회원가입 완료
-  public static String welcome(String userName) {
+  public static String welcome(String username) {
     return String.format(
         "%s님, 환영합니다🎉\n" + "그로블에 가입해 주셔서 감사합니다.\n\n" + "이제 단 5분 만에 첫 상품을 등록하고, 판매를 시작할 수 있어요.",
-        userName);
+        username);
   }
 
   // [Groble] 결제 알림
@@ -43,6 +43,14 @@ public class MessageFormatter {
   // [Groble] 인증 완료
   public static String verificationComplete(String sellerName) {
     return String.format("%s님, 메이커 인증이 완료되었습니다!", sellerName);
+  }
+
+  // [Groble] 결제 취소 알림
+  public static String approveCancel(
+      String buyerName, String contentTitle, BigDecimal refundedAmount) {
+    return String.format(
+        "%s님, 결제 취소가 승인되었습니다. \n" + "\n" + "- 상품명: %s\n" + "- 환불 금액: %s",
+        buyerName, contentTitle, formatCurrency(refundedAmount));
   }
 
   // 원화 표기법 포맷팅

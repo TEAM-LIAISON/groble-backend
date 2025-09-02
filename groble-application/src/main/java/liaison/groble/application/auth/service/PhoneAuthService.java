@@ -7,21 +7,21 @@ import java.time.ZoneId;
 import org.springframework.stereotype.Service;
 
 import liaison.groble.application.auth.helper.UserHelper;
+import liaison.groble.application.common.enums.SmsTemplate;
+import liaison.groble.application.common.service.SmsService;
 import liaison.groble.application.notification.dto.KakaoNotificationDTO;
 import liaison.groble.application.notification.enums.KakaoNotificationType;
 import liaison.groble.application.notification.service.KakaoNotificationService;
 import liaison.groble.application.notification.service.NotificationService;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.common.utils.CodeGenerator;
+import liaison.groble.common.utils.PhoneUtils;
 import liaison.groble.domain.market.entity.Market;
 import liaison.groble.domain.port.VerificationCodePort;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.repository.UserRepository;
 import liaison.groble.external.discord.dto.MemberCreateReportDTO;
 import liaison.groble.external.discord.service.DiscordMemberReportService;
-import liaison.groble.external.sms.Message;
-import liaison.groble.external.sms.SmsSender;
-import liaison.groble.external.sms.exception.SmsSendException;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,7 +35,6 @@ public class PhoneAuthService {
   private static final Duration CODE_TTL = Duration.ofMinutes(5);
 
   // Sender & Port
-  private final SmsSender smsSender;
   private final VerificationCodePort verificationCodePort;
 
   // Reader
@@ -46,13 +45,14 @@ public class PhoneAuthService {
   private final KakaoNotificationService kakaoNotificationService;
   private final NotificationService notificationService;
   private final DiscordMemberReportService discordMemberReportService;
+  private final SmsService smsService;
   private final UserHelper userHelper;
 
   /** 로그인한 사용자의 전화번호 인증 코드 발송 - 기존 전화번호와 중복 체크 - 사용자별 Redis 키로 저장 */
   public void sendVerificationCodeForUser(Long userId, String phoneNumber) {
     log.info("▶ 로그인 사용자 전화번호 인증 시작: userId={}, phoneNumber={}", userId, phoneNumber);
 
-    String sanitized = sanitizePhoneNumber(phoneNumber);
+    String sanitized = PhoneUtils.sanitizePhoneNumber(phoneNumber);
 
     // 1. 기존 사용자의 전화번호와 동일한지 체크
     validatePhoneNumberForUser(userId, sanitized);
@@ -61,7 +61,8 @@ public class PhoneAuthService {
     String code = CodeGenerator.generateVerificationCode(4);
     verificationCodePort.saveVerificationCodeForUser(userId, sanitized, code, CODE_TTL.toMinutes());
 
-    sendSms(sanitized, code);
+    // 3. 인증 코드 SMS 발송
+    smsService.sendSms(sanitized, SmsTemplate.VERIFICATION_CODE, code);
     log.info("로그인 사용자 전화번호 인증 코드 발송 완료: userId={}", userId);
   }
 
@@ -72,7 +73,7 @@ public class PhoneAuthService {
     log.info("▶ 로그인 사용자 전화번호 인증 검증: userId={}, phoneNumber={}", userId, phoneNumber);
 
     // 전화번호 정규화
-    String sanitized = sanitizePhoneNumber(phoneNumber);
+    String sanitized = PhoneUtils.sanitizePhoneNumber(phoneNumber);
 
     boolean isValid = verificationCodePort.validateVerificationCodeForUser(userId, sanitized, code);
     if (!isValid) {
@@ -97,7 +98,7 @@ public class PhoneAuthService {
       kakaoNotificationService.sendNotification(
           KakaoNotificationDTO.builder()
               .type(KakaoNotificationType.WELCOME)
-              .userName(user.getNickname())
+              .username(user.getNickname())
               .phoneNumber(sanitized)
               .build());
       sendDiscordMemberReport(user);
@@ -108,30 +109,12 @@ public class PhoneAuthService {
 
   // === Private Helper Methods ===
 
-  private String sanitizePhoneNumber(String phoneNumber) {
-    return phoneNumber.replaceAll("\\D", ""); // 하이픈·공백 제거
-  }
-
   private void validatePhoneNumberForUser(Long userId, String phoneNumber) {
     // 사용자의 현재 전화번호와 동일한지 체크 (선택적)
     User user = userReader.getUserById(userId);
 
     if (phoneNumber.equals(user.getPhoneNumber())) {
       log.info("동일한 전화번호로 재인증 요청: userId={}", userId);
-    }
-  }
-
-  private void sendSms(String phoneNumber, String code) {
-    String smsContent = "[Groble] 인증코드 [" + code + "]를 입력해주세요.";
-    Message message = Message.builder().to(phoneNumber).content(smsContent).build();
-
-    try {
-      log.info("SMS 전송 시도: to={}", phoneNumber);
-      smsSender.sendSms(message);
-      log.info("SMS 전송 성공: phoneNumber={}", phoneNumber);
-    } catch (Exception e) {
-      log.error("SMS 전송 실패: phoneNumber={}, error={}", phoneNumber, e.getMessage(), e);
-      throw new SmsSendException();
     }
   }
 

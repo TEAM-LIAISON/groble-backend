@@ -31,6 +31,8 @@ public class QContentReview extends EntityPathBase<ContentReview> {
 
     public final DateTimePath<java.time.LocalDateTime> deletionRequestedAt = createDateTime("deletionRequestedAt", java.time.LocalDateTime.class);
 
+    public final liaison.groble.domain.guest.entity.QGuestUser guestUser;
+
     public final NumberPath<Long> id = createNumber("id", Long.class);
 
     public final liaison.groble.domain.purchase.entity.QPurchase purchase;
@@ -65,6 +67,7 @@ public class QContentReview extends EntityPathBase<ContentReview> {
     public QContentReview(Class<? extends ContentReview> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
         this.content = inits.isInitialized("content") ? new QContent(forProperty("content"), inits.get("content")) : null;
+        this.guestUser = inits.isInitialized("guestUser") ? new liaison.groble.domain.guest.entity.QGuestUser(forProperty("guestUser")) : null;
         this.purchase = inits.isInitialized("purchase") ? new liaison.groble.domain.purchase.entity.QPurchase(forProperty("purchase"), inits.get("purchase")) : null;
         this.user = inits.isInitialized("user") ? new liaison.groble.domain.user.entity.QUser(forProperty("user"), inits.get("user")) : null;
     }

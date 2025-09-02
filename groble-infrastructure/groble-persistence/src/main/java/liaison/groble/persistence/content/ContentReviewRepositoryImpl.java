@@ -27,4 +27,9 @@ public class ContentReviewRepositoryImpl implements ContentReviewRepository {
     return jpaContentReviewRepository.existsByUserIdAndContentIdAndReviewStatus(
         userId, contentId, ReviewStatus.ACTIVE);
   }
+
+  public boolean existsContentReviewForGuest(Long guestUserId, Long contentId) {
+    return jpaContentReviewRepository.existsByGuestUserIdAndContentIdAndReviewStatus(
+        guestUserId, contentId, ReviewStatus.ACTIVE);
+  }
 }

@@ -1,6 +1,5 @@
 package liaison.groble.external.infotalk.service;
 
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
 
@@ -15,8 +14,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import liaison.groble.external.config.BizppurioConfig;
 import liaison.groble.external.infotalk.dto.message.ButtonInfo;
@@ -42,14 +39,9 @@ public class BizppurioMessageService {
   private final BizppurioConfig config;
   private final BizppurioTokenService tokenService;
   private final RestTemplate restTemplate;
-  private final ObjectMapper objectMapper;
 
   // API 엔드포인트
   private static final String MESSAGE_ENDPOINT = "/v3/message";
-
-  // 날짜 포맷터 (예약발송용)
-  private static final DateTimeFormatter SEND_TIME_FORMATTER =
-      DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
 
   /**
    * 알림톡 발송 - 버튼 포함 버전

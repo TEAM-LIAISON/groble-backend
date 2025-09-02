@@ -128,25 +128,29 @@ logging:
     io.swagger.v3: INFO
     software.amazon.awssdk: INFO
     org.apache.http: INFO
+    com.sun.mail: WARN                             # JavaMail SMTP 디버그 로그 축약
+    javax.mail: WARN                               # JavaMail 로그 축약
   file:
-    path: ./logs
+    path: ${user.dir}/logs
 
 # application-local.yml
+
+# OpenTelemetry 설정 비활성화 (운영)
 management:
   tracing:
+    enabled: false                            # 트레이싱 비활성화
     sampling:
-      probability: 1.0  # 샘플링 비율 (1.0 = 100%)
+      probability: 0.0                        # 샘플링 0%
   metrics:
     export:
       otlp:
-        enabled: true
+        enabled: false                        # OTLP 메트릭 비활성화
   otlp:
     metrics:
       export:
-        url: http://otelcol.groble.local:4318/v1/metrics
-        step: 10s
+        enabled: false                        # 메트릭 export 비활성화
     tracing:
-      endpoint: http://otelcol.groble.local:4318/v1/traces
+      enabled: false                          # 트레이싱 비활성화
   endpoints:
     web:
       exposure:
@@ -156,8 +160,9 @@ management:
     health:
       show-details: always
     prometheus:
-      enabled: true
+      enabled: true                           # Prometheus는 유지 (모니터링용)
     metrics:
+      enabled: true
       export:
         prometheus:
           enabled: true
@@ -167,19 +172,14 @@ management:
       tags:
         application: ${spring.application.name}
         environment: ${server.env}
-    observations:
-      key-values:
-        application: ${spring.application.name}
+
+# OpenTelemetry 완전 비활성화
 otel:
-  resource:
-    attributes:
-      service.name: ${spring.application.name}
-      service.version: ${version:0.0.1}
-      deployment.environment: ${spring.profiles.active:default}
-  exporter:
-    otlp:
-      protocol: http/protobuf
-      endpoint: http://otelcol.groble.local:4318/
+  sdk:
+    disabled: true                            # SDK 자체 비활성화
+  traces:
+    exporter: none                            # 트레이스 내보내지 않음
+  metrics:
+    exporter: none                            # 메트릭 내보내지 않음
   logs:
-    export:
-      endpoint: http://otelcol.groble.local:4318/v1/logs
+    exporter: none                            # 로그 내보내지 않음

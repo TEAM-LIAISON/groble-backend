@@ -1,5 +1,6 @@
 package liaison.groble.persistence.content;
 
+import static com.querydsl.core.types.dsl.Expressions.*;
 import static com.querydsl.jpa.JPAExpressions.select;
 
 import java.time.LocalDateTime;
@@ -32,6 +33,7 @@ import liaison.groble.domain.content.entity.QContentReply;
 import liaison.groble.domain.content.entity.QContentReview;
 import liaison.groble.domain.content.enums.ReviewStatus;
 import liaison.groble.domain.content.repository.ContentReviewCustomRepository;
+import liaison.groble.domain.guest.entity.QGuestUser;
 import liaison.groble.domain.order.entity.QOrder;
 import liaison.groble.domain.purchase.entity.QPurchase;
 import liaison.groble.domain.user.entity.QUser;
@@ -66,9 +68,32 @@ public class ContentReviewCustomRepositoryImpl implements ContentReviewCustomRep
   }
 
   @Override
+  public Optional<ContentReview> getContentReviewForGuest(Long guestUserId, Long reviewId) {
+    QContentReview qContentReview = QContentReview.contentReview;
+    QContent qContent = QContent.content;
+    QGuestUser qGuestUser = QGuestUser.guestUser;
+
+    BooleanExpression conditions =
+        qContentReview
+            .id
+            .eq(reviewId)
+            .and(qContentReview.guestUser.id.eq(guestUserId))
+            .and(qContentReview.reviewStatus.eq(ReviewStatus.ACTIVE));
+
+    return Optional.ofNullable(
+        jpaQueryFactory
+            .selectFrom(qContentReview)
+            .leftJoin(qContentReview.content, qContent)
+            .leftJoin(qContentReview.guestUser, qGuestUser)
+            .where(conditions)
+            .fetchOne());
+  }
+
+  @Override
   public Page<FlatContentReviewDetailDTO> getContentReviewPageDTOs(
       Long userId, Long contentId, Pageable pageable) {
     QUser qUser = QUser.user;
+    QGuestUser qGuestUser = QGuestUser.guestUser;
     QContent qContent = QContent.content;
     QContentReview qContentReview = QContentReview.contentReview;
     QPurchase qPurchase = QPurchase.purchase;
@@ -96,13 +121,21 @@ public class ContentReviewCustomRepositoryImpl implements ContentReviewCustomRep
                     qContentReview.reviewStatus.stringValue().as("reviewStatus"),
                     qContent.title.as("contentTitle"),
                     qContentReview.createdAt.as("createdAt"),
-                    qUser.userProfile.nickname.as("reviewerNickname"),
+                    // 리뷰어 닉네임 - 회원/비회원 구분
+                    cases()
+                        .when(qContentReview.user.isNotNull())
+                        .then(qUser.userProfile.nickname)
+                        .when(qContentReview.guestUser.isNotNull())
+                        .then(qGuestUser.username)
+                        .otherwise(nullExpression(String.class))
+                        .as("reviewerNickname"),
                     qContentReview.reviewContent.as("reviewContent"),
                     qPurchase.selectedOptionName.as("selectedOptionName"),
                     qContentReview.rating.as("rating")))
             .from(qContentReview)
             .leftJoin(qContentReview.content, qContent)
             .leftJoin(qContentReview.user, qUser)
+            .leftJoin(qContentReview.guestUser, qGuestUser)
             .leftJoin(qContentReview.purchase, qPurchase)
             .where(cond);
     // 정렬 적용
@@ -139,6 +172,7 @@ public class ContentReviewCustomRepositoryImpl implements ContentReviewCustomRep
   public Optional<FlatContentReviewDetailDTO> getContentReviewDetailDTO(
       Long userId, Long contentId, Long reviewId) {
     QUser qUser = QUser.user;
+    QGuestUser qGuestUser = QGuestUser.guestUser;
     QContent qContent = QContent.content;
     QPurchase qPurchase = QPurchase.purchase;
     QContentReview qContentReview = QContentReview.contentReview;
@@ -166,13 +200,21 @@ public class ContentReviewCustomRepositoryImpl implements ContentReviewCustomRep
                     qContentReview.reviewStatus.stringValue().as("reviewStatus"),
                     qContent.title.as("contentTitle"),
                     qContentReview.createdAt.as("createdAt"),
-                    qUser.userProfile.nickname.as("reviewerNickname"),
+                    // 리뷰어 닉네임 - 회원/비회원 구분
+                    cases()
+                        .when(qContentReview.user.isNotNull())
+                        .then(qUser.userProfile.nickname)
+                        .when(qContentReview.guestUser.isNotNull())
+                        .then(qGuestUser.username)
+                        .otherwise(nullExpression(String.class))
+                        .as("reviewerNickname"),
                     qContentReview.reviewContent.as("reviewContent"),
                     qPurchase.selectedOptionName.as("selectedOptionName"),
                     qContentReview.rating.as("rating")))
             .from(qContentReview)
             .leftJoin(qContentReview.content, qContent)
             .leftJoin(qContentReview.user, qUser)
+            .leftJoin(qContentReview.guestUser, qGuestUser)
             .leftJoin(qContentReview.purchase, qPurchase)
             .where(conditions)
             .fetchOne();
@@ -185,26 +227,32 @@ public class ContentReviewCustomRepositoryImpl implements ContentReviewCustomRep
       Long userId, Long contentId) {
 
     QUser qUser = QUser.user;
+    QGuestUser qGuestUser = QGuestUser.guestUser;
     QContent qContent = QContent.content;
     QPurchase qPurchase = QPurchase.purchase;
     QContentReview qContentReview = QContentReview.contentReview;
 
-    /* 1) 서브쿼리 – min() 으로 다중 row 방지 */
+    /* 1) 서브쿼리 – min() 으로 다중 row 방지 - 리뷰와 연관된 구매 정보에서 선택옵션명 조회 */
     Expression<String> selectedOptionNameExpr =
         ExpressionUtils.as(
             JPAExpressions.select(qPurchase.selectedOptionName.min()) // ★ 집계 함수
                 .from(qPurchase)
-                .where(qPurchase.user.id.eq(userId), qPurchase.content.id.eq(contentId)),
+                .where(
+                    qPurchase
+                        .content
+                        .id
+                        .eq(contentId)
+                        .and(qPurchase.id.eq(qContentReview.purchase.id))),
             "selectedOptionName");
 
-    // 기본 조건 설정 (특정 reviewId를 가진 리뷰를 찾고, 해당 리뷰가 특정 contentId에 속하고 판매자가 이를 조회했는지 확인)
+    // 기본 조건 설정 (특정 userId가 작성한 리뷰를 찾고, 해당 리뷰가 특정 contentId에 속하는지 확인)
     BooleanExpression conditions =
         qContentReview
             .content
             .id
             .eq(contentId)
-            .and(qContentReview.user.id.eq(userId))
-            .and(qContentReview.reviewStatus.eq(ReviewStatus.ACTIVE)); // ← 수정
+            .and(qContentReview.user.id.eq(userId)) // 특정 사용자가 작성한 리뷰만
+            .and(qContentReview.reviewStatus.eq(ReviewStatus.ACTIVE));
 
     FlatContentReviewDetailDTO result =
         jpaQueryFactory
@@ -214,13 +262,21 @@ public class ContentReviewCustomRepositoryImpl implements ContentReviewCustomRep
                     qContentReview.id.as("reviewId"),
                     qContent.title.as("contentTitle"),
                     qContentReview.createdAt.as("createdAt"),
-                    qUser.userProfile.nickname.as("reviewerNickname"),
+                    // 리뷰어 닉네임 - 회원/비회원 구분
+                    cases()
+                        .when(qContentReview.user.isNotNull())
+                        .then(qUser.userProfile.nickname)
+                        .when(qContentReview.guestUser.isNotNull())
+                        .then(qGuestUser.username)
+                        .otherwise(nullExpression(String.class))
+                        .as("reviewerNickname"),
                     qContentReview.reviewContent.as("reviewContent"),
                     selectedOptionNameExpr,
                     qContentReview.rating.as("rating")))
             .from(qContentReview)
             .leftJoin(qContentReview.content, qContent)
             .leftJoin(qContentReview.user, qUser)
+            .leftJoin(qContentReview.guestUser, qGuestUser)
             .where(conditions)
             .fetchOne();
 
@@ -232,18 +288,22 @@ public class ContentReviewCustomRepositoryImpl implements ContentReviewCustomRep
     QContentReview qContentReview = QContentReview.contentReview;
     QContentReply qContentReply = QContentReply.contentReply;
     QUser qReviewer = new QUser("reviewer");
+    QGuestUser qGuestReviewer = new QGuestUser("guestReviewer");
     QUser qSeller = new QUser("seller");
     QPurchase qPurchase = QPurchase.purchase;
     QOrder qOrder = QOrder.order;
 
-    // selectedOptionName 서브쿼리
+    // selectedOptionName 서브쿼리 - 리뷰와 연관된 구매 정보에서 선택옵션명 조회
     Expression<String> selectedOptionNameExpression =
         ExpressionUtils.as(
             select(qPurchase.selectedOptionName.min()) // min() 추가
                 .from(qPurchase)
                 .where(
-                    qPurchase.user.id.eq(qContentReview.user.id),
-                    qPurchase.content.id.eq(contentId))
+                    qPurchase
+                        .content
+                        .id
+                        .eq(contentId)
+                        .and(qPurchase.id.eq(qContentReview.purchase.id)))
                 .limit(1),
             "selectedOptionName");
 
@@ -253,10 +313,29 @@ public class ContentReviewCustomRepositoryImpl implements ContentReviewCustomRep
                 FlatContentReviewReplyDTO.class,
                 // Review 정보
                 qContentReview.id.as("reviewId"),
-                qContentReview.user.id.as("reviewerId"),
+                // 리뷰어 ID - 회원/비회원 구분
+                com.querydsl.core.types.dsl.Expressions.cases()
+                    .when(qContentReview.user.isNotNull())
+                    .then(qContentReview.user.id)
+                    .when(qContentReview.guestUser.isNotNull())
+                    .then(qContentReview.guestUser.id)
+                    .otherwise(com.querydsl.core.types.dsl.Expressions.nullExpression(Long.class))
+                    .as("reviewerId"),
                 qContentReview.createdAt.as("reviewCreatedAt"),
-                qReviewer.userProfile.profileImageUrl.as("reviewerProfileImageUrl"),
-                qReviewer.userProfile.nickname.as("reviewerNickname"),
+                // 리뷰어 프로필 이미지 - 회원만 (비회원은 null)
+                com.querydsl.core.types.dsl.Expressions.cases()
+                    .when(qContentReview.user.isNotNull())
+                    .then(qReviewer.userProfile.profileImageUrl)
+                    .otherwise(com.querydsl.core.types.dsl.Expressions.nullExpression(String.class))
+                    .as("reviewerProfileImageUrl"),
+                // 리뷰어 닉네임 - 회원/비회원 구분
+                com.querydsl.core.types.dsl.Expressions.cases()
+                    .when(qContentReview.user.isNotNull())
+                    .then(qReviewer.userProfile.nickname)
+                    .when(qContentReview.guestUser.isNotNull())
+                    .then(qGuestReviewer.username)
+                    .otherwise(com.querydsl.core.types.dsl.Expressions.nullExpression(String.class))
+                    .as("reviewerNickname"),
                 qContentReview.reviewContent.as("reviewContent"),
                 selectedOptionNameExpression,
                 qContentReview.rating.as("rating"),
@@ -269,6 +348,7 @@ public class ContentReviewCustomRepositoryImpl implements ContentReviewCustomRep
                 qContentReply.replyContent.as("replyContent")))
         .from(qContentReview)
         .leftJoin(qContentReview.user, qReviewer)
+        .leftJoin(qContentReview.guestUser, qGuestReviewer)
         .leftJoin(qContentReview.purchase, qPurchase)
         .leftJoin(qPurchase.order, qOrder)
         .leftJoin(qContentReply)
@@ -306,6 +386,17 @@ public class ContentReviewCustomRepositoryImpl implements ContentReviewCustomRep
         .update(qContentReview)
         .set(qContentReview.reviewStatus, ReviewStatus.DELETED)
         .where(qContentReview.id.eq(reviewId).and(qContentReview.user.id.eq(userId)))
+        .execute();
+  }
+
+  @Override
+  public void deleteGuestContentReview(Long guestUserId, Long reviewId) {
+    QContentReview qContentReview = QContentReview.contentReview;
+
+    jpaQueryFactory
+        .update(qContentReview)
+        .set(qContentReview.reviewStatus, ReviewStatus.DELETED)
+        .where(qContentReview.id.eq(reviewId).and(qContentReview.guestUser.id.eq(guestUserId)))
         .execute();
   }
 }

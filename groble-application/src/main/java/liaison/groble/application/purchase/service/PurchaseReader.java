@@ -75,6 +75,12 @@ public class PurchaseReader {
     return purchaseCustomRepository.findMyPurchasedContents(userId, orderStatuses, pageable);
   }
 
+  public Page<FlatPurchaseContentPreviewDTO> findMyPurchasedContentsForGuest(
+      Long guestUserId, List<Order.OrderStatus> orderStatuses, Pageable pageable) {
+    return purchaseCustomRepository.findMyPurchasedContentsForGuest(
+        guestUserId, orderStatuses, pageable);
+  }
+
   public FlatSellManageDetailDTO getSellManageDetail(Long userId, Long contentId) {
     return purchaseCustomRepository
         .getSellManageDetail(userId, contentId)
@@ -91,5 +97,9 @@ public class PurchaseReader {
 
   public boolean isContentPurchasedByUser(Long userId, Long contentId) {
     return purchaseCustomRepository.existsByUserAndContent(userId, contentId);
+  }
+
+  public boolean isContentPurchasedByGuestUser(Long guestUserId, Long contentId) {
+    return purchaseCustomRepository.existsByGuestUserAndContent(guestUserId, contentId);
   }
 }

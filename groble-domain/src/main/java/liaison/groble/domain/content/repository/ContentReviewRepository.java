@@ -10,4 +10,6 @@ public interface ContentReviewRepository {
   Optional<ContentReview> getContentReviewById(Long reviewId);
 
   boolean existsContentReview(Long userId, Long contentId);
+
+  boolean existsContentReviewForGuest(Long guestUserId, Long contentId);
 }

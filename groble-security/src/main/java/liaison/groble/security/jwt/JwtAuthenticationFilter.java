@@ -50,6 +50,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
   private final JwtTokenProvider jwtTokenProvider;
   private final UserDetailsService userDetailsService;
+  private final GuestUserDetailsService guestUserDetailsService;
 
   // 인증이 필요없는 경로 패턴 목록
   private static final List<String> PUBLIC_PATHS =
@@ -73,10 +74,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
           "/api/v1/verification/email/code/verify/sign-up",
           "/api/v1/verification/email/code/password-reset",
           "/api/v1/verification/password/reset",
+          "/api/v1/guest/auth/verify-request",
+          "/api/v1/guest/auth/code-request",
           "/payment/**",
           "/payple-payment",
           "/api/v1/groble/contents",
           "/api/v1/home/contents",
+          // ✅ 게스트 공개 API 경로 추가
           "/swagger-ui/**",
           "/swagger-ui.html",
           "/v3/api-docs/**",
@@ -123,11 +127,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     SecurityContextHolder.clearContext();
 
     try {
-      // 액세스 토큰 추출
+      // 1. 액세스 토큰 추출
       String accessJwt = extractToken(request);
       boolean accessTokenPresent = StringUtils.hasText(accessJwt);
 
-      // 리프레시 토큰 추출 및 검증
+      // 2. 게스트 토큰 추출 ✅
+      String guestJwt =
+          CookieUtils.getCookie(request, "guestToken")
+              .map(jakarta.servlet.http.Cookie::getValue)
+              .orElse(null);
+      boolean guestTokenPresent = StringUtils.hasText(guestJwt);
+
+      // 3. 리프레시 토큰 추출 및 검증
       var refreshTokenOpt = CookieUtils.getCookie(request, "refreshToken");
       boolean validRefreshToken = false;
       String refreshToken = null;
@@ -145,14 +156,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
       }
 
-      // 액세스 토큰 처리
+      // 4. 토큰 우선순위에 따른 인증 처리: accessToken > guestToken ✅
       if (accessTokenPresent) {
+        // 회원 토큰 처리
         try {
           jwtTokenProvider.parseClaimsJws(accessJwt, TokenType.ACCESS);
           authenticate(accessJwt, request);
         } catch (ExpiredJwtException exp) {
           log.debug("액세스 토큰 만료 - URI: {}", request.getRequestURI());
-          // ✅ 관리자 요청인지 확인 후 적절한 도메인으로 토큰 재발급
           handleTokenRefresh(refreshToken, validRefreshToken, response, request);
         } catch (JwtException | IllegalArgumentException bad) {
           log.debug("유효하지 않은 액세스 토큰 - URI: {}", request.getRequestURI());
@@ -162,7 +173,26 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             handleTokenRefresh(refreshToken, true, response, request);
           }
         }
+      } else if (guestTokenPresent) {
+        // 게스트 토큰 처리 ✅
+        try {
+          if (jwtTokenProvider.validateGuestToken(guestJwt)) {
+            authenticateGuest(guestJwt, request);
+            log.debug("게스트 인증 성공 - URI: {}", request.getRequestURI());
+          } else {
+            log.debug("유효하지 않은 게스트 토큰 - URI: {}", request.getRequestURI());
+            deleteGuestCookie(request, response);
+          }
+        } catch (ExpiredJwtException e) {
+          log.info("게스트 토큰 만료 - URI: {}", request.getRequestURI());
+          response.addHeader("X-Guest-Token-Status", "expired");
+          deleteGuestCookie(request, response);
+        } catch (Exception e) {
+          log.warn("게스트 토큰 검증 실패 - URI: {}", request.getRequestURI(), e);
+          deleteGuestCookie(request, response);
+        }
       } else {
+        // 토큰이 없는 경우 리프레시 토큰으로 재발급 시도
         if (validRefreshToken) {
           handleTokenRefresh(refreshToken, true, response, request);
         }
@@ -379,5 +409,41 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     return adminCookieDomain != null && !adminCookieDomain.isBlank()
         ? adminCookieDomain
         : ".groble.im";
+  }
+
+  /** 게스트 토큰으로 인증 처리 ✅ */
+  private void authenticateGuest(String guestToken, HttpServletRequest request) {
+    try {
+      // 게스트 토큰에서 Principal 추출
+      GuestPrincipal guestPrincipal = jwtTokenProvider.getGuestPrincipalFromToken(guestToken);
+
+      // 게스트 사용자 정보 로드
+      UserDetails guestDetails =
+          guestUserDetailsService.loadUserByGuestId(guestPrincipal.getGuestUserId());
+
+      // 인증 객체 생성
+      UsernamePasswordAuthenticationToken authentication =
+          new UsernamePasswordAuthenticationToken(
+              guestDetails, null, guestDetails.getAuthorities());
+
+      authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+      // SecurityContext에 설정
+      SecurityContextHolder.getContext().setAuthentication(authentication);
+
+      log.debug("게스트 인증 완료 - guestId: {}", guestPrincipal.getGuestUserId());
+
+    } catch (Exception e) {
+      log.error("게스트 인증 처리 중 오류 발생", e);
+      SecurityContextHolder.clearContext();
+    }
+  }
+
+  /** 게스트 쿠키 삭제 ✅ */
+  private void deleteGuestCookie(HttpServletRequest request, HttpServletResponse response) {
+    String sameSite = isProductionEnvironment() ? "Strict" : "None";
+    CookieUtils.deleteCookie(
+        request, response, "guestToken", "/", cookieDomain, sameSite, true, true);
+    log.debug("게스트 토큰 쿠키 삭제");
   }
 }

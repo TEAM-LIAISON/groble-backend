@@ -37,6 +37,7 @@ import liaison.groble.domain.content.entity.QContentReview;
 import liaison.groble.domain.content.entity.QDocumentOption;
 import liaison.groble.domain.content.enums.ContentType;
 import liaison.groble.domain.dashboard.dto.FlatDashboardOverviewDTO;
+import liaison.groble.domain.guest.entity.QGuestUser;
 import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.order.entity.QOrder;
 import liaison.groble.domain.payment.entity.QPayplePayment;
@@ -305,6 +306,7 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
     QPurchase qPurchase = QPurchase.purchase;
     QContent qContent = QContent.content;
     QUser qUser = QUser.user;
+    QGuestUser qGuestUser = QGuestUser.guestUser;
     QIntegratedAccount qIntegratedAccount = QIntegratedAccount.integratedAccount;
     QSocialAccount qSocialAccount = QSocialAccount.socialAccount;
 
@@ -319,20 +321,45 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
                     qPurchase.id.as("purchaseId"),
                     qContent.title.as("contentTitle"),
                     qPurchase.purchasedAt.as("purchasedAt"),
-                    qUser.userProfile.nickname.as("purchaserNickname"),
-                    // 조건부 이메일 처리
+                    // 구매자 닉네임 - 회원/비회원 구분
                     Expressions.cases()
-                        .when(qUser.accountType.eq(AccountType.INTEGRATED))
+                        .when(qPurchase.user.isNotNull())
+                        .then(qUser.userProfile.nickname)
+                        .when(qPurchase.guestUser.isNotNull())
+                        .then(qGuestUser.username)
+                        .otherwise(Expressions.nullExpression(String.class))
+                        .as("purchaserNickname"),
+                    // 구매자 이메일 - 회원/비회원 구분
+                    Expressions.cases()
+                        .when(
+                            qPurchase
+                                .user
+                                .isNotNull()
+                                .and(qUser.accountType.eq(AccountType.INTEGRATED)))
                         .then(qIntegratedAccount.integratedAccountEmail)
-                        .when(qUser.accountType.eq(AccountType.SOCIAL))
+                        .when(
+                            qPurchase
+                                .user
+                                .isNotNull()
+                                .and(qUser.accountType.eq(AccountType.SOCIAL)))
                         .then(qSocialAccount.socialAccountEmail)
+                        .when(qPurchase.guestUser.isNotNull())
+                        .then(qGuestUser.email)
                         .otherwise(Expressions.nullExpression(String.class))
                         .as("purchaserEmail"),
-                    qUser.userProfile.phoneNumber.as("purchaserPhoneNumber"),
+                    // 구매자 전화번호 - 회원/비회원 구분
+                    Expressions.cases()
+                        .when(qPurchase.user.isNotNull())
+                        .then(qUser.userProfile.phoneNumber)
+                        .when(qPurchase.guestUser.isNotNull())
+                        .then(qGuestUser.phoneNumber)
+                        .otherwise(Expressions.nullExpression(String.class))
+                        .as("purchaserPhoneNumber"),
                     qPurchase.selectedOptionName.as("selectedOptionName"),
                     qPurchase.finalPrice.as("finalPrice")))
             .from(qPurchase)
             .leftJoin(qPurchase.user, qUser)
+            .leftJoin(qPurchase.guestUser, qGuestUser)
             .leftJoin(qUser.integratedAccount, qIntegratedAccount)
             .leftJoin(qUser.socialAccount, qSocialAccount)
             .leftJoin(qPurchase.content, qContent)
@@ -349,6 +376,7 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
     QPurchase qPurchase = QPurchase.purchase;
     QContent qContent = QContent.content;
     QUser qUser = QUser.user;
+    QGuestUser qGuestUser = QGuestUser.guestUser;
     QIntegratedAccount qIntegratedAcc = QIntegratedAccount.integratedAccount;
     QSocialAccount qSocialAcc = QSocialAccount.socialAccount;
 
@@ -356,7 +384,8 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
     BooleanExpression conditions =
         qPurchase.content.id.eq(contentId).and(qPurchase.content.user.id.eq(userId));
 
-    JPAQuery<FlatContentSellDetailDTO> query =
+    // 데이터 조회 쿼리 구성
+    JPAQuery<FlatContentSellDetailDTO> dataQuery =
         queryFactory
             .select(
                 Projections.fields(
@@ -364,53 +393,32 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
                     qPurchase.id.as("purchaseId"),
                     qContent.title.as("contentTitle"),
                     qPurchase.purchasedAt.as("purchasedAt"),
-                    qUser.userProfile.nickname.as("purchaserNickname"),
-                    // 이메일
-                    Expressions.cases()
-                        .when(qUser.accountType.eq(AccountType.INTEGRATED))
-                        .then(qIntegratedAcc.integratedAccountEmail)
-                        .when(qUser.accountType.eq(AccountType.SOCIAL))
-                        .then(qSocialAcc.socialAccountEmail)
-                        .otherwise(Expressions.nullExpression(String.class))
-                        .as("purchaserEmail"),
-                    qUser.userProfile.phoneNumber.as("purchaserPhoneNumber"),
+                    ExpressionUtils.as(
+                        buildNicknameExpression(qPurchase, qUser, qGuestUser), "purchaserNickname"),
+                    ExpressionUtils.as(
+                        buildEmailExpression(
+                            qPurchase, qUser, qGuestUser, qIntegratedAcc, qSocialAcc),
+                        "purchaserEmail"),
+                    ExpressionUtils.as(
+                        buildPhoneExpression(qPurchase, qUser, qGuestUser), "purchaserPhoneNumber"),
                     qPurchase.selectedOptionName.as("selectedOptionName"),
                     qPurchase.finalPrice.as("finalPrice")))
             .from(qPurchase)
             .leftJoin(qPurchase.user, qUser)
+            .leftJoin(qPurchase.guestUser, qGuestUser)
             .leftJoin(qUser.integratedAccount, qIntegratedAcc)
             .leftJoin(qUser.socialAccount, qSocialAcc)
             .leftJoin(qPurchase.content, qContent)
             .where(conditions);
 
-    // ─── 1) 기본 정렬 ─────────────────────────────
-    if (pageable.getSort().isUnsorted()) {
-      query.orderBy(qPurchase.purchasedAt.desc());
-    } else {
-      // ─── 2) dynamic sort ──────────────────────────
-      for (Sort.Order sortOrder : pageable.getSort()) {
-        com.querydsl.core.types.Order direction =
-            sortOrder.isAscending()
-                ? com.querydsl.core.types.Order.ASC
-                : com.querydsl.core.types.Order.DESC;
+    // 정렬 적용
+    dataQuery = applySorting(dataQuery, pageable, qPurchase, qContent);
 
-        String property = sortOrder.getProperty();
-        if ("purchasedAt".equals(property)) {
-          // Purchase.purchasedAt 으로 직접 참조
-          query.orderBy(new OrderSpecifier<>(direction, qPurchase.purchasedAt));
-        } else {
-          PathBuilder<Content> contentPath =
-              new PathBuilder<>(Content.class, qContent.getMetadata());
-          ComparableExpressionBase<?> expr = contentPath.getComparable(property, Comparable.class);
-          query.orderBy(new OrderSpecifier<>(direction, expr));
-        }
-      }
-    }
-
-    // ─── 페이징, 조회, count ───────────────────────
+    // 페이징된 데이터 조회
     List<FlatContentSellDetailDTO> items =
-        query.offset(pageable.getOffset()).limit(pageable.getPageSize()).fetch();
+        dataQuery.offset(pageable.getOffset()).limit(pageable.getPageSize()).fetch();
 
+    // 전체 개수 조회
     long total =
         Optional.ofNullable(
                 queryFactory.select(qPurchase.count()).from(qPurchase).where(conditions).fetchOne())
@@ -501,37 +509,109 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
   }
 
   @Override
+  public Page<FlatPurchaseContentPreviewDTO> findMyPurchasedContentsForGuest(
+      Long guestUserId, List<Order.OrderStatus> orderStatuses, Pageable pageable) {
+    QPurchase qPurchase = QPurchase.purchase;
+    QOrder qOrder = QOrder.order;
+    QContent qContent = QContent.content;
+    QContentOption qContentOption = QContentOption.contentOption;
+    QGuestUser qGuestUser = QGuestUser.guestUser;
+
+    BooleanExpression conditions = qPurchase.guestUser.id.eq(guestUserId);
+    if (orderStatuses != null) {
+      conditions = conditions.and(qOrder.status.in(orderStatuses));
+    }
+
+    JPAQuery<FlatPurchaseContentPreviewDTO> query =
+        queryFactory
+            .select(
+                Projections.fields(
+                    FlatPurchaseContentPreviewDTO.class,
+                    qOrder.merchantUid.as("merchantUid"),
+                    qContent.id.as("contentId"),
+                    qContent.contentType.stringValue().as("contentType"),
+                    qPurchase.purchasedAt.as("purchasedAt"),
+                    qContent.title.as("title"),
+                    qContent.thumbnailUrl.as("thumbnailUrl"),
+                    qContent.user.userProfile.nickname.as("sellerName"),
+                    qPurchase.originalPrice.as("originalPrice"),
+                    qPurchase.finalPrice.as("finalPrice"),
+                    ExpressionUtils.as(
+                        select(qContentOption.count().intValue())
+                            .from(qContentOption)
+                            .where(qContentOption.content.eq(qContent)),
+                        "priceOptionLength"),
+                    qOrder.status.stringValue().as("orderStatus")))
+            .from(qPurchase)
+            .leftJoin(qPurchase.guestUser, qGuestUser)
+            .leftJoin(qPurchase.content, qContent)
+            .leftJoin(qPurchase.order, qOrder)
+            .where(conditions);
+
+    // 3) Pageable의 Sort 적용
+    if (pageable.getSort().isUnsorted()) {
+      query.orderBy(qPurchase.purchasedAt.desc());
+    } else {
+      for (Sort.Order order : pageable.getSort()) {
+        com.querydsl.core.types.Order direction =
+            order.isAscending()
+                ? com.querydsl.core.types.Order.ASC
+                : com.querydsl.core.types.Order.DESC;
+
+        // purchasedAt은 Purchase 엔티티에서 처리
+        if ("purchasedAt".equals(order.getProperty())) {
+          query.orderBy(new OrderSpecifier<>(direction, qPurchase.purchasedAt));
+        } else {
+          // 다른 필드는 Content에서 처리
+          PathBuilder<Content> path = new PathBuilder<>(Content.class, qContent.getMetadata());
+          ComparableExpressionBase<?> expr =
+              path.getComparable(order.getProperty(), Comparable.class);
+          query.orderBy(new OrderSpecifier<>(direction, expr));
+        }
+      }
+    }
+
+    // 4) 페이징(Offset + Limit)
+    List<FlatPurchaseContentPreviewDTO> items =
+        query.offset(pageable.getOffset()).limit(pageable.getPageSize()).fetch();
+
+    // 5) 전체 카운트
+    long total =
+        Optional.ofNullable(
+                queryFactory
+                    .select(qPurchase.count())
+                    .from(qPurchase)
+                    .leftJoin(qPurchase.order, qOrder)
+                    .where(conditions)
+                    .fetchOne())
+            .orElse(0L);
+
+    return new PageImpl<>(items, pageable, total);
+  }
+
+  @Override
   public Optional<FlatSellManageDetailDTO> getSellManageDetail(Long userId, Long contentId) {
     QPurchase qPurchase = QPurchase.purchase;
     QOrder qOrder = QOrder.order;
     QContent qContent = QContent.content;
-    QUser qUser = QUser.user;
     QContentReview qContentReview = QContentReview.contentReview;
 
-    BooleanExpression conditions =
-        qPurchase
-            .content
-            .id
-            .eq(contentId)
-            .and(qPurchase.content.user.id.eq(userId))
-            .and(qOrder.status.eq(Order.OrderStatus.PAID));
-
-    FlatSellManageDetailDTO result =
+    // 1번의 쿼리로 모든 통계 데이터를 가져오기
+    Tuple result =
         queryFactory
             .select(
-                Projections.constructor(
-                    FlatSellManageDetailDTO.class,
-                    // BigDecimal 그대로 전달 (데이터 없으면 0)
-                    qPurchase.finalPrice.sum().coalesce(BigDecimal.ZERO),
-                    // Long으로, 데이터 없으면 0
-                    qPurchase.user.id.countDistinct().coalesce(0L),
-                    // 서브쿼리 count() 결과도 Long, 데이터 없으면 0
-                    JPAExpressions.select(qContentReview.count().coalesce(0L))
-                        .from(qContentReview)
-                        .where(qContentReview.content.id.eq(contentId))))
+                // 총 결제 금액
+                qPurchase.finalPrice.sum().coalesce(BigDecimal.ZERO),
+                // 고유한 회원 구매자 수 (NULL 값 제외)
+                qPurchase.user.id.countDistinct(),
+                // 고유한 비회원 구매자 수 (NULL 값 제외)
+                qPurchase.guestUser.id.countDistinct(),
+                // 리뷰 총 개수 (서브쿼리)
+                JPAExpressions.select(qContentReview.count().coalesce(0L))
+                    .from(qContentReview)
+                    .where(qContentReview.content.id.eq(contentId)))
             .from(qPurchase)
             .leftJoin(qPurchase.content, qContent)
-            .leftJoin(qPurchase.user, qUser)
             .leftJoin(qPurchase.order, qOrder)
             .where(
                 qPurchase
@@ -542,7 +622,32 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
                     .and(qOrder.status.eq(Order.OrderStatus.PAID)))
             .fetchOne();
 
-    return Optional.ofNullable(result);
+    if (result == null) {
+      // 데이터가 없는 경우 기본값 반환
+      return Optional.of(
+          FlatSellManageDetailDTO.builder()
+              .totalPaymentPrice(BigDecimal.ZERO)
+              .totalPurchaseCustomer(0L)
+              .totalReviewCount(0L)
+              .build());
+    }
+
+    // 결과 추출 및 NULL 안전 처리
+    BigDecimal totalPaymentPrice =
+        Optional.ofNullable(result.get(0, BigDecimal.class)).orElse(BigDecimal.ZERO);
+    Long memberCount = Optional.ofNullable(result.get(1, Long.class)).orElse(0L);
+    Long guestCount = Optional.ofNullable(result.get(2, Long.class)).orElse(0L);
+    Long totalReviewCount = Optional.ofNullable(result.get(3, Long.class)).orElse(0L);
+
+    // 총 고유 구매자 수 = 회원 + 비회원
+    Long totalPurchaseCustomer = memberCount + guestCount;
+
+    return Optional.of(
+        FlatSellManageDetailDTO.builder()
+            .totalPaymentPrice(totalPaymentPrice)
+            .totalPurchaseCustomer(totalPurchaseCustomer)
+            .totalReviewCount(totalReviewCount)
+            .build());
   }
 
   @Override
@@ -562,20 +667,31 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
   }
 
   @Override
+  public boolean existsByGuestUserAndContent(Long guestUserId, Long contentId) {
+    QPurchase qPurchase = QPurchase.purchase;
+    QContent qContent = QContent.content;
+    BooleanExpression conditions =
+        qPurchase.guestUser.id.eq(guestUserId).and(qPurchase.content.id.eq(contentId));
+    return queryFactory
+            .selectOne()
+            .from(qPurchase)
+            .leftJoin(qPurchase.content, qContent)
+            .where(conditions)
+            .fetchFirst()
+        != null;
+  }
+
+  @Override
   public FlatDashboardOverviewDTO getDashboardOverviewStats(Long sellerId) {
     LocalDateTime currentMonthStart = LocalDate.now().withDayOfMonth(1).atStartOfDay();
 
     QPurchase purchase = QPurchase.purchase;
     QContent content = QContent.content;
 
-    // 전체 통계 - NULL 안전 처리
+    // 전체 통계 - 회원과 비회원 합계
     Tuple totalStats =
         queryFactory
-            .select(
-                purchase.finalPrice.sum().coalesce(BigDecimal.ZERO),
-                purchase.count(),
-                purchase.user.id.countDistinct() // 전체 고유 고객 수
-                )
+            .select(purchase.finalPrice.sum().coalesce(BigDecimal.ZERO), purchase.count())
             .from(purchase)
             .join(purchase.content, content)
             .where(
@@ -584,14 +700,35 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
                 purchase.purchasedAt.isNotNull())
             .fetchOne();
 
-    // 이번 달 통계
+    // 전체 고유 고객 수 (회원 + 비회원)
+    Long totalMemberCustomers =
+        queryFactory
+            .select(purchase.user.id.countDistinct())
+            .from(purchase)
+            .join(purchase.content, content)
+            .where(
+                content.user.id.eq(sellerId),
+                purchase.cancelledAt.isNull(),
+                purchase.purchasedAt.isNotNull(),
+                purchase.user.isNotNull())
+            .fetchOne();
+
+    Long totalGuestCustomers =
+        queryFactory
+            .select(purchase.guestUser.id.countDistinct())
+            .from(purchase)
+            .join(purchase.content, content)
+            .where(
+                content.user.id.eq(sellerId),
+                purchase.cancelledAt.isNull(),
+                purchase.purchasedAt.isNotNull(),
+                purchase.guestUser.isNotNull())
+            .fetchOne();
+
+    // 이번 달 통계 - 회원과 비회원 합계
     Tuple monthStats =
         queryFactory
-            .select(
-                purchase.finalPrice.sum().coalesce(BigDecimal.ZERO),
-                purchase.count(),
-                purchase.user.id.countDistinct() // 이번 달 고유 고객 수
-                )
+            .select(purchase.finalPrice.sum().coalesce(BigDecimal.ZERO), purchase.count())
             .from(purchase)
             .join(purchase.content, content)
             .where(
@@ -601,27 +738,62 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
                 purchase.purchasedAt.goe(currentMonthStart))
             .fetchOne();
 
+    // 이번 달 고유 고객 수 (회원 + 비회원)
+    Long monthMemberCustomers =
+        queryFactory
+            .select(purchase.user.id.countDistinct())
+            .from(purchase)
+            .join(purchase.content, content)
+            .where(
+                content.user.id.eq(sellerId),
+                purchase.cancelledAt.isNull(),
+                purchase.purchasedAt.isNotNull(),
+                purchase.purchasedAt.goe(currentMonthStart),
+                purchase.user.isNotNull())
+            .fetchOne();
+
+    Long monthGuestCustomers =
+        queryFactory
+            .select(purchase.guestUser.id.countDistinct())
+            .from(purchase)
+            .join(purchase.content, content)
+            .where(
+                content.user.id.eq(sellerId),
+                purchase.cancelledAt.isNull(),
+                purchase.purchasedAt.isNotNull(),
+                purchase.purchasedAt.goe(currentMonthStart),
+                purchase.guestUser.isNotNull())
+            .fetchOne();
+
     // NULL 안전 처리
     BigDecimal totalRevenue = BigDecimal.ZERO;
     Long totalSalesCount = 0L;
-    Long totalCustomers = 0L;
+    Long totalCustomers;
     BigDecimal monthRevenue = BigDecimal.ZERO;
     Long monthSalesCount = 0L;
-    Long recentCustomers = 0L;
+    Long recentCustomers;
 
     if (totalStats != null) {
       totalRevenue =
           Optional.ofNullable(totalStats.get(0, BigDecimal.class)).orElse(BigDecimal.ZERO);
       totalSalesCount = Optional.ofNullable(totalStats.get(1, Long.class)).orElse(0L);
-      totalCustomers = Optional.ofNullable(totalStats.get(2, Long.class)).orElse(0L);
     }
+
+    // 전체 고유 고객 수 계산
+    totalCustomers =
+        (totalMemberCustomers != null ? totalMemberCustomers : 0L)
+            + (totalGuestCustomers != null ? totalGuestCustomers : 0L);
 
     if (monthStats != null) {
       monthRevenue =
           Optional.ofNullable(monthStats.get(0, BigDecimal.class)).orElse(BigDecimal.ZERO);
       monthSalesCount = Optional.ofNullable(monthStats.get(1, Long.class)).orElse(0L);
-      recentCustomers = Optional.ofNullable(monthStats.get(2, Long.class)).orElse(0L);
     }
+
+    // 이번 달 고유 고객 수 계산
+    recentCustomers =
+        (monthMemberCustomers != null ? monthMemberCustomers : 0L)
+            + (monthGuestCustomers != null ? monthGuestCustomers : 0L);
 
     return FlatDashboardOverviewDTO.builder()
         .totalRevenue(totalRevenue)
@@ -631,5 +803,67 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
         .totalCustomers(totalCustomers)
         .recentCustomers(recentCustomers)
         .build();
+  }
+
+  /** 구매자 닉네임 표현식을 생성합니다. 회원인 경우 User의 닉네임을, 비회원인 경우 GuestUser의 username을 반환합니다. */
+  private Expression<String> buildNicknameExpression(
+      QPurchase qPurchase, QUser qUser, QGuestUser qGuestUser) {
+    return Expressions.cases()
+        .when(qPurchase.user.isNotNull())
+        .then(qUser.userProfile.nickname)
+        .otherwise(qGuestUser.username);
+  }
+
+  /** 구매자 이메일 표현식을 생성합니다. 회원인 경우 계정 타입에 따라 이메일을, 비회원인 경우 GuestUser의 이메일을 반환합니다. */
+  private Expression<String> buildEmailExpression(
+      QPurchase qPurchase,
+      QUser qUser,
+      QGuestUser qGuestUser,
+      QIntegratedAccount qIntegratedAcc,
+      QSocialAccount qSocialAcc) {
+    return Expressions.cases()
+        .when(qPurchase.user.isNotNull().and(qUser.accountType.eq(AccountType.INTEGRATED)))
+        .then(qIntegratedAcc.integratedAccountEmail)
+        .when(qPurchase.user.isNotNull().and(qUser.accountType.eq(AccountType.SOCIAL)))
+        .then(qSocialAcc.socialAccountEmail)
+        .otherwise(qGuestUser.email);
+  }
+
+  /** 구매자 전화번호 표현식을 생성합니다. 회원인 경우 User의 전화번호를, 비회원인 경우 GuestUser의 전화번호를 반환합니다. */
+  private Expression<String> buildPhoneExpression(
+      QPurchase qPurchase, QUser qUser, QGuestUser qGuestUser) {
+    return Expressions.cases()
+        .when(qPurchase.user.isNotNull())
+        .then(qUser.userProfile.phoneNumber)
+        .otherwise(qGuestUser.phoneNumber);
+  }
+
+  /** 정렬 조건을 적용합니다. */
+  private JPAQuery<FlatContentSellDetailDTO> applySorting(
+      JPAQuery<FlatContentSellDetailDTO> query,
+      Pageable pageable,
+      QPurchase qPurchase,
+      QContent qContent) {
+    if (pageable.getSort().isUnsorted()) {
+      return query.orderBy(qPurchase.purchasedAt.desc());
+    }
+
+    for (Sort.Order sortOrder : pageable.getSort()) {
+      com.querydsl.core.types.Order direction =
+          sortOrder.isAscending()
+              ? com.querydsl.core.types.Order.ASC
+              : com.querydsl.core.types.Order.DESC;
+
+      String property = sortOrder.getProperty();
+      if ("purchasedAt".equals(property)) {
+        query = query.orderBy(new OrderSpecifier<>(direction, qPurchase.purchasedAt));
+      } else {
+        PathBuilder<Content> contentPath = new PathBuilder<>(Content.class, qContent.getMetadata());
+        ComparableExpressionBase<?> expr = contentPath.getComparable(property, Comparable.class);
+        query = query.orderBy(new OrderSpecifier<>(direction, expr));
+      }
+    }
+
+    return query;
   }
 }

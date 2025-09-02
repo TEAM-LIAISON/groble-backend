@@ -4,7 +4,9 @@ import org.mapstruct.Mapper;
 
 import liaison.groble.api.model.payment.request.PaymentCancelRequest;
 import liaison.groble.api.model.payment.request.PaypleAuthResultRequest;
+import liaison.groble.api.model.payment.response.AppCardPayplePaymentResponse;
 import liaison.groble.api.model.payment.response.PaymentCancelInfoResponse;
+import liaison.groble.application.payment.dto.AppCardPayplePaymentDTO;
 import liaison.groble.application.payment.dto.PaypleAuthResultDTO;
 import liaison.groble.application.payment.dto.cancel.PaymentCancelDTO;
 import liaison.groble.application.payment.dto.cancel.PaymentCancelInfoDTO;
@@ -19,4 +21,7 @@ public interface PaymentMapper {
 
   // ====== 📤 DTO → Response 변환 ======
   PaymentCancelInfoResponse toPaymentCancelInfoResponse(PaymentCancelInfoDTO paymentCancelInfoDTO);
+
+  AppCardPayplePaymentResponse toAppCardPayplePaymentResponse(
+      AppCardPayplePaymentDTO appCardPayplePaymentDTO);
 }

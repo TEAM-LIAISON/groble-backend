@@ -1,7 +1,6 @@
 package liaison.groble.application.settlement.service;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.ZoneId;
 import java.util.List;
@@ -12,17 +11,17 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import liaison.groble.application.settlement.dto.MonthlySettlementOverviewDTO;
 import liaison.groble.application.settlement.dto.PerTransactionSettlementOverviewDTO;
 import liaison.groble.application.settlement.dto.SettlementDetailDTO;
 import liaison.groble.application.settlement.dto.SettlementOverviewDTO;
+import liaison.groble.application.settlement.dto.SettlementsOverviewDTO;
 import liaison.groble.application.settlement.dto.TaxInvoiceDTO;
 import liaison.groble.application.settlement.reader.SettlementReader;
 import liaison.groble.application.settlement.reader.TaxInvoiceReader;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.common.response.PageResponse;
-import liaison.groble.domain.settlement.dto.FlatMonthlySettlement;
 import liaison.groble.domain.settlement.dto.FlatPerTransactionSettlement;
+import liaison.groble.domain.settlement.dto.FlatSettlementsDTO;
 import liaison.groble.domain.settlement.entity.Settlement;
 import liaison.groble.domain.settlement.entity.TaxInvoice;
 import liaison.groble.domain.user.entity.SellerInfo;
@@ -55,32 +54,22 @@ public class SettlementService {
             .filter(Objects::nonNull)
             .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-    // 3) 이번 달 정산 예정 금액 = 이번 달 기간 Settlement의 settlementAmount (없으면 0)
-    YearMonth nowYm = YearMonth.now(KST);
-    LocalDate start = nowYm.atDay(1);
-    LocalDate end = nowYm.atEndOfMonth();
-
-    BigDecimal currentMonthSettlementAmount =
-        settlementReader
-            .findSettlementByUserIdAndPeriod(userId, start, end)
-            .map(Settlement::getSettlementAmount)
-            .orElse(BigDecimal.ZERO);
+    BigDecimal pendingSettlementAmount = settlementReader.getPendingSettlementAmount(userId);
 
     return SettlementOverviewDTO.builder()
         .verificationStatus(sellerInfo.getVerificationStatus().name())
         .totalSettlementAmount(totalSettlementAmount)
-        .currentMonthSettlementAmount(currentMonthSettlementAmount)
+        .pendingSettlementAmount(pendingSettlementAmount)
         .build();
   }
 
   @Transactional(readOnly = true)
-  public PageResponse<MonthlySettlementOverviewDTO> getMonthlySettlements(
+  public PageResponse<SettlementsOverviewDTO> getMonthlySettlements(
       Long userId, Pageable pageable) {
-    Page<FlatMonthlySettlement> page =
-        settlementReader.findMonthlySettlementsByUserId(userId, pageable);
+    Page<FlatSettlementsDTO> page = settlementReader.findSettlementsByUserId(userId, pageable);
 
-    List<MonthlySettlementOverviewDTO> items =
-        page.getContent().stream().map(this::convertFlatDTOToMonthlyDTO).toList();
+    List<SettlementsOverviewDTO> items =
+        page.getContent().stream().map(this::convertFlatDTOToSettlementsDTO).toList();
 
     PageResponse.MetaData meta =
         PageResponse.MetaData.builder()
@@ -91,21 +80,21 @@ public class SettlementService {
     return PageResponse.from(page, items, meta);
   }
 
-  private MonthlySettlementOverviewDTO convertFlatDTOToMonthlyDTO(FlatMonthlySettlement flat) {
-    return MonthlySettlementOverviewDTO.builder()
+  private SettlementsOverviewDTO convertFlatDTOToSettlementsDTO(FlatSettlementsDTO flat) {
+    return SettlementsOverviewDTO.builder()
+        .settlementId(flat.getSettlementId())
         .settlementStartDate(flat.getSettlementStartDate())
         .settlementEndDate(flat.getSettlementEndDate())
+        .scheduledSettlementDate(flat.getScheduledSettlementDate())
+        .contentType(flat.getContentType())
         .settlementAmount(flat.getSettlementAmount())
         .settlementStatus(flat.getSettlementStatus())
         .build();
   }
 
   // 세금계산서 상세 내역 조회
-  public SettlementDetailDTO getSettlementDetail(Long userId, YearMonth yearMonth) {
-    LocalDate startDate = yearMonth.atDay(1);
-    LocalDate endDate = yearMonth.atEndOfMonth();
-    Settlement settlement =
-        settlementReader.getSettlementByUserIdAndPeriod(userId, startDate, endDate);
+  public SettlementDetailDTO getSettlementDetail(Long userId, Long settlementId) {
+    Settlement settlement = settlementReader.getSettlementByIdAndUserId(userId, settlementId);
 
     // 수동으로 관리
     Boolean isTaxInvoiceButtonEnabled = settlement.getTaxInvoiceEligible();
@@ -141,13 +130,10 @@ public class SettlementService {
 
   @Transactional
   public PageResponse<PerTransactionSettlementOverviewDTO> getPerTransactionSettlements(
-      Long userId, YearMonth yearMonth, Pageable pageable) {
-    LocalDate startDate = yearMonth.atDay(1);
-    LocalDate endDate = yearMonth.atEndOfMonth();
+      Long userId, Long settlementId, Pageable pageable) {
 
     Page<FlatPerTransactionSettlement> page =
-        settlementReader.findPerTransactionSettlementsByUserIdAndYearMonth(
-            userId, startDate, endDate, pageable);
+        settlementReader.findPerTransactionSettlementsByIdAndUserId(userId, settlementId, pageable);
 
     List<PerTransactionSettlementOverviewDTO> items =
         page.getContent().stream().map(this::convertFlatDTOToPerTransactionDTO).toList();
@@ -159,9 +145,9 @@ public class SettlementService {
             .build();
 
     log.info(
-        "Per transaction settlements retrieved for userId: {}, yearMonth: {}, page: {}, size: {}, totalElements: {}",
+        "Per transaction settlements retrieved for userId: {}, settlementId: {}, page: {}, size: {}, totalElements: {}",
         userId,
-        yearMonth,
+        settlementId,
         pageable.getPageNumber(),
         pageable.getPageSize(),
         page.getTotalElements());

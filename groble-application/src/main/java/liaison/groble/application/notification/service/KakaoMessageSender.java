@@ -26,15 +26,4 @@ public class KakaoMessageSender {
         kakaoSenderKey,
         kakaoMessageDTO.getButtons());
   }
-
-  //    public MessageResponse send(KakaoMessage message) {
-  //        return bizppurioMessageService.sendAlimtalk(
-  //                message.getPhoneNumber(),
-  //                message.getTemplateCode(),
-  //                message.getTitle(),
-  //                message.getContent(),
-  //                kakaoSenderKey,
-  //                message.getButtons()
-  //        );
-  //    }
 }

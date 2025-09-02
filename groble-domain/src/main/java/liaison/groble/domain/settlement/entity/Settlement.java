@@ -9,9 +9,25 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
-import jakarta.persistence.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 
 import liaison.groble.domain.common.entity.BaseTimeEntity;
+import liaison.groble.domain.settlement.enums.SettlementCycle;
+import liaison.groble.domain.settlement.enums.SettlementType;
 import liaison.groble.domain.user.entity.User;
 
 import lombok.AccessLevel;
@@ -31,7 +47,10 @@ import lombok.NoArgsConstructor;
       @Index(
           name = "idx_settlement_user_period",
           columnList = "user_id, settlement_start_date, settlement_end_date",
-          unique = true)
+          unique = true),
+      @Index(
+          name = "idx_settlement_type_cycle_round",
+          columnList = "settlement_type, settlement_cycle, settlement_round")
     })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -48,6 +67,20 @@ public class Settlement extends BaseTimeEntity {
   // 세금계산서 관계 추가
   @OneToMany(mappedBy = "settlement", fetch = FetchType.LAZY)
   private List<TaxInvoice> taxInvoices = new ArrayList<>();
+
+  // 정산 타입 (자료형/서비스형 구분)
+  @Enumerated(EnumType.STRING)
+  @Column(name = "settlement_type", length = 20)
+  private SettlementType settlementType;
+
+  // 정산 주기 타입 (월1회/월2회/월4회)
+  @Enumerated(EnumType.STRING)
+  @Column(name = "settlement_cycle", length = 20)
+  private SettlementCycle settlementCycle;
+
+  // 정산 회차 (월 내에서 몇 번째 정산인지)
+  @Column(name = "settlement_round")
+  private Integer settlementRound;
 
   // 세금계산서 발급 가능 여부 (수동 관리)
   @Column(name = "tax_invoice_eligible", nullable = false)
@@ -143,7 +176,10 @@ public class Settlement extends BaseTimeEntity {
       LocalDate settlementEndDate,
       BigDecimal platformFeeRate,
       BigDecimal pgFeeRate,
-      BigDecimal vatRate) {
+      BigDecimal vatRate,
+      SettlementType settlementType,
+      SettlementCycle settlementCycle,
+      Integer settlementRound) {
     // 입력 검증
     if (user == null) {
       throw new IllegalArgumentException("사용자는 필수입니다.");
@@ -163,7 +199,15 @@ public class Settlement extends BaseTimeEntity {
     this.pgFeeRate = pgFeeRate != null ? pgFeeRate : new BigDecimal("0.0170"); // 기본 1.7%
     this.vatRate = vatRate != null ? vatRate : new BigDecimal("0.1000"); // 기본 10%
     this.status = SettlementStatus.PENDING;
-    this.scheduledSettlementDate = computeScheduledDate(this.settlementEndDate);
+
+    // 신규 필드 설정 (null이면 기존 방식) - scheduledSettlementDate 계산 전에 먼저 설정
+    this.settlementType = settlementType != null ? settlementType : SettlementType.LEGACY;
+    this.settlementCycle = settlementCycle != null ? settlementCycle : SettlementCycle.MONTHLY;
+    this.settlementRound = settlementRound != null ? settlementRound : 1;
+
+    // 정산 예정일 계산 로직 변경 - 필드들이 초기화된 후에 계산
+    this.scheduledSettlementDate =
+        calculateScheduledDate(this.settlementEndDate, this.settlementType, this.settlementRound);
   }
 
   // === 비즈니스 메서드 ===
@@ -350,5 +394,97 @@ public class Settlement extends BaseTimeEntity {
   // 세금계산서 발급 가능 여부 수동 설정
   public void setTaxInvoiceEligible(boolean eligible) {
     this.taxInvoiceEligible = eligible;
+  }
+
+  /** 콘텐츠 타입과 결제일에 따른 정산 기간 계산 기존 월 단위 계산과 호환되도록 구현 */
+  public static SettlementPeriod calculatePeriod(
+      SettlementType settlementType, LocalDate paymentDate) {
+
+    if (settlementType == SettlementType.LEGACY) {
+      // 기존 방식: 월 단위
+      return new SettlementPeriod(
+          paymentDate.withDayOfMonth(1),
+          paymentDate.withDayOfMonth(paymentDate.lengthOfMonth()),
+          1 // 회차
+          );
+    }
+
+    int day = paymentDate.getDayOfMonth();
+
+    if (settlementType == SettlementType.DOCUMENT) {
+      // 자료형: 월 4회
+      if (day >= 16 && day <= 23) {
+        // 익월 1일 정산 (전월 16-23일)
+        return new SettlementPeriod(
+            paymentDate.withDayOfMonth(16), paymentDate.withDayOfMonth(23), 1);
+      } else if (day >= 24) {
+        // 익월 8일 정산 (전월 24-말일)
+        return new SettlementPeriod(
+            paymentDate.withDayOfMonth(24),
+            paymentDate.withDayOfMonth(paymentDate.lengthOfMonth()),
+            2);
+      } else if (day >= 1 && day <= 7) {
+        // 당월 16일 정산 (당월 1-7일)
+        return new SettlementPeriod(
+            paymentDate.withDayOfMonth(1), paymentDate.withDayOfMonth(7), 3);
+      } else {
+        // 당월 24일 정산 (당월 8-15일)
+        return new SettlementPeriod(
+            paymentDate.withDayOfMonth(8), paymentDate.withDayOfMonth(15), 4);
+      }
+    } else {
+      // 서비스형: 월 2회
+      if (day >= 1 && day <= 15) {
+        // 익월 1일 정산 (전월 1-15일)
+        return new SettlementPeriod(
+            paymentDate.withDayOfMonth(1), paymentDate.withDayOfMonth(15), 1);
+      } else {
+        // 익월 16일 정산 (전월 16-말일)
+        return new SettlementPeriod(
+            paymentDate.withDayOfMonth(16),
+            paymentDate.withDayOfMonth(paymentDate.lengthOfMonth()),
+            2);
+      }
+    }
+  }
+
+  // 정산 기간 정보를 담는 내부 클래스
+  @Getter
+  public static class SettlementPeriod {
+    private final LocalDate startDate;
+    private final LocalDate endDate;
+    private final Integer round;
+
+    public SettlementPeriod(LocalDate startDate, LocalDate endDate, Integer round) {
+      this.startDate = startDate;
+      this.endDate = endDate;
+      this.round = round;
+    }
+  }
+
+  /** 정산 예정일 계산 - 타입별로 다르게 */
+  private static LocalDate calculateScheduledDate(
+      LocalDate endDate, SettlementType type, Integer round) {
+
+    if (type == SettlementType.LEGACY) {
+      // 기존: 익월 1일
+      return endDate.plusMonths(1).withDayOfMonth(1);
+    }
+
+    LocalDate nextMonth = endDate.plusMonths(1);
+
+    if (type == SettlementType.DOCUMENT) {
+      // 자료형: 1일, 8일, 16일, 24일
+      return switch (round) {
+        case 1 -> nextMonth.withDayOfMonth(1);
+        case 2 -> nextMonth.withDayOfMonth(8);
+        case 3 -> endDate.withDayOfMonth(16); // 당월
+        case 4 -> endDate.withDayOfMonth(24); // 당월
+        default -> nextMonth.withDayOfMonth(1);
+      };
+    } else {
+      // 서비스형: 1일, 16일
+      return round == 1 ? nextMonth.withDayOfMonth(1) : nextMonth.withDayOfMonth(16);
+    }
   }
 }

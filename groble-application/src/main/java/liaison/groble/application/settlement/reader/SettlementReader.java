@@ -1,5 +1,6 @@
 package liaison.groble.application.settlement.reader;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -10,8 +11,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import liaison.groble.common.exception.EntityNotFoundException;
-import liaison.groble.domain.settlement.dto.FlatMonthlySettlement;
 import liaison.groble.domain.settlement.dto.FlatPerTransactionSettlement;
+import liaison.groble.domain.settlement.dto.FlatSettlementsDTO;
 import liaison.groble.domain.settlement.entity.Settlement;
 import liaison.groble.domain.settlement.entity.SettlementItem;
 import liaison.groble.domain.settlement.repository.SettlementCustomRepository;
@@ -52,6 +53,17 @@ public class SettlementReader {
                         sellerId, periodStart, periodEnd)));
   }
 
+  public Settlement getSettlementByIdAndUserId(Long sellerId, Long settlementId) {
+    return settlementRepository
+        .findByIdAndUserId(sellerId, settlementId)
+        .orElseThrow(
+            () ->
+                new EntityNotFoundException(
+                    String.format(
+                        "정산 정보를 찾을 수 없습니다 - sellerId: %d, settlementId: %d",
+                        sellerId, settlementId)));
+  }
+
   /**
    * 정산 정보 조회 (Optional)
    *
@@ -62,15 +74,18 @@ public class SettlementReader {
     return settlementRepository.findByUserIdAndPeriod(sellerId, periodStart, periodEnd);
   }
 
-  public Page<FlatMonthlySettlement> findMonthlySettlementsByUserId(
-      Long userId, Pageable pageable) {
-    return settlementCustomRepository.findMonthlySettlementsByUserId(userId, pageable);
+  public BigDecimal getPendingSettlementAmount(Long sellerId) {
+    return settlementRepository.getPendingSettlementAmount(sellerId);
   }
 
-  public Page<FlatPerTransactionSettlement> findPerTransactionSettlementsByUserIdAndYearMonth(
-      Long userId, LocalDate periodStart, LocalDate periodEnd, Pageable pageable) {
-    return settlementCustomRepository.findPerTransactionSettlementsByUserIdAndYearMonth(
-        userId, periodStart, periodEnd, pageable);
+  public Page<FlatSettlementsDTO> findSettlementsByUserId(Long userId, Pageable pageable) {
+    return settlementCustomRepository.findSettlementsByUserId(userId, pageable);
+  }
+
+  public Page<FlatPerTransactionSettlement> findPerTransactionSettlementsByIdAndUserId(
+      Long userId, Long settlementId, Pageable pageable) {
+    return settlementCustomRepository.findPerTransactionSettlementsByIdAndUserId(
+        userId, settlementId, pageable);
   }
 
   public List<Settlement> findAllByUserId(Long userId) {

@@ -9,4 +9,7 @@ public interface JpaContentReviewRepository extends JpaRepository<ContentReview,
 
   boolean existsByUserIdAndContentIdAndReviewStatus(
       Long userId, Long contentId, ReviewStatus reviewStatus);
+
+  boolean existsByGuestUserIdAndContentIdAndReviewStatus(
+      Long guestUserId, Long contentId, ReviewStatus reviewStatus);
 }

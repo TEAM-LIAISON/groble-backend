@@ -6,6 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 import liaison.groble.application.order.service.OrderReader;
 import liaison.groble.application.payment.dto.cancel.PaymentCancelDTO;
 import liaison.groble.application.payment.dto.cancel.PaymentCancelInfoDTO;
+import liaison.groble.application.payment.exception.refund.OrderCancellationException;
 import liaison.groble.application.payment.exception.refund.PaymentRefundBadRequestException;
 import liaison.groble.application.purchase.service.PurchaseReader;
 import liaison.groble.domain.content.enums.ContentType;
@@ -95,15 +96,21 @@ public class PaymentService {
   }
 
   private void validateRequestCancellableStatus(Order order) {
-    // 주문 상태 검증
-    if (order.getStatus() != Order.OrderStatus.PAID) {
-      throw new IllegalStateException(
-          String.format(
-              "결제 완료된 주문만 취소 요청할 수 있습니다. orderId: %d, status: %s",
-              order.getId(), order.getStatus()));
+    // 이미 취소 요청된 경우
+    if (order.getStatus() == Order.OrderStatus.CANCEL_REQUEST) {
+      throw new OrderCancellationException(
+          "이미 취소 요청이 완료되었습니다.", String.valueOf(order.getId()), order.getStatus().toString());
     }
 
-    // 결제 상태 검증
+    // 결제 완료 상태가 아닌 경우
+    if (order.getStatus() != Order.OrderStatus.PAID) {
+      throw new OrderCancellationException(
+          String.format(
+              "결제 완료된 주문만 취소 요청할 수 있습니다. orderId: %d, status: %s",
+              order.getId(), order.getStatus()),
+          String.valueOf(order.getId()),
+          order.getStatus().toString());
+    }
   }
 
   private void handlePaymentCancelSuccess(

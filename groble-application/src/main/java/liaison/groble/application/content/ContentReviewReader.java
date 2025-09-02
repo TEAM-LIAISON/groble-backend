@@ -41,6 +41,15 @@ public class ContentReviewReader {
                     "리뷰를 찾을 수 없습니다. User ID: " + userId + ", Review ID: " + reviewId));
   }
 
+  public ContentReview getContentReviewForGuest(Long guestUserId, Long reviewId) {
+    return contentReviewCustomRepository
+        .getContentReviewForGuest(guestUserId, reviewId)
+        .orElseThrow(
+            () ->
+                new EntityNotFoundException(
+                    "리뷰를 찾을 수 없습니다. Guest User ID: " + guestUserId + ", Review ID: " + reviewId));
+  }
+
   public FlatContentReviewDetailDTO getContentReviewDetail(
       Long userId, Long contentId, Long reviewId) {
     return contentReviewCustomRepository
@@ -71,5 +80,9 @@ public class ContentReviewReader {
 
   public boolean existsContentReview(Long userId, Long contentId) {
     return contentReviewRepository.existsContentReview(userId, contentId);
+  }
+
+  public boolean existsContentReviewForGuest(Long guestUserId, Long contentId) {
+    return contentReviewRepository.existsContentReviewForGuest(guestUserId, contentId);
   }
 }

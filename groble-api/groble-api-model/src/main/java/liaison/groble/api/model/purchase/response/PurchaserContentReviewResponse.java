@@ -3,15 +3,11 @@ package liaison.groble.api.model.purchase.response;
 import java.math.BigDecimal;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 @Getter
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
 @Schema(description = "구매자의 콘텐츠 리뷰 응답 DTO")
 public class PurchaserContentReviewResponse {
   @Schema(

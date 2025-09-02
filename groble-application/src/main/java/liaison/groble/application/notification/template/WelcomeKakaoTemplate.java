@@ -32,7 +32,7 @@ public class WelcomeKakaoTemplate implements KakaoTemplate {
 
   @Override
   public String buildMessage(KakaoNotificationDTO kakaoNotificationDTO) {
-    return MessageFormatter.welcome(kakaoNotificationDTO.getUserName());
+    return MessageFormatter.welcome(kakaoNotificationDTO.getUsername());
   }
 
   @Override
