@@ -18,8 +18,6 @@ public final class PurchaseReviewApiResponses {
   private PurchaseReviewApiResponses() {}
 
   /** 리뷰 저장/수정 요청 API 응답 */
-
-  /** 결제 요청 API 응답 */
   @Target(ElementType.METHOD)
   @Retention(RetentionPolicy.RUNTIME)
   @ApiResponses({
@@ -32,7 +30,7 @@ public final class PurchaseReviewApiResponses {
                 schema =
                     @Schema(
                         implementation =
-                            GenericResponseSchemas.ContentReviewRequestResponse.class))),
+                            GenericResponseSchemas.ApiContentReviewRequestResponse.class))),
     @ApiResponse(
         responseCode = "400",
         description = CommonSwaggerDocs.BAD_REQUEST,
