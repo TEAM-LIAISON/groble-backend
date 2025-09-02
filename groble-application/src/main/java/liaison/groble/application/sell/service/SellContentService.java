@@ -200,8 +200,6 @@ public class SellContentService {
 
     User seller = userReader.getUserById(userId);
     ContentReview contentReview = contentReviewReader.getContentReviewById(reviewId);
-    User buyer = contentReview.getUser();
-
     ContentReply contentReply =
         ContentReply.builder()
             .contentReview(contentReview)
@@ -212,11 +210,15 @@ public class SellContentService {
 
     contentReplyWriter.save(contentReply);
 
-    notificationService.sendContentReviewReplyNotification(
-        buyer,
-        contentReview.getContent().getId(),
-        contentReview.getId(),
-        contentReview.getContent().getThumbnailUrl());
+    // 회원 리뷰인 경우에만 알림 발송 (비회원에게는 알림 불가)
+    if (contentReview.isMemberReview()) {
+      User buyer = contentReview.getUser();
+      notificationService.sendContentReviewReplyNotification(
+          buyer,
+          contentReview.getContent().getId(),
+          contentReview.getId(),
+          contentReview.getContent().getThumbnailUrl());
+    }
 
     return ReplyContentDTO.builder().replyContent(replyContentDTO.getReplyContent()).build();
   }
