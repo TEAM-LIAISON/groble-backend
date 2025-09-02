@@ -1,5 +1,6 @@
 package liaison.groble.external.adapter.payment;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.json.simple.JSONObject;
@@ -102,8 +103,27 @@ public class PaypleServiceV2 implements PaypleService {
 
   @Override
   public JSONObject payAuth(Map<String, String> params) {
-    log.info("페이플 결제 인증 요청 - 미구현");
-    return createErrorResponse("NOT_IMPLEMENTED", "결제 인증 기능은 구현되지 않았습니다");
+    log.info("페이플 결제 인증 요청 시작 - cst_id: {}", maskSensitiveData(params.get("cst_id")));
+
+    try {
+      // HTTP 요청 실행
+      HttpResponse response = executeAuthRequest(params);
+
+      // 응답 파싱 및 검증
+      return parseAndValidateResponse(response);
+
+    } catch (HttpClientException e) {
+      log.error("페이플 결제 인증 HTTP 요청 실패", e);
+      return createErrorResponse("NETWORK_ERROR", "네트워크 오류가 발생했습니다: " + e.getMessage());
+
+    } catch (ParseException e) {
+      log.error("페이플 인증 응답 파싱 실패", e);
+      return createErrorResponse("PARSE_ERROR", "응답 파싱 중 오류가 발생했습니다");
+
+    } catch (Exception e) {
+      log.error("페이플 결제 인증 예상치 못한 오류", e);
+      return createErrorResponse("UNKNOWN_ERROR", "예상치 못한 오류가 발생했습니다");
+    }
   }
 
   @Override
@@ -124,7 +144,7 @@ public class PaypleServiceV2 implements PaypleService {
 
   private PaypleRefundRequest createRefundRequest(Map<String, String> params) {
     return PaypleRefundRequest.builder()
-        .url("https://testcpay.payple.kr/php/auth.php") // 테스트 환경 URL
+        .url(paypleConfig.getCancelApiUrl()) // 올바른 환불 API URL 사용
         .cstId(paypleConfig.getCstId())
         .custKey(paypleConfig.getCustKey())
         .authKey("test") // TODO: AuthKey 설정 필요
@@ -155,14 +175,54 @@ public class PaypleServiceV2 implements PaypleService {
     requestBody.put("PCD_CST_ID", request.getCstId());
     requestBody.put("PCD_CUST_KEY", request.getCustKey());
     requestBody.put("PCD_AUTH_KEY", request.getAuthKey());
+    requestBody.put("PCD_REFUND_KEY", paypleConfig.getRefundKey());
+    requestBody.put("PCD_PAYCANCEL_FLAG", "Y");
     requestBody.put("PCD_PAY_OID", request.getPayOid());
+    requestBody.put(
+        "PCD_PAY_DATE", new java.text.SimpleDateFormat("yyyyMMdd").format(new java.util.Date()));
     requestBody.put("PCD_REFUND_TOTAL", request.getRefundTotal());
-    requestBody.put("PCD_REFUND_TAXFREE", request.getRefundTaxfree());
-    requestBody.put("PCD_REFUND_REASON", request.getRefundReason());
+
+    if (request.getRefundTaxfree() != null && !request.getRefundTaxfree().equals("0")) {
+      requestBody.put("PCD_REFUND_TAXTOTAL", request.getRefundTaxfree());
+    }
+
+    if (request.getRefundReason() != null) {
+      requestBody.put("PCD_REFUND_REASON", request.getRefundReason());
+    }
 
     log.debug("페이플 환불 요청 본문: {}", requestBody.toJSONString());
 
     HttpRequest httpRequest = HttpRequest.post(request.getUrl(), requestBody.toJSONString());
+    return httpClient.post(httpRequest);
+  }
+
+  private HttpResponse executeAuthRequest(Map<String, String> params) throws HttpClientException {
+    JSONObject requestBody = new JSONObject();
+    requestBody.put("cst_id", paypleConfig.getCstId());
+    requestBody.put("custKey", paypleConfig.getCustKey());
+
+    // 추가 파라미터 설정
+    if (params != null) {
+      for (Map.Entry<String, String> entry : params.entrySet()) {
+        // 기본 설정값은 덮어쓰지 않음
+        if (!"cst_id".equals(entry.getKey()) && !"custKey".equals(entry.getKey())) {
+          requestBody.put(entry.getKey(), entry.getValue());
+        }
+      }
+    }
+
+    log.debug("페이플 인증 요청 본문: {}", requestBody.toJSONString());
+
+    String authUrl = paypleConfig.getAuthApiUrl();
+
+    Map<String, String> headers = new HashMap<>();
+    headers.put("content-type", "application/json");
+    headers.put("charset", "UTF-8");
+    headers.put("referer", paypleConfig.getRefererUrl());
+
+    HttpRequest httpRequest =
+        HttpRequest.postWithHeaders(authUrl, headers, requestBody.toJSONString());
+
     return httpClient.post(httpRequest);
   }
 
@@ -176,14 +236,31 @@ public class PaypleServiceV2 implements PaypleService {
           "API_ERROR", "페이플 API 오류 (상태코드: " + response.getStatusCode() + ")");
     }
 
-    JSONObject jsonResponse = (JSONObject) jsonParser.parse(response.getBody());
+    String responseBody = response.getBody();
 
-    log.info(
-        "페이플 API 응답 성공 - 응답시간: {}ms, 결과: {}",
-        response.getResponseTimeMs(),
-        jsonResponse.getOrDefault("PCD_PAY_RST", "UNKNOWN"));
+    // 응답 본문 검증 및 로깅
+    if (responseBody == null || responseBody.trim().isEmpty()) {
+      log.error("페이플 API 응답이 비어있음 - 상태코드: {}", response.getStatusCode());
+      return createErrorResponse("EMPTY_RESPONSE", "페이플 API 응답이 비어있습니다");
+    }
 
-    return jsonResponse;
+    log.debug("페이플 API 응답 원문 길이: {}, 내용: {}", responseBody.length(), responseBody);
+
+    try {
+      JSONObject jsonResponse = (JSONObject) jsonParser.parse(responseBody);
+
+      log.info(
+          "페이플 API 응답 성공 - 응답시간: {}ms, 결과: {}",
+          response.getResponseTimeMs(),
+          jsonResponse.getOrDefault("PCD_PAY_RST", "UNKNOWN"));
+
+      return jsonResponse;
+
+    } catch (ParseException e) {
+      log.error(
+          "페이플 API 응답 JSON 파싱 실패 - 응답 길이: {}, 응답 내용: [{}]", responseBody.length(), responseBody, e);
+      return createErrorResponse("PARSE_ERROR", "응답 파싱 중 오류가 발생했습니다: " + responseBody);
+    }
   }
 
   private JSONObject createErrorResponse(String errorCode, String errorMessage) {
