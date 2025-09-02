@@ -2,6 +2,7 @@ package liaison.groble.api.server.purchase;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -10,11 +11,17 @@ import org.springframework.web.bind.annotation.RestController;
 
 import liaison.groble.api.model.purchase.request.PurchaserContentReviewRequest;
 import liaison.groble.api.model.purchase.response.PurchaserContentReviewResponse;
+import liaison.groble.api.server.common.ApiPaths;
+import liaison.groble.api.server.common.BaseController;
+import liaison.groble.api.server.common.ResponseMessages;
+import liaison.groble.api.server.purchase.docs.PurchaseReviewApiResponses;
+import liaison.groble.api.server.purchase.docs.PurchaseReviewSwaggerDocs;
 import liaison.groble.application.purchase.dto.PurchaserContentReviewDTO;
-import liaison.groble.application.purchase.exception.PurchaseAuthenticationRequiredException;
-import liaison.groble.application.purchase.service.PurchaserReviewService;
+import liaison.groble.application.purchase.strategy.ReviewProcessorFactory;
 import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.annotation.Logging;
+import liaison.groble.common.context.UserContext;
+import liaison.groble.common.factory.UserContextFactory;
 import liaison.groble.common.model.Accessor;
 import liaison.groble.common.response.GrobleResponse;
 import liaison.groble.common.response.ResponseHelper;
@@ -22,47 +29,39 @@ import liaison.groble.mapping.content.PurchaserContentReviewMapper;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
+@Validated
 @RestController
-@RequestMapping("/api/v1/purchase/review")
-@RequiredArgsConstructor
+@RequestMapping(ApiPaths.Purchase.REVIEW_BASE)
 @Tag(
-    name = "[🧾 통합 리뷰 관리] 회원/비회원 구매자 리뷰 작성, 수정, 삭제 API",
-    description = "토큰 종류에 따라 회원/비회원을 자동 판단하여 구매한 콘텐츠에 대한 리뷰 작성, 수정, 삭제 기능을 제공합니다.")
-public class PurchaserReviewController {
-  // API 경로 상수화
-  private static final String PURCHASER_REVIEW_ADD_PATH = "/{merchantUid}";
-  private static final String PURCHASER_REVIEW_UPDATE_PATH = "/update/{reviewId}";
-  private static final String PURCHASER_REVIEW_DELETE_PATH = "/delete/{reviewId}";
+    name = PurchaseReviewSwaggerDocs.TAG_NAME,
+    description = PurchaseReviewSwaggerDocs.TAG_DESCRIPTION)
+public class PurchaserReviewController extends BaseController {
 
-  // 응답 메시지 상수화
-  private static final String PURCHASER_REVIEW_ADD_SUCCESS_MESSAGE = "구매자가 콘텐츠에 대한 리뷰 작성에 성공했습니다.";
-  private static final String PURCHASER_REVIEW_UPDATE_SUCCESS_MESSAGE =
-      "구매자가 콘텐츠에 대한 리뷰 수정에 성공했습니다.";
-  private static final String PURCHASER_REVIEW_DELETE_SUCCESS_MESSAGE =
-      "구매자가 콘텐츠에 대한 리뷰 삭제에 성공했습니다.";
-
+  // Factory
+  private final ReviewProcessorFactory processorFactory;
   // Mapper
   private final PurchaserContentReviewMapper purchaserContentReviewMapper;
 
-  // Service
-  private final PurchaserReviewService purchaserReviewService;
-
-  // Helper
-  private final ResponseHelper responseHelper;
+  public PurchaserReviewController(
+      ResponseHelper responseHelper,
+      ReviewProcessorFactory processorFactory,
+      PurchaserContentReviewMapper purchaserContentReviewMapper) {
+    super(responseHelper);
+    this.processorFactory = processorFactory;
+    this.purchaserContentReviewMapper = purchaserContentReviewMapper;
+  }
 
   @Operation(
-      summary = "[✅ 통합 리뷰 관리 - 리뷰 추가] 내가 구매한 콘텐츠 리뷰 추가",
-      description = "토큰 종류에 따라 회원/비회원을 자동 판단하여 구매한 콘텐츠에 대해 리뷰를 추가합니다.")
+      summary = PurchaseReviewSwaggerDocs.PURCHASER_REVIEW_ADD_SUMMARY,
+      description = PurchaseReviewSwaggerDocs.PURCHASER_REVIEW_ADD_DESCRIPTION)
+  @PurchaseReviewApiResponses.ContentReviewResponses
   @Logging(
       item = "PurchaserReview",
       action = "addReview",
       includeParam = true,
       includeResult = true)
-  @PostMapping(PURCHASER_REVIEW_ADD_PATH)
+  @PostMapping(ApiPaths.Purchase.ADD_REVIEW)
   public ResponseEntity<GrobleResponse<PurchaserContentReviewResponse>> addReview(
       @Auth(required = false) Accessor accessor,
       @PathVariable("merchantUid") String merchantUid,
@@ -70,51 +69,28 @@ public class PurchaserReviewController {
 
     PurchaserContentReviewDTO purchaserContentReviewDTO =
         purchaserContentReviewMapper.toPurchaserContentReviewDTO(purchaserContentReviewRequest);
-
-    PurchaserContentReviewDTO addedReviewDTO;
-    String userTypeInfo;
-
-    // 토큰 종류에 따른 분기 처리
-    if (accessor.isAuthenticated() && !accessor.isGuest()) {
-      // 회원 리뷰 추가
-      log.info("회원 리뷰 추가 - userId: {}, merchantUid: {}", accessor.getUserId(), merchantUid);
-      addedReviewDTO =
-          purchaserReviewService.addReviewUnified(
-              accessor.getUserId(), null, merchantUid, purchaserContentReviewDTO);
-      userTypeInfo = "회원";
-
-    } else if (accessor.isGuest()) {
-      // 비회원 리뷰 추가
-      log.info("비회원 리뷰 추가 - guestUserId: {}, merchantUid: {}", accessor.getId(), merchantUid);
-      addedReviewDTO =
-          purchaserReviewService.addReviewUnified(
-              null, accessor.getId(), merchantUid, purchaserContentReviewDTO);
-      userTypeInfo = "비회원";
-
-    } else {
-      // 인증되지 않은 사용자
-      throw PurchaseAuthenticationRequiredException.forPurchaseList();
-    }
-
-    PurchaserContentReviewResponse purchaserContentReviewResponse =
+    UserContext userContext = UserContextFactory.from(accessor);
+    PurchaserContentReviewDTO addedReviewDTO =
+        processorFactory
+            .getProcessor(userContext)
+            .addReview(userContext, merchantUid, purchaserContentReviewDTO);
+    PurchaserContentReviewResponse response =
         purchaserContentReviewMapper.toPurchaserContentReviewResponse(addedReviewDTO);
 
-    log.info("{} 리뷰 추가 완료 - merchantUid: {}", userTypeInfo, merchantUid);
-    return responseHelper.success(
-        purchaserContentReviewResponse,
-        userTypeInfo + " " + PURCHASER_REVIEW_ADD_SUCCESS_MESSAGE,
-        HttpStatus.CREATED);
+    return success(
+        response, ResponseMessages.Purchase.PURCHASE_REVIEW_ADD_SUCCESS, HttpStatus.CREATED);
   }
 
   @Operation(
-      summary = "[✅ 통합 리뷰 관리 - 리뷰 수정] 내가 작성한 콘텐츠의 리뷰 수정",
-      description = "토큰 종류에 따라 회원/비회원을 자동 판단하여 작성한 리뷰를 수정합니다.")
+      summary = PurchaseReviewSwaggerDocs.PURCHASER_REVIEW_UPDATE_SUMMARY,
+      description = PurchaseReviewSwaggerDocs.PURCHASER_REVIEW_UPDATE_DESCRIPTION)
+  @PurchaseReviewApiResponses.ContentReviewResponses
   @Logging(
       item = "PurchaserReview",
       action = "updateReview",
       includeParam = true,
       includeResult = true)
-  @PostMapping(PURCHASER_REVIEW_UPDATE_PATH)
+  @PostMapping(ApiPaths.Purchase.UPDATE_REVIEW)
   public ResponseEntity<GrobleResponse<PurchaserContentReviewResponse>> updateReview(
       @Auth(required = false) Accessor accessor,
       @PathVariable("reviewId") Long reviewId,
@@ -123,75 +99,33 @@ public class PurchaserReviewController {
     PurchaserContentReviewDTO purchaserContentReviewDTO =
         purchaserContentReviewMapper.toPurchaserContentReviewDTO(purchaserContentReviewRequest);
 
-    PurchaserContentReviewDTO updatedReviewDTO;
-    String userTypeInfo;
+    UserContext userContext = UserContextFactory.from(accessor);
+    PurchaserContentReviewDTO reviewDTO =
+        processorFactory
+            .getProcessor(userContext)
+            .updateReview(userContext, reviewId, purchaserContentReviewDTO);
 
-    // 토큰 종류에 따른 분기 처리
-    if (accessor.isAuthenticated() && !accessor.isGuest()) {
-      // 회원 리뷰 수정
-      log.info("회원 리뷰 수정 - userId: {}, reviewId: {}", accessor.getUserId(), reviewId);
-      updatedReviewDTO =
-          purchaserReviewService.updateReviewUnified(
-              accessor.getUserId(), null, reviewId, purchaserContentReviewDTO);
-      userTypeInfo = "회원";
+    PurchaserContentReviewResponse response =
+        purchaserContentReviewMapper.toPurchaserContentReviewResponse(reviewDTO);
 
-    } else if (accessor.isGuest()) {
-      // 비회원 리뷰 수정
-      log.info("비회원 리뷰 수정 - guestUserId: {}, reviewId: {}", accessor.getId(), reviewId);
-      updatedReviewDTO =
-          purchaserReviewService.updateReviewUnified(
-              null, accessor.getId(), reviewId, purchaserContentReviewDTO);
-      userTypeInfo = "비회원";
-
-    } else {
-      // 인증되지 않은 사용자
-      throw PurchaseAuthenticationRequiredException.forPurchaseList();
-    }
-
-    PurchaserContentReviewResponse purchaserContentReviewResponse =
-        purchaserContentReviewMapper.toPurchaserContentReviewResponse(updatedReviewDTO);
-
-    log.info("{} 리뷰 수정 완료 - reviewId: {}", userTypeInfo, reviewId);
-    return responseHelper.success(
-        purchaserContentReviewResponse,
-        userTypeInfo + " " + PURCHASER_REVIEW_UPDATE_SUCCESS_MESSAGE,
-        HttpStatus.OK);
+    return success(response, ResponseMessages.Purchase.PURCHASE_REVIEW_UPDATE_SUCCESS);
   }
 
   @Operation(
-      summary = "[✅ 통합 리뷰 관리 - 리뷰 삭제] 내가 작성한 콘텐츠의 리뷰 삭제",
-      description = "토큰 종류에 따라 회원/비회원을 자동 판단하여 작성한 리뷰를 삭제합니다.")
+      summary = PurchaseReviewSwaggerDocs.PURCHASER_REVIEW_DELETE_SUMMARY,
+      description = PurchaseReviewSwaggerDocs.PURCHASER_REVIEW_DELETE_DESCRIPTION)
   @Logging(
       item = "PurchaserReview",
       action = "deleteReview",
       includeParam = true,
       includeResult = true)
-  @PostMapping(PURCHASER_REVIEW_DELETE_PATH)
+  @PostMapping(ApiPaths.Purchase.DELETE_REVIEW)
   public ResponseEntity<GrobleResponse<Void>> deleteReview(
       @Auth(required = false) Accessor accessor, @PathVariable("reviewId") Long reviewId) {
+    UserContext userContext = UserContextFactory.from(accessor);
 
-    String userTypeInfo;
+    processorFactory.getProcessor(userContext).deleteReview(userContext, reviewId);
 
-    // 토큰 종류에 따른 분기 처리
-    if (accessor.isAuthenticated() && !accessor.isGuest()) {
-      // 회원 리뷰 삭제
-      log.info("회원 리뷰 삭제 - userId: {}, reviewId: {}", accessor.getUserId(), reviewId);
-      purchaserReviewService.deleteReviewUnified(accessor.getUserId(), null, reviewId);
-      userTypeInfo = "회원";
-
-    } else if (accessor.isGuest()) {
-      // 비회원 리뷰 삭제
-      log.info("비회원 리뷰 삭제 - guestUserId: {}, reviewId: {}", accessor.getId(), reviewId);
-      purchaserReviewService.deleteReviewUnified(null, accessor.getId(), reviewId);
-      userTypeInfo = "비회원";
-
-    } else {
-      // 인증되지 않은 사용자
-      throw PurchaseAuthenticationRequiredException.forPurchaseList();
-    }
-
-    log.info("{} 리뷰 삭제 완료 - reviewId: {}", userTypeInfo, reviewId);
-    return responseHelper.success(
-        null, userTypeInfo + " " + PURCHASER_REVIEW_DELETE_SUCCESS_MESSAGE, HttpStatus.OK);
+    return success(null, ResponseMessages.Purchase.PURCHASE_REVIEW_DELETE_SUCCESS);
   }
 }

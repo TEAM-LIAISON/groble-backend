@@ -22,10 +22,32 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@Schema(
+    description = "페이징 처리된 응답",
+    example =
+        """
+       {
+         "items": [],
+         "pageInfo": {
+           "currentPage": 0,
+           "totalPages": 10,
+           "pageSize": 12,
+           "totalElements": 120,
+           "first": true,
+           "last": false,
+           "empty": false
+         }
+       }
+       """)
 public class PageResponse<T> {
 
+  @Schema(description = "현재 페이지의 아이템 목록")
   private List<T> items; // 현재 페이지의 아이템 목록
+
+  @Schema(description = "페이지 정보")
   private PageInfo pageInfo; // 페이지 정보
+
+  @Schema(description = "추가 메타데이터 (선택적)")
   private MetaData meta; // 추가 메타데이터 (선택적)
 
   /**

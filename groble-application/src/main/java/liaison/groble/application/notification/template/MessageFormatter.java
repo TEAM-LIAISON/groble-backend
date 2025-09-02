@@ -45,6 +45,14 @@ public class MessageFormatter {
     return String.format("%s님, 메이커 인증이 완료되었습니다!", sellerName);
   }
 
+  // [Groble] 결제 취소 알림
+  public static String approveCancel(
+      String buyerName, String contentTitle, BigDecimal refundedAmount) {
+    return String.format(
+        "%s님, 결제 취소가 승인되었습니다. \n" + "\n" + "- 상품명: %s\n" + "- 환불 금액: %s",
+        buyerName, contentTitle, formatCurrency(refundedAmount));
+  }
+
   // 원화 표기법 포맷팅
   private static String formatCurrency(BigDecimal amount) {
     return CURRENCY_FORMAT.format(amount);

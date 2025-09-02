@@ -26,4 +26,7 @@ public class KakaoNotificationDTO {
 
   // Review_Registered_Template
   private Long reviewId;
+
+  // Approve_Cancel_Template
+  private BigDecimal refundedAmount;
 }

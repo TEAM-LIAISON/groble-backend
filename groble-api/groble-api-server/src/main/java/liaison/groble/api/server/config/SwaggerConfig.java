@@ -42,11 +42,20 @@ public class SwaggerConfig {
     return openApi -> {
       // ResponseStatus enum 문서화 개선
       Schema responseStatusSchema = new Schema().type("string").description("응답 상태 타입");
-
-      // enum 값 추가
       responseStatusSchema.setEnum(List.of("SUCCESS", "ERROR", "FAIL"));
-
       openApi.getComponents().addSchemas("ResponseStatus", responseStatusSchema);
+
+      // Generic 타입의 예시 생성을 위한 설정
+      openApi
+          .getComponents()
+          .getSchemas()
+          .forEach(
+              (key, schema) -> {
+                if (schema.get$ref() == null && schema.getProperties() != null) {
+                  // 중첩된 객체들의 example 생성을 활성화
+                  schema.setExample(null); // 자동 생성되도록 설정
+                }
+              });
     };
   }
 

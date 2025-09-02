@@ -62,7 +62,7 @@ public class ContentReviewDetailResponse {
 
   @Schema(
       description = "리뷰 별점",
-      example = "29900",
+      example = "4.5",
       type = "number",
       format = "decimal",
       requiredMode = Schema.RequiredMode.REQUIRED)

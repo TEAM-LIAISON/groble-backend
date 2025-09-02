@@ -1,4 +1,4 @@
-package liaison.groble.api.server.payment.docs;
+package liaison.groble.api.server.purchase.docs;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -13,72 +13,11 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
-/** 결제 API 공통 응답 어노테이션 */
-public final class PaymentApiResponses {
+public final class PurchaseReviewApiResponses {
 
-  private PaymentApiResponses() {}
+  private PurchaseReviewApiResponses() {}
 
-  /** 결제 요청 API 응답 */
-  @Target(ElementType.METHOD)
-  @Retention(RetentionPolicy.RUNTIME)
-  @ApiResponses({
-    @ApiResponse(
-        responseCode = "200",
-        description = CommonSwaggerDocs.SUCCESS_200,
-        content =
-            @Content(
-                mediaType = "application/json",
-                schema =
-                    @Schema(implementation = GenericResponseSchemas.PaymentRequestResponse.class))),
-    @ApiResponse(
-        responseCode = "400",
-        description = CommonSwaggerDocs.BAD_REQUEST,
-        content =
-            @Content(
-                mediaType = "application/json",
-                examples =
-                    @io.swagger.v3.oas.annotations.media.ExampleObject(
-                        value = CommonSwaggerDocs.BAD_REQUEST_EXAMPLE))),
-    @ApiResponse(
-        responseCode = "403",
-        description = CommonSwaggerDocs.FORBIDDEN,
-        content =
-            @Content(
-                mediaType = "application/json",
-                examples =
-                    @io.swagger.v3.oas.annotations.media.ExampleObject(
-                        value = CommonSwaggerDocs.FORBIDDEN_EXAMPLE))),
-    @ApiResponse(
-        responseCode = "404",
-        description = CommonSwaggerDocs.NOT_FOUND,
-        content =
-            @Content(
-                mediaType = "application/json",
-                examples =
-                    @io.swagger.v3.oas.annotations.media.ExampleObject(
-                        value = CommonSwaggerDocs.NOT_FOUND_EXAMPLE))),
-    @ApiResponse(
-        responseCode = "409",
-        description = CommonSwaggerDocs.CONFLICT,
-        content =
-            @Content(
-                mediaType = "application/json",
-                examples =
-                    @io.swagger.v3.oas.annotations.media.ExampleObject(
-                        value = CommonSwaggerDocs.CONFLICT_EXAMPLE))),
-    @ApiResponse(
-        responseCode = "500",
-        description = CommonSwaggerDocs.SERVER_ERROR,
-        content =
-            @Content(
-                mediaType = "application/json",
-                examples =
-                    @io.swagger.v3.oas.annotations.media.ExampleObject(
-                        value = CommonSwaggerDocs.SERVER_ERROR_EXAMPLE)))
-  })
-  public @interface PaymentRequestResponses {}
-
-  /** 결제 취소 API 응답 */
+  /** 리뷰 저장/수정 요청 API 응답 */
   @Target(ElementType.METHOD)
   @Retention(RetentionPolicy.RUNTIME)
   @ApiResponses({
@@ -90,7 +29,8 @@ public final class PaymentApiResponses {
                 mediaType = "application/json",
                 schema =
                     @Schema(
-                        implementation = GenericResponseSchemas.ApiPaymentCancelResponse.class))),
+                        implementation =
+                            GenericResponseSchemas.ApiContentReviewRequestResponse.class))),
     @ApiResponse(
         responseCode = "400",
         description = CommonSwaggerDocs.BAD_REQUEST,
@@ -137,5 +77,5 @@ public final class PaymentApiResponses {
                     @io.swagger.v3.oas.annotations.media.ExampleObject(
                         value = CommonSwaggerDocs.SERVER_ERROR_EXAMPLE)))
   })
-  public @interface PaymentCancelResponses {}
+  public @interface ContentReviewResponses {}
 }

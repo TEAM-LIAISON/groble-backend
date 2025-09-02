@@ -38,4 +38,28 @@ public final class ResponseMessages {
 
     private Content() {}
   }
+
+  public static final class Purchase {
+    public static final String PURCHASE_REVIEW_ADD_SUCCESS = "구매자가 콘텐츠에 대한 리뷰 작성에 성공했습니다.";
+    public static final String PURCHASE_REVIEW_UPDATE_SUCCESS = "구매자가 콘텐츠에 대한 리뷰 수정에 성공했습니다.";
+    public static final String PURCHASE_REVIEW_DELETE_SUCCESS = "구매자가 콘텐츠에 대한 리뷰 삭제에 성공했습니다.";
+
+    private Purchase() {}
+  }
+
+  public static final class Sell {
+    public static final String SELL_CONTENT_HOME_SUCCESS = "판매 관리 메인 페이지 조회에 성공했습니다.";
+    public static final String SELL_CONTENT_LIST_SUCCESS = "판매 리스트 전체보기에 성공하였습니다.";
+    public static final String SELL_CONTENT_DETAIL_SUCCESS = "판매 콘텐츠 상세 조회에 성공하였습니다.";
+
+    public static final String SELL_CONTENT_REVIEW_LIST_SUCCESS = "판매 콘텐츠 리뷰 리스트 조회에 성공하였습니다.";
+    public static final String SELL_CONTENT_REVIEW_DETAIL_SUCCESS = "판매 콘텐츠 리뷰 상세 조회에 성공하였습니다.";
+    public static final String SELL_CONTENT_REVIEW_DELETE_SUCCESS = "판매 콘텐츠 리뷰 삭제에 성공하였습니다.";
+
+    public static final String REVIEW_REPLY_ADD_SUCCESS = "리뷰 답글 작성에 성공하였습니다.";
+    public static final String REVIEW_REPLY_UPDATE_SUCCESS = "리뷰 답글 수정에 성공하였습니다.";
+    public static final String REVIEW_REPLY_DELETE_SUCCESS = "리뷰 답글 삭제에 성공하였습니다.";
+
+    private Sell() {}
+  }
 }
