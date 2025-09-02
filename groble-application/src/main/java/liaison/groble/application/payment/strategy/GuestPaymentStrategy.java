@@ -54,9 +54,8 @@ public class GuestPaymentStrategy implements PaymentStrategy {
     return executionService.executePayment(
         authResult,
         () -> transactionService.saveAuthAndValidateForGuest(guestUserId, authResult),
-        (authInfo, approvalResult) ->
-            transactionService.completePaymentForGuest(authInfo, approvalResult),
-        completionResult -> eventPublisher.publishPaymentCompletedForGuest(completionResult));
+        transactionService::completePaymentForGuest,
+        eventPublisher::publishPaymentCompletedForGuest);
   }
 
   @Override

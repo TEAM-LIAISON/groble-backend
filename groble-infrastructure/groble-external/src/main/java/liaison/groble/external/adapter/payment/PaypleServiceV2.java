@@ -1,5 +1,6 @@
 package liaison.groble.external.adapter.payment;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.json.simple.JSONObject;
@@ -102,8 +103,27 @@ public class PaypleServiceV2 implements PaypleService {
 
   @Override
   public JSONObject payAuth(Map<String, String> params) {
-    log.info("페이플 결제 인증 요청 - 미구현");
-    return createErrorResponse("NOT_IMPLEMENTED", "결제 인증 기능은 구현되지 않았습니다");
+    log.info("페이플 결제 인증 요청 시작 - cst_id: {}", maskSensitiveData(params.get("cst_id")));
+
+    try {
+      // HTTP 요청 실행
+      HttpResponse response = executeAuthRequest(params);
+
+      // 응답 파싱 및 검증
+      return parseAndValidateResponse(response);
+
+    } catch (HttpClientException e) {
+      log.error("페이플 결제 인증 HTTP 요청 실패", e);
+      return createErrorResponse("NETWORK_ERROR", "네트워크 오류가 발생했습니다: " + e.getMessage());
+
+    } catch (ParseException e) {
+      log.error("페이플 인증 응답 파싱 실패", e);
+      return createErrorResponse("PARSE_ERROR", "응답 파싱 중 오류가 발생했습니다");
+
+    } catch (Exception e) {
+      log.error("페이플 결제 인증 예상치 못한 오류", e);
+      return createErrorResponse("UNKNOWN_ERROR", "예상치 못한 오류가 발생했습니다");
+    }
   }
 
   @Override
@@ -163,6 +183,36 @@ public class PaypleServiceV2 implements PaypleService {
     log.debug("페이플 환불 요청 본문: {}", requestBody.toJSONString());
 
     HttpRequest httpRequest = HttpRequest.post(request.getUrl(), requestBody.toJSONString());
+    return httpClient.post(httpRequest);
+  }
+
+  private HttpResponse executeAuthRequest(Map<String, String> params) throws HttpClientException {
+    JSONObject requestBody = new JSONObject();
+    requestBody.put("cst_id", paypleConfig.getCstId());
+    requestBody.put("custKey", paypleConfig.getCustKey());
+
+    // 추가 파라미터 설정
+    if (params != null) {
+      for (Map.Entry<String, String> entry : params.entrySet()) {
+        // 기본 설정값은 덮어쓰지 않음
+        if (!"cst_id".equals(entry.getKey()) && !"custKey".equals(entry.getKey())) {
+          requestBody.put(entry.getKey(), entry.getValue());
+        }
+      }
+    }
+
+    log.debug("페이플 인증 요청 본문: {}", requestBody.toJSONString());
+
+    String authUrl = paypleConfig.getAuthApiUrl();
+
+    Map<String, String> headers = new HashMap<>();
+    headers.put("content-type", "application/json");
+    headers.put("charset", "UTF-8");
+    headers.put("referer", paypleConfig.getRefererUrl());
+
+    HttpRequest httpRequest =
+        HttpRequest.postWithHeaders(authUrl, headers, requestBody.toJSONString());
+
     return httpClient.post(httpRequest);
   }
 

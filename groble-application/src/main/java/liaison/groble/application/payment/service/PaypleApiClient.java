@@ -1,6 +1,5 @@
 package liaison.groble.application.payment.service;
 
-import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -32,15 +31,17 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class PaypleApiClient {
   private static final String PAY_WORK_AUTH = "AUTH";
-  private static final String PAY_WORK_APPCARD = "APPCARD";
   private static final String RESULT_SUCCESS = "success";
-  private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd");
 
   private final PaypleService paypleService;
   private final PaypleConfig paypleConfig;
 
   /**
    * 파트너 인증 요청
+   *
+   * <p>(1) 환불 요청에 사용
+   *
+   * <p>(2) 정산지급대행에 사용
    *
    * @param payWork 작업 구분
    * @return 인증 응답
@@ -137,7 +138,7 @@ public class PaypleApiClient {
   }
 
   /**
-   * 환불 요청
+   * 앱카드 환불 요청
    *
    * @param cancelInfo 취소 정보
    * @return 환불 결과
@@ -195,6 +196,23 @@ public class PaypleApiClient {
       throw new PaypleApiException("페이플 환불 요청 실패", e);
     }
   }
+
+  //    /**
+  //     * 계좌 인증 요청
+  //     *
+  //     * @param authResult 인증 결과
+  //     * @return 승인 결과 & 빌링키
+  //     */
+  //    @Retryable(value = PaypleApiException.class, maxAttempts = 2, backoff = @Backoff(delay =
+  // 500))
+  //    public PaypleAccountVerificationResult requestAccountVerification(PaymentSettlementInfo
+  // settlementInfo) {
+  //        log.info("페이플 계좌 인증 요청");
+  //
+  //        try {
+  //            PaypleAuthResponseDTO authResponse = requestAuth(PAY_WORK_AUTH);
+  //        }
+  //    }
 
   /** JSONObject에서 안전하게 문자열 추출 */
   private String getString(JSONObject json, String key) {
