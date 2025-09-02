@@ -175,10 +175,20 @@ public class PaypleServiceV2 implements PaypleService {
     requestBody.put("PCD_CST_ID", request.getCstId());
     requestBody.put("PCD_CUST_KEY", request.getCustKey());
     requestBody.put("PCD_AUTH_KEY", request.getAuthKey());
+    requestBody.put("PCD_REFUND_KEY", paypleConfig.getRefundKey());
+    requestBody.put("PCD_PAYCANCEL_FLAG", "Y");
     requestBody.put("PCD_PAY_OID", request.getPayOid());
+    requestBody.put(
+        "PCD_PAY_DATE", new java.text.SimpleDateFormat("yyyyMMdd").format(new java.util.Date()));
     requestBody.put("PCD_REFUND_TOTAL", request.getRefundTotal());
-    requestBody.put("PCD_REFUND_TAXFREE", request.getRefundTaxfree());
-    requestBody.put("PCD_REFUND_REASON", request.getRefundReason());
+
+    if (request.getRefundTaxfree() != null && !request.getRefundTaxfree().equals("0")) {
+      requestBody.put("PCD_REFUND_TAXTOTAL", request.getRefundTaxfree());
+    }
+
+    if (request.getRefundReason() != null) {
+      requestBody.put("PCD_REFUND_REASON", request.getRefundReason());
+    }
 
     log.debug("페이플 환불 요청 본문: {}", requestBody.toJSONString());
 
