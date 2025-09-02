@@ -91,6 +91,7 @@ public class AdminOrderService {
         kakaoNotificationService.sendNotification(
             KakaoNotificationDTO.builder()
                 .type(KakaoNotificationType.APPROVE_CANCEL)
+                .phoneNumber(purchase.getPurchaserPhoneNumber())
                 .buyerName(purchase.getPurchaserName())
                 .contentTitle(purchase.getContent().getTitle())
                 .refundedAmount(order.getFinalPrice())

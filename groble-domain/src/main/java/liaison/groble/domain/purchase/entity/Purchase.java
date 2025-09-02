@@ -228,4 +228,13 @@ public class Purchase extends BaseTimeEntity {
     }
     return null;
   }
+
+  public String getPurchaserPhoneNumber() {
+    if (isMemberPurchase()) {
+      return this.user.getPhoneNumber();
+    } else if (isGuestPurchase()) {
+      return this.guestUser.getPhoneNumber();
+    }
+    return null;
+  }
 }
