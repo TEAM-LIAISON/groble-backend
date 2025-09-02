@@ -26,6 +26,11 @@ public class PaypleConfig {
         : "https://cpay.payple.kr/js/v1/payment.js";
   }
 
+  // 정산지급대행 URL 설정
+  public String getSettlementUrl() {
+    return testMode ? "https://demohub.payple.kr/oauth/token" : "https://hub.payple.kr/oauth/token";
+  }
+
   public String getAuthApiUrl() {
     return testMode
         ? "https://democpay.payple.kr/php/auth.php"
