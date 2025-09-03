@@ -56,7 +56,8 @@ public class GuestAuthService {
   }
 
   public GuestTokenDTO verifyGuestAuthCode(VerifyGuestAuthCodeDTO verifyGuestAuthCodeDTO) {
-    String sanitized = PhoneUtils.sanitizePhoneNumber(verifyGuestAuthCodeDTO.getPhoneNumber());
+    String phoneNumber = verifyGuestAuthCodeDTO.getPhoneNumber();
+    String sanitized = PhoneUtils.sanitizePhoneNumber(phoneNumber);
     String authCode = verifyGuestAuthCodeDTO.getAuthCode();
 
     // 1. 인증 코드 검증
@@ -67,10 +68,10 @@ public class GuestAuthService {
     }
 
     // 2. 사용자 정보 완성 여부 확인 (email, username이 모두 존재하는지)
-    boolean hasCompleteUserInfo = guestUserReader.hasCompleteUserInfo(sanitized);
+    boolean hasCompleteUserInfo = guestUserReader.hasCompleteUserInfo(phoneNumber);
 
     // 3. 기존 GuestUser 조회
-    GuestUser existingGuestUser = guestUserReader.getByPhoneNumberIfExists(sanitized);
+    GuestUser existingGuestUser = guestUserReader.getByPhoneNumberIfExists(phoneNumber);
 
     GuestUser guestUser;
     String email = null;
@@ -93,10 +94,10 @@ public class GuestAuthService {
         guestUser = existingGuestUser;
       } else {
         // 새로운 GuestUser 생성 (이메일과 이름은 빈 값으로 생성)
-        guestUser = GuestUser.builder().username("").phoneNumber(sanitized).email("").build();
+        guestUser = GuestUser.builder().phoneNumber(phoneNumber).build();
       }
 
-      log.info("사용자 정보가 불완전한 비회원 인증 완료: phoneNumber={}", sanitized);
+      log.info("사용자 정보가 불완전한 비회원 인증 완료: phoneNumber={}", phoneNumber);
     }
 
     // 4. 전화번호 인증 완료 처리
@@ -112,7 +113,7 @@ public class GuestAuthService {
     String guestToken = securityPort.createGuestTokenWithScope(guestUser.getId(), tokenScope);
 
     return GuestTokenDTO.builder()
-        .phoneNumber(sanitized)
+        .phoneNumber(phoneNumber)
         .email(email) // 사용자 정보가 불완전하면 null
         .username(username) // 사용자 정보가 불완전하면 null
         .guestToken(guestToken)
