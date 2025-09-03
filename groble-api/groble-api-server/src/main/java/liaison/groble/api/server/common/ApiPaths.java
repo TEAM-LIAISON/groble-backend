@@ -9,9 +9,9 @@ public final class ApiPaths {
   public static final class Guest {
     public static final String BASE_AUTH = API_V1 + "/guest/auth";
 
-    public static final String PHONE_CODE_REQUEST = BASE_AUTH + "/code-request";
-    public static final String PHONE_CODE_VERIFY = BASE_AUTH + "/verify-request";
-    public static final String UPDATE_GUEST_USER_INFO = BASE_AUTH + "/update-info";
+    public static final String PHONE_CODE_REQUEST = "/code-request";
+    public static final String PHONE_CODE_VERIFY = "/verify-request";
+    public static final String UPDATE_GUEST_USER_INFO = "/update-info";
   }
 
   public static final class Admin {
