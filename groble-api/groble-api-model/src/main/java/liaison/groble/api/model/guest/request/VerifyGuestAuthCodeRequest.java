@@ -18,7 +18,7 @@ public class VerifyGuestAuthCodeRequest {
   @Schema(description = "비회원 사용자 전화번호", example = "010-1234-5678")
   private String phoneNumber;
 
-  @Pattern(regexp = "^[0-9]{4}$", message = "인증 코드는 6자리 숫자여야 합니다.")
-  @Schema(description = "인증 코드", example = "1234")
+  @Pattern(regexp = "^[0-9]{6}$", message = "인증 코드는 6자리 숫자여야 합니다.")
+  @Schema(description = "인증 코드", example = "123456")
   private String authCode;
 }
