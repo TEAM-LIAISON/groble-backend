@@ -59,7 +59,7 @@ public class PaypleApiClient {
     params.put("PCD_PAY_WORK", payWork);
 
     try {
-      JSONObject authResult = paypleService.payAuth(params);
+      JSONObject authResult = paypleService.payAuthForCancel();
 
       String result = getString(authResult, "result");
       if (!RESULT_SUCCESS.equalsIgnoreCase(result)) {
