@@ -3,7 +3,6 @@ package liaison.groble.api.server.guest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -12,18 +11,25 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import liaison.groble.api.model.guest.request.GuestAuthCodeRequest;
-import liaison.groble.api.model.guest.request.GuestAuthVerifyRequest;
+import liaison.groble.api.model.guest.request.UpdateGuestUserInfoRequest;
+import liaison.groble.api.model.guest.request.VerifyGuestAuthCodeRequest;
 import liaison.groble.api.model.guest.response.GuestAuthCodeResponse;
+import liaison.groble.api.model.guest.response.UpdateGuestUserInfoResponse;
+import liaison.groble.api.model.guest.response.VerifyAuthCodeResponse;
 import liaison.groble.api.server.common.ApiPaths;
 import liaison.groble.api.server.common.BaseController;
 import liaison.groble.api.server.common.ResponseMessages;
 import liaison.groble.api.server.guest.docs.GuestAuthPostResponses;
 import liaison.groble.api.server.guest.docs.GuestAuthSwaggerDocs;
 import liaison.groble.application.guest.dto.GuestAuthDTO;
-import liaison.groble.application.guest.dto.GuestAuthVerifyDTO;
 import liaison.groble.application.guest.dto.GuestTokenDTO;
+import liaison.groble.application.guest.dto.UpdateGuestUserInfoDTO;
+import liaison.groble.application.guest.dto.UpdateGuestUserInfoResultDTO;
+import liaison.groble.application.guest.dto.VerifyGuestAuthCodeDTO;
 import liaison.groble.application.guest.service.GuestAuthService;
+import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.annotation.Logging;
+import liaison.groble.common.model.Accessor;
 import liaison.groble.common.response.GrobleResponse;
 import liaison.groble.common.response.ResponseHelper;
 import liaison.groble.common.utils.TokenCookieService;
@@ -56,6 +62,7 @@ public class GuestAuthController extends BaseController {
     this.tokenCookieService = tokenCookieService;
   }
 
+  // === 비회원 전화번호 인증 요청 API ===
   @Operation(
       summary = GuestAuthSwaggerDocs.CODE_REQUEST_SUMMARY,
       description = GuestAuthSwaggerDocs.CODE_REQUEST_DESCRIPTION)
@@ -78,26 +85,65 @@ public class GuestAuthController extends BaseController {
     return success(guestAuthCodeResponse, ResponseMessages.Guest.GUEST_AUTH_PHONE_REQUEST_SUCCESS);
   }
 
+  // === 비회원 전화번호 인증 코드 검증 및 (임시/정식)토큰 발급 API ===
   @Operation(
       summary = GuestAuthSwaggerDocs.CODE_VERIFY_SUMMARY,
       description = GuestAuthSwaggerDocs.CODE_VERIFY_DESCRIPTION)
+  @GuestAuthPostResponses.VerifyAuthCodeResponses
   @Logging(
       item = "Guest",
       action = "verifyGuestPhoneNumberAuthCode",
       includeParam = true,
       includeResult = true)
   @PostMapping(ApiPaths.Guest.PHONE_CODE_VERIFY)
-  public ResponseEntity<GrobleResponse<Void>> verifyGuestPhoneNumberAuthCode(
-      @Valid @RequestBody GuestAuthVerifyRequest guestAuthVerifyRequest,
+  public ResponseEntity<GrobleResponse<VerifyAuthCodeResponse>> verifyGuestPhoneNumberAuthCode(
+      @Valid @RequestBody VerifyGuestAuthCodeRequest verifyGuestAuthCodeRequest,
       HttpServletResponse response) {
 
-    GuestAuthVerifyDTO guestAuthVerifyDTO =
-        guestAuthMapper.toGuestAuthVerifyDTO(guestAuthVerifyRequest);
-    GuestTokenDTO guestTokenDTO = guestAuthService.verifyGuestAuthCode(guestAuthVerifyDTO);
+    VerifyGuestAuthCodeDTO verifyGuestAuthCodeDTO =
+        guestAuthMapper.toVerifyGuestAuthCodeDTO(verifyGuestAuthCodeRequest);
+    GuestTokenDTO guestTokenDTO = guestAuthService.verifyGuestAuthCode(verifyGuestAuthCodeDTO);
 
     // 게스트 토큰 쿠키 설정
     tokenCookieService.addGuestTokenCookie(response, guestTokenDTO.getGuestToken());
 
-    return responseHelper.success(null, "비회원 전화번호 인증 검증이 성공적으로 완료되었습니다.", HttpStatus.OK);
+    // DTO를 Response로 변환
+    VerifyAuthCodeResponse verifyAuthCodeResponse =
+        guestAuthMapper.toVerifyAuthCodeResponse(guestTokenDTO);
+
+    return success(verifyAuthCodeResponse, "비회원 전화번호 인증 검증이 성공적으로 완료되었습니다.");
+  }
+
+  // === 비회원 사용자 정보 업데이트 및 정식 토큰 발급 API ===
+  @Operation(
+      summary = "비회원 사용자 정보 업데이트",
+      description = "전화번호 인증 완료된 비회원 사용자의 이메일과 이름을 업데이트하고 정식 토큰을 발급합니다.")
+  @Logging(
+      item = "Guest",
+      action = "updateGuestUserInfo",
+      includeParam = true,
+      includeResult = true)
+  @PostMapping(ApiPaths.Guest.UPDATE_GUEST_USER_INFO)
+  public ResponseEntity<GrobleResponse<UpdateGuestUserInfoResponse>> updateGuestUserInfo(
+      @Valid @RequestBody UpdateGuestUserInfoRequest updateGuestUserInfoRequest,
+      @Auth Accessor accessor,
+      HttpServletResponse response) {
+
+    // DTO 변환
+    UpdateGuestUserInfoDTO updateGuestUserInfoDTO =
+        guestAuthMapper.toUpdateGuestUserInfoDTO(updateGuestUserInfoRequest);
+
+    // 서비스 호출
+    UpdateGuestUserInfoResultDTO resultDTO =
+        guestAuthService.updateGuestUserInfo(accessor.getUserId(), updateGuestUserInfoDTO);
+
+    // 새로운 토큰을 쿠키에 설정
+    tokenCookieService.addGuestTokenCookie(response, resultDTO.getNewGuestToken());
+
+    // Response 변환
+    UpdateGuestUserInfoResponse updateResponse =
+        guestAuthMapper.toUpdateGuestUserInfoResponse(resultDTO);
+
+    return success(updateResponse, "비회원 사용자 정보가 성공적으로 업데이트되었습니다.");
   }
 }

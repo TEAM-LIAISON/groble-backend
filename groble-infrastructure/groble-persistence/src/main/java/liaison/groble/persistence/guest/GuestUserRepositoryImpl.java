@@ -35,6 +35,11 @@ public class GuestUserRepositoryImpl implements GuestUserRepository {
   }
 
   @Override
+  public boolean existsByPhoneNumberAndHasCompleteUserInfo(String phoneNumber) {
+    return jpaGuestUserRepository.existsByPhoneNumberAndHasCompleteUserInfo(phoneNumber);
+  }
+
+  @Override
   public GuestUser save(GuestUser guestUser) {
     return jpaGuestUserRepository.save(guestUser);
   }

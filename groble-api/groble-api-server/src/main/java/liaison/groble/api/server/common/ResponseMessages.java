@@ -6,6 +6,7 @@ public final class ResponseMessages {
 
   public static final class Guest {
     public static final String GUEST_AUTH_PHONE_REQUEST_SUCCESS = "비회원 전화번호 인증 요청이 성공적으로 완료되었습니다.";
+    public static final String VERIFY_GUEST_AUTH_PHONE_SUCCESS = "비회원 전화번호 인증이 성공적으로 완료되었습니다.";
   }
 
   public static final class Admin {

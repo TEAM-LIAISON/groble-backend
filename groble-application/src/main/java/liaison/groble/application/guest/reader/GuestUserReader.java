@@ -32,4 +32,12 @@ public class GuestUserReader {
   public boolean existsByPhoneNumber(String phoneNumber) {
     return guestUserRepository.existsByPhoneNumber(phoneNumber);
   }
+
+  public boolean hasCompleteUserInfo(String phoneNumber) {
+    return guestUserRepository.existsByPhoneNumberAndHasCompleteUserInfo(phoneNumber);
+  }
+
+  public GuestUser getByPhoneNumberIfExists(String phoneNumber) {
+    return guestUserRepository.findByPhoneNumber(phoneNumber).orElse(null);
+  }
 }

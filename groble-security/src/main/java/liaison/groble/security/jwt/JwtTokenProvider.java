@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import liaison.groble.common.enums.GuestTokenScope;
 import liaison.groble.security.oauth2.exception.TokenException;
 
 import io.jsonwebtoken.Claims;
@@ -271,12 +272,18 @@ public class JwtTokenProvider {
     }
   }
 
-  // 비회원 토큰 생성
+  // 게스트 토큰 생성 (기본: FULL_ACCESS)
   public String createGuestToken(Long guestUserId) {
+    return createGuestTokenWithScope(guestUserId, GuestTokenScope.FULL_ACCESS);
+  }
+
+  // 스코프 지정 게스트 토큰 생성
+  public String createGuestTokenWithScope(Long guestUserId, GuestTokenScope scope) {
     LocalDateTime expiryDate = LocalDateTime.now().plusSeconds(guestTokenExpirationMs / 1000);
     return Jwts.builder()
         .setSubject("guest:" + guestUserId)
         .claim("type", "GUEST")
+        .claim("scope", scope.getCode())
         .claim("roles", List.of("ROLE_GUEST"))
         .setIssuedAt(new Date())
         .setExpiration(Date.from(expiryDate.atZone(ZoneId.systemDefault()).toInstant()))
@@ -284,13 +291,23 @@ public class JwtTokenProvider {
         .compact();
   }
 
-  // Principal 추출
-  public GuestPrincipal getGuestPrincipalFromToken(String token) {
+  // 게스트 토큰에서 스코프 추출
+  public GuestTokenScope getGuestTokenScope(String guestToken) {
+    try {
+      Claims claims = getClaims(guestToken);
+      String scopeCode = claims.get("scope", String.class);
+      return scopeCode != null ? GuestTokenScope.fromCode(scopeCode) : GuestTokenScope.FULL_ACCESS;
+    } catch (Exception e) {
+      throw new TokenException("게스트 토큰에서 스코프를 추출할 수 없습니다", e);
+    }
+  }
+
+  // Guest ID 추출
+  public Long getGuestIdFromToken(String token) {
     Claims claims = getClaims(token);
     String subject = claims.getSubject(); // "guest:123"
 
-    Long guestId = Long.valueOf(subject.substring(6));
-    return GuestPrincipal.of(guestId); // PII 없이 생성
+    return Long.valueOf(subject.substring(6));
   }
 
   // getClaims 메서드

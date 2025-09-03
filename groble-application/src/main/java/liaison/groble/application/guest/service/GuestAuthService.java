@@ -7,11 +7,14 @@ import org.springframework.stereotype.Service;
 import liaison.groble.application.common.enums.SmsTemplate;
 import liaison.groble.application.common.service.SmsService;
 import liaison.groble.application.guest.dto.GuestAuthDTO;
-import liaison.groble.application.guest.dto.GuestAuthVerifyDTO;
 import liaison.groble.application.guest.dto.GuestTokenDTO;
+import liaison.groble.application.guest.dto.UpdateGuestUserInfoDTO;
+import liaison.groble.application.guest.dto.UpdateGuestUserInfoResultDTO;
+import liaison.groble.application.guest.dto.VerifyGuestAuthCodeDTO;
 import liaison.groble.application.guest.exception.InvalidGuestAuthCodeException;
 import liaison.groble.application.guest.reader.GuestUserReader;
 import liaison.groble.application.guest.writer.GuestUserWriter;
+import liaison.groble.common.enums.GuestTokenScope;
 import liaison.groble.common.port.security.SecurityPort;
 import liaison.groble.common.utils.CodeGenerator;
 import liaison.groble.common.utils.PhoneUtils;
@@ -40,7 +43,7 @@ public class GuestAuthService {
 
     // 1. 기존 GuestUser 상태 확인 및 처리
     handleExistingGuestUser(guestAuthDTO.getPhoneNumber());
-    String code = CodeGenerator.generateVerificationCode(4);
+    String code = CodeGenerator.generateVerificationCode(6);
 
     // 2. Redis 인증 코드 저장 (5분 유효)
     verificationCodePort.saveVerificationCodeForGuest(
@@ -52,11 +55,9 @@ public class GuestAuthService {
     return GuestAuthDTO.builder().phoneNumber(guestAuthDTO.getPhoneNumber()).build();
   }
 
-  public GuestTokenDTO verifyGuestAuthCode(GuestAuthVerifyDTO guestAuthVerifyDTO) {
-    String sanitized = PhoneUtils.sanitizePhoneNumber(guestAuthVerifyDTO.getPhoneNumber());
-    String authCode = guestAuthVerifyDTO.getAuthCode();
-    String email = guestAuthVerifyDTO.getEmail();
-    String username = guestAuthVerifyDTO.getUsername();
+  public GuestTokenDTO verifyGuestAuthCode(VerifyGuestAuthCodeDTO verifyGuestAuthCodeDTO) {
+    String sanitized = PhoneUtils.sanitizePhoneNumber(verifyGuestAuthCodeDTO.getPhoneNumber());
+    String authCode = verifyGuestAuthCodeDTO.getAuthCode();
 
     // 1. 인증 코드 검증
     boolean isValidCode =
@@ -65,46 +66,84 @@ public class GuestAuthService {
       throw new InvalidGuestAuthCodeException();
     }
 
-    // 2. 기존 GuestUser 조회 또는 생성 처리
-    GuestUser guestUser;
-    if (guestUserReader.existsByPhoneNumber(sanitized)) {
-      guestUser = guestUserReader.getByPhoneNumber(sanitized);
+    // 2. 사용자 정보 완성 여부 확인 (email, username이 모두 존재하는지)
+    boolean hasCompleteUserInfo = guestUserReader.hasCompleteUserInfo(sanitized);
 
-      // 기존 사용자의 정보와 요청 정보가 다른 경우 업데이트
-      if (!guestUser.getEmail().equals(email) || !guestUser.getUsername().equals(username)) {
-        log.info(
-            "기존 비회원 정보 업데이트: phoneNumber={}, oldEmail={}, newEmail={}, oldUsername={}, newUsername={}",
-            sanitized,
-            guestUser.getEmail(),
-            email,
-            guestUser.getUsername(),
-            username);
-        guestUser.updateUserInfo(username, email);
-      }
+    // 3. 기존 GuestUser 조회
+    GuestUser existingGuestUser = guestUserReader.getByPhoneNumberIfExists(sanitized);
+
+    GuestUser guestUser;
+    String email = null;
+    String username = null;
+
+    if (hasCompleteUserInfo && existingGuestUser != null) {
+      // 완전한 사용자 정보가 있는 경우: 기존 정보 사용 및 로그인 처리
+      guestUser = existingGuestUser;
+      email = guestUser.getEmail();
+      username = guestUser.getUsername();
+
+      log.info(
+          "완전한 사용자 정보가 있는 비회원 인증 완료 - 자동 로그인: phoneNumber={}, email={}, username={}",
+          sanitized,
+          email,
+          username);
     } else {
-      // 새로운 GuestUser 생성
-      guestUser =
-          GuestUser.builder().username(username).phoneNumber(sanitized).email(email).build();
+      // 사용자 정보가 불완전한 경우: 이메일과 이름을 응답에 포함하지 않음
+      if (existingGuestUser != null) {
+        guestUser = existingGuestUser;
+      } else {
+        // 새로운 GuestUser 생성 (이메일과 이름은 빈 값으로 생성)
+        guestUser = GuestUser.builder().username("").phoneNumber(sanitized).email("").build();
+      }
+
+      log.info("사용자 정보가 불완전한 비회원 인증 완료: phoneNumber={}", sanitized);
     }
 
-    // 3. 전화번호 인증 완료 처리
+    // 4. 전화번호 인증 완료 처리
     guestUser.verifyPhone();
     guestUserWriter.save(guestUser);
 
-    // 4. 인증 코드 삭제
+    // 5. 인증 코드 삭제
     verificationCodePort.removeVerificationCodeForGuest(sanitized);
 
-    // 5. 게스트 토큰 생성
-    String guestToken = securityPort.createGuestToken(guestUser.getId());
-
-    log.info("비회원 전화번호 인증 완료: phoneNumber={}, email={}, username={}", sanitized, email, username);
+    // 6. 게스트 토큰 생성 (스코프에 따라 다른 토큰 생성)
+    GuestTokenScope tokenScope =
+        hasCompleteUserInfo ? GuestTokenScope.FULL_ACCESS : GuestTokenScope.PHONE_VERIFIED;
+    String guestToken = securityPort.createGuestTokenWithScope(guestUser.getId(), tokenScope);
 
     return GuestTokenDTO.builder()
         .phoneNumber(sanitized)
-        .email(email)
-        .username(username)
+        .email(email) // 사용자 정보가 불완전하면 null
+        .username(username) // 사용자 정보가 불완전하면 null
         .guestToken(guestToken)
         .authenticated(true)
+        .hasCompleteUserInfo(hasCompleteUserInfo)
+        .build();
+  }
+
+  public UpdateGuestUserInfoResultDTO updateGuestUserInfo(
+      Long guestUserId, UpdateGuestUserInfoDTO updateGuestUserInfoDTO) {
+    String email = updateGuestUserInfoDTO.getEmail();
+    String username = updateGuestUserInfoDTO.getUsername();
+
+    // 1. GuestUser 조회
+    GuestUser guestUser = guestUserReader.getGuestUserById(guestUserId);
+
+    // 2. 사용자 정보 업데이트
+    guestUser.updateUserInfo(username, email);
+    guestUserWriter.save(guestUser);
+
+    // 3. 새로운 FULL_ACCESS 토큰 생성
+    String newGuestToken =
+        securityPort.createGuestTokenWithScope(guestUserId, GuestTokenScope.FULL_ACCESS);
+
+    log.info(
+        "비회원 사용자 정보 업데이트 완료: guestUserId={}, email={}, username={}", guestUserId, email, username);
+
+    return UpdateGuestUserInfoResultDTO.builder()
+        .email(email)
+        .username(username)
+        .newGuestToken(newGuestToken)
         .build();
   }
 

@@ -11,6 +11,7 @@ public final class ApiPaths {
 
     public static final String PHONE_CODE_REQUEST = BASE_AUTH + "/code-request";
     public static final String PHONE_CODE_VERIFY = BASE_AUTH + "/verify-request";
+    public static final String UPDATE_GUEST_USER_INFO = BASE_AUTH + "/update-info";
   }
 
   public static final class Admin {
