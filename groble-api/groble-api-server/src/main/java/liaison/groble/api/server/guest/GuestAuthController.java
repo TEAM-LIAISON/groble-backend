@@ -116,8 +116,9 @@ public class GuestAuthController extends BaseController {
 
   // === 비회원 사용자 정보 업데이트 및 정식 토큰 발급 API ===
   @Operation(
-      summary = "비회원 사용자 정보 업데이트",
-      description = "전화번호 인증 완료된 비회원 사용자의 이메일과 이름을 업데이트하고 정식 토큰을 발급합니다.")
+      summary = GuestAuthSwaggerDocs.UPDATE_GUEST_USER_INFO_SUMMARY,
+      description = GuestAuthSwaggerDocs.UPDATE_GUEST_USER_INFO_DESCRIPTION)
+  @GuestAuthPostResponses.UpdateGuestUserInfoResponses
   @Logging(
       item = "Guest",
       action = "updateGuestUserInfo",
@@ -144,6 +145,6 @@ public class GuestAuthController extends BaseController {
     UpdateGuestUserInfoResponse updateResponse =
         guestAuthMapper.toUpdateGuestUserInfoResponse(resultDTO);
 
-    return success(updateResponse, "비회원 사용자 정보가 성공적으로 업데이트되었습니다.");
+    return success(updateResponse, ResponseMessages.Guest.UPDATE_GUEST_USER_INFO_SUCCESS);
   }
 }

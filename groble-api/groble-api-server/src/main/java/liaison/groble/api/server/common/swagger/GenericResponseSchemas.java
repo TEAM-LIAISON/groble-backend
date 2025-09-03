@@ -304,4 +304,23 @@ public final class GenericResponseSchemas {
     @Schema(description = "응답 시간", example = "2025-08-31T07:06:06.312Z")
     public String timestamp;
   }
+
+  @Schema(description = CommonSwaggerDocs.GROBLE_RESPONSE_DESC + " - 비회원 사용자 정보 업데이트 응답")
+  public static class ApiUpdateGuestUserInfoResponse {
+
+    @Schema(description = "응답 상태", example = CommonSwaggerDocs.STATUS_SUCCESS)
+    public String status;
+
+    @Schema(description = "HTTP 상태 코드", example = "200")
+    public int code;
+
+    @Schema(description = "응답 메시지", example = ResponseMessages.Guest.UPDATE_GUEST_USER_INFO_SUCCESS)
+    public String message;
+
+    @Schema(description = "비회원 사용자 정보 업데이트 및 정식 토큰 발급 응답")
+    public VerifyAuthCodeResponse data;
+
+    @Schema(description = "응답 시간", example = "2025-08-31T07:06:06.312Z")
+    public String timestamp;
+  }
 }
