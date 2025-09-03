@@ -4,6 +4,10 @@ public final class ResponseMessages {
 
   private ResponseMessages() {}
 
+  public static final class Guest {
+    public static final String GUEST_AUTH_PHONE_REQUEST_SUCCESS = "비회원 전화번호 인증 요청이 성공적으로 완료되었습니다.";
+  }
+
   public static final class Admin {
     public static final String SETTLEMENT_APPROVAL_SUCCESS = "정산 승인 요청이 성공적으로 처리되었습니다.";
   }

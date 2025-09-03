@@ -35,17 +35,21 @@ public class GuestAuthService {
   // Service
   private final SmsService smsService;
 
-  public void sendGuestAuthCode(GuestAuthDTO guestAuthDTO) {
+  public GuestAuthDTO sendGuestAuthCode(GuestAuthDTO guestAuthDTO) {
     String sanitized = PhoneUtils.sanitizePhoneNumber(guestAuthDTO.getPhoneNumber());
 
     // 1. 기존 GuestUser 상태 확인 및 처리
-    handleExistingGuestUser(sanitized);
+    handleExistingGuestUser(guestAuthDTO.getPhoneNumber());
     String code = CodeGenerator.generateVerificationCode(4);
+
+    // 2. Redis 인증 코드 저장 (5분 유효)
     verificationCodePort.saveVerificationCodeForGuest(
         sanitized, code, Duration.ofMinutes(5).toMinutes());
 
     // 3. SMS 발송
     smsService.sendSms(sanitized, SmsTemplate.VERIFICATION_CODE, code);
+
+    return GuestAuthDTO.builder().phoneNumber(guestAuthDTO.getPhoneNumber()).build();
   }
 
   public GuestTokenDTO verifyGuestAuthCode(GuestAuthVerifyDTO guestAuthVerifyDTO) {

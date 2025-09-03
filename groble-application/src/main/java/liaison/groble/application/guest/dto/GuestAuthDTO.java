@@ -6,7 +6,5 @@ import lombok.Getter;
 @Getter
 @Builder
 public class GuestAuthDTO {
-  private String username;
-  private String email;
   private String phoneNumber;
 }

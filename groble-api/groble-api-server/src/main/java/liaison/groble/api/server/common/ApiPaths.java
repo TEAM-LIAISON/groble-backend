@@ -6,6 +6,13 @@ public final class ApiPaths {
 
   public static final String API_V1 = "/api/v1";
 
+  public static final class Guest {
+    public static final String BASE_AUTH = API_V1 + "/guest/auth";
+
+    public static final String PHONE_CODE_REQUEST = BASE_AUTH + "/code-request";
+    public static final String PHONE_CODE_VERIFY = BASE_AUTH + "/verify-request";
+  }
+
   public static final class Admin {
     public static final String BASE = API_V1 + "/admin";
     public static final String SETTLEMENT_BASE = BASE + "/settlements";
