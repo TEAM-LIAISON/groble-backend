@@ -4,6 +4,10 @@ public final class ResponseMessages {
 
   private ResponseMessages() {}
 
+  public static final class Admin {
+    public static final String SETTLEMENT_APPROVAL_SUCCESS = "정산 승인 요청이 성공적으로 처리되었습니다.";
+  }
+
   public static final class Payment {
     public static final String REQUEST_SUCCESS = "결제 승인 요청이 성공적으로 처리되었습니다.";
     public static final String CANCEL_SUCCESS = "결제 취소 요청이 성공적으로 처리되었습니다.";

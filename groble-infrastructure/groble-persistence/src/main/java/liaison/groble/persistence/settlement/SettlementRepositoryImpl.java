@@ -42,4 +42,9 @@ public class SettlementRepositoryImpl implements SettlementRepository {
   public Settlement save(Settlement settlement) {
     return jpaSettlementRepository.save(settlement);
   }
+
+  @Override
+  public List<Settlement> findByIdIn(List<Long> settlementIds) {
+    return jpaSettlementRepository.findByIdIn(settlementIds);
+  }
 }

@@ -31,8 +31,6 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @RequiredArgsConstructor
 public class PaypleApiClient {
-  private static final String PAY_WORK_AUTH = "AUTH";
-  private static final String PAY_WORK_LINKREG = "LINKREG";
   private static final String RESULT_SUCCESS = "success";
 
   private final PaypleService paypleService;

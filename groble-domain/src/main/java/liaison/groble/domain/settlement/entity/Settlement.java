@@ -277,6 +277,31 @@ public class Settlement extends BaseTimeEntity {
     this.settlementNote = reason;
   }
 
+  /**
+   * 정산 승인 처리
+   *
+   * @param adminUserId 승인 처리한 관리자 ID
+   * @param approvalReason 승인 사유
+   */
+  public void approve(Long adminUserId, String approvalReason) {
+    if (this.status == SettlementStatus.COMPLETED) {
+      throw new IllegalStateException("이미 완료된 정산입니다: " + this.id);
+    }
+    if (this.status == SettlementStatus.CANCELLED) {
+      throw new IllegalStateException("취소된 정산은 승인할 수 없습니다: " + this.id);
+    }
+
+    this.status = SettlementStatus.COMPLETED;
+    this.settledAt = LocalDateTime.now();
+
+    // 승인 정보를 메모에 기록
+    String approvalNote =
+        String.format(
+            "관리자 승인 완료 (ID: %d, 사유: %s)",
+            adminUserId, approvalReason != null ? approvalReason : "정산 승인");
+    this.settlementNote = approvalNote;
+  }
+
   /** 수정 가능 여부 확인 */
   private void ensureModifiable() {
     if (this.status == SettlementStatus.COMPLETED || this.status == SettlementStatus.CANCELLED) {
