@@ -64,27 +64,44 @@ public class GuestPaymentStrategy implements PaymentStrategy {
 
     log.info("비회원 결제 취소 처리 시작 - guestUserId: {}, merchantUid: {}", guestUserId, merchantUid);
 
-    // 1. 취소 가능 여부 검증
-    PaymentCancelInfo cancelInfo =
-        transactionService.validateCancellationForGuest(guestUserId, merchantUid);
+    try {
+      // 1. 취소 가능 여부 검증
+      PaymentCancelInfo cancelInfo =
+          transactionService.validateCancellationForGuest(guestUserId, merchantUid);
 
-    // 2. 페이플 환불 API 호출
-    PaypleRefundResult refundResult = paypleApiClient.requestRefund(cancelInfo);
-    if (!refundResult.isSuccess()) {
-      throw new PaypleRefundException(
-          String.format(
-              "비회원 환불 실패 [%s]: %s", refundResult.getErrorCode(), refundResult.getErrorMessage()));
+      // 2. 페이플 환불 API 호출 (개선된 전용 인증 사용)
+      PaypleRefundResult refundResult = paypleApiClient.requestRefund(cancelInfo);
+      if (!refundResult.isSuccess()) {
+        throw new PaypleRefundException(
+            String.format(
+                "비회원 환불 실패 [%s]: %s", refundResult.getErrorCode(), refundResult.getErrorMessage()));
+      }
+
+      // 3. 취소 완료 처리
+      PaymentCancelResult cancelResult =
+          transactionService.completeCancelForGuest(cancelInfo, reason);
+
+      // 4. 환불 완료 이벤트 발행
+      eventPublisher.publishPaymentRefundedForGuest(cancelResult);
+
+      // 5. 응답 생성
+      return buildCancelResponse(merchantUid, reason, cancelResult);
+
+    } catch (PaypleRefundException e) {
+      log.error(
+          "비회원 결제 취소 실패 - guestUserId: {}, merchantUid: {}, reason: {}",
+          guestUserId,
+          merchantUid,
+          e.getMessage());
+      throw e;
+    } catch (Exception e) {
+      log.error(
+          "비회원 결제 취소 중 예상치 못한 오류 발생 - guestUserId: {}, merchantUid: {}",
+          guestUserId,
+          merchantUid,
+          e);
+      throw new PaypleRefundException("결제 취소 처리 중 오류가 발생했습니다", e);
     }
-
-    // 3. 취소 완료 처리
-    PaymentCancelResult cancelResult =
-        transactionService.completeCancelForGuest(cancelInfo, reason);
-
-    // 4. 환불 완료 이벤트 발행
-    eventPublisher.publishPaymentRefundedForGuest(cancelResult);
-
-    // 5. 응답 생성
-    return buildCancelResponse(merchantUid, reason, cancelResult);
   }
 
   private PaymentCancelResponse buildCancelResponse(

@@ -14,6 +14,7 @@ import liaison.groble.application.payment.dto.PaypleAuthResponseDTO;
 import liaison.groble.application.payment.dto.PaypleAuthResultDTO;
 import liaison.groble.application.payment.dto.PaypleRefundResult;
 import liaison.groble.application.payment.exception.PaypleApiException;
+import liaison.groble.external.adapter.payment.PaypleCodeGenerator;
 import liaison.groble.external.adapter.payment.PaypleRefundRequest;
 import liaison.groble.external.adapter.payment.PaypleService;
 import liaison.groble.external.config.PaypleConfig;
@@ -31,19 +32,17 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class PaypleApiClient {
   private static final String PAY_WORK_AUTH = "AUTH";
+  private static final String PAY_WORK_LINKREG = "LINKREG";
   private static final String RESULT_SUCCESS = "success";
 
   private final PaypleService paypleService;
   private final PaypleConfig paypleConfig;
+  private final PaypleCodeGenerator codeGenerator;
 
   /**
-   * 파트너 인증 요청
+   * 일반 결제 인증 요청 (기존 호환성 유지)
    *
-   * <p>(1) 환불 요청에 사용
-   *
-   * <p>(2) 정산지급대행에 사용
-   *
-   * @param payWork 작업 구분
+   * @param payWork 작업 구분 (AUTH, LINKREG, PAY 등)
    * @return 인증 응답
    */
   @Retryable(
@@ -51,37 +50,87 @@ public class PaypleApiClient {
       maxAttempts = 3,
       backoff = @Backoff(delay = 1000, multiplier = 2))
   public PaypleAuthResponseDTO requestAuth(String payWork) {
-    log.info("페이플 파트너 인증 요청 - payWork: {}", payWork);
+    log.info("페이플 일반 결제 인증 요청 - payWork: {}", payWork);
 
     Map<String, String> params = new HashMap<>();
-    params.put("cst_id", paypleConfig.getCstId());
-    params.put("custKey", paypleConfig.getCustKey());
     params.put("PCD_PAY_WORK", payWork);
 
     try {
-      JSONObject authResult = paypleService.payAuthForCancel();
-
-      String result = getString(authResult, "result");
-      if (!RESULT_SUCCESS.equalsIgnoreCase(result)) {
-        String errorMsg = getString(authResult, "result_msg");
-        log.error("페이플 파트너 인증 실패 - message: {}", errorMsg);
-        throw new PaypleApiException("페이플 파트너 인증 실패: " + errorMsg);
-      }
-
-      return PaypleAuthResponseDTO.builder()
-          .result(result)
-          .resultMsg(getString(authResult, "result_msg"))
-          .cstId(getString(authResult, "cst_id"))
-          .custKey(getString(authResult, "custKey"))
-          .authKey(getString(authResult, "AuthKey"))
-          .payWork(getString(authResult, "PCD_PAY_WORK"))
-          .payUrl(getString(authResult, "PCD_PAY_URL"))
-          .returnUrl(getString(authResult, "return_url"))
-          .build();
+      JSONObject authResult = paypleService.payAuth(params);
+      return buildAuthResponse(authResult, "일반 결제 인증");
 
     } catch (Exception e) {
-      log.error("페이플 파트너 인증 중 오류 발생", e);
-      throw new PaypleApiException("페이플 파트너 인증 실패", e);
+      log.error("페이플 일반 결제 인증 중 오류 발생", e);
+      throw new PaypleApiException("페이플 일반 결제 인증 실패", e);
+    }
+  }
+
+  /**
+   * 결제 취소를 위한 전용 인증 요청
+   *
+   * @return 인증 응답
+   */
+  @Retryable(
+      value = PaypleApiException.class,
+      maxAttempts = 3,
+      backoff = @Backoff(delay = 1000, multiplier = 2))
+  public PaypleAuthResponseDTO requestAuthForCancel() {
+    log.info("페이플 결제 취소 전용 인증 요청");
+
+    try {
+      JSONObject authResult = paypleService.payAuthForCancel();
+      return buildAuthResponse(authResult, "결제 취소 인증");
+
+    } catch (Exception e) {
+      log.error("페이플 결제 취소 인증 중 오류 발생", e);
+      throw new PaypleApiException("페이플 결제 취소 인증 실패", e);
+    }
+  }
+
+  /**
+   * 정산지급대행을 위한 계정 인증 요청
+   *
+   * @param customCode 사용자 지정 코드 (null인 경우 자동 생성)
+   * @return 인증 응답
+   */
+  @Retryable(
+      value = PaypleApiException.class,
+      maxAttempts = 3,
+      backoff = @Backoff(delay = 1000, multiplier = 2))
+  public PaypleAuthResponseDTO requestAuthForSettlementAccount(String customCode) {
+    String code = (customCode != null) ? customCode : codeGenerator.generateSettlementCode();
+    log.info("페이플 정산지급대행 계정 인증 요청 - code: {}", maskCode(code));
+
+    try {
+      JSONObject authResult = paypleService.payAuthForSettlement(code);
+      return buildAuthResponse(authResult, "정산지급대행 계정 인증");
+
+    } catch (Exception e) {
+      log.error("페이플 정산지급대행 계정 인증 중 오류 발생", e);
+      throw new PaypleApiException("페이플 정산지급대행 계정 인증 실패", e);
+    }
+  }
+
+  /**
+   * 정산지급대행을 위한 계좌 인증 요청 타임스탬프 기반 코드 사용
+   *
+   * @return 인증 응답
+   */
+  @Retryable(
+      value = PaypleApiException.class,
+      maxAttempts = 3,
+      backoff = @Backoff(delay = 1000, multiplier = 2))
+  public PaypleAuthResponseDTO requestAuthForSettlementBank() {
+    String timestampCode = codeGenerator.generateTimestampBasedCode();
+    log.info("페이플 정산지급대행 계좌 인증 요청 - timestamp code: {}", timestampCode);
+
+    try {
+      JSONObject authResult = paypleService.payAuthForSettlement(timestampCode);
+      return buildAuthResponse(authResult, "정산지급대행 계좌 인증");
+
+    } catch (Exception e) {
+      log.error("페이플 정산지급대행 계좌 인증 중 오류 발생", e);
+      throw new PaypleApiException("페이플 정산지급대행 계좌 인증 실패", e);
     }
   }
 
@@ -151,8 +200,8 @@ public class PaypleApiClient {
         cancelInfo.getRefundAmount());
 
     try {
-      // 1. 환불을 위한 인증 요청
-      PaypleAuthResponseDTO authResponse = requestAuth(PAY_WORK_AUTH);
+      // 1. 환불을 위한 전용 인증 요청
+      PaypleAuthResponseDTO authResponse = requestAuthForCancel();
 
       // 2. 환불 요청 생성
       PaypleRefundRequest refundRequest =
@@ -197,22 +246,73 @@ public class PaypleApiClient {
     }
   }
 
-  //    /**
-  //     * 계좌 인증 요청
-  //     *
-  //     * @param authResult 인증 결과
-  //     * @return 승인 결과 & 빌링키
-  //     */
-  //    @Retryable(value = PaypleApiException.class, maxAttempts = 2, backoff = @Backoff(delay =
-  // 500))
-  //    public PaypleAccountVerificationResult requestAccountVerification(PaymentSettlementInfo
-  // settlementInfo) {
-  //        log.info("페이플 계좌 인증 요청");
-  //
-  //        try {
-  //            PaypleAuthResponseDTO authResponse = requestAuth(PAY_WORK_AUTH);
-  //        }
-  //    }
+  /**
+   * 정산지급대행 계좌 검증 요청
+   *
+   * @return 계좌 검증 결과
+   */
+  @Retryable(value = PaypleApiException.class, maxAttempts = 2, backoff = @Backoff(delay = 500))
+  public PaypleAuthResponseDTO requestAccountVerification() {
+    log.info("페이플 정산지급대행 계좌 검증 요청");
+
+    try {
+      // 정산지급대행 계좌 인증 사용
+      return requestAuthForSettlementBank();
+
+    } catch (Exception e) {
+      log.error("페이플 계좌 검증 요청 중 오류 발생", e);
+      throw new PaypleApiException("페이플 계좌 검증 요청 실패", e);
+    }
+  }
+
+  /**
+   * 정산지급대행 계정 등록 요청
+   *
+   * @param merchantCode 상점 고유 코드
+   * @return 계정 등록 결과
+   */
+  @Retryable(value = PaypleApiException.class, maxAttempts = 2, backoff = @Backoff(delay = 500))
+  public PaypleAuthResponseDTO requestAccountRegistration(String merchantCode) {
+    log.info("페이플 정산지급대행 계정 등록 요청 - merchantCode: {}", maskCode(merchantCode));
+
+    try {
+      // 상점별 고유 코드로 정산지급대행 계정 인증
+      return requestAuthForSettlementAccount(merchantCode);
+
+    } catch (Exception e) {
+      log.error("페이플 계정 등록 요청 중 오류 발생", e);
+      throw new PaypleApiException("페이플 계정 등록 요청 실패", e);
+    }
+  }
+
+  /** 공통 인증 응답 빌더 */
+  private PaypleAuthResponseDTO buildAuthResponse(JSONObject authResult, String authType) {
+    String result = getString(authResult, "result");
+    if (!RESULT_SUCCESS.equalsIgnoreCase(result)) {
+      String errorMsg = getString(authResult, "result_msg");
+      log.error("페이플 {} 실패 - message: {}", authType, errorMsg);
+      throw new PaypleApiException("페이플 " + authType + " 실패: " + errorMsg);
+    }
+
+    return PaypleAuthResponseDTO.builder()
+        .result(result)
+        .resultMsg(getString(authResult, "result_msg"))
+        .cstId(getString(authResult, "cst_id"))
+        .custKey(getString(authResult, "custKey"))
+        .authKey(getString(authResult, "AuthKey"))
+        .payWork(getString(authResult, "PCD_PAY_WORK"))
+        .payUrl(getString(authResult, "PCD_PAY_URL"))
+        .returnUrl(getString(authResult, "return_url"))
+        .build();
+  }
+
+  /** 코드 마스킹 (보안을 위한 로깅용) */
+  private String maskCode(String code) {
+    if (code == null || code.length() <= 4) {
+      return "****";
+    }
+    return code.substring(0, 2) + "****" + code.substring(code.length() - 2);
+  }
 
   /** JSONObject에서 안전하게 문자열 추출 */
   private String getString(JSONObject json, String key) {
