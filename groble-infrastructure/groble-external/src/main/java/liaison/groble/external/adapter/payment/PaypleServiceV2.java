@@ -127,6 +127,54 @@ public class PaypleServiceV2 implements PaypleService {
   }
 
   @Override
+  public JSONObject payAuthForCancel() {
+    log.info("페이플 결제 취소 인증 요청 시작");
+
+    try {
+      // 결제 취소 전용 파라미터 생성
+      Map<String, String> cancelParams = createCancelAuthParams();
+      HttpResponse response = executeAuthRequest(cancelParams);
+      return parseAndValidateResponse(response);
+    } catch (HttpClientException e) {
+      log.error("페이플 결제 취소 인증 HTTP 요청 실패", e);
+      return createErrorResponse("NETWORK_ERROR", "네트워크 오류가 발생했습니다: " + e.getMessage());
+    } catch (ParseException e) {
+      log.error("페이플 취소 인증 응답 파싱 실패", e);
+      return createErrorResponse("PARSE_ERROR", "응답 파싱 중 오류가 발생했습니다");
+    } catch (Exception e) {
+      log.error("페이플 결제 취소 인증 예상치 못한 오류", e);
+      return createErrorResponse("UNKNOWN_ERROR", "예상치 못한 오류가 발생했습니다");
+    }
+  }
+
+  @Override
+  public JSONObject payAuthForSettlement(String code) {
+    log.info("페이플 정산지급대행 인증 요청 시작 - code: {}", maskSensitiveData(code));
+
+    // code 검증
+    if (!isValidSettlementCode(code)) {
+      log.error("정산지급대행 code 형식 오류 - code: {}", code);
+      return createErrorResponse("INVALID_CODE", "code는 영문+숫자 조합 10자리여야 합니다");
+    }
+
+    try {
+      // 정산지급대행 전용 파라미터 생성
+      Map<String, String> settlementParams = createSettlementAuthParams(code);
+      HttpResponse response = executeAuthRequest(settlementParams);
+      return parseAndValidateResponse(response);
+    } catch (HttpClientException e) {
+      log.error("페이플 정산지급대행 인증 HTTP 요청 실패", e);
+      return createErrorResponse("NETWORK_ERROR", "네트워크 오류가 발생했습니다: " + e.getMessage());
+    } catch (ParseException e) {
+      log.error("페이플 정산지급대행 인증 응답 파싱 실패", e);
+      return createErrorResponse("PARSE_ERROR", "응답 파싱 중 오류가 발생했습니다");
+    } catch (Exception e) {
+      log.error("페이플 정산지급대행 인증 예상치 못한 오류", e);
+      return createErrorResponse("UNKNOWN_ERROR", "예상치 못한 오류가 발생했습니다");
+    }
+  }
+
+  @Override
   public JSONObject paySimplePayment(Map<String, String> params) {
     log.info("페이플 간편결제 요청 - 미구현");
     return createErrorResponse("NOT_IMPLEMENTED", "간편결제 기능은 구현되지 않았습니다");
@@ -278,5 +326,32 @@ public class PaypleServiceV2 implements PaypleService {
     return sensitiveData.substring(0, 4)
         + "***"
         + sensitiveData.substring(sensitiveData.length() - 4);
+  }
+
+  /** 결제 취소용 인증 파라미터 생성 필요한 파라미터: cst_id, custKey, PCD_PAYCANCEL_FLAG */
+  private Map<String, String> createCancelAuthParams() {
+    Map<String, String> params = new HashMap<>();
+    params.put("cst_id", paypleConfig.getCstId());
+    params.put("custKey", paypleConfig.getCustKey());
+    params.put("PCD_PAYCANCEL_FLAG", "Y");
+    return params;
+  }
+
+  /** 정산지급대행용 인증 파라미터 생성 필요한 파라미터: cst_id, custKey, code */
+  private Map<String, String> createSettlementAuthParams(String code) {
+    Map<String, String> params = new HashMap<>();
+    params.put("cst_id", paypleConfig.getCstId());
+    params.put("custKey", paypleConfig.getCustKey());
+    params.put("code", code);
+    return params;
+  }
+
+  /** 정산지급대행 code 유효성 검증 영문+숫자 조합 10자리인지 확인 */
+  private boolean isValidSettlementCode(String code) {
+    if (code == null || code.length() != 10) {
+      return false;
+    }
+    // 영문+숫자 조합인지 확인
+    return code.matches("^[a-zA-Z0-9]{10}$");
   }
 }

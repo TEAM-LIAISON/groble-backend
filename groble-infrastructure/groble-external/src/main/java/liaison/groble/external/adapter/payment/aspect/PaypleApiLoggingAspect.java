@@ -8,7 +8,7 @@ import java.util.Map;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
-import org.json.JSONObject;
+import org.json.simple.JSONObject;
 import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -106,7 +106,7 @@ public class PaypleApiLoggingAspect {
       if (result instanceof JSONObject) {
         JSONObject jsonResult = (JSONObject) result;
         JSONObject maskedResult = maskSensitiveJsonData(jsonResult);
-        log.info("│ 📥 응답 데이터:\n{}", formatJsonForLog(maskedResult.toString(2)));
+        log.info("│ 📥 응답 데이터:\n{}", formatJsonForLog(maskedResult.toJSONString()));
 
         // 결제 상태 정보 하이라이트
         highlightPaymentStatus(jsonResult);
@@ -135,10 +135,10 @@ public class PaypleApiLoggingAspect {
 
   private void highlightPaymentStatus(JSONObject jsonResult) {
     try {
-      String payResult = jsonResult.optString("PCD_PAY_RST", "");
-      String resultMsg = jsonResult.optString("result_msg", "");
-      String payOid = jsonResult.optString("PCD_PAY_OID", "");
-      String payTotal = jsonResult.optString("PCD_PAY_TOTAL", "");
+      String payResult = getStringValue(jsonResult, "PCD_PAY_RST");
+      String resultMsg = getStringValue(jsonResult, "result_msg");
+      String payOid = getStringValue(jsonResult, "PCD_PAY_OID");
+      String payTotal = getStringValue(jsonResult, "PCD_PAY_TOTAL");
 
       if (!payResult.isEmpty()) {
         log.info("│ 💳 결제결과: {}", payResult);
@@ -178,7 +178,8 @@ public class PaypleApiLoggingAspect {
   private JSONObject maskSensitiveJsonData(JSONObject json) {
     JSONObject masked = new JSONObject();
 
-    for (String key : json.keySet()) {
+    for (Object keyObj : json.keySet()) {
+      String key = String.valueOf(keyObj);
       Object value = json.get(key);
 
       if (isSensitiveKey(key)) {
@@ -225,5 +226,11 @@ public class PaypleApiLoggingAspect {
 
   private String generateTransactionId() {
     return String.format("TX_%d", System.currentTimeMillis() % 100000);
+  }
+
+  /** JSONObject에서 String 값을 안전하게 가져오는 헬퍼 메서드 */
+  private String getStringValue(JSONObject json, String key) {
+    Object value = json.get(key);
+    return value != null ? String.valueOf(value) : "";
   }
 }
