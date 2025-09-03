@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- Payple API 전용 로그 설정 -->
+    
+    <!-- Payple API 로그를 별도 파일로 출력 -->
+    <appender name="PAYPLE_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/payple-api.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>logs/payple-api.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxFileSize>100MB</maxFileSize>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>3GB</totalSizeCap>
+        </rollingPolicy>
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- 콘솔에도 출력 (개발용) -->
+    <appender name="PAYPLE_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} %highlight(%-5level) %cyan(%logger{15}) - %msg%n</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- Payple 관련 패키지 로거 설정 -->
+    <logger name="liaison.groble.external.adapter.payment.aspect.PaypleApiLoggingAspect" 
+            level="INFO" additivity="false">
+        <appender-ref ref="PAYPLE_FILE"/>
+        <appender-ref ref="PAYPLE_CONSOLE"/>
+    </logger>
+
+    <logger name="liaison.groble.external.adapter.payment.http.PaypleHttpLoggingInterceptor" 
+            level="INFO" additivity="false">
+        <appender-ref ref="PAYPLE_FILE"/>
+        <appender-ref ref="PAYPLE_CONSOLE"/>
+    </logger>
+
+    <!-- PaypleService 관련 로거 -->
+    <logger name="liaison.groble.external.adapter.payment.PaypleService" 
+            level="DEBUG" additivity="false">
+        <appender-ref ref="PAYPLE_FILE"/>
+        <appender-ref ref="PAYPLE_CONSOLE"/>
+    </logger>
+
+    <logger name="liaison.groble.external.adapter.payment.PaypleServiceV2" 
+            level="DEBUG" additivity="false">
+        <appender-ref ref="PAYPLE_FILE"/>
+        <appender-ref ref="PAYPLE_CONSOLE"/>
+    </logger>
+</configuration>

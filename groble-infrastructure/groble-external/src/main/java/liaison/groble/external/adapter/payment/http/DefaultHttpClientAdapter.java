@@ -11,6 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StopWatch;
@@ -34,6 +35,9 @@ public class DefaultHttpClientAdapter implements HttpClientAdapter {
   private int defaultConnectionTimeout = 5000; // 5초
   private int defaultReadTimeout = 10000; // 10초
 
+  @Autowired(required = false)
+  private PaypleHttpLoggingInterceptor loggingInterceptor;
+
   @Override
   public HttpResponse post(HttpRequest request) throws HttpClientException {
     StopWatch stopWatch = new StopWatch();
@@ -42,6 +46,11 @@ public class DefaultHttpClientAdapter implements HttpClientAdapter {
     HttpURLConnection connection = null;
     try {
       log.debug("HTTP POST 요청 시작 - URL: {}", request.getUrl());
+
+      // 요청 로깅
+      if (loggingInterceptor != null) {
+        loggingInterceptor.logHttpRequest(request);
+      }
 
       connection = createConnection(request);
       setupConnection(connection, request);
@@ -55,12 +64,23 @@ public class DefaultHttpClientAdapter implements HttpClientAdapter {
           response.getResponseTimeMs(),
           response.getStatusCode());
 
+      // 응답 로깅
+      if (loggingInterceptor != null) {
+        loggingInterceptor.logHttpResponse(response, request.getUrl());
+      }
+
       return response;
 
     } catch (SocketTimeoutException e) {
       stopWatch.stop();
       log.error(
           "HTTP 요청 타임아웃 - URL: {}, 소요시간: {}ms", request.getUrl(), stopWatch.getTotalTimeMillis());
+
+      // 오류 로깅
+      if (loggingInterceptor != null) {
+        loggingInterceptor.logHttpError(request.getUrl(), e, stopWatch.getTotalTimeMillis());
+      }
+
       throw new HttpClientException(
           "HTTP 요청 타임아웃", request.getUrl(), -1, (int) stopWatch.getTotalTimeMillis(), e);
     } catch (IOException e) {
@@ -70,6 +90,12 @@ public class DefaultHttpClientAdapter implements HttpClientAdapter {
           request.getUrl(),
           stopWatch.getTotalTimeMillis(),
           e);
+
+      // 오류 로깅
+      if (loggingInterceptor != null) {
+        loggingInterceptor.logHttpError(request.getUrl(), e, stopWatch.getTotalTimeMillis());
+      }
+
       throw new HttpClientException(
           "HTTP 요청 I/O 오류: " + e.getMessage(),
           request.getUrl(),
@@ -83,6 +109,12 @@ public class DefaultHttpClientAdapter implements HttpClientAdapter {
           request.getUrl(),
           stopWatch.getTotalTimeMillis(),
           e);
+
+      // 오류 로깅
+      if (loggingInterceptor != null) {
+        loggingInterceptor.logHttpError(request.getUrl(), e, stopWatch.getTotalTimeMillis());
+      }
+
       throw new HttpClientException(
           "HTTP 요청 예상치 못한 오류: " + e.getMessage(),
           request.getUrl(),

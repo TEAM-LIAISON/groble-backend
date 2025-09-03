@@ -300,6 +300,9 @@ project(':groble-infrastructure:groble-external') {
         // Spring Web
         implementation 'org.springframework.boot:spring-boot-starter-web'
 
+        // Spring AOP (Aspect 지원)
+        implementation 'org.springframework.boot:spring-boot-starter-aop'
+
         // 이메일 발송 의존성 추가
         implementation 'org.springframework.boot:spring-boot-starter-mail'
 
@@ -320,6 +323,9 @@ project(':groble-infrastructure:groble-external') {
         // Payple 결제 연동을 위한 의존성
         implementation 'org.apache.httpcomponents:httpclient:4.5.13'
         implementation 'com.googlecode.json-simple:json-simple:1.1'
+        
+        // JSON 라이브러리 (org.json.JSONObject 지원)
+        implementation 'org.json:json:20240303'
 
         // Retry
         implementation 'org.springframework.retry:spring-retry'
