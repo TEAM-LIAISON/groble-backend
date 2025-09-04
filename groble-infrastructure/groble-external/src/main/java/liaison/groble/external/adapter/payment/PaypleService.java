@@ -23,4 +23,7 @@ public interface PaypleService {
   JSONObject payRefund(PaypleRefundRequest request);
 
   JSONObject paySimplePayment(Map<String, String> params);
+
+  /** 정산지급대행 계좌 검증 API */
+  JSONObject payAccountVerification(Map<String, String> params);
 }

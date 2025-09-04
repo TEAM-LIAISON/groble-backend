@@ -64,4 +64,10 @@ public class PaypleConfig {
         ? "https://democpay.payple.kr/php/account/api/cPayCAct.php"
         : "https://cpay.payple.kr/php/account/api/cPayCAct.php";
   }
+
+  public String getAccountVerificationUrl() {
+    return testMode
+        ? "https://demohub.payple.kr/api/v1/settlements/account/verification"
+        : "https://hub.payple.kr/api/v1/settlements/account/verification";
+  }
 }

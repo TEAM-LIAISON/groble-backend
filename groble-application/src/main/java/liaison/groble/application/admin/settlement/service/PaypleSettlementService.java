@@ -76,13 +76,13 @@ public class PaypleSettlementService {
         request.getBankCodeStd());
 
     try {
+      // PaypleAccountVerificationRequest를 Map으로 변환
       Map<String, String> params = buildAccountVerificationParams(request);
 
-      // TODO: PaypleService에 계좌 인증 메서드 추가 필요
-      // 현재는 임시로 payAuth를 사용하지만, 실제로는 계좌 인증 전용 API 필요
-      JSONObject result = paypleService.payAuth(params);
+      // 페이플 전용 계좌 검증 API 사용
+      JSONObject result = paypleService.payAccountVerification(params);
 
-      log.info("페이플 계좌 인증 요청 완료");
+      log.info("페이플 계좌 검증 요청 완료");
       return result;
 
     } catch (Exception e) {

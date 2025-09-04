@@ -180,6 +180,31 @@ public class PaypleServiceV2 implements PaypleService {
     return createErrorResponse("NOT_IMPLEMENTED", "간편결제 기능은 구현되지 않았습니다");
   }
 
+  @Override
+  public JSONObject payAccountVerification(Map<String, String> params) {
+    log.info(
+        "페이플 계좌 검증 요청 시작 - 계좌번호: {}, 은행코드: {}",
+        maskAccountNumber(params.get("account_num")),
+        params.get("bank_code_std"));
+
+    try {
+      HttpResponse response = executeAccountVerificationRequest(params);
+      return parseAndValidateResponse(response);
+
+    } catch (HttpClientException e) {
+      log.error("페이플 계좌 검증 HTTP 요청 실패", e);
+      return createErrorResponse("NETWORK_ERROR", "네트워크 오류가 발생했습니다: " + e.getMessage());
+
+    } catch (ParseException e) {
+      log.error("페이플 계좌 검증 응답 파싱 실패", e);
+      return createErrorResponse("PARSE_ERROR", "응답 파싱 중 오류가 발생했습니다");
+
+    } catch (Exception e) {
+      log.error("페이플 계좌 검증 예상치 못한 오류", e);
+      return createErrorResponse("UNKNOWN_ERROR", "예상치 못한 오류가 발생했습니다");
+    }
+  }
+
   private PayplePaymentRequest createPaymentRequest(Map<String, String> params) {
     return PayplePaymentRequest.builder()
         .url(params.get("PCD_PAY_COFURL"))
@@ -274,6 +299,35 @@ public class PaypleServiceV2 implements PaypleService {
     return httpClient.post(httpRequest);
   }
 
+  private HttpResponse executeAccountVerificationRequest(Map<String, String> params)
+      throws HttpClientException {
+    JSONObject requestBody = new JSONObject();
+    requestBody.put("cst_id", params.get("cst_id"));
+    requestBody.put("custKey", params.get("custKey"));
+    requestBody.put("bank_code_std", params.get("bank_code_std"));
+    requestBody.put("account_num", params.get("account_num"));
+    requestBody.put("account_holder_info_type", params.get("account_holder_info_type"));
+    requestBody.put("account_holder_info", params.get("account_holder_info"));
+
+    if (params.get("sub_id") != null) {
+      requestBody.put("sub_id", params.get("sub_id"));
+    }
+
+    log.debug("페이플 계좌 검증 요청 본문: {}", maskSensitiveRequestBody(requestBody));
+
+    // 계좌 검증 전용 URL - PaypleConfig에 추가 필요
+    String accountVerificationUrl = paypleConfig.getAccountVerificationUrl();
+
+    Map<String, String> headers = new HashMap<>();
+    headers.put("content-type", "application/json");
+    headers.put("charset", "UTF-8");
+    headers.put("referer", paypleConfig.getRefererUrl());
+
+    HttpRequest httpRequest =
+        HttpRequest.postWithHeaders(accountVerificationUrl, headers, requestBody.toJSONString());
+    return httpClient.post(httpRequest);
+  }
+
   private JSONObject parseAndValidateResponse(HttpResponse response) throws ParseException {
     if (!response.isSuccess()) {
       log.warn(
@@ -353,5 +407,33 @@ public class PaypleServiceV2 implements PaypleService {
     }
     // 영문+숫자 조합인지 확인
     return code.matches("^[a-zA-Z0-9]{10}$");
+  }
+
+  /** 계좌번호 마스킹 (보안을 위한 로깅용) */
+  private String maskAccountNumber(String accountNumber) {
+    if (accountNumber == null || accountNumber.length() <= 4) {
+      return "****";
+    }
+    return accountNumber.substring(0, 2)
+        + "****"
+        + accountNumber.substring(accountNumber.length() - 2);
+  }
+
+  /** 민감한 정보가 포함된 요청 본문 마스킹 */
+  private String maskSensitiveRequestBody(JSONObject requestBody) {
+    JSONObject maskedBody = new JSONObject();
+    for (Object key : requestBody.keySet()) {
+      String keyStr = key.toString();
+      Object value = requestBody.get(key);
+
+      if ("account_num".equals(keyStr)) {
+        maskedBody.put(keyStr, maskAccountNumber(value.toString()));
+      } else if ("custKey".equals(keyStr) || "account_holder_info".equals(keyStr)) {
+        maskedBody.put(keyStr, maskSensitiveData(value.toString()));
+      } else {
+        maskedBody.put(keyStr, value);
+      }
+    }
+    return maskedBody.toJSONString();
   }
 }
