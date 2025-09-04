@@ -70,4 +70,22 @@ public class PaypleConfig {
         ? "https://demohub.payple.kr/api/v1/settlements/account/verification"
         : "https://hub.payple.kr/api/v1/settlements/account/verification";
   }
+
+  public String getTransferRequestUrl() {
+    return testMode
+        ? "https://demohub.payple.kr/api/v1/settlements/transfer/request"
+        : "https://hub.payple.kr/api/v1/settlements/transfer/request";
+  }
+
+  public String getTransferExecuteUrl() {
+    return testMode
+        ? "https://demohub.payple.kr/transfer/execute"
+        : "https://hub.payple.kr/transfer/execute";
+  }
+
+  public String getTransferCancelUrl() {
+    return testMode
+        ? "https://demohub.payple.kr/transfer/cancel"
+        : "https://hub.payple.kr/transfer/cancel";
+  }
 }

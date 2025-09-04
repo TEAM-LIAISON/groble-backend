@@ -92,6 +92,93 @@ public class PaypleSettlementService {
   }
 
   /**
+   * 빌링키로 이체 대기 요청
+   *
+   * @param billingTranId 계좌 인증으로 받은 빌링키
+   * @param tranAmt 이체 금액
+   * @param subId 하위 셀러 ID (선택)
+   * @param printContent 거래 내역 표시 문구 (선택)
+   * @return 이체 대기 요청 결과
+   */
+  @Retryable(value = PaypleApiException.class, maxAttempts = 2, backoff = @Backoff(delay = 1000))
+  public JSONObject requestTransfer(
+      String billingTranId, String tranAmt, String subId, String printContent) {
+    log.info("페이플 이체 대기 요청 - 빌링키: {}, 금액: {}", maskBillingKey(billingTranId), tranAmt);
+
+    try {
+      Map<String, String> params = buildTransferParams(billingTranId, tranAmt, subId, printContent);
+
+      // 페이플 이체 대기 요청 API 호출
+      JSONObject result = paypleService.payTransferRequest(params);
+
+      log.info("페이플 이체 대기 요청 완료");
+      return result;
+
+    } catch (Exception e) {
+      log.error("페이플 이체 대기 요청 중 오류 발생", e);
+      throw new PaypleApiException("페이플 이체 대기 요청 실패", e);
+    }
+  }
+
+  /**
+   * 빌링키 그룹으로 이체 실행 요청
+   *
+   * @param groupKey 이체 대기 요청에서 받은 그룹키
+   * @param billingTranId 실행할 빌링키 ("ALL" 또는 특정 빌링키)
+   * @param accessToken 파트너 인증 토큰
+   * @param webhookUrl 테스트 환경 웹훅 URL (선택)
+   * @return 이체 실행 결과
+   */
+  @Retryable(value = PaypleApiException.class, maxAttempts = 2, backoff = @Backoff(delay = 1000))
+  public JSONObject requestTransferExecute(
+      String groupKey, String billingTranId, String accessToken, String webhookUrl) {
+    log.info("페이플 이체 실행 요청 - 그룹키: {}, 빌링키: {}", maskSensitiveData(groupKey), billingTranId);
+
+    try {
+      Map<String, String> params = buildTransferExecuteParams(groupKey, billingTranId, webhookUrl);
+
+      // 페이플 이체 실행 API 호출
+      JSONObject result = paypleService.payTransferExecute(params, accessToken);
+
+      log.info("페이플 이체 실행 요청 완료");
+      return result;
+
+    } catch (Exception e) {
+      log.error("페이플 이체 실행 요청 중 오류 발생", e);
+      throw new PaypleApiException("페이플 이체 실행 요청 실패", e);
+    }
+  }
+
+  /**
+   * 빌링키 그룹의 이체 대기 취소 요청
+   *
+   * @param groupKey 이체 대기 요청에서 받은 그룹키
+   * @param billingTranId 취소할 빌링키 ("ALL" 또는 특정 빌링키)
+   * @param accessToken 파트너 인증 토큰
+   * @param cancelReason 취소 사유 (선택)
+   * @return 이체 취소 결과
+   */
+  @Retryable(value = PaypleApiException.class, maxAttempts = 2, backoff = @Backoff(delay = 1000))
+  public JSONObject requestTransferCancel(
+      String groupKey, String billingTranId, String accessToken, String cancelReason) {
+    log.info("페이플 이체 대기 취소 요청 - 그룹키: {}, 빌링키: {}", maskSensitiveData(groupKey), billingTranId);
+
+    try {
+      Map<String, String> params = buildTransferCancelParams(groupKey, billingTranId, cancelReason);
+
+      // 페이플 이체 취소 API 호출
+      JSONObject result = paypleService.payTransferCancel(params, accessToken);
+
+      log.info("페이플 이체 대기 취소 요청 완료");
+      return result;
+
+    } catch (Exception e) {
+      log.error("페이플 이체 대기 취소 요청 중 오류 발생", e);
+      throw new PaypleApiException("페이플 이체 대기 취소 요청 실패", e);
+    }
+  }
+
+  /**
    * 그룹 정산 요청
    *
    * @param settlementItems 정산 항목 목록
@@ -149,6 +236,64 @@ public class PaypleSettlementService {
     return params;
   }
 
+  /** 이체 대기 요청 파라미터 빌드 */
+  private Map<String, String> buildTransferParams(
+      String billingTranId, String tranAmt, String subId, String printContent) {
+    Map<String, String> params = new HashMap<>();
+    params.put("cst_id", paypleConfig.getCstId());
+    params.put("custKey", paypleConfig.getCustKey());
+    params.put("billing_tran_id", billingTranId);
+    params.put("tran_amt", tranAmt);
+
+    if (subId != null && !subId.trim().isEmpty()) {
+      params.put("sub_id", subId);
+    }
+
+    if (printContent != null && !printContent.trim().isEmpty()) {
+      params.put("print_content", printContent);
+    }
+
+    // 중복 이체 방지를 위한 고유 키 생성 (UUID 기반)
+    String distinctKey = generateDistinctKey();
+    params.put("distinct_key", distinctKey);
+
+    return params;
+  }
+
+  /** 이체 실행 요청 파라미터 빌드 */
+  private Map<String, String> buildTransferExecuteParams(
+      String groupKey, String billingTranId, String webhookUrl) {
+    Map<String, String> params = new HashMap<>();
+    params.put("cst_id", paypleConfig.getCstId());
+    params.put("custKey", paypleConfig.getCustKey());
+    params.put("group_key", groupKey);
+    params.put("billing_tran_id", billingTranId);
+    params.put("execute_type", "NOW");
+
+    // 테스트 환경에서만 웹훅 URL 추가
+    if (paypleConfig.isTestMode() && webhookUrl != null && !webhookUrl.trim().isEmpty()) {
+      params.put("webhook_url", webhookUrl);
+    }
+
+    return params;
+  }
+
+  /** 이체 취소 요청 파라미터 빌드 */
+  private Map<String, String> buildTransferCancelParams(
+      String groupKey, String billingTranId, String cancelReason) {
+    Map<String, String> params = new HashMap<>();
+    params.put("cst_id", paypleConfig.getCstId());
+    params.put("custKey", paypleConfig.getCustKey());
+    params.put("group_key", groupKey);
+    params.put("billing_tran_id", billingTranId);
+
+    if (cancelReason != null && !cancelReason.trim().isEmpty()) {
+      params.put("cancel_reason", cancelReason);
+    }
+
+    return params;
+  }
+
   /** 그룹 정산 파라미터 빌드 */
   private Map<String, String> buildGroupSettlementParams(
       List<SettlementItem> settlementItems, String accessToken) {
@@ -175,6 +320,29 @@ public class PaypleSettlementService {
     return accountNumber.substring(0, 2)
         + "****"
         + accountNumber.substring(accountNumber.length() - 2);
+  }
+
+  /** 빌링키 마스킹 (보안을 위한 로깅용) */
+  private String maskBillingKey(String billingKey) {
+    if (billingKey == null || billingKey.length() <= 8) {
+      return "****";
+    }
+    return billingKey.substring(0, 4) + "****" + billingKey.substring(billingKey.length() - 4);
+  }
+
+  /** 민감한 데이터 마스킹 (그룹키, custKey 등) */
+  private String maskSensitiveData(String sensitiveData) {
+    if (sensitiveData == null || sensitiveData.length() <= 8) {
+      return "****";
+    }
+    return sensitiveData.substring(0, 4)
+        + "****"
+        + sensitiveData.substring(sensitiveData.length() - 4);
+  }
+
+  /** 중복 이체 방지를 위한 고유 키 생성 */
+  private String generateDistinctKey() {
+    return java.util.UUID.randomUUID().toString().replaceAll("-", "").substring(0, 20);
   }
 
   /** JSONObject에서 안전하게 문자열 추출 */

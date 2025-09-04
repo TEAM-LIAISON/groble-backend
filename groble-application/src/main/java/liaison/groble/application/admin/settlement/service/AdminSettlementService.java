@@ -186,7 +186,58 @@ public class AdminSettlementService {
           paypleSettlementService.requestAccountVerification(
               accountRequest, authResult.getAccessToken());
 
-      // 3. 그룹 정산 요청
+      // 3. 계좌 인증 성공 시 빌링키 추출
+      String billingTranId = extractBillingTranId(accountResult);
+      if (billingTranId == null) {
+        throw new PaypleApiException("계좌 인증에서 빌링키를 가져올 수 없습니다");
+      }
+
+      // 4. 각 정산 항목에 대해 이체 대기 요청 (테스트용 1000원 고정)
+      String groupKey = null;
+      for (SettlementItem item : validItems) {
+        JSONObject transferResult =
+            paypleSettlementService.requestTransfer(
+                billingTranId,
+                "1000", // 테스트 시 1000원 고정
+                null, // sub_id
+                "정산" // 거래 내역 표시 문구
+                );
+
+        // 첫 번째 이체 대기 요청에서 group_key 추출
+        if (groupKey == null) {
+          groupKey = extractGroupKey(transferResult);
+        }
+
+        log.info(
+            "정산 항목 {} 이체 대기 요청 완료: {}",
+            item.getId(),
+            transferResult.getOrDefault("result", "UNKNOWN"));
+      }
+
+      // 5. 이체 대기 성공 후 처리 (즉시 실행 vs 대기)
+      if (groupKey != null) {
+        // TODO: 실제 운영에서는 이 부분을 설정으로 제어할 수 있음
+        boolean executeImmediately = false; // false로 변경하여 검토 단계 추가
+
+        if (executeImmediately) {
+          JSONObject executeResult =
+              paypleSettlementService.requestTransferExecute(
+                  groupKey,
+                  "ALL", // 그룹의 모든 이체 대기 건 실행
+                  authResult.getAccessToken(),
+                  "http://your-test-domain.com" // 테스트 웹훅 URL
+                  );
+
+          log.info("이체 실행 요청 완료 - 결과: {}", executeResult.getOrDefault("result", "UNKNOWN"));
+        } else {
+          log.info("이체 대기 완료 - 관리자 검토 대기 중 (그룹키: {})", maskSensitiveData(groupKey));
+          // 실제 운영에서는 여기서 관리자에게 알림을 보내거나 대시보드에서 확인할 수 있도록 함
+        }
+      } else {
+        log.warn("이체 대기 요청에서 group_key를 추출할 수 없습니다");
+      }
+
+      // 6. 그룹 정산 요청 (기존 로직 유지)
       JSONObject settlementResult =
           paypleSettlementService.requestGroupSettlement(validItems, authResult.getAccessToken());
 
@@ -245,5 +296,149 @@ public class AdminSettlementService {
     public BigDecimal getApprovedAmount() {
       return approvedAmount;
     }
+  }
+
+  /**
+   * 이체 대기 상태인 정산을 실제 실행
+   *
+   * @param groupKey 이체 대기 시 받은 그룹키
+   * @param billingTranId 실행할 빌링키 ("ALL" 또는 특정 빌링키)
+   * @return 이체 실행 결과
+   */
+  public PaypleSettlementResultDTO executeTransfer(String groupKey, String billingTranId) {
+    log.info("이체 실행 요청 - 그룹키: {}, 빌링키: {}", maskSensitiveData(groupKey), billingTranId);
+
+    try {
+      // 1. 파트너 인증
+      PayplePartnerAuthResult authResult = paypleSettlementService.requestPartnerAuth();
+      if (!authResult.isSuccess()) {
+        throw new PaypleApiException("페이플 파트너 인증 실패: " + authResult.getMessage());
+      }
+
+      // 2. 이체 실행 요청
+      JSONObject executeResult =
+          paypleSettlementService.requestTransferExecute(
+              groupKey,
+              billingTranId,
+              authResult.getAccessToken(),
+              "http://your-test-domain.com" // 테스트 웹훅 URL
+              );
+
+      log.info("이체 실행 완료 - 결과: {}", executeResult.getOrDefault("result", "UNKNOWN"));
+
+      return PaypleSettlementResultDTO.builder()
+          .success(true)
+          .responseCode("A0000")
+          .responseMessage("이체 실행 성공")
+          .build();
+
+    } catch (Exception e) {
+      log.error("이체 실행 실패", e);
+      return PaypleSettlementResultDTO.builder()
+          .success(false)
+          .responseCode("ERROR")
+          .responseMessage("이체 실행 실패: " + e.getMessage())
+          .build();
+    }
+  }
+
+  /**
+   * 이체 대기 상태인 정산을 취소
+   *
+   * @param groupKey 이체 대기 시 받은 그룹키
+   * @param billingTranId 취소할 빌링키 ("ALL" 또는 특정 빌링키)
+   * @param cancelReason 취소 사유
+   * @return 이체 취소 결과
+   */
+  public PaypleSettlementResultDTO cancelTransfer(
+      String groupKey, String billingTranId, String cancelReason) {
+    log.info("이체 취소 요청 - 그룹키: {}, 빌링키: {}", maskSensitiveData(groupKey), billingTranId);
+
+    try {
+      // 1. 파트너 인증
+      PayplePartnerAuthResult authResult = paypleSettlementService.requestPartnerAuth();
+      if (!authResult.isSuccess()) {
+        throw new PaypleApiException("페이플 파트너 인증 실패: " + authResult.getMessage());
+      }
+
+      // 2. 이체 취소 요청
+      JSONObject cancelResult =
+          paypleSettlementService.requestTransferCancel(
+              groupKey, billingTranId, authResult.getAccessToken(), cancelReason);
+
+      log.info("이체 취소 완료 - 결과: {}", cancelResult.getOrDefault("result", "UNKNOWN"));
+
+      return PaypleSettlementResultDTO.builder()
+          .success(true)
+          .responseCode("A0000")
+          .responseMessage("이체 취소 성공")
+          .build();
+
+    } catch (Exception e) {
+      log.error("이체 취소 실패", e);
+      return PaypleSettlementResultDTO.builder()
+          .success(false)
+          .responseCode("ERROR")
+          .responseMessage("이체 취소 실패: " + e.getMessage())
+          .build();
+    }
+  }
+
+  /**
+   * 계좌 인증 결과에서 빌링키 추출
+   *
+   * @param accountResult 계좌 인증 API 응답
+   * @return 빌링키 또는 null
+   */
+  private String extractBillingTranId(JSONObject accountResult) {
+    if (accountResult == null) {
+      return null;
+    }
+
+    // 페이플 계좌 인증 응답에서 빌링키 추출
+    String result =
+        accountResult.get("result") != null ? accountResult.get("result").toString() : null;
+
+    if (!"A0000".equals(result)) {
+      log.warn("계좌 인증 실패 - result: {}, message: {}", result, accountResult.get("message"));
+      return null;
+    }
+
+    Object billingTranId = accountResult.get("billing_tran_id");
+    return billingTranId != null ? billingTranId.toString() : null;
+  }
+
+  /**
+   * 이체 대기 요청 결과에서 그룹키 추출
+   *
+   * @param transferResult 이체 대기 요청 API 응답
+   * @return 그룹키 또는 null
+   */
+  private String extractGroupKey(JSONObject transferResult) {
+    if (transferResult == null) {
+      return null;
+    }
+
+    // 페이플 이체 대기 요청 응답에서 그룹키 추출
+    String result =
+        transferResult.get("result") != null ? transferResult.get("result").toString() : null;
+
+    if (!"A0000".equals(result)) {
+      log.warn("이체 대기 요청 실패 - result: {}, message: {}", result, transferResult.get("message"));
+      return null;
+    }
+
+    Object groupKey = transferResult.get("group_key");
+    return groupKey != null ? groupKey.toString() : null;
+  }
+
+  /** 민감한 데이터 마스킹 (그룹키 등) */
+  private String maskSensitiveData(String sensitiveData) {
+    if (sensitiveData == null || sensitiveData.length() <= 8) {
+      return "****";
+    }
+    return sensitiveData.substring(0, 4)
+        + "****"
+        + sensitiveData.substring(sensitiveData.length() - 4);
   }
 }

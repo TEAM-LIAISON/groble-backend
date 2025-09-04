@@ -26,4 +26,13 @@ public interface PaypleService {
 
   /** 정산지급대행 계좌 검증 API */
   JSONObject payAccountVerification(Map<String, String> params);
+
+  /** 정산지급대행 이체 대기 요청 API */
+  JSONObject payTransferRequest(Map<String, String> params);
+
+  /** 정산지급대행 이체 실행 요청 API */
+  JSONObject payTransferExecute(Map<String, String> params, String accessToken);
+
+  /** 정산지급대행 이체 대기 취소 API */
+  JSONObject payTransferCancel(Map<String, String> params, String accessToken);
 }

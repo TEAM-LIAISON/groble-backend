@@ -205,6 +205,81 @@ public class PaypleServiceV2 implements PaypleService {
     }
   }
 
+  @Override
+  public JSONObject payTransferRequest(Map<String, String> params) {
+    log.info(
+        "페이플 이체 대기 요청 시작 - 빌링키: {}, 이체금액: {}",
+        maskSensitiveData(params.get("billing_tran_id")),
+        params.get("tran_amt"));
+
+    try {
+      HttpResponse response = executeTransferRequest(params);
+      return parseAndValidateResponse(response);
+
+    } catch (HttpClientException e) {
+      log.error("페이플 이체 대기 요청 HTTP 요청 실패", e);
+      return createErrorResponse("NETWORK_ERROR", "네트워크 오류가 발생했습니다: " + e.getMessage());
+
+    } catch (ParseException e) {
+      log.error("페이플 이체 대기 요청 응답 파싱 실패", e);
+      return createErrorResponse("PARSE_ERROR", "응답 파싱 중 오류가 발생했습니다");
+
+    } catch (Exception e) {
+      log.error("페이플 이체 대기 요청 예상치 못한 오류", e);
+      return createErrorResponse("UNKNOWN_ERROR", "예상치 못한 오류가 발생했습니다");
+    }
+  }
+
+  @Override
+  public JSONObject payTransferExecute(Map<String, String> params, String accessToken) {
+    log.info(
+        "페이플 이체 실행 요청 시작 - 그룹키: {}, 빌링키: {}",
+        maskSensitiveData(params.get("group_key")),
+        params.get("billing_tran_id"));
+
+    try {
+      HttpResponse response = executeTransferExecuteRequest(params, accessToken);
+      return parseAndValidateResponse(response);
+
+    } catch (HttpClientException e) {
+      log.error("페이플 이체 실행 요청 HTTP 요청 실패", e);
+      return createErrorResponse("NETWORK_ERROR", "네트워크 오류가 발생했습니다: " + e.getMessage());
+
+    } catch (ParseException e) {
+      log.error("페이플 이체 실행 요청 응답 파싱 실패", e);
+      return createErrorResponse("PARSE_ERROR", "응답 파싱 중 오류가 발생했습니다");
+
+    } catch (Exception e) {
+      log.error("페이플 이체 실행 요청 예상치 못한 오류", e);
+      return createErrorResponse("UNKNOWN_ERROR", "예상치 못한 오류가 발생했습니다");
+    }
+  }
+
+  @Override
+  public JSONObject payTransferCancel(Map<String, String> params, String accessToken) {
+    log.info(
+        "페이플 이체 대기 취소 요청 시작 - 그룹키: {}, 빌링키: {}",
+        maskSensitiveData(params.get("group_key")),
+        params.get("billing_tran_id"));
+
+    try {
+      HttpResponse response = executeTransferCancelRequest(params, accessToken);
+      return parseAndValidateResponse(response);
+
+    } catch (HttpClientException e) {
+      log.error("페이플 이체 대기 취소 HTTP 요청 실패", e);
+      return createErrorResponse("NETWORK_ERROR", "네트워크 오류가 발생했습니다: " + e.getMessage());
+
+    } catch (ParseException e) {
+      log.error("페이플 이체 대기 취소 응답 파싱 실패", e);
+      return createErrorResponse("PARSE_ERROR", "응답 파싱 중 오류가 발생했습니다");
+
+    } catch (Exception e) {
+      log.error("페이플 이체 대기 취소 예상치 못한 오류", e);
+      return createErrorResponse("UNKNOWN_ERROR", "예상치 못한 오류가 발생했습니다");
+    }
+  }
+
   private PayplePaymentRequest createPaymentRequest(Map<String, String> params) {
     return PayplePaymentRequest.builder()
         .url(params.get("PCD_PAY_COFURL"))
@@ -328,6 +403,98 @@ public class PaypleServiceV2 implements PaypleService {
     return httpClient.post(httpRequest);
   }
 
+  private HttpResponse executeTransferRequest(Map<String, String> params)
+      throws HttpClientException {
+    JSONObject requestBody = new JSONObject();
+    requestBody.put("cst_id", params.get("cst_id"));
+    requestBody.put("custKey", params.get("custKey"));
+    requestBody.put("billing_tran_id", params.get("billing_tran_id"));
+    requestBody.put("tran_amt", params.get("tran_amt"));
+
+    // sub_id는 선택적 파라미터
+    if (params.get("sub_id") != null) {
+      requestBody.put("sub_id", params.get("sub_id"));
+    }
+
+    // distinct_key는 선택적 파라미터 (중복 이체 방지)
+    if (params.get("distinct_key") != null) {
+      requestBody.put("distinct_key", params.get("distinct_key"));
+    }
+
+    // print_content는 선택적 파라미터 (거래 내역 표시 문구)
+    if (params.get("print_content") != null) {
+      requestBody.put("print_content", params.get("print_content"));
+    }
+
+    log.debug("페이플 이체 대기 요청 본문: {}", maskSensitiveTransferRequestBody(requestBody));
+
+    String transferRequestUrl = paypleConfig.getTransferRequestUrl();
+
+    Map<String, String> headers = new HashMap<>();
+    headers.put("content-type", "application/json");
+    headers.put("charset", "UTF-8");
+    headers.put("referer", paypleConfig.getRefererUrl());
+
+    HttpRequest httpRequest =
+        HttpRequest.postWithHeaders(transferRequestUrl, headers, requestBody.toJSONString());
+    return httpClient.post(httpRequest);
+  }
+
+  private HttpResponse executeTransferExecuteRequest(Map<String, String> params, String accessToken)
+      throws HttpClientException {
+    JSONObject requestBody = new JSONObject();
+    requestBody.put("cst_id", params.get("cst_id"));
+    requestBody.put("custKey", params.get("custKey"));
+    requestBody.put("group_key", params.get("group_key"));
+    requestBody.put("billing_tran_id", params.get("billing_tran_id"));
+    requestBody.put("execute_type", params.getOrDefault("execute_type", "NOW"));
+
+    // 테스트 환경에서만 webhook_url 추가
+    if (paypleConfig.isTestMode() && params.get("webhook_url") != null) {
+      requestBody.put("webhook_url", params.get("webhook_url"));
+    }
+
+    log.debug("페이플 이체 실행 요청 본문: {}", maskSensitiveTransferExecuteRequestBody(requestBody));
+
+    String transferExecuteUrl = paypleConfig.getTransferExecuteUrl();
+
+    Map<String, String> headers = new HashMap<>();
+    headers.put("Authorization", "Bearer " + accessToken);
+    headers.put("Content-Type", "application/json");
+    headers.put("Cache-Control", "no-cache");
+
+    HttpRequest httpRequest =
+        HttpRequest.postWithHeaders(transferExecuteUrl, headers, requestBody.toJSONString());
+    return httpClient.post(httpRequest);
+  }
+
+  private HttpResponse executeTransferCancelRequest(Map<String, String> params, String accessToken)
+      throws HttpClientException {
+    JSONObject requestBody = new JSONObject();
+    requestBody.put("cst_id", params.get("cst_id"));
+    requestBody.put("custKey", params.get("custKey"));
+    requestBody.put("group_key", params.get("group_key"));
+    requestBody.put("billing_tran_id", params.get("billing_tran_id"));
+
+    // 취소 사유 (선택적)
+    if (params.get("cancel_reason") != null) {
+      requestBody.put("cancel_reason", params.get("cancel_reason"));
+    }
+
+    log.debug("페이플 이체 대기 취소 요청 본문: {}", maskSensitiveTransferExecuteRequestBody(requestBody));
+
+    String transferCancelUrl = paypleConfig.getTransferCancelUrl();
+
+    Map<String, String> headers = new HashMap<>();
+    headers.put("Authorization", "Bearer " + accessToken);
+    headers.put("Content-Type", "application/json");
+    headers.put("Cache-Control", "no-cache");
+
+    HttpRequest httpRequest =
+        HttpRequest.postWithHeaders(transferCancelUrl, headers, requestBody.toJSONString());
+    return httpClient.post(httpRequest);
+  }
+
   private JSONObject parseAndValidateResponse(HttpResponse response) throws ParseException {
     if (!response.isSuccess()) {
       log.warn(
@@ -429,6 +596,40 @@ public class PaypleServiceV2 implements PaypleService {
       if ("account_num".equals(keyStr)) {
         maskedBody.put(keyStr, maskAccountNumber(value.toString()));
       } else if ("custKey".equals(keyStr) || "account_holder_info".equals(keyStr)) {
+        maskedBody.put(keyStr, maskSensitiveData(value.toString()));
+      } else {
+        maskedBody.put(keyStr, value);
+      }
+    }
+    return maskedBody.toJSONString();
+  }
+
+  /** 이체 요청의 민감한 정보가 포함된 요청 본문 마스킹 */
+  private String maskSensitiveTransferRequestBody(JSONObject requestBody) {
+    JSONObject maskedBody = new JSONObject();
+    for (Object key : requestBody.keySet()) {
+      String keyStr = key.toString();
+      Object value = requestBody.get(key);
+
+      if ("billing_tran_id".equals(keyStr)) {
+        maskedBody.put(keyStr, maskSensitiveData(value.toString()));
+      } else if ("custKey".equals(keyStr)) {
+        maskedBody.put(keyStr, maskSensitiveData(value.toString()));
+      } else {
+        maskedBody.put(keyStr, value);
+      }
+    }
+    return maskedBody.toJSONString();
+  }
+
+  /** 이체 실행 요청의 민감한 정보가 포함된 요청 본문 마스킹 */
+  private String maskSensitiveTransferExecuteRequestBody(JSONObject requestBody) {
+    JSONObject maskedBody = new JSONObject();
+    for (Object key : requestBody.keySet()) {
+      String keyStr = key.toString();
+      Object value = requestBody.get(key);
+
+      if ("group_key".equals(keyStr) || "custKey".equals(keyStr)) {
         maskedBody.put(keyStr, maskSensitiveData(value.toString()));
       } else {
         maskedBody.put(keyStr, value);

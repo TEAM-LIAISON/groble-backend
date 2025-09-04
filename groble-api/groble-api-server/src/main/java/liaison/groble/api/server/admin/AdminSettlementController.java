@@ -7,6 +7,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import liaison.groble.api.model.admin.settlement.request.SettlementApprovalRequest;
@@ -16,6 +17,7 @@ import liaison.groble.api.server.common.ApiPaths;
 import liaison.groble.api.server.common.BaseController;
 import liaison.groble.api.server.common.ResponseMessages;
 import liaison.groble.application.admin.settlement.dto.SettlementApprovalDTO;
+import liaison.groble.application.admin.settlement.dto.SettlementApprovalDTO.PaypleSettlementResultDTO;
 import liaison.groble.application.admin.settlement.dto.SettlementApprovalRequestDTO;
 import liaison.groble.application.admin.settlement.service.AdminSettlementService;
 import liaison.groble.common.response.GrobleResponse;
@@ -74,5 +76,68 @@ public class AdminSettlementController extends BaseController {
     SettlementApprovalResponse response = adminSettlementMapper.toResponse(serviceResult);
 
     return success(response, ResponseMessages.Admin.SETTLEMENT_APPROVAL_SUCCESS);
+  }
+
+  /**
+   * 이체 대기 상태인 정산을 실제 실행
+   *
+   * <p>관리자가 검토 후 이체 대기 상태의 정산을 실제 실행합니다.
+   *
+   * @param groupKey 이체 대기 시 받은 그룹키
+   * @param billingTranId 실행할 빌링키 (기본값: "ALL")
+   * @return 이체 실행 결과
+   */
+  @PostMapping("/execute-transfer")
+  public ResponseEntity<GrobleResponse<PaypleSettlementResultDTO>> executeTransfer(
+      @RequestParam String groupKey, @RequestParam(defaultValue = "ALL") String billingTranId) {
+
+    log.info("이체 실행 요청 - 그룹키: {}, 빌링키: {}", maskSensitiveData(groupKey), billingTranId);
+
+    PaypleSettlementResultDTO result =
+        adminSettlementService.executeTransfer(groupKey, billingTranId);
+
+    if (result.isSuccess()) {
+      return success(result, "이체 실행이 완료되었습니다");
+    } else {
+      return success(result, result.getResponseMessage());
+    }
+  }
+
+  /**
+   * 이체 대기 상태인 정산을 취소
+   *
+   * <p>관리자가 검토 후 이체 대기 상태의 정산을 취소합니다.
+   *
+   * @param groupKey 이체 대기 시 받은 그룹키
+   * @param billingTranId 취소할 빌링키 (기본값: "ALL")
+   * @param cancelReason 취소 사유
+   * @return 이체 취소 결과
+   */
+  @PostMapping("/cancel-transfer")
+  public ResponseEntity<GrobleResponse<PaypleSettlementResultDTO>> cancelTransfer(
+      @RequestParam String groupKey,
+      @RequestParam(defaultValue = "ALL") String billingTranId,
+      @RequestParam(required = false) String cancelReason) {
+
+    log.info("이체 취소 요청 - 그룹키: {}, 빌링키: {}", maskSensitiveData(groupKey), billingTranId);
+
+    PaypleSettlementResultDTO result =
+        adminSettlementService.cancelTransfer(groupKey, billingTranId, cancelReason);
+
+    if (result.isSuccess()) {
+      return success(result, "이체 취소가 완료되었습니다");
+    } else {
+      return success(result, result.getResponseMessage());
+    }
+  }
+
+  /** 민감한 데이터 마스킹 */
+  private String maskSensitiveData(String sensitiveData) {
+    if (sensitiveData == null || sensitiveData.length() <= 8) {
+      return "****";
+    }
+    return sensitiveData.substring(0, 4)
+        + "****"
+        + sensitiveData.substring(sensitiveData.length() - 4);
   }
 }
