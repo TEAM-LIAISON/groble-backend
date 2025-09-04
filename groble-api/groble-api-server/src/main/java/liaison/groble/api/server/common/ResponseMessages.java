@@ -49,6 +49,13 @@ public final class ResponseMessages {
     private Content() {}
   }
 
+  public static final class Order {
+    public static final String ORDER_CREATE_SUCCESS = "주문 생성이 성공적으로 완료되었습니다.";
+    public static final String GET_ORDER_SUCCESS = "주문 성공 페이지 정보 조회에 성공하였습니다.";
+
+    private Order() {}
+  }
+
   public static final class Purchase {
     public static final String PURCHASE_REVIEW_ADD_SUCCESS = "구매자가 콘텐츠에 대한 리뷰 작성에 성공했습니다.";
     public static final String PURCHASE_REVIEW_UPDATE_SUCCESS = "구매자가 콘텐츠에 대한 리뷰 수정에 성공했습니다.";

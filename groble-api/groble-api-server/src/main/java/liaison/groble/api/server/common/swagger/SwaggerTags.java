@@ -80,4 +80,11 @@ public final class SwaggerTags {
 
     private Common() {}
   }
+
+  public static final class Order {
+    public static final String ORDER = "[🔄 통합 주문] 회원/비회원 통합 주문 발행, 회원/비회원 주문 결과 조회 API";
+    public static final String ORDER_DESC = "회원/비회원 통합 주문 발행, 회원/비회원 주문 결과 조회 기능을 제공합니다.";
+
+    private Order() {}
+  }
 }

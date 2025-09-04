@@ -68,6 +68,12 @@ public final class ApiPaths {
     private Market() {}
   }
 
+  public static final class Order {
+    public static final String BASE = API_V1 + "/orders";
+    public static final String CREATE_ORDER = "/create";
+    public static final String GET_ORDER_SUCCESS = "/success/{merchantUid}";
+  }
+
   public static final class Purchase {
     public static final String BASE = API_V1 + "/purchase";
 
