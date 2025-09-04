@@ -1,6 +1,7 @@
 package liaison.groble.api.server.common.swagger;
 
 import liaison.groble.api.model.guest.response.GuestAuthCodeResponse;
+import liaison.groble.api.model.guest.response.UpdateGuestUserInfoResponse;
 import liaison.groble.api.model.guest.response.VerifyAuthCodeResponse;
 import liaison.groble.api.model.payment.response.AppCardPayplePaymentResponse;
 import liaison.groble.api.model.purchase.response.PurchaserContentReviewResponse;
@@ -318,7 +319,7 @@ public final class GenericResponseSchemas {
     public String message;
 
     @Schema(description = "비회원 사용자 정보 업데이트 및 정식 토큰 발급 응답")
-    public VerifyAuthCodeResponse data;
+    public UpdateGuestUserInfoResponse data;
 
     @Schema(description = "응답 시간", example = "2025-08-31T07:06:06.312Z")
     public String timestamp;
