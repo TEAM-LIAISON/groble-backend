@@ -13,4 +13,7 @@ public interface SellerInfoRepository {
   Optional<SellerInfo> findByUserIdWithUser(Long userId);
 
   Optional<SellerInfo> findByUserNicknameWithUser(String nickname);
+
+  // 중복 생성 방지를 위한 존재 여부 확인
+  boolean existsByUserId(Long userId);
 }

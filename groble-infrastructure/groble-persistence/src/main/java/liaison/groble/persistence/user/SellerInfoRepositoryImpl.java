@@ -33,4 +33,9 @@ public class SellerInfoRepositoryImpl implements SellerInfoRepository {
   public Optional<SellerInfo> findByUserNicknameWithUser(String nickname) {
     return jpaSellerInfoRepository.findByUserNicknameWithUser(nickname);
   }
+
+  @Override
+  public boolean existsByUserId(Long userId) {
+    return jpaSellerInfoRepository.existsByUserId(userId);
+  }
 }

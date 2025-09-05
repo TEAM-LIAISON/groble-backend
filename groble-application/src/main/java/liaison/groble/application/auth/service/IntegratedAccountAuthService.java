@@ -79,10 +79,23 @@ public class IntegratedAccountAuthService {
 
       // 4. 메이커로 가입한 경우에 SellerInfo 생성 필요
       if (userType == UserType.SELLER) {
-        SellerInfo sellerInfo = SellerInfo.createForUser(savedUser);
-        sellerInfoRepository.save(sellerInfo);
-        Market market = Market.createForUser(user);
-        marketRepository.save(market);
+        // SellerInfo 중복 생성 방지
+        if (!sellerInfoRepository.existsByUserId(savedUser.getId())) {
+          SellerInfo sellerInfo = SellerInfo.createForUser(savedUser);
+          sellerInfoRepository.save(sellerInfo);
+          log.info("Created new SellerInfo for user: {}", savedUser.getId());
+        } else {
+          log.info("SellerInfo already exists for user: {}", savedUser.getId());
+        }
+
+        // Market 중복 생성 방지
+        if (!marketRepository.existsByUserId(savedUser.getId())) {
+          Market market = Market.createForUser(savedUser);
+          marketRepository.save(market);
+          log.info("Created new Market for user: {}", savedUser.getId());
+        } else {
+          log.info("Market already exists for user: {}", savedUser.getId());
+        }
       }
 
       // 4. 토큰 발급 및 저장
