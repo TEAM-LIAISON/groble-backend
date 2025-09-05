@@ -19,6 +19,18 @@ public final class AdminSettlementSwaggerDocs {
   public static final String TAG_NAME = SwaggerTags.Admin.SETTLEMENT;
   public static final String TAG_DESCRIPTION = SwaggerTags.Admin.SETTLEMENT_DESC;
 
+  // === 모든 사용자의 정산 내역 조회 API ===
+  public static final String ALL_USERS_SETTLEMENTS_SUMMARY =
+      "[✅ 전체 사용자 정산 내역 조회] 관리자가 모든 사용자의 정산 내역을 페이징 처리하여 조회합니다.";
+  public static final String ALL_USERS_SETTLEMENTS_DESCRIPTION =
+      """
+                    관리자가 모든 사용자의 정산 내역을 페이징 처리하여 조회합니다.
+
+                    **응답 데이터:**
+                    - 각 정산 항목에 대한 상세 정보 포함
+                    - 페이징 정보 포함 (총 페이지 수, 현재 페이지 등)
+                    """;
+
   @Operation(
       summary = "정산 승인 처리",
       description =

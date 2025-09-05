@@ -7,9 +7,11 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.json.simple.JSONObject;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import liaison.groble.application.admin.settlement.dto.AdminSettlementOverviewDTO;
 import liaison.groble.application.admin.settlement.dto.PaypleAccountVerificationRequest;
 import liaison.groble.application.admin.settlement.dto.PayplePartnerAuthResult;
 import liaison.groble.application.admin.settlement.dto.SettlementApprovalDTO;
@@ -17,6 +19,7 @@ import liaison.groble.application.admin.settlement.dto.SettlementApprovalDTO.Fai
 import liaison.groble.application.admin.settlement.dto.SettlementApprovalDTO.PaypleSettlementResultDTO;
 import liaison.groble.application.admin.settlement.dto.SettlementApprovalRequestDTO;
 import liaison.groble.application.payment.exception.PaypleApiException;
+import liaison.groble.common.response.PageResponse;
 import liaison.groble.domain.settlement.entity.Settlement;
 import liaison.groble.domain.settlement.entity.SettlementItem;
 import liaison.groble.domain.settlement.repository.SettlementRepository;
@@ -39,6 +42,15 @@ public class AdminSettlementService {
   private final SettlementRepository settlementRepository;
   private final PaypleSettlementService paypleSettlementService;
   private final PaypleConfig paypleConfig;
+
+  @Transactional(readOnly = true)
+  public PageResponse<AdminSettlementOverviewDTO> getAllUsersSettlements(
+      Long adminUserId, Pageable pageable) {
+
+    log.info("관리자 정산 조회 요청 - 관리자 ID: {}, 페이지: {}", adminUserId, pageable);
+
+    return null;
+  }
 
   /**
    * 정산 승인 처리

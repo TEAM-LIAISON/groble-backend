@@ -2,8 +2,10 @@ package liaison.groble.api.server.admin;
 
 import jakarta.validation.Valid;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -11,19 +13,27 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import liaison.groble.api.model.admin.settlement.request.SettlementApprovalRequest;
+import liaison.groble.api.model.admin.settlement.response.AdminSettlementsOverviewResponse;
 import liaison.groble.api.model.admin.settlement.response.SettlementApprovalResponse;
 import liaison.groble.api.server.admin.docs.AdminSettlementSwaggerDocs;
 import liaison.groble.api.server.common.ApiPaths;
 import liaison.groble.api.server.common.BaseController;
 import liaison.groble.api.server.common.ResponseMessages;
+import liaison.groble.application.admin.settlement.dto.AdminSettlementOverviewDTO;
 import liaison.groble.application.admin.settlement.dto.SettlementApprovalDTO;
 import liaison.groble.application.admin.settlement.dto.SettlementApprovalDTO.PaypleSettlementResultDTO;
 import liaison.groble.application.admin.settlement.dto.SettlementApprovalRequestDTO;
 import liaison.groble.application.admin.settlement.service.AdminSettlementService;
+import liaison.groble.common.annotation.Auth;
+import liaison.groble.common.annotation.Logging;
+import liaison.groble.common.model.Accessor;
 import liaison.groble.common.response.GrobleResponse;
+import liaison.groble.common.response.PageResponse;
 import liaison.groble.common.response.ResponseHelper;
+import liaison.groble.common.utils.PageUtils;
 import liaison.groble.mapping.admin.AdminSettlementMapper;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 
@@ -46,6 +56,42 @@ public class AdminSettlementController extends BaseController {
     super(responseHelper);
     this.adminSettlementMapper = adminSettlementMapper;
     this.adminSettlementService = adminSettlementService;
+  }
+
+  /**
+   * 모든 사용자의 정산 내역 조회
+   *
+   * <p>관리자가 모든 사용자의 정산 내역을 페이징 처리하여 조회합니다.
+   *
+   * @param accessor 인증된 관리자 정보
+   * @param page 페이지 번호 (기본값: 0)
+   * @param size 페이지 크기 (기본값: 20)
+   * @param sort 정렬 기준 (기본값: createdAt)
+   * @return 페이징된 모든 사용자의 정산 내역
+   */
+  @Operation(
+      summary = AdminSettlementSwaggerDocs.ALL_USERS_SETTLEMENTS_SUMMARY,
+      description = AdminSettlementSwaggerDocs.ALL_USERS_SETTLEMENTS_DESCRIPTION)
+  @Logging(
+      item = "AdminSettlement",
+      action = "getAllUsersSettlements",
+      includeParam = true,
+      includeResult = true)
+  @GetMapping(ApiPaths.Admin.ALL_USERS_SETTLEMENTS)
+  public ResponseEntity<GrobleResponse<PageResponse<AdminSettlementsOverviewResponse>>>
+      getAllUsersSettlements(
+          @Auth Accessor accessor,
+          @RequestParam(value = "page", defaultValue = "0") int page,
+          @RequestParam(value = "size", defaultValue = "20") int size,
+          @RequestParam(value = "sort", defaultValue = "createdAt") String sort) {
+    Pageable pageable = PageUtils.createPageable(page, size, sort);
+    PageResponse<AdminSettlementOverviewDTO> dtoPage =
+        adminSettlementService.getAllUsersSettlements(accessor.getUserId(), pageable);
+
+    PageResponse<AdminSettlementsOverviewResponse> responsePage =
+        adminSettlementMapper.toAdminSettlementsOverviewResponsePage(dtoPage);
+
+    return success(responsePage, ResponseMessages.Admin.ALL_USERS_SETTLEMENTS_RETRIEVED);
   }
 
   /**

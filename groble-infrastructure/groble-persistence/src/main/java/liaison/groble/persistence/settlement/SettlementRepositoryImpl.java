@@ -8,6 +8,7 @@ import java.util.Optional;
 import org.springframework.stereotype.Repository;
 
 import liaison.groble.domain.settlement.entity.Settlement;
+import liaison.groble.domain.settlement.repository.SettlementCustomRepository;
 import liaison.groble.domain.settlement.repository.SettlementRepository;
 
 import lombok.AllArgsConstructor;
@@ -16,6 +17,7 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class SettlementRepositoryImpl implements SettlementRepository {
   private final JpaSettlementRepository jpaSettlementRepository;
+  private final SettlementCustomRepository settlementCustomRepository;
 
   @Override
   public Optional<Settlement> findByUserIdAndPeriod(

@@ -4,13 +4,17 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
 import liaison.groble.api.model.admin.settlement.request.SettlementApprovalRequest;
+import liaison.groble.api.model.admin.settlement.response.AdminSettlementsOverviewResponse;
 import liaison.groble.api.model.admin.settlement.response.SettlementApprovalResponse;
+import liaison.groble.application.admin.settlement.dto.AdminSettlementOverviewDTO;
 import liaison.groble.application.admin.settlement.dto.SettlementApprovalDTO;
 import liaison.groble.application.admin.settlement.dto.SettlementApprovalRequestDTO;
+import liaison.groble.common.response.PageResponse;
+import liaison.groble.mapping.common.PageResponseMapper;
 import liaison.groble.mapping.config.GrobleMapperConfig;
 
 @Mapper(config = GrobleMapperConfig.class)
-public interface AdminSettlementMapper {
+public interface AdminSettlementMapper extends PageResponseMapper {
 
   /** API 요청을 Application DTO로 변환 */
   SettlementApprovalRequestDTO toRequestDTO(SettlementApprovalRequest request);
@@ -19,6 +23,15 @@ public interface AdminSettlementMapper {
   @Mapping(target = "paypleResult", source = "paypleResult")
   @Mapping(target = "failedSettlements", source = "failedSettlements")
   SettlementApprovalResponse toResponse(SettlementApprovalDTO dto);
+
+  // ====== 📤 PageResponse 변환 ======
+  default PageResponse<AdminSettlementsOverviewResponse> toAdminSettlementsOverviewResponsePage(
+      PageResponse<AdminSettlementOverviewDTO> dtoPage) {
+    return toPageResponse(dtoPage, this::toAdminSettlementsOverviewResponse);
+  }
+
+  AdminSettlementsOverviewResponse toAdminSettlementsOverviewResponse(
+      AdminSettlementOverviewDTO adminSettlementOverviewDTO);
 
   /** PaypleSettlementResultDTO 매핑 */
   SettlementApprovalResponse.PaypleSettlementResult toPaypleResult(

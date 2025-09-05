@@ -30,4 +30,6 @@ public class AdminDashboardController extends BaseController {
     super(responseHelper);
     this.adminDashboardMapper = adminDashboardMapper;
   }
+
+  // 모든 유저의 정산 필요 항목 조회
 }

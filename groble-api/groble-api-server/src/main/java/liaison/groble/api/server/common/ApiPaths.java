@@ -15,6 +15,8 @@ public final class ApiPaths {
 
     public static final String APPROVE_SETTLEMENTS = "/approve";
 
+    public static final String ALL_USERS_SETTLEMENTS = "/all-users";
+
     private Admin() {}
   }
 

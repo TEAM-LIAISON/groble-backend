@@ -21,6 +21,7 @@ import liaison.groble.domain.settlement.dto.FlatPerTransactionSettlement;
 import liaison.groble.domain.settlement.dto.FlatSettlementsDTO;
 import liaison.groble.domain.settlement.entity.QSettlement;
 import liaison.groble.domain.settlement.entity.QSettlementItem;
+import liaison.groble.domain.settlement.entity.Settlement;
 import liaison.groble.domain.settlement.enums.SettlementType;
 import liaison.groble.domain.settlement.repository.SettlementCustomRepository;
 import liaison.groble.domain.user.entity.QUser;
@@ -132,6 +133,35 @@ public class SettlementCustomRepositoryImpl implements SettlementCustomRepositor
                     .leftJoin(qPurchase.order, qOrder)
                     .where(cond)
                     .fetchOne())
+            .orElse(0L);
+
+    return new PageImpl<>(content, pageable, total);
+  }
+
+  @Override
+  public Page<Settlement> findAllUsersSettlementsForAdmin(Pageable pageable) {
+    QSettlement qSettlement = QSettlement.settlement;
+    QUser qUser = QUser.user;
+
+    // 메인 쿼리 - Settlement 엔터티를 직접 조회하고 User 정보를 fetch join
+    JPAQuery<Settlement> query =
+        jpaQueryFactory
+            .selectFrom(qSettlement)
+            .leftJoin(qSettlement.user, qUser)
+            .fetchJoin()
+            .orderBy(
+                qSettlement.scheduledSettlementDate.desc(), // 정산 예정일 기준 정렬
+                qSettlement.createdAt.desc() // 생성일 기준 정렬
+                );
+
+    // 페이징 적용
+    List<Settlement> content =
+        query.offset(pageable.getOffset()).limit(pageable.getPageSize()).fetch();
+
+    // 전체 카운트 조회
+    long total =
+        Optional.ofNullable(
+                jpaQueryFactory.select(qSettlement.count()).from(qSettlement).fetchOne())
             .orElse(0L);
 
     return new PageImpl<>(content, pageable, total);
