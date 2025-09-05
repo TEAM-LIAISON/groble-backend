@@ -47,10 +47,24 @@ public class SocialAccountUserService {
     user.updateLastUserType(userType);
     if (userType == UserType.SELLER) {
       user.setSeller(true);
-      SellerInfo sellerInfo = SellerInfo.createForUser(user);
-      sellerInfoRepository.save(sellerInfo);
-      Market market = Market.createForUser(user);
-      marketRepository.save(market);
+
+      // SellerInfo 중복 생성 방지
+      if (!sellerInfoRepository.existsByUserId(user.getId())) {
+        SellerInfo sellerInfo = SellerInfo.createForUser(user);
+        sellerInfoRepository.save(sellerInfo);
+        log.info("Created new SellerInfo for user: {}", user.getId());
+      } else {
+        log.info("SellerInfo already exists for user: {}", user.getId());
+      }
+
+      // Market 중복 생성 방지
+      if (!marketRepository.existsByUserId(user.getId())) {
+        Market market = Market.createForUser(user);
+        marketRepository.save(market);
+        log.info("Created new Market for user: {}", user.getId());
+      } else {
+        log.info("Market already exists for user: {}", user.getId());
+      }
     } else {
       user.setSeller(false);
     }
