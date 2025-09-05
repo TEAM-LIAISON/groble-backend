@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import liaison.groble.api.model.admin.settlement.request.SettlementApprovalRequest;
 import liaison.groble.api.model.admin.settlement.response.AdminSettlementsOverviewResponse;
 import liaison.groble.api.model.admin.settlement.response.SettlementApprovalResponse;
+import liaison.groble.api.server.admin.docs.AdminSettlementExampleResponses;
 import liaison.groble.api.server.admin.docs.AdminSettlementSwaggerDocs;
 import liaison.groble.api.server.common.ApiPaths;
 import liaison.groble.api.server.common.BaseController;
@@ -72,6 +73,7 @@ public class AdminSettlementController extends BaseController {
   @Operation(
       summary = AdminSettlementSwaggerDocs.ALL_USERS_SETTLEMENTS_SUMMARY,
       description = AdminSettlementSwaggerDocs.ALL_USERS_SETTLEMENTS_DESCRIPTION)
+  @AdminSettlementExampleResponses.AllUsersSettlementsPageSuccess
   @Logging(
       item = "AdminSettlement",
       action = "getAllUsersSettlements",

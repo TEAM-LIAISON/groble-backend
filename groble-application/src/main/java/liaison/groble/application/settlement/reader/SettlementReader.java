@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import liaison.groble.common.exception.EntityNotFoundException;
+import liaison.groble.domain.settlement.dto.FlatAdminSettlementsDTO;
 import liaison.groble.domain.settlement.dto.FlatPerTransactionSettlement;
 import liaison.groble.domain.settlement.dto.FlatSettlementsDTO;
 import liaison.groble.domain.settlement.entity.Settlement;
@@ -80,6 +81,11 @@ public class SettlementReader {
 
   public Page<FlatSettlementsDTO> findSettlementsByUserId(Long userId, Pageable pageable) {
     return settlementCustomRepository.findSettlementsByUserId(userId, pageable);
+  }
+
+  public Page<FlatAdminSettlementsDTO> findAdminSettlementsByUserId(
+      Long adminUserId, Pageable pageable) {
+    return settlementCustomRepository.findAdminSettlementsByUserId(adminUserId, pageable);
   }
 
   public Page<FlatPerTransactionSettlement> findPerTransactionSettlementsByIdAndUserId(

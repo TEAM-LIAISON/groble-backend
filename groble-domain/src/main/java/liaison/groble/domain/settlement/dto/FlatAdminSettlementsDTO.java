@@ -1,19 +1,25 @@
-package liaison.groble.application.admin.settlement.dto;
+package liaison.groble.domain.settlement.dto;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
 @Builder
-public class AdminSettlementOverviewDTO {
+@NoArgsConstructor
+@AllArgsConstructor
+public class FlatAdminSettlementsDTO {
   private Long settlementId;
   private LocalDate scheduledSettlementDate;
   private String contentType;
   private BigDecimal settlementAmount;
   private String settlementStatus;
+
+  // SellerInfo 존재
   private String verificationStatus;
   private Boolean isBusinessSeller;
   private String businessType;

@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.json.simple.JSONObject;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,7 +20,9 @@ import liaison.groble.application.admin.settlement.dto.SettlementApprovalDTO.Fai
 import liaison.groble.application.admin.settlement.dto.SettlementApprovalDTO.PaypleSettlementResultDTO;
 import liaison.groble.application.admin.settlement.dto.SettlementApprovalRequestDTO;
 import liaison.groble.application.payment.exception.PaypleApiException;
+import liaison.groble.application.settlement.reader.SettlementReader;
 import liaison.groble.common.response.PageResponse;
+import liaison.groble.domain.settlement.dto.FlatAdminSettlementsDTO;
 import liaison.groble.domain.settlement.entity.Settlement;
 import liaison.groble.domain.settlement.entity.SettlementItem;
 import liaison.groble.domain.settlement.repository.SettlementRepository;
@@ -41,15 +44,25 @@ public class AdminSettlementService {
 
   private final SettlementRepository settlementRepository;
   private final PaypleSettlementService paypleSettlementService;
+  private final SettlementReader settlementReader;
   private final PaypleConfig paypleConfig;
 
   @Transactional(readOnly = true)
   public PageResponse<AdminSettlementOverviewDTO> getAllUsersSettlements(
       Long adminUserId, Pageable pageable) {
+    Page<FlatAdminSettlementsDTO> page =
+        settlementReader.findAdminSettlementsByUserId(adminUserId, pageable);
 
-    log.info("관리자 정산 조회 요청 - 관리자 ID: {}, 페이지: {}", adminUserId, pageable);
+    List<AdminSettlementOverviewDTO> items =
+        page.getContent().stream().map(this::convertFlatDTOToAdminSettlementsDTO).toList();
 
-    return null;
+    PageResponse.MetaData meta =
+        PageResponse.MetaData.builder()
+            .sortBy(pageable.getSort().iterator().next().getProperty())
+            .sortDirection(pageable.getSort().iterator().next().getDirection().name())
+            .build();
+
+    return PageResponse.from(page, items, meta);
   }
 
   /**
@@ -452,5 +465,24 @@ public class AdminSettlementService {
     return sensitiveData.substring(0, 4)
         + "****"
         + sensitiveData.substring(sensitiveData.length() - 4);
+  }
+
+  private AdminSettlementOverviewDTO convertFlatDTOToAdminSettlementsDTO(
+      FlatAdminSettlementsDTO flatAdminSettlementsDTO) {
+    return AdminSettlementOverviewDTO.builder()
+        .settlementId(flatAdminSettlementsDTO.getSettlementId())
+        .scheduledSettlementDate(flatAdminSettlementsDTO.getScheduledSettlementDate())
+        .contentType(flatAdminSettlementsDTO.getContentType())
+        .settlementAmount(flatAdminSettlementsDTO.getSettlementAmount())
+        .settlementStatus(flatAdminSettlementsDTO.getSettlementStatus())
+        .verificationStatus(flatAdminSettlementsDTO.getVerificationStatus())
+        .isBusinessSeller(flatAdminSettlementsDTO.getIsBusinessSeller())
+        .businessType(flatAdminSettlementsDTO.getBusinessType())
+        .bankAccountOwner(flatAdminSettlementsDTO.getBankAccountOwner())
+        .bankName(flatAdminSettlementsDTO.getBankName())
+        .bankAccountNumber(flatAdminSettlementsDTO.getBankAccountNumber())
+        .copyOfBankbookUrl(flatAdminSettlementsDTO.getCopyOfBankbookUrl())
+        .businessLicenseFileUrl(flatAdminSettlementsDTO.getBusinessLicenseFileUrl())
+        .build();
   }
 }

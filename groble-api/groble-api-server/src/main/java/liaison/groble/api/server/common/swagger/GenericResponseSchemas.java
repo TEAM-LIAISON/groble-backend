@@ -1,5 +1,6 @@
 package liaison.groble.api.server.common.swagger;
 
+import liaison.groble.api.model.admin.settlement.response.AdminSettlementsOverviewResponse;
 import liaison.groble.api.model.guest.response.GuestAuthCodeResponse;
 import liaison.groble.api.model.guest.response.UpdateGuestUserInfoResponse;
 import liaison.groble.api.model.guest.response.VerifyAuthCodeResponse;
@@ -320,6 +321,27 @@ public final class GenericResponseSchemas {
 
     @Schema(description = "비회원 사용자 정보 업데이트 및 정식 토큰 발급 응답")
     public UpdateGuestUserInfoResponse data;
+
+    @Schema(description = "응답 시간", example = "2025-08-31T07:06:06.312Z")
+    public String timestamp;
+  }
+
+  @Schema(description = CommonSwaggerDocs.GROBLE_RESPONSE_DESC + " - 관리자 전체 사용자 정산 내역 조회 응답")
+  public static class ApiAllUsersSettlementsResponse {
+
+    @Schema(description = "응답 상태", example = CommonSwaggerDocs.STATUS_SUCCESS)
+    public String status;
+
+    @Schema(description = "HTTP 상태 코드", example = "200")
+    public int code;
+
+    @Schema(
+        description = "응답 메시지",
+        example = ResponseMessages.Admin.ALL_USERS_SETTLEMENTS_RETRIEVED)
+    public String message;
+
+    @Schema(description = "전체 사용자 정산 내역 데이터")
+    public AdminSettlementsOverviewResponse data;
 
     @Schema(description = "응답 시간", example = "2025-08-31T07:06:06.312Z")
     public String timestamp;
