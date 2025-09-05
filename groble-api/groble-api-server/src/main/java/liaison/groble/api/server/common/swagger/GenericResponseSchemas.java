@@ -340,8 +340,8 @@ public final class GenericResponseSchemas {
         example = ResponseMessages.Admin.ALL_USERS_SETTLEMENTS_RETRIEVED)
     public String message;
 
-    @Schema(description = "전체 사용자 정산 내역 데이터")
-    public AdminSettlementsOverviewResponse data;
+    @Schema(description = "전체 사용자 정산 내역 데이터 (페이징)")
+    public PageResponse<AdminSettlementsOverviewResponse> data;
 
     @Schema(description = "응답 시간", example = "2025-08-31T07:06:06.312Z")
     public String timestamp;
