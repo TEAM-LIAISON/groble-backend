@@ -60,13 +60,18 @@ public final class SwaggerTags {
   }
 
   public static final class Admin {
-    public static final String USER = "[✅ 관리자] 사용자 관리 API";
-    public static final String USER_DESC = "관리자의 사용자 관리 기능을 제공합니다.";
-    public static final String CONTENT = "[✅ 관리자] 콘텐츠 관리 API";
-    public static final String CONTENT_DESC = "관리자의 콘텐츠 관리 및 모니터링 기능을 제공합니다.";
     public static final String AUTH = "[✅ 관리자 인증/인가] 관리자 로그인 및 로그아웃";
     public static final String AUTH_DESC = "관리자의 로그인 및 로그아웃 기능을 제공합니다.";
-    public static final String SETTLEMENT = "[✅ 정산 관리] 정산 관리 API";
+
+    public static final String DASHBOARD = "[✅ 관리자 대시보드] 관리자 대시보드 API";
+    public static final String DASHBOARD_DESC = "관리자 대시보드에 필요한 통계,요약,알림 정보를 제공합니다.";
+
+    public static final String USER = "[✅ 관리자 사용자 관리] 사용자 관리 API";
+    public static final String USER_DESC = "관리자의 사용자 관리 기능을 제공합니다.";
+    public static final String CONTENT = "[✅ 관리자 콘텐츠 관리] 콘텐츠 관리 API";
+    public static final String CONTENT_DESC = "관리자의 콘텐츠 관리 및 모니터링 기능을 제공합니다.";
+
+    public static final String SETTLEMENT = "[✅ 관리자 정산 관리] 정산 관리 API";
     public static final String SETTLEMENT_DESC = "정산 내역 조회 및 정산 완료 기능을 제공합니다.";
 
     private Admin() {}

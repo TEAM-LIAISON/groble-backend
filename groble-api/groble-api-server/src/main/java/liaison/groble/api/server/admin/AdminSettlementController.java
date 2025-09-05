@@ -56,7 +56,7 @@ public class AdminSettlementController extends BaseController {
    * @param request 정산 승인 요청
    * @return 정산 승인 결과
    */
-  @PostMapping("/approve")
+  @PostMapping(ApiPaths.Admin.APPROVE_SETTLEMENTS)
   @AdminSettlementSwaggerDocs.ApproveSettlements
   public ResponseEntity<GrobleResponse<SettlementApprovalResponse>> approveSettlements(
       @Valid @RequestBody SettlementApprovalRequest request) {
