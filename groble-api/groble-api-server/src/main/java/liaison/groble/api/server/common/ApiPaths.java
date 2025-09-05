@@ -10,6 +10,7 @@ public final class ApiPaths {
     public static final String BASE = API_V1 + "/admin";
 
     public static final String DASHBOARD_BASE = BASE + "/dashboard";
+    public static final String DASHBOARD_OVERVIEW = "/overview";
 
     public static final String SETTLEMENT_BASE = BASE + "/settlements";
 

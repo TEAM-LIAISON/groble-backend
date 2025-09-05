@@ -95,6 +95,11 @@ public class PurchaseReader {
     return purchaseCustomRepository.getDashboardOverviewStats(sellerId);
   }
 
+  // 관리자 대시보드 개요 조회
+  public FlatDashboardOverviewDTO getAdminDashboardOverviewStats() {
+    return purchaseCustomRepository.getAdminDashboardOverviewStats();
+  }
+
   public boolean isContentPurchasedByUser(Long userId, Long contentId) {
     return purchaseCustomRepository.existsByUserAndContent(userId, contentId);
   }

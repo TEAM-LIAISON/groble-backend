@@ -21,5 +21,7 @@ public interface JpaGuestUserRepository extends JpaRepository<GuestUser, Long> {
       "SELECT COUNT(gu) > 0 FROM GuestUser gu WHERE gu.phoneNumber = :phoneNumber AND gu.email IS NOT NULL AND gu.email != '' AND gu.username IS NOT NULL AND gu.username != ''")
   boolean existsByPhoneNumberAndHasCompleteUserInfo(@Param("phoneNumber") String phoneNumber);
 
+  long count();
+
   GuestUser save(GuestUser guestUser);
 }

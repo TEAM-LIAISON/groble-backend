@@ -38,6 +38,11 @@ public class UserRepositoryImpl implements UserRepository {
   }
 
   @Override
+  public long countByStatus(UserStatus status) {
+    return jpaUserRepository.countByUserStatusInfo_Status(status);
+  }
+
+  @Override
   @Transactional
   public User saveAndFlush(User user) {
     return jpaUserRepository.saveAndFlush(user);
