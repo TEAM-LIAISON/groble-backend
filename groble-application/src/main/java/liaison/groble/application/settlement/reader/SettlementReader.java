@@ -65,6 +65,15 @@ public class SettlementReader {
                         sellerId, settlementId)));
   }
 
+  public Settlement getSettlementById(Long settlementId) {
+    return settlementRepository
+        .findById(settlementId)
+        .orElseThrow(
+            () ->
+                new EntityNotFoundException(
+                    String.format("정산 정보를 찾을 수 없습니다 - settlementId: %d", settlementId)));
+  }
+
   /**
    * 정산 정보 조회 (Optional)
    *

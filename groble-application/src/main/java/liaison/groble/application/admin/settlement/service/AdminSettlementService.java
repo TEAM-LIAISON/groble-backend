@@ -68,7 +68,18 @@ public class AdminSettlementService {
 
   @Transactional(readOnly = true)
   public AdminSettlementDetailDTO getSettlementDetail(Long settlementId) {
-    return null;
+    Settlement settlement = settlementReader.getSettlementById(settlementId);
+
+    return AdminSettlementDetailDTO.builder()
+        .settlementId(settlement.getId())
+        .settlementStartDate(settlement.getSettlementStartDate())
+        .settlementEndDate(settlement.getSettlementEndDate())
+        .scheduledSettlementDate(settlement.getScheduledSettlementDate())
+        .settlementAmount(settlement.getSettlementAmount())
+        .pgFee(settlement.getPgFee())
+        .platformFee(settlement.getPlatformFee())
+        .vatAmount(settlement.getFeeVat())
+        .build();
   }
 
   /**

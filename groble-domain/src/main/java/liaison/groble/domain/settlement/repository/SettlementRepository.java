@@ -13,6 +13,8 @@ public interface SettlementRepository {
 
   Optional<Settlement> findByIdAndUserId(Long sellerId, Long settlementId);
 
+  Optional<Settlement> findById(Long settlementId);
+
   BigDecimal getPendingSettlementAmount(Long sellerId);
 
   List<Settlement> findAllByUserId(Long userId);

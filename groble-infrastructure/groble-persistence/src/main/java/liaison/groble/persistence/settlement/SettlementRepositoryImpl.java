@@ -31,6 +31,11 @@ public class SettlementRepositoryImpl implements SettlementRepository {
   }
 
   @Override
+  public Optional<Settlement> findById(Long settlementId) {
+    return jpaSettlementRepository.findById(settlementId);
+  }
+
+  @Override
   public BigDecimal getPendingSettlementAmount(Long sellerId) {
     return jpaSettlementRepository.calculatePendingSettlementAmount(sellerId);
   }
