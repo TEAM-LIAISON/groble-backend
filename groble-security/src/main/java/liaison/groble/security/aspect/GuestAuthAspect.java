@@ -9,7 +9,6 @@ import org.springframework.stereotype.Component;
 
 import liaison.groble.common.annotation.GuestOnly;
 import liaison.groble.security.exception.ForbiddenException;
-import liaison.groble.security.jwt.GuestPrincipal;
 
 @Aspect
 @Component
@@ -19,7 +18,8 @@ public class GuestAuthAspect {
   public void validateGuestAccess(JoinPoint joinPoint, GuestOnly guestOnly) {
     Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
-    if (auth == null || !(auth.getPrincipal() instanceof GuestPrincipal)) {
+    // 게스트 사용자인지 확인 (principal이 "guest_ID" 형태인지 확인)
+    if (auth == null || auth.getName() == null || !auth.getName().startsWith("guest_")) {
       throw new ForbiddenException(guestOnly.message());
     }
   }

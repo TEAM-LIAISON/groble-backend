@@ -62,22 +62,31 @@ public class AuthArgumentResolver implements HandlerMethodArgumentResolver {
       }
     }
 
-    // 게스트 사용자인 경우 처리 추가
-    if (principal instanceof liaison.groble.security.jwt.GuestPrincipal) {
-      liaison.groble.security.jwt.GuestPrincipal guestPrincipal =
-          (liaison.groble.security.jwt.GuestPrincipal) principal;
+    // 게스트 사용자인 경우 처리 추가 - GuestPrincipal을 사용하지 않고 직접 처리
+    if (authentication.getName() != null && authentication.getName().startsWith("guest_")) {
+      String guestIdStr = authentication.getName().replace("guest_", "");
+      try {
+        Long guestId = Long.parseLong(guestIdStr);
 
-      Set<String> roles =
-          guestPrincipal.getAuthorities().stream()
-              .map(GrantedAuthority::getAuthority)
-              .collect(Collectors.toSet());
+        Set<String> roles =
+            authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.toSet());
 
-      return Accessor.builder()
-          .id(guestPrincipal.getGuestUserId())
-          .roles(roles)
-          .userType("GUEST")
-          .accountType("GUEST")
-          .build();
+        return Accessor.builder()
+            .id(guestId)
+            .roles(roles)
+            .userType("GUEST")
+            .accountType("GUEST")
+            .build();
+      } catch (NumberFormatException e) {
+        // 게스트 ID 파싱 실패시 익명 사용자로 처리
+        if (required) {
+          throw new UnauthorizedException("게스트 인증 정보가 유효하지 않습니다.");
+        } else {
+          return createAnonymousAccessor();
+        }
+      }
     }
 
     // UserDetailsImpl이 아닌 경우

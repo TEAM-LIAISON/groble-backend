@@ -4,6 +4,16 @@ public final class ResponseMessages {
 
   private ResponseMessages() {}
 
+  public static final class Guest {
+    public static final String GUEST_AUTH_PHONE_REQUEST_SUCCESS = "비회원 전화번호 인증 요청이 성공적으로 완료되었습니다.";
+    public static final String VERIFY_GUEST_AUTH_PHONE_SUCCESS = "비회원 전화번호 인증이 성공적으로 완료되었습니다.";
+    public static final String UPDATE_GUEST_USER_INFO_SUCCESS = "비회원 사용자 정보 업데이트가 성공적으로 완료되었습니다.";
+  }
+
+  public static final class Admin {
+    public static final String SETTLEMENT_APPROVAL_SUCCESS = "정산 승인 요청이 성공적으로 처리되었습니다.";
+  }
+
   public static final class Payment {
     public static final String REQUEST_SUCCESS = "결제 승인 요청이 성공적으로 처리되었습니다.";
     public static final String CANCEL_SUCCESS = "결제 취소 요청이 성공적으로 처리되었습니다.";
@@ -37,6 +47,13 @@ public final class ResponseMessages {
     public static final String LIST_RETRIEVED = "콘텐츠 목록 조회에 성공하였습니다.";
 
     private Content() {}
+  }
+
+  public static final class Order {
+    public static final String ORDER_CREATE_SUCCESS = "주문 생성이 성공적으로 완료되었습니다.";
+    public static final String GET_ORDER_SUCCESS = "주문 성공 페이지 정보 조회에 성공하였습니다.";
+
+    private Order() {}
   }
 
   public static final class Purchase {

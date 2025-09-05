@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import liaison.groble.common.enums.GuestTokenScope;
 import liaison.groble.common.port.security.SecurityPort;
 import liaison.groble.security.jwt.JwtTokenProvider;
 
@@ -39,6 +40,16 @@ public class SecurityAdapter implements SecurityPort {
   @Override
   public String createGuestToken(Long guestUserId) {
     return jwtTokenProvider.createGuestToken(guestUserId);
+  }
+
+  @Override
+  public String createGuestTokenWithScope(Long guestUserId, GuestTokenScope scope) {
+    return jwtTokenProvider.createGuestTokenWithScope(guestUserId, scope);
+  }
+
+  @Override
+  public GuestTokenScope getGuestTokenScope(String guestToken) {
+    return jwtTokenProvider.getGuestTokenScope(guestToken);
   }
 
   @Override

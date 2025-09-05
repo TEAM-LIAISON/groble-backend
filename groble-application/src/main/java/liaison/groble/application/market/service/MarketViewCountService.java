@@ -17,6 +17,8 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class MarketViewCountService {
+  // 관리자 계정 ID 상수
+  private static final Long ADMIN_USER_ID = 1L;
 
   // Reader
   private final UserReader userReader;
@@ -29,6 +31,10 @@ public class MarketViewCountService {
 
   @Async
   public void recordMarketView(String marketLinkUrl, MarketViewCountDTO marketViewCountDTO) {
+    // 관리자 계정(groble@groble.im, userId=1)에 대해서는 조회수 집계를 하지 않음
+    if (ADMIN_USER_ID.equals(marketViewCountDTO.getUserId())) {
+      return;
+    }
 
     Market market = userReader.getMarketWithUser(marketLinkUrl);
 

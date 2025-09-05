@@ -29,6 +29,13 @@ public class PerTransactionSettlementOverviewResponse {
       requiredMode = Schema.RequiredMode.REQUIRED)
   private BigDecimal settlementAmount;
 
+  @Schema(
+      description = "주문 상태 [PAID - 결제완료], [CANCEL_REQUEST - 결제취소], [CANCELLED - 환불완료]",
+      example = "CANCELLED",
+      type = "string",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private String orderStatus;
+
   // 판매일
   @Schema(
       description = "판매일 (YYYY-MM-DDTHH:mm:ss)",

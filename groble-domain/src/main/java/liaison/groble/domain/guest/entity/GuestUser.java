@@ -37,13 +37,13 @@ public class GuestUser extends BaseTimeEntity {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @Column(name = "user_name", nullable = false, length = 50)
+  @Column(name = "user_name", nullable = true, length = 50)
   private String username;
 
   @Column(name = "phone_number", nullable = false, length = 20, unique = true)
   private String phoneNumber;
 
-  @Column(name = "email", nullable = false, length = 100)
+  @Column(name = "email", nullable = true, length = 100)
   private String email;
 
   @Enumerated(EnumType.STRING)
