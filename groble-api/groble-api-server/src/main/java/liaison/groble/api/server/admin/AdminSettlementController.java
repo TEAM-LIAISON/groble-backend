@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import liaison.groble.api.model.admin.settlement.request.SettlementApprovalRequest;
+import liaison.groble.api.model.admin.settlement.response.AdminSettlementDetailResponse;
 import liaison.groble.api.model.admin.settlement.response.AdminSettlementsOverviewResponse;
 import liaison.groble.api.model.admin.settlement.response.SettlementApprovalResponse;
 import liaison.groble.api.server.admin.docs.AdminSettlementExampleResponses;
@@ -20,6 +21,7 @@ import liaison.groble.api.server.admin.docs.AdminSettlementSwaggerDocs;
 import liaison.groble.api.server.common.ApiPaths;
 import liaison.groble.api.server.common.BaseController;
 import liaison.groble.api.server.common.ResponseMessages;
+import liaison.groble.application.admin.settlement.dto.AdminSettlementDetailDTO;
 import liaison.groble.application.admin.settlement.dto.AdminSettlementOverviewDTO;
 import liaison.groble.application.admin.settlement.dto.SettlementApprovalDTO;
 import liaison.groble.application.admin.settlement.dto.SettlementApprovalDTO.PaypleSettlementResultDTO;
@@ -27,6 +29,7 @@ import liaison.groble.application.admin.settlement.dto.SettlementApprovalRequest
 import liaison.groble.application.admin.settlement.service.AdminSettlementService;
 import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.annotation.Logging;
+import liaison.groble.common.annotation.RequireRole;
 import liaison.groble.common.model.Accessor;
 import liaison.groble.common.response.GrobleResponse;
 import liaison.groble.common.response.PageResponse;
@@ -94,6 +97,28 @@ public class AdminSettlementController extends BaseController {
         adminSettlementMapper.toAdminSettlementsOverviewResponsePage(dtoPage);
 
     return success(responsePage, ResponseMessages.Admin.ALL_USERS_SETTLEMENTS_RETRIEVED);
+  }
+
+  @Operation(
+      summary = AdminSettlementSwaggerDocs.SETTLEMENT_DETAIL_SUMMARY,
+      description = AdminSettlementSwaggerDocs.SETTLEMENT_DETAIL_DESCRIPTION)
+  @AdminSettlementExampleResponses.AdminSettlementDetailSuccess
+  @RequireRole("ROLE_ADMIN")
+  @Logging(
+      item = "AdminSettlement",
+      action = "getSettlementsDetail",
+      includeParam = true,
+      includeResult = true)
+  @GetMapping(ApiPaths.Admin.SETTLEMENT_DETAIL)
+  public ResponseEntity<GrobleResponse<AdminSettlementDetailResponse>> getSettlementsDetail(
+      @Auth Accessor accessor, @RequestParam Long settlementId) {
+    AdminSettlementDetailDTO adminSettlementDetailDTO =
+        adminSettlementService.getSettlementDetail(settlementId);
+
+    AdminSettlementDetailResponse response =
+        adminSettlementMapper.toAdminSettlementDetailResponse(adminSettlementDetailDTO);
+
+    return success(response, ResponseMessages.Admin.SETTLEMENT_DETAIL_RETRIEVED);
   }
 
   /**

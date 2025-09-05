@@ -1,6 +1,7 @@
 package liaison.groble.api.server.common.swagger;
 
 import liaison.groble.api.model.admin.dashboard.response.AdminDashboardOverviewResponse;
+import liaison.groble.api.model.admin.settlement.response.AdminSettlementDetailResponse;
 import liaison.groble.api.model.admin.settlement.response.AdminSettlementsOverviewResponse;
 import liaison.groble.api.model.guest.response.GuestAuthCodeResponse;
 import liaison.groble.api.model.guest.response.UpdateGuestUserInfoResponse;
@@ -327,6 +328,7 @@ public final class GenericResponseSchemas {
     public String timestamp;
   }
 
+  @Schema(description = CommonSwaggerDocs.GROBLE_RESPONSE_DESC + " - 관리자 대시보드 개요 응답")
   public static class ApiAdminDashboardOverviewResponse {
 
     @Schema(description = "응답 상태", example = CommonSwaggerDocs.STATUS_SUCCESS)
@@ -361,6 +363,25 @@ public final class GenericResponseSchemas {
 
     @Schema(description = "전체 사용자 정산 내역 데이터 (페이징)")
     public PageResponse<AdminSettlementsOverviewResponse> data;
+
+    @Schema(description = "응답 시간", example = "2025-08-31T07:06:06.312Z")
+    public String timestamp;
+  }
+
+  @Schema(description = CommonSwaggerDocs.GROBLE_RESPONSE_DESC + " - 관리자 정산 상세 조회 응답")
+  public static class ApiAdminSettlementDetailResponse {
+
+    @Schema(description = "응답 상태", example = CommonSwaggerDocs.STATUS_SUCCESS)
+    public String status;
+
+    @Schema(description = "HTTP 상태 코드", example = "200")
+    public int code;
+
+    @Schema(description = "응답 메시지", example = ResponseMessages.Admin.SETTLEMENT_DETAIL_RETRIEVED)
+    public String message;
+
+    @Schema(description = "정산 상세 정보 데이터")
+    public AdminSettlementDetailResponse data;
 
     @Schema(description = "응답 시간", example = "2025-08-31T07:06:06.312Z")
     public String timestamp;

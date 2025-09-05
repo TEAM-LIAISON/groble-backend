@@ -15,6 +15,7 @@ public final class ResponseMessages {
     public static final String SETTLEMENT_APPROVAL_SUCCESS = "정산 승인 요청이 성공적으로 처리되었습니다.";
 
     public static final String ALL_USERS_SETTLEMENTS_RETRIEVED = "전체 사용자 정산 내역 조회에 성공하였습니다.";
+    public static final String SETTLEMENT_DETAIL_RETRIEVED = "사용자 정산 상세 내역 조회에 성공하였습니다.";
   }
 
   public static final class Payment {

@@ -9,6 +9,7 @@ import liaison.groble.api.server.common.swagger.CommonSwaggerDocs;
 import liaison.groble.api.server.common.swagger.GenericResponseSchemas;
 
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -29,16 +30,12 @@ public final class AdminDashboardApiResponses {
                 schema =
                     @Schema(
                         implementation =
-                            GenericResponseSchemas.ApiAdminDashboardOverviewResponse.class))),
-    @ApiResponse(
-        responseCode = "400",
-        description = CommonSwaggerDocs.BAD_REQUEST,
-        content =
-            @Content(
-                mediaType = "application/json",
+                            GenericResponseSchemas.ApiAdminDashboardOverviewResponse.class),
                 examples =
-                    @io.swagger.v3.oas.annotations.media.ExampleObject(
-                        value = CommonSwaggerDocs.BAD_REQUEST_EXAMPLE))),
+                    @ExampleObject(
+                        name = "성공 응답 예시",
+                        description = "관리자 대시보드 개요 조회 성공 시 응답 예시",
+                        value = AdminDashboardExamples.ADMIN_DASHBOARD_OVERVIEW_SUCCESS_EXAMPLE))),
     @ApiResponse(
         responseCode = "403",
         description = CommonSwaggerDocs.FORBIDDEN,
@@ -48,24 +45,6 @@ public final class AdminDashboardApiResponses {
                 examples =
                     @io.swagger.v3.oas.annotations.media.ExampleObject(
                         value = CommonSwaggerDocs.FORBIDDEN_EXAMPLE))),
-    @ApiResponse(
-        responseCode = "404",
-        description = CommonSwaggerDocs.NOT_FOUND,
-        content =
-            @Content(
-                mediaType = "application/json",
-                examples =
-                    @io.swagger.v3.oas.annotations.media.ExampleObject(
-                        value = CommonSwaggerDocs.NOT_FOUND_EXAMPLE))),
-    @ApiResponse(
-        responseCode = "409",
-        description = CommonSwaggerDocs.CONFLICT,
-        content =
-            @Content(
-                mediaType = "application/json",
-                examples =
-                    @io.swagger.v3.oas.annotations.media.ExampleObject(
-                        value = CommonSwaggerDocs.CONFLICT_EXAMPLE))),
     @ApiResponse(
         responseCode = "500",
         description = CommonSwaggerDocs.SERVER_ERROR,

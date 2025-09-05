@@ -4,8 +4,10 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
 import liaison.groble.api.model.admin.settlement.request.SettlementApprovalRequest;
+import liaison.groble.api.model.admin.settlement.response.AdminSettlementDetailResponse;
 import liaison.groble.api.model.admin.settlement.response.AdminSettlementsOverviewResponse;
 import liaison.groble.api.model.admin.settlement.response.SettlementApprovalResponse;
+import liaison.groble.application.admin.settlement.dto.AdminSettlementDetailDTO;
 import liaison.groble.application.admin.settlement.dto.AdminSettlementOverviewDTO;
 import liaison.groble.application.admin.settlement.dto.SettlementApprovalDTO;
 import liaison.groble.application.admin.settlement.dto.SettlementApprovalRequestDTO;
@@ -32,6 +34,9 @@ public interface AdminSettlementMapper extends PageResponseMapper {
 
   AdminSettlementsOverviewResponse toAdminSettlementsOverviewResponse(
       AdminSettlementOverviewDTO adminSettlementOverviewDTO);
+
+  AdminSettlementDetailResponse toAdminSettlementDetailResponse(
+      AdminSettlementDetailDTO adminSettlementDetailDTO);
 
   /** PaypleSettlementResultDTO 매핑 */
   SettlementApprovalResponse.PaypleSettlementResult toPaypleResult(

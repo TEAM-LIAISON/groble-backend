@@ -31,6 +31,21 @@ public final class AdminSettlementSwaggerDocs {
                     - 페이징 정보 포함 (총 페이지 수, 현재 페이지 등)
                     """;
 
+  // === 정산 상세 내역 조회 API ===
+  public static final String SETTLEMENT_DETAIL_SUMMARY =
+      "[✅ 정산 상세 내역 조회] 관리자가 특정 정산 항목의 상세 내역을 조회합니다.";
+  public static final String SETTLEMENT_DETAIL_DESCRIPTION =
+      """
+                    관리자가 특정 정산 항목의 상세 내역을 조회합니다.
+
+                    **요청 파라미터:**
+                    - settlementId: 조회할 정산 항목의 고유 ID
+
+                    **응답 데이터:**
+                    - 정산 항목의 상세 정보 포함
+                    - 관련된 결제 및 환불 내역 포함
+                    """;
+
   @Operation(
       summary = "정산 승인 처리",
       description =

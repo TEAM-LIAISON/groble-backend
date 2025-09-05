@@ -73,4 +73,23 @@ public final class AdminSettlementExamples {
         }
       }
       """;
+
+  public static final String ADMIN_SETTLEMENT_DETAIL_SUCCESS_EXAMPLE =
+      """
+      {
+        "success": true,
+        "code": "SUCCESS",
+        "message": "정산 상세 정보 조회가 성공적으로 처리되었습니다.",
+        "data": {
+          "settlementId": 123,
+          "settlementStartDate": "2025-01-01",
+          "settlementEndDate": "2025-01-31",
+          "scheduledSettlementDate": "2025-02-15",
+          "settlementAmount": 180000.00,
+          "pgFee": 3060.00,
+          "platformFee": 2700.00,
+          "vatAmount": 270.00
+        }
+      }
+      """;
 }

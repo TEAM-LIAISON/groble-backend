@@ -74,4 +74,53 @@ public final class AdminSettlementExampleResponses {
                         value = CommonSwaggerDocs.SERVER_ERROR_EXAMPLE)))
   })
   public @interface AllUsersSettlementsPageSuccess {}
+
+  /** 관리자 특정 정산 항목 상세 내역 조회 성공 응답 */
+  @Target(ElementType.METHOD)
+  @Retention(RetentionPolicy.RUNTIME)
+  @ApiResponses({
+    @ApiResponse(
+        responseCode = "200",
+        description = CommonSwaggerDocs.SUCCESS_200,
+        content =
+            @Content(
+                mediaType = "application/json",
+                schema =
+                    @Schema(
+                        implementation =
+                            GenericResponseSchemas.ApiAdminSettlementDetailResponse.class),
+                examples =
+                    @ExampleObject(
+                        name = "성공 응답 예시",
+                        description = "정산 상세 조회 성공 시 응답 예시",
+                        value = AdminSettlementExamples.ADMIN_SETTLEMENT_DETAIL_SUCCESS_EXAMPLE))),
+    @ApiResponse(
+        responseCode = "403",
+        description = CommonSwaggerDocs.FORBIDDEN,
+        content =
+            @Content(
+                mediaType = "application/json",
+                examples =
+                    @io.swagger.v3.oas.annotations.media.ExampleObject(
+                        value = CommonSwaggerDocs.FORBIDDEN_EXAMPLE))),
+    @ApiResponse(
+        responseCode = "404",
+        description = CommonSwaggerDocs.NOT_FOUND,
+        content =
+            @Content(
+                mediaType = "application/json",
+                examples =
+                    @io.swagger.v3.oas.annotations.media.ExampleObject(
+                        value = CommonSwaggerDocs.NOT_FOUND_EXAMPLE))),
+    @ApiResponse(
+        responseCode = "500",
+        description = CommonSwaggerDocs.SERVER_ERROR,
+        content =
+            @Content(
+                mediaType = "application/json",
+                examples =
+                    @io.swagger.v3.oas.annotations.media.ExampleObject(
+                        value = CommonSwaggerDocs.SERVER_ERROR_EXAMPLE)))
+  })
+  public @interface AdminSettlementDetailSuccess {}
 }

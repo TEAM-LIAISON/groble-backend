@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import liaison.groble.api.model.admin.dashboard.response.AdminDashboardOverviewResponse;
 import liaison.groble.api.server.admin.docs.AdminDashboardApiResponses;
-import liaison.groble.api.server.admin.docs.AdminSettlementSwaggerDocs;
+import liaison.groble.api.server.admin.docs.AdminDashboardSwaggerDocs;
 import liaison.groble.api.server.common.ApiPaths;
 import liaison.groble.api.server.common.BaseController;
 import liaison.groble.api.server.common.ResponseMessages;
@@ -29,8 +29,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @RestController
 @RequestMapping(ApiPaths.Admin.DASHBOARD_BASE)
 @Tag(
-    name = AdminSettlementSwaggerDocs.TAG_NAME,
-    description = AdminSettlementSwaggerDocs.TAG_DESCRIPTION)
+    name = AdminDashboardSwaggerDocs.TAG_NAME,
+    description = AdminDashboardSwaggerDocs.TAG_DESCRIPTION)
 public class AdminDashboardController extends BaseController {
 
   // Service
@@ -50,8 +50,8 @@ public class AdminDashboardController extends BaseController {
 
   // 모든 전체 데이터 조회
   @Operation(
-      summary = AdminSettlementSwaggerDocs.ALL_USERS_SETTLEMENTS_SUMMARY,
-      description = AdminSettlementSwaggerDocs.ALL_USERS_SETTLEMENTS_DESCRIPTION)
+      summary = AdminDashboardSwaggerDocs.DASHBOARD_OVERVIEW_SUMMARY,
+      description = AdminDashboardSwaggerDocs.DASHBOARD_OVERVIEW_DESCRIPTION)
   @AdminDashboardApiResponses.GetAdminDashboardOverviewApiResponses
   @Logging(
       item = "AdminDashboard",
