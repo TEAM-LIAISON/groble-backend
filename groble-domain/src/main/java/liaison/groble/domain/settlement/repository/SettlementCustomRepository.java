@@ -13,5 +13,8 @@ public interface SettlementCustomRepository {
   Page<FlatPerTransactionSettlement> findPerTransactionSettlementsByIdAndUserId(
       Long userId, Long settlementId, Pageable pageable);
 
+  Page<FlatPerTransactionSettlement> findSalesListBySettlementId(
+      Long settlementId, Pageable pageable);
+
   Page<FlatAdminSettlementsDTO> findAdminSettlementsByUserId(Long adminUserId, Pageable pageable);
 }

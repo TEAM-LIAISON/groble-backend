@@ -16,6 +16,7 @@ import liaison.groble.application.admin.settlement.dto.AdminSettlementDetailDTO;
 import liaison.groble.application.admin.settlement.dto.AdminSettlementOverviewDTO;
 import liaison.groble.application.admin.settlement.dto.PaypleAccountVerificationRequest;
 import liaison.groble.application.admin.settlement.dto.PayplePartnerAuthResult;
+import liaison.groble.application.admin.settlement.dto.PerTransactionAdminSettlementOverviewDTO;
 import liaison.groble.application.admin.settlement.dto.SettlementApprovalDTO;
 import liaison.groble.application.admin.settlement.dto.SettlementApprovalDTO.FailedSettlementDTO;
 import liaison.groble.application.admin.settlement.dto.SettlementApprovalDTO.PaypleSettlementResultDTO;
@@ -24,6 +25,7 @@ import liaison.groble.application.payment.exception.PaypleApiException;
 import liaison.groble.application.settlement.reader.SettlementReader;
 import liaison.groble.common.response.PageResponse;
 import liaison.groble.domain.settlement.dto.FlatAdminSettlementsDTO;
+import liaison.groble.domain.settlement.dto.FlatPerTransactionSettlement;
 import liaison.groble.domain.settlement.entity.Settlement;
 import liaison.groble.domain.settlement.entity.SettlementItem;
 import liaison.groble.domain.settlement.repository.SettlementRepository;
@@ -80,6 +82,24 @@ public class AdminSettlementService {
         .platformFee(settlement.getPlatformFee())
         .vatAmount(settlement.getFeeVat())
         .build();
+  }
+
+  @Transactional(readOnly = true)
+  public PageResponse<PerTransactionAdminSettlementOverviewDTO> getSalesList(
+      Long settlementId, Pageable pageable) {
+    Page<FlatPerTransactionSettlement> page =
+        settlementReader.findSalesListBySettlementId(settlementId, pageable);
+
+    List<PerTransactionAdminSettlementOverviewDTO> items =
+        page.getContent().stream().map(this::convertFlatDTOToPerTransactionDTO).toList();
+
+    PageResponse.MetaData meta =
+        PageResponse.MetaData.builder()
+            .sortBy(pageable.getSort().iterator().next().getProperty())
+            .sortDirection(pageable.getSort().iterator().next().getDirection().name())
+            .build();
+
+    return PageResponse.from(page, items, meta);
   }
 
   /**
@@ -500,6 +520,16 @@ public class AdminSettlementService {
         .bankAccountNumber(flatAdminSettlementsDTO.getBankAccountNumber())
         .copyOfBankbookUrl(flatAdminSettlementsDTO.getCopyOfBankbookUrl())
         .businessLicenseFileUrl(flatAdminSettlementsDTO.getBusinessLicenseFileUrl())
+        .build();
+  }
+
+  private PerTransactionAdminSettlementOverviewDTO convertFlatDTOToPerTransactionDTO(
+      FlatPerTransactionSettlement flat) {
+    return PerTransactionAdminSettlementOverviewDTO.builder()
+        .contentTitle(flat.getContentTitle())
+        .settlementAmount(flat.getSettlementAmount())
+        .orderStatus(flat.getOrderStatus())
+        .purchasedAt(flat.getPurchasedAt())
         .build();
   }
 }

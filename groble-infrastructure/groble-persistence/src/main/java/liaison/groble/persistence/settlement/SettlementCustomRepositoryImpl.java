@@ -140,6 +140,55 @@ public class SettlementCustomRepositoryImpl implements SettlementCustomRepositor
   }
 
   @Override
+  public Page<FlatPerTransactionSettlement> findSalesListBySettlementId(
+      Long settlementId, Pageable pageable) {
+
+    QSettlementItem qSettlementItem = QSettlementItem.settlementItem;
+    QSettlement qSettlement = QSettlement.settlement;
+    QPurchase qPurchase = QPurchase.purchase;
+    QOrder qOrder = QOrder.order;
+
+    // [기간] purchasedAt ∈ [periodStart 00:00, periodEnd+1 00:00)
+    BooleanExpression cond = qSettlement.id.eq(settlementId);
+
+    // 메인 조회
+    JPAQuery<FlatPerTransactionSettlement> query =
+        jpaQueryFactory
+            .select(
+                Projections.fields(
+                    FlatPerTransactionSettlement.class,
+                    qSettlementItem.contentTitle.as("contentTitle"),
+                    qSettlementItem.settlementAmount.as("settlementAmount"),
+                    qSettlementItem.purchase.order.status.stringValue().as("orderStatus"),
+                    qSettlementItem.purchasedAt.as("purchasedAt")))
+            .from(qSettlementItem)
+            .leftJoin(qSettlementItem.settlement, qSettlement)
+            .leftJoin(qSettlementItem.purchase, qPurchase)
+            .leftJoin(qPurchase.order, qOrder)
+            .where(cond)
+            .orderBy(qSettlementItem.purchasedAt.desc());
+
+    // 페이징
+    List<FlatPerTransactionSettlement> content =
+        query.offset(pageable.getOffset()).limit(pageable.getPageSize()).fetch();
+
+    // 카운트
+    Long total =
+        Optional.ofNullable(
+                jpaQueryFactory
+                    .select(qSettlementItem.count())
+                    .from(qSettlementItem)
+                    .leftJoin(qSettlementItem.settlement, qSettlement)
+                    .leftJoin(qSettlementItem.purchase, qPurchase)
+                    .leftJoin(qPurchase.order, qOrder)
+                    .where(cond)
+                    .fetchOne())
+            .orElse(0L);
+
+    return new PageImpl<>(content, pageable, total);
+  }
+
+  @Override
   public Page<FlatAdminSettlementsDTO> findAdminSettlementsByUserId(
       Long adminUserId, Pageable pageable) {
     QSettlement qSettlement = QSettlement.settlement;

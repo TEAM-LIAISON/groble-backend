@@ -6,9 +6,11 @@ import org.mapstruct.Mapping;
 import liaison.groble.api.model.admin.settlement.request.SettlementApprovalRequest;
 import liaison.groble.api.model.admin.settlement.response.AdminSettlementDetailResponse;
 import liaison.groble.api.model.admin.settlement.response.AdminSettlementsOverviewResponse;
+import liaison.groble.api.model.admin.settlement.response.PerTransactionAdminSettlementOverviewResponse;
 import liaison.groble.api.model.admin.settlement.response.SettlementApprovalResponse;
 import liaison.groble.application.admin.settlement.dto.AdminSettlementDetailDTO;
 import liaison.groble.application.admin.settlement.dto.AdminSettlementOverviewDTO;
+import liaison.groble.application.admin.settlement.dto.PerTransactionAdminSettlementOverviewDTO;
 import liaison.groble.application.admin.settlement.dto.SettlementApprovalDTO;
 import liaison.groble.application.admin.settlement.dto.SettlementApprovalRequestDTO;
 import liaison.groble.common.response.PageResponse;
@@ -32,11 +34,20 @@ public interface AdminSettlementMapper extends PageResponseMapper {
     return toPageResponse(dtoPage, this::toAdminSettlementsOverviewResponse);
   }
 
+  default PageResponse<PerTransactionAdminSettlementOverviewResponse>
+      toPerTransactionAdminSettlementOverviewResponsePage(
+          PageResponse<PerTransactionAdminSettlementOverviewDTO> dtoPage) {
+    return toPageResponse(dtoPage, this::toPerTransactionAdminSettlementOverviewResponse);
+  }
+
   AdminSettlementsOverviewResponse toAdminSettlementsOverviewResponse(
       AdminSettlementOverviewDTO adminSettlementOverviewDTO);
 
   AdminSettlementDetailResponse toAdminSettlementDetailResponse(
       AdminSettlementDetailDTO adminSettlementDetailDTO);
+
+  PerTransactionAdminSettlementOverviewResponse toPerTransactionAdminSettlementOverviewResponse(
+      PerTransactionAdminSettlementOverviewDTO perTransactionAdminSettlementOverviewDTO);
 
   /** PaypleSettlementResultDTO 매핑 */
   SettlementApprovalResponse.PaypleSettlementResult toPaypleResult(

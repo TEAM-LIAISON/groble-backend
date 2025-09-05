@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import liaison.groble.api.model.admin.settlement.request.SettlementApprovalRequest;
 import liaison.groble.api.model.admin.settlement.response.AdminSettlementDetailResponse;
 import liaison.groble.api.model.admin.settlement.response.AdminSettlementsOverviewResponse;
+import liaison.groble.api.model.admin.settlement.response.PerTransactionAdminSettlementOverviewResponse;
 import liaison.groble.api.model.admin.settlement.response.SettlementApprovalResponse;
 import liaison.groble.api.server.admin.docs.AdminSettlementExampleResponses;
 import liaison.groble.api.server.admin.docs.AdminSettlementSwaggerDocs;
@@ -24,6 +25,7 @@ import liaison.groble.api.server.common.BaseController;
 import liaison.groble.api.server.common.ResponseMessages;
 import liaison.groble.application.admin.settlement.dto.AdminSettlementDetailDTO;
 import liaison.groble.application.admin.settlement.dto.AdminSettlementOverviewDTO;
+import liaison.groble.application.admin.settlement.dto.PerTransactionAdminSettlementOverviewDTO;
 import liaison.groble.application.admin.settlement.dto.SettlementApprovalDTO;
 import liaison.groble.application.admin.settlement.dto.SettlementApprovalDTO.PaypleSettlementResultDTO;
 import liaison.groble.application.admin.settlement.dto.SettlementApprovalRequestDTO;
@@ -129,6 +131,40 @@ public class AdminSettlementController extends BaseController {
         adminSettlementMapper.toAdminSettlementDetailResponse(adminSettlementDetailDTO);
 
     return success(response, ResponseMessages.Admin.SETTLEMENT_DETAIL_RETRIEVED);
+  }
+
+  @Operation(
+      summary = AdminSettlementSwaggerDocs.SETTLEMENT_DETAIL_SALES_SUMMARY,
+      description = AdminSettlementSwaggerDocs.SETTLEMENT_DETAIL_SALES_DESCRIPTION)
+  @AdminSettlementExampleResponses.AdminSettlementSalesListSuccess
+  @RequireRole("ROLE_ADMIN")
+  @Logging(
+      item = "AdminSettlement",
+      action = "getSalesList",
+      includeParam = true,
+      includeResult = true)
+  @GetMapping(ApiPaths.Admin.SALES_LIST)
+  public ResponseEntity<GrobleResponse<PageResponse<PerTransactionAdminSettlementOverviewResponse>>>
+      getSalesList(
+          @Auth Accessor accessor,
+          @Parameter(
+                  name = "settlementId",
+                  description = "숫자 형식",
+                  example = "265",
+                  schema = @Schema(type = "number"))
+              @PathVariable("settlementId")
+              Long settlementId,
+          @RequestParam(value = "page", defaultValue = "0") int page,
+          @RequestParam(value = "size", defaultValue = "20") int size,
+          @RequestParam(value = "sort", defaultValue = "createdAt") String sort) {
+    Pageable pageable = PageUtils.createPageable(page, size, sort);
+    PageResponse<PerTransactionAdminSettlementOverviewDTO> dtoPage =
+        adminSettlementService.getSalesList(settlementId, pageable);
+
+    PageResponse<PerTransactionAdminSettlementOverviewResponse> responsePage =
+        adminSettlementMapper.toPerTransactionAdminSettlementOverviewResponsePage(dtoPage);
+
+    return success(responsePage, ResponseMessages.Admin.SALES_LIST_RETRIEVED);
   }
 
   /**

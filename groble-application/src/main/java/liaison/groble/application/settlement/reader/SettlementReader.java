@@ -103,6 +103,11 @@ public class SettlementReader {
         userId, settlementId, pageable);
   }
 
+  public Page<FlatPerTransactionSettlement> findSalesListBySettlementId(
+      Long settlementId, Pageable pageable) {
+    return settlementCustomRepository.findSalesListBySettlementId(settlementId, pageable);
+  }
+
   public List<Settlement> findAllByUserId(Long userId) {
     return settlementRepository.findAllByUserId(userId);
   }

@@ -123,4 +123,6 @@ public final class AdminSettlementExampleResponses {
                         value = CommonSwaggerDocs.SERVER_ERROR_EXAMPLE)))
   })
   public @interface AdminSettlementDetailSuccess {}
+
+  public @interface AdminSettlementSalesListSuccess {}
 }
