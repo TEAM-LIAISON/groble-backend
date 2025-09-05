@@ -11,5 +11,6 @@ import lombok.Getter;
 public class PerTransactionSettlementOverviewDTO {
   private String contentTitle;
   private BigDecimal settlementAmount;
+  private String orderStatus;
   private LocalDateTime purchasedAt;
 }

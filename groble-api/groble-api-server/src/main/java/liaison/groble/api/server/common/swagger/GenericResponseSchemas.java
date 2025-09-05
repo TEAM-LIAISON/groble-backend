@@ -1,11 +1,15 @@
 package liaison.groble.api.server.common.swagger;
 
+import liaison.groble.api.model.guest.response.GuestAuthCodeResponse;
+import liaison.groble.api.model.guest.response.UpdateGuestUserInfoResponse;
+import liaison.groble.api.model.guest.response.VerifyAuthCodeResponse;
 import liaison.groble.api.model.payment.response.AppCardPayplePaymentResponse;
 import liaison.groble.api.model.purchase.response.PurchaserContentReviewResponse;
 import liaison.groble.api.model.sell.response.ContentReviewDetailResponse;
 import liaison.groble.api.model.sell.response.ContentSellDetailResponse;
 import liaison.groble.api.model.sell.response.ReplyContentResponse;
 import liaison.groble.api.model.sell.response.SellManagePageResponse;
+import liaison.groble.api.server.common.ResponseMessages;
 import liaison.groble.application.payment.dto.cancel.PaymentCancelResponse;
 import liaison.groble.common.response.PageResponse;
 
@@ -255,6 +259,67 @@ public final class GenericResponseSchemas {
 
     @Schema(description = "리뷰 답글 데이터")
     public ReplyContentResponse data;
+
+    @Schema(description = "응답 시간", example = "2025-08-31T07:06:06.312Z")
+    public String timestamp;
+  }
+
+  @Schema(description = CommonSwaggerDocs.GROBLE_RESPONSE_DESC + " - 비회원 인증 요청 응답")
+  public static class ApiGuestAuthResponse {
+
+    @Schema(description = "응답 상태", example = CommonSwaggerDocs.STATUS_SUCCESS)
+    public String status;
+
+    @Schema(description = "HTTP 상태 코드", example = "200")
+    public int code;
+
+    @Schema(
+        description = "응답 메시지",
+        example = ResponseMessages.Guest.GUEST_AUTH_PHONE_REQUEST_SUCCESS)
+    public String message;
+
+    @Schema(description = "비회원 인증 코드 발송 요청 응답")
+    public GuestAuthCodeResponse data;
+
+    @Schema(description = "응답 시간", example = "2025-08-31T07:06:06.312Z")
+    public String timestamp;
+  }
+
+  @Schema(description = CommonSwaggerDocs.GROBLE_RESPONSE_DESC + " - 비회원 인증 요청 응답")
+  public static class ApiVerifyGuestAuthResponse {
+
+    @Schema(description = "응답 상태", example = CommonSwaggerDocs.STATUS_SUCCESS)
+    public String status;
+
+    @Schema(description = "HTTP 상태 코드", example = "200")
+    public int code;
+
+    @Schema(
+        description = "응답 메시지",
+        example = ResponseMessages.Guest.VERIFY_GUEST_AUTH_PHONE_SUCCESS)
+    public String message;
+
+    @Schema(description = "비회원 인증 코드 검증 결과 응답")
+    public VerifyAuthCodeResponse data;
+
+    @Schema(description = "응답 시간", example = "2025-08-31T07:06:06.312Z")
+    public String timestamp;
+  }
+
+  @Schema(description = CommonSwaggerDocs.GROBLE_RESPONSE_DESC + " - 비회원 사용자 정보 업데이트 응답")
+  public static class ApiUpdateGuestUserInfoResponse {
+
+    @Schema(description = "응답 상태", example = CommonSwaggerDocs.STATUS_SUCCESS)
+    public String status;
+
+    @Schema(description = "HTTP 상태 코드", example = "200")
+    public int code;
+
+    @Schema(description = "응답 메시지", example = ResponseMessages.Guest.UPDATE_GUEST_USER_INFO_SUCCESS)
+    public String message;
+
+    @Schema(description = "비회원 사용자 정보 업데이트 및 정식 토큰 발급 응답")
+    public UpdateGuestUserInfoResponse data;
 
     @Schema(description = "응답 시간", example = "2025-08-31T07:06:06.312Z")
     public String timestamp;

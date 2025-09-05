@@ -1,5 +1,6 @@
 package liaison.groble.persistence.settlement;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Repository;
@@ -27,5 +28,10 @@ public class SettlementItemRepositoryImpl implements SettlementItemRepository {
   @Override
   public SettlementItem save(SettlementItem item) {
     return jpaSettlementItemRepository.save(item);
+  }
+
+  @Override
+  public List<SettlementItem> findByIdIn(List<Long> settlementItemIds) {
+    return jpaSettlementItemRepository.findByIdIn(settlementItemIds);
   }
 }

@@ -11,4 +11,5 @@ public class GuestTokenDTO {
   private String username;
   private String guestToken;
   private boolean authenticated;
+  private boolean hasCompleteUserInfo;
 }

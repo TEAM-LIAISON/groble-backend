@@ -2,6 +2,8 @@ package liaison.groble.common.port.security;
 
 import java.time.LocalDateTime;
 
+import liaison.groble.common.enums.GuestTokenScope;
+
 public interface SecurityPort {
   String encodePassword(String password);
 
@@ -10,6 +12,10 @@ public interface SecurityPort {
   String createRefreshToken(Long userId, String email);
 
   String createGuestToken(Long guestUserId);
+
+  String createGuestTokenWithScope(Long guestUserId, GuestTokenScope scope);
+
+  GuestTokenScope getGuestTokenScope(String guestToken);
 
   long getAccessTokenExpirationTime();
 

@@ -414,24 +414,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
   /** 게스트 토큰으로 인증 처리 ✅ */
   private void authenticateGuest(String guestToken, HttpServletRequest request) {
     try {
-      // 게스트 토큰에서 Principal 추출
-      GuestPrincipal guestPrincipal = jwtTokenProvider.getGuestPrincipalFromToken(guestToken);
+      // 게스트 토큰에서 ID 추출
+      Long guestUserId = jwtTokenProvider.getGuestIdFromToken(guestToken);
 
       // 게스트 사용자 정보 로드
-      UserDetails guestDetails =
-          guestUserDetailsService.loadUserByGuestId(guestPrincipal.getGuestUserId());
+      UserDetails guestDetails = guestUserDetailsService.loadUserByGuestId(guestUserId);
 
-      // 인증 객체 생성
+      // 인증 객체 생성 - principal name을 "guest_ID" 형태로 설정
       UsernamePasswordAuthenticationToken authentication =
           new UsernamePasswordAuthenticationToken(
-              guestDetails, null, guestDetails.getAuthorities());
+              "guest_" + guestUserId, null, guestDetails.getAuthorities());
 
       authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
       // SecurityContext에 설정
       SecurityContextHolder.getContext().setAuthentication(authentication);
 
-      log.debug("게스트 인증 완료 - guestId: {}", guestPrincipal.getGuestUserId());
+      log.debug("게스트 인증 완료 - guestId: {}", guestUserId);
 
     } catch (Exception e) {
       log.error("게스트 인증 처리 중 오류 발생", e);

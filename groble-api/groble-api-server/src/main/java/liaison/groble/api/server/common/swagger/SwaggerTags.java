@@ -4,6 +4,13 @@ public final class SwaggerTags {
 
   private SwaggerTags() {}
 
+  public static final class Guest {
+    public static final String AUTH = "[👀 비회원] 비회원 인증/인가 기능";
+    public static final String AUTH_DESC = "비회원 토큰 발급, 비회원 전화번호 인증/검증";
+
+    private Guest() {}
+  }
+
   public static final class Purchase {
     public static final String REVIEW = "[🧾 통합 리뷰 관리] 회원/비회원 구매자 리뷰 작성, 수정, 삭제 API";
     public static final String REVIEW_DESC = "회원/비회원 구매자 리뷰 작성, 수정, 삭제 기능을 제공합니다.";
@@ -72,5 +79,12 @@ public final class SwaggerTags {
     public static final String GLOBAL_DESC = "SEO 동적 데이터 및 전역 설정 정보를 제공합니다.";
 
     private Common() {}
+  }
+
+  public static final class Order {
+    public static final String ORDER = "[🔄 통합 주문] 회원/비회원 통합 주문 발행, 회원/비회원 주문 결과 조회 API";
+    public static final String ORDER_DESC = "회원/비회원 통합 주문 발행, 회원/비회원 주문 결과 조회 기능을 제공합니다.";
+
+    private Order() {}
   }
 }

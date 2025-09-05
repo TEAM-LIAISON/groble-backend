@@ -15,6 +15,8 @@ import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
+import liaison.groble.domain.order.entity.QOrder;
+import liaison.groble.domain.purchase.entity.QPurchase;
 import liaison.groble.domain.settlement.dto.FlatPerTransactionSettlement;
 import liaison.groble.domain.settlement.dto.FlatSettlementsDTO;
 import liaison.groble.domain.settlement.entity.QSettlement;
@@ -91,17 +93,12 @@ public class SettlementCustomRepositoryImpl implements SettlementCustomRepositor
 
     QSettlementItem qSettlementItem = QSettlementItem.settlementItem;
     QSettlement qSettlement = QSettlement.settlement;
-    QUser qUser = QUser.user;
+    QPurchase qPurchase = QPurchase.purchase; // 선택: 모델에 맞게 사용
+    QOrder qOrder = QOrder.order; // 선택: 모델에 맞게 사용
 
     // [기간] purchasedAt ∈ [periodStart 00:00, periodEnd+1 00:00)
     BooleanExpression cond =
-        qSettlementItem
-            .settlement
-            .user
-            .id
-            .eq(userId)
-            .and(qSettlement.id.eq(settlementId))
-            .and(qSettlementItem.isRefunded.isFalse());
+        qSettlementItem.settlement.user.id.eq(userId).and(qSettlement.id.eq(settlementId));
 
     // 메인 조회
     JPAQuery<FlatPerTransactionSettlement> query =
@@ -111,10 +108,12 @@ public class SettlementCustomRepositoryImpl implements SettlementCustomRepositor
                     FlatPerTransactionSettlement.class,
                     qSettlementItem.contentTitle.as("contentTitle"),
                     qSettlementItem.settlementAmount.as("settlementAmount"),
+                    qSettlementItem.purchase.order.status.stringValue().as("orderStatus"),
                     qSettlementItem.purchasedAt.as("purchasedAt")))
             .from(qSettlementItem)
             .leftJoin(qSettlementItem.settlement, qSettlement)
-            .leftJoin(qSettlement.user, qUser)
+            .leftJoin(qSettlementItem.purchase, qPurchase)
+            .leftJoin(qPurchase.order, qOrder)
             .where(cond)
             .orderBy(qSettlementItem.purchasedAt.desc());
 
@@ -128,7 +127,9 @@ public class SettlementCustomRepositoryImpl implements SettlementCustomRepositor
                 jpaQueryFactory
                     .select(qSettlementItem.count())
                     .from(qSettlementItem)
-                    .join(qSettlementItem.settlement, qSettlement)
+                    .leftJoin(qSettlementItem.settlement, qSettlement)
+                    .leftJoin(qSettlementItem.purchase, qPurchase)
+                    .leftJoin(qPurchase.order, qOrder)
                     .where(cond)
                     .fetchOne())
             .orElse(0L);

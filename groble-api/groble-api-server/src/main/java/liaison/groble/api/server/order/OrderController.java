@@ -1,7 +1,5 @@
 package liaison.groble.api.server.order;
 
-import java.util.List;
-
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
@@ -17,199 +15,103 @@ import org.springframework.web.bind.annotation.RestController;
 import liaison.groble.api.model.order.request.CreateOrderRequest;
 import liaison.groble.api.model.order.response.CreateOrderResponse;
 import liaison.groble.api.model.order.response.OrderSuccessResponse;
+import liaison.groble.api.server.common.ApiPaths;
+import liaison.groble.api.server.common.BaseController;
+import liaison.groble.api.server.common.ResponseMessages;
+import liaison.groble.api.server.order.docs.OrderSwaggerDocs;
 import liaison.groble.application.order.dto.CreateOrderRequestDTO;
 import liaison.groble.application.order.dto.CreateOrderSuccessDTO;
 import liaison.groble.application.order.dto.OrderSuccessDTO;
-import liaison.groble.application.order.exception.OrderAuthenticationRequiredException;
-import liaison.groble.application.order.service.OrderService;
-import liaison.groble.application.terms.dto.TermsAgreementDTO;
-import liaison.groble.application.terms.service.OrderTermsService;
+import liaison.groble.application.order.strategy.OrderProcessorFactory;
+import liaison.groble.application.order.strategy.OrderProcessorStrategy;
 import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.annotation.Logging;
+import liaison.groble.common.context.UserContext;
+import liaison.groble.common.factory.UserContextFactory;
 import liaison.groble.common.model.Accessor;
 import liaison.groble.common.response.GrobleResponse;
 import liaison.groble.common.response.ResponseHelper;
 import liaison.groble.mapping.order.OrderMapper;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestController
-@RequiredArgsConstructor
-@RequestMapping("/api/v1/orders")
-@Tag(
-    name = "[🔄 통합 주문] 회원/비회원 통합 주문 발행, 회원/비회원 주문 결과 조회 API",
-    description = "토큰 종류에 따라 회원/비회원을 자동 판단하여 주문을 처리합니다.")
-public class OrderController {
+@RequestMapping(ApiPaths.Order.BASE)
+@Tag(name = OrderSwaggerDocs.TAG_NAME, description = OrderSwaggerDocs.TAG_DESCRIPTION)
+public class OrderController extends BaseController {
 
-  // API 경로 상수화
-  private static final String ORDER_SUCCESS_PATH = "/success/{merchantUid}";
-
-  // 응답 메시지 상수화
-  private static final String CREATE_ORDER_SUCCESS_MESSAGE = "주문 생성에 성공했습니다.";
-  private static final String ORDER_SUCCESS_RESPONSE_MESSAGE = "주문 성공 페이지 정보 조회에 성공했습니다.";
-
-  // Service
-  private final OrderService orderService;
-  private final OrderTermsService orderTermsService;
+  // Factory
+  private final OrderProcessorFactory processorFactory;
 
   // Mapper
   private final OrderMapper orderMapper;
 
-  // Helper
-  private final ResponseHelper responseHelper;
+  public OrderController(
+      ResponseHelper responseHelper,
+      OrderProcessorFactory processorFactory,
+      OrderMapper orderMapper) {
+    super(responseHelper);
+    this.processorFactory = processorFactory;
+    this.orderMapper = orderMapper;
+  }
 
   @Operation(
-      summary = "[✅ 통합 주문 발행] 회원/비회원 자동 판단 주문 발행",
-      description =
-          "토큰 종류에 따라 회원(accessToken)과 비회원(guestToken)을 자동 판단하여 주문을 발행합니다. "
-              + "회원은 쿠폰 사용이 가능하며, 비회원은 전화번호 인증 후 이용 가능합니다.")
-  @ApiResponse(
-      responseCode = "201",
-      description = "CREATE_ORDER_SUCCESS_MESSAGE",
-      content =
-          @Content(
-              mediaType = "application/json",
-              schema = @Schema(implementation = CreateOrderResponse.class)))
-  @PostMapping("/create")
+      summary = OrderSwaggerDocs.CREATE_ORDER_SUMMARY,
+      description = OrderSwaggerDocs.CREATE_ORDER_DESCRIPTION)
+  @PostMapping(ApiPaths.Order.CREATE_ORDER)
   @Logging(item = "Order", action = "createOrder", includeParam = true, includeResult = true)
   public ResponseEntity<GrobleResponse<CreateOrderResponse>> createOrder(
       @Auth(required = false) Accessor accessor,
       @Valid @RequestBody CreateOrderRequest request,
       HttpServletRequest httpRequest) {
+
     CreateOrderRequestDTO createOrderRequestDTO = orderMapper.toCreateOrderDTO(request);
-    CreateOrderSuccessDTO createOrderSuccessDTO;
-    String userTypeInfo;
-    // 토큰 종류에 따른 분기 처리
-    if (accessor.isAuthenticated() && !accessor.isGuest()) {
-      // 회원 주문 처리 (accessToken)
-      log.info(
-          "회원 주문 처리 시작 - userId: {}, userType: {}", accessor.getUserId(), accessor.getUserType());
-      createOrderSuccessDTO =
-          orderService.createOrderForUser(createOrderRequestDTO, accessor.getUserId());
-      processOrderTermsAgreement(accessor.getUserId(), httpRequest);
-      userTypeInfo = "회원";
+    UserContext userContext = UserContextFactory.from(accessor);
 
-    } else if (accessor.isGuest()) {
-      // 비회원 주문 처리 (guestToken)
-      log.info("비회원 주문 처리 시작 - guestUserId: {}", accessor.getId());
-      createOrderSuccessDTO =
-          orderService.createOrderForGuest(createOrderRequestDTO, accessor.getId());
-      processGuestOrderTermsAgreement(accessor.getId(), httpRequest);
-      userTypeInfo = "비회원";
+    // UserContext와 Strategy 패턴을 이용한 주문 처리
+    OrderProcessorStrategy processor = processorFactory.getProcessor(userContext);
+    CreateOrderSuccessDTO createOrderSuccessDTO =
+        processor.createOrder(userContext, createOrderRequestDTO, httpRequest);
 
-    } else {
-      // 인증되지 않은 사용자
-      throw OrderAuthenticationRequiredException.forOrderCreation();
-    }
+    String userTypeInfo = userContext.isMember() ? "회원" : "비회원";
+    log.info("{} 주문 처리 완료 - userId: {}", userTypeInfo, userContext.getId());
 
     CreateOrderResponse response = orderMapper.toCreateOrderResponse(createOrderSuccessDTO);
     log.info("{} 주문 생성 완료 - merchantUid: {}", userTypeInfo, createOrderSuccessDTO.getMerchantUid());
 
-    return responseHelper.success(
-        response, userTypeInfo + " " + CREATE_ORDER_SUCCESS_MESSAGE, HttpStatus.CREATED);
+    return success(response, ResponseMessages.Order.ORDER_CREATE_SUCCESS, HttpStatus.CREATED);
   }
 
   @Operation(
-      summary = "[✅ 통합 주문 조회] 회원/비회원 주문 성공 페이지 정보 조회",
-      description = "토큰 종류에 따라 회원/비회원을 자동 판단하여 주문 성공 정보를 조회합니다.")
-  @ApiResponse(
-      responseCode = "200",
-      description = ORDER_SUCCESS_RESPONSE_MESSAGE,
-      content =
-          @Content(
-              mediaType = "application/json",
-              schema = @Schema(implementation = OrderSuccessResponse.class)))
-  @GetMapping(ORDER_SUCCESS_PATH)
+      summary = OrderSwaggerDocs.GET_ORDER_SUMMARY,
+      description = OrderSwaggerDocs.GET_ORDER_DESCRIPTION)
   @Logging(
       item = "Order",
       action = "getSuccessOrderPage",
       includeParam = true,
       includeResult = true)
+  @GetMapping(ApiPaths.Order.GET_ORDER_SUCCESS)
   public ResponseEntity<GrobleResponse<OrderSuccessResponse>> getSuccessOrderPage(
       @Auth(required = false) Accessor accessor,
       @Valid @PathVariable("merchantUid") String merchantUid) {
 
-    OrderSuccessDTO orderSuccessDTO;
+    UserContext userContext = UserContextFactory.from(accessor);
 
-    if (accessor.isAuthenticated() && !accessor.isGuest()) {
-      // 회원 주문 조회
-      orderSuccessDTO = orderService.getOrderSuccess(merchantUid, accessor.getUserId());
-      log.info("회원 주문 성공 페이지 조회 - userId: {}, merchantUid: {}", accessor.getUserId(), merchantUid);
+    // UserContext와 Strategy 패턴을 이용한 주문 조회
+    OrderProcessorStrategy processor = processorFactory.getProcessor(userContext);
+    OrderSuccessDTO orderSuccessDTO = processor.getOrderSuccess(userContext, merchantUid);
 
-    } else if (accessor.isGuest()) {
-      // 비회원 주문 조회
-      orderSuccessDTO = orderService.getGuestOrderSuccess(merchantUid, accessor.getId());
-      log.info(
-          "비회원 주문 성공 페이지 조회 - guestUserId: {}, merchantUid: {}", accessor.getId(), merchantUid);
-
-    } else {
-      throw OrderAuthenticationRequiredException.forOrderInquiry();
-    }
+    String userTypeInfo = userContext.isMember() ? "회원" : "비회원";
+    log.info(
+        "{} 주문 성공 페이지 조회 - userId: {}, merchantUid: {}",
+        userTypeInfo,
+        userContext.getId(),
+        merchantUid);
 
     OrderSuccessResponse orderSuccessResponse = orderMapper.toOrderSuccessResponse(orderSuccessDTO);
-    return responseHelper.success(
-        orderSuccessResponse, ORDER_SUCCESS_RESPONSE_MESSAGE, HttpStatus.OK);
-  }
-
-  /**
-   * 회원 주문 약관 동의 처리
-   *
-   * @param userId 사용자 ID
-   * @param httpRequest HTTP 요청 (IP, User-Agent 추출용)
-   */
-  private void processOrderTermsAgreement(Long userId, HttpServletRequest httpRequest) {
-    try {
-      TermsAgreementDTO termsAgreementDTO = createTermsAgreementDTO();
-      termsAgreementDTO.setUserId(userId);
-      // IP 및 User-Agent 설정
-      termsAgreementDTO.setIpAddress(httpRequest.getRemoteAddr());
-      termsAgreementDTO.setUserAgent(httpRequest.getHeader("User-Agent"));
-
-      orderTermsService.agreeToOrderTerms(termsAgreementDTO);
-      log.info("회원 주문 약관 동의 처리 완료 - userId: {}", userId);
-
-    } catch (Exception e) {
-      log.error("회원 주문 약관 동의 처리 실패 - userId: {}", userId, e);
-      // 약관 동의 실패는 주문을 중단시키지 않음 (별도 처리 필요할 수 있음)
-    }
-  }
-
-  /**
-   * 비회원 주문 약관 동의 처리
-   *
-   * @param guestUserId 게스트 사용자 ID
-   * @param httpRequest HTTP 요청 (IP, User-Agent 추출용)
-   */
-  private void processGuestOrderTermsAgreement(Long guestUserId, HttpServletRequest httpRequest) {
-    try {
-      TermsAgreementDTO termsAgreementDTO = createTermsAgreementDTO();
-      // IP 및 User-Agent 설정
-      termsAgreementDTO.setIpAddress(httpRequest.getRemoteAddr());
-      termsAgreementDTO.setUserAgent(httpRequest.getHeader("User-Agent"));
-
-      orderTermsService.agreeToOrderTermsForGuest(termsAgreementDTO, guestUserId);
-      log.info("비회원 주문 약관 동의 처리 완료 - guestUserId: {}", guestUserId);
-
-    } catch (Exception e) {
-      log.error("비회원 주문 약관 동의 처리 실패 - guestUserId: {}", guestUserId, e);
-      // 약관 동의 실패는 주문을 중단시키지 않음 (별도 처리 필요할 수 있음)
-    }
-  }
-
-  /** 공통 약관 동의 DTO 생성 */
-  private TermsAgreementDTO createTermsAgreementDTO() {
-    List<String> termTypeStrs =
-        List.of("ELECTRONIC_FINANCIAL", "PURCHASE_POLICY", "PERSONAL_INFORMATION");
-
-    return TermsAgreementDTO.builder()
-        .termsTypeStrings(termTypeStrs) // 문자열 리스트로 전달
-        .build();
+    return success(orderSuccessResponse, ResponseMessages.Order.GET_ORDER_SUCCESS);
   }
 }

@@ -2,7 +2,6 @@ package liaison.groble.application.settlement.service;
 
 import java.math.BigDecimal;
 import java.time.YearMonth;
-import java.time.ZoneId;
 import java.util.List;
 import java.util.Objects;
 
@@ -39,8 +38,6 @@ public class SettlementService {
   private final UserReader userReader;
   private final SettlementReader settlementReader;
   private final TaxInvoiceReader taxInvoiceReader;
-
-  private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
   @Transactional
   public SettlementOverviewDTO getSettlementOverview(Long userId) {
@@ -178,6 +175,7 @@ public class SettlementService {
     return PerTransactionSettlementOverviewDTO.builder()
         .contentTitle(flat.getContentTitle())
         .settlementAmount(flat.getSettlementAmount())
+        .orderStatus(flat.getOrderStatus())
         .purchasedAt(flat.getPurchasedAt())
         .build();
   }

@@ -234,6 +234,12 @@ public class TokenCookieService {
     log.info("[User] 토큰 쿠키 완전 제거 완료");
   }
 
+  /** 게스트 토큰 쿠키에서 토큰 값 추출 */
+  public String getGuestTokenFromCookie(HttpServletRequest request) {
+    if (request == null) return null;
+    return CookieUtils.getCookieValue(request, GUEST_TOKEN_COOKIE_NAME);
+  }
+
   // --- 공통 헬퍼: 현재 요청 가져오기 ---
   private HttpServletRequest resolveRequest(HttpServletRequest request) {
     if (request != null) return request;

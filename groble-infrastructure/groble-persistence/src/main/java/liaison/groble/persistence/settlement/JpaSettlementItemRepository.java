@@ -1,5 +1,6 @@
 package liaison.groble.persistence.settlement;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -10,4 +11,6 @@ public interface JpaSettlementItemRepository extends JpaRepository<SettlementIte
   boolean existsByPurchaseId(Long purchaseId);
 
   Optional<SettlementItem> findByPurchaseId(Long purchaseId);
+
+  List<SettlementItem> findByIdIn(List<Long> settlementItemIds);
 }

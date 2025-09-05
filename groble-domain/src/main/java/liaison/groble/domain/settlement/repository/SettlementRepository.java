@@ -18,4 +18,12 @@ public interface SettlementRepository {
   List<Settlement> findAllByUserId(Long userId);
 
   Settlement save(Settlement settlement);
+
+  /**
+   * ID 목록으로 정산들 조회 (관리자용)
+   *
+   * @param settlementIds 정산 ID 목록
+   * @return 조회된 정산 목록
+   */
+  List<Settlement> findByIdIn(List<Long> settlementIds);
 }

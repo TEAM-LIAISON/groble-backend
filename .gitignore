@@ -39,6 +39,9 @@ out/
 ### DS_Store ###
 .DS_Store
 
+### MapStruct Generated Files ###
+**/src/main/generated/**/mapping/**
+
 ### .yml ###
 application-secret.yml
 application-secret-dev.yml

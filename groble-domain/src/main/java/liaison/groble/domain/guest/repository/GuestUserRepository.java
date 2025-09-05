@@ -13,5 +13,7 @@ public interface GuestUserRepository {
 
   boolean existsById(Long guestUserId);
 
+  boolean existsByPhoneNumberAndHasCompleteUserInfo(String phoneNumber);
+
   GuestUser save(GuestUser guestUser);
 }

@@ -33,4 +33,6 @@ public interface JpaSettlementRepository extends JpaRepository<Settlement, Long>
   BigDecimal calculatePendingSettlementAmount(@Param("sellerId") Long sellerId);
 
   List<Settlement> findAllByUserId(Long userId);
+
+  List<Settlement> findByIdIn(List<Long> settlementIds);
 }
