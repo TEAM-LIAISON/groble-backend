@@ -16,6 +16,7 @@ import liaison.groble.application.admin.dashboard.dto.AdminDashboardOverviewDTO;
 import liaison.groble.application.admin.dashboard.service.AdminDashboardService;
 import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.annotation.Logging;
+import liaison.groble.common.annotation.RequireRole;
 import liaison.groble.common.model.Accessor;
 import liaison.groble.common.response.GrobleResponse;
 import liaison.groble.common.response.ResponseHelper;
@@ -57,6 +58,7 @@ public class AdminDashboardController extends BaseController {
       action = "getAdminDashboardOverview",
       includeParam = true,
       includeResult = true)
+  @RequireRole("ROLE_ADMIN")
   @GetMapping(ApiPaths.Admin.DASHBOARD_OVERVIEW)
   public ResponseEntity<GrobleResponse<AdminDashboardOverviewResponse>> getAdminDashboardOverview(
       @Auth Accessor accessor) {

@@ -54,9 +54,9 @@ public class AdminDashboardService {
     long totalContentCount = contentRepository.countByStatusIn(allStatuses);
     long activeContentCount = contentRepository.countByStatusIn(activeStatuses);
     long documentTypeCount =
-        contentRepository.countByContentTypeAndStatusIn("DOCUMENT", activeStatuses);
+        contentRepository.countByContentTypeAndStatusIn("DOCUMENT", allStatuses);
     long coachingTypeCount =
-        contentRepository.countByContentTypeAndStatusIn("COACHING", activeStatuses);
+        contentRepository.countByContentTypeAndStatusIn("COACHING", allStatuses);
     long membershipTypeCount = 0L;
     //        contentRepository.countByContentTypeAndStatusIn("MEMBERSHIP", activeStatuses);
 
