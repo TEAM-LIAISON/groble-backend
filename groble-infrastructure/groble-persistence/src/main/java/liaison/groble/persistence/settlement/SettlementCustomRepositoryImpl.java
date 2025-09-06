@@ -17,12 +17,14 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 
 import liaison.groble.domain.order.entity.QOrder;
 import liaison.groble.domain.purchase.entity.QPurchase;
+import liaison.groble.domain.settlement.dto.FlatAdminSettlementsDTO;
 import liaison.groble.domain.settlement.dto.FlatPerTransactionSettlement;
 import liaison.groble.domain.settlement.dto.FlatSettlementsDTO;
 import liaison.groble.domain.settlement.entity.QSettlement;
 import liaison.groble.domain.settlement.entity.QSettlementItem;
 import liaison.groble.domain.settlement.enums.SettlementType;
 import liaison.groble.domain.settlement.repository.SettlementCustomRepository;
+import liaison.groble.domain.user.entity.QSellerInfo;
 import liaison.groble.domain.user.entity.QUser;
 
 import lombok.RequiredArgsConstructor;
@@ -93,8 +95,8 @@ public class SettlementCustomRepositoryImpl implements SettlementCustomRepositor
 
     QSettlementItem qSettlementItem = QSettlementItem.settlementItem;
     QSettlement qSettlement = QSettlement.settlement;
-    QPurchase qPurchase = QPurchase.purchase; // 선택: 모델에 맞게 사용
-    QOrder qOrder = QOrder.order; // 선택: 모델에 맞게 사용
+    QPurchase qPurchase = QPurchase.purchase;
+    QOrder qOrder = QOrder.order;
 
     // [기간] purchasedAt ∈ [periodStart 00:00, periodEnd+1 00:00)
     BooleanExpression cond =
@@ -135,5 +137,117 @@ public class SettlementCustomRepositoryImpl implements SettlementCustomRepositor
             .orElse(0L);
 
     return new PageImpl<>(content, pageable, total);
+  }
+
+  @Override
+  public Page<FlatPerTransactionSettlement> findSalesListBySettlementId(
+      Long settlementId, Pageable pageable) {
+
+    QSettlementItem qSettlementItem = QSettlementItem.settlementItem;
+    QSettlement qSettlement = QSettlement.settlement;
+    QPurchase qPurchase = QPurchase.purchase;
+    QOrder qOrder = QOrder.order;
+
+    // [기간] purchasedAt ∈ [periodStart 00:00, periodEnd+1 00:00)
+    BooleanExpression cond = qSettlement.id.eq(settlementId);
+
+    // 메인 조회
+    JPAQuery<FlatPerTransactionSettlement> query =
+        jpaQueryFactory
+            .select(
+                Projections.fields(
+                    FlatPerTransactionSettlement.class,
+                    qSettlementItem.contentTitle.as("contentTitle"),
+                    qSettlementItem.settlementAmount.as("settlementAmount"),
+                    qSettlementItem.purchase.order.status.stringValue().as("orderStatus"),
+                    qSettlementItem.purchasedAt.as("purchasedAt")))
+            .from(qSettlementItem)
+            .leftJoin(qSettlementItem.settlement, qSettlement)
+            .leftJoin(qSettlementItem.purchase, qPurchase)
+            .leftJoin(qPurchase.order, qOrder)
+            .where(cond)
+            .orderBy(qSettlementItem.purchasedAt.desc());
+
+    // 페이징
+    List<FlatPerTransactionSettlement> content =
+        query.offset(pageable.getOffset()).limit(pageable.getPageSize()).fetch();
+
+    // 카운트
+    Long total =
+        Optional.ofNullable(
+                jpaQueryFactory
+                    .select(qSettlementItem.count())
+                    .from(qSettlementItem)
+                    .leftJoin(qSettlementItem.settlement, qSettlement)
+                    .leftJoin(qSettlementItem.purchase, qPurchase)
+                    .leftJoin(qPurchase.order, qOrder)
+                    .where(cond)
+                    .fetchOne())
+            .orElse(0L);
+
+    return new PageImpl<>(content, pageable, total);
+  }
+
+  @Override
+  public Page<FlatAdminSettlementsDTO> findAdminSettlementsByUserId(
+      Long adminUserId, Pageable pageable) {
+    QSettlement qSettlement = QSettlement.settlement;
+    QUser qUser = QUser.user;
+    QSellerInfo qSellerInfo = QSellerInfo.sellerInfo;
+
+    // settlementType에 따른 정렬 우선순위 설정 (COACHING = 0, DOCUMENT = 1)
+    NumberExpression<Integer> typeOrder =
+        new CaseBuilder()
+            .when(qSettlement.settlementType.eq(SettlementType.COACHING))
+            .then(0)
+            .when(qSettlement.settlementType.eq(SettlementType.DOCUMENT))
+            .then(1)
+            .otherwise(2);
+
+    JPAQuery<FlatAdminSettlementsDTO> query =
+        jpaQueryFactory
+            .select(
+                Projections.fields(
+                    FlatAdminSettlementsDTO.class,
+                    qSettlement.id.as("settlementId"),
+                    qSettlement.scheduledSettlementDate.as("scheduledSettlementDate"),
+                    qSettlement.settlementType.stringValue().as("contentType"),
+                    qSettlement.settlementAmount.as("settlementAmount"),
+                    qSettlement.status.stringValue().as("settlementStatus"),
+                    // SellerInfo 필드들
+                    qSellerInfo.verificationStatus.stringValue().as("verificationStatus"),
+                    qSellerInfo.isBusinessSeller.as("isBusinessSeller"),
+                    qSellerInfo.businessType.stringValue().as("businessType"),
+                    qSellerInfo.bankAccountOwner.as("bankAccountOwner"),
+                    qSellerInfo.bankName.as("bankName"),
+                    qSellerInfo.bankAccountNumber.as("bankAccountNumber"),
+                    qSellerInfo.copyOfBankbookUrl.as("copyOfBankbookUrl"),
+                    qSellerInfo.businessLicenseFileUrl.as("businessLicenseFileUrl"),
+                    qSellerInfo.taxInvoiceEmail.as("taxInvoiceEmail")))
+            .from(qSettlement)
+            .leftJoin(qSettlement.user, qUser)
+            .leftJoin(qSellerInfo)
+            .on(qSellerInfo.user.eq(qUser))
+            .orderBy(
+                qSettlement.scheduledSettlementDate.desc(), // 정산 예정일 기준 정렬
+                typeOrder.asc(), // COACHING이 먼저 (0 < 1)
+                qSettlement.id.desc() // tie-breaker
+                );
+
+    List<FlatAdminSettlementsDTO> items =
+        query.offset(pageable.getOffset()).limit(pageable.getPageSize()).fetch();
+
+    long total =
+        Optional.ofNullable(
+                jpaQueryFactory
+                    .select(qSettlement.count())
+                    .from(qSettlement)
+                    .leftJoin(qSettlement.user, qUser)
+                    .leftJoin(qSellerInfo)
+                    .on(qSellerInfo.user.eq(qUser))
+                    .fetchOne())
+            .orElse(0L);
+
+    return new PageImpl<>(items, pageable, total);
   }
 }

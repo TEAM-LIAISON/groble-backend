@@ -6,19 +6,29 @@ public final class ApiPaths {
 
   public static final String API_V1 = "/api/v1";
 
+  public static final class Admin {
+    public static final String BASE = API_V1 + "/admin";
+
+    public static final String DASHBOARD_BASE = BASE + "/dashboard";
+    public static final String DASHBOARD_OVERVIEW = "/overview";
+
+    public static final String SETTLEMENT_BASE = BASE + "/settlements";
+
+    public static final String APPROVE_SETTLEMENTS = "/approve";
+
+    public static final String ALL_USERS_SETTLEMENTS = "/all-users";
+    public static final String SETTLEMENT_DETAIL = "/{settlementId}";
+    public static final String SALES_LIST = "/sales/{settlementId}";
+
+    private Admin() {}
+  }
+
   public static final class Guest {
     public static final String BASE_AUTH = API_V1 + "/guest/auth";
 
     public static final String PHONE_CODE_REQUEST = "/code-request";
     public static final String PHONE_CODE_VERIFY = "/verify-request";
     public static final String UPDATE_GUEST_USER_INFO = "/update-info";
-  }
-
-  public static final class Admin {
-    public static final String BASE = API_V1 + "/admin";
-    public static final String SETTLEMENT_BASE = BASE + "/settlements";
-
-    private Admin() {}
   }
 
   public static final class Payment {

@@ -43,4 +43,6 @@ public interface PurchaseCustomRepository {
   boolean existsByGuestUserAndContent(Long guestUserId, Long contentId);
 
   FlatDashboardOverviewDTO getDashboardOverviewStats(Long sellerId);
+
+  FlatDashboardOverviewDTO getAdminDashboardOverviewStats();
 }

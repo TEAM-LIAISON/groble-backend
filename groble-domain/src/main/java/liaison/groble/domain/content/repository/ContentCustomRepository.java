@@ -61,4 +61,12 @@ public interface ContentCustomRepository {
   boolean existsSellingContentByUser(Long userId);
 
   boolean isAvailableForSale(Long contentId);
+
+  long countByStatus(ContentStatus status);
+
+  long countByStatusIn(List<ContentStatus> statuses);
+
+  long countByContentTypeAndStatus(String contentType, ContentStatus status);
+
+  long countByContentTypeAndStatusIn(String contentType, List<ContentStatus> statuses);
 }

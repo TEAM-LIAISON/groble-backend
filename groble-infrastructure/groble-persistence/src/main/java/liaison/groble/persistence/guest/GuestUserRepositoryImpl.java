@@ -40,6 +40,11 @@ public class GuestUserRepositoryImpl implements GuestUserRepository {
   }
 
   @Override
+  public long count() {
+    return jpaGuestUserRepository.count();
+  }
+
+  @Override
   public GuestUser save(GuestUser guestUser) {
     return jpaGuestUserRepository.save(guestUser);
   }
