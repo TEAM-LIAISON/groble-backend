@@ -41,17 +41,27 @@ public class MarketReferrerStatsCustomRepositoryImpl
     // 방문수 집계식
     NumberExpression<Long> visitCount = qEvent.id.count();
 
+    // 먼저 해당 마켓 ID를 찾기
+    Long marketId =
+        jpaQueryFactory
+            .select(qMarket.id)
+            .from(qMarket)
+            .where(qMarket.marketLinkUrl.eq(marketLinkUrl))
+            .fetchOne();
+
+    if (marketId == null) {
+      return new PageImpl<>(List.of(), pageable, 0L);
+    }
+
     // 전체 개수: 유니크한 referrerUrl 개수
     Long total =
         jpaQueryFactory
             .select(qStats.id.countDistinct())
             .from(qStats)
-            .join(qMarket)
-            .on(qMarket.id.eq(qStats.marketId))
             .join(qEvent)
             .on(qEvent.referrerStatsId.eq(qStats.id))
             .where(
-                qMarket.marketLinkUrl.eq(marketLinkUrl),
+                qStats.marketId.eq(marketId),
                 qEvent.eventDate.goe(startDateTime),
                 qEvent.eventDate.lt(endExclusive))
             .fetchOne();
@@ -62,12 +72,10 @@ public class MarketReferrerStatsCustomRepositoryImpl
             .select(
                 Projections.constructor(FlatReferrerStatsDTO.class, qStats.referrerUrl, visitCount))
             .from(qStats)
-            .join(qMarket)
-            .on(qMarket.id.eq(qStats.marketId))
             .join(qEvent)
             .on(qEvent.referrerStatsId.eq(qStats.id))
             .where(
-                qMarket.marketLinkUrl.eq(marketLinkUrl),
+                qStats.marketId.eq(marketId),
                 qEvent.eventDate.goe(startDateTime),
                 qEvent.eventDate.lt(endExclusive))
             .groupBy(qStats.id, qStats.referrerUrl)

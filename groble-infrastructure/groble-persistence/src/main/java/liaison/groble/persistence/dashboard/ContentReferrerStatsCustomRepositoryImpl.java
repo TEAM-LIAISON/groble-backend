@@ -40,6 +40,11 @@ public class ContentReferrerStatsCustomRepositoryImpl
     // 방문수 집계식
     NumberExpression<Long> visitCount = qEvent.id.count();
 
+    // contentId가 null인 경우 빈 결과 반환
+    if (contentId == null) {
+      return new PageImpl<>(List.of(), pageable, 0L);
+    }
+
     // 전체 개수: 유니크한 referrerUrl 개수
     Long total =
         jpaQueryFactory
@@ -65,7 +70,7 @@ public class ContentReferrerStatsCustomRepositoryImpl
                 qStats.contentId.eq(contentId),
                 qEvent.eventDate.goe(startDateTime),
                 qEvent.eventDate.lt(endExclusive))
-            .groupBy(qStats.id, qStats.referrerUrl) // referrerUrl만 필요하므로 간소화
+            .groupBy(qStats.id, qStats.referrerUrl)
             .orderBy(visitCount.desc())
             .offset(pageable.getOffset())
             .limit(pageable.getPageSize())
