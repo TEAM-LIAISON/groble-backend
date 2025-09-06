@@ -87,6 +87,10 @@ public class MarketReferrerStats {
   private Integer visitCount = 1;
 
   // 유틸리티 메서드
+  public void incrementVisitCount() {
+    this.visitCount++;
+  }
+
   public void parseReferrerUrl() {
     if (this.referrerUrl == null || this.referrerUrl.isEmpty()) {
       this.referrerDomain = "(direct)";

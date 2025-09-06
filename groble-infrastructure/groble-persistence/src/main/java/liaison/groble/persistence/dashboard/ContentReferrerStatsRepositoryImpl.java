@@ -1,5 +1,7 @@
 package liaison.groble.persistence.dashboard;
 
+import java.util.Optional;
+
 import org.springframework.stereotype.Repository;
 
 import liaison.groble.domain.dashboard.entity.ContentReferrerStats;
@@ -15,5 +17,14 @@ public class ContentReferrerStatsRepositoryImpl implements ContentReferrerStatsR
   @Override
   public ContentReferrerStats save(ContentReferrerStats contentReferrerStats) {
     return jpaContentReferrerStatsRepository.save(contentReferrerStats);
+  }
+
+  @Override
+  public Optional<ContentReferrerStats>
+      findByContentIdAndReferrerDomainAndSourceAndMediumAndCampaign(
+          Long contentId, String referrerDomain, String source, String medium, String campaign) {
+    return jpaContentReferrerStatsRepository
+        .findByContentIdAndReferrerDomainAndSourceAndMediumAndCampaign(
+            contentId, referrerDomain, source, medium, campaign);
   }
 }
