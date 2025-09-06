@@ -10,7 +10,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import com.querydsl.core.types.Projections;
-import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
 import liaison.groble.domain.dashboard.dto.FlatReferrerStatsDTO;
@@ -38,9 +37,6 @@ public class MarketReferrerStatsCustomRepositoryImpl
     LocalDateTime startDateTime = startDate.atStartOfDay();
     LocalDateTime endExclusive = endDate.plusDays(1).atStartOfDay();
 
-    // 방문수 집계식
-    NumberExpression<Long> visitCount = qEvent.id.count();
-
     // 먼저 해당 마켓 ID를 찾기
     Long marketId =
         jpaQueryFactory
@@ -53,33 +49,23 @@ public class MarketReferrerStatsCustomRepositoryImpl
       return new PageImpl<>(List.of(), pageable, 0L);
     }
 
-    // 전체 개수: 유니크한 referrerUrl 개수
+    // 전체 개수: 마켓의 전체 referrer stats 개수
     Long total =
         jpaQueryFactory
             .select(qStats.id.countDistinct())
             .from(qStats)
-            .join(qEvent)
-            .on(qEvent.referrerStatsId.eq(qStats.id))
-            .where(
-                qStats.marketId.eq(marketId),
-                qEvent.eventDate.goe(startDateTime),
-                qEvent.eventDate.lt(endExclusive))
+            .where(qStats.marketId.eq(marketId))
             .fetchOne();
 
-    // 데이터 조회
+    // 데이터 조회: visitCount 필드를 직접 사용 (이벤트 기반 집계 대신)
     List<FlatReferrerStatsDTO> content =
         jpaQueryFactory
             .select(
-                Projections.constructor(FlatReferrerStatsDTO.class, qStats.referrerUrl, visitCount))
+                Projections.constructor(
+                    FlatReferrerStatsDTO.class, qStats.referrerUrl, qStats.visitCount.longValue()))
             .from(qStats)
-            .join(qEvent)
-            .on(qEvent.referrerStatsId.eq(qStats.id))
-            .where(
-                qStats.marketId.eq(marketId),
-                qEvent.eventDate.goe(startDateTime),
-                qEvent.eventDate.lt(endExclusive))
-            .groupBy(qStats.id, qStats.referrerUrl)
-            .orderBy(visitCount.desc())
+            .where(qStats.marketId.eq(marketId))
+            .orderBy(qStats.visitCount.desc())
             .offset(pageable.getOffset())
             .limit(pageable.getPageSize())
             .fetch();

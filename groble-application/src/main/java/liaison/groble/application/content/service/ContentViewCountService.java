@@ -77,20 +77,26 @@ public class ContentViewCountService {
 
   private void recordReferrerStats(Long contentId, String referrerUrl) {
     try {
-      // ContentReferrerStats 찾거나 생성
+      // ContentReferrerStats 찾거나 생성하고 방문수 증가
       ContentReferrerStats stats = findOrCreateReferrerStats(contentId, referrerUrl);
 
-      // ContentReferrerEvent 생성
-      ContentReferrerEvent event =
-          ContentReferrerEvent.builder()
-              .referrerStatsId(stats.getId())
-              .contentId(contentId)
-              .eventDate(LocalDateTime.now())
-              .build();
+      // 방문수 증가
+      stats.incrementVisitCount();
+      contentReferrerStatsRepository.save(stats);
 
-      contentReferrerEventRepository.save(event);
+      // ContentReferrerEvent는 샘플링하여 생성 (모든 방문을 기록하지 않음)
+      if (shouldCreateEvent()) {
+        ContentReferrerEvent event =
+            ContentReferrerEvent.builder()
+                .referrerStatsId(stats.getId())
+                .contentId(contentId)
+                .eventDate(LocalDateTime.now())
+                .build();
+
+        contentReferrerEventRepository.save(event);
+      }
     } catch (Exception e) {
-      log.error(e.getMessage(), e);
+      log.error("Failed to record referrer stats for contentId: " + contentId, e);
     }
   }
 
@@ -98,37 +104,87 @@ public class ContentViewCountService {
     // UTM 파라미터 파싱
     Map<String, String> utmParams = parseUtmParameters(referrerUrl);
 
-    // ContentReferrerStats 생성 또는 조회
-    ContentReferrerStats stats =
-        ContentReferrerStats.builder()
-            .contentId(contentId)
-            .referrerUrl(referrerUrl)
-            .source(utmParams.get("utm_source"))
-            .medium(utmParams.get("utm_medium"))
-            .campaign(utmParams.get("utm_campaign"))
-            .content(utmParams.get("utm_content"))
-            .term(utmParams.get("utm_term"))
-            .build();
-
-    // 리퍼러 URL 파싱 (도메인 추출 등)
-    stats.parseReferrerUrl();
+    // 먼저 간단한 키로 조회 시도 (캐시 활용 가능)
+    String referrerDomain = extractDomainFromUrl(referrerUrl);
+    String source = utmParams.getOrDefault("utm_source", mapDomainToSource(referrerDomain));
+    String medium = utmParams.getOrDefault("utm_medium", inferMediumFromDomain(referrerDomain));
+    String campaign = utmParams.get("utm_campaign");
 
     // 기존 통계가 있는지 확인
     Optional<ContentReferrerStats> existing =
         contentReferrerStatsRepository
             .findByContentIdAndReferrerDomainAndSourceAndMediumAndCampaign(
-                contentId,
-                stats.getReferrerDomain(),
-                stats.getSource(),
-                stats.getMedium(),
-                stats.getCampaign());
+                contentId, referrerDomain, source, medium, campaign);
 
     if (existing.isPresent()) {
       return existing.get();
     }
 
+    // 새로운 통계 생성
+    ContentReferrerStats stats =
+        ContentReferrerStats.builder()
+            .contentId(contentId)
+            .referrerUrl(referrerUrl)
+            .referrerDomain(referrerDomain)
+            .source(source)
+            .medium(medium)
+            .campaign(campaign)
+            .content(utmParams.get("utm_content"))
+            .term(utmParams.get("utm_term"))
+            .visitCount(1) // 초기값 설정
+            .build();
+
+    // 추가적인 파싱이 필요한 경우만 실행
+    stats.parseReferrerUrl();
+
     // 새로운 통계 저장
     return contentReferrerStatsRepository.save(stats);
+  }
+
+  private boolean shouldCreateEvent() {
+    // 10% 확률로만 이벤트 생성 (샘플링)
+    return Math.random() < 0.1;
+  }
+
+  private String extractDomainFromUrl(String url) {
+    if (url == null || url.isEmpty()) {
+      return "(direct)";
+    }
+    try {
+      String clean = url.replaceAll("^https?://", "").replaceAll("^www\\.", "");
+      int idx = clean.indexOf('/');
+      return idx > 0 ? clean.substring(0, idx).toLowerCase() : clean.toLowerCase();
+    } catch (Exception e) {
+      return "(unknown)";
+    }
+  }
+
+  private String mapDomainToSource(String domain) {
+    if (domain == null || "(direct)".equals(domain)) return "(direct)";
+    if (domain.contains("instagram.com")) return "instagram";
+    if (domain.contains("threads.com")) return "threads";
+    if (domain.contains("facebook.com")) return "facebook";
+    if (domain.contains("google.com")) return "google";
+    if (domain.contains("naver.com")) return "naver";
+    return domain.replaceAll("\\.com$|\\.co\\.kr$|\\.net$", "");
+  }
+
+  private String inferMediumFromDomain(String domain) {
+    if (domain == null || "(direct)".equals(domain)) return "(none)";
+    if (isSocialDomain(domain)) return "social";
+    if (domain.contains("google.com") || domain.contains("naver.com")) return "search";
+    return "referral";
+  }
+
+  private boolean isSocialDomain(String domain) {
+    return domain != null
+        && (domain.contains("instagram.com")
+            || domain.contains("threads.com")
+            || domain.contains("facebook.com")
+            || domain.contains("twitter.com")
+            || domain.contains("linkedin.com")
+            || domain.contains("youtube.com")
+            || domain.contains("tiktok.com"));
   }
 
   private Map<String, String> parseUtmParameters(String url) {
