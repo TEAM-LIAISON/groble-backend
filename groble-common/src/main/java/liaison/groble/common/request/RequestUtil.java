@@ -44,4 +44,9 @@ public class RequestUtil {
   public String getUserAgent() {
     return request.getHeader("User-Agent");
   }
+
+  /** Referer 헤더 정보를 가져옵니다. */
+  public String getReferer() {
+    return request.getHeader("Referer");
+  }
 }
