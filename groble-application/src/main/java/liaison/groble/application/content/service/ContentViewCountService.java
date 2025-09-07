@@ -69,9 +69,6 @@ public class ContentViewCountService {
               .build();
 
       contentViewLogRepository.save(log);
-
-      // 리퍼러 통계 처리
-      recordReferrerStats(contentId, contentViewCountDTO.getReferer());
     }
   }
 
@@ -84,17 +81,15 @@ public class ContentViewCountService {
       stats.incrementVisitCount();
       contentReferrerStatsRepository.save(stats);
 
-      // ContentReferrerEvent는 샘플링하여 생성 (모든 방문을 기록하지 않음)
-      if (shouldCreateEvent()) {
-        ContentReferrerEvent event =
-            ContentReferrerEvent.builder()
-                .referrerStatsId(stats.getId())
-                .contentId(contentId)
-                .eventDate(LocalDateTime.now())
-                .build();
+      ContentReferrerEvent event =
+          ContentReferrerEvent.builder()
+              .referrerStatsId(stats.getId())
+              .contentId(contentId)
+              .eventDate(LocalDateTime.now())
+              .build();
 
-        contentReferrerEventRepository.save(event);
-      }
+      contentReferrerEventRepository.save(event);
+
     } catch (Exception e) {
       log.error("Failed to record referrer stats for contentId: " + contentId, e);
     }
@@ -139,11 +134,6 @@ public class ContentViewCountService {
 
     // 새로운 통계 저장
     return contentReferrerStatsRepository.save(stats);
-  }
-
-  private boolean shouldCreateEvent() {
-    // 10% 확률로만 이벤트 생성 (샘플링)
-    return Math.random() < 0.1;
   }
 
   private String extractDomainFromUrl(String url) {
