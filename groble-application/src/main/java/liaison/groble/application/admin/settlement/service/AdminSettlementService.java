@@ -103,18 +103,18 @@ public class AdminSettlementService {
   }
 
   /**
-   * 정산 승인 처리
+   * 정산 승인 및 실행 처리
    *
    * @param requestDTO 정산 승인 요청 정보
-   * @return 정산 승인 결과
+   * @return 정산 승인 및 실행 결과
    */
-  public SettlementApprovalDTO approveSettlements(SettlementApprovalRequestDTO requestDTO) {
+  public SettlementApprovalDTO approveAndExecuteSettlements(
+      SettlementApprovalRequestDTO requestDTO) {
 
     log.info(
-        "정산 승인 처리 시작 - 정산 수: {}, 관리자: {}, 페이플 실행: {}",
+        "정산 승인 및 실행 처리 시작 - 정산 수: {}, 관리자: {}",
         requestDTO.getSettlementIds().size(),
-        requestDTO.getAdminUserId(),
-        requestDTO.isExecutePaypleSettlement());
+        requestDTO.getAdminUserId());
 
     // 1. 정산 조회 및 검증
     List<Settlement> settlements = validateAndRetrieveSettlements(requestDTO.getSettlementIds());
@@ -148,12 +148,12 @@ public class AdminSettlementService {
       }
     }
 
-    // 3. 페이플 정산 실행 (옵션) - 승인된 정산의 정상 항목들만
+    // 3. 페이플 정산 실행 - 승인된 정산의 정상 항목들에 대해 자동 실행
     PaypleSettlementResultDTO paypleResult = null;
-    if (requestDTO.isExecutePaypleSettlement() && !approvedSettlements.isEmpty()) {
+    if (!approvedSettlements.isEmpty()) {
       List<SettlementItem> validItemsForPayple = extractValidItemsForPayple(approvedSettlements);
       if (!validItemsForPayple.isEmpty()) {
-        paypleResult = executePaypleGroupSettlement(validItemsForPayple);
+        paypleResult = executePaypleGroupSettlementImmediately(validItemsForPayple);
       }
     }
 
@@ -230,9 +230,10 @@ public class AdminSettlementService {
         .collect(Collectors.toList());
   }
 
-  /** 페이플 그룹 정산 실행 */
-  private PaypleSettlementResultDTO executePaypleGroupSettlement(List<SettlementItem> validItems) {
-    log.info("페이플 그룹 정산 실행 시작 - 유효 항목 수: {}", validItems.size());
+  /** 페이플 그룹 정산 승인 후 즉시 실행 */
+  private PaypleSettlementResultDTO executePaypleGroupSettlementImmediately(
+      List<SettlementItem> validItems) {
+    log.info("페이플 그룹 정산 승인 후 즉시 실행 시작 - 유효 항목 수: {}", validItems.size());
 
     try {
       // 1. 파트너 인증
@@ -276,25 +277,17 @@ public class AdminSettlementService {
             transferResult.getOrDefault("result", "UNKNOWN"));
       }
 
-      // 5. 이체 대기 성공 후 처리 (즉시 실행 vs 대기)
+      // 5. 이체 대기 성공 후 즉시 실행
       if (groupKey != null) {
-        // TODO: 실제 운영에서는 이 부분을 설정으로 제어할 수 있음
-        boolean executeImmediately = false; // false로 변경하여 검토 단계 추가
+        JSONObject executeResult =
+            paypleSettlementService.requestTransferExecute(
+                groupKey,
+                "ALL", // 그룹의 모든 이체 대기 건 실행
+                authResult.getAccessToken(),
+                "http://your-test-domain.com" // 테스트 웹훅 URL
+                );
 
-        if (executeImmediately) {
-          JSONObject executeResult =
-              paypleSettlementService.requestTransferExecute(
-                  groupKey,
-                  "ALL", // 그룹의 모든 이체 대기 건 실행
-                  authResult.getAccessToken(),
-                  "http://your-test-domain.com" // 테스트 웹훅 URL
-                  );
-
-          log.info("이체 실행 요청 완료 - 결과: {}", executeResult.getOrDefault("result", "UNKNOWN"));
-        } else {
-          log.info("이체 대기 완료 - 관리자 검토 대기 중 (그룹키: {})", maskSensitiveData(groupKey));
-          // 실제 운영에서는 여기서 관리자에게 알림을 보내거나 대시보드에서 확인할 수 있도록 함
-        }
+        log.info("이체 즉시 실행 완료 - 결과: {}", executeResult.getOrDefault("result", "UNKNOWN"));
       } else {
         log.warn("이체 대기 요청에서 group_key를 추출할 수 없습니다");
       }
@@ -312,11 +305,11 @@ public class AdminSettlementService {
           .build();
 
     } catch (Exception e) {
-      log.error("페이플 그룹 정산 실행 실패", e);
+      log.error("페이플 그룹 정산 승인 후 즉시 실행 실패", e);
       return PaypleSettlementResultDTO.builder()
           .success(false)
           .responseCode("ERROR")
-          .responseMessage("페이플 정산 실행 실패: " + e.getMessage())
+          .responseMessage("페이플 정산 승인 및 실행 실패: " + e.getMessage())
           .build();
     }
   }
@@ -357,92 +350,6 @@ public class AdminSettlementService {
 
     public BigDecimal getApprovedAmount() {
       return approvedAmount;
-    }
-  }
-
-  /**
-   * 이체 대기 상태인 정산을 실제 실행
-   *
-   * @param groupKey 이체 대기 시 받은 그룹키
-   * @param billingTranId 실행할 빌링키 ("ALL" 또는 특정 빌링키)
-   * @return 이체 실행 결과
-   */
-  public PaypleSettlementResultDTO executeTransfer(String groupKey, String billingTranId) {
-    log.info("이체 실행 요청 - 그룹키: {}, 빌링키: {}", maskSensitiveData(groupKey), billingTranId);
-
-    try {
-      // 1. 파트너 인증
-      PayplePartnerAuthResult authResult = paypleSettlementService.requestPartnerAuth();
-      if (!authResult.isSuccess()) {
-        throw new PaypleApiException("페이플 파트너 인증 실패: " + authResult.getMessage());
-      }
-
-      // 2. 이체 실행 요청
-      JSONObject executeResult =
-          paypleSettlementService.requestTransferExecute(
-              groupKey,
-              billingTranId,
-              authResult.getAccessToken(),
-              "http://your-test-domain.com" // 테스트 웹훅 URL
-              );
-
-      log.info("이체 실행 완료 - 결과: {}", executeResult.getOrDefault("result", "UNKNOWN"));
-
-      return PaypleSettlementResultDTO.builder()
-          .success(true)
-          .responseCode("A0000")
-          .responseMessage("이체 실행 성공")
-          .build();
-
-    } catch (Exception e) {
-      log.error("이체 실행 실패", e);
-      return PaypleSettlementResultDTO.builder()
-          .success(false)
-          .responseCode("ERROR")
-          .responseMessage("이체 실행 실패: " + e.getMessage())
-          .build();
-    }
-  }
-
-  /**
-   * 이체 대기 상태인 정산을 취소
-   *
-   * @param groupKey 이체 대기 시 받은 그룹키
-   * @param billingTranId 취소할 빌링키 ("ALL" 또는 특정 빌링키)
-   * @param cancelReason 취소 사유
-   * @return 이체 취소 결과
-   */
-  public PaypleSettlementResultDTO cancelTransfer(
-      String groupKey, String billingTranId, String cancelReason) {
-    log.info("이체 취소 요청 - 그룹키: {}, 빌링키: {}", maskSensitiveData(groupKey), billingTranId);
-
-    try {
-      // 1. 파트너 인증
-      PayplePartnerAuthResult authResult = paypleSettlementService.requestPartnerAuth();
-      if (!authResult.isSuccess()) {
-        throw new PaypleApiException("페이플 파트너 인증 실패: " + authResult.getMessage());
-      }
-
-      // 2. 이체 취소 요청
-      JSONObject cancelResult =
-          paypleSettlementService.requestTransferCancel(
-              groupKey, billingTranId, authResult.getAccessToken(), cancelReason);
-
-      log.info("이체 취소 완료 - 결과: {}", cancelResult.getOrDefault("result", "UNKNOWN"));
-
-      return PaypleSettlementResultDTO.builder()
-          .success(true)
-          .responseCode("A0000")
-          .responseMessage("이체 취소 성공")
-          .build();
-
-    } catch (Exception e) {
-      log.error("이체 취소 실패", e);
-      return PaypleSettlementResultDTO.builder()
-          .success(false)
-          .responseCode("ERROR")
-          .responseMessage("이체 취소 실패: " + e.getMessage())
-          .build();
     }
   }
 
