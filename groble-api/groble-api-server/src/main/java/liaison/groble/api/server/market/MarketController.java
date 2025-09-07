@@ -196,7 +196,7 @@ public class MarketController {
             .userId(accessor.getUserId())
             .ip(requestUtil.getClientIp())
             .userAgent(requestUtil.getUserAgent())
-            .referer(null)
+            .referer(requestUtil.getReferer())
             .build();
 
     marketViewCountService.recordMarketView(marketLinkUrl, marketViewCountDTO);
