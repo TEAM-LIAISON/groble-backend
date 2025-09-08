@@ -63,7 +63,7 @@ public class MarketViewStatsCustomRepositoryImpl implements MarketViewStatsCusto
                 qMarket.marketLinkUrl.eq(marketLinkUrl),
                 qMarketViewStats.periodType.eq(periodType),
                 qMarketViewStats.statDate.between(startDate, endDate))
-            .orderBy(qMarketViewStats.statDate.desc())
+            .orderBy(qMarketViewStats.viewCount.desc(), qMarketViewStats.statDate.desc())
             .offset(pageable.getOffset())
             .limit(pageable.getPageSize())
             .fetch();

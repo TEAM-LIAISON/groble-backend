@@ -61,7 +61,7 @@ public class ContentViewStatsCustomRepositoryImpl implements ContentViewStatsCus
                 qContentViewStats.contentId.eq(contentId),
                 qContentViewStats.periodType.eq(periodType),
                 qContentViewStats.statDate.between(startDate, endDate))
-            .orderBy(qContentViewStats.statDate.desc())
+            .orderBy(qContentViewStats.viewCount.desc(), qContentViewStats.statDate.desc())
             .offset(pageable.getOffset())
             .limit(pageable.getPageSize())
             .fetch();

@@ -13,7 +13,9 @@ import liaison.groble.domain.market.entity.Market;
 import liaison.groble.domain.port.DailyViewPort;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class MarketViewCountService {

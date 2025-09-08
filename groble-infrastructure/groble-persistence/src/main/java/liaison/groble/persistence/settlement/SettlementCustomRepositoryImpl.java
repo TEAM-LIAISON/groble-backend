@@ -1,5 +1,6 @@
 package liaison.groble.persistence.settlement;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -22,6 +23,7 @@ import liaison.groble.domain.settlement.dto.FlatPerTransactionSettlement;
 import liaison.groble.domain.settlement.dto.FlatSettlementsDTO;
 import liaison.groble.domain.settlement.entity.QSettlement;
 import liaison.groble.domain.settlement.entity.QSettlementItem;
+import liaison.groble.domain.settlement.entity.Settlement;
 import liaison.groble.domain.settlement.enums.SettlementType;
 import liaison.groble.domain.settlement.repository.SettlementCustomRepository;
 import liaison.groble.domain.user.entity.QSellerInfo;
@@ -249,5 +251,19 @@ public class SettlementCustomRepositoryImpl implements SettlementCustomRepositor
             .orElse(0L);
 
     return new PageImpl<>(items, pageable, total);
+  }
+
+  @Override
+  public BigDecimal getTotalCompletedPlatformFee() {
+    QSettlement qSettlement = QSettlement.settlement;
+
+    BigDecimal result =
+        jpaQueryFactory
+            .select(qSettlement.platformFee.sum().coalesce(BigDecimal.ZERO))
+            .from(qSettlement)
+            .where(qSettlement.status.eq(Settlement.SettlementStatus.COMPLETED))
+            .fetchOne();
+
+    return result != null ? result : BigDecimal.ZERO;
   }
 }
