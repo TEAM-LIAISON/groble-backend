@@ -11,6 +11,12 @@ import lombok.Getter;
 @Schema(description = "관리자 페이지에서 대시보드 전체 요약 정보에 대한 응답 DTO")
 public class AdminDashboardOverviewResponse {
 
+  @Schema(description = "총 매출 중 그로블 수수료(1.5%)")
+  private BigDecimal grobleFee;
+
+  @Schema(description = "총 매출 중 기타 금액")
+  private BigDecimal etcAmount;
+
   @Schema(description = "총 거래액 (금액)", example = "1500000000")
   private BigDecimal totalTransactionAmount;
 

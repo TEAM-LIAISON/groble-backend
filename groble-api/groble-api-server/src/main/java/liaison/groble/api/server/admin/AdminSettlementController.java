@@ -196,14 +196,4 @@ public class AdminSettlementController extends BaseController {
 
     return success(response, ResponseMessages.Admin.SETTLEMENT_APPROVAL_SUCCESS);
   }
-
-  /** 민감한 데이터 마스킹 */
-  private String maskSensitiveData(String sensitiveData) {
-    if (sensitiveData == null || sensitiveData.length() <= 8) {
-      return "****";
-    }
-    return sensitiveData.substring(0, 4)
-        + "****"
-        + sensitiveData.substring(sensitiveData.length() - 4);
-  }
 }

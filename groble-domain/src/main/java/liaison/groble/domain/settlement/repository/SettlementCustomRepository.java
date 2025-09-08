@@ -1,5 +1,7 @@
 package liaison.groble.domain.settlement.repository;
 
+import java.math.BigDecimal;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -17,4 +19,6 @@ public interface SettlementCustomRepository {
       Long settlementId, Pageable pageable);
 
   Page<FlatAdminSettlementsDTO> findAdminSettlementsByUserId(Long adminUserId, Pageable pageable);
+
+  BigDecimal getTotalCompletedPlatformFee();
 }

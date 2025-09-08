@@ -1,5 +1,6 @@
 package liaison.groble.application.admin.dashboard.service;
 
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
 
@@ -8,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import liaison.groble.application.admin.dashboard.dto.AdminDashboardOverviewDTO;
 import liaison.groble.application.purchase.service.PurchaseReader;
+import liaison.groble.application.settlement.reader.SettlementReader;
 import liaison.groble.domain.content.enums.ContentStatus;
 import liaison.groble.domain.content.repository.ContentRepository;
 import liaison.groble.domain.dashboard.dto.FlatDashboardOverviewDTO;
@@ -36,11 +38,15 @@ public class AdminDashboardService {
 
   // Reader
   private final PurchaseReader purchaseReader;
+  private final SettlementReader settlementReader;
 
   @Transactional(readOnly = true)
   public AdminDashboardOverviewDTO getAdminDashboardOverview() {
     // 거래 통계 조회
     FlatDashboardOverviewDTO transactionStats = purchaseReader.getAdminDashboardOverviewStats();
+
+    // 정산 통계 조회 (완료된 정산의 플랫폼 수수료 합계)
+    BigDecimal grobleFee = settlementReader.getTotalCompletedPlatformFee();
 
     // 사용자 통계 조회
     long userCount = userRepository.countByStatus(UserStatus.ACTIVE);
@@ -61,6 +67,8 @@ public class AdminDashboardService {
     //        contentRepository.countByContentTypeAndStatusIn("MEMBERSHIP", activeStatuses);
 
     return AdminDashboardOverviewDTO.builder()
+        .grobleFee(grobleFee)
+        .etcAmount(BigDecimal.ZERO) // 추가된 필드, 현재는 0으로 설정
         .totalTransactionAmount(transactionStats.getTotalRevenue())
         .totalTransactionCount(transactionStats.getTotalSalesCount())
         .monthlyTransactionAmount(transactionStats.getCurrentMonthRevenue())

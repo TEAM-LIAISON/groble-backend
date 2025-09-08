@@ -129,4 +129,9 @@ public class SettlementReader {
         .orElseThrow(
             () -> new EntityNotFoundException("정산 항목을 찾을 수 없습니다 - purchaseId: " + purchaseId));
   }
+
+  /** 완료된 정산의 총 플랫폼 수수료 합계 조회 */
+  public BigDecimal getTotalCompletedPlatformFee() {
+    return settlementCustomRepository.getTotalCompletedPlatformFee();
+  }
 }
