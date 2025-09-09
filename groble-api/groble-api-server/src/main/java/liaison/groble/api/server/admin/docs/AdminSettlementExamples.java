@@ -92,4 +92,44 @@ public final class AdminSettlementExamples {
         }
       }
       """;
+
+  public static final String ADMIN_SETTLEMENT_SALES_LIST_SUCCESS_EXAMPLE =
+      """
+      {
+        "success": true,
+        "code": "SUCCESS",
+        "message": "정산 판매 내역 조회가 성공적으로 처리되었습니다.",
+        "data": {
+          "items": [
+            {
+              "contentTitle": "AI 툴 개발 가이드",
+              "settlementAmount": 150000.00,
+              "orderStatus": "PAID",
+              "purchasedAt": "2025-01-10 14:30:00"
+            },
+            {
+              "contentTitle": "웹 개발 마스터 코스",
+              "settlementAmount": 95000.00,
+              "orderStatus": "PAID",
+              "purchasedAt": "2025-01-08 09:15:00"
+            },
+            {
+              "contentTitle": "디자인 패턴 완벽 가이드",
+              "settlementAmount": 120000.00,
+              "orderStatus": "CANCELLED",
+              "purchasedAt": "2025-01-05 16:45:00"
+            }
+          ],
+          "pageInfo": {
+            "currentPage": 0,
+            "totalPages": 3,
+            "pageSize": 20,
+            "totalElements": 52,
+            "first": true,
+            "last": false,
+            "empty": false
+          }
+        }
+      }
+      """;
 }
