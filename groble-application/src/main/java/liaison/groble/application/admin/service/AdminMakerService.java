@@ -10,7 +10,6 @@ import liaison.groble.application.notification.enums.KakaoNotificationType;
 import liaison.groble.application.notification.service.KakaoNotificationService;
 import liaison.groble.application.notification.service.NotificationService;
 import liaison.groble.application.user.service.UserReader;
-import liaison.groble.application.user.service.UserWriter;
 import liaison.groble.domain.file.entity.FileInfo;
 import liaison.groble.domain.file.repository.FileRepository;
 import liaison.groble.domain.market.entity.Market;
@@ -29,7 +28,6 @@ public class AdminMakerService {
   private final UserReader userReader;
   private final FileRepository fileRepository;
   private final NotificationService notificationService;
-  private final UserWriter userWriter;
   private final KakaoNotificationService kakaoNotificationService;
 
   @Transactional(readOnly = true)

@@ -90,6 +90,10 @@ public class SellerInfo {
   @Column(name = "bank_name")
   private String bankName;
 
+  /** 기관 코드 */
+  @Column(name = "bank_code")
+  private String bankCode;
+
   /** 정산받을 계좌번호 */
   @Column(name = "bank_account_number")
   private String bankAccountNumber;
@@ -226,12 +230,14 @@ public class SellerInfo {
       String bankAccountOwner,
       String bankName,
       String bankAccountNumber,
-      String copyOfBankbookUrl) {
+      String copyOfBankbookUrl,
+      String bankCode) {
     this.businessSellerRequest = false;
     this.bankAccountOwner = bankAccountOwner;
     this.bankName = bankName;
     this.bankAccountNumber = bankAccountNumber;
     this.copyOfBankbookUrl = copyOfBankbookUrl;
+    this.bankCode = bankCode;
   }
 
   // 사업자 메이커 은행 정보만 업데이트
@@ -239,12 +245,14 @@ public class SellerInfo {
       String bankAccountOwner,
       String bankName,
       String bankAccountNumber,
-      String copyOfBankbookUrl) {
+      String copyOfBankbookUrl,
+      String bankCode) {
     this.businessSellerRequest = true;
     this.bankAccountOwner = bankAccountOwner;
     this.bankName = bankName;
     this.bankAccountNumber = bankAccountNumber;
     this.copyOfBankbookUrl = copyOfBankbookUrl;
+    this.bankCode = bankCode;
   }
 
   // 사업자 정보만 업데이트

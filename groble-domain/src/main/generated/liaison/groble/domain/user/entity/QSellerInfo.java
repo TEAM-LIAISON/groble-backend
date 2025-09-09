@@ -26,6 +26,8 @@ public class QSellerInfo extends EntityPathBase<SellerInfo> {
 
     public final StringPath bankAccountOwner = createString("bankAccountOwner");
 
+    public final StringPath bankCode = createString("bankCode");
+
     public final StringPath bankName = createString("bankName");
 
     public final StringPath businessAddress = createString("businessAddress");
