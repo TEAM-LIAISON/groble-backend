@@ -91,7 +91,7 @@ public class SellerInfo {
   private String bankName;
 
   /** 기관 코드 */
-  @Column(name = "bank_code")
+  @Column(name = "bank_code", length = 10)
   private String bankCode;
 
   /** 정산받을 계좌번호 */
