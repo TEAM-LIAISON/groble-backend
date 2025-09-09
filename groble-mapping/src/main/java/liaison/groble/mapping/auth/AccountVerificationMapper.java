@@ -14,7 +14,7 @@ public interface AccountVerificationMapper {
       VerifyPersonalMakerAccountRequest request);
 
   /** API 요청 모델 → 애플리케이션 DTO 매핑 (필드명이 같으면 자동, 다르면 @Mapping 필요) */
-  VerifyBusinessMakerAccountDTO toVerifyBusinessMakerAccountDTO(
+  VerifyBusinessMakerAccountDTO toVerifyBusinessMakerLicenseDTO(
       VerificationBusinessMakerAccountRequest request);
 
   /** 서로 다른 enum 타입(BusinessType)을 이름(name) 기준으로 매핑 MapStruct가 자동으로 이 메서드를 호출합니다. */

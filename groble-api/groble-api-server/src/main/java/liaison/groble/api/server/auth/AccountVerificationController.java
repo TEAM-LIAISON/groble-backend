@@ -16,10 +16,12 @@ import org.springframework.web.multipart.MultipartFile;
 
 import liaison.groble.api.model.auth.request.VerificationBusinessMakerAccountRequest;
 import liaison.groble.api.model.auth.request.VerifyPersonalMakerAccountRequest;
-import liaison.groble.api.model.auth.response.swagger.BusinessMaker;
-import liaison.groble.api.model.auth.response.swagger.BusinessVerification;
-import liaison.groble.api.model.auth.response.swagger.PersonalMaker;
 import liaison.groble.api.model.file.response.FileUploadResponse;
+import liaison.groble.api.server.auth.docs.AccountVerificationApiResponses;
+import liaison.groble.api.server.auth.docs.AccountVerificationSwaggerDocs;
+import liaison.groble.api.server.common.ApiPaths;
+import liaison.groble.api.server.common.BaseController;
+import liaison.groble.api.server.common.ResponseMessages;
 import liaison.groble.api.server.util.FileUtil;
 import liaison.groble.application.auth.dto.VerifyBusinessMakerAccountDTO;
 import liaison.groble.application.auth.dto.VerifyPersonalMakerAccountDTO;
@@ -28,42 +30,25 @@ import liaison.groble.application.file.FileService;
 import liaison.groble.application.file.dto.FileDTO;
 import liaison.groble.application.file.dto.FileUploadDTO;
 import liaison.groble.common.annotation.Auth;
+import liaison.groble.common.annotation.Logging;
 import liaison.groble.common.model.Accessor;
 import liaison.groble.common.response.GrobleResponse;
 import liaison.groble.common.response.ResponseHelper;
 import liaison.groble.mapping.auth.AccountVerificationMapper;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestController
-@RequiredArgsConstructor
-@RequestMapping("/api/v1/account-verification")
-@Tag(name = "[🏧 계좌]은행 계좌 인증 API", description = "은행 계좌 인증 관련 API (개인 메이커 인증 & 개인 • 법인 사업자)")
-public class AccountVerificationController {
-
-  // API 경로 상수화
-  private static final String PERSONAL_MAKER_VERIFICATION_PATH = "/personal-maker";
-  private static final String BUSINESS_MAKER_VERIFICATION_PATH = "/business-maker";
-  private static final String BUSINESS_VERIFICATION_PATH = "/business";
-  private static final String UPLOAD_BANKBOOK_COPY_PATH = "/upload-bankbook-copy";
-  private static final String UPLOAD_BUSINESS_LICENSE_PATH = "/upload-business-license";
-
-  // 응답 메시지 상수화
-  private static final String PERSONAL_MAKER_VERIFICATION_SUCCESS_MESSAGE =
-      "개인 메이커 계좌 인증 요청이 성공적으로 처리되었습니다.";
-  private static final String BUSINESS_MAKER_VERIFICATION_SUCCESS_MESSAGE =
-      "법인 사업자 계좌 인증 요청이 성공적으로 처리되었습니다.";
-  private static final String BUSINESS_VERIFICATION_SUCCESS_MESSAGE =
-      "개인 • 법인 사업자 계좌 인증 요청이 성공적으로 처리되었습니다.";
-  private static final String UPLOAD_BANKBOOK_COPY_SUCCESS_MESSAGE =
-      "통장 사본 이미지 업로드가 성공적으로 완료되었습니다.";
-  private static final String UPLOAD_BUSINESS_LICENSE_SUCCESS_MESSAGE =
-      "사업자 등록증 사본 이미지 업로드가 성공적으로 완료되었습니다.";
+@RequestMapping(ApiPaths.Auth.ACCOUNT_VERIFICATION)
+@Tag(
+    name = AccountVerificationSwaggerDocs.TAG_NAME,
+    description = AccountVerificationSwaggerDocs.TAG_DESCRIPTION)
+public class AccountVerificationController extends BaseController {
 
   // Service
   private final AccountVerificationService accountVerificationService;
@@ -72,12 +57,31 @@ public class AccountVerificationController {
 
   // Mapper
   private final AccountVerificationMapper accountVerificationMapper;
-  // Helper
-  private final ResponseHelper responseHelper;
+
+  public AccountVerificationController(
+      ResponseHelper responseHelper,
+      AccountVerificationMapper accountVerificationMapper,
+      AccountVerificationService accountVerificationService,
+      FileService fileService,
+      FileUtil fileUtil) {
+    super(responseHelper);
+    this.accountVerificationMapper = accountVerificationMapper;
+    this.accountVerificationService = accountVerificationService;
+    this.fileService = fileService;
+    this.fileUtil = fileUtil;
+  }
 
   /** 개인 메이커 계좌 인증 요청 처리 */
-  @PersonalMaker
-  @PostMapping(PERSONAL_MAKER_VERIFICATION_PATH)
+  @Operation(
+      summary = AccountVerificationSwaggerDocs.PERSONAL_MAKER_VERIFICATION_SUMMARY,
+      description = AccountVerificationSwaggerDocs.PERSONAL_MAKER_VERIFICATION_DESCRIPTION)
+  @Logging(
+      item = "AccountVerification",
+      action = "verifyPersonalMakerAccount",
+      includeParam = true,
+      includeResult = true)
+  @AccountVerificationApiResponses.PersonalMakerAccountVerificationResponses
+  @PostMapping(ApiPaths.Auth.PERSONAL_MAKER_VERIFICATION)
   public ResponseEntity<GrobleResponse<Void>> verifyPersonalMakerAccount(
       @Auth Accessor accessor, @Valid @RequestBody VerifyPersonalMakerAccountRequest request) {
 
@@ -85,40 +89,57 @@ public class AccountVerificationController {
         accountVerificationMapper.toVerifyPersonalMakerAccountDTO(request);
     accountVerificationService.verifyPersonalMakerAccount(
         accessor.getUserId(), verifyPersonalMakerAccountDTO);
-    return responseHelper.success(null, PERSONAL_MAKER_VERIFICATION_SUCCESS_MESSAGE, HttpStatus.OK);
+    return success(null, ResponseMessages.Auth.PERSONAL_MAKER_VERIFICATION_SUCCESS);
   }
 
-  @BusinessMaker
-  @PostMapping(BUSINESS_MAKER_VERIFICATION_PATH)
+  /** 개인 • 법인 사업자 계좌, 통장 인증 요청 처리 */
+  @Operation(
+      summary = AccountVerificationSwaggerDocs.BUSINESS_MAKER_BANKBOOK_VERIFICATION_SUMMARY,
+      description = AccountVerificationSwaggerDocs.BUSINESS_MAKER_BANKBOOK_VERIFICATION_DESCRIPTION)
+  @Logging(
+      item = "AccountVerification",
+      action = "verifyBusinessBankbook",
+      includeParam = true,
+      includeResult = true)
+  @AccountVerificationApiResponses.BusinessBankbookVerificationResponses
+  @PostMapping(ApiPaths.Auth.BUSINESS_MAKER_BANKBOOK_VERIFICATION)
   public ResponseEntity<GrobleResponse<Void>> verifyBusinessBankbook(
       @Auth Accessor accessor,
       @Valid @RequestBody VerificationBusinessMakerAccountRequest request) {
 
     VerifyBusinessMakerAccountDTO verifyBusinessMakerAccountDTO =
-        accountVerificationMapper.toVerifyBusinessMakerAccountDTO(request);
+        accountVerificationMapper.toVerifyBusinessMakerLicenseDTO(request);
 
     accountVerificationService.verifyBusinessBankbook(
         accessor.getUserId(), verifyBusinessMakerAccountDTO);
-    return responseHelper.success(null, BUSINESS_MAKER_VERIFICATION_SUCCESS_MESSAGE, HttpStatus.OK);
+    return success(null, ResponseMessages.Auth.BUSINESS_MAKER_BANKBOOK_VERIFICATION_SUCCESS);
   }
 
-  /** 개인 • 법인 사업자 계좌 인증 요청 처리 */
-  @BusinessVerification
-  @PostMapping(BUSINESS_VERIFICATION_PATH)
-  public ResponseEntity<GrobleResponse<Void>> verifyBusinessAccount(
+  /** 개인 • 법인 사업자 사업자 등록증 인증 요청 처리 */
+  @Operation(
+      summary = AccountVerificationSwaggerDocs.BUSINESS_MAKER_VERIFICATION_SUMMARY,
+      description = AccountVerificationSwaggerDocs.BUSINESS_MAKER_VERIFICATION_DESCRIPTION)
+  @Logging(
+      item = "AccountVerification",
+      action = "verifyBusinessAccount",
+      includeParam = true,
+      includeResult = true)
+  @AccountVerificationApiResponses.BusinessLicenseVerificationResponses
+  @PostMapping(ApiPaths.Auth.BUSINESS_MAKER_VERIFICATION)
+  public ResponseEntity<GrobleResponse<Void>> verifyBusinessLicense(
       @Auth Accessor accessor,
       @Valid @RequestBody VerificationBusinessMakerAccountRequest request) {
 
     VerifyBusinessMakerAccountDTO verifyBusinessMakerAccountDTO =
-        accountVerificationMapper.toVerifyBusinessMakerAccountDTO(request);
+        accountVerificationMapper.toVerifyBusinessMakerLicenseDTO(request);
 
     accountVerificationService.verifyBusinessAccount(
         accessor.getUserId(), verifyBusinessMakerAccountDTO);
-    return ResponseEntity.ok(GrobleResponse.success(null));
+    return success(null, ResponseMessages.Auth.BUSINESS_MAKER_VERIFICATION_SUCCESS);
   }
 
   /** 통장 사본 첨부 파일 업로드 */
-  @PostMapping(UPLOAD_BANKBOOK_COPY_PATH)
+  @PostMapping(ApiPaths.Auth.UPLOAD_BANKBOOK_COPY)
   public ResponseEntity<GrobleResponse<?>> uploadBankbookCopyImage(
       @Auth final Accessor accessor,
       @RequestPart("bankbookCopyImage")
@@ -169,7 +190,7 @@ public class AccountVerificationController {
   }
 
   /** 통장 사본 첨부 파일 업로드 */
-  @PostMapping(UPLOAD_BUSINESS_LICENSE_PATH)
+  @PostMapping(ApiPaths.Auth.UPLOAD_BUSINESS_LICENSE)
   public ResponseEntity<GrobleResponse<?>> uploadBusinessLicenseImage(
       @Auth final Accessor accessor,
       @RequestPart("businessLicenseImage")

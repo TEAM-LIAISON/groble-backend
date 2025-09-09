@@ -5,8 +5,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import liaison.groble.api.server.common.swagger.AuthResponseSchemas;
 import liaison.groble.api.server.common.swagger.CommonSwaggerDocs;
-import liaison.groble.api.server.common.swagger.GenericResponseSchemas;
 
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -25,8 +25,7 @@ public class GuestAuthPostResponses {
         content =
             @Content(
                 mediaType = "application/json",
-                schema =
-                    @Schema(implementation = GenericResponseSchemas.ApiGuestAuthResponse.class))),
+                schema = @Schema(implementation = AuthResponseSchemas.ApiGuestAuthResponse.class))),
     @ApiResponse(
         responseCode = "403",
         description = CommonSwaggerDocs.FORBIDDEN,
@@ -77,7 +76,7 @@ public class GuestAuthPostResponses {
                 mediaType = "application/json",
                 schema =
                     @Schema(
-                        implementation = GenericResponseSchemas.ApiVerifyGuestAuthResponse.class))),
+                        implementation = AuthResponseSchemas.ApiVerifyGuestAuthResponse.class))),
     @ApiResponse(
         responseCode = "403",
         description = CommonSwaggerDocs.FORBIDDEN,
@@ -129,7 +128,7 @@ public class GuestAuthPostResponses {
                 schema =
                     @Schema(
                         implementation =
-                            GenericResponseSchemas.ApiUpdateGuestUserInfoResponse.class))),
+                            AuthResponseSchemas.ApiUpdateGuestUserInfoResponse.class))),
     @ApiResponse(
         responseCode = "403",
         description = CommonSwaggerDocs.FORBIDDEN,

@@ -5,8 +5,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import liaison.groble.api.server.common.swagger.AdminResponseSchemas;
 import liaison.groble.api.server.common.swagger.CommonSwaggerDocs;
-import liaison.groble.api.server.common.swagger.GenericResponseSchemas;
 
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -30,7 +30,7 @@ public final class AdminSettlementExampleResponses {
                 schema =
                     @Schema(
                         implementation =
-                            GenericResponseSchemas.ApiAllUsersSettlementsResponse.class),
+                            AdminResponseSchemas.ApiAdminSettlementsOverviewResponse.class),
                 examples =
                     @ExampleObject(
                         name = "성공 응답 예시",
@@ -88,7 +88,7 @@ public final class AdminSettlementExampleResponses {
                 schema =
                     @Schema(
                         implementation =
-                            GenericResponseSchemas.ApiAdminSettlementDetailResponse.class),
+                            AdminResponseSchemas.ApiAdminSettlementDetailResponse.class),
                 examples =
                     @ExampleObject(
                         name = "성공 응답 예시",
@@ -137,7 +137,7 @@ public final class AdminSettlementExampleResponses {
                 schema =
                     @Schema(
                         implementation =
-                            GenericResponseSchemas.ApiAdminSettlementSalesListResponse.class),
+                            AdminResponseSchemas.ApiAdminSettlementSalesListResponse.class),
                 examples =
                     @ExampleObject(
                         name = "성공 응답 예시",

@@ -4,6 +4,13 @@ public final class SwaggerTags {
 
   private SwaggerTags() {}
 
+  public static final class Auth {
+    public static final String VERIFICATION = "[🏧 메이커 인증] 메이커 인증 API";
+    public static final String VERIFICATION_DESC = "메이커 인증 관련 기능을 제공합니다.";
+
+    private Auth() {}
+  }
+
   public static final class Guest {
     public static final String AUTH = "[👀 비회원] 비회원 인증/인가 기능";
     public static final String AUTH_DESC = "비회원 토큰 발급, 비회원 전화번호 인증/검증";
