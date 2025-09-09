@@ -459,7 +459,7 @@ public class PaypleServiceV2 implements PaypleService {
 
     log.debug("페이플 이체 대기 요청 본문: {}", maskSensitiveTransferRequestBody(requestBody));
 
-    String transferRequestUrl = paypleConfig.getTransferRequestUrl();
+    String transferRequestUrl = paypleConfig.getPendingTransferRequestUrl();
 
     Map<String, String> headers = new HashMap<>();
     headers.put("content-type", "application/json");

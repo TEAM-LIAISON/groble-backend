@@ -212,11 +212,11 @@ public class PaypleSettlementService {
   private PayplePartnerAuthResult buildPartnerAuthResult(JSONObject authResult) {
     return PayplePartnerAuthResult.builder()
         .result(getString(authResult, "result"))
-        .message(getString(authResult, "result_msg"))
-        .code(getString(authResult, "server_name"))
-        .accessToken(getString(authResult, "AuthKey"))
-        .tokenType(getString(authResult, "custKey"))
-        .expiresIn(getString(authResult, "cst_id"))
+        .message(getString(authResult, "message"))
+        .code(getString(authResult, "code"))
+        .accessToken(getString(authResult, "access_token"))
+        .tokenType(getString(authResult, "token_type"))
+        .expiresIn(getString(authResult, "expires_in"))
         .build();
   }
 

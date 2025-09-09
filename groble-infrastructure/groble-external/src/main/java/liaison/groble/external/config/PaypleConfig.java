@@ -26,11 +26,6 @@ public class PaypleConfig {
         : "https://cpay.payple.kr/js/v1/payment.js";
   }
 
-  // 정산지급대행 URL 설정
-  public String getSettlementAuthApiUrl() {
-    return testMode ? "https://demohub.payple.kr/oauth/token" : "https://hub.payple.kr/oauth/token";
-  }
-
   public String getAuthApiUrl() {
     return testMode
         ? "https://democpay.payple.kr/php/auth.php"
@@ -65,27 +60,35 @@ public class PaypleConfig {
         : "https://cpay.payple.kr/php/account/api/cPayCAct.php";
   }
 
-  public String getAccountVerificationUrl() {
-    return testMode
-        ? "https://demohub.payple.kr/api/v1/settlements/account/verification"
-        : "https://hub.payple.kr/api/v1/settlements/account/verification";
-  }
-
-  public String getTransferRequestUrl() {
-    return testMode
-        ? "https://demohub.payple.kr/api/v1/settlements/transfer/request"
-        : "https://hub.payple.kr/api/v1/settlements/transfer/request";
-  }
-
-  public String getTransferExecuteUrl() {
-    return testMode
-        ? "https://demohub.payple.kr/transfer/execute"
-        : "https://hub.payple.kr/transfer/execute";
-  }
-
   public String getTransferCancelUrl() {
     return testMode
         ? "https://demohub.payple.kr/transfer/cancel"
         : "https://hub.payple.kr/transfer/cancel";
+  }
+
+  // 정산지급대행 URL 설정
+  public String getSettlementAuthApiUrl() {
+    return testMode ? "https://demohub.payple.kr/oauth/token" : "https://hub.payple.kr/oauth/token";
+  }
+
+  // 계좌인증 요청 URL
+  public String getAccountVerificationUrl() {
+    return testMode
+        ? "https://demohub.payple.kr/inquiry/real_name"
+        : "https://hub.payple.kr/inquiry/real_name";
+  }
+
+  // 빌링키로 이체 대기 요청
+  public String getPendingTransferRequestUrl() {
+    return testMode
+        ? "https://demohub.payple.kr/transfer/request"
+        : "https://hub.payple.kr/transfer/request";
+  }
+
+  // 이체 실행 요청
+  public String getTransferExecuteUrl() {
+    return testMode
+        ? "https://demohub.payple.kr/transfer/execute"
+        : "https://hub.payple.kr/transfer/execute";
   }
 }

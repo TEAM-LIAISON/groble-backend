@@ -4,6 +4,7 @@ import liaison.groble.api.model.admin.dashboard.response.AdminDashboardOverviewR
 import liaison.groble.api.model.admin.settlement.response.AdminSettlementDetailResponse;
 import liaison.groble.api.model.admin.settlement.response.AdminSettlementsOverviewResponse;
 import liaison.groble.api.model.admin.settlement.response.PerTransactionAdminSettlementOverviewResponse;
+import liaison.groble.api.model.admin.settlement.response.SettlementApprovalResponse;
 import liaison.groble.api.model.guest.response.GuestAuthCodeResponse;
 import liaison.groble.api.model.guest.response.UpdateGuestUserInfoResponse;
 import liaison.groble.api.model.guest.response.VerifyAuthCodeResponse;
@@ -402,6 +403,25 @@ public final class GenericResponseSchemas {
 
     @Schema(description = "정산 판매 내역 데이터 (페이징)")
     public PageResponse<PerTransactionAdminSettlementOverviewResponse> data;
+
+    @Schema(description = "응답 시간", example = "2025-08-31T07:06:06.312Z")
+    public String timestamp;
+  }
+
+  @Schema(description = CommonSwaggerDocs.GROBLE_RESPONSE_DESC + " - 정산 승인 응답")
+  public static class ApiSettlementApprovalResponse {
+
+    @Schema(description = "응답 상태", example = CommonSwaggerDocs.STATUS_SUCCESS)
+    public String status;
+
+    @Schema(description = "HTTP 상태 코드", example = "200")
+    public int code;
+
+    @Schema(description = "응답 메시지", example = ResponseMessages.Admin.SETTLEMENT_APPROVAL_SUCCESS)
+    public String message;
+
+    @Schema(description = "정산 승인 결과 데이터")
+    public SettlementApprovalResponse data;
 
     @Schema(description = "응답 시간", example = "2025-08-31T07:06:06.312Z")
     public String timestamp;
