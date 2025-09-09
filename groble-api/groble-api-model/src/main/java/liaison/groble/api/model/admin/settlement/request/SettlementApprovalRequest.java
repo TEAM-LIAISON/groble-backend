@@ -28,15 +28,4 @@ public class SettlementApprovalRequest {
   @NotNull(message = "정산 ID 목록은 필수입니다")
   @NotEmpty(message = "최소 하나 이상의 정산을 선택해야 합니다")
   private List<Long> settlementIds;
-
-  @Schema(description = "승인 처리자 ID", example = "12345")
-  @NotNull(message = "처리자 ID는 필수입니다")
-  private Long adminUserId;
-
-  @Schema(description = "승인 사유", example = "월말 정산 승인 처리")
-  private String approvalReason;
-
-  @Schema(description = "즉시 페이플 정산 실행 여부", example = "true")
-  @Builder.Default
-  private boolean executePaypleSettlement = true;
 }

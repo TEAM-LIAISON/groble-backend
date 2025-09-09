@@ -111,10 +111,7 @@ public class AdminSettlementService {
   public SettlementApprovalDTO approveAndExecuteSettlements(
       SettlementApprovalRequestDTO requestDTO) {
 
-    log.info(
-        "정산 승인 및 실행 처리 시작 - 정산 수: {}, 관리자: {}",
-        requestDTO.getSettlementIds().size(),
-        requestDTO.getAdminUserId());
+    log.info("정산 승인 및 실행 처리 시작 - 정산 수: {}", requestDTO.getSettlementIds().size());
 
     // 1. 정산 조회 및 검증
     List<Settlement> settlements = validateAndRetrieveSettlements(requestDTO.getSettlementIds());
@@ -129,9 +126,7 @@ public class AdminSettlementService {
 
     for (Settlement settlement : settlements) {
       try {
-        ApprovalResult result =
-            approveSettlement(
-                settlement, requestDTO.getAdminUserId(), requestDTO.getApprovalReason());
+        ApprovalResult result = approveSettlement(settlement);
 
         approvedSettlements.add(settlement);
         totalApprovedItemCount += result.getApprovedItemCount();
@@ -187,8 +182,7 @@ public class AdminSettlementService {
   }
 
   /** 개별 정산 승인 처리 */
-  private ApprovalResult approveSettlement(
-      Settlement settlement, Long adminUserId, String approvalReason) {
+  private ApprovalResult approveSettlement(Settlement settlement) {
     if (settlement.getStatus() == Settlement.SettlementStatus.COMPLETED) {
       throw new IllegalStateException("이미 완료된 정산입니다: " + settlement.getId());
     }
@@ -210,7 +204,7 @@ public class AdminSettlementService {
             .reduce(BigDecimal.ZERO, BigDecimal::add);
 
     // Settlement 상태를 승인으로 변경
-    settlement.approve(adminUserId, approvalReason);
+    settlement.approve();
 
     log.info(
         "정산 승인 완료 - ID: {}, 정상 항목: {}개, 환불 제외 항목: {}개, 승인 금액: {}",
