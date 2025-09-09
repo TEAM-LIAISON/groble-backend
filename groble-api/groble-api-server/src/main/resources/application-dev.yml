@@ -158,6 +158,7 @@ logging:
     # 네트워크 디버깅을 위해 일시적 활성화
     org.apache.http: WARN          # HTTP client 디버깅
     org.apache.http.wire: WARN     # Wire-level log 활성화
+    org.apache.http.impl.conn.PoolingHttpClientConnectionManager: WARN  # Connection pool 로그
     httpclient.wire: WARN          # HttpClient wire logging
     org.apache.hc: WARN            # Apache HttpComponents
 
