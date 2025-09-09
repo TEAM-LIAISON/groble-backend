@@ -160,7 +160,7 @@ public class PaypleServiceV2 implements PaypleService {
     try {
       // 정산지급대행 전용 파라미터 생성
       Map<String, String> settlementParams = createSettlementAuthParams(code);
-      HttpResponse response = executeAuthRequest(settlementParams);
+      HttpResponse response = executeSettlementAuthRequest(settlementParams);
       return parseAndValidateResponse(response);
     } catch (HttpClientException e) {
       log.error("페이플 정산지급대행 인증 HTTP 요청 실패", e);
@@ -362,6 +362,37 @@ public class PaypleServiceV2 implements PaypleService {
     log.debug("페이플 인증 요청 본문: {}", requestBody.toJSONString());
 
     String authUrl = paypleConfig.getAuthApiUrl();
+
+    Map<String, String> headers = new HashMap<>();
+    headers.put("content-type", "application/json");
+    headers.put("charset", "UTF-8");
+    headers.put("referer", paypleConfig.getRefererUrl());
+
+    HttpRequest httpRequest =
+        HttpRequest.postWithHeaders(authUrl, headers, requestBody.toJSONString());
+
+    return httpClient.post(httpRequest);
+  }
+
+  private HttpResponse executeSettlementAuthRequest(Map<String, String> params)
+      throws HttpClientException {
+    JSONObject requestBody = new JSONObject();
+    requestBody.put("cst_id", paypleConfig.getCstId());
+    requestBody.put("custKey", paypleConfig.getCustKey());
+
+    // 추가 파라미터 설정
+    if (params != null) {
+      for (Map.Entry<String, String> entry : params.entrySet()) {
+        // 기본 설정값은 덮어쓰지 않음
+        if (!"cst_id".equals(entry.getKey()) && !"custKey".equals(entry.getKey())) {
+          requestBody.put(entry.getKey(), entry.getValue());
+        }
+      }
+    }
+
+    log.debug("페이플 정산지급대행 인증 요청 본문: {}", requestBody.toJSONString());
+
+    String authUrl = paypleConfig.getSettlementAuthApiUrl();
 
     Map<String, String> headers = new HashMap<>();
     headers.put("content-type", "application/json");

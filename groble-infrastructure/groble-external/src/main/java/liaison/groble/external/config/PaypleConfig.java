@@ -27,7 +27,7 @@ public class PaypleConfig {
   }
 
   // 정산지급대행 URL 설정
-  public String getSettlementUrl() {
+  public String getSettlementAuthApiUrl() {
     return testMode ? "https://demohub.payple.kr/oauth/token" : "https://hub.payple.kr/oauth/token";
   }
 
