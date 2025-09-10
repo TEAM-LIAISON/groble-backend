@@ -149,7 +149,7 @@ public class PaypleServiceV2 implements PaypleService {
 
   @Override
   public JSONObject payAuthForSettlement(String code) {
-    log.info("페이플 정산지급대행 인증 요청 시작 - code: {}", maskSensitiveData(code));
+    // Aspect에서 로깅 처리
 
     // code 검증
     if (!isValidSettlementCode(code)) {
@@ -182,10 +182,7 @@ public class PaypleServiceV2 implements PaypleService {
 
   @Override
   public JSONObject payAccountVerification(Map<String, String> params, String accessToken) {
-    log.info(
-        "페이플 계좌 검증 요청 시작 - 계좌번호: {}, 은행코드: {}",
-        maskAccountNumber(params.get("account_num")),
-        params.get("bank_code_std"));
+    // Aspect에서 로깅 처리
 
     try {
       HttpResponse response = executeAccountVerificationRequest(params, accessToken);
@@ -551,10 +548,7 @@ public class PaypleServiceV2 implements PaypleService {
     try {
       JSONObject jsonResponse = (JSONObject) jsonParser.parse(responseBody);
 
-      log.info(
-          "페이플 API 응답 성공 - 응답시간: {}ms, 결과: {}",
-          response.getResponseTimeMs(),
-          jsonResponse.getOrDefault("PCD_PAY_RST", "UNKNOWN"));
+      // Aspect에서 로깅 처리하므로 중복 로그 제거
 
       return jsonResponse;
 
