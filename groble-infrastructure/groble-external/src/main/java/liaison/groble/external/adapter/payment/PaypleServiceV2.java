@@ -206,14 +206,14 @@ public class PaypleServiceV2 implements PaypleService {
   }
 
   @Override
-  public JSONObject payTransferRequest(Map<String, String> params) {
+  public JSONObject payTransferRequest(Map<String, String> params, String accessToken) {
     log.info(
         "페이플 이체 대기 요청 시작 - 빌링키: {}, 이체금액: {}",
         maskSensitiveData(params.get("billing_tran_id")),
         params.get("tran_amt"));
 
     try {
-      HttpResponse response = executeTransferRequest(params);
+      HttpResponse response = executeTransferRequest(params, accessToken);
       return parseAndValidateResponse(response);
 
     } catch (HttpClientException e) {
@@ -435,7 +435,7 @@ public class PaypleServiceV2 implements PaypleService {
     return httpClient.post(httpRequest);
   }
 
-  private HttpResponse executeTransferRequest(Map<String, String> params)
+  private HttpResponse executeTransferRequest(Map<String, String> params, String accessToken)
       throws HttpClientException {
     JSONObject requestBody = new JSONObject();
     requestBody.put("cst_id", params.get("cst_id"));
@@ -463,6 +463,7 @@ public class PaypleServiceV2 implements PaypleService {
     String transferRequestUrl = paypleConfig.getPendingTransferRequestUrl();
 
     Map<String, String> headers = new HashMap<>();
+    headers.put("Authorization", "Bearer " + accessToken);
     headers.put("content-type", "application/json");
     headers.put("charset", "UTF-8");
     headers.put("referer", paypleConfig.getRefererUrl());

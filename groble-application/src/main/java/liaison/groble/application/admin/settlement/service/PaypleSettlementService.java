@@ -141,18 +141,19 @@ public class PaypleSettlementService {
    * @param tranAmt 이체 금액
    * @param subId 하위 셀러 ID (선택)
    * @param printContent 거래 내역 표시 문구 (선택)
+   * @param accessToken 파트너 인증으로 받은 액세스 토큰
    * @return 이체 대기 요청 결과
    */
   @Retryable(value = PaypleApiException.class, maxAttempts = 2, backoff = @Backoff(delay = 1000))
   public JSONObject requestTransfer(
-      String billingTranId, String tranAmt, String subId, String printContent) {
+      String billingTranId, String tranAmt, String subId, String printContent, String accessToken) {
     log.info("페이플 이체 대기 요청 - 빌링키: {}, 금액: {}", maskBillingKey(billingTranId), tranAmt);
 
     try {
       Map<String, String> params = buildTransferParams(billingTranId, tranAmt, subId, printContent);
 
-      // 페이플 이체 대기 요청 API 호출
-      JSONObject result = paypleService.payTransferRequest(params);
+      // 페이플 이체 대기 요청 API 호출 (액세스 토큰 전달)
+      JSONObject result = paypleService.payTransferRequest(params, accessToken);
 
       log.info("페이플 이체 대기 요청 완료");
       return result;

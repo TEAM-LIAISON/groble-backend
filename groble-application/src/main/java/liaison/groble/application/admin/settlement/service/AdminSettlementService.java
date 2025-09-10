@@ -315,7 +315,8 @@ public class AdminSettlementService {
                 billingTranId,
                 "1000", // 테스트 시 1000원 고정
                 null, // sub_id
-                "정산" // 거래 내역 표시 문구
+                "정산", // 거래 내역 표시 문구
+                authResult.getAccessToken() // 액세스 토큰 전달
                 );
 
         // 첫 번째 이체 대기 요청에서 group_key 추출

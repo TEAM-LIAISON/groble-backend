@@ -28,7 +28,7 @@ public interface PaypleService {
   JSONObject payAccountVerification(Map<String, String> params, String accessToken);
 
   /** 정산지급대행 이체 대기 요청 API */
-  JSONObject payTransferRequest(Map<String, String> params);
+  JSONObject payTransferRequest(Map<String, String> params, String accessToken);
 
   /** 정산지급대행 이체 실행 요청 API */
   JSONObject payTransferExecute(Map<String, String> params, String accessToken);
