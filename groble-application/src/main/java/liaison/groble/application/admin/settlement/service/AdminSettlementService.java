@@ -307,13 +307,25 @@ public class AdminSettlementService {
       String billingTranId =
           getOrCreateBillingTranId(validItems.get(0), authResult.getAccessToken());
 
-      // 4. 각 정산 항목에 대해 이체 대기 요청 (테스트용 1000원 고정)
+      // 3. 각 정산 항목에 대해 이체 대기 요청
       String groupKey = null;
       for (SettlementItem item : validItems) {
+        // 환경에 따른 이체 금액 결정
+        String transferAmount =
+            paypleConfig.isTestMode()
+                ? paypleConfig.getTestTransferAmount() // 테스트: 설정값 (기본 1000원)
+                : String.valueOf(item.getSettlementAmount().intValue()); // 운영: 실제 정산 금액
+
+        log.info(
+            "정산 항목 {} 이체 대기 요청 - 금액: {}원 (테스트모드: {})",
+            item.getId(),
+            transferAmount,
+            paypleConfig.isTestMode());
+
         JSONObject transferResult =
             paypleSettlementService.requestTransfer(
                 billingTranId,
-                "1000", // 테스트 시 1000원 고정
+                transferAmount,
                 null, // sub_id
                 "정산", // 거래 내역 표시 문구
                 authResult.getAccessToken() // 액세스 토큰 전달
