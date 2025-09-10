@@ -327,7 +327,6 @@ public class AdminSettlementService {
                 billingTranId,
                 transferAmount,
                 null, // sub_id
-                "정산", // 거래 내역 표시 문구
                 authResult.getAccessToken() // 액세스 토큰 전달
                 );
 
