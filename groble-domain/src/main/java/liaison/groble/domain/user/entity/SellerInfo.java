@@ -119,6 +119,14 @@ public class SellerInfo {
   @Column(name = "copy_of_bankbook_url", columnDefinition = "TEXT")
   private String copyOfBankbookUrl;
 
+  /** 생년월일 6자리 (YYMMDD) */
+  @Column(name = "birth_date", length = 6)
+  private String birthDate;
+
+  /** 사업자등록번호 */
+  @Column(name = "business_number")
+  private String businessNumber;
+
   // 사업자 메이커 인증 요청 여부 확인
   public boolean isBusinessMakerVerificationRequested() {
     return businessLicenseFileUrl != null && !businessLicenseFileUrl.isBlank();
@@ -170,6 +178,12 @@ public class SellerInfo {
     if (updatedInfo.getCopyOfBankbookUrl() != null) {
       this.copyOfBankbookUrl = updatedInfo.getCopyOfBankbookUrl();
     }
+    if (updatedInfo.getBirthDate() != null) {
+      this.birthDate = updatedInfo.getBirthDate();
+    }
+    if (updatedInfo.getBusinessNumber() != null) {
+      this.businessNumber = updatedInfo.getBusinessNumber();
+    }
   }
 
   /**
@@ -211,6 +225,8 @@ public class SellerInfo {
     this.bankName = null;
     this.bankAccountNumber = null;
     this.bankAccountOwner = null;
+    this.birthDate = null;
+    this.businessNumber = null;
   }
 
   /**

@@ -91,6 +91,11 @@ public class MarketReferrerStats {
     this.visitCount++;
   }
 
+  // 방문 카운트 통합 메서드
+  public void consolidateVisitCount(int additionalVisits) {
+    this.visitCount += additionalVisits;
+  }
+
   public void parseReferrerUrl() {
     if (this.referrerUrl == null || this.referrerUrl.isEmpty()) {
       this.referrerDomain = "(direct)";
