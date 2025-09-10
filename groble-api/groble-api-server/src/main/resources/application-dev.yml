@@ -175,7 +175,7 @@ logging:
 # OpenTelemetry 설정 활성화
 otel:
   service:
-    name: "groble-api"
+    name: "groble-dev-api"
     version: "1.0.0"
   exporter:
     otlp:
@@ -187,7 +187,7 @@ otel:
       compression: "gzip"
   resource:
     attributes:
-      service.name: "groble-api"
+      service.name: "groble-dev-api"
       service.version: "1.0.0"
       environment: "development"
       deployment.environment: "dev"
