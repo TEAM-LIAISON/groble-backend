@@ -100,9 +100,7 @@ public class PaymentService {
     // 이미 취소 요청된 경우 - 중복 요청 예외 처리
     if (order.getStatus() == Order.OrderStatus.CANCEL_REQUEST) {
       throw new DuplicateCancelRequestException(
-          "이미 취소 요청이 진행 중입니다. 중복 요청은 처리할 수 없습니다.",
-          String.valueOf(order.getId()),
-          order.getStatus().toString());
+          "결제 취소 요청이 아마 완료된 콘텐츠입니다", String.valueOf(order.getId()), order.getStatus().toString());
     }
 
     // 결제 완료 상태가 아닌 경우
