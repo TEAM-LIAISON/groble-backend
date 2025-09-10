@@ -180,22 +180,43 @@ logging:
     javax.mail: WARN                               # JavaMail 로그 축약
   file:
     path: ${user.dir}/logs
-# OpenTelemetry 설정 비활성화 (운영)
+
+# OpenTelemetry 설정 활성화
+otel:
+  service:
+    name: "groble-prod-api"
+    version: "1.0.0"
+  exporter:
+    otlp:
+      # OTLP HTTP 엔드포인트 (gRPC는 4317, HTTP는 4318)
+      endpoint: "http://10.0.1.229:4318"
+      # 프로토콜 변경 시도
+      protocol: "http/protobuf"
+      timeout: "30s"
+      compression: "gzip"
+  resource:
+    attributes:
+      service.name: "groble-prod-api"
+      service.version: "1.0.0"
+      environment: "production"
+      deployment.environment: "prod"
+  #  traces:
+  #    exporter: otlp
+  #    sampler:
+  #      probability: 0.1
+  metrics:
+    exporter: otlp
+  logs:
+    exporter: otlp
+  sdk:
+    disabled: false  # 명시적으로 활성화
+
+# Management 설정 정리
 management:
   tracing:
-    enabled: false                            # 트레이싱 비활성화
+    enabled: true     # 트레이싱 활성화로 변경
     sampling:
-      probability: 0.0                        # 샘플링 0%
-  metrics:
-    export:
-      otlp:
-        enabled: false                        # OTLP 메트릭 비활성화
-  otlp:
-    metrics:
-      export:
-        enabled: false                        # 메트릭 export 비활성화
-    tracing:
-      enabled: false                          # 트레이싱 비활성화
+      probability: 0.1  # otel 설정과 동일하게
   endpoints:
     web:
       exposure:
@@ -205,26 +226,17 @@ management:
     health:
       show-details: always
     prometheus:
-      enabled: true                           # Prometheus는 유지 (모니터링용)
+      enabled: true
     metrics:
       enabled: true
-      export:
-        prometheus:
-          enabled: true
-      distribution:
-        percentiles-histogram:
-          http.server.requests: true
-      tags:
-        application: ${spring.application.name}
-        environment: ${server.env}
-
-# OpenTelemetry 완전 비활성화
-otel:
-  sdk:
-    disabled: true                            # SDK 자체 비활성화
-  traces:
-    exporter: none                            # 트레이스 내보내지 않음
   metrics:
-    exporter: none                            # 메트릭 내보내지 않음
-  logs:
-    exporter: none                            # 로그 내보내지 않음
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+    tags:
+      application: ${spring.application.name}
+      environment: ${server.env}
+  prometheus:
+    metrics:
+      export:
+        enabled: true

@@ -18,6 +18,7 @@ import liaison.groble.api.model.admin.settlement.response.AdminSettlementDetailR
 import liaison.groble.api.model.admin.settlement.response.AdminSettlementsOverviewResponse;
 import liaison.groble.api.model.admin.settlement.response.PerTransactionAdminSettlementOverviewResponse;
 import liaison.groble.api.model.admin.settlement.response.SettlementApprovalResponse;
+import liaison.groble.api.server.admin.docs.AdminSettlementApiResponses;
 import liaison.groble.api.server.admin.docs.AdminSettlementExampleResponses;
 import liaison.groble.api.server.admin.docs.AdminSettlementSwaggerDocs;
 import liaison.groble.api.server.common.ApiPaths;
@@ -174,15 +175,18 @@ public class AdminSettlementController extends BaseController {
    * @param request 정산 승인 요청
    * @return 정산 승인 및 실행 결과
    */
+  @RequireRole("ROLE_ADMIN")
+  @Logging(
+      item = "AdminSettlement",
+      action = "approveSettlements",
+      includeParam = true,
+      includeResult = true)
+  @AdminSettlementApiResponses.SettlementApprovalApiResponses
   @PostMapping(ApiPaths.Admin.APPROVE_SETTLEMENTS)
-  @AdminSettlementSwaggerDocs.ApproveSettlements
   public ResponseEntity<GrobleResponse<SettlementApprovalResponse>> approveSettlements(
       @Valid @RequestBody SettlementApprovalRequest request) {
 
-    log.info(
-        "정산 승인 및 실행 요청 - 정산 수: {}, 관리자: {}",
-        request.getSettlementIds().size(),
-        request.getAdminUserId());
+    log.info("정산 승인 및 실행 요청 - 정산 수: {}", request.getSettlementIds().size());
 
     // 1. API 요청을 Application DTO로 변환
     SettlementApprovalRequestDTO requestDTO = adminSettlementMapper.toRequestDTO(request);

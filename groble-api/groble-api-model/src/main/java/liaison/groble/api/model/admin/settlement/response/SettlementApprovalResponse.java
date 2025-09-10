@@ -4,6 +4,8 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -35,6 +37,7 @@ public class SettlementApprovalResponse {
   private BigDecimal totalApprovedAmount;
 
   @Schema(description = "승인 처리 시각")
+  @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
   private LocalDateTime approvedAt;
 
   @Schema(description = "페이플 정산 요청 결과")

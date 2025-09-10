@@ -111,17 +111,15 @@ public class AdminSettlementService {
   public SettlementApprovalDTO approveAndExecuteSettlements(
       SettlementApprovalRequestDTO requestDTO) {
 
-    log.info(
-        "정산 승인 및 실행 처리 시작 - 정산 수: {}, 관리자: {}",
-        requestDTO.getSettlementIds().size(),
-        requestDTO.getAdminUserId());
+    log.info("정산 승인 및 실행 처리 시작 - 정산 수: {}", requestDTO.getSettlementIds().size());
 
     // 1. 정산 조회 및 검증
     List<Settlement> settlements = validateAndRetrieveSettlements(requestDTO.getSettlementIds());
 
-    // 2. 정산들 승인 처리
+    // 2. 정산들 사전 검증 (실제 승인은 페이플 성공 후)
     List<FailedSettlementDTO> failedSettlements = new ArrayList<>();
-    List<Settlement> approvedSettlements = new ArrayList<>();
+    List<Settlement> validSettlements = new ArrayList<>();
+    List<ApprovalResult> approvalResults = new ArrayList<>();
 
     int totalApprovedItemCount = 0;
     int totalExcludedRefundedItemCount = 0;
@@ -129,17 +127,16 @@ public class AdminSettlementService {
 
     for (Settlement settlement : settlements) {
       try {
-        ApprovalResult result =
-            approveSettlement(
-                settlement, requestDTO.getAdminUserId(), requestDTO.getApprovalReason());
+        ApprovalResult result = validateSettlementForApproval(settlement);
 
-        approvedSettlements.add(settlement);
+        validSettlements.add(settlement);
+        approvalResults.add(result);
         totalApprovedItemCount += result.getApprovedItemCount();
         totalExcludedRefundedItemCount += result.getExcludedRefundedItemCount();
         totalApprovedAmount = totalApprovedAmount.add(result.getApprovedAmount());
 
       } catch (Exception e) {
-        log.error("정산 승인 실패 - ID: {}", settlement.getId(), e);
+        log.error("정산 검증 실패 - ID: {}", settlement.getId(), e);
         failedSettlements.add(
             FailedSettlementDTO.builder()
                 .settlementId(settlement.getId())
@@ -148,19 +145,44 @@ public class AdminSettlementService {
       }
     }
 
-    // 3. 페이플 정산 실행 - 승인된 정산의 정상 항목들에 대해 자동 실행
+    // 3. 페이플 정산 실행 먼저 시도
     PaypleSettlementResultDTO paypleResult = null;
-    if (!approvedSettlements.isEmpty()) {
-      List<SettlementItem> validItemsForPayple = extractValidItemsForPayple(approvedSettlements);
+    int actualApprovedSettlementCount = 0;
+
+    if (!validSettlements.isEmpty()) {
+      List<SettlementItem> validItemsForPayple = extractValidItemsForPayple(validSettlements);
       if (!validItemsForPayple.isEmpty()) {
         paypleResult = executePaypleGroupSettlementImmediately(validItemsForPayple);
+
+        // 4. 페이플 정산 성공 시에만 DB 상태를 COMPLETED로 변경
+        if (paypleResult != null && paypleResult.isSuccess()) {
+          for (Settlement settlement : validSettlements) {
+            settlement.approve();
+            actualApprovedSettlementCount++;
+            log.info("정산 최종 승인 완료 - ID: {}", settlement.getId());
+          }
+        } else {
+          log.error("페이플 정산 실패로 인한 정산 승인 취소 - 정산 수: {}", validSettlements.size());
+          // 페이플 실패 시 검증된 정산들을 실패 목록에 추가
+          for (Settlement settlement : validSettlements) {
+            failedSettlements.add(
+                FailedSettlementDTO.builder()
+                    .settlementId(settlement.getId())
+                    .failureReason("페이플 정산 실행 실패")
+                    .build());
+          }
+          // 성공 카운트들을 0으로 재설정
+          totalApprovedItemCount = 0;
+          totalExcludedRefundedItemCount = 0;
+          totalApprovedAmount = BigDecimal.ZERO;
+        }
       }
     }
 
-    // 4. 결과 반환
+    // 5. 결과 반환
     return SettlementApprovalDTO.builder()
         .success(failedSettlements.isEmpty())
-        .approvedSettlementCount(approvedSettlements.size())
+        .approvedSettlementCount(actualApprovedSettlementCount)
         .approvedItemCount(totalApprovedItemCount)
         .totalApprovedAmount(totalApprovedAmount)
         .approvedAt(LocalDateTime.now())
@@ -186,9 +208,44 @@ public class AdminSettlementService {
     return settlements;
   }
 
+  /** 정산 승인 가능 여부 검증 (실제 승인은 하지 않음) */
+  private ApprovalResult validateSettlementForApproval(Settlement settlement) {
+    if (settlement.getStatus() == Settlement.SettlementStatus.COMPLETED) {
+      throw new IllegalStateException("이미 완료된 정산입니다: " + settlement.getId());
+    }
+
+    // 환불되지 않은 정산 항목들만 계산
+    List<SettlementItem> validItems =
+        settlement.getSettlementItems().stream()
+            .filter(item -> !item.isRefundedSafe())
+            .collect(Collectors.toList());
+
+    List<SettlementItem> refundedItems =
+        settlement.getSettlementItems().stream()
+            .filter(SettlementItem::isRefundedSafe)
+            .collect(Collectors.toList());
+
+    if (validItems.isEmpty()) {
+      throw new IllegalStateException("정산 가능한 항목이 없습니다: " + settlement.getId());
+    }
+
+    BigDecimal approvedAmount =
+        validItems.stream()
+            .map(SettlementItem::getSettlementAmount)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+    log.info(
+        "정산 검증 완료 - ID: {}, 정상 항목: {}개, 환불 제외 항목: {}개, 승인 예정 금액: {}",
+        settlement.getId(),
+        validItems.size(),
+        refundedItems.size(),
+        approvedAmount);
+
+    return new ApprovalResult(validItems.size(), refundedItems.size(), approvedAmount);
+  }
+
   /** 개별 정산 승인 처리 */
-  private ApprovalResult approveSettlement(
-      Settlement settlement, Long adminUserId, String approvalReason) {
+  private ApprovalResult approveSettlement(Settlement settlement) {
     if (settlement.getStatus() == Settlement.SettlementStatus.COMPLETED) {
       throw new IllegalStateException("이미 완료된 정산입니다: " + settlement.getId());
     }
@@ -210,7 +267,7 @@ public class AdminSettlementService {
             .reduce(BigDecimal.ZERO, BigDecimal::add);
 
     // Settlement 상태를 승인으로 변경
-    settlement.approve(adminUserId, approvalReason);
+    settlement.approve();
 
     log.info(
         "정산 승인 완료 - ID: {}, 정상 항목: {}개, 환불 제외 항목: {}개, 승인 금액: {}",
