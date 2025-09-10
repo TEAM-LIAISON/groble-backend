@@ -213,7 +213,10 @@ public class Settlement extends BaseTimeEntity {
       BigDecimal vatRate,
       SettlementType settlementType,
       SettlementCycle settlementCycle,
-      Integer settlementRound) {
+      Integer settlementRound,
+      String bankName,
+      String accountNumber,
+      String accountHolder) {
     // 입력 검증
     if (user == null) {
       throw new IllegalArgumentException("사용자는 필수입니다.");
@@ -242,6 +245,10 @@ public class Settlement extends BaseTimeEntity {
     // 정산 예정일 계산 로직 변경 - 필드들이 초기화된 후에 계산
     this.scheduledSettlementDate =
         calculateScheduledDate(this.settlementEndDate, this.settlementType, this.settlementRound);
+
+    this.bankName = bankName;
+    this.accountNumber = accountNumber;
+    this.accountHolder = accountHolder;
   }
 
   // === 비즈니스 메서드 ===
