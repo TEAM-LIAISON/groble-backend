@@ -1,5 +1,6 @@
 package liaison.groble.persistence.dashboard;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Repository;
@@ -20,10 +21,23 @@ public class MarketReferrerStatsRepositoryImpl implements MarketReferrerStatsRep
   }
 
   @Override
+  public void delete(MarketReferrerStats marketReferrerStats) {
+    jpaMarketReferrerStatsRepository.delete(marketReferrerStats);
+  }
+
+  @Override
   public Optional<MarketReferrerStats> findByMarketIdAndReferrerDomainAndSourceAndMediumAndCampaign(
       Long marketId, String referrerDomain, String source, String medium, String campaign) {
     return jpaMarketReferrerStatsRepository
         .findByMarketIdAndReferrerDomainAndSourceAndMediumAndCampaign(
+            marketId, referrerDomain, source, medium, campaign);
+  }
+
+  @Override
+  public List<MarketReferrerStats> findAllByMarketIdAndReferrerDomainAndSourceAndMediumAndCampaign(
+      Long marketId, String referrerDomain, String source, String medium, String campaign) {
+    return jpaMarketReferrerStatsRepository
+        .findAllByMarketIdAndReferrerDomainAndSourceAndMediumAndCampaign(
             marketId, referrerDomain, source, medium, campaign);
   }
 }
