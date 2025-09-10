@@ -316,4 +316,16 @@ public class SettlementItem extends BaseTimeEntity {
         .filter(inv -> inv.getStatus() == TaxInvoice.InvoiceStatus.ISSUED)
         .max(Comparator.comparing(TaxInvoice::getIssuedDate));
   }
+
+  /** 이체 성공 처리 */
+  public void completeSettlement() {
+    // 필요하다면 상태 필드 추가 가능
+    // 현재는 Settlement 레벨에서 관리
+  }
+
+  /** 이체 실패 처리 */
+  public void failSettlement() {
+    // 필요하다면 상태 필드 추가 가능
+    // 현재는 Settlement 레벨에서 관리
+  }
 }

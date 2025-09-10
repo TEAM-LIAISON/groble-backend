@@ -155,19 +155,26 @@ public class AdminSettlementService {
     if (!validSettlements.isEmpty()) {
       List<SettlementItem> validItemsForPayple = extractValidItemsForPayple(validSettlements);
       if (!validItemsForPayple.isEmpty()) {
+        // 페이플 이체 실행 전 정산들을 처리중 상태로 변경
+        for (Settlement settlement : validSettlements) {
+          settlement.startProcessing();
+          log.info("정산 {} 처리 시작 - 상태: PROCESSING", settlement.getId());
+        }
+
         paypleResult = executePaypleGroupSettlementImmediately(validItemsForPayple);
 
         // 4. 페이플 정산 성공 시에만 DB 상태를 COMPLETED로 변경
         if (paypleResult != null && paypleResult.isSuccess()) {
           for (Settlement settlement : validSettlements) {
-            settlement.approve();
+            settlement.completeSettlement(); // 웹훅에서도 호출되지만 즉시 실행이므로 여기서 완료 처리
             actualApprovedSettlementCount++;
             log.info("정산 최종 승인 완료 - ID: {}", settlement.getId());
           }
         } else {
           log.error("페이플 정산 실패로 인한 정산 승인 취소 - 정산 수: {}", validSettlements.size());
-          // 페이플 실패 시 검증된 정산들을 실패 목록에 추가
+          // 페이플 실패 시 검증된 정산들을 실패 처리
           for (Settlement settlement : validSettlements) {
+            settlement.failSettlement(); // 보류 상태로 변경
             failedSettlements.add(
                 FailedSettlementDTO.builder()
                     .settlementId(settlement.getId())
@@ -324,10 +331,7 @@ public class AdminSettlementService {
 
         JSONObject transferResult =
             paypleSettlementService.requestTransfer(
-                billingTranId,
-                transferAmount,
-                null, // sub_id
-                authResult.getAccessToken() // 액세스 토큰 전달
+                billingTranId, transferAmount, authResult.getAccessToken() // 액세스 토큰 전달
                 );
 
         String result = getStringValue(transferResult, "result");
@@ -355,7 +359,7 @@ public class AdminSettlementService {
               groupKey,
               "ALL", // 그룹의 모든 이체 대기 건 실행
               authResult.getAccessToken(),
-              "http://your-test-domain.com" // 테스트 웹훅 URL
+              paypleConfig.getWebhookUrl() // 환경별 웹훅 URL
               );
 
       String executeResultCode = getStringValue(executeResult, "result");

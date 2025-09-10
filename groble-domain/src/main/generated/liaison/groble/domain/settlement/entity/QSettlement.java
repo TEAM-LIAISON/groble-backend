@@ -41,11 +41,15 @@ public class QSettlement extends EntityPathBase<Settlement> {
 
     public final StringPath paypleApiTranDtm = createString("paypleApiTranDtm");
 
+    public final StringPath paypleApiTranId = createString("paypleApiTranId");
+
     public final StringPath paypleBankCodeStd = createString("paypleBankCodeStd");
 
     public final StringPath paypleBankCodeSub = createString("paypleBankCodeSub");
 
     public final StringPath paypleBankRspCode = createString("paypleBankRspCode");
+
+    public final StringPath paypleBankRspMsg = createString("paypleBankRspMsg");
 
     public final StringPath paypleBankTranDate = createString("paypleBankTranDate");
 

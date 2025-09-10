@@ -92,4 +92,11 @@ public class PaypleConfig {
         ? "https://demohub.payple.kr/transfer/execute"
         : "https://hub.payple.kr/transfer/execute";
   }
+
+  // 웹훅 URL 설정
+  public String getWebhookUrl() {
+    return testMode
+        ? "https://api.dev.groble.im/api/webhooks/payple/transfer-result"
+        : "https://api.groble.im/api/webhooks/payple/transfer-result";
+  }
 }

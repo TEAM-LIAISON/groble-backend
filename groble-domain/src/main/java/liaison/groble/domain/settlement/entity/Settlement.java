@@ -34,7 +34,9 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Entity
 @Table(
     name = "settlements",
@@ -190,6 +192,13 @@ public class Settlement extends BaseTimeEntity {
 
   @Column(name = "payple_account_verification_at")
   private LocalDateTime paypleAccountVerificationAt; // 계좌 인증 완료 시간
+
+  // 페이플 이체 결과 정보
+  @Column(name = "payple_api_tran_id", length = 100)
+  private String paypleApiTranId; // 페이플 API 거래 ID (이체 실행 시 업데이트)
+
+  @Column(name = "payple_bank_rsp_msg", length = 500)
+  private String paypleBankRspMsg; // 은행 응답 메시지
 
   // 동시성 제어를 위한 버전
   @Version private Long version;
@@ -530,6 +539,57 @@ public class Settlement extends BaseTimeEntity {
       this.endDate = endDate;
       this.round = round;
     }
+  }
+
+  /** 이체 성공 처리 */
+  public void completeSettlement() {
+    if (this.status == SettlementStatus.PENDING || this.status == SettlementStatus.PROCESSING) {
+      this.status = SettlementStatus.COMPLETED;
+      this.settledAt = LocalDateTime.now();
+    }
+  }
+
+  /** 이체 실패 처리 */
+  public void failSettlement() {
+    if (this.status == SettlementStatus.PROCESSING) {
+      this.status = SettlementStatus.ON_HOLD; // 실패 시 보류 상태로 변경
+      this.settlementNote = "페이플 이체 실패로 인한 보류";
+    }
+  }
+
+  /** 페이플 이체 결과 정보 업데이트 */
+  public void updatePaypleTransferResult(
+      String apiTranId,
+      String apiTranDtm,
+      String bankTranId,
+      String bankTranDate,
+      String bankRspCode,
+      String bankRspMsg) {
+
+    this.paypleApiTranId = apiTranId;
+    // paypleApiTranDtm은 기존 필드 재사용 (계좌 인증 시 설정됨, 이체 시 업데이트)
+    if (apiTranDtm != null) {
+      this.paypleApiTranDtm = apiTranDtm;
+    }
+
+    // 은행 거래 정보는 기존 계좌 인증 필드 재사용 (이체 시 업데이트)
+    if (bankTranId != null) {
+      this.paypleBankTranId = bankTranId;
+    }
+    if (bankTranDate != null) {
+      this.paypleBankTranDate = bankTranDate;
+    }
+    if (bankRspCode != null) {
+      this.paypleBankRspCode = bankRspCode;
+    }
+
+    // 새로 추가된 은행 응답 메시지
+    this.paypleBankRspMsg = bankRspMsg;
+
+    log.info(
+        "정산 {} 페이플 이체 결과 업데이트 완료 - API거래ID: {}",
+        this.id,
+        apiTranId != null && apiTranId.length() > 8 ? apiTranId.substring(0, 8) + "****" : "****");
   }
 
   /** 정산 예정일 계산 - 타입별로 다르게 */

@@ -139,17 +139,15 @@ public class PaypleSettlementService {
    *
    * @param billingTranId 계좌 인증으로 받은 빌링키
    * @param tranAmt 이체 금액
-   * @param subId 하위 셀러 ID (선택)
    * @param accessToken 파트너 인증으로 받은 액세스 토큰
    * @return 이체 대기 요청 결과
    */
   @Retryable(value = PaypleApiException.class, maxAttempts = 2, backoff = @Backoff(delay = 1000))
-  public JSONObject requestTransfer(
-      String billingTranId, String tranAmt, String subId, String accessToken) {
+  public JSONObject requestTransfer(String billingTranId, String tranAmt, String accessToken) {
     log.info("페이플 이체 대기 요청 - 빌링키: {}, 금액: {}", maskBillingKey(billingTranId), tranAmt);
 
     try {
-      Map<String, String> params = buildTransferParams(billingTranId, tranAmt, subId);
+      Map<String, String> params = buildTransferParams(billingTranId, tranAmt);
 
       // 페이플 이체 대기 요청 API 호출 (액세스 토큰 전달)
       JSONObject result = paypleService.payTransferRequest(params, accessToken);
@@ -280,17 +278,12 @@ public class PaypleSettlementService {
   }
 
   /** 이체 대기 요청 파라미터 빌드 */
-  private Map<String, String> buildTransferParams(
-      String billingTranId, String tranAmt, String subId) {
+  private Map<String, String> buildTransferParams(String billingTranId, String tranAmt) {
     Map<String, String> params = new HashMap<>();
     params.put("cst_id", paypleConfig.getCstId());
     params.put("custKey", paypleConfig.getCustKey());
     params.put("billing_tran_id", billingTranId);
     params.put("tran_amt", tranAmt);
-
-    if (subId != null && !subId.trim().isEmpty()) {
-      params.put("sub_id", subId);
-    }
 
     // 중복 이체 방지를 위한 고유 키 생성 (UUID 기반)
     String distinctKey = generateDistinctKey();
