@@ -25,7 +25,7 @@ public interface PaypleService {
   JSONObject paySimplePayment(Map<String, String> params);
 
   /** 정산지급대행 계좌 검증 API */
-  JSONObject payAccountVerification(Map<String, String> params);
+  JSONObject payAccountVerification(Map<String, String> params, String accessToken);
 
   /** 정산지급대행 이체 대기 요청 API */
   JSONObject payTransferRequest(Map<String, String> params);

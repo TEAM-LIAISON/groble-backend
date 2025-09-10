@@ -37,6 +37,22 @@ public class QSettlement extends EntityPathBase<Settlement> {
 
     public final NumberPath<Long> id = createNumber("id", Long.class);
 
+    public final DateTimePath<java.time.LocalDateTime> paypleAccountVerificationAt = createDateTime("paypleAccountVerificationAt", java.time.LocalDateTime.class);
+
+    public final StringPath paypleApiTranDtm = createString("paypleApiTranDtm");
+
+    public final StringPath paypleBankCodeStd = createString("paypleBankCodeStd");
+
+    public final StringPath paypleBankCodeSub = createString("paypleBankCodeSub");
+
+    public final StringPath paypleBankRspCode = createString("paypleBankRspCode");
+
+    public final StringPath paypleBankTranDate = createString("paypleBankTranDate");
+
+    public final StringPath paypleBankTranId = createString("paypleBankTranId");
+
+    public final StringPath paypleBillingTranId = createString("paypleBillingTranId");
+
     public final NumberPath<java.math.BigDecimal> pgFee = createNumber("pgFee", java.math.BigDecimal.class);
 
     public final NumberPath<java.math.BigDecimal> pgFeeRate = createNumber("pgFeeRate", java.math.BigDecimal.class);

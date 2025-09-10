@@ -303,18 +303,9 @@ public class AdminSettlementService {
         throw new PaypleApiException("페이플 파트너 인증 실패: " + authResult.getMessage());
       }
 
-      // 2. 계좌 인증 (첫 번째 정산 항목의 사용자 SellerInfo에서 계좌 정보 가져오기)
-      PaypleAccountVerificationRequest accountRequest =
-          buildAccountVerificationRequest(validItems.get(0));
-      JSONObject accountResult =
-          paypleSettlementService.requestAccountVerification(
-              accountRequest, authResult.getAccessToken());
-
-      // 3. 계좌 인증 성공 시 빌링키 추출
-      String billingTranId = extractBillingTranId(accountResult);
-      if (billingTranId == null) {
-        throw new PaypleApiException("계좌 인증에서 빌링키를 가져올 수 없습니다");
-      }
+      // 2. 빌링키 확보 (저장된 정보 우선 사용, 없으면 새로 계좌 인증)
+      String billingTranId =
+          getOrCreateBillingTranId(validItems.get(0), authResult.getAccessToken());
 
       // 4. 각 정산 항목에 대해 이체 대기 요청 (테스트용 1000원 고정)
       String groupKey = null;
@@ -423,6 +414,52 @@ public class AdminSettlementService {
         .accountHolderInfo(accountHolderInfo) // SellerInfo 상태에 따라 생년월일, "0", 또는 사업자등록번호
         .subId("groble_sub_" + userId) // 사용자별 고유한 subId 생성
         .build();
+  }
+
+  /**
+   * 빌링키 확보 - 저장된 정보 우선 사용, 없으면 새로 계좌 인증
+   *
+   * @param settlementItem 정산 항목 (사용자 정보를 위해)
+   * @param accessToken 페이플 액세스 토큰
+   * @return 빌링 거래 ID
+   */
+  private String getOrCreateBillingTranId(SettlementItem settlementItem, String accessToken) {
+    Settlement settlement = settlementItem.getSettlement();
+
+    // 1. 이미 저장된 빌링키가 있는지 확인
+    if (settlement.isPaypleAccountVerified()) {
+      log.info(
+          "저장된 페이플 빌링키 사용 - Settlement ID: {}, billing_tran_id: {}",
+          settlement.getId(),
+          maskSensitiveData(settlement.getPaypleBillingTranId()));
+
+      return settlement.getPaypleBillingTranId();
+    }
+
+    // 2. 저장된 빌링키가 없으면 새로 계좌 인증 수행
+    log.info("저장된 빌링키가 없어 새로 계좌 인증 수행 - Settlement ID: {}", settlement.getId());
+
+    try {
+      PaypleAccountVerificationRequest accountRequest =
+          buildAccountVerificationRequest(settlementItem);
+      JSONObject accountResult =
+          paypleSettlementService.requestAccountVerification(accountRequest, accessToken);
+
+      // 3. 계좌 인증 성공 시 결과를 Settlement에 저장
+      paypleSettlementService.saveAccountVerificationResult(settlement, accountResult);
+
+      // 4. 빌링키 추출
+      String billingTranId = extractBillingTranId(accountResult);
+      if (billingTranId == null) {
+        throw new PaypleApiException("계좌 인증에서 빌링키를 가져올 수 없습니다");
+      }
+
+      return billingTranId;
+
+    } catch (Exception e) {
+      log.error("빌링키 확보 실패 - Settlement ID: {}", settlement.getId(), e);
+      throw new PaypleApiException("빌링키 확보 실패", e);
+    }
   }
 
   /**

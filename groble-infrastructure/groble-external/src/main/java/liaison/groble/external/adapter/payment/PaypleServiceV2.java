@@ -181,14 +181,14 @@ public class PaypleServiceV2 implements PaypleService {
   }
 
   @Override
-  public JSONObject payAccountVerification(Map<String, String> params) {
+  public JSONObject payAccountVerification(Map<String, String> params, String accessToken) {
     log.info(
         "페이플 계좌 검증 요청 시작 - 계좌번호: {}, 은행코드: {}",
         maskAccountNumber(params.get("account_num")),
         params.get("bank_code_std"));
 
     try {
-      HttpResponse response = executeAccountVerificationRequest(params);
+      HttpResponse response = executeAccountVerificationRequest(params, accessToken);
       return parseAndValidateResponse(response);
 
     } catch (HttpClientException e) {
@@ -405,8 +405,8 @@ public class PaypleServiceV2 implements PaypleService {
     return httpClient.post(httpRequest);
   }
 
-  private HttpResponse executeAccountVerificationRequest(Map<String, String> params)
-      throws HttpClientException {
+  private HttpResponse executeAccountVerificationRequest(
+      Map<String, String> params, String accessToken) throws HttpClientException {
     JSONObject requestBody = new JSONObject();
     requestBody.put("cst_id", params.get("cst_id"));
     requestBody.put("custKey", params.get("custKey"));
@@ -425,6 +425,7 @@ public class PaypleServiceV2 implements PaypleService {
     String accountVerificationUrl = paypleConfig.getAccountVerificationUrl();
 
     Map<String, String> headers = new HashMap<>();
+    headers.put("Authorization", "Bearer " + accessToken);
     headers.put("content-type", "application/json");
     headers.put("charset", "UTF-8");
     headers.put("referer", paypleConfig.getRefererUrl());

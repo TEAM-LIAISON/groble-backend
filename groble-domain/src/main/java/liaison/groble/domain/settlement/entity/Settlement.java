@@ -166,6 +166,31 @@ public class Settlement extends BaseTimeEntity {
   @Column(name = "account_holder", length = 100)
   private String accountHolder;
 
+  // 페이플 계좌 인증 결과 정보
+  @Column(name = "payple_billing_tran_id", length = 100)
+  private String paypleBillingTranId; // 페이플 빌링 거래 ID (정산 처리시 필수)
+
+  @Column(name = "payple_api_tran_dtm", length = 20)
+  private String paypleApiTranDtm; // API 거래 일시
+
+  @Column(name = "payple_bank_tran_id", length = 100)
+  private String paypleBankTranId; // 페이플 은행 거래 ID
+
+  @Column(name = "payple_bank_tran_date", length = 10)
+  private String paypleBankTranDate; // 은행 거래 날짜
+
+  @Column(name = "payple_bank_rsp_code", length = 10)
+  private String paypleBankRspCode; // 은행 응답 코드
+
+  @Column(name = "payple_bank_code_std", length = 10)
+  private String paypleBankCodeStd; // 표준 은행 코드
+
+  @Column(name = "payple_bank_code_sub", length = 10)
+  private String paypleBankCodeSub; // 세부 은행 코드
+
+  @Column(name = "payple_account_verification_at")
+  private LocalDateTime paypleAccountVerificationAt; // 계좌 인증 완료 시간
+
   // 동시성 제어를 위한 버전
   @Version private Long version;
 
@@ -316,6 +341,36 @@ public class Settlement extends BaseTimeEntity {
     this.bankName = bankName;
     this.accountNumber = accountNumber;
     this.accountHolder = accountHolder;
+  }
+
+  /** 페이플 계좌 인증 결과 저장 */
+  public void updatePaypleAccountVerification(
+      String billingTranId,
+      String apiTranDtm,
+      String bankTranId,
+      String bankTranDate,
+      String bankRspCode,
+      String bankCodeStd,
+      String bankCodeSub) {
+    ensureModifiable();
+
+    if (billingTranId == null || billingTranId.trim().isEmpty()) {
+      throw new IllegalArgumentException("빌링 거래 ID는 필수입니다.");
+    }
+
+    this.paypleBillingTranId = billingTranId;
+    this.paypleApiTranDtm = apiTranDtm;
+    this.paypleBankTranId = bankTranId;
+    this.paypleBankTranDate = bankTranDate;
+    this.paypleBankRspCode = bankRspCode;
+    this.paypleBankCodeStd = bankCodeStd;
+    this.paypleBankCodeSub = bankCodeSub;
+    this.paypleAccountVerificationAt = LocalDateTime.now();
+  }
+
+  /** 페이플 계좌 인증 완료 여부 확인 */
+  public boolean isPaypleAccountVerified() {
+    return paypleBillingTranId != null && !paypleBillingTranId.trim().isEmpty();
   }
 
   /** 은행 정보 검증 */
