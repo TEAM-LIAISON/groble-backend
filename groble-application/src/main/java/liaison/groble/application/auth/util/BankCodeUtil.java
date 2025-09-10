@@ -28,6 +28,7 @@ public final class BankCodeUtil {
 
     // 인터넷 전문은행
     BANK_CODE_MAP.put("케이뱅크", "089");
+    BANK_CODE_MAP.put("카카오뱅크", "090");
     BANK_CODE_MAP.put("토스뱅크", "092");
 
     // 특수은행 및 농협
