@@ -20,6 +20,8 @@ import liaison.groble.common.utils.CodeGenerator;
 import liaison.groble.common.utils.PhoneUtils;
 import liaison.groble.domain.guest.entity.GuestUser;
 import liaison.groble.domain.port.VerificationCodePort;
+import liaison.groble.external.discord.dto.guest.GuestSignUpReportDTO;
+import liaison.groble.external.discord.service.guest.GuestReportService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,6 +39,7 @@ public class GuestAuthService {
 
   // Service
   private final SmsService smsService;
+  private final GuestReportService guestReportService;
 
   public GuestAuthDTO sendGuestAuthCode(GuestAuthDTO guestAuthDTO) {
     String sanitized = PhoneUtils.sanitizePhoneNumber(guestAuthDTO.getPhoneNumber());
@@ -140,6 +143,14 @@ public class GuestAuthService {
 
     log.info(
         "비회원 사용자 정보 업데이트 완료: guestUserId={}, email={}, username={}", guestUserId, email, username);
+
+    guestReportService.sendGuestSignUpReport(
+        GuestSignUpReportDTO.builder()
+            .guestId(guestUserId)
+            .email(email)
+            .name(username)
+            .phoneNumber(guestUser.getPhoneNumber())
+            .build());
 
     return UpdateGuestUserInfoResultDTO.builder()
         .email(email)

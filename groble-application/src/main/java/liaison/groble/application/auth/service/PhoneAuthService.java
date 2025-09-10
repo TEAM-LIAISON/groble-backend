@@ -21,7 +21,7 @@ import liaison.groble.domain.port.VerificationCodePort;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.repository.UserRepository;
 import liaison.groble.external.discord.dto.MemberCreateReportDTO;
-import liaison.groble.external.discord.service.DiscordMemberReportService;
+import liaison.groble.external.discord.service.member.DiscordMemberReportService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

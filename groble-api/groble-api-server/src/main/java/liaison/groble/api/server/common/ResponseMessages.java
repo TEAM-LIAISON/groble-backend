@@ -4,41 +4,21 @@ public final class ResponseMessages {
 
   private ResponseMessages() {}
 
-  public static final class Guest {
-    public static final String GUEST_AUTH_PHONE_REQUEST_SUCCESS = "비회원 전화번호 인증 요청이 성공적으로 완료되었습니다.";
-    public static final String VERIFY_GUEST_AUTH_PHONE_SUCCESS = "비회원 전화번호 인증이 성공적으로 완료되었습니다.";
-    public static final String UPDATE_GUEST_USER_INFO_SUCCESS = "비회원 사용자 정보 업데이트가 성공적으로 완료되었습니다.";
-  }
-
   public static final class Admin {
+    public static final String DASHBOARD_OVERVIEW_RETRIEVED = "관리자 대시보드 개요 조회에 성공하였습니다.";
     public static final String SETTLEMENT_APPROVAL_SUCCESS = "정산 승인 요청이 성공적으로 처리되었습니다.";
+
+    public static final String ALL_USERS_SETTLEMENTS_RETRIEVED = "전체 사용자 정산 내역 조회에 성공하였습니다.";
+    public static final String SETTLEMENT_DETAIL_RETRIEVED = "사용자 정산 상세 내역 조회에 성공하였습니다.";
+    public static final String SALES_LIST_RETRIEVED = "정산별 판매 내역 조회에 성공하였습니다.";
   }
 
-  public static final class Payment {
-    public static final String REQUEST_SUCCESS = "결제 승인 요청이 성공적으로 처리되었습니다.";
-    public static final String CANCEL_SUCCESS = "결제 취소 요청이 성공적으로 처리되었습니다.";
-    public static final String VERIFICATION_SUCCESS = "결제 검증이 성공적으로 완료되었습니다.";
-    public static final String REFUND_SUCCESS = "환불 요청이 성공적으로 처리되었습니다.";
-
-    private Payment() {}
-  }
-
-  public static final class Common {
-    public static final String SUCCESS = "요청이 성공적으로 처리되었습니다.";
-    public static final String CREATED = "성공적으로 생성되었습니다.";
-    public static final String UPDATED = "성공적으로 수정되었습니다.";
-    public static final String DELETED = "성공적으로 삭제되었습니다.";
-    public static final String RETRIEVED = "조회에 성공하였습니다.";
-
-    private Common() {}
-  }
-
-  public static final class User {
-    public static final String PROFILE_UPDATED = "프로필이 성공적으로 수정되었습니다.";
-    public static final String ROLE_SWITCHED = "가입 유형이 전환되었습니다.";
-    public static final String PASSWORD_CHANGED = "비밀번호가 성공적으로 변경되었습니다.";
-
-    private User() {}
+  public static final class Auth {
+    public static final String PERSONAL_MAKER_VERIFICATION_SUCCESS = "개인 메이커 인증 요청이 성공적으로 처리되었습니다.";
+    public static final String BUSINESS_MAKER_BANKBOOK_VERIFICATION_SUCCESS =
+        "개인 • 법인 사업자 메이커 계좌 및 통장 사본 저장 요청이 성공적으로 처리되었습니다.";
+    public static final String BUSINESS_MAKER_VERIFICATION_SUCCESS =
+        "개인 • 법인 사업자 메이커 인증 요청이 성공적으로 처리되었습니다.";
   }
 
   public static final class Content {
@@ -49,11 +29,26 @@ public final class ResponseMessages {
     private Content() {}
   }
 
+  public static final class Guest {
+    public static final String GUEST_AUTH_PHONE_REQUEST_SUCCESS = "비회원 전화번호 인증 요청이 성공적으로 완료되었습니다.";
+    public static final String VERIFY_GUEST_AUTH_PHONE_SUCCESS = "비회원 전화번호 인증이 성공적으로 완료되었습니다.";
+    public static final String UPDATE_GUEST_USER_INFO_SUCCESS = "비회원 사용자 정보 업데이트가 성공적으로 완료되었습니다.";
+  }
+
   public static final class Order {
     public static final String ORDER_CREATE_SUCCESS = "주문 생성이 성공적으로 완료되었습니다.";
     public static final String GET_ORDER_SUCCESS = "주문 성공 페이지 정보 조회에 성공하였습니다.";
 
     private Order() {}
+  }
+
+  public static final class Payment {
+    public static final String REQUEST_SUCCESS = "결제 승인 요청이 성공적으로 처리되었습니다.";
+    public static final String CANCEL_SUCCESS = "결제 취소 요청이 성공적으로 처리되었습니다.";
+    public static final String VERIFICATION_SUCCESS = "결제 검증이 성공적으로 완료되었습니다.";
+    public static final String REFUND_SUCCESS = "환불 요청이 성공적으로 처리되었습니다.";
+
+    private Payment() {}
   }
 
   public static final class Purchase {
@@ -78,5 +73,13 @@ public final class ResponseMessages {
     public static final String REVIEW_REPLY_DELETE_SUCCESS = "리뷰 답글 삭제에 성공하였습니다.";
 
     private Sell() {}
+  }
+
+  public static final class User {
+    public static final String PROFILE_UPDATED = "프로필이 성공적으로 수정되었습니다.";
+    public static final String ROLE_SWITCHED = "가입 유형이 전환되었습니다.";
+    public static final String PASSWORD_CHANGED = "비밀번호가 성공적으로 변경되었습니다.";
+
+    private User() {}
   }
 }

@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import liaison.groble.common.exception.EntityNotFoundException;
+import liaison.groble.domain.settlement.dto.FlatAdminSettlementsDTO;
 import liaison.groble.domain.settlement.dto.FlatPerTransactionSettlement;
 import liaison.groble.domain.settlement.dto.FlatSettlementsDTO;
 import liaison.groble.domain.settlement.entity.Settlement;
@@ -64,6 +65,15 @@ public class SettlementReader {
                         sellerId, settlementId)));
   }
 
+  public Settlement getSettlementById(Long settlementId) {
+    return settlementRepository
+        .findById(settlementId)
+        .orElseThrow(
+            () ->
+                new EntityNotFoundException(
+                    String.format("정산 정보를 찾을 수 없습니다 - settlementId: %d", settlementId)));
+  }
+
   /**
    * 정산 정보 조회 (Optional)
    *
@@ -82,10 +92,20 @@ public class SettlementReader {
     return settlementCustomRepository.findSettlementsByUserId(userId, pageable);
   }
 
+  public Page<FlatAdminSettlementsDTO> findAdminSettlementsByUserId(
+      Long adminUserId, Pageable pageable) {
+    return settlementCustomRepository.findAdminSettlementsByUserId(adminUserId, pageable);
+  }
+
   public Page<FlatPerTransactionSettlement> findPerTransactionSettlementsByIdAndUserId(
       Long userId, Long settlementId, Pageable pageable) {
     return settlementCustomRepository.findPerTransactionSettlementsByIdAndUserId(
         userId, settlementId, pageable);
+  }
+
+  public Page<FlatPerTransactionSettlement> findSalesListBySettlementId(
+      Long settlementId, Pageable pageable) {
+    return settlementCustomRepository.findSalesListBySettlementId(settlementId, pageable);
   }
 
   public List<Settlement> findAllByUserId(Long userId) {
@@ -108,5 +128,10 @@ public class SettlementReader {
         .findByPurchaseId(purchaseId)
         .orElseThrow(
             () -> new EntityNotFoundException("정산 항목을 찾을 수 없습니다 - purchaseId: " + purchaseId));
+  }
+
+  /** 완료된 정산의 총 플랫폼 수수료 합계 조회 */
+  public BigDecimal getTotalCompletedPlatformFee() {
+    return settlementCustomRepository.getTotalCompletedPlatformFee();
   }
 }

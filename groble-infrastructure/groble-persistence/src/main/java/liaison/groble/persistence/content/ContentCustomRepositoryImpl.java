@@ -997,4 +997,62 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
 
     return result != null;
   }
+
+  @Override
+  public long countByStatus(ContentStatus status) {
+    QContent qContent = QContent.content;
+    return Optional.ofNullable(
+            queryFactory
+                .select(qContent.count())
+                .from(qContent)
+                .where(qContent.status.eq(status))
+                .fetchOne())
+        .orElse(0L);
+  }
+
+  @Override
+  public long countByStatusIn(List<ContentStatus> statuses) {
+    QContent qContent = QContent.content;
+    return Optional.ofNullable(
+            queryFactory
+                .select(qContent.count())
+                .from(qContent)
+                .where(qContent.status.in(statuses))
+                .fetchOne())
+        .orElse(0L);
+  }
+
+  @Override
+  public long countByContentTypeAndStatus(String contentType, ContentStatus status) {
+    QContent qContent = QContent.content;
+    return Optional.ofNullable(
+            queryFactory
+                .select(qContent.count())
+                .from(qContent)
+                .where(
+                    qContent
+                        .contentType
+                        .stringValue()
+                        .eq(contentType)
+                        .and(qContent.status.eq(status)))
+                .fetchOne())
+        .orElse(0L);
+  }
+
+  @Override
+  public long countByContentTypeAndStatusIn(String contentType, List<ContentStatus> statuses) {
+    QContent qContent = QContent.content;
+    return Optional.ofNullable(
+            queryFactory
+                .select(qContent.count())
+                .from(qContent)
+                .where(
+                    qContent
+                        .contentType
+                        .stringValue()
+                        .eq(contentType)
+                        .and(qContent.status.in(statuses)))
+                .fetchOne())
+        .orElse(0L);
+  }
 }

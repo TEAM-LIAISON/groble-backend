@@ -805,6 +805,119 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
         .build();
   }
 
+  @Override
+  public FlatDashboardOverviewDTO getAdminDashboardOverviewStats() {
+    LocalDateTime currentMonthStart = LocalDate.now().withDayOfMonth(1).atStartOfDay();
+    QPurchase purchase = QPurchase.purchase;
+    QContent content = QContent.content;
+
+    // 전체 거래 통계 (모든 판매자 합산)
+    Tuple totalStats =
+        queryFactory
+            .select(purchase.finalPrice.sum().coalesce(BigDecimal.ZERO), purchase.count())
+            .from(purchase)
+            .join(purchase.content, content)
+            .where(purchase.cancelledAt.isNull(), purchase.purchasedAt.isNotNull())
+            .fetchOne();
+
+    // 이번 달 거래 통계
+    Tuple monthStats =
+        queryFactory
+            .select(purchase.finalPrice.sum().coalesce(BigDecimal.ZERO), purchase.count())
+            .from(purchase)
+            .join(purchase.content, content)
+            .where(
+                purchase.cancelledAt.isNull(),
+                purchase.purchasedAt.isNotNull(),
+                purchase.purchasedAt.goe(currentMonthStart))
+            .fetchOne();
+
+    // 전체 고유 고객 수 (회원 + 비회원)
+    Long totalMemberCustomers =
+        queryFactory
+            .select(purchase.user.id.countDistinct())
+            .from(purchase)
+            .join(purchase.content, content)
+            .where(
+                purchase.cancelledAt.isNull(),
+                purchase.purchasedAt.isNotNull(),
+                purchase.user.isNotNull())
+            .fetchOne();
+
+    Long totalGuestCustomers =
+        queryFactory
+            .select(purchase.guestUser.id.countDistinct())
+            .from(purchase)
+            .join(purchase.content, content)
+            .where(
+                purchase.cancelledAt.isNull(),
+                purchase.purchasedAt.isNotNull(),
+                purchase.guestUser.isNotNull())
+            .fetchOne();
+
+    // 이번 달 고유 고객 수 (회원 + 비회원)
+    Long monthMemberCustomers =
+        queryFactory
+            .select(purchase.user.id.countDistinct())
+            .from(purchase)
+            .join(purchase.content, content)
+            .where(
+                purchase.cancelledAt.isNull(),
+                purchase.purchasedAt.isNotNull(),
+                purchase.purchasedAt.goe(currentMonthStart),
+                purchase.user.isNotNull())
+            .fetchOne();
+
+    Long monthGuestCustomers =
+        queryFactory
+            .select(purchase.guestUser.id.countDistinct())
+            .from(purchase)
+            .join(purchase.content, content)
+            .where(
+                purchase.cancelledAt.isNull(),
+                purchase.purchasedAt.isNotNull(),
+                purchase.purchasedAt.goe(currentMonthStart),
+                purchase.guestUser.isNotNull())
+            .fetchOne();
+
+    // NULL 안전 처리
+    BigDecimal totalRevenue = BigDecimal.ZERO;
+    Long totalSalesCount = 0L;
+    BigDecimal monthRevenue = BigDecimal.ZERO;
+    Long monthSalesCount = 0L;
+
+    if (totalStats != null) {
+      totalRevenue =
+          Optional.ofNullable(totalStats.get(0, BigDecimal.class)).orElse(BigDecimal.ZERO);
+      totalSalesCount = Optional.ofNullable(totalStats.get(1, Long.class)).orElse(0L);
+    }
+
+    if (monthStats != null) {
+      monthRevenue =
+          Optional.ofNullable(monthStats.get(0, BigDecimal.class)).orElse(BigDecimal.ZERO);
+      monthSalesCount = Optional.ofNullable(monthStats.get(1, Long.class)).orElse(0L);
+    }
+
+    // 전체 고유 고객 수 계산
+    Long totalCustomers =
+        (totalMemberCustomers != null ? totalMemberCustomers : 0L)
+            + (totalGuestCustomers != null ? totalGuestCustomers : 0L);
+
+    // 이번 달 고유 고객 수 계산
+    Long recentCustomers =
+        (monthMemberCustomers != null ? monthMemberCustomers : 0L)
+            + (monthGuestCustomers != null ? monthGuestCustomers : 0L);
+
+    return FlatDashboardOverviewDTO.builder()
+        .totalRevenue(totalRevenue)
+        .totalSalesCount(totalSalesCount)
+        .currentMonthRevenue(monthRevenue)
+        .currentMonthSalesCount(monthSalesCount)
+        .totalCustomers(totalCustomers)
+        .recentCustomers(recentCustomers)
+        .build();
+  }
+
   /** 구매자 닉네임 표현식을 생성합니다. 회원인 경우 User의 닉네임을, 비회원인 경우 GuestUser의 username을 반환합니다. */
   private Expression<String> buildNicknameExpression(
       QPurchase qPurchase, QUser qUser, QGuestUser qGuestUser) {

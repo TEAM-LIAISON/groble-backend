@@ -350,7 +350,7 @@ public class ContentController {
             .userId(accessor.getUserId())
             .ip(requestUtil.getClientIp())
             .userAgent(requestUtil.getUserAgent())
-            .referer(null)
+            .referer(requestUtil.getReferer())
             .build();
 
     contentViewCountService.recordContentView(contentId, contentViewCountDTO);

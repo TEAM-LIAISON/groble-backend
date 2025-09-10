@@ -19,7 +19,4 @@ import lombok.NoArgsConstructor;
 public class SettlementApprovalRequestDTO {
 
   private List<Long> settlementIds;
-  private Long adminUserId;
-  private String approvalReason;
-  private boolean executePaypleSettlement;
 }

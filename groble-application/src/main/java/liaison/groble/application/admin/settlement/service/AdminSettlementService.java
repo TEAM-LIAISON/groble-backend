@@ -7,16 +7,25 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.json.simple.JSONObject;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import liaison.groble.application.admin.settlement.dto.AdminSettlementDetailDTO;
+import liaison.groble.application.admin.settlement.dto.AdminSettlementOverviewDTO;
 import liaison.groble.application.admin.settlement.dto.PaypleAccountVerificationRequest;
 import liaison.groble.application.admin.settlement.dto.PayplePartnerAuthResult;
+import liaison.groble.application.admin.settlement.dto.PerTransactionAdminSettlementOverviewDTO;
 import liaison.groble.application.admin.settlement.dto.SettlementApprovalDTO;
 import liaison.groble.application.admin.settlement.dto.SettlementApprovalDTO.FailedSettlementDTO;
 import liaison.groble.application.admin.settlement.dto.SettlementApprovalDTO.PaypleSettlementResultDTO;
 import liaison.groble.application.admin.settlement.dto.SettlementApprovalRequestDTO;
 import liaison.groble.application.payment.exception.PaypleApiException;
+import liaison.groble.application.settlement.reader.SettlementReader;
+import liaison.groble.common.response.PageResponse;
+import liaison.groble.domain.settlement.dto.FlatAdminSettlementsDTO;
+import liaison.groble.domain.settlement.dto.FlatPerTransactionSettlement;
 import liaison.groble.domain.settlement.entity.Settlement;
 import liaison.groble.domain.settlement.entity.SettlementItem;
 import liaison.groble.domain.settlement.repository.SettlementRepository;
@@ -38,28 +47,79 @@ public class AdminSettlementService {
 
   private final SettlementRepository settlementRepository;
   private final PaypleSettlementService paypleSettlementService;
+  private final SettlementReader settlementReader;
   private final PaypleConfig paypleConfig;
 
+  @Transactional(readOnly = true)
+  public PageResponse<AdminSettlementOverviewDTO> getAllUsersSettlements(
+      Long adminUserId, Pageable pageable) {
+    Page<FlatAdminSettlementsDTO> page =
+        settlementReader.findAdminSettlementsByUserId(adminUserId, pageable);
+
+    List<AdminSettlementOverviewDTO> items =
+        page.getContent().stream().map(this::convertFlatDTOToAdminSettlementsDTO).toList();
+
+    PageResponse.MetaData meta =
+        PageResponse.MetaData.builder()
+            .sortBy(pageable.getSort().iterator().next().getProperty())
+            .sortDirection(pageable.getSort().iterator().next().getDirection().name())
+            .build();
+
+    return PageResponse.from(page, items, meta);
+  }
+
+  @Transactional(readOnly = true)
+  public AdminSettlementDetailDTO getSettlementDetail(Long settlementId) {
+    Settlement settlement = settlementReader.getSettlementById(settlementId);
+
+    return AdminSettlementDetailDTO.builder()
+        .settlementId(settlement.getId())
+        .settlementStartDate(settlement.getSettlementStartDate())
+        .settlementEndDate(settlement.getSettlementEndDate())
+        .scheduledSettlementDate(settlement.getScheduledSettlementDate())
+        .settlementAmount(settlement.getSettlementAmount())
+        .pgFee(settlement.getPgFee())
+        .platformFee(settlement.getPlatformFee())
+        .vatAmount(settlement.getFeeVat())
+        .build();
+  }
+
+  @Transactional(readOnly = true)
+  public PageResponse<PerTransactionAdminSettlementOverviewDTO> getSalesList(
+      Long settlementId, Pageable pageable) {
+    Page<FlatPerTransactionSettlement> page =
+        settlementReader.findSalesListBySettlementId(settlementId, pageable);
+
+    List<PerTransactionAdminSettlementOverviewDTO> items =
+        page.getContent().stream().map(this::convertFlatDTOToPerTransactionDTO).toList();
+
+    PageResponse.MetaData meta =
+        PageResponse.MetaData.builder()
+            .sortBy(pageable.getSort().iterator().next().getProperty())
+            .sortDirection(pageable.getSort().iterator().next().getDirection().name())
+            .build();
+
+    return PageResponse.from(page, items, meta);
+  }
+
   /**
-   * 정산 승인 처리
+   * 정산 승인 및 실행 처리
    *
    * @param requestDTO 정산 승인 요청 정보
-   * @return 정산 승인 결과
+   * @return 정산 승인 및 실행 결과
    */
-  public SettlementApprovalDTO approveSettlements(SettlementApprovalRequestDTO requestDTO) {
+  public SettlementApprovalDTO approveAndExecuteSettlements(
+      SettlementApprovalRequestDTO requestDTO) {
 
-    log.info(
-        "정산 승인 처리 시작 - 정산 수: {}, 관리자: {}, 페이플 실행: {}",
-        requestDTO.getSettlementIds().size(),
-        requestDTO.getAdminUserId(),
-        requestDTO.isExecutePaypleSettlement());
+    log.info("정산 승인 및 실행 처리 시작 - 정산 수: {}", requestDTO.getSettlementIds().size());
 
     // 1. 정산 조회 및 검증
     List<Settlement> settlements = validateAndRetrieveSettlements(requestDTO.getSettlementIds());
 
-    // 2. 정산들 승인 처리
+    // 2. 정산들 사전 검증 (실제 승인은 페이플 성공 후)
     List<FailedSettlementDTO> failedSettlements = new ArrayList<>();
-    List<Settlement> approvedSettlements = new ArrayList<>();
+    List<Settlement> validSettlements = new ArrayList<>();
+    List<ApprovalResult> approvalResults = new ArrayList<>();
 
     int totalApprovedItemCount = 0;
     int totalExcludedRefundedItemCount = 0;
@@ -67,17 +127,16 @@ public class AdminSettlementService {
 
     for (Settlement settlement : settlements) {
       try {
-        ApprovalResult result =
-            approveSettlement(
-                settlement, requestDTO.getAdminUserId(), requestDTO.getApprovalReason());
+        ApprovalResult result = validateSettlementForApproval(settlement);
 
-        approvedSettlements.add(settlement);
+        validSettlements.add(settlement);
+        approvalResults.add(result);
         totalApprovedItemCount += result.getApprovedItemCount();
         totalExcludedRefundedItemCount += result.getExcludedRefundedItemCount();
         totalApprovedAmount = totalApprovedAmount.add(result.getApprovedAmount());
 
       } catch (Exception e) {
-        log.error("정산 승인 실패 - ID: {}", settlement.getId(), e);
+        log.error("정산 검증 실패 - ID: {}", settlement.getId(), e);
         failedSettlements.add(
             FailedSettlementDTO.builder()
                 .settlementId(settlement.getId())
@@ -86,19 +145,44 @@ public class AdminSettlementService {
       }
     }
 
-    // 3. 페이플 정산 실행 (옵션) - 승인된 정산의 정상 항목들만
+    // 3. 페이플 정산 실행 먼저 시도
     PaypleSettlementResultDTO paypleResult = null;
-    if (requestDTO.isExecutePaypleSettlement() && !approvedSettlements.isEmpty()) {
-      List<SettlementItem> validItemsForPayple = extractValidItemsForPayple(approvedSettlements);
+    int actualApprovedSettlementCount = 0;
+
+    if (!validSettlements.isEmpty()) {
+      List<SettlementItem> validItemsForPayple = extractValidItemsForPayple(validSettlements);
       if (!validItemsForPayple.isEmpty()) {
-        paypleResult = executePaypleGroupSettlement(validItemsForPayple);
+        paypleResult = executePaypleGroupSettlementImmediately(validItemsForPayple);
+
+        // 4. 페이플 정산 성공 시에만 DB 상태를 COMPLETED로 변경
+        if (paypleResult != null && paypleResult.isSuccess()) {
+          for (Settlement settlement : validSettlements) {
+            settlement.approve();
+            actualApprovedSettlementCount++;
+            log.info("정산 최종 승인 완료 - ID: {}", settlement.getId());
+          }
+        } else {
+          log.error("페이플 정산 실패로 인한 정산 승인 취소 - 정산 수: {}", validSettlements.size());
+          // 페이플 실패 시 검증된 정산들을 실패 목록에 추가
+          for (Settlement settlement : validSettlements) {
+            failedSettlements.add(
+                FailedSettlementDTO.builder()
+                    .settlementId(settlement.getId())
+                    .failureReason("페이플 정산 실행 실패")
+                    .build());
+          }
+          // 성공 카운트들을 0으로 재설정
+          totalApprovedItemCount = 0;
+          totalExcludedRefundedItemCount = 0;
+          totalApprovedAmount = BigDecimal.ZERO;
+        }
       }
     }
 
-    // 4. 결과 반환
+    // 5. 결과 반환
     return SettlementApprovalDTO.builder()
         .success(failedSettlements.isEmpty())
-        .approvedSettlementCount(approvedSettlements.size())
+        .approvedSettlementCount(actualApprovedSettlementCount)
         .approvedItemCount(totalApprovedItemCount)
         .totalApprovedAmount(totalApprovedAmount)
         .approvedAt(LocalDateTime.now())
@@ -124,9 +208,44 @@ public class AdminSettlementService {
     return settlements;
   }
 
+  /** 정산 승인 가능 여부 검증 (실제 승인은 하지 않음) */
+  private ApprovalResult validateSettlementForApproval(Settlement settlement) {
+    if (settlement.getStatus() == Settlement.SettlementStatus.COMPLETED) {
+      throw new IllegalStateException("이미 완료된 정산입니다: " + settlement.getId());
+    }
+
+    // 환불되지 않은 정산 항목들만 계산
+    List<SettlementItem> validItems =
+        settlement.getSettlementItems().stream()
+            .filter(item -> !item.isRefundedSafe())
+            .collect(Collectors.toList());
+
+    List<SettlementItem> refundedItems =
+        settlement.getSettlementItems().stream()
+            .filter(SettlementItem::isRefundedSafe)
+            .collect(Collectors.toList());
+
+    if (validItems.isEmpty()) {
+      throw new IllegalStateException("정산 가능한 항목이 없습니다: " + settlement.getId());
+    }
+
+    BigDecimal approvedAmount =
+        validItems.stream()
+            .map(SettlementItem::getSettlementAmount)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+    log.info(
+        "정산 검증 완료 - ID: {}, 정상 항목: {}개, 환불 제외 항목: {}개, 승인 예정 금액: {}",
+        settlement.getId(),
+        validItems.size(),
+        refundedItems.size(),
+        approvedAmount);
+
+    return new ApprovalResult(validItems.size(), refundedItems.size(), approvedAmount);
+  }
+
   /** 개별 정산 승인 처리 */
-  private ApprovalResult approveSettlement(
-      Settlement settlement, Long adminUserId, String approvalReason) {
+  private ApprovalResult approveSettlement(Settlement settlement) {
     if (settlement.getStatus() == Settlement.SettlementStatus.COMPLETED) {
       throw new IllegalStateException("이미 완료된 정산입니다: " + settlement.getId());
     }
@@ -148,7 +267,7 @@ public class AdminSettlementService {
             .reduce(BigDecimal.ZERO, BigDecimal::add);
 
     // Settlement 상태를 승인으로 변경
-    settlement.approve(adminUserId, approvalReason);
+    settlement.approve();
 
     log.info(
         "정산 승인 완료 - ID: {}, 정상 항목: {}개, 환불 제외 항목: {}개, 승인 금액: {}",
@@ -168,9 +287,10 @@ public class AdminSettlementService {
         .collect(Collectors.toList());
   }
 
-  /** 페이플 그룹 정산 실행 */
-  private PaypleSettlementResultDTO executePaypleGroupSettlement(List<SettlementItem> validItems) {
-    log.info("페이플 그룹 정산 실행 시작 - 유효 항목 수: {}", validItems.size());
+  /** 페이플 그룹 정산 승인 후 즉시 실행 */
+  private PaypleSettlementResultDTO executePaypleGroupSettlementImmediately(
+      List<SettlementItem> validItems) {
+    log.info("페이플 그룹 정산 승인 후 즉시 실행 시작 - 유효 항목 수: {}", validItems.size());
 
     try {
       // 1. 파트너 인증
@@ -214,25 +334,17 @@ public class AdminSettlementService {
             transferResult.getOrDefault("result", "UNKNOWN"));
       }
 
-      // 5. 이체 대기 성공 후 처리 (즉시 실행 vs 대기)
+      // 5. 이체 대기 성공 후 즉시 실행
       if (groupKey != null) {
-        // TODO: 실제 운영에서는 이 부분을 설정으로 제어할 수 있음
-        boolean executeImmediately = false; // false로 변경하여 검토 단계 추가
+        JSONObject executeResult =
+            paypleSettlementService.requestTransferExecute(
+                groupKey,
+                "ALL", // 그룹의 모든 이체 대기 건 실행
+                authResult.getAccessToken(),
+                "http://your-test-domain.com" // 테스트 웹훅 URL
+                );
 
-        if (executeImmediately) {
-          JSONObject executeResult =
-              paypleSettlementService.requestTransferExecute(
-                  groupKey,
-                  "ALL", // 그룹의 모든 이체 대기 건 실행
-                  authResult.getAccessToken(),
-                  "http://your-test-domain.com" // 테스트 웹훅 URL
-                  );
-
-          log.info("이체 실행 요청 완료 - 결과: {}", executeResult.getOrDefault("result", "UNKNOWN"));
-        } else {
-          log.info("이체 대기 완료 - 관리자 검토 대기 중 (그룹키: {})", maskSensitiveData(groupKey));
-          // 실제 운영에서는 여기서 관리자에게 알림을 보내거나 대시보드에서 확인할 수 있도록 함
-        }
+        log.info("이체 즉시 실행 완료 - 결과: {}", executeResult.getOrDefault("result", "UNKNOWN"));
       } else {
         log.warn("이체 대기 요청에서 group_key를 추출할 수 없습니다");
       }
@@ -250,11 +362,11 @@ public class AdminSettlementService {
           .build();
 
     } catch (Exception e) {
-      log.error("페이플 그룹 정산 실행 실패", e);
+      log.error("페이플 그룹 정산 승인 후 즉시 실행 실패", e);
       return PaypleSettlementResultDTO.builder()
           .success(false)
           .responseCode("ERROR")
-          .responseMessage("페이플 정산 실행 실패: " + e.getMessage())
+          .responseMessage("페이플 정산 승인 및 실행 실패: " + e.getMessage())
           .build();
     }
   }
@@ -295,92 +407,6 @@ public class AdminSettlementService {
 
     public BigDecimal getApprovedAmount() {
       return approvedAmount;
-    }
-  }
-
-  /**
-   * 이체 대기 상태인 정산을 실제 실행
-   *
-   * @param groupKey 이체 대기 시 받은 그룹키
-   * @param billingTranId 실행할 빌링키 ("ALL" 또는 특정 빌링키)
-   * @return 이체 실행 결과
-   */
-  public PaypleSettlementResultDTO executeTransfer(String groupKey, String billingTranId) {
-    log.info("이체 실행 요청 - 그룹키: {}, 빌링키: {}", maskSensitiveData(groupKey), billingTranId);
-
-    try {
-      // 1. 파트너 인증
-      PayplePartnerAuthResult authResult = paypleSettlementService.requestPartnerAuth();
-      if (!authResult.isSuccess()) {
-        throw new PaypleApiException("페이플 파트너 인증 실패: " + authResult.getMessage());
-      }
-
-      // 2. 이체 실행 요청
-      JSONObject executeResult =
-          paypleSettlementService.requestTransferExecute(
-              groupKey,
-              billingTranId,
-              authResult.getAccessToken(),
-              "http://your-test-domain.com" // 테스트 웹훅 URL
-              );
-
-      log.info("이체 실행 완료 - 결과: {}", executeResult.getOrDefault("result", "UNKNOWN"));
-
-      return PaypleSettlementResultDTO.builder()
-          .success(true)
-          .responseCode("A0000")
-          .responseMessage("이체 실행 성공")
-          .build();
-
-    } catch (Exception e) {
-      log.error("이체 실행 실패", e);
-      return PaypleSettlementResultDTO.builder()
-          .success(false)
-          .responseCode("ERROR")
-          .responseMessage("이체 실행 실패: " + e.getMessage())
-          .build();
-    }
-  }
-
-  /**
-   * 이체 대기 상태인 정산을 취소
-   *
-   * @param groupKey 이체 대기 시 받은 그룹키
-   * @param billingTranId 취소할 빌링키 ("ALL" 또는 특정 빌링키)
-   * @param cancelReason 취소 사유
-   * @return 이체 취소 결과
-   */
-  public PaypleSettlementResultDTO cancelTransfer(
-      String groupKey, String billingTranId, String cancelReason) {
-    log.info("이체 취소 요청 - 그룹키: {}, 빌링키: {}", maskSensitiveData(groupKey), billingTranId);
-
-    try {
-      // 1. 파트너 인증
-      PayplePartnerAuthResult authResult = paypleSettlementService.requestPartnerAuth();
-      if (!authResult.isSuccess()) {
-        throw new PaypleApiException("페이플 파트너 인증 실패: " + authResult.getMessage());
-      }
-
-      // 2. 이체 취소 요청
-      JSONObject cancelResult =
-          paypleSettlementService.requestTransferCancel(
-              groupKey, billingTranId, authResult.getAccessToken(), cancelReason);
-
-      log.info("이체 취소 완료 - 결과: {}", cancelResult.getOrDefault("result", "UNKNOWN"));
-
-      return PaypleSettlementResultDTO.builder()
-          .success(true)
-          .responseCode("A0000")
-          .responseMessage("이체 취소 성공")
-          .build();
-
-    } catch (Exception e) {
-      log.error("이체 취소 실패", e);
-      return PaypleSettlementResultDTO.builder()
-          .success(false)
-          .responseCode("ERROR")
-          .responseMessage("이체 취소 실패: " + e.getMessage())
-          .build();
     }
   }
 
@@ -440,5 +466,34 @@ public class AdminSettlementService {
     return sensitiveData.substring(0, 4)
         + "****"
         + sensitiveData.substring(sensitiveData.length() - 4);
+  }
+
+  private AdminSettlementOverviewDTO convertFlatDTOToAdminSettlementsDTO(
+      FlatAdminSettlementsDTO flatAdminSettlementsDTO) {
+    return AdminSettlementOverviewDTO.builder()
+        .settlementId(flatAdminSettlementsDTO.getSettlementId())
+        .scheduledSettlementDate(flatAdminSettlementsDTO.getScheduledSettlementDate())
+        .contentType(flatAdminSettlementsDTO.getContentType())
+        .settlementAmount(flatAdminSettlementsDTO.getSettlementAmount())
+        .settlementStatus(flatAdminSettlementsDTO.getSettlementStatus())
+        .verificationStatus(flatAdminSettlementsDTO.getVerificationStatus())
+        .isBusinessSeller(flatAdminSettlementsDTO.getIsBusinessSeller())
+        .businessType(flatAdminSettlementsDTO.getBusinessType())
+        .bankAccountOwner(flatAdminSettlementsDTO.getBankAccountOwner())
+        .bankName(flatAdminSettlementsDTO.getBankName())
+        .bankAccountNumber(flatAdminSettlementsDTO.getBankAccountNumber())
+        .copyOfBankbookUrl(flatAdminSettlementsDTO.getCopyOfBankbookUrl())
+        .businessLicenseFileUrl(flatAdminSettlementsDTO.getBusinessLicenseFileUrl())
+        .build();
+  }
+
+  private PerTransactionAdminSettlementOverviewDTO convertFlatDTOToPerTransactionDTO(
+      FlatPerTransactionSettlement flat) {
+    return PerTransactionAdminSettlementOverviewDTO.builder()
+        .contentTitle(flat.getContentTitle())
+        .settlementAmount(flat.getSettlementAmount())
+        .orderStatus(flat.getOrderStatus())
+        .purchasedAt(flat.getPurchasedAt())
+        .build();
   }
 }

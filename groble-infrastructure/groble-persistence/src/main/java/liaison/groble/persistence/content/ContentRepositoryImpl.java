@@ -65,6 +65,26 @@ public class ContentRepositoryImpl implements ContentRepository {
     return jpaContentRepository.findIdsByUserId(userId);
   }
 
+  @Override
+  public long countByStatus(ContentStatus status) {
+    return contentCustomRepository.countByStatus(status);
+  }
+
+  @Override
+  public long countByStatusIn(List<ContentStatus> statuses) {
+    return contentCustomRepository.countByStatusIn(statuses);
+  }
+
+  @Override
+  public long countByContentTypeAndStatus(String contentType, ContentStatus status) {
+    return contentCustomRepository.countByContentTypeAndStatus(contentType, status);
+  }
+
+  @Override
+  public long countByContentTypeAndStatusIn(String contentType, List<ContentStatus> statuses) {
+    return contentCustomRepository.countByContentTypeAndStatusIn(contentType, statuses);
+  }
+
   public boolean existsSellingContentByUser(Long userId) {
     return contentCustomRepository.existsSellingContentByUser(userId);
   }

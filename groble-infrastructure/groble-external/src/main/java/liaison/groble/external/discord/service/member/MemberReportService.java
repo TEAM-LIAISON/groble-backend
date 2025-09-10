@@ -1,4 +1,4 @@
-package liaison.groble.external.discord.service;
+package liaison.groble.external.discord.service.member;
 
 import liaison.groble.external.discord.dto.MemberCreateReportDTO;
 

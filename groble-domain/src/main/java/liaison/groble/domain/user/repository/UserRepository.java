@@ -14,5 +14,7 @@ public interface UserRepository {
 
   boolean existsByNicknameAndStatus(String nickname, UserStatus status);
 
+  long countByStatus(UserStatus status);
+
   User saveAndFlush(User user);
 }

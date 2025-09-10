@@ -30,4 +30,12 @@ public interface ContentRepository {
   List<Long> findIdsByUserId(Long userId);
 
   boolean existsByUserAndStatus(User user, ContentStatus status);
+
+  long countByStatus(ContentStatus status);
+
+  long countByStatusIn(java.util.List<ContentStatus> statuses);
+
+  long countByContentTypeAndStatus(String contentType, ContentStatus status);
+
+  long countByContentTypeAndStatusIn(String contentType, java.util.List<ContentStatus> statuses);
 }

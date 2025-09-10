@@ -15,5 +15,7 @@ public interface GuestUserRepository {
 
   boolean existsByPhoneNumberAndHasCompleteUserInfo(String phoneNumber);
 
+  long count();
+
   GuestUser save(GuestUser guestUser);
 }

@@ -13,6 +13,7 @@ import liaison.groble.application.admin.settlement.dto.PaypleAccountVerification
 import liaison.groble.application.admin.settlement.dto.PayplePartnerAuthResult;
 import liaison.groble.application.payment.exception.PaypleApiException;
 import liaison.groble.domain.settlement.entity.SettlementItem;
+import liaison.groble.external.adapter.payment.PaypleCodeGenerator;
 import liaison.groble.external.adapter.payment.PaypleService;
 import liaison.groble.external.config.PaypleConfig;
 
@@ -31,6 +32,7 @@ public class PaypleSettlementService {
 
   private final PaypleService paypleService;
   private final PaypleConfig paypleConfig;
+  private final PaypleCodeGenerator codeGenerator;
 
   /**
    * 파트너 인증 요청
@@ -309,7 +311,7 @@ public class PaypleSettlementService {
 
   /** 정산용 인증 코드 생성 (타임스탬프 기반) */
   private String generateSettlementAuthCode() {
-    return "SETTLEMENT_" + System.currentTimeMillis() % 1000000;
+    return codeGenerator.generateSettlementCode();
   }
 
   /** 계좌번호 마스킹 (보안을 위한 로깅용) */

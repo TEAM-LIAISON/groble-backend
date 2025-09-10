@@ -5,6 +5,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import liaison.groble.application.auth.dto.VerifyBusinessMakerAccountDTO;
 import liaison.groble.application.auth.dto.VerifyPersonalMakerAccountDTO;
+import liaison.groble.application.auth.util.BankCodeUtil;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.domain.user.entity.SellerInfo;
 import liaison.groble.domain.user.entity.User;
@@ -34,12 +35,16 @@ public class AccountVerificationService {
   public void verifyPersonalMakerAccount(Long userId, VerifyPersonalMakerAccountDTO dto) {
     SellerInfo sellerInfo = userReader.getSellerInfoWithUser(userId);
     User user = sellerInfo.getUser();
+    // 은행명으로 기관 코드 조회
+    String bankCode = BankCodeUtil.getBankCode(dto.getBankName());
+
     // 직접 업데이트
     sellerInfo.updatePersonalMakerBankInfo(
         dto.getBankAccountOwner(),
         dto.getBankName(),
         dto.getBankAccountNumber(),
-        dto.getCopyOfBankbookUrl());
+        dto.getCopyOfBankbookUrl(),
+        bankCode);
 
     final PersonalMakerVerificationCreateReportDTO personalMakerVerificationCreateReportDTO =
         PersonalMakerVerificationCreateReportDTO.builder()
@@ -60,12 +65,16 @@ public class AccountVerificationService {
   public void verifyBusinessBankbook(Long userId, VerifyBusinessMakerAccountDTO dto) {
     SellerInfo sellerInfo = userReader.getSellerInfoWithUser(userId);
 
+    // 은행명으로 기관 코드 조회
+    String bankCode = BankCodeUtil.getBankCode(dto.getBankName());
+
     // 직접 업데이트
     sellerInfo.updateBusinessMakerBankInfo(
         dto.getBankAccountOwner(),
         dto.getBankName(),
         dto.getBankAccountNumber(),
-        dto.getCopyOfBankbookUrl());
+        dto.getCopyOfBankbookUrl(),
+        bankCode);
   }
 
   @Transactional

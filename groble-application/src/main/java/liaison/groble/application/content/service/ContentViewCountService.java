@@ -11,7 +11,9 @@ import liaison.groble.domain.dashboard.repository.ContentViewLogRepository;
 import liaison.groble.domain.port.DailyViewPort;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ContentViewCountService {

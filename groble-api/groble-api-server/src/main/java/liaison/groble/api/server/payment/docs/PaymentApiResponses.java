@@ -6,7 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 import liaison.groble.api.server.common.swagger.CommonSwaggerDocs;
-import liaison.groble.api.server.common.swagger.GenericResponseSchemas;
+import liaison.groble.api.server.common.swagger.PaymentResponseSchemas;
 
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -29,7 +29,8 @@ public final class PaymentApiResponses {
             @Content(
                 mediaType = "application/json",
                 schema =
-                    @Schema(implementation = GenericResponseSchemas.PaymentRequestResponse.class))),
+                    @Schema(
+                        implementation = PaymentResponseSchemas.ApiPaymentRequestResponse.class))),
     @ApiResponse(
         responseCode = "400",
         description = CommonSwaggerDocs.BAD_REQUEST,
@@ -90,7 +91,7 @@ public final class PaymentApiResponses {
                 mediaType = "application/json",
                 schema =
                     @Schema(
-                        implementation = GenericResponseSchemas.ApiPaymentCancelResponse.class))),
+                        implementation = PaymentResponseSchemas.ApiPaymentCancelResponse.class))),
     @ApiResponse(
         responseCode = "400",
         description = CommonSwaggerDocs.BAD_REQUEST,
