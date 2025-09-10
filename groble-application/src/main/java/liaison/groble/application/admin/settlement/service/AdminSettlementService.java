@@ -319,30 +319,42 @@ public class AdminSettlementService {
                 authResult.getAccessToken() // 액세스 토큰 전달
                 );
 
+        String result = getStringValue(transferResult, "result");
+        log.info("정산 항목 {} 이체 대기 요청 완료: {}", item.getId(), result);
+
+        // 이체 대기 요청 실패 시 즉시 중단
+        if (!"A0000".equals(result)) {
+          String errorMessage = getStringValue(transferResult, "message");
+          log.error("이체 대기 요청 실패 - result: {}, message: {}", result, errorMessage);
+          throw new PaypleApiException("이체 대기 요청 실패: " + errorMessage);
+        }
+
         // 첫 번째 이체 대기 요청에서 group_key 추출
         if (groupKey == null) {
           groupKey = extractGroupKey(transferResult);
+          if (groupKey == null) {
+            throw new PaypleApiException("이체 대기 요청에서 group_key를 추출할 수 없습니다");
+          }
         }
-
-        log.info(
-            "정산 항목 {} 이체 대기 요청 완료: {}",
-            item.getId(),
-            transferResult.getOrDefault("result", "UNKNOWN"));
       }
 
       // 5. 이체 대기 성공 후 즉시 실행
-      if (groupKey != null) {
-        JSONObject executeResult =
-            paypleSettlementService.requestTransferExecute(
-                groupKey,
-                "ALL", // 그룹의 모든 이체 대기 건 실행
-                authResult.getAccessToken(),
-                "http://your-test-domain.com" // 테스트 웹훅 URL
-                );
+      JSONObject executeResult =
+          paypleSettlementService.requestTransferExecute(
+              groupKey,
+              "ALL", // 그룹의 모든 이체 대기 건 실행
+              authResult.getAccessToken(),
+              "http://your-test-domain.com" // 테스트 웹훅 URL
+              );
 
-        log.info("이체 즉시 실행 완료 - 결과: {}", executeResult.getOrDefault("result", "UNKNOWN"));
-      } else {
-        log.warn("이체 대기 요청에서 group_key를 추출할 수 없습니다");
+      String executeResultCode = getStringValue(executeResult, "result");
+      log.info("이체 즉시 실행 완료 - 결과: {}", executeResultCode);
+
+      // 이체 실행 실패 시 중단
+      if (!"A0000".equals(executeResultCode)) {
+        String executeErrorMessage = getStringValue(executeResult, "message");
+        log.error("이체 실행 실패 - result: {}, message: {}", executeResultCode, executeErrorMessage);
+        throw new PaypleApiException("이체 실행 실패: " + executeErrorMessage);
       }
 
       // 6. 그룹 정산 요청 (기존 로직 유지)
@@ -580,17 +592,18 @@ public class AdminSettlementService {
       return null;
     }
 
-    // 페이플 이체 대기 요청 응답에서 그룹키 추출
-    String result =
-        transferResult.get("result") != null ? transferResult.get("result").toString() : null;
-
-    if (!"A0000".equals(result)) {
-      log.warn("이체 대기 요청 실패 - result: {}, message: {}", result, transferResult.get("message"));
-      return null;
-    }
-
+    // 성공한 이체 대기 요청에서 그룹키만 추출 (실패 검증은 호출부에서 처리)
     Object groupKey = transferResult.get("group_key");
     return groupKey != null ? groupKey.toString() : null;
+  }
+
+  /** JSONObject에서 안전하게 문자열 추출 */
+  private String getStringValue(JSONObject json, String key) {
+    if (json == null) {
+      return null;
+    }
+    Object value = json.get(key);
+    return value != null ? value.toString() : null;
   }
 
   /** 민감한 데이터 마스킹 (그룹키 등) */
