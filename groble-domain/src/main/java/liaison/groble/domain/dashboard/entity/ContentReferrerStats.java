@@ -121,6 +121,11 @@ public class ContentReferrerStats extends BaseTimeEntity {
     this.visitCount++;
   }
 
+  // 방문 카운트 통합 메서드
+  public void consolidateVisitCount(int additionalVisits) {
+    this.visitCount += additionalVisits;
+  }
+
   private String extractDomain(String url) {
     try {
       String clean = url.replaceAll("^https?://", "").replaceAll("^www\\.", "");

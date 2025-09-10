@@ -1,7 +1,7 @@
 package liaison.groble.application.dashboard.service;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
+import java.util.List;
 
 import org.springframework.stereotype.Service;
 
@@ -171,16 +171,40 @@ public class ReferrerService {
         referrerDTO.getUtmMedium(),
         campaign);
 
-    // 기존 통계가 있는지 확인
-    Optional<ContentReferrerStats> existing =
+    // 기존 통계가 있는지 확인 - 중복 데이터 처리
+    List<ContentReferrerStats> existingList =
         contentReferrerStatsRepository
-            .findByContentIdAndReferrerDomainAndSourceAndMediumAndCampaign(
+            .findAllByContentIdAndReferrerDomainAndSourceAndMediumAndCampaign(
                 contentId, referrerDomain, source, medium, campaign);
 
-    if (existing.isPresent()) {
-      log.info("Found existing ContentReferrerStats with id: {}", existing.get().getId());
+    if (!existingList.isEmpty()) {
+      // 중복 데이터가 있는 경우 처리
+      if (existingList.size() > 1) {
+        log.warn(
+            "Found {} duplicate ContentReferrerStats for contentId: {}, consolidating...",
+            existingList.size(),
+            contentId);
+
+        // 가장 오래된 것을 기준으로 하고 나머지는 삭제
+        ContentReferrerStats primary = existingList.get(0);
+        for (int i = 1; i < existingList.size(); i++) {
+          ContentReferrerStats duplicate = existingList.get(i);
+          // 방문 카운트를 합산
+          primary.consolidateVisitCount(duplicate.getVisitCount());
+          // 중복 데이터 삭제
+          contentReferrerStatsRepository.delete(duplicate);
+          log.info("Deleted duplicate ContentReferrerStats with id: {}", duplicate.getId());
+        }
+        contentReferrerStatsRepository.save(primary);
+        log.info("Consolidated visits into ContentReferrerStats with id: {}", primary.getId());
+        log.info("--- findOrCreateContentReferrerStats END (CONSOLIDATED) ---");
+        return primary;
+      }
+
+      ContentReferrerStats existing = existingList.get(0);
+      log.info("Found existing ContentReferrerStats with id: {}", existing.getId());
       log.info("--- findOrCreateContentReferrerStats END (EXISTING) ---");
-      return existing.get();
+      return existing;
     }
 
     log.info("No existing stats found, creating new one...");
@@ -256,15 +280,40 @@ public class ReferrerService {
         referrerDTO.getUtmMedium(),
         campaign);
 
-    // 기존 통계가 있는지 확인
-    Optional<MarketReferrerStats> existing =
-        marketReferrerStatsRepository.findByMarketIdAndReferrerDomainAndSourceAndMediumAndCampaign(
-            marketId, referrerDomain, source, medium, campaign);
+    // 기존 통계가 있는지 확인 - 중복 데이터 처리
+    List<MarketReferrerStats> existingList =
+        marketReferrerStatsRepository
+            .findAllByMarketIdAndReferrerDomainAndSourceAndMediumAndCampaign(
+                marketId, referrerDomain, source, medium, campaign);
 
-    if (existing.isPresent()) {
-      log.info("Found existing MarketReferrerStats with id: {}", existing.get().getId());
+    if (!existingList.isEmpty()) {
+      // 중복 데이터가 있는 경우 처리
+      if (existingList.size() > 1) {
+        log.warn(
+            "Found {} duplicate MarketReferrerStats for marketId: {}, consolidating...",
+            existingList.size(),
+            marketId);
+
+        // 가장 오래된 것을 기준으로 하고 나머지는 삭제
+        MarketReferrerStats primary = existingList.get(0);
+        for (int i = 1; i < existingList.size(); i++) {
+          MarketReferrerStats duplicate = existingList.get(i);
+          // 방문 카운트를 합산
+          primary.consolidateVisitCount(duplicate.getVisitCount());
+          // 중복 데이터 삭제
+          marketReferrerStatsRepository.delete(duplicate);
+          log.info("Deleted duplicate MarketReferrerStats with id: {}", duplicate.getId());
+        }
+        marketReferrerStatsRepository.save(primary);
+        log.info("Consolidated visits into MarketReferrerStats with id: {}", primary.getId());
+        log.info("--- findOrCreateMarketReferrerStats END (CONSOLIDATED) ---");
+        return primary;
+      }
+
+      MarketReferrerStats existing = existingList.get(0);
+      log.info("Found existing MarketReferrerStats with id: {}", existing.getId());
       log.info("--- findOrCreateMarketReferrerStats END (EXISTING) ---");
-      return existing.get();
+      return existing;
     }
 
     log.info("No existing stats found, creating new one...");
