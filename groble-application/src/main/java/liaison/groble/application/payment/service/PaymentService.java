@@ -6,6 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 import liaison.groble.application.order.service.OrderReader;
 import liaison.groble.application.payment.dto.cancel.PaymentCancelDTO;
 import liaison.groble.application.payment.dto.cancel.PaymentCancelInfoDTO;
+import liaison.groble.application.payment.exception.refund.DuplicateCancelRequestException;
 import liaison.groble.application.payment.exception.refund.OrderCancellationException;
 import liaison.groble.application.payment.exception.refund.PaymentRefundBadRequestException;
 import liaison.groble.application.purchase.service.PurchaseReader;
@@ -96,10 +97,12 @@ public class PaymentService {
   }
 
   private void validateRequestCancellableStatus(Order order) {
-    // 이미 취소 요청된 경우
+    // 이미 취소 요청된 경우 - 중복 요청 예외 처리
     if (order.getStatus() == Order.OrderStatus.CANCEL_REQUEST) {
-      throw new OrderCancellationException(
-          "이미 취소 요청이 완료되었습니다.", String.valueOf(order.getId()), order.getStatus().toString());
+      throw new DuplicateCancelRequestException(
+          "이미 취소 요청이 진행 중입니다. 중복 요청은 처리할 수 없습니다.",
+          String.valueOf(order.getId()),
+          order.getStatus().toString());
     }
 
     // 결제 완료 상태가 아닌 경우
