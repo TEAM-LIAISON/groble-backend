@@ -81,8 +81,8 @@ public class PaypleSettlementService {
       // PaypleAccountVerificationRequest를 Map으로 변환
       Map<String, String> params = buildAccountVerificationParams(request);
 
-      // 페이플 전용 계좌 검증 API 사용
-      JSONObject result = paypleService.payAccountVerification(params);
+      // 페이플 전용 계좌 검증 API 사용 (액세스 토큰 전달)
+      JSONObject result = paypleService.payAccountVerification(params, accessToken);
 
       log.info("페이플 계좌 검증 요청 완료");
       return result;
@@ -94,24 +94,63 @@ public class PaypleSettlementService {
   }
 
   /**
+   * 계좌 인증 결과를 Settlement에 저장
+   *
+   * @param settlement 정산 엔티티
+   * @param verificationResult 페이플 계좌 인증 결과
+   */
+  public void saveAccountVerificationResult(
+      liaison.groble.domain.settlement.entity.Settlement settlement,
+      JSONObject verificationResult) {
+
+    if (verificationResult == null) {
+      throw new IllegalArgumentException("계좌 인증 결과가 없습니다.");
+    }
+
+    String result = getString(verificationResult, "result");
+    if (!"A0000".equals(result)) {
+      log.warn("계좌 인증 실패로 인해 결과 저장을 건너뜁니다. result: {}", result);
+      return;
+    }
+
+    try {
+      settlement.updatePaypleAccountVerification(
+          getString(verificationResult, "billing_tran_id"),
+          getString(verificationResult, "api_tran_dtm"),
+          getString(verificationResult, "bank_tran_id"),
+          getString(verificationResult, "bank_tran_date"),
+          getString(verificationResult, "bank_rsp_code"),
+          getString(verificationResult, "bank_code_std"),
+          getString(verificationResult, "bank_code_sub"));
+
+      log.info(
+          "페이플 계좌 인증 결과 저장 완료 - Settlement ID: {}, billing_tran_id: {}",
+          settlement.getId(),
+          maskSensitiveData(getString(verificationResult, "billing_tran_id")));
+
+    } catch (Exception e) {
+      log.error("페이플 계좌 인증 결과 저장 중 오류 발생", e);
+      throw new PaypleApiException("계좌 인증 결과 저장 실패", e);
+    }
+  }
+
+  /**
    * 빌링키로 이체 대기 요청
    *
    * @param billingTranId 계좌 인증으로 받은 빌링키
    * @param tranAmt 이체 금액
-   * @param subId 하위 셀러 ID (선택)
-   * @param printContent 거래 내역 표시 문구 (선택)
+   * @param accessToken 파트너 인증으로 받은 액세스 토큰
    * @return 이체 대기 요청 결과
    */
   @Retryable(value = PaypleApiException.class, maxAttempts = 2, backoff = @Backoff(delay = 1000))
-  public JSONObject requestTransfer(
-      String billingTranId, String tranAmt, String subId, String printContent) {
+  public JSONObject requestTransfer(String billingTranId, String tranAmt, String accessToken) {
     log.info("페이플 이체 대기 요청 - 빌링키: {}, 금액: {}", maskBillingKey(billingTranId), tranAmt);
 
     try {
-      Map<String, String> params = buildTransferParams(billingTranId, tranAmt, subId, printContent);
+      Map<String, String> params = buildTransferParams(billingTranId, tranAmt);
 
-      // 페이플 이체 대기 요청 API 호출
-      JSONObject result = paypleService.payTransferRequest(params);
+      // 페이플 이체 대기 요청 API 호출 (액세스 토큰 전달)
+      JSONObject result = paypleService.payTransferRequest(params, accessToken);
 
       log.info("페이플 이체 대기 요청 완료");
       return result;
@@ -239,21 +278,12 @@ public class PaypleSettlementService {
   }
 
   /** 이체 대기 요청 파라미터 빌드 */
-  private Map<String, String> buildTransferParams(
-      String billingTranId, String tranAmt, String subId, String printContent) {
+  private Map<String, String> buildTransferParams(String billingTranId, String tranAmt) {
     Map<String, String> params = new HashMap<>();
     params.put("cst_id", paypleConfig.getCstId());
     params.put("custKey", paypleConfig.getCustKey());
     params.put("billing_tran_id", billingTranId);
     params.put("tran_amt", tranAmt);
-
-    if (subId != null && !subId.trim().isEmpty()) {
-      params.put("sub_id", subId);
-    }
-
-    if (printContent != null && !printContent.trim().isEmpty()) {
-      params.put("print_content", printContent);
-    }
 
     // 중복 이체 방지를 위한 고유 키 생성 (UUID 기반)
     String distinctKey = generateDistinctKey();

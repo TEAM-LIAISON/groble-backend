@@ -155,19 +155,26 @@ public class AdminSettlementService {
     if (!validSettlements.isEmpty()) {
       List<SettlementItem> validItemsForPayple = extractValidItemsForPayple(validSettlements);
       if (!validItemsForPayple.isEmpty()) {
+        // 페이플 이체 실행 전 정산들을 처리중 상태로 변경
+        for (Settlement settlement : validSettlements) {
+          settlement.startProcessing();
+          log.info("정산 {} 처리 시작 - 상태: PROCESSING", settlement.getId());
+        }
+
         paypleResult = executePaypleGroupSettlementImmediately(validItemsForPayple);
 
         // 4. 페이플 정산 성공 시에만 DB 상태를 COMPLETED로 변경
         if (paypleResult != null && paypleResult.isSuccess()) {
           for (Settlement settlement : validSettlements) {
-            settlement.approve();
+            settlement.completeSettlement(); // 웹훅에서도 호출되지만 즉시 실행이므로 여기서 완료 처리
             actualApprovedSettlementCount++;
             log.info("정산 최종 승인 완료 - ID: {}", settlement.getId());
           }
         } else {
           log.error("페이플 정산 실패로 인한 정산 승인 취소 - 정산 수: {}", validSettlements.size());
-          // 페이플 실패 시 검증된 정산들을 실패 목록에 추가
+          // 페이플 실패 시 검증된 정산들을 실패 처리
           for (Settlement settlement : validSettlements) {
+            settlement.failSettlement(); // 보류 상태로 변경
             failedSettlements.add(
                 FailedSettlementDTO.builder()
                     .settlementId(settlement.getId())
@@ -303,59 +310,69 @@ public class AdminSettlementService {
         throw new PaypleApiException("페이플 파트너 인증 실패: " + authResult.getMessage());
       }
 
-      // 2. 계좌 인증 (첫 번째 정산 항목의 사용자 SellerInfo에서 계좌 정보 가져오기)
-      PaypleAccountVerificationRequest accountRequest =
-          buildAccountVerificationRequest(validItems.get(0));
-      JSONObject accountResult =
-          paypleSettlementService.requestAccountVerification(
-              accountRequest, authResult.getAccessToken());
+      // 2. 빌링키 확보 (저장된 정보 우선 사용, 없으면 새로 계좌 인증)
+      String billingTranId =
+          getOrCreateBillingTranId(validItems.get(0), authResult.getAccessToken());
 
-      // 3. 계좌 인증 성공 시 빌링키 추출
-      String billingTranId = extractBillingTranId(accountResult);
-      if (billingTranId == null) {
-        throw new PaypleApiException("계좌 인증에서 빌링키를 가져올 수 없습니다");
-      }
-
-      // 4. 각 정산 항목에 대해 이체 대기 요청 (테스트용 1000원 고정)
+      // 3. 각 정산 항목에 대해 이체 대기 요청
       String groupKey = null;
       for (SettlementItem item : validItems) {
+        // 환경에 따른 이체 금액 결정
+        String transferAmount =
+            paypleConfig.isTestMode()
+                ? paypleConfig.getTestTransferAmount() // 테스트: 설정값 (기본 1000원)
+                : String.valueOf(item.getSettlementAmount().intValue()); // 운영: 실제 정산 금액
+
+        log.info(
+            "정산 항목 {} 이체 대기 요청 - 금액: {}원 (테스트모드: {})",
+            item.getId(),
+            transferAmount,
+            paypleConfig.isTestMode());
+
         JSONObject transferResult =
             paypleSettlementService.requestTransfer(
-                billingTranId,
-                "1000", // 테스트 시 1000원 고정
-                null, // sub_id
-                "정산" // 거래 내역 표시 문구
+                billingTranId, transferAmount, authResult.getAccessToken() // 액세스 토큰 전달
                 );
+
+        String result = getStringValue(transferResult, "result");
+        log.info("정산 항목 {} 이체 대기 요청 완료: {}", item.getId(), result);
+
+        // 이체 대기 요청 실패 시 즉시 중단
+        if (!"A0000".equals(result)) {
+          String errorMessage = getStringValue(transferResult, "message");
+          log.error("이체 대기 요청 실패 - result: {}, message: {}", result, errorMessage);
+          throw new PaypleApiException("이체 대기 요청 실패: " + errorMessage);
+        }
 
         // 첫 번째 이체 대기 요청에서 group_key 추출
         if (groupKey == null) {
           groupKey = extractGroupKey(transferResult);
+          if (groupKey == null) {
+            throw new PaypleApiException("이체 대기 요청에서 group_key를 추출할 수 없습니다");
+          }
         }
-
-        log.info(
-            "정산 항목 {} 이체 대기 요청 완료: {}",
-            item.getId(),
-            transferResult.getOrDefault("result", "UNKNOWN"));
       }
 
       // 5. 이체 대기 성공 후 즉시 실행
-      if (groupKey != null) {
-        JSONObject executeResult =
-            paypleSettlementService.requestTransferExecute(
-                groupKey,
-                "ALL", // 그룹의 모든 이체 대기 건 실행
-                authResult.getAccessToken(),
-                "http://your-test-domain.com" // 테스트 웹훅 URL
-                );
+      JSONObject executeResult =
+          paypleSettlementService.requestTransferExecute(
+              groupKey,
+              "ALL", // 그룹의 모든 이체 대기 건 실행
+              authResult.getAccessToken(),
+              paypleConfig.getWebhookUrl() // 환경별 웹훅 URL
+              );
 
-        log.info("이체 즉시 실행 완료 - 결과: {}", executeResult.getOrDefault("result", "UNKNOWN"));
-      } else {
-        log.warn("이체 대기 요청에서 group_key를 추출할 수 없습니다");
+      String executeResultCode = getStringValue(executeResult, "result");
+      log.info("이체 즉시 실행 완료 - 결과: {}", executeResultCode);
+
+      // 이체 실행 실패 시 중단
+      if (!"A0000".equals(executeResultCode)) {
+        String executeErrorMessage = getStringValue(executeResult, "message");
+        log.error("이체 실행 실패 - result: {}, message: {}", executeResultCode, executeErrorMessage);
+        throw new PaypleApiException("이체 실행 실패: " + executeErrorMessage);
       }
 
-      // 6. 그룹 정산 요청 (기존 로직 유지)
-      JSONObject settlementResult =
-          paypleSettlementService.requestGroupSettlement(validItems, authResult.getAccessToken());
+      // 이체 실행 완료 후 추가 처리 불필요 (웹훅에서 최종 결과 수신)
 
       return PaypleSettlementResultDTO.builder()
           .success(true)
@@ -423,6 +440,52 @@ public class AdminSettlementService {
         .accountHolderInfo(accountHolderInfo) // SellerInfo 상태에 따라 생년월일, "0", 또는 사업자등록번호
         .subId("groble_sub_" + userId) // 사용자별 고유한 subId 생성
         .build();
+  }
+
+  /**
+   * 빌링키 확보 - 저장된 정보 우선 사용, 없으면 새로 계좌 인증
+   *
+   * @param settlementItem 정산 항목 (사용자 정보를 위해)
+   * @param accessToken 페이플 액세스 토큰
+   * @return 빌링 거래 ID
+   */
+  private String getOrCreateBillingTranId(SettlementItem settlementItem, String accessToken) {
+    Settlement settlement = settlementItem.getSettlement();
+
+    // 1. 이미 저장된 빌링키가 있는지 확인
+    if (settlement.isPaypleAccountVerified()) {
+      log.info(
+          "저장된 페이플 빌링키 사용 - Settlement ID: {}, billing_tran_id: {}",
+          settlement.getId(),
+          maskSensitiveData(settlement.getPaypleBillingTranId()));
+
+      return settlement.getPaypleBillingTranId();
+    }
+
+    // 2. 저장된 빌링키가 없으면 새로 계좌 인증 수행
+    log.info("저장된 빌링키가 없어 새로 계좌 인증 수행 - Settlement ID: {}", settlement.getId());
+
+    try {
+      PaypleAccountVerificationRequest accountRequest =
+          buildAccountVerificationRequest(settlementItem);
+      JSONObject accountResult =
+          paypleSettlementService.requestAccountVerification(accountRequest, accessToken);
+
+      // 3. 계좌 인증 성공 시 결과를 Settlement에 저장
+      paypleSettlementService.saveAccountVerificationResult(settlement, accountResult);
+
+      // 4. 빌링키 추출
+      String billingTranId = extractBillingTranId(accountResult);
+      if (billingTranId == null) {
+        throw new PaypleApiException("계좌 인증에서 빌링키를 가져올 수 없습니다");
+      }
+
+      return billingTranId;
+
+    } catch (Exception e) {
+      log.error("빌링키 확보 실패 - Settlement ID: {}", settlement.getId(), e);
+      throw new PaypleApiException("빌링키 확보 실패", e);
+    }
   }
 
   /**
@@ -542,17 +605,18 @@ public class AdminSettlementService {
       return null;
     }
 
-    // 페이플 이체 대기 요청 응답에서 그룹키 추출
-    String result =
-        transferResult.get("result") != null ? transferResult.get("result").toString() : null;
-
-    if (!"A0000".equals(result)) {
-      log.warn("이체 대기 요청 실패 - result: {}, message: {}", result, transferResult.get("message"));
-      return null;
-    }
-
+    // 성공한 이체 대기 요청에서 그룹키만 추출 (실패 검증은 호출부에서 처리)
     Object groupKey = transferResult.get("group_key");
     return groupKey != null ? groupKey.toString() : null;
+  }
+
+  /** JSONObject에서 안전하게 문자열 추출 */
+  private String getStringValue(JSONObject json, String key) {
+    if (json == null) {
+      return null;
+    }
+    Object value = json.get(key);
+    return value != null ? value.toString() : null;
   }
 
   /** 민감한 데이터 마스킹 (그룹키 등) */

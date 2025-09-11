@@ -18,6 +18,7 @@ public class PaypleConfig {
   private String clientKey; // 클라이언트 키
   private String authUrl; // 파트너 인증 URL
   private boolean testMode; // 테스트 모드 여부
+  private String testTransferAmount = "1000"; // 테스트 모드 시 이체 금액 (기본값: 1000원)
 
   // URL 설정
   public String getPaymentJsUrl() {
@@ -90,5 +91,12 @@ public class PaypleConfig {
     return testMode
         ? "https://demohub.payple.kr/transfer/execute"
         : "https://hub.payple.kr/transfer/execute";
+  }
+
+  // 웹훅 URL 설정
+  public String getWebhookUrl() {
+    return testMode
+        ? "https://api.dev.groble.im/api/webhooks/payple/transfer-result"
+        : "https://api.groble.im/api/webhooks/payple/transfer-result";
   }
 }

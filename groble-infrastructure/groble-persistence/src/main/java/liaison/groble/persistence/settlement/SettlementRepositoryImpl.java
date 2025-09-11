@@ -54,4 +54,9 @@ public class SettlementRepositoryImpl implements SettlementRepository {
   public List<Settlement> findByIdIn(List<Long> settlementIds) {
     return jpaSettlementRepository.findByIdIn(settlementIds);
   }
+
+  @Override
+  public List<Settlement> findByPaypleBillingTranId(String billingTranId) {
+    return jpaSettlementRepository.findByPaypleBillingTranId(billingTranId);
+  }
 }
