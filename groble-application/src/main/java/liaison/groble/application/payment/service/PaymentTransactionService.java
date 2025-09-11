@@ -34,6 +34,7 @@ import liaison.groble.domain.settlement.entity.Settlement;
 import liaison.groble.domain.settlement.entity.SettlementItem;
 import liaison.groble.domain.settlement.enums.SettlementCycle;
 import liaison.groble.domain.settlement.enums.SettlementType;
+import liaison.groble.domain.user.entity.SellerInfo;
 import liaison.groble.domain.user.entity.User;
 
 import lombok.RequiredArgsConstructor;
@@ -389,6 +390,9 @@ public class PaymentTransactionService {
     try {
       User seller = userReader.getUserById(sellerId);
 
+      // SellerInfo에서 은행 정보 조회
+      SellerInfo sellerInfo = userReader.getSellerInfo(sellerId);
+
       BigDecimal platformFeeRate = new BigDecimal("0.0150"); // 1.5%
       BigDecimal pgFeeRate = new BigDecimal("0.0170"); // 1.7%
       BigDecimal vatRate = new BigDecimal("0.1000"); // 10%
@@ -405,7 +409,7 @@ public class PaymentTransactionService {
           periodStart,
           periodEnd);
 
-      // Builder 패턴으로 생성 (새로운 필드 포함)
+      // Builder 패턴으로 생성 (SellerInfo에서 은행 정보 포함)
       Settlement settlement =
           Settlement.builder()
               .user(seller)
@@ -417,6 +421,9 @@ public class PaymentTransactionService {
               .settlementType(settlementType)
               .settlementCycle(cycle)
               .settlementRound(settlementRound)
+              .bankName(sellerInfo.getBankName())
+              .accountNumber(sellerInfo.getBankAccountNumber())
+              .accountHolder(sellerInfo.getBankAccountOwner())
               .build();
 
       return settlementWriter.saveSettlement(settlement);

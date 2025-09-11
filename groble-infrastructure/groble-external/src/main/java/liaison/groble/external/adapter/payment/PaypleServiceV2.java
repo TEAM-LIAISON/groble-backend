@@ -149,7 +149,7 @@ public class PaypleServiceV2 implements PaypleService {
 
   @Override
   public JSONObject payAuthForSettlement(String code) {
-    log.info("페이플 정산지급대행 인증 요청 시작 - code: {}", maskSensitiveData(code));
+    // Aspect에서 로깅 처리
 
     // code 검증
     if (!isValidSettlementCode(code)) {
@@ -181,14 +181,11 @@ public class PaypleServiceV2 implements PaypleService {
   }
 
   @Override
-  public JSONObject payAccountVerification(Map<String, String> params) {
-    log.info(
-        "페이플 계좌 검증 요청 시작 - 계좌번호: {}, 은행코드: {}",
-        maskAccountNumber(params.get("account_num")),
-        params.get("bank_code_std"));
+  public JSONObject payAccountVerification(Map<String, String> params, String accessToken) {
+    // Aspect에서 로깅 처리
 
     try {
-      HttpResponse response = executeAccountVerificationRequest(params);
+      HttpResponse response = executeAccountVerificationRequest(params, accessToken);
       return parseAndValidateResponse(response);
 
     } catch (HttpClientException e) {
@@ -206,14 +203,14 @@ public class PaypleServiceV2 implements PaypleService {
   }
 
   @Override
-  public JSONObject payTransferRequest(Map<String, String> params) {
+  public JSONObject payTransferRequest(Map<String, String> params, String accessToken) {
     log.info(
         "페이플 이체 대기 요청 시작 - 빌링키: {}, 이체금액: {}",
         maskSensitiveData(params.get("billing_tran_id")),
         params.get("tran_amt"));
 
     try {
-      HttpResponse response = executeTransferRequest(params);
+      HttpResponse response = executeTransferRequest(params, accessToken);
       return parseAndValidateResponse(response);
 
     } catch (HttpClientException e) {
@@ -405,8 +402,8 @@ public class PaypleServiceV2 implements PaypleService {
     return httpClient.post(httpRequest);
   }
 
-  private HttpResponse executeAccountVerificationRequest(Map<String, String> params)
-      throws HttpClientException {
+  private HttpResponse executeAccountVerificationRequest(
+      Map<String, String> params, String accessToken) throws HttpClientException {
     JSONObject requestBody = new JSONObject();
     requestBody.put("cst_id", params.get("cst_id"));
     requestBody.put("custKey", params.get("custKey"));
@@ -425,6 +422,7 @@ public class PaypleServiceV2 implements PaypleService {
     String accountVerificationUrl = paypleConfig.getAccountVerificationUrl();
 
     Map<String, String> headers = new HashMap<>();
+    headers.put("Authorization", "Bearer " + accessToken);
     headers.put("content-type", "application/json");
     headers.put("charset", "UTF-8");
     headers.put("referer", paypleConfig.getRefererUrl());
@@ -434,7 +432,7 @@ public class PaypleServiceV2 implements PaypleService {
     return httpClient.post(httpRequest);
   }
 
-  private HttpResponse executeTransferRequest(Map<String, String> params)
+  private HttpResponse executeTransferRequest(Map<String, String> params, String accessToken)
       throws HttpClientException {
     JSONObject requestBody = new JSONObject();
     requestBody.put("cst_id", params.get("cst_id"));
@@ -462,6 +460,7 @@ public class PaypleServiceV2 implements PaypleService {
     String transferRequestUrl = paypleConfig.getPendingTransferRequestUrl();
 
     Map<String, String> headers = new HashMap<>();
+    headers.put("Authorization", "Bearer " + accessToken);
     headers.put("content-type", "application/json");
     headers.put("charset", "UTF-8");
     headers.put("referer", paypleConfig.getRefererUrl());
@@ -549,10 +548,7 @@ public class PaypleServiceV2 implements PaypleService {
     try {
       JSONObject jsonResponse = (JSONObject) jsonParser.parse(responseBody);
 
-      log.info(
-          "페이플 API 응답 성공 - 응답시간: {}ms, 결과: {}",
-          response.getResponseTimeMs(),
-          jsonResponse.getOrDefault("PCD_PAY_RST", "UNKNOWN"));
+      // Aspect에서 로깅 처리하므로 중복 로그 제거
 
       return jsonResponse;
 

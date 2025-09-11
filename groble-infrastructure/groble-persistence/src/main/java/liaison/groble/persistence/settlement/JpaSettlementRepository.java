@@ -37,4 +37,6 @@ public interface JpaSettlementRepository extends JpaRepository<Settlement, Long>
   List<Settlement> findAllByUserId(Long userId);
 
   List<Settlement> findByIdIn(List<Long> settlementIds);
+
+  List<Settlement> findByPaypleBillingTranId(String billingTranId);
 }

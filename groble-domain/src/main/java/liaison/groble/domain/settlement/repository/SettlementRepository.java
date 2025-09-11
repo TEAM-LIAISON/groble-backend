@@ -28,4 +28,12 @@ public interface SettlementRepository {
    * @return 조회된 정산 목록
    */
   List<Settlement> findByIdIn(List<Long> settlementIds);
+
+  /**
+   * 페이플 빌링키로 정산 조회 (웹훅 처리용)
+   *
+   * @param billingTranId 페이플 빌링키
+   * @return 해당 빌링키를 가진 정산 목록
+   */
+  List<Settlement> findByPaypleBillingTranId(String billingTranId);
 }

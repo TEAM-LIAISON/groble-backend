@@ -68,7 +68,6 @@ public class SettlementController {
   // Helper
   private final ResponseHelper responseHelper;
 
-  // TODO: (1) 정산 개요 조회 (메이커 인증 여부 / 누적 정산 금액 / 정산 예정 금액)
   @RequireRole("ROLE_SELLER")
   @Operation(
       summary = "[💰 정산 개요 조회] 정산 개요 조회",

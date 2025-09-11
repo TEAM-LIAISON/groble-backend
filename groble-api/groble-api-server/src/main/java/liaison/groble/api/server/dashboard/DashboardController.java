@@ -125,7 +125,6 @@ public class DashboardController {
         dashboardOverviewResponse, DASHBOARD_OVERVIEW_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 
-  // TODO(2): 내 콘텐츠 전체 목록 조회 (20개씩, 최신순 정렬 페이징)
   @RequireRole("ROLE_SELLER")
   @Operation(
       summary = "[📊 대시보드 내 콘텐츠 목록 조회] 내 콘텐츠 목록 조회 ✅",
@@ -157,7 +156,6 @@ public class DashboardController {
         responsePage, DASHBOARD_CONTENTS_LIST_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 
-  // TODO(3): 오늘/지난 7일/최근 30일/이번 달/지난 달 선택에 따른 마켓과 콘텐츠 조회 [콘텐츠는 목록 제공]
   @RequireRole("ROLE_SELLER")
   @Operation(
       summary = "[📊 대시보드 - 마켓/콘텐츠 전체 조회수 조회] 내 마켓과 콘텐츠 전체 조회수 조회 ✅",
@@ -278,7 +276,6 @@ public class DashboardController {
         responsePage, DASHBOARD_CONTENTS_VIEW_STATS_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 
-  // TODO(4): 오늘/지난 7일/최근 30일/이번 달/지난 달 선택에 따른 마켓 상세 조회수 제공 + 유입 경로 제공
   @RequireRole("ROLE_SELLER")
   @Operation(
       summary = "[📊 대시보드 - 마켓 날짜별 조회수 조회] 마켓 조회수 조회 ✅",
@@ -355,8 +352,6 @@ public class DashboardController {
     return responseHelper.success(
         responsePage, DASHBOARD_MARKET_VIEW_STATS_SUCCESS_MESSAGE, HttpStatus.OK);
   }
-
-  // TODO(5): 오늘/지난 7일/최근 30일/이번 달/지난 달 선택에 따른 콘텐츠 상세 조회수 제공 + 유입 경로 제공
 
   @RequireRole("ROLE_SELLER")
   @Operation(

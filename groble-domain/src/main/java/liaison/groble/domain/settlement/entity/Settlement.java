@@ -34,7 +34,9 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Entity
 @Table(
     name = "settlements",
@@ -166,6 +168,38 @@ public class Settlement extends BaseTimeEntity {
   @Column(name = "account_holder", length = 100)
   private String accountHolder;
 
+  // 페이플 계좌 인증 결과 정보
+  @Column(name = "payple_billing_tran_id", length = 100)
+  private String paypleBillingTranId; // 페이플 빌링 거래 ID (정산 처리시 필수)
+
+  @Column(name = "payple_api_tran_dtm", length = 20)
+  private String paypleApiTranDtm; // API 거래 일시
+
+  @Column(name = "payple_bank_tran_id", length = 100)
+  private String paypleBankTranId; // 페이플 은행 거래 ID
+
+  @Column(name = "payple_bank_tran_date", length = 10)
+  private String paypleBankTranDate; // 은행 거래 날짜
+
+  @Column(name = "payple_bank_rsp_code", length = 10)
+  private String paypleBankRspCode; // 은행 응답 코드
+
+  @Column(name = "payple_bank_code_std", length = 10)
+  private String paypleBankCodeStd; // 표준 은행 코드
+
+  @Column(name = "payple_bank_code_sub", length = 10)
+  private String paypleBankCodeSub; // 세부 은행 코드
+
+  @Column(name = "payple_account_verification_at")
+  private LocalDateTime paypleAccountVerificationAt; // 계좌 인증 완료 시간
+
+  // 페이플 이체 결과 정보
+  @Column(name = "payple_api_tran_id", length = 100)
+  private String paypleApiTranId; // 페이플 API 거래 ID (이체 실행 시 업데이트)
+
+  @Column(name = "payple_bank_rsp_msg", length = 500)
+  private String paypleBankRspMsg; // 은행 응답 메시지
+
   // 동시성 제어를 위한 버전
   @Version private Long version;
 
@@ -179,7 +213,10 @@ public class Settlement extends BaseTimeEntity {
       BigDecimal vatRate,
       SettlementType settlementType,
       SettlementCycle settlementCycle,
-      Integer settlementRound) {
+      Integer settlementRound,
+      String bankName,
+      String accountNumber,
+      String accountHolder) {
     // 입력 검증
     if (user == null) {
       throw new IllegalArgumentException("사용자는 필수입니다.");
@@ -208,6 +245,10 @@ public class Settlement extends BaseTimeEntity {
     // 정산 예정일 계산 로직 변경 - 필드들이 초기화된 후에 계산
     this.scheduledSettlementDate =
         calculateScheduledDate(this.settlementEndDate, this.settlementType, this.settlementRound);
+
+    this.bankName = bankName;
+    this.accountNumber = accountNumber;
+    this.accountHolder = accountHolder;
   }
 
   // === 비즈니스 메서드 ===
@@ -316,6 +357,36 @@ public class Settlement extends BaseTimeEntity {
     this.bankName = bankName;
     this.accountNumber = accountNumber;
     this.accountHolder = accountHolder;
+  }
+
+  /** 페이플 계좌 인증 결과 저장 */
+  public void updatePaypleAccountVerification(
+      String billingTranId,
+      String apiTranDtm,
+      String bankTranId,
+      String bankTranDate,
+      String bankRspCode,
+      String bankCodeStd,
+      String bankCodeSub) {
+    ensureModifiable();
+
+    if (billingTranId == null || billingTranId.trim().isEmpty()) {
+      throw new IllegalArgumentException("빌링 거래 ID는 필수입니다.");
+    }
+
+    this.paypleBillingTranId = billingTranId;
+    this.paypleApiTranDtm = apiTranDtm;
+    this.paypleBankTranId = bankTranId;
+    this.paypleBankTranDate = bankTranDate;
+    this.paypleBankRspCode = bankRspCode;
+    this.paypleBankCodeStd = bankCodeStd;
+    this.paypleBankCodeSub = bankCodeSub;
+    this.paypleAccountVerificationAt = LocalDateTime.now();
+  }
+
+  /** 페이플 계좌 인증 완료 여부 확인 */
+  public boolean isPaypleAccountVerified() {
+    return paypleBillingTranId != null && !paypleBillingTranId.trim().isEmpty();
   }
 
   /** 은행 정보 검증 */
@@ -475,6 +546,57 @@ public class Settlement extends BaseTimeEntity {
       this.endDate = endDate;
       this.round = round;
     }
+  }
+
+  /** 이체 성공 처리 */
+  public void completeSettlement() {
+    if (this.status == SettlementStatus.PENDING || this.status == SettlementStatus.PROCESSING) {
+      this.status = SettlementStatus.COMPLETED;
+      this.settledAt = LocalDateTime.now();
+    }
+  }
+
+  /** 이체 실패 처리 */
+  public void failSettlement() {
+    if (this.status == SettlementStatus.PROCESSING) {
+      this.status = SettlementStatus.ON_HOLD; // 실패 시 보류 상태로 변경
+      this.settlementNote = "페이플 이체 실패로 인한 보류";
+    }
+  }
+
+  /** 페이플 이체 결과 정보 업데이트 */
+  public void updatePaypleTransferResult(
+      String apiTranId,
+      String apiTranDtm,
+      String bankTranId,
+      String bankTranDate,
+      String bankRspCode,
+      String bankRspMsg) {
+
+    this.paypleApiTranId = apiTranId;
+    // paypleApiTranDtm은 기존 필드 재사용 (계좌 인증 시 설정됨, 이체 시 업데이트)
+    if (apiTranDtm != null) {
+      this.paypleApiTranDtm = apiTranDtm;
+    }
+
+    // 은행 거래 정보는 기존 계좌 인증 필드 재사용 (이체 시 업데이트)
+    if (bankTranId != null) {
+      this.paypleBankTranId = bankTranId;
+    }
+    if (bankTranDate != null) {
+      this.paypleBankTranDate = bankTranDate;
+    }
+    if (bankRspCode != null) {
+      this.paypleBankRspCode = bankRspCode;
+    }
+
+    // 새로 추가된 은행 응답 메시지
+    this.paypleBankRspMsg = bankRspMsg;
+
+    log.info(
+        "정산 {} 페이플 이체 결과 업데이트 완료 - API거래ID: {}",
+        this.id,
+        apiTranId != null && apiTranId.length() > 8 ? apiTranId.substring(0, 8) + "****" : "****");
   }
 
   /** 정산 예정일 계산 - 타입별로 다르게 */
