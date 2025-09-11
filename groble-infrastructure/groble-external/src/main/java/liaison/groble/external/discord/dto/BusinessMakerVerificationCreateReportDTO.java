@@ -7,6 +7,7 @@ public record BusinessMakerVerificationCreateReportDTO(
     Long userId,
     String nickname,
     String bankAccountOwner,
+    String birthDate,
     String bankName,
     String bankAccountNumber,
     String copyOfBankbookUrl,

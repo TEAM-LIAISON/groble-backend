@@ -244,6 +244,7 @@ public class SellerInfo {
   // 개인 메이커 은행 정보만 업데이트
   public void updatePersonalMakerBankInfo(
       String bankAccountOwner,
+      String birthDate,
       String bankName,
       String bankAccountNumber,
       String copyOfBankbookUrl,
@@ -259,11 +260,13 @@ public class SellerInfo {
   // 사업자 메이커 은행 정보만 업데이트
   public void updateBusinessMakerBankInfo(
       String bankAccountOwner,
+      String birthDate,
       String bankName,
       String bankAccountNumber,
       String copyOfBankbookUrl,
       String bankCode) {
     this.businessSellerRequest = true;
+    this.birthDate = birthDate;
     this.bankAccountOwner = bankAccountOwner;
     this.bankName = bankName;
     this.bankAccountNumber = bankAccountNumber;
