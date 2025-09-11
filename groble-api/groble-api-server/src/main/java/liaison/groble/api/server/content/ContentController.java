@@ -428,7 +428,28 @@ public class ContentController {
 
   private boolean isPdfAndZipFile(MultipartFile file) {
     String contentType = file.getContentType();
-    return contentType != null
-        && (contentType.equals("application/pdf") || contentType.equals("application/zip"));
+    String fileName = file.getOriginalFilename();
+
+    if (fileName == null || fileName.trim().isEmpty()) {
+      return false;
+    }
+
+    String lowerFileName = fileName.toLowerCase();
+
+    // PDF 파일 검증
+    if (lowerFileName.endsWith(".pdf")) {
+      return contentType != null && contentType.equals("application/pdf");
+    }
+
+    // ZIP 파일 검증 (브라우저별 Content-Type 차이 허용)
+    if (lowerFileName.endsWith(".zip")) {
+      return contentType != null
+          && (contentType.equals("application/zip")
+              || contentType.equals("application/x-zip-compressed")
+              || contentType.equals("application/x-zip")
+              || contentType.equals("application/octet-stream"));
+    }
+
+    return false;
   }
 }
