@@ -372,9 +372,7 @@ public class AdminSettlementService {
         throw new PaypleApiException("이체 실행 실패: " + executeErrorMessage);
       }
 
-      // 6. 그룹 정산 요청 (기존 로직 유지)
-      JSONObject settlementResult =
-          paypleSettlementService.requestGroupSettlement(validItems, authResult.getAccessToken());
+      // 이체 실행 완료 후 추가 처리 불필요 (웹훅에서 최종 결과 수신)
 
       return PaypleSettlementResultDTO.builder()
           .success(true)
