@@ -71,10 +71,12 @@ public class PaypleApiLoggingAspect {
     try {
       if (result instanceof JSONObject) {
         JSONObject jsonResult = (JSONObject) result;
-        String resultCode = getStringValue(jsonResult, "result");
-        String message = getStringValue(jsonResult, "message");
+        String resultCode = getStringValue(jsonResult, "PCD_PAY_RST");
+        String message = getStringValue(jsonResult, "PCD_PAY_MSG");
 
-        if ("A0000".equals(resultCode) || "T0000".equals(resultCode)) {
+        if ("success".equals(resultCode)
+            || "A0000".equals(resultCode)
+            || "T0000".equals(resultCode)) {
           log.info("✅ [페이플-{}] 성공 ({}ms) - {}", apiName, duration, message);
         } else {
           log.warn("⚠️ [페이플-{}] 실패 ({}ms) - {} : {}", apiName, duration, resultCode, message);
