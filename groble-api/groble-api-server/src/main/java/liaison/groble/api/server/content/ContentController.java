@@ -34,6 +34,7 @@ import liaison.groble.api.model.dashboard.request.referrer.ReferrerRequest;
 import liaison.groble.api.model.file.response.FileUploadResponse;
 import liaison.groble.api.model.maker.response.ContactInfoResponse;
 import liaison.groble.api.server.util.FileUtil;
+import liaison.groble.api.server.util.FileValidationUtil;
 import liaison.groble.application.content.dto.ContentCardDTO;
 import liaison.groble.application.content.dto.ContentDetailDTO;
 import liaison.groble.application.content.dto.ContentViewCountDTO;
@@ -111,6 +112,7 @@ public class ContentController {
   // Util
   private final RequestUtil requestUtil;
   private final FileUtil fileUtil;
+  private final FileValidationUtil fileValidationUtil;
 
   // Helper
   private final ResponseHelper responseHelper;
@@ -261,14 +263,15 @@ public class ContentController {
           @Valid
           final MultipartFile contentThumbnailImage) {
 
-    if (contentThumbnailImage == null || contentThumbnailImage.isEmpty()) {
-      return ResponseEntity.badRequest()
-          .body(GrobleResponse.error("이미지 파일을 선택해주세요.", HttpStatus.BAD_REQUEST.value()));
-    }
+    FileValidationUtil.FileValidationResult validationResult =
+        fileValidationUtil.validateFile(
+            contentThumbnailImage, FileValidationUtil.FileType.IMAGE, 5);
 
-    if (!isImageFile(contentThumbnailImage)) {
+    if (!validationResult.isValid()) {
       return ResponseEntity.badRequest()
-          .body(GrobleResponse.error("이미지 파일만 업로드 가능합니다.", HttpStatus.BAD_REQUEST.value()));
+          .body(
+              GrobleResponse.error(
+                  validationResult.getErrorMessage(), HttpStatus.BAD_REQUEST.value()));
     }
     try {
       FileUploadDTO fileUploadDTO =
@@ -304,14 +307,15 @@ public class ContentController {
               schema = @Schema(type = "string", format = "binary"))
           @Valid
           final MultipartFile contentDocumentFile) {
-    if (contentDocumentFile == null || contentDocumentFile.isEmpty()) {
-      return ResponseEntity.badRequest()
-          .body(GrobleResponse.error("콘텐츠 파일을 업로드해주세요.", HttpStatus.BAD_REQUEST.value()));
-    }
+    FileValidationUtil.FileValidationResult validationResult =
+        fileValidationUtil.validateFile(
+            contentDocumentFile, FileValidationUtil.FileType.PDF_OR_ZIP, 60);
 
-    if (!isPdfAndZipFile(contentDocumentFile)) {
+    if (!validationResult.isValid()) {
       return ResponseEntity.badRequest()
-          .body(GrobleResponse.error("pdf/zip 파일만 업로드 가능합니다.", HttpStatus.BAD_REQUEST.value()));
+          .body(
+              GrobleResponse.error(
+                  validationResult.getErrorMessage(), HttpStatus.BAD_REQUEST.value()));
     }
     try {
       FileUploadDTO fileUploadDTO =
@@ -379,9 +383,14 @@ public class ContentController {
 
     List<FileUploadResponse> responses = new ArrayList<>();
     for (MultipartFile file : contentDetailImages) {
-      if (file.isEmpty() || !isImageFile(file)) {
+      FileValidationUtil.FileValidationResult validationResult =
+          fileValidationUtil.validateFile(file, FileValidationUtil.FileType.IMAGE, 10);
+
+      if (!validationResult.isValid()) {
         return ResponseEntity.badRequest()
-            .body(GrobleResponse.error("모든 파일이 유효한 이미지여야 합니다.", HttpStatus.BAD_REQUEST.value()));
+            .body(
+                GrobleResponse.error(
+                    validationResult.getErrorMessage(), HttpStatus.BAD_REQUEST.value()));
       }
       try {
         FileUploadDTO dto = fileUtil.toServiceFileUploadDTO(file, "contents/detail");
@@ -418,38 +427,5 @@ public class ContentController {
     ReferrerDTO referrerDTO = referrerMapper.toContentReferrerDTO(referrerRequest);
     referrerService.recordContentReferrer(contentId, referrerDTO);
     return responseHelper.success(null, CONTENT_REFERRAL_SUCCESS_MESSAGE, HttpStatus.OK);
-  }
-
-  /** 이미지 파일 여부 확인 */
-  private boolean isImageFile(MultipartFile file) {
-    String contentType = file.getContentType();
-    return contentType != null && contentType.startsWith("image/");
-  }
-
-  private boolean isPdfAndZipFile(MultipartFile file) {
-    String contentType = file.getContentType();
-    String fileName = file.getOriginalFilename();
-
-    if (fileName == null || fileName.trim().isEmpty()) {
-      return false;
-    }
-
-    String lowerFileName = fileName.toLowerCase();
-
-    // PDF 파일 검증
-    if (lowerFileName.endsWith(".pdf")) {
-      return contentType != null && contentType.equals("application/pdf");
-    }
-
-    // ZIP 파일 검증 (브라우저별 Content-Type 차이 허용)
-    if (lowerFileName.endsWith(".zip")) {
-      return contentType != null
-          && (contentType.equals("application/zip")
-              || contentType.equals("application/x-zip-compressed")
-              || contentType.equals("application/x-zip")
-              || contentType.equals("application/octet-stream"));
-    }
-
-    return false;
   }
 }

@@ -26,6 +26,7 @@ import liaison.groble.api.model.user.response.swagger.SwitchRole;
 import liaison.groble.api.model.user.response.swagger.UploadUserProfileImage;
 import liaison.groble.api.model.user.response.swagger.UserHeader;
 import liaison.groble.api.server.util.FileUtil;
+import liaison.groble.api.server.util.FileValidationUtil;
 import liaison.groble.application.file.FileService;
 import liaison.groble.application.file.dto.FileUploadDTO;
 import liaison.groble.application.user.dto.UserHeaderDTO;
@@ -73,6 +74,7 @@ public class UserController {
 
   // Utils
   private final FileUtil fileUtil;
+  private final FileValidationUtil fileValidationUtil;
 
   // Helper
   private final ResponseHelper responseHelper;
@@ -171,15 +173,15 @@ public class UserController {
               schema = @Schema(type = "string", format = "binary"))
           MultipartFile profileImage) {
 
-    // 1) 파일 미선택
-    if (profileImage == null || profileImage.isEmpty()) {
+    // 파일 검증 (5MB 제한)
+    FileValidationUtil.FileValidationResult validationResult =
+        fileValidationUtil.validateFile(profileImage, FileValidationUtil.FileType.STRICT_IMAGE, 5);
+
+    if (!validationResult.isValid()) {
       return ResponseEntity.badRequest()
-          .body(GrobleResponse.error("이미지 파일을 선택해주세요.", HttpStatus.BAD_REQUEST.value()));
-    }
-    // 2) 이미지 타입 검증
-    if (!isImageFile(profileImage)) {
-      return ResponseEntity.badRequest()
-          .body(GrobleResponse.error("이미지 파일만 업로드 가능합니다.", HttpStatus.BAD_REQUEST.value()));
+          .body(
+              GrobleResponse.error(
+                  validationResult.getErrorMessage(), HttpStatus.BAD_REQUEST.value()));
     }
 
     try {
@@ -209,10 +211,5 @@ public class UserController {
               GrobleResponse.error(
                   "프로필 이미지 저장 중 오류가 발생했습니다. 다시 시도해주세요.", HttpStatus.INTERNAL_SERVER_ERROR.value()));
     }
-  }
-
-  private boolean isImageFile(MultipartFile file) {
-    String ct = file.getContentType();
-    return ct != null && ct.startsWith("image/");
   }
 }
