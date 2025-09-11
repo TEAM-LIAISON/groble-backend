@@ -1,11 +1,15 @@
 package liaison.groble.api.model.auth.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Schema(description = "개인 메이커 인증 처리 요청")
 public class VerifyPersonalMakerAccountRequest {
   /** 정산받을 은행 계좌 소유자 이름 */
