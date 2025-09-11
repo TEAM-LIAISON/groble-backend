@@ -89,6 +89,7 @@ public class AccountVerificationService {
     // 직접 업데이트
     sellerInfo.updateBusinessInfo(
         BusinessType.valueOf(dto.getBusinessType().name()),
+        dto.getBusinessNumber(),
         dto.getBusinessCategory(),
         dto.getBusinessSector(),
         dto.getBusinessName(),
@@ -107,6 +108,7 @@ public class AccountVerificationService {
             .bankAccountNumber(sellerInfo.getBankAccountNumber())
             .copyOfBankbookUrl(sellerInfo.getCopyOfBankbookUrl())
             .businessType(dto.getBusinessType().name())
+            .businessNumber(dto.getBusinessNumber())
             .businessCategory(dto.getBusinessCategory())
             .businessSector(dto.getBusinessSector())
             .businessName(dto.getBusinessName())

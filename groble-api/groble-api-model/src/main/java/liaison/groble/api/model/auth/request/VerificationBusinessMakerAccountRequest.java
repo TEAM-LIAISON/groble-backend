@@ -38,6 +38,10 @@ public class VerificationBusinessMakerAccountRequest {
       allowableValues = {"INDIVIDUAL_SIMPLIFIED", "INDIVIDUAL_NORMAL", "CORPORATE"})
   private BusinessType businessType;
 
+  /** 사업자등록번호 */
+  @Schema(description = "사업자등록번호", example = "1234-56-78901")
+  private String businessNumber;
+
   /** 업종 */
   @Schema(description = "업종", example = "IT 서비스")
   private String businessCategory;

@@ -12,6 +12,7 @@ public class VerifyBusinessMakerAccountDTO {
   private final String bankAccountNumber;
   private final String copyOfBankbookUrl;
   private final BusinessType businessType;
+  private final String businessNumber;
   private final String businessCategory;
   private final String businessSector;
   private final String businessName;

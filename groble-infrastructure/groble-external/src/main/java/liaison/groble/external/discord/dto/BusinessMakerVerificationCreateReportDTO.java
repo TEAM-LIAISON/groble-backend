@@ -12,6 +12,7 @@ public record BusinessMakerVerificationCreateReportDTO(
     String bankAccountNumber,
     String copyOfBankbookUrl,
     String businessType,
+    String businessNumber,
     String businessCategory,
     String businessSector,
     String businessName,

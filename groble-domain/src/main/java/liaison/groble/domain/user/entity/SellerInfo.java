@@ -277,6 +277,7 @@ public class SellerInfo {
   // 사업자 정보만 업데이트
   public void updateBusinessInfo(
       BusinessType businessType,
+      String businessNumber,
       String businessCategory,
       String businessSector,
       String businessName,
@@ -285,6 +286,7 @@ public class SellerInfo {
       String businessLicenseFileUrl,
       String taxInvoiceEmail) {
     this.businessType = businessType;
+    this.businessNumber = businessNumber;
     this.businessCategory = businessCategory;
     this.businessSector = businessSector;
     this.businessName = businessName;
