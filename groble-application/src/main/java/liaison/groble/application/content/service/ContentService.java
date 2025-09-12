@@ -215,17 +215,24 @@ public class ContentService {
       content = findAndValidateUserContent(userId, contentDTO.getContentId());
 
       // 2) 옵션 컬렉션을 처음부터 로딩
-      //    (lazy 로딩일 경우, 강제로 컬렉션을 초기화해서
-      //     이미 DB에 남아 있는 실제 엔티티만 제거되도록 함)
       content.getOptions().size();
-      // → 이 시점에 Hibernate가 DB에 남아 있는 옵션 리스트를 가져옵니다.
 
-      // 3) 컬렉션에서 실제로 제거할 대상만 남겨두고 지울 수 있도록
-      //    (예: 무조건 다 지우려면 clear 그대로 사용해도 되지만,
-      //     clear 직전에 fetch를 했으니 DB에 없는 id로 삭제쿼리가 나가지 않음)
-      content.getOptions().clear();
+      // 3) 판매 이력에 따른 옵션 처리
+      if (content.getSaleCount() > 0) {
+        // 판매 이력 있음: 기존 옵션 비활성화 + 새 옵션 추가
+        handleOptionsWithSalesHistory(content, contentDTO.getOptions());
+      } else {
+        // 판매 이력 없음: 완전 교체
+        content.getOptions().clear();
+        if (contentDTO.getOptions() != null && !contentDTO.getOptions().isEmpty()) {
+          addOptionsToContent(content, contentDTO);
+        }
+      }
     } else {
       content = new Content(user);
+      if (contentDTO.getOptions() != null && !contentDTO.getOptions().isEmpty()) {
+        addOptionsToContent(content, contentDTO);
+      }
     }
 
     // 4. 카테고리 조회 및 설정 (심사 요청 시 필수)
@@ -235,11 +242,6 @@ public class ContentService {
     updateContentFromDTO(content, contentDTO);
     content.setCategory(category); // 카테고리 설정
     content.setStatus(ContentStatus.ACTIVE); // 심사중으로 설정
-
-    // 4) 새 옵션 추가
-    if (contentDTO.getOptions() != null && !contentDTO.getOptions().isEmpty()) {
-      addOptionsToContent(content, contentDTO);
-    }
 
     // 7. 저장 및 변환
     final LocalDateTime nowInSeoul = LocalDateTime.now(ZoneId.of("Asia/Seoul"));
