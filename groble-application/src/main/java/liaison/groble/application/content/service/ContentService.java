@@ -10,6 +10,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
@@ -1031,32 +1032,76 @@ public class ContentService {
       List<ContentOption> activeOptions, List<ContentOptionDTO> newOptions) {
     // 개수가 다르면 변경사항 있음
     if (activeOptions.size() != newOptions.size()) {
+      log.info("옵션 개수 차이: 기존={}, 새={}", activeOptions.size(), newOptions.size());
       return true;
     }
 
-    // 각 옵션의 내용을 비교 (간단한 비교)
-    for (int i = 0; i < activeOptions.size(); i++) {
-      ContentOption existing = activeOptions.get(i);
-      ContentOptionDTO newOption = newOptions.get(i);
+    // 기존 옵션들을 Set으로 변환 (순서 무관하게 비교)
+    Set<String> existingOptionSignatures =
+        activeOptions.stream().map(this::createOptionSignature).collect(Collectors.toSet());
 
-      // 이름, 설명, 가격 중 하나라도 다르면 변경사항 있음
-      if (!Objects.equals(existing.getName(), newOption.getName())
-          || !Objects.equals(existing.getDescription(), newOption.getDescription())
-          || !Objects.equals(existing.getPrice(), newOption.getPrice())) {
-        return true;
-      }
+    // 새 옵션들을 Set으로 변환
+    Set<String> newOptionSignatures =
+        newOptions.stream().map(this::createOptionSignatureFromDTO).collect(Collectors.toSet());
 
-      // DocumentOption 특수 필드 비교
-      if (existing instanceof DocumentOption && newOption.getDocumentFileUrl() != null) {
-        DocumentOption docOption = (DocumentOption) existing;
-        if (!Objects.equals(docOption.getDocumentFileUrl(), newOption.getDocumentFileUrl())
-            || !Objects.equals(docOption.getDocumentLinkUrl(), newOption.getDocumentLinkUrl())) {
-          return true;
-        }
-      }
+    log.info("기존 옵션 시그니처: {}", existingOptionSignatures);
+    log.info("새 옵션 시그니처: {}", newOptionSignatures);
+
+    // Set 비교로 순서에 관계없이 내용 비교
+    boolean hasChanges = !existingOptionSignatures.equals(newOptionSignatures);
+    log.info("옵션 변경사항 여부: {}", hasChanges);
+    return hasChanges;
+  }
+
+  private String createOptionSignature(ContentOption option) {
+    StringBuilder signature = new StringBuilder();
+    signature
+        .append(safeString(option.getName()))
+        .append("|")
+        .append(safeString(option.getDescription()))
+        .append("|")
+        .append(option.getPrice() != null ? option.getPrice().toString() : "null")
+        .append("|");
+
+    // DocumentOption 특수 필드 추가
+    if (option instanceof DocumentOption) {
+      DocumentOption docOption = (DocumentOption) option;
+      signature
+          .append(safeString(docOption.getDocumentFileUrl()))
+          .append("|")
+          .append(safeString(docOption.getDocumentLinkUrl()));
+    } else {
+      signature.append("null|null"); // 일관성을 위해
     }
 
-    return false; // 모든 옵션이 동일함
+    String result = signature.toString();
+    log.debug("기존 옵션 시그니처 생성: optionId={}, signature={}", option.getId(), result);
+    return result;
+  }
+
+  private String createOptionSignatureFromDTO(ContentOptionDTO dto) {
+    StringBuilder signature = new StringBuilder();
+    signature
+        .append(safeString(dto.getName()))
+        .append("|")
+        .append(safeString(dto.getDescription()))
+        .append("|")
+        .append(dto.getPrice() != null ? dto.getPrice().toString() : "null")
+        .append("|");
+
+    // DocumentOption 특수 필드 추가
+    signature
+        .append(safeString(dto.getDocumentFileUrl()))
+        .append("|")
+        .append(safeString(dto.getDocumentLinkUrl()));
+
+    String result = signature.toString();
+    log.debug("새 옵션 시그니처 생성: signature={}", result);
+    return result;
+  }
+
+  private String safeString(String str) {
+    return str != null ? str : "null";
   }
 
   @Transactional(readOnly = true)
