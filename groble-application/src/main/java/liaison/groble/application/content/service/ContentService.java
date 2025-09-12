@@ -181,9 +181,14 @@ public class ContentService {
       // 옵션 처리
       if (content.getSaleCount() > 0) {
         // 판매 이력 있음: 기존 옵션 비활성화 + 새 옵션 추가
-        handleOptionsWithSalesHistory(content, contentDTO.getOptions());
+        log.info(
+            "판매 이력 있는 콘텐츠 임시저장: contentId={}, saleCount={} - 기존 옵션 비활성화",
+            content.getId(),
+            content.getSaleCount());
+        handleOptionsWithSalesHistorySmartly(content, contentDTO.getOptions());
       } else {
         // 판매 이력 없음: 완전 교체
+        log.info("판매 이력 없는 콘텐츠 임시저장: contentId={} - 기존 옵션 완전 교체", content.getId());
         content.getOptions().clear();
         if (contentDTO.getOptions() != null) {
           addOptionsToContent(content, contentDTO);
@@ -220,9 +225,14 @@ public class ContentService {
       // 3) 판매 이력에 따른 옵션 처리
       if (content.getSaleCount() > 0) {
         // 판매 이력 있음: 기존 옵션 비활성화 + 새 옵션 추가
-        handleOptionsWithSalesHistory(content, contentDTO.getOptions());
+        log.info(
+            "판매 이력 있는 콘텐츠 심사요청: contentId={}, saleCount={} - 기존 옵션 비활성화",
+            content.getId(),
+            content.getSaleCount());
+        handleOptionsWithSalesHistorySmartly(content, contentDTO.getOptions());
       } else {
         // 판매 이력 없음: 완전 교체
+        log.info("판매 이력 없는 콘텐츠 심사요청: contentId={} - 기존 옵션 완전 교체", content.getId());
         content.getOptions().clear();
         if (contentDTO.getOptions() != null && !contentDTO.getOptions().isEmpty()) {
           addOptionsToContent(content, contentDTO);
@@ -979,28 +989,74 @@ public class ContentService {
     }
   }
 
-  private void handleOptionsWithSalesHistory(Content content, List<ContentOptionDTO> newOptions) {
-    log.info(
-        "판매 이력이 있는 콘텐츠 옵션 수정: contentId={}, saleCount={}", content.getId(), content.getSaleCount());
+  private void handleOptionsWithSalesHistorySmartly(
+      Content content, List<ContentOptionDTO> newOptions) {
+    List<ContentOption> activeOptions =
+        content.getOptions().stream().filter(ContentOption::isActive).collect(Collectors.toList());
 
-    // 모든 기존 옵션 비활성화
-    content.getOptions().stream()
-        .filter(ContentOption::isActive)
-        .forEach(
-            option -> {
-              option.deactivate();
-              log.info("기존 옵션 비활성화: optionId={}", option.getId());
-            });
-
-    // 새 옵션 추가
-    if (newOptions != null) {
-      newOptions.forEach(
-          dto -> {
-            ContentOption newOption = createOptionByContentType(content.getContentType(), dto);
-            content.addOption(newOption);
-            log.info("새 옵션 추가: name={}, price={}", newOption.getName(), newOption.getPrice());
-          });
+    // 새 옵션이 없으면 종료
+    if (newOptions == null || newOptions.isEmpty()) {
+      log.info("새 옵션 데이터가 없음, 스킵: contentId={}", content.getId());
+      return;
     }
+
+    // 변경사항이 있는지 확인
+    if (!hasOptionChanges(activeOptions, newOptions)) {
+      log.info("옵션 변경사항 없음, 스킵: contentId={}", content.getId());
+      return;
+    }
+
+    log.info(
+        "옵션 변경사항 감지, 업데이트 진행: contentId={}, 기존활성옵션수={}, 새옵션수={}",
+        content.getId(),
+        activeOptions.size(),
+        newOptions.size());
+
+    // 변경사항이 있을 때만 기존 옵션 비활성화 + 새 옵션 추가
+    activeOptions.forEach(
+        option -> {
+          option.deactivate();
+          log.info("기존 옵션 비활성화: optionId={}", option.getId());
+        });
+
+    newOptions.forEach(
+        dto -> {
+          ContentOption newOption = createOptionByContentType(content.getContentType(), dto);
+          content.addOption(newOption);
+          log.info("새 옵션 추가: name={}, price={}", newOption.getName(), newOption.getPrice());
+        });
+  }
+
+  private boolean hasOptionChanges(
+      List<ContentOption> activeOptions, List<ContentOptionDTO> newOptions) {
+    // 개수가 다르면 변경사항 있음
+    if (activeOptions.size() != newOptions.size()) {
+      return true;
+    }
+
+    // 각 옵션의 내용을 비교 (간단한 비교)
+    for (int i = 0; i < activeOptions.size(); i++) {
+      ContentOption existing = activeOptions.get(i);
+      ContentOptionDTO newOption = newOptions.get(i);
+
+      // 이름, 설명, 가격 중 하나라도 다르면 변경사항 있음
+      if (!Objects.equals(existing.getName(), newOption.getName())
+          || !Objects.equals(existing.getDescription(), newOption.getDescription())
+          || !Objects.equals(existing.getPrice(), newOption.getPrice())) {
+        return true;
+      }
+
+      // DocumentOption 특수 필드 비교
+      if (existing instanceof DocumentOption && newOption.getDocumentFileUrl() != null) {
+        DocumentOption docOption = (DocumentOption) existing;
+        if (!Objects.equals(docOption.getDocumentFileUrl(), newOption.getDocumentFileUrl())
+            || !Objects.equals(docOption.getDocumentLinkUrl(), newOption.getDocumentLinkUrl())) {
+          return true;
+        }
+      }
+    }
+
+    return false; // 모든 옵션이 동일함
   }
 
   @Transactional(readOnly = true)
