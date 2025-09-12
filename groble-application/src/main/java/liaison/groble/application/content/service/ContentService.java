@@ -179,21 +179,23 @@ public class ContentService {
 
       updateContentFromDTO(content, contentDTO);
 
-      // 옵션 처리
-      if (content.getSaleCount() > 0) {
-        // 판매 이력 있음: 기존 옵션 비활성화 + 새 옵션 추가
-        log.info(
-            "판매 이력 있는 콘텐츠 임시저장: contentId={}, saleCount={} - 기존 옵션 비활성화",
-            content.getId(),
-            content.getSaleCount());
-        handleOptionsWithSalesHistorySmartly(content, contentDTO.getOptions());
-      } else {
-        // 판매 이력 없음: 완전 교체
-        log.info("판매 이력 없는 콘텐츠 임시저장: contentId={} - 기존 옵션 완전 교체", content.getId());
-        content.getOptions().clear();
-        if (contentDTO.getOptions() != null) {
+      // 옵션 처리 - 옵션 데이터가 전달된 경우에만
+      if (contentDTO.getOptions() != null && !contentDTO.getOptions().isEmpty()) {
+        if (content.getSaleCount() > 0) {
+          // 판매 이력 있음: 기존 옵션 비활성화 + 새 옵션 추가
+          log.info(
+              "판매 이력 있는 콘텐츠 임시저장: contentId={}, saleCount={} - 옵션 데이터 전달됨",
+              content.getId(),
+              content.getSaleCount());
+          handleOptionsWithSalesHistorySmartly(content, contentDTO.getOptions());
+        } else {
+          // 판매 이력 없음: 완전 교체
+          log.info("판매 이력 없는 콘텐츠 임시저장: contentId={} - 기존 옵션 완전 교체", content.getId());
+          content.getOptions().clear();
           addOptionsToContent(content, contentDTO);
         }
+      } else {
+        log.info("옵션 데이터 없음, 옵션 처리 건너뛰기: contentId={}", content.getId());
       }
     } else {
       // 새 콘텐츠
@@ -223,21 +225,23 @@ public class ContentService {
       // 2) 옵션 컬렉션을 처음부터 로딩
       content.getOptions().size();
 
-      // 3) 판매 이력에 따른 옵션 처리
-      if (content.getSaleCount() > 0) {
-        // 판매 이력 있음: 기존 옵션 비활성화 + 새 옵션 추가
-        log.info(
-            "판매 이력 있는 콘텐츠 심사요청: contentId={}, saleCount={} - 기존 옵션 비활성화",
-            content.getId(),
-            content.getSaleCount());
-        handleOptionsWithSalesHistorySmartly(content, contentDTO.getOptions());
-      } else {
-        // 판매 이력 없음: 완전 교체
-        log.info("판매 이력 없는 콘텐츠 심사요청: contentId={} - 기존 옵션 완전 교체", content.getId());
-        content.getOptions().clear();
-        if (contentDTO.getOptions() != null && !contentDTO.getOptions().isEmpty()) {
+      // 3) 판매 이력에 따른 옵션 처리 - 옵션 데이터가 전달된 경우에만
+      if (contentDTO.getOptions() != null && !contentDTO.getOptions().isEmpty()) {
+        if (content.getSaleCount() > 0) {
+          // 판매 이력 있음: 기존 옵션 비활성화 + 새 옵션 추가
+          log.info(
+              "판매 이력 있는 콘텐츠 심사요청: contentId={}, saleCount={} - 옵션 데이터 전달됨",
+              content.getId(),
+              content.getSaleCount());
+          handleOptionsWithSalesHistorySmartly(content, contentDTO.getOptions());
+        } else {
+          // 판매 이력 없음: 완전 교체
+          log.info("판매 이력 없는 콘텐츠 심사요청: contentId={} - 기존 옵션 완전 교체", content.getId());
+          content.getOptions().clear();
           addOptionsToContent(content, contentDTO);
         }
+      } else {
+        log.info("옵션 데이터 없음, 옵션 처리 건너뛰기: contentId={}", content.getId());
       }
     } else {
       content = new Content(user);
