@@ -1064,7 +1064,10 @@ public class ContentService {
         .append("|")
         .append(safeString(option.getDescription()))
         .append("|")
-        .append(option.getPrice() != null ? option.getPrice().toString() : "null")
+        .append(
+            option.getPrice() != null
+                ? option.getPrice().stripTrailingZeros().toPlainString()
+                : "null")
         .append("|");
 
     // DocumentOption 특수 필드 추가
@@ -1090,7 +1093,8 @@ public class ContentService {
         .append("|")
         .append(safeString(dto.getDescription()))
         .append("|")
-        .append(dto.getPrice() != null ? dto.getPrice().toString() : "null")
+        .append(
+            dto.getPrice() != null ? dto.getPrice().stripTrailingZeros().toPlainString() : "null")
         .append("|");
 
     // DocumentOption 특수 필드 추가
