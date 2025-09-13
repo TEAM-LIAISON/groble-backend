@@ -22,6 +22,8 @@ import liaison.groble.application.purchase.service.PurchaseReader;
 import liaison.groble.application.settlement.reader.SettlementReader;
 import liaison.groble.application.settlement.writer.SettlementWriter;
 import liaison.groble.application.user.service.UserReader;
+import liaison.groble.domain.content.entity.Content;
+import liaison.groble.domain.content.repository.ContentRepository;
 import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.payment.entity.Payment;
 import liaison.groble.domain.payment.entity.PayplePayment;
@@ -56,6 +58,7 @@ public class PaymentTransactionService {
   private final PaymentReader paymentReader;
   private final PaymentValidator paymentValidator;
   private final PayplePaymentRepository payplePaymentRepository;
+  private final ContentRepository contentRepository;
   private final PaymentRepository paymentRepository;
   private final PurchaseRepository purchaseRepository;
   private final SettlementReader settlementReader;
@@ -293,6 +296,9 @@ public class PaymentTransactionService {
   /** Purchase 생성 */
   private Purchase createPurchase(Order order) {
     Purchase purchase = Purchase.createFromOrder(order);
+    Content content = order.getOrderItems().get(0).getContent();
+    content.incrementSaleCount();
+    contentRepository.save(content);
     return purchaseRepository.save(purchase);
   }
 

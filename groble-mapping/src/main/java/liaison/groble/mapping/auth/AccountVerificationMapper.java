@@ -10,6 +10,7 @@ import liaison.groble.mapping.config.GrobleMapperConfig;
 
 @Mapper(config = GrobleMapperConfig.class)
 public interface AccountVerificationMapper {
+
   VerifyPersonalMakerAccountDTO toVerifyPersonalMakerAccountDTO(
       VerifyPersonalMakerAccountRequest request);
 

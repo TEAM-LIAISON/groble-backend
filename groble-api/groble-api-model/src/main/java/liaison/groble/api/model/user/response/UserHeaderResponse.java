@@ -34,4 +34,7 @@ public class UserHeaderResponse {
 
   @Schema(description = "마지막으로 사용한 사용자 유형", example = "SELLER")
   private String lastUserType;
+
+  @Schema(description = "게스트 사용자 여부 [FULL_ACCESS 게스트만 true]", example = "false")
+  private Boolean isGuest;
 }

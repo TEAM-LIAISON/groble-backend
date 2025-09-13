@@ -31,35 +31,15 @@ public class ReferrerService {
   private final UserReader userReader;
 
   public void recordContentReferrer(Long contentId, ReferrerDTO referrerDTO) {
-    log.info("=== CONTENT REFERRER DEBUG START ===");
-    log.info("ContentId: {}", contentId);
-    log.info(
-        "Incoming ReferrerDTO: pageUrl={}, referrerUrl={}, utmSource={}, utmMedium={}, utmCampaign={}, utmContent={}, utmTerm={}",
-        referrerDTO.getPageUrl(),
-        referrerDTO.getReferrerUrl(),
-        referrerDTO.getUtmSource(),
-        referrerDTO.getUtmMedium(),
-        referrerDTO.getUtmCampaign(),
-        referrerDTO.getUtmContent(),
-        referrerDTO.getUtmTerm());
-
     try {
+      // admin.groble.im에서 유입되는 경우 추적하지 않음
+      String referrerUrl = referrerDTO.getReferrerUrl();
+      if (referrerUrl != null && referrerUrl.contains("admin.groble.im")) {
+        return;
+      }
+
       // ContentReferrerStats 찾거나 생성하고 방문수 증가
       ContentReferrerStats stats = findOrCreateContentReferrerStats(contentId, referrerDTO);
-
-      log.info(
-          "Final ContentReferrerStats before save: id={}, contentId={}, referrerUrl={}, referrerDomain={}, referrerPath={}, source={}, medium={}, campaign={}, content={}, term={}, visitCount={}",
-          stats.getId(),
-          stats.getContentId(),
-          stats.getReferrerUrl(),
-          stats.getReferrerDomain(),
-          stats.getReferrerPath(),
-          stats.getSource(),
-          stats.getMedium(),
-          stats.getCampaign(),
-          stats.getContent(),
-          stats.getTerm(),
-          stats.getVisitCount());
 
       // 방문수 증가
       stats.incrementVisitCount();
@@ -75,12 +55,8 @@ public class ReferrerService {
 
       contentReferrerEventRepository.save(event);
 
-      log.info("Successfully saved ContentReferrerStats with id: {}", stats.getId());
-      log.info("=== CONTENT REFERRER DEBUG END ===");
-
     } catch (Exception e) {
       log.error("Failed to record content referrer stats for contentId: " + contentId, e);
-      log.info("=== CONTENT REFERRER DEBUG END (ERROR) ===");
     }
   }
 

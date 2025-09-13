@@ -7,10 +7,12 @@ import lombok.Getter;
 @Builder
 public class VerifyBusinessMakerAccountDTO {
   private final String bankAccountOwner;
+  private final String birthDate;
   private final String bankName;
   private final String bankAccountNumber;
   private final String copyOfBankbookUrl;
   private final BusinessType businessType;
+  private final String businessNumber;
   private final String businessCategory;
   private final String businessSector;
   private final String businessName;

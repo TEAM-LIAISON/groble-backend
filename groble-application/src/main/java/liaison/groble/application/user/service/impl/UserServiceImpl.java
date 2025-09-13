@@ -179,6 +179,7 @@ public class UserServiceImpl implements UserService {
         .unreadNotificationCount(unreadNotificationCount)
         .alreadyRegisteredAsSeller(user.isSeller())
         .lastUserType(user.getLastUserType().name())
+        .isGuest(false) // 회원 사용자는 게스트가 아님
         .build();
   }
 

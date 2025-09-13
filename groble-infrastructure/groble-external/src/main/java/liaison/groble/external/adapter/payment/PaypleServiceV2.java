@@ -323,8 +323,9 @@ public class PaypleServiceV2 implements PaypleService {
     requestBody.put("PCD_REFUND_KEY", paypleConfig.getRefundKey());
     requestBody.put("PCD_PAYCANCEL_FLAG", "Y");
     requestBody.put("PCD_PAY_OID", request.getPayOid());
-    requestBody.put(
-        "PCD_PAY_DATE", new java.text.SimpleDateFormat("yyyyMMdd").format(new java.util.Date()));
+    // 주문번호에서 실제 결제일 추출하여 사용
+    String paymentDate = extractPaymentDateFromMerchantUid(request.getPayOid());
+    requestBody.put("PCD_PAY_DATE", paymentDate);
     requestBody.put("PCD_REFUND_TOTAL", request.getRefundTotal());
 
     if (request.getRefundTaxfree() != null && !request.getRefundTaxfree().equals("0")) {
@@ -663,5 +664,23 @@ public class PaypleServiceV2 implements PaypleService {
       }
     }
     return maskedBody.toJSONString();
+  }
+
+  /** 주문번호(merchantUid)에서 결제일 추출 예: "2025091223403337" → "20250912" */
+  private String extractPaymentDateFromMerchantUid(String merchantUid) {
+    if (merchantUid == null || merchantUid.length() < 8) {
+      log.warn("유효하지 않은 주문번호 형식, 현재 날짜 사용: {}", merchantUid);
+      return new java.text.SimpleDateFormat("yyyyMMdd").format(new java.util.Date());
+    }
+
+    try {
+      // 주문번호 앞 8자리가 결제일 (yyyyMMdd 형식)
+      String paymentDate = merchantUid.substring(0, 8);
+      log.info("주문번호에서 결제일 추출: {} → {}", merchantUid, paymentDate);
+      return paymentDate;
+    } catch (Exception e) {
+      log.error("주문번호에서 결제일 추출 실패, 현재 날짜 사용: {}", merchantUid, e);
+      return new java.text.SimpleDateFormat("yyyyMMdd").format(new java.util.Date());
+    }
   }
 }

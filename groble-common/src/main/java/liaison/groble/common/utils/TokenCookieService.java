@@ -234,6 +234,37 @@ public class TokenCookieService {
     log.info("[User] 토큰 쿠키 완전 제거 완료");
   }
 
+  // --- Guest 쿠키 제거 ---
+  public void clearGuestTokenCookie(HttpServletRequest request, HttpServletResponse response) {
+    CookieSettings settings = resolveUserSettings(request);
+
+    CookieUtils.addCookie(
+        response,
+        GUEST_TOKEN_COOKIE_NAME,
+        null,
+        0,
+        "/",
+        true,
+        settings.secure(),
+        settings.sameSite(),
+        settings.domain());
+
+    log.debug(
+        "[Guest] 쿠키 제거: domain={}, fromLocalhost={}",
+        settings.domain() != null ? settings.domain() : "(host-only)",
+        settings.fromLocalhost());
+  }
+
+  public void clearGuestTokenCookie(HttpServletResponse response) {
+    clearGuestTokenCookie(null, response);
+  }
+
+  /** 로그아웃 시 게스트 토큰 쿠키 완전 제거 */
+  public void removeGuestTokenCookie(HttpServletResponse response) {
+    clearGuestTokenCookie(null, response);
+    log.info("[Guest] 토큰 쿠키 완전 제거 완료");
+  }
+
   /** 게스트 토큰 쿠키에서 토큰 값 추출 */
   public String getGuestTokenFromCookie(HttpServletRequest request) {
     if (request == null) return null;

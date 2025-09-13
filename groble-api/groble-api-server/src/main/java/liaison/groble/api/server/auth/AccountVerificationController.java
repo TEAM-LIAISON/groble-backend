@@ -23,6 +23,7 @@ import liaison.groble.api.server.common.ApiPaths;
 import liaison.groble.api.server.common.BaseController;
 import liaison.groble.api.server.common.ResponseMessages;
 import liaison.groble.api.server.util.FileUtil;
+import liaison.groble.api.server.util.FileValidationUtil;
 import liaison.groble.application.auth.dto.VerifyBusinessMakerAccountDTO;
 import liaison.groble.application.auth.dto.VerifyPersonalMakerAccountDTO;
 import liaison.groble.application.auth.service.AccountVerificationService;
@@ -54,6 +55,7 @@ public class AccountVerificationController extends BaseController {
   private final AccountVerificationService accountVerificationService;
   private final FileService fileService;
   private final FileUtil fileUtil;
+  private final FileValidationUtil fileValidationUtil;
 
   // Mapper
   private final AccountVerificationMapper accountVerificationMapper;
@@ -63,12 +65,14 @@ public class AccountVerificationController extends BaseController {
       AccountVerificationMapper accountVerificationMapper,
       AccountVerificationService accountVerificationService,
       FileService fileService,
-      FileUtil fileUtil) {
+      FileUtil fileUtil,
+      FileValidationUtil fileValidationUtil) {
     super(responseHelper);
     this.accountVerificationMapper = accountVerificationMapper;
     this.accountVerificationService = accountVerificationService;
     this.fileService = fileService;
     this.fileUtil = fileUtil;
+    this.fileValidationUtil = fileValidationUtil;
   }
 
   /** 개인 메이커 계좌 인증 요청 처리 */
@@ -150,16 +154,15 @@ public class AccountVerificationController extends BaseController {
           @Valid
           final MultipartFile bankbookCopyImage) {
 
-    if (bankbookCopyImage == null || bankbookCopyImage.isEmpty()) {
-      return ResponseEntity.badRequest()
-          .body(GrobleResponse.error("pdf, png, jpeg 파일을 선택해주세요.", HttpStatus.BAD_REQUEST.value()));
-    }
+    FileValidationUtil.FileValidationResult validationResult =
+        fileValidationUtil.validateFile(
+            bankbookCopyImage, FileValidationUtil.FileType.DOCUMENT, 10);
 
-    if (!isAllowedFileType(bankbookCopyImage)) {
+    if (!validationResult.isValid()) {
       return ResponseEntity.badRequest()
           .body(
               GrobleResponse.error(
-                  "pdf, png, jpeg 파일만 업로드 가능합니다.", HttpStatus.BAD_REQUEST.value()));
+                  validationResult.getErrorMessage(), HttpStatus.BAD_REQUEST.value()));
     }
 
     try {
@@ -201,16 +204,15 @@ public class AccountVerificationController extends BaseController {
           @Valid
           final MultipartFile businessLicenseImage) {
 
-    if (businessLicenseImage == null || businessLicenseImage.isEmpty()) {
-      return ResponseEntity.badRequest()
-          .body(GrobleResponse.error("pdf, png, jpeg 파일을 선택해주세요.", HttpStatus.BAD_REQUEST.value()));
-    }
+    FileValidationUtil.FileValidationResult validationResult =
+        fileValidationUtil.validateFile(
+            businessLicenseImage, FileValidationUtil.FileType.DOCUMENT, 10);
 
-    if (!isAllowedFileType(businessLicenseImage)) {
+    if (!validationResult.isValid()) {
       return ResponseEntity.badRequest()
           .body(
               GrobleResponse.error(
-                  "pdf, png, jpeg 파일만 업로드 가능합니다.", HttpStatus.BAD_REQUEST.value()));
+                  validationResult.getErrorMessage(), HttpStatus.BAD_REQUEST.value()));
     }
 
     try {
@@ -239,13 +241,5 @@ public class AccountVerificationController extends BaseController {
               GrobleResponse.error(
                   "파일 저장 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR.value()));
     }
-  }
-
-  private boolean isAllowedFileType(MultipartFile file) {
-    String contentType = file.getContentType();
-    return contentType != null
-        && (contentType.equalsIgnoreCase("application/pdf")
-            || contentType.equalsIgnoreCase("image/jpeg")
-            || contentType.equalsIgnoreCase("image/png"));
   }
 }
