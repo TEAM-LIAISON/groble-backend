@@ -60,11 +60,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
     description = "마이페이지 조회, 프로필 이미지 업로드, 가입 유형 전환을 진행합니다.")
 public class UserController extends BaseController {
 
-  // 응답 메시지 상수화
-  private static final String USER_SWITCH_ROLE_SUCCESS_MESSAGE = "가입 유형이 전환되었습니다.";
-  private static final String USER_MY_PAGE_SUMMARY_SUCCESS_MESSAGE = "마이페이지 요약 정보 조회에 성공했습니다.";
-  private static final String USER_MY_PAGE_DETAIL_SUCCESS_MESSAGE = "마이페이지 상세 정보 조회에 성공했습니다.";
-
   // Factory
   private final UserHeaderProcessorFactory userHeaderProcessorFactory;
 
@@ -107,7 +102,7 @@ public class UserController extends BaseController {
     boolean success = userService.switchUserType(accessor.getUserId(), request.getUserType());
 
     if (success) {
-      return responseHelper.success(null, USER_SWITCH_ROLE_SUCCESS_MESSAGE, HttpStatus.NO_CONTENT);
+      return success(null, ResponseMessages.User.ROLE_SWITCHED, HttpStatus.NO_CONTENT);
     } else {
       String target = request.getUserType().toUpperCase();
       String message;
@@ -131,8 +126,9 @@ public class UserController extends BaseController {
       @Auth Accessor accessor) {
     UserMyPageSummaryDTO userMyPageSummaryDTO =
         userService.getUserMyPageSummary(accessor.getUserId());
-    return ResponseEntity.ok(
-        GrobleResponse.success(userMapper.toApiMyPageSummaryResponse(userMyPageSummaryDTO)));
+    return success(
+        userMapper.toApiMyPageSummaryResponse(userMyPageSummaryDTO),
+        ResponseMessages.User.MY_PAGE_SUMMARY_SUCCESS);
   }
 
   /** 마이페이지 상세 정보 조회 */
@@ -141,8 +137,9 @@ public class UserController extends BaseController {
   public ResponseEntity<GrobleResponse<UserMyPageDetailResponse>> getUserMyPageDetail(
       @Auth Accessor accessor) {
     UserMyPageDetailDTO detailDTO = userService.getUserMyPageDetail(accessor.getUserId());
-    return ResponseEntity.ok(
-        GrobleResponse.success(userMapper.toApiMyPageDetailResponse(detailDTO)));
+    return success(
+        userMapper.toApiMyPageDetailResponse(detailDTO),
+        ResponseMessages.User.MY_PAGE_DETAIL_SUCCESS);
   }
 
   @UserHeader

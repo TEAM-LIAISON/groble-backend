@@ -27,8 +27,14 @@ public class MemberUserHeaderProcessor extends BaseUserHeaderProcessor {
   }
 
   @Override
-  protected boolean isValidUserContext(UserContext userContext) {
+  protected boolean isMemberContext(UserContext userContext) {
     return userContext.isMember() && userService.isLoginAble(userContext.getId());
+  }
+
+  @Override
+  protected boolean isAuthenticatedGuestContext(UserContext userContext) {
+    // 회원 처리기에서는 게스트를 처리하지 않음
+    return false;
   }
 
   @Override
@@ -39,11 +45,19 @@ public class MemberUserHeaderProcessor extends BaseUserHeaderProcessor {
   }
 
   @Override
-  protected UserHeaderDTO createGuestResponse(HttpServletResponse httpResponse) {
+  protected UserHeaderDTO createAuthenticatedGuestResponse(
+      UserContext userContext, HttpServletResponse httpResponse) {
+    // 회원 처리기에서는 게스트 응답을 생성하지 않음
+    // 안전성을 위해 익명 게스트 응답 반환
+    return createAnonymousGuestResponse(httpResponse);
+  }
+
+  @Override
+  protected UserHeaderDTO createAnonymousGuestResponse(HttpServletResponse httpResponse) {
     // 토큰이 유효하지 않은 경우 로그아웃 처리
     tokenCookieService.removeTokenCookies(httpResponse);
 
     // 부모 클래스의 기본 구현 사용
-    return super.createGuestResponse(httpResponse);
+    return super.createAnonymousGuestResponse(httpResponse);
   }
 }

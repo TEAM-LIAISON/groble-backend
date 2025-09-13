@@ -4,12 +4,20 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import org.springframework.stereotype.Component;
 
+import liaison.groble.application.guest.reader.GuestUserReader;
 import liaison.groble.application.user.dto.UserHeaderDTO;
 import liaison.groble.common.context.UserContext;
+import liaison.groble.domain.guest.entity.GuestUser;
 
 /** 비회원(게스트)의 헤더 정보 처리 구현체 */
 @Component
 public class GuestUserHeaderProcessor extends BaseUserHeaderProcessor {
+
+  private final GuestUserReader guestUserReader;
+
+  public GuestUserHeaderProcessor(GuestUserReader guestUserReader) {
+    this.guestUserReader = guestUserReader;
+  }
 
   @Override
   public String getSupportedUserType() {
@@ -17,16 +25,45 @@ public class GuestUserHeaderProcessor extends BaseUserHeaderProcessor {
   }
 
   @Override
-  protected boolean isValidUserContext(UserContext userContext) {
-    // 비회원은 항상 유효하지 않은 컨텍스트로 간주
+  protected boolean isMemberContext(UserContext userContext) {
+    // 게스트 처리기에서는 회원을 처리하지 않음
     return false;
+  }
+
+  @Override
+  protected boolean isAuthenticatedGuestContext(UserContext userContext) {
+    // 게스트이면서 ID가 있는 경우 (토큰으로 식별된 게스트)
+    return userContext.isGuest() && userContext.getId() != null;
   }
 
   @Override
   protected UserHeaderDTO createMemberResponse(
       UserContext userContext, HttpServletResponse httpResponse) {
-    // 비회원은 회원 응답을 생성하지 않음
-    // 이 메서드가 호출되지 않아야 하지만, 안전성을 위해 게스트 응답 반환
-    return createGuestResponse(httpResponse);
+    // 게스트 처리기에서는 회원 응답을 생성하지 않음
+    // 안전성을 위해 익명 게스트 응답 반환
+    return createAnonymousGuestResponse(httpResponse);
+  }
+
+  @Override
+  protected UserHeaderDTO createAuthenticatedGuestResponse(
+      UserContext userContext, HttpServletResponse httpResponse) {
+    try {
+      // 토큰으로 식별된 게스트 사용자 정보 조회
+      GuestUser guestUser = guestUserReader.getGuestUserById(userContext.getId());
+
+      return UserHeaderDTO.builder()
+          .isLogin(false) // 게스트는 로그인 상태가 아님
+          .nickname(guestUser.getUsername()) // 게스트 사용자명 사용
+          .email(null) // 게스트는 이메일 정보 없음
+          .profileImageUrl(null) // 게스트는 프로필 이미지 없음
+          .canSwitchToSeller(false) // 게스트는 판매자 전환 불가
+          .unreadNotificationCount(0) // 게스트는 알림 없음
+          .alreadyRegisteredAsSeller(false) // 게스트는 판매자 등록 불가
+          .lastUserType(null) // 게스트는 사용자 타입 없음
+          .build();
+    } catch (Exception e) {
+      // 게스트 사용자 조회 실패 시 익명 게스트로 처리
+      return createAnonymousGuestResponse(httpResponse);
+    }
   }
 }

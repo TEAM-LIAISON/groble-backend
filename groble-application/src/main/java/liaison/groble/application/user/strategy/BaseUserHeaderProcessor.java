@@ -17,23 +17,33 @@ public abstract class BaseUserHeaderProcessor implements UserHeaderStrategy {
   public final UserHeaderDTO processUserHeader(
       UserContext userContext, HttpServletResponse httpResponse) {
     // Template Method 패턴: 공통 흐름 정의
-    if (isValidUserContext(userContext)) {
+    if (isMemberContext(userContext)) {
       return createMemberResponse(userContext, httpResponse);
+    } else if (isAuthenticatedGuestContext(userContext)) {
+      return createAuthenticatedGuestResponse(userContext, httpResponse);
     } else {
-      return createGuestResponse(httpResponse);
+      return createAnonymousGuestResponse(httpResponse);
     }
   }
 
   /**
-   * 사용자 컨텍스트가 유효한 회원인지 확인합니다. 하위 클래스에서 구체적인 검증 로직을 구현합니다.
+   * 사용자 컨텍스트가 유효한 회원인지 확인합니다.
    *
    * @param userContext 사용자 컨텍스트
    * @return 유효한 회원 여부
    */
-  protected abstract boolean isValidUserContext(UserContext userContext);
+  protected abstract boolean isMemberContext(UserContext userContext);
 
   /**
-   * 회원용 응답을 생성합니다. 하위 클래스에서 구체적인 회원 정보 조회 로직을 구현합니다.
+   * 사용자 컨텍스트가 토큰으로 식별된 게스트인지 확인합니다.
+   *
+   * @param userContext 사용자 컨텍스트
+   * @return 인증된 게스트 여부
+   */
+  protected abstract boolean isAuthenticatedGuestContext(UserContext userContext);
+
+  /**
+   * 회원용 응답을 생성합니다.
    *
    * @param userContext 사용자 컨텍스트
    * @param httpResponse HTTP 응답 객체
@@ -43,12 +53,22 @@ public abstract class BaseUserHeaderProcessor implements UserHeaderStrategy {
       UserContext userContext, HttpServletResponse httpResponse);
 
   /**
-   * 비회원용 기본 응답을 생성합니다. 공통 로직으로 제공하되, 필요시 하위 클래스에서 오버라이드 가능합니다.
+   * 토큰으로 식별된 게스트용 응답을 생성합니다.
+   *
+   * @param userContext 사용자 컨텍스트
+   * @param httpResponse HTTP 응답 객체
+   * @return 인증된 게스트용 헤더 응답
+   */
+  protected abstract UserHeaderDTO createAuthenticatedGuestResponse(
+      UserContext userContext, HttpServletResponse httpResponse);
+
+  /**
+   * 완전한 익명 사용자(토큰 없음)용 기본 응답을 생성합니다. 공통 로직으로 제공하되, 필요시 하위 클래스에서 오버라이드 가능합니다.
    *
    * @param httpResponse HTTP 응답 객체
-   * @return 비회원용 헤더 응답
+   * @return 익명 사용자용 헤더 응답
    */
-  protected UserHeaderDTO createGuestResponse(HttpServletResponse httpResponse) {
+  protected UserHeaderDTO createAnonymousGuestResponse(HttpServletResponse httpResponse) {
     return UserHeaderDTO.builder()
         .isLogin(false)
         .nickname(null)
