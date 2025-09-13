@@ -62,8 +62,15 @@ public class GuestUserHeaderProcessor extends BaseUserHeaderProcessor {
       // 토큰으로 식별된 게스트 사용자 정보 조회
       GuestUser guestUser = guestUserReader.getGuestUserById(guestUserId);
 
+      // 스코프 판단: FULL_ACCESS는 username과 email이 모두 있는 경우
+      boolean hasFullAccess =
+          guestUser.getUsername() != null
+              && !guestUser.getUsername().trim().isEmpty()
+              && guestUser.getEmail() != null
+              && !guestUser.getEmail().trim().isEmpty();
+
       return UserHeaderDTO.builder()
-          .isLogin(false) // 게스트는 로그인 상태가 아님
+          .isLogin(hasFullAccess) // FULL_ACCESS 스코프만 로그인 상태로 처리
           .nickname(guestUser.getUsername()) // 게스트 사용자명 사용
           .email(guestUser.getEmail()) // 게스트 이메일 정보
           .profileImageUrl(null) // 게스트는 프로필 이미지 없음
