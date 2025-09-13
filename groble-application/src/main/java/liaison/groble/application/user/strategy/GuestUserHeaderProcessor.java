@@ -33,7 +33,12 @@ public class GuestUserHeaderProcessor extends BaseUserHeaderProcessor {
   @Override
   protected boolean isAuthenticatedGuestContext(UserContext userContext) {
     // 게스트이면서 ID가 있는 경우 (토큰으로 식별된 게스트)
-    return userContext.isGuest() && userContext.getId() != null;
+    try {
+      return userContext.isGuest() && userContext.getId() != null;
+    } catch (Exception e) {
+      // userContext.getId() 접근 시 오류가 발생하면 인증되지 않은 게스트로 처리
+      return false;
+    }
   }
 
   @Override
@@ -48,13 +53,19 @@ public class GuestUserHeaderProcessor extends BaseUserHeaderProcessor {
   protected UserHeaderDTO createAuthenticatedGuestResponse(
       UserContext userContext, HttpServletResponse httpResponse) {
     try {
+      // userContext.getId()가 null이 아닌지 다시 한번 확인
+      Long guestUserId = userContext.getId();
+      if (guestUserId == null) {
+        return createAnonymousGuestResponse(httpResponse);
+      }
+
       // 토큰으로 식별된 게스트 사용자 정보 조회
-      GuestUser guestUser = guestUserReader.getGuestUserById(userContext.getId());
+      GuestUser guestUser = guestUserReader.getGuestUserById(guestUserId);
 
       return UserHeaderDTO.builder()
           .isLogin(false) // 게스트는 로그인 상태가 아님
           .nickname(guestUser.getUsername()) // 게스트 사용자명 사용
-          .email(null) // 게스트는 이메일 정보 없음
+          .email(guestUser.getEmail()) // 게스트 이메일 정보
           .profileImageUrl(null) // 게스트는 프로필 이미지 없음
           .canSwitchToSeller(false) // 게스트는 판매자 전환 불가
           .unreadNotificationCount(0) // 게스트는 알림 없음

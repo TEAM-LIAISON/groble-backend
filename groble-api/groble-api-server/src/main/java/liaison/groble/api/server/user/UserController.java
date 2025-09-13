@@ -148,12 +148,29 @@ public class UserController extends BaseController {
   public ResponseEntity<GrobleResponse<UserHeaderResponse>> getUserHeaderInform(
       @Auth(required = false) Accessor accessor, HttpServletResponse httpResponse) {
 
-    UserContext userContext = UserContextFactory.from(accessor);
-    UserHeaderStrategy processor = userHeaderProcessorFactory.getProcessor(userContext);
+    try {
+      UserContext userContext = UserContextFactory.from(accessor);
+      UserHeaderStrategy processor = userHeaderProcessorFactory.getProcessor(userContext);
 
-    UserHeaderDTO userHeaderDTO = processor.processUserHeader(userContext, httpResponse);
-    UserHeaderResponse response = userMapper.toUserHeaderResponse(userHeaderDTO);
-    return success(response, ResponseMessages.User.USER_HEADER_INFORM_SUCCESS);
+      UserHeaderDTO userHeaderDTO = processor.processUserHeader(userContext, httpResponse);
+      UserHeaderResponse response = userMapper.toUserHeaderResponse(userHeaderDTO);
+      return success(response, ResponseMessages.User.USER_HEADER_INFORM_SUCCESS);
+    } catch (Exception e) {
+      // 완전한 익명 사용자 (토큰 없음)를 위한 기본 응답 생성
+      UserHeaderResponse anonymousResponse =
+          UserHeaderResponse.builder()
+              .isLogin(false)
+              .nickname(null)
+              .email(null)
+              .profileImageUrl(null)
+              .canSwitchToSeller(false)
+              .unreadNotificationCount(0)
+              .alreadyRegisteredAsSeller(false)
+              .lastUserType(null)
+              .build();
+
+      return success(anonymousResponse, ResponseMessages.User.USER_HEADER_INFORM_SUCCESS);
+    }
   }
 
   /** 사용자 프로필 이미지 업로드 */
