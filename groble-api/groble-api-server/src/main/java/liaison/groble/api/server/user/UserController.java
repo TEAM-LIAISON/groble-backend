@@ -25,6 +25,9 @@ import liaison.groble.api.model.user.response.swagger.MyPageDetail;
 import liaison.groble.api.model.user.response.swagger.SwitchRole;
 import liaison.groble.api.model.user.response.swagger.UploadUserProfileImage;
 import liaison.groble.api.model.user.response.swagger.UserHeader;
+import liaison.groble.api.server.common.ApiPaths;
+import liaison.groble.api.server.common.BaseController;
+import liaison.groble.api.server.common.ResponseMessages;
 import liaison.groble.api.server.util.FileUtil;
 import liaison.groble.api.server.util.FileValidationUtil;
 import liaison.groble.application.file.FileService;
@@ -33,7 +36,12 @@ import liaison.groble.application.user.dto.UserHeaderDTO;
 import liaison.groble.application.user.dto.UserMyPageDetailDTO;
 import liaison.groble.application.user.dto.UserMyPageSummaryDTO;
 import liaison.groble.application.user.service.UserService;
+import liaison.groble.application.user.strategy.UserHeaderProcessorFactory;
+import liaison.groble.application.user.strategy.UserHeaderStrategy;
 import liaison.groble.common.annotation.Auth;
+import liaison.groble.common.annotation.Logging;
+import liaison.groble.common.context.UserContext;
+import liaison.groble.common.factory.UserContextFactory;
 import liaison.groble.common.model.Accessor;
 import liaison.groble.common.response.GrobleResponse;
 import liaison.groble.common.response.ResponseHelper;
@@ -43,26 +51,22 @@ import liaison.groble.mapping.user.UserMapper;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
 
 /** 사용자 정보 관련 API 컨트롤러 */
 @RestController
-@RequiredArgsConstructor
-@RequestMapping("/api/v1")
+@RequestMapping
 @Tag(
     name = "[👨‍💻 마이페이지] 마이페이지에서 사용하는 기능 관련 API",
     description = "마이페이지 조회, 프로필 이미지 업로드, 가입 유형 전환을 진행합니다.")
-public class UserController {
-
-  // API 경로 상수화
-  private static final String USER_SWITCH_ROLE_PATH = "/users/switch-role";
-  private static final String USER_MY_PAGE_SUMMARY_PATH = "/users/me/summary";
-  private static final String USER_MY_PAGE_DETAIL_PATH = "/users/me/detail";
+public class UserController extends BaseController {
 
   // 응답 메시지 상수화
   private static final String USER_SWITCH_ROLE_SUCCESS_MESSAGE = "가입 유형이 전환되었습니다.";
   private static final String USER_MY_PAGE_SUMMARY_SUCCESS_MESSAGE = "마이페이지 요약 정보 조회에 성공했습니다.";
   private static final String USER_MY_PAGE_DETAIL_SUCCESS_MESSAGE = "마이페이지 상세 정보 조회에 성공했습니다.";
+
+  // Factory
+  private final UserHeaderProcessorFactory userHeaderProcessorFactory;
 
   // Service
   private final UserService userService;
@@ -76,11 +80,27 @@ public class UserController {
   private final FileUtil fileUtil;
   private final FileValidationUtil fileValidationUtil;
 
-  // Helper
-  private final ResponseHelper responseHelper;
+  public UserController(
+      ResponseHelper responseHelper,
+      UserHeaderProcessorFactory userHeaderProcessorFactory,
+      UserService userService,
+      FileService fileService,
+      TokenCookieService tokenCookieService,
+      UserMapper userMapper,
+      FileUtil fileUtil,
+      FileValidationUtil fileValidationUtil) {
+    super(responseHelper);
+    this.userHeaderProcessorFactory = userHeaderProcessorFactory;
+    this.userService = userService;
+    this.fileService = fileService;
+    this.tokenCookieService = tokenCookieService;
+    this.userMapper = userMapper;
+    this.fileUtil = fileUtil;
+    this.fileValidationUtil = fileValidationUtil;
+  }
 
   @SwitchRole
-  @PostMapping(USER_SWITCH_ROLE_PATH)
+  @PostMapping(ApiPaths.User.SWITCH_ROLE)
   public ResponseEntity<GrobleResponse<Void>> switchUserType(
       @Auth Accessor accessor, @Valid @RequestBody UserTypeRequest request) {
 
@@ -106,7 +126,7 @@ public class UserController {
   }
 
   /** 마이페이지 요약 정보 조회 */
-  @GetMapping(USER_MY_PAGE_SUMMARY_PATH)
+  @GetMapping(ApiPaths.User.MY_PAGE_SUMMARY)
   public ResponseEntity<GrobleResponse<MyPageSummaryResponseBase>> getUserMyPageSummary(
       @Auth Accessor accessor) {
     UserMyPageSummaryDTO userMyPageSummaryDTO =
@@ -117,7 +137,7 @@ public class UserController {
 
   /** 마이페이지 상세 정보 조회 */
   @MyPageDetail
-  @GetMapping(USER_MY_PAGE_DETAIL_PATH)
+  @GetMapping(ApiPaths.User.MY_PAGE_DETAIL)
   public ResponseEntity<GrobleResponse<UserMyPageDetailResponse>> getUserMyPageDetail(
       @Auth Accessor accessor) {
     UserMyPageDetailDTO detailDTO = userService.getUserMyPageDetail(accessor.getUserId());
@@ -126,44 +146,25 @@ public class UserController {
   }
 
   @UserHeader
-  @GetMapping("/me")
+  @GetMapping(ApiPaths.User.MY_PAGE)
+  @Logging(item = "User", action = "getUserHeaderInform", includeParam = true, includeResult = true)
   public ResponseEntity<GrobleResponse<UserHeaderResponse>> getUserHeaderInform(
-      @Auth Accessor accessor, HttpServletResponse httpResponse) {
+      @Auth(required = false) Accessor accessor, HttpServletResponse httpResponse) {
 
-    // 로그인한 경우 - 기존 코드 활용
-    boolean isLogin = userService.isLoginAble(accessor.getUserId());
+    UserContext userContext = UserContextFactory.from(accessor);
+    UserHeaderStrategy processor = userHeaderProcessorFactory.getProcessor(userContext);
 
-    if (isLogin) {
-      UserHeaderDTO userHeaderDTO = userService.getUserHeaderInform(accessor.getUserId());
-      UserHeaderResponse userHeaderResponse = userMapper.toUserHeaderResponse(userHeaderDTO);
-
-      return ResponseEntity.ok(GrobleResponse.success(userHeaderResponse, "사용자 헤더 정보 조회 성공"));
-
-    } else {
-      // 로그아웃 처리
-      tokenCookieService.removeTokenCookies(httpResponse);
-
-      // 로그아웃된 사용자를 위한 기본 응답 생성
-      UserHeaderResponse loggedOutResponse =
-          UserHeaderResponse.builder()
-              .isLogin(false)
-              .nickname(null)
-              .email(null)
-              .profileImageUrl(null)
-              .canSwitchToSeller(false)
-              .unreadNotificationCount(0)
-              .alreadyRegisteredAsSeller(false)
-              .lastUserType(null)
-              .build();
-
-      return ResponseEntity.ok(GrobleResponse.success(loggedOutResponse, "로그아웃 처리 완료"));
-    }
+    UserHeaderDTO userHeaderDTO = processor.processUserHeader(userContext, httpResponse);
+    UserHeaderResponse response = userMapper.toUserHeaderResponse(userHeaderDTO);
+    return success(response, ResponseMessages.User.USER_HEADER_INFORM_SUCCESS);
   }
 
   /** 사용자 프로필 이미지 업로드 */
   // 프로필 이미지 추가 업로드 및 수정 진행
   @UploadUserProfileImage
-  @PostMapping(value = "/users/me/profile-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @PostMapping(
+      value = ApiPaths.User.UPLOAD_PROFILE_IMAGE,
+      consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<GrobleResponse<?>> uploadProfileImage(
       @Auth Accessor accessor,
       @RequestPart("profileImage")

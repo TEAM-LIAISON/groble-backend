@@ -76,6 +76,7 @@ public final class ResponseMessages {
   }
 
   public static final class User {
+    public static final String USER_HEADER_INFORM_SUCCESS = "사용자 헤더 정보 조회에 성공했습니다.";
     public static final String PROFILE_UPDATED = "프로필이 성공적으로 수정되었습니다.";
     public static final String ROLE_SWITCHED = "가입 유형이 전환되었습니다.";
     public static final String PASSWORD_CHANGED = "비밀번호가 성공적으로 변경되었습니다.";
