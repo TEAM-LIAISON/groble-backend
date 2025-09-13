@@ -64,6 +64,12 @@ public class AuthArgumentResolver implements HandlerMethodArgumentResolver {
 
     // 게스트 사용자인 경우 처리 추가 - GuestPrincipal을 사용하지 않고 직접 처리
     if (authentication.getName() != null && authentication.getName().startsWith("guest_")) {
+      // required=true인 경우 게스트 접근 차단 (회원 전용 API 보호)
+      if (required) {
+        throw new UnauthorizedException("회원만 접근 가능한 기능입니다.");
+      }
+
+      // required=false인 경우에만 게스트 Accessor 반환
       String guestIdStr = authentication.getName().replace("guest_", "");
       try {
         Long guestId = Long.parseLong(guestIdStr);
@@ -81,11 +87,7 @@ public class AuthArgumentResolver implements HandlerMethodArgumentResolver {
             .build();
       } catch (NumberFormatException e) {
         // 게스트 ID 파싱 실패시 익명 사용자로 처리
-        if (required) {
-          throw new UnauthorizedException("게스트 인증 정보가 유효하지 않습니다.");
-        } else {
-          return createAnonymousAccessor();
-        }
+        return createAnonymousAccessor();
       }
     }
 
