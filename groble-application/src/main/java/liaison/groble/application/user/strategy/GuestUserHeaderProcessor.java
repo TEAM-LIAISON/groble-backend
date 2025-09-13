@@ -78,6 +78,7 @@ public class GuestUserHeaderProcessor extends BaseUserHeaderProcessor {
           .unreadNotificationCount(0) // 게스트는 알림 없음
           .alreadyRegisteredAsSeller(false) // 게스트는 판매자 등록 불가
           .lastUserType(null) // 게스트는 사용자 타입 없음
+          .isGuest(hasFullAccess) // FULL_ACCESS 게스트만 true
           .build();
     } catch (Exception e) {
       // 게스트 사용자 조회 실패 시 익명 게스트로 처리

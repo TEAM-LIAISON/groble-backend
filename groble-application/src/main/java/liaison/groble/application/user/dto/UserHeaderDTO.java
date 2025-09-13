@@ -14,4 +14,5 @@ public class UserHeaderDTO {
   private long unreadNotificationCount;
   private boolean alreadyRegisteredAsSeller;
   private String lastUserType;
+  private Boolean isGuest;
 }

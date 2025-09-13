@@ -78,6 +78,7 @@ public abstract class BaseUserHeaderProcessor implements UserHeaderStrategy {
         .unreadNotificationCount(0)
         .alreadyRegisteredAsSeller(false)
         .lastUserType(null)
+        .isGuest(false) // 익명 사용자는 게스트가 아님
         .build();
   }
 }
