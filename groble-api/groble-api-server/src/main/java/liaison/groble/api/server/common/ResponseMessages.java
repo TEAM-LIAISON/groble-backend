@@ -19,6 +19,8 @@ public final class ResponseMessages {
         "개인 • 법인 사업자 메이커 계좌 및 통장 사본 저장 요청이 성공적으로 처리되었습니다.";
     public static final String BUSINESS_MAKER_VERIFICATION_SUCCESS =
         "개인 • 법인 사업자 메이커 인증 요청이 성공적으로 처리되었습니다.";
+    public static final String LOGOUT_SUCCESS = "로그아웃이 성공적으로 처리되었습니다.";
+    public static final String GUEST_LOGOUT_SUCCESS = "게스트 로그아웃이 성공적으로 처리되었습니다.";
   }
 
   public static final class Content {

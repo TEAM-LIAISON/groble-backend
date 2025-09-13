@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import liaison.groble.api.model.auth.request.SignInRequest;
 import liaison.groble.api.model.auth.request.UserWithdrawalRequest;
 import liaison.groble.api.model.auth.response.SignInTestResponse;
+import liaison.groble.api.server.common.ResponseMessages;
 import liaison.groble.application.auth.dto.SignInAuthResultDTO;
 import liaison.groble.application.auth.dto.SignInDTO;
 import liaison.groble.application.auth.dto.UserWithdrawalDTO;
@@ -47,7 +48,6 @@ public class AuthController {
   // 응답 메시지 상수화
   private static final String DEPRECATED_SIGN_IN_TEST_SUCCESS_MESSAGE =
       "[Deprecated 예정] 테스트용 통합 계정 로그인이 성공적으로 완료되었습니다.";
-  private static final String LOGOUT_SUCCESS_MESSAGE = "로그아웃이 성공적으로 처리되었습니다.";
   private static final String WITHDRAWAL_SUCCESS_MESSAGE = "회원탈퇴가 성공적으로 처리되었습니다.";
 
   // Service
@@ -83,9 +83,26 @@ public class AuthController {
   @Operation(summary = "[✅ 로그아웃]", description = "로그아웃을 통해 쿠키와 토큰을 무효화합니다.")
   @PostMapping(LOGOUT)
   public ResponseEntity<GrobleResponse<Void>> logout(
-      @Auth Accessor accessor, HttpServletRequest request, HttpServletResponse response) {
+      @Auth(required = false) Accessor accessor,
+      HttpServletRequest request,
+      HttpServletResponse response) {
+
+    // 게스트 사용자인 경우 게스트 토큰만 제거
+    if (accessor != null && accessor.isGuest()) {
+      tokenCookieService.clearGuestTokenCookie(request, response);
+      return responseHelper.success(null, ResponseMessages.Auth.LOGOUT_SUCCESS, HttpStatus.OK);
+    }
+
+    // 회원 사용자인 경우 액세스/리프레시 토큰 제거
+    if (accessor != null && accessor.isAuthenticated()) {
+      tokenCookieService.clearTokenCookies(request, response);
+      return responseHelper.success(null, ResponseMessages.Auth.LOGOUT_SUCCESS, HttpStatus.OK);
+    }
+
+    // 익명 사용자의 경우 (토큰이 없는 상태) - 모든 토큰 제거 시도
     tokenCookieService.clearTokenCookies(request, response);
-    return responseHelper.success(null, LOGOUT_SUCCESS_MESSAGE, HttpStatus.OK);
+    tokenCookieService.clearGuestTokenCookie(request, response);
+    return responseHelper.success(null, ResponseMessages.Auth.LOGOUT_SUCCESS, HttpStatus.OK);
   }
 
   @Operation(summary = "[❌ 회원탈퇴]", description = "사용자 계정을 탈퇴 처리합니다.")
