@@ -443,7 +443,11 @@ public abstract class BaseOrderProcessor implements OrderProcessorStrategy {
   /** 공통 약관 동의 DTO 생성 */
   protected TermsAgreementDTO createTermsAgreementDTO() {
     List<String> termTypeStrs =
-        List.of("ELECTRONIC_FINANCIAL", "PURCHASE_POLICY", "PERSONAL_INFORMATION");
+        List.of(
+            "PERSONAL_INFO_COLLECTION_AND_THIRD_PARTY_PROVISION",
+            "TERMS_OF_SERVICE",
+            "REFUND_POLICY",
+            "MARKETPLACE_INTERMEDIARY_NOTICE");
 
     return TermsAgreementDTO.builder().termsTypeStrings(termTypeStrs).build();
   }
