@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 
 import liaison.groble.application.content.ContentReader;
 import liaison.groble.application.guest.reader.GuestUserReader;
+import liaison.groble.application.order.dto.CreateOrderRequestDTO;
 import liaison.groble.application.order.dto.CreateOrderSuccessDTO;
 import liaison.groble.application.purchase.service.PurchaseReader;
 import liaison.groble.application.terms.dto.TermsAgreementDTO;
@@ -138,6 +139,13 @@ public class MemberOrderProcessor extends BaseOrderProcessor {
       log.error("회원 주문 약관 동의 처리 실패 - userId: {}", userContext.getId(), e);
       // 약관 동의 실패는 주문을 중단시키지 않음
     }
+  }
+
+  @Override
+  protected void handlePostFreeOrderProcessing(
+      Order order, UserContext userContext, CreateOrderRequestDTO createOrderRequestDTO) {
+    // 회원은 Guest 전용 처리가 필요 없음
+    log.info("회원 무료 주문 후 처리 완료 - userId: {}", userContext.getId());
   }
 
   /** 사용자 정보로부터 구매자 정보 생성 */

@@ -6,9 +6,6 @@ import java.util.stream.Collectors;
 
 import jakarta.servlet.http.HttpServletRequest;
 
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.transaction.annotation.Transactional;
-
 import liaison.groble.application.content.ContentReader;
 import liaison.groble.application.guest.reader.GuestUserReader;
 import liaison.groble.application.order.dto.CreateOrderRequestDTO;
@@ -26,7 +23,6 @@ import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.content.entity.ContentOption;
 import liaison.groble.domain.coupon.entity.UserCoupon;
 import liaison.groble.domain.coupon.repository.UserCouponRepository;
-import liaison.groble.domain.guest.entity.GuestUser;
 import liaison.groble.domain.guest.repository.GuestUserRepository;
 import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.order.entity.OrderItem;
@@ -48,24 +44,23 @@ import lombok.extern.slf4j.Slf4j;
 public abstract class BaseOrderProcessor implements OrderProcessorStrategy {
 
   // Readers
-  protected final ContentReader contentReader;
-  protected final PurchaseReader purchaseReader;
-  protected final GuestUserReader guestUserReader;
+  protected ContentReader contentReader;
+  protected PurchaseReader purchaseReader;
+  protected GuestUserReader guestUserReader;
 
   // Repositories
-  protected final OrderRepository orderRepository;
-  protected final UserCouponRepository userCouponRepository;
-  protected final PurchaseRepository purchaseRepository;
-  protected final PaymentRepository paymentRepository;
-  protected final GuestUserRepository guestUserRepository;
+  protected OrderRepository orderRepository;
+  protected UserCouponRepository userCouponRepository;
+  protected PurchaseRepository purchaseRepository;
+  protected PaymentRepository paymentRepository;
+  protected GuestUserRepository guestUserRepository;
 
   // Services
-  protected final OrderTermsService orderTermsService;
+  protected OrderTermsService orderTermsService;
 
   // Event Publisher
-  protected final EventPublisher eventPublisher;
+  protected EventPublisher eventPublisher;
 
-  // 명시적 생성자 추가
   protected BaseOrderProcessor(
       ContentReader contentReader,
       PurchaseReader purchaseReader,
@@ -77,6 +72,11 @@ public abstract class BaseOrderProcessor implements OrderProcessorStrategy {
       GuestUserRepository guestUserRepository,
       OrderTermsService orderTermsService,
       EventPublisher eventPublisher) {
+    log.info("=== BaseOrderProcessor 생성자 호출 시작 ===");
+    log.info("contentReader: {}", contentReader);
+    log.info("purchaseReader: {}", purchaseReader);
+    log.info("guestUserReader: {}", guestUserReader);
+
     this.contentReader = contentReader;
     this.purchaseReader = purchaseReader;
     this.guestUserReader = guestUserReader;
@@ -87,6 +87,8 @@ public abstract class BaseOrderProcessor implements OrderProcessorStrategy {
     this.guestUserRepository = guestUserRepository;
     this.orderTermsService = orderTermsService;
     this.eventPublisher = eventPublisher;
+
+    log.info("=== BaseOrderProcessor 생성자 완료 - this.contentReader: {} ===", this.contentReader);
   }
 
   @Override
@@ -99,6 +101,10 @@ public abstract class BaseOrderProcessor implements OrderProcessorStrategy {
         getUserTypeString(userContext),
         userContext.getId(),
         createOrderRequestDTO.getContentId());
+
+    log.info("=== createOrder 시점의 contentReader 상태 확인 ===");
+    log.info("this.contentReader: {}", this.contentReader);
+    log.info("contentReader == null: {}", this.contentReader == null);
 
     // 1. 콘텐츠 조회
     final Content content = contentReader.getContentById(createOrderRequestDTO.getContentId());
@@ -129,32 +135,14 @@ public abstract class BaseOrderProcessor implements OrderProcessorStrategy {
     // 6. 주문 저장 및 merchantUid 생성
     order = saveOrderWithMerchantUid(order);
 
-    // ===================== 변경된 부분 시작 =====================
-
-    // 7. 구매자 정보 저장 동의: createOrder에선 '의사(intent) + 스냅샷'만 기록 (GuestUser에는 절대 반영 X)
-    //    - 비회원(게스트)일 때만 의미 있음. (회원은 보통 동의 저장 대상 아님)
-    if (userContext.isGuest()) {
-      // DTO에 이메일/이름 입력란이 없다면 null/빈 값 들어와도 됩니다 (스냅샷만 저장)
-      String emailSnapshot = safeTrim(order.getGuestUser().getEmail());
-      String usernameSnapshot = safeTrim(order.getGuestUser().getUsername());
-
-      recordBuyerConsentIntentAndSnapshot(
-          order,
-          createOrderRequestDTO.isBuyerInfoStorageAgreed(), // ✅ 체크박스 값 = intent
-          emailSnapshot,
-          usernameSnapshot);
-    }
-
-    // 8. 무료 주문 처리(= 결제 즉시 성공): 결제 성공 훅에서만 GuestUser를 동의=true로 승격
+    // 7. 무료 주문 처리
     if (willBeFreePurchase) {
       boolean success = processFreeOrderPurchase(order);
       if (!success) throw new RuntimeException("무료 주문 처리 실패 - 트랜잭션 롤백");
 
-      // 무료 결제는 지금 시점이 곧 '결제 성공'이므로, 여기서만 동의 승격을 수행
-      applyBuyerConsentAfterPaymentSuccess(order);
+      // Guest 전용 처리는 서브클래스에서 처리
+      handlePostFreeOrderProcessing(order, userContext, createOrderRequestDTO);
     }
-
-    // ===================== 변경된 부분 끝 =======================
 
     // 9. 주문 생성 로그 기록
     logOrderCreation(
@@ -206,6 +194,10 @@ public abstract class BaseOrderProcessor implements OrderProcessorStrategy {
   /** 약관 동의 처리 */
   protected abstract void processTermsAgreement(
       UserContext userContext, HttpServletRequest httpRequest, boolean buyerInfoStorageAgreed);
+
+  /** 무료 주문 후 처리 (Guest 전용 로직 등) */
+  protected abstract void handlePostFreeOrderProcessing(
+      Order order, UserContext userContext, CreateOrderRequestDTO createOrderRequestDTO);
 
   // ===== 공통 메서드들 =====
 
@@ -507,41 +499,5 @@ public abstract class BaseOrderProcessor implements OrderProcessorStrategy {
   /** 사용자 타입 문자열 반환 */
   protected String getUserTypeString(UserContext userContext) {
     return userContext.isMember() ? "회원" : "비회원";
-  }
-
-  /** 주문 생성 시점: '동의 의사'와 '스냅샷(이메일/이름)'만 orders 테이블에 기록 */
-  private void recordBuyerConsentIntentAndSnapshot(
-      Order order, boolean consentIntent, String emailSnapshot, String usernameSnapshot) {
-    order.setBuyerConsentIntentAndSnapshot(consentIntent, emailSnapshot, usernameSnapshot);
-    orderRepository.save(order); // 변경 필드 반영
-  }
-
-  /**
-   * 결제 성공 시점에만 호출: - intent=true 이고 게스트 주문이면 GuestUser를 동의=true로 '승격' - 이메일/이름이 비어있으면 주문 스냅샷으로 보강 -
-   * 부분 유니크(uk_guest_phone_when_agreed) 충돌 시 정본으로 주문 재지정
-   */
-  @Transactional
-  protected void applyBuyerConsentAfterPaymentSuccess(Order order) {
-    if (!order.isBuyerInfoConsentIntent()) return; // 의사 없으면 처리 안함
-    if (!order.isGuestOrder()) return; // 게스트 주문만 해당
-
-    GuestUser guest = guestUserReader.getGuestUserById(order.getGuestUser().getId()); // 행 잠금 권장
-    if (guest.isBuyerInfoStorageAgreed()) return; // 이미 동의된 경우 스킵
-
-    try {
-      guest.agreeBuyerInfo(order.getBuyerUsernameSnapshot(), order.getBuyerEmailSnapshot());
-      guestUserRepository.save(guest); // 여기서 uk_guest_phone_when_agreed 제약이 작동
-    } catch (DataIntegrityViolationException e) {
-      // 같은 전화번호로 이미 동의=true인 정본이 존재 → 그 정본으로 주문 연결 변경
-      GuestUser canonical =
-          guestUserReader.getByPhoneNumberAndBuyerInfoStorageAgreedTrue(guest.getPhoneNumber());
-      order.setGuestUserId(canonical);
-      orderRepository.save(order);
-      // 필요 시 mergeGuestData(guest, canonical); // 선택: 비정본 데이터 보강/아카이브
-    }
-  }
-
-  private String safeTrim(String v) {
-    return (v == null) ? null : v.trim();
   }
 }

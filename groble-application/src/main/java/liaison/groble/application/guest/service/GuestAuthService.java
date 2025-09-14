@@ -156,7 +156,8 @@ public class GuestAuthService {
 
   // 기존 GuestUser 상태 확인 및 처리
   private void handleExistingGuestUser(String phoneNumber) {
-    boolean existingGuest = guestUserReader.existsByPhoneNumber(phoneNumber);
+    boolean existingGuest =
+        guestUserReader.existsByPhoneNumberAndBuyerInfoStorageAgreedTrue(phoneNumber);
 
     if (existingGuest) {
       GuestUser guestUser = guestUserReader.getByPhoneNumber(phoneNumber);
