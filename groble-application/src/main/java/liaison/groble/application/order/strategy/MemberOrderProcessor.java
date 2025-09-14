@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Component;
 
 import liaison.groble.application.content.ContentReader;
+import liaison.groble.application.guest.reader.GuestUserReader;
 import liaison.groble.application.order.dto.CreateOrderSuccessDTO;
 import liaison.groble.application.purchase.service.PurchaseReader;
 import liaison.groble.application.terms.dto.TermsAgreementDTO;
@@ -18,6 +19,7 @@ import liaison.groble.common.event.EventPublisher;
 import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.coupon.entity.UserCoupon;
 import liaison.groble.domain.coupon.repository.UserCouponRepository;
+import liaison.groble.domain.guest.repository.GuestUserRepository;
 import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.order.entity.Purchaser;
 import liaison.groble.domain.order.repository.OrderRepository;
@@ -38,23 +40,27 @@ public class MemberOrderProcessor extends BaseOrderProcessor {
   public MemberOrderProcessor(
       ContentReader contentReader,
       PurchaseReader purchaseReader,
+      UserReader userReader, // 추가된 파라미터
+      GuestUserReader guestUserReader,
       OrderRepository orderRepository,
       UserCouponRepository userCouponRepository,
       PurchaseRepository purchaseRepository,
       PaymentRepository paymentRepository,
+      GuestUserRepository guestUserRepository,
       OrderTermsService orderTermsService,
-      EventPublisher eventPublisher,
-      UserReader userReader) {
+      EventPublisher eventPublisher) {
     super(
         contentReader,
         purchaseReader,
+        guestUserReader,
         orderRepository,
         userCouponRepository,
         purchaseRepository,
         paymentRepository,
+        guestUserRepository,
         orderTermsService,
         eventPublisher);
-    this.userReader = userReader;
+    this.userReader = userReader; // 이제 정상적으로 초기화됨
   }
 
   @Override

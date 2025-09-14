@@ -45,6 +45,11 @@ public class GuestUserRepositoryImpl implements GuestUserRepository {
   }
 
   @Override
+  public Optional<GuestUser> getByPhoneNumberAndBuyerInfoStorageAgreedTrue(String phoneNumber) {
+    return jpaGuestUserRepository.getByPhoneNumberAndBuyerInfoStorageAgreedTrue(phoneNumber);
+  }
+
+  @Override
   public long count() {
     return jpaGuestUserRepository.count();
   }

@@ -69,71 +69,51 @@ public class GuestAuthService {
       throw new InvalidGuestAuthCodeException();
     }
 
-    // 2) 상태 조회
-    boolean buyerAgreed = guestUserReader.buyerInfoStorageAgreed(inputPhone);
-    GuestUser existingGuestUser = guestUserReader.getByPhoneNumberIfExists(inputPhone); // null 가능
-    boolean hasCompleteInfo =
-        existingGuestUser != null
-            && existingGuestUser.getEmail() != null
-            && !existingGuestUser.getEmail().isBlank()
-            && existingGuestUser.getUsername() != null
-            && !existingGuestUser.getUsername().isBlank();
-
-    // “동의 + 정보완비”면 개인정보 반환 가능
-    boolean canReturnUserInfo = buyerAgreed && hasCompleteInfo;
-
-    // “동의 없음 + 정보는 있음(레거시)”면 동의 재요청 필요
-    boolean needsBuyerInfoConsent = !buyerAgreed && hasCompleteInfo;
-
-    // 3) GuestUser 확보(없으면 생성)
+    // 2) 동의된 게스트 존재 여부 및 개체 조회 (있으면 그 개체를 사용)
+    boolean hasAgreedUser = guestUserReader.existsByPhoneNumberAndBuyerInfoStorageAgreedTrue(phone);
     GuestUser guestUser =
-        (existingGuestUser != null)
-            ? existingGuestUser
-            : GuestUser.builder().phoneNumber(inputPhone).build();
+        hasAgreedUser
+            ? guestUserReader.getByPhoneNumberAndBuyerInfoStorageAgreedTrue(phone) // 동의된 개체
+            : GuestUser.builder().phoneNumber(phone).build(); // 동의된 개체가 없으면 무조건 신규 생성(agreed=false)
 
-    String email = null;
-    String username = null;
-    GuestTokenScope tokenScope;
+    // 레거시: 동의는 없지만 과거 저장된 이름/이메일이 존재하는지(재동의 유도용)
+    boolean legacyInfoExists = guestUserReader.hasCompleteUserInfo(phone);
 
-    if (canReturnUserInfo) {
-      email = guestUser.getEmail();
-      username = guestUser.getUsername();
-      tokenScope = GuestTokenScope.FULL_ACCESS;
-      log.info(
-          "비회원 인증 완료(동의+정보완비) - 자동 로그인: phone={}, email={}, username={}",
-          inputPhone,
-          email,
-          username);
-    } else {
-      // 동의 없거나, 정보가 불완전 → 개인정보 미반환 + PHONE_VERIFIED
-      tokenScope = GuestTokenScope.PHONE_VERIFIED;
-      if (needsBuyerInfoConsent) {
-        log.info("비회원 인증 완료(레거시 정보는 있으나 동의 없음) - 동의 재요청 필요: phone={}", inputPhone);
-      } else {
-        log.info("비회원 인증 완료(신규 또는 정보 불완전): phone={}", inputPhone);
-      }
-    }
+    // 3) 개인정보 반환/스코프 판단은 "동의+정보완비" 기준
+    boolean buyerAgreed = hasAgreedUser; // 이번에 토큰을 부여할 개체의 동의 상태
+    boolean hasCompleteInfo =
+        buyerAgreed
+            && guestUser.getEmail() != null
+            && !guestUser.getEmail().isBlank()
+            && guestUser.getUsername() != null
+            && !guestUser.getUsername().isBlank();
 
-    // 4) 전화번호 인증 처리 및 저장
+    boolean canReturnUserInfo = hasCompleteInfo; // 동의 + (이름/이메일) 완비
+    boolean needsBuyerInfoConsent = !buyerAgreed && legacyInfoExists; // 레거시 정보는 있으나 동의 없음
+
+    GuestTokenScope scope =
+        canReturnUserInfo ? GuestTokenScope.FULL_ACCESS : GuestTokenScope.PHONE_VERIFIED;
+
+    // 4) 전화번호 인증 처리 및 저장 (신규 생성된 경우에도 동일 처리)
     guestUser.verifyPhone();
-    guestUserWriter.save(guestUser);
+    guestUser = guestUserWriter.save(guestUser);
 
     // 5) 인증 코드 삭제
     verificationCodePort.removeVerificationCodeForGuest(phone);
 
-    // 6) 토큰 생성
-    String guestToken = securityPort.createGuestTokenWithScope(guestUser.getId(), tokenScope);
+    // 6) 토큰 생성(이 토큰은 방금 선택/생성된 guestUser.id에 귀속됨)
+    String guestToken = securityPort.createGuestTokenWithScope(guestUser.getId(), scope);
 
-    // 7) 응답
+    // 7) 응답 (개인정보는 동의+완비일 때만 반환)
     return GuestTokenDTO.builder()
-        .phoneNumber(inputPhone)
-        .email(canReturnUserInfo ? email : null) // 동의+완비일 때만 반환
-        .username(canReturnUserInfo ? username : null) // 동의+완비일 때만 반환
+        .phoneNumber(phone) // 일관성 위해 sanitized 반환 권장
+        .email(canReturnUserInfo ? guestUser.getEmail() : null)
+        .username(canReturnUserInfo ? guestUser.getUsername() : null)
         .guestToken(guestToken)
         .authenticated(true)
-        .hasCompleteUserInfo(canReturnUserInfo) // “사용 가능”한 완비 정보 기준으로 true
+        .hasCompleteUserInfo(canReturnUserInfo)
         .buyerInfoStorageAgreed(buyerAgreed)
-        .needsBuyerInfoConsent(needsBuyerInfoConsent) // ✅ 동의 재요청 플래그
+        .needsBuyerInfoConsent(needsBuyerInfoConsent)
         .build();
   }
 

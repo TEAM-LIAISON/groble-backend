@@ -13,6 +13,8 @@ public interface JpaGuestUserRepository extends JpaRepository<GuestUser, Long> {
 
   Optional<GuestUser> findByPhoneNumber(String phoneNumber);
 
+  Optional<GuestUser> getByPhoneNumberAndBuyerInfoStorageAgreedTrue(String phoneNumber);
+
   boolean existsByPhoneNumber(String phoneNumber);
 
   boolean existsById(Long guestUserId);

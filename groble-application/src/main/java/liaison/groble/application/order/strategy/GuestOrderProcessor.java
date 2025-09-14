@@ -18,6 +18,7 @@ import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.coupon.entity.UserCoupon;
 import liaison.groble.domain.coupon.repository.UserCouponRepository;
 import liaison.groble.domain.guest.entity.GuestUser;
+import liaison.groble.domain.guest.repository.GuestUserRepository;
 import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.order.repository.OrderRepository;
 import liaison.groble.domain.order.vo.OrderOptionInfo;
@@ -30,26 +31,28 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Component
 public class GuestOrderProcessor extends BaseOrderProcessor {
-
-  private final GuestUserReader guestUserReader;
+  private GuestUserReader guestUserReader;
 
   public GuestOrderProcessor(
       ContentReader contentReader,
       PurchaseReader purchaseReader,
+      GuestUserReader guestUserReader,
       OrderRepository orderRepository,
       UserCouponRepository userCouponRepository,
       PurchaseRepository purchaseRepository,
       PaymentRepository paymentRepository,
+      GuestUserRepository guestUserRepository,
       OrderTermsService orderTermsService,
-      EventPublisher eventPublisher,
-      GuestUserReader guestUserReader) {
+      EventPublisher eventPublisher) {
     super(
         contentReader,
         purchaseReader,
+        guestUserReader,
         orderRepository,
         userCouponRepository,
         purchaseRepository,
         paymentRepository,
+        guestUserRepository,
         orderTermsService,
         eventPublisher);
     this.guestUserReader = guestUserReader;

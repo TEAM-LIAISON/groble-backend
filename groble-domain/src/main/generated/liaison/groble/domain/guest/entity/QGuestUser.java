@@ -23,6 +23,8 @@ public class QGuestUser extends EntityPathBase<GuestUser> {
 
     public final BooleanPath buyerInfoStorageAgreed = createBoolean("buyerInfoStorageAgreed");
 
+    public final DateTimePath<java.time.LocalDateTime> buyerInfoStorageAgreedAt = createDateTime("buyerInfoStorageAgreedAt", java.time.LocalDateTime.class);
+
     //inherited
     public final DateTimePath<java.time.LocalDateTime> createdAt = _super.createdAt;
 
