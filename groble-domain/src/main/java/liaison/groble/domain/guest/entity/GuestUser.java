@@ -40,7 +40,7 @@ public class GuestUser extends BaseTimeEntity {
   @Column(name = "user_name", nullable = true, length = 50)
   private String username;
 
-  @Column(name = "phone_number", nullable = false, length = 20, unique = true)
+  @Column(name = "phone_number", nullable = false, length = 20)
   private String phoneNumber;
 
   @Column(name = "email", nullable = true, length = 100)
@@ -55,6 +55,9 @@ public class GuestUser extends BaseTimeEntity {
 
   @Column(name = "verification_expires_at")
   private LocalDateTime verificationExpiresAt;
+
+  @Column(name = "buyer_info_storage_agreed")
+  private boolean buyerInfoStorageAgreed;
 
   @Builder
   public GuestUser(String username, String phoneNumber, String email) {
@@ -97,5 +100,7 @@ public class GuestUser extends BaseTimeEntity {
     if (email != null && !email.trim().isEmpty()) {
       this.email = email;
     }
+    // 처음에는 이메일과 이름 정보를 저장하지 않음
+    this.buyerInfoStorageAgreed = false;
   }
 }

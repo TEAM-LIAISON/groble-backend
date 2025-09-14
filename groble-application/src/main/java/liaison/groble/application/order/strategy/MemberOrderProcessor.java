@@ -113,16 +113,20 @@ public class MemberOrderProcessor extends BaseOrderProcessor {
   }
 
   @Override
-  protected void processTermsAgreement(UserContext userContext, HttpServletRequest httpRequest) {
+  protected void processTermsAgreement(
+      UserContext userContext, HttpServletRequest httpRequest, boolean buyerInfoStorageAgreed) {
     try {
-      TermsAgreementDTO termsAgreementDTO = createTermsAgreementDTO();
+      TermsAgreementDTO termsAgreementDTO = createTermsAgreementDTO(buyerInfoStorageAgreed);
       termsAgreementDTO.setUserId(userContext.getId());
       // IP 및 User-Agent 설정
       termsAgreementDTO.setIpAddress(httpRequest.getRemoteAddr());
       termsAgreementDTO.setUserAgent(httpRequest.getHeader("User-Agent"));
 
       orderTermsService.agreeToOrderTerms(termsAgreementDTO);
-      log.info("회원 주문 약관 동의 처리 완료 - userId: {}", userContext.getId());
+      log.info(
+          "회원 주문 약관 동의 처리 완료 - userId: {}, buyerInfoStorage: {}",
+          userContext.getId(),
+          buyerInfoStorageAgreed);
 
     } catch (Exception e) {
       log.error("회원 주문 약관 동의 처리 실패 - userId: {}", userContext.getId(), e);

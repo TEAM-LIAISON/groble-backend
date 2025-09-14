@@ -100,7 +100,8 @@ public abstract class BaseOrderProcessor implements OrderProcessorStrategy {
     order = saveOrderWithMerchantUid(order);
 
     // 7. 약관 동의 처리
-    processTermsAgreement(userContext, httpRequest);
+    processTermsAgreement(
+        userContext, httpRequest, createOrderRequestDTO.isBuyerInfoStorageAgreed());
 
     // 8. 무료 주문 처리
     if (willBeFreePurchase) {
@@ -159,7 +160,7 @@ public abstract class BaseOrderProcessor implements OrderProcessorStrategy {
 
   /** 약관 동의 처리 */
   protected abstract void processTermsAgreement(
-      UserContext userContext, HttpServletRequest httpRequest);
+      UserContext userContext, HttpServletRequest httpRequest, boolean buyerInfoStorageAgreed);
 
   // ===== 공통 메서드들 =====
 
@@ -441,13 +442,19 @@ public abstract class BaseOrderProcessor implements OrderProcessorStrategy {
   }
 
   /** 공통 약관 동의 DTO 생성 */
-  protected TermsAgreementDTO createTermsAgreementDTO() {
+  protected TermsAgreementDTO createTermsAgreementDTO(boolean includeBuyerInfoStorage) {
     List<String> termTypeStrs =
-        List.of(
-            "PERSONAL_INFO_COLLECTION_AND_THIRD_PARTY_PROVISION",
-            "TERMS_OF_SERVICE",
-            "REFUND_POLICY",
-            "MARKETPLACE_INTERMEDIARY_NOTICE");
+        new java.util.ArrayList<>(
+            List.of(
+                "PERSONAL_INFO_COLLECTION_AND_THIRD_PARTY_PROVISION",
+                "TERMS_OF_SERVICE",
+                "REFUND_POLICY",
+                "MARKETPLACE_INTERMEDIARY_NOTICE"));
+
+    // 구매자 정보 저장 약관 동의 시에만 추가
+    if (includeBuyerInfoStorage) {
+      termTypeStrs.add("BUYER_INFORMATION_STORAGE");
+    }
 
     return TermsAgreementDTO.builder().termsTypeStrings(termTypeStrs).build();
   }

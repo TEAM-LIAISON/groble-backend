@@ -110,15 +110,19 @@ public class GuestOrderProcessor extends BaseOrderProcessor {
   }
 
   @Override
-  protected void processTermsAgreement(UserContext userContext, HttpServletRequest httpRequest) {
+  protected void processTermsAgreement(
+      UserContext userContext, HttpServletRequest httpRequest, boolean buyerInfoStorageAgreed) {
     try {
-      TermsAgreementDTO termsAgreementDTO = createTermsAgreementDTO();
+      TermsAgreementDTO termsAgreementDTO = createTermsAgreementDTO(buyerInfoStorageAgreed);
       // IP 및 User-Agent 설정
       termsAgreementDTO.setIpAddress(httpRequest.getRemoteAddr());
       termsAgreementDTO.setUserAgent(httpRequest.getHeader("User-Agent"));
 
       orderTermsService.agreeToOrderTermsForGuest(termsAgreementDTO, userContext.getId());
-      log.info("비회원 주문 약관 동의 처리 완료 - guestUserId: {}", userContext.getId());
+      log.info(
+          "비회원 주문 약관 동의 처리 완료 - guestUserId: {}, buyerInfoStorage: {}",
+          userContext.getId(),
+          buyerInfoStorageAgreed);
 
     } catch (Exception e) {
       log.error("비회원 주문 약관 동의 처리 실패 - guestUserId: {}", userContext.getId(), e);
