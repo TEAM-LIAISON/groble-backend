@@ -70,14 +70,17 @@ public class GuestAuthService {
     }
 
     // 2) 동의된 게스트 존재 여부 및 개체 조회 (있으면 그 개체를 사용)
-    boolean hasAgreedUser = guestUserReader.existsByPhoneNumberAndBuyerInfoStorageAgreedTrue(phone);
+    boolean hasAgreedUser =
+        guestUserReader.existsByPhoneNumberAndBuyerInfoStorageAgreedTrue(inputPhone);
     GuestUser guestUser =
         hasAgreedUser
-            ? guestUserReader.getByPhoneNumberAndBuyerInfoStorageAgreedTrue(phone) // 동의된 개체
-            : GuestUser.builder().phoneNumber(phone).build(); // 동의된 개체가 없으면 무조건 신규 생성(agreed=false)
+            ? guestUserReader.getByPhoneNumberAndBuyerInfoStorageAgreedTrue(inputPhone) // 동의된 개체
+            : GuestUser.builder()
+                .phoneNumber(inputPhone)
+                .build(); // 동의된 개체가 없으면 무조건 신규 생성(agreed=false)
 
     // 레거시: 동의는 없지만 과거 저장된 이름/이메일이 존재하는지(재동의 유도용)
-    boolean legacyInfoExists = guestUserReader.hasCompleteUserInfo(phone);
+    boolean legacyInfoExists = guestUserReader.hasCompleteUserInfo(inputPhone);
 
     // 3) 개인정보 반환/스코프 판단은 "동의+정보완비" 기준
     boolean buyerAgreed = hasAgreedUser; // 이번에 토큰을 부여할 개체의 동의 상태
@@ -106,7 +109,7 @@ public class GuestAuthService {
 
     // 7) 응답 (개인정보는 동의+완비일 때만 반환)
     return GuestTokenDTO.builder()
-        .phoneNumber(phone) // 일관성 위해 sanitized 반환 권장
+        .phoneNumber(inputPhone) // 일관성 위해 sanitized 반환 권장
         .email(canReturnUserInfo ? guestUser.getEmail() : null)
         .username(canReturnUserInfo ? guestUser.getUsername() : null)
         .guestToken(guestToken)
