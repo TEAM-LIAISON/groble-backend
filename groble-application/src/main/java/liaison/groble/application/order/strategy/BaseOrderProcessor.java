@@ -37,7 +37,6 @@ import liaison.groble.domain.payment.repository.PaymentRepository;
 import liaison.groble.domain.purchase.entity.Purchase;
 import liaison.groble.domain.purchase.repository.PurchaseRepository;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -46,13 +45,12 @@ import lombok.extern.slf4j.Slf4j;
  * <p>Template Method Pattern을 사용하여 공통 로직을 정의하고, 사용자 타입별 차이점만 서브클래스에서 구현합니다.
  */
 @Slf4j
-@RequiredArgsConstructor
 public abstract class BaseOrderProcessor implements OrderProcessorStrategy {
 
   // Readers
   protected final ContentReader contentReader;
   protected final PurchaseReader purchaseReader;
-  private final GuestUserReader guestUserReader;
+  protected final GuestUserReader guestUserReader;
 
   // Repositories
   protected final OrderRepository orderRepository;
@@ -66,6 +64,30 @@ public abstract class BaseOrderProcessor implements OrderProcessorStrategy {
 
   // Event Publisher
   protected final EventPublisher eventPublisher;
+
+  // 명시적 생성자 추가
+  protected BaseOrderProcessor(
+      ContentReader contentReader,
+      PurchaseReader purchaseReader,
+      GuestUserReader guestUserReader,
+      OrderRepository orderRepository,
+      UserCouponRepository userCouponRepository,
+      PurchaseRepository purchaseRepository,
+      PaymentRepository paymentRepository,
+      GuestUserRepository guestUserRepository,
+      OrderTermsService orderTermsService,
+      EventPublisher eventPublisher) {
+    this.contentReader = contentReader;
+    this.purchaseReader = purchaseReader;
+    this.guestUserReader = guestUserReader;
+    this.orderRepository = orderRepository;
+    this.userCouponRepository = userCouponRepository;
+    this.purchaseRepository = purchaseRepository;
+    this.paymentRepository = paymentRepository;
+    this.guestUserRepository = guestUserRepository;
+    this.orderTermsService = orderTermsService;
+    this.eventPublisher = eventPublisher;
+  }
 
   @Override
   public final CreateOrderSuccessDTO createOrder(
