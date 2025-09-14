@@ -37,6 +37,10 @@ public class GuestUserReader {
     return guestUserRepository.existsByPhoneNumberAndHasCompleteUserInfo(phoneNumber);
   }
 
+  public boolean buyerInfoStorageAgreed(String phoneNumber) {
+    return guestUserRepository.existsByPhoneNumberAndBuyerInfoStorageAgreedTrue(phoneNumber);
+  }
+
   public GuestUser getByPhoneNumberIfExists(String phoneNumber) {
     return guestUserRepository.findByPhoneNumber(phoneNumber).orElse(null);
   }

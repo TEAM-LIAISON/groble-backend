@@ -41,4 +41,12 @@ public class VerifyAuthCodeResponse {
       type = "boolean",
       requiredMode = Schema.RequiredMode.REQUIRED)
   private Boolean hasCompleteUserInfo;
+
+  @Schema(
+      description =
+          "해당 전화번호가 구매자 정보 저장 약관에 동의했는지 여부 (true면 구매자 정보 저장 약관 철회 불가하도록 설정, false면 구매자 정보 저장 약관을 선택할 수 있도록 설정)",
+      example = "true",
+      type = "boolean",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private Boolean buyerInfoStorageAgreed;
 }
