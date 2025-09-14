@@ -70,8 +70,8 @@ public class GuestAuthService {
     }
 
     // 2) 상태 조회
-    boolean buyerAgreed = guestUserReader.buyerInfoStorageAgreed(phone);
-    GuestUser existingGuestUser = guestUserReader.getByPhoneNumberIfExists(phone); // null 가능
+    boolean buyerAgreed = guestUserReader.buyerInfoStorageAgreed(inputPhone);
+    GuestUser existingGuestUser = guestUserReader.getByPhoneNumberIfExists(inputPhone); // null 가능
     boolean hasCompleteInfo =
         existingGuestUser != null
             && existingGuestUser.getEmail() != null
@@ -89,7 +89,7 @@ public class GuestAuthService {
     GuestUser guestUser =
         (existingGuestUser != null)
             ? existingGuestUser
-            : GuestUser.builder().phoneNumber(phone).build();
+            : GuestUser.builder().phoneNumber(inputPhone).build();
 
     String email = null;
     String username = null;
@@ -100,14 +100,17 @@ public class GuestAuthService {
       username = guestUser.getUsername();
       tokenScope = GuestTokenScope.FULL_ACCESS;
       log.info(
-          "비회원 인증 완료(동의+정보완비) - 자동 로그인: phone={}, email={}, username={}", phone, email, username);
+          "비회원 인증 완료(동의+정보완비) - 자동 로그인: phone={}, email={}, username={}",
+          inputPhone,
+          email,
+          username);
     } else {
       // 동의 없거나, 정보가 불완전 → 개인정보 미반환 + PHONE_VERIFIED
       tokenScope = GuestTokenScope.PHONE_VERIFIED;
       if (needsBuyerInfoConsent) {
-        log.info("비회원 인증 완료(레거시 정보는 있으나 동의 없음) - 동의 재요청 필요: phone={}", phone);
+        log.info("비회원 인증 완료(레거시 정보는 있으나 동의 없음) - 동의 재요청 필요: phone={}", inputPhone);
       } else {
-        log.info("비회원 인증 완료(신규 또는 정보 불완전): phone={}", phone);
+        log.info("비회원 인증 완료(신규 또는 정보 불완전): phone={}", inputPhone);
       }
     }
 
@@ -123,7 +126,7 @@ public class GuestAuthService {
 
     // 7) 응답
     return GuestTokenDTO.builder()
-        .phoneNumber(phone)
+        .phoneNumber(inputPhone)
         .email(canReturnUserInfo ? email : null) // 동의+완비일 때만 반환
         .username(canReturnUserInfo ? username : null) // 동의+완비일 때만 반환
         .guestToken(guestToken)
