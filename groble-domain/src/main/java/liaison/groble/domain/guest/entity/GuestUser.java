@@ -24,7 +24,7 @@ import lombok.NoArgsConstructor;
 @Table(
     name = "guest_users",
     indexes = {
-      @Index(name = "idx_guest_phone", columnList = "phone"),
+      @Index(name = "idx_guest_phone_number", columnList = "phone_number"),
       @Index(name = "idx_guest_email", columnList = "email"),
       @Index(name = "idx_guest_verification_status", columnList = "phone_verification_status"),
       @Index(name = "idx_guest_created_at", columnList = "created_at")
@@ -40,7 +40,7 @@ public class GuestUser extends BaseTimeEntity {
   @Column(name = "user_name", nullable = true, length = 50)
   private String username;
 
-  @Column(name = "phone_number", nullable = false, length = 20, unique = true)
+  @Column(name = "phone_number", nullable = false, length = 20)
   private String phoneNumber;
 
   @Column(name = "email", nullable = true, length = 100)
@@ -55,6 +55,12 @@ public class GuestUser extends BaseTimeEntity {
 
   @Column(name = "verification_expires_at")
   private LocalDateTime verificationExpiresAt;
+
+  @Column(name = "buyer_info_storage_agreed")
+  private boolean buyerInfoStorageAgreed;
+
+  @Column(name = "buyer_info_storage_agreed_at")
+  private LocalDateTime buyerInfoStorageAgreedAt;
 
   @Builder
   public GuestUser(String username, String phoneNumber, String email) {
@@ -88,6 +94,14 @@ public class GuestUser extends BaseTimeEntity {
   public boolean isVerificationExpired() {
     return this.verificationExpiresAt != null
         && this.verificationExpiresAt.isBefore(LocalDateTime.now());
+  }
+
+  // 동의 승격 전용 도메인 메서드 (결제 성공 시 사용)
+  public void agreeBuyerInfo(String username, String email) {
+    this.buyerInfoStorageAgreed = true;
+    this.buyerInfoStorageAgreedAt = LocalDateTime.now();
+    if (this.username == null || this.username.isBlank()) this.username = username;
+    if (this.email == null || this.email.isBlank()) this.email = email;
   }
 
   public void updateUserInfo(String username, String email) {

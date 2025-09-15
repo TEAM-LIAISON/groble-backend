@@ -10,6 +10,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
@@ -178,16 +179,23 @@ public class ContentService {
 
       updateContentFromDTO(content, contentDTO);
 
-      // 옵션 처리
-      if (content.getSaleCount() > 0) {
-        // 판매 이력 있음: 기존 옵션 비활성화 + 새 옵션 추가
-        handleOptionsWithSalesHistory(content, contentDTO.getOptions());
-      } else {
-        // 판매 이력 없음: 완전 교체
-        content.getOptions().clear();
-        if (contentDTO.getOptions() != null) {
+      // 옵션 처리 - 옵션 데이터가 전달된 경우에만
+      if (contentDTO.getOptions() != null && !contentDTO.getOptions().isEmpty()) {
+        if (content.getSaleCount() > 0) {
+          // 판매 이력 있음: 기존 옵션 비활성화 + 새 옵션 추가
+          log.info(
+              "판매 이력 있는 콘텐츠 임시저장: contentId={}, saleCount={} - 옵션 데이터 전달됨",
+              content.getId(),
+              content.getSaleCount());
+          handleOptionsWithSalesHistorySmartly(content, contentDTO.getOptions());
+        } else {
+          // 판매 이력 없음: 완전 교체
+          log.info("판매 이력 없는 콘텐츠 임시저장: contentId={} - 기존 옵션 완전 교체", content.getId());
+          content.getOptions().clear();
           addOptionsToContent(content, contentDTO);
         }
+      } else {
+        log.info("옵션 데이터 없음, 옵션 처리 건너뛰기: contentId={}", content.getId());
       }
     } else {
       // 새 콘텐츠
@@ -215,17 +223,31 @@ public class ContentService {
       content = findAndValidateUserContent(userId, contentDTO.getContentId());
 
       // 2) 옵션 컬렉션을 처음부터 로딩
-      //    (lazy 로딩일 경우, 강제로 컬렉션을 초기화해서
-      //     이미 DB에 남아 있는 실제 엔티티만 제거되도록 함)
       content.getOptions().size();
-      // → 이 시점에 Hibernate가 DB에 남아 있는 옵션 리스트를 가져옵니다.
 
-      // 3) 컬렉션에서 실제로 제거할 대상만 남겨두고 지울 수 있도록
-      //    (예: 무조건 다 지우려면 clear 그대로 사용해도 되지만,
-      //     clear 직전에 fetch를 했으니 DB에 없는 id로 삭제쿼리가 나가지 않음)
-      content.getOptions().clear();
+      // 3) 판매 이력에 따른 옵션 처리 - 옵션 데이터가 전달된 경우에만
+      if (contentDTO.getOptions() != null && !contentDTO.getOptions().isEmpty()) {
+        if (content.getSaleCount() > 0) {
+          // 판매 이력 있음: 기존 옵션 비활성화 + 새 옵션 추가
+          log.info(
+              "판매 이력 있는 콘텐츠 심사요청: contentId={}, saleCount={} - 옵션 데이터 전달됨",
+              content.getId(),
+              content.getSaleCount());
+          handleOptionsWithSalesHistorySmartly(content, contentDTO.getOptions());
+        } else {
+          // 판매 이력 없음: 완전 교체
+          log.info("판매 이력 없는 콘텐츠 심사요청: contentId={} - 기존 옵션 완전 교체", content.getId());
+          content.getOptions().clear();
+          addOptionsToContent(content, contentDTO);
+        }
+      } else {
+        log.info("옵션 데이터 없음, 옵션 처리 건너뛰기: contentId={}", content.getId());
+      }
     } else {
       content = new Content(user);
+      if (contentDTO.getOptions() != null && !contentDTO.getOptions().isEmpty()) {
+        addOptionsToContent(content, contentDTO);
+      }
     }
 
     // 4. 카테고리 조회 및 설정 (심사 요청 시 필수)
@@ -235,11 +257,6 @@ public class ContentService {
     updateContentFromDTO(content, contentDTO);
     content.setCategory(category); // 카테고리 설정
     content.setStatus(ContentStatus.ACTIVE); // 심사중으로 설정
-
-    // 4) 새 옵션 추가
-    if (contentDTO.getOptions() != null && !contentDTO.getOptions().isEmpty()) {
-      addOptionsToContent(content, contentDTO);
-    }
 
     // 7. 저장 및 변환
     final LocalDateTime nowInSeoul = LocalDateTime.now(ZoneId.of("Asia/Seoul"));
@@ -977,28 +994,122 @@ public class ContentService {
     }
   }
 
-  private void handleOptionsWithSalesHistory(Content content, List<ContentOptionDTO> newOptions) {
-    log.info(
-        "판매 이력이 있는 콘텐츠 옵션 수정: contentId={}, saleCount={}", content.getId(), content.getSaleCount());
+  private void handleOptionsWithSalesHistorySmartly(
+      Content content, List<ContentOptionDTO> newOptions) {
+    List<ContentOption> activeOptions =
+        content.getOptions().stream().filter(ContentOption::isActive).collect(Collectors.toList());
 
-    // 모든 기존 옵션 비활성화
-    content.getOptions().stream()
-        .filter(ContentOption::isActive)
-        .forEach(
-            option -> {
-              option.deactivate();
-              log.info("기존 옵션 비활성화: optionId={}", option.getId());
-            });
-
-    // 새 옵션 추가
-    if (newOptions != null) {
-      newOptions.forEach(
-          dto -> {
-            ContentOption newOption = createOptionByContentType(content.getContentType(), dto);
-            content.addOption(newOption);
-            log.info("새 옵션 추가: name={}, price={}", newOption.getName(), newOption.getPrice());
-          });
+    // 새 옵션이 없으면 종료
+    if (newOptions == null || newOptions.isEmpty()) {
+      log.info("새 옵션 데이터가 없음, 스킵: contentId={}", content.getId());
+      return;
     }
+
+    // 변경사항이 있는지 확인
+    if (!hasOptionChanges(activeOptions, newOptions)) {
+      log.info("옵션 변경사항 없음, 스킵: contentId={}", content.getId());
+      return;
+    }
+
+    log.info(
+        "옵션 변경사항 감지, 업데이트 진행: contentId={}, 기존활성옵션수={}, 새옵션수={}",
+        content.getId(),
+        activeOptions.size(),
+        newOptions.size());
+
+    // 변경사항이 있을 때만 기존 옵션 비활성화 + 새 옵션 추가
+    activeOptions.forEach(
+        option -> {
+          option.deactivate();
+          log.info("기존 옵션 비활성화: optionId={}", option.getId());
+        });
+
+    newOptions.forEach(
+        dto -> {
+          ContentOption newOption = createOptionByContentType(content.getContentType(), dto);
+          content.addOption(newOption);
+          log.info("새 옵션 추가: name={}, price={}", newOption.getName(), newOption.getPrice());
+        });
+  }
+
+  private boolean hasOptionChanges(
+      List<ContentOption> activeOptions, List<ContentOptionDTO> newOptions) {
+    // 개수가 다르면 변경사항 있음
+    if (activeOptions.size() != newOptions.size()) {
+      log.info("옵션 개수 차이: 기존={}, 새={}", activeOptions.size(), newOptions.size());
+      return true;
+    }
+
+    // 기존 옵션들을 Set으로 변환 (순서 무관하게 비교)
+    Set<String> existingOptionSignatures =
+        activeOptions.stream().map(this::createOptionSignature).collect(Collectors.toSet());
+
+    // 새 옵션들을 Set으로 변환
+    Set<String> newOptionSignatures =
+        newOptions.stream().map(this::createOptionSignatureFromDTO).collect(Collectors.toSet());
+
+    log.info("기존 옵션 시그니처: {}", existingOptionSignatures);
+    log.info("새 옵션 시그니처: {}", newOptionSignatures);
+
+    // Set 비교로 순서에 관계없이 내용 비교
+    boolean hasChanges = !existingOptionSignatures.equals(newOptionSignatures);
+    log.info("옵션 변경사항 여부: {}", hasChanges);
+    return hasChanges;
+  }
+
+  private String createOptionSignature(ContentOption option) {
+    StringBuilder signature = new StringBuilder();
+    signature
+        .append(safeString(option.getName()))
+        .append("|")
+        .append(safeString(option.getDescription()))
+        .append("|")
+        .append(
+            option.getPrice() != null
+                ? option.getPrice().stripTrailingZeros().toPlainString()
+                : "null")
+        .append("|");
+
+    // DocumentOption 특수 필드 추가
+    if (option instanceof DocumentOption) {
+      DocumentOption docOption = (DocumentOption) option;
+      signature
+          .append(safeString(docOption.getDocumentFileUrl()))
+          .append("|")
+          .append(safeString(docOption.getDocumentLinkUrl()));
+    } else {
+      signature.append("null|null"); // 일관성을 위해
+    }
+
+    String result = signature.toString();
+    log.debug("기존 옵션 시그니처 생성: optionId={}, signature={}", option.getId(), result);
+    return result;
+  }
+
+  private String createOptionSignatureFromDTO(ContentOptionDTO dto) {
+    StringBuilder signature = new StringBuilder();
+    signature
+        .append(safeString(dto.getName()))
+        .append("|")
+        .append(safeString(dto.getDescription()))
+        .append("|")
+        .append(
+            dto.getPrice() != null ? dto.getPrice().stripTrailingZeros().toPlainString() : "null")
+        .append("|");
+
+    // DocumentOption 특수 필드 추가
+    signature
+        .append(safeString(dto.getDocumentFileUrl()))
+        .append("|")
+        .append(safeString(dto.getDocumentLinkUrl()));
+
+    String result = signature.toString();
+    log.debug("새 옵션 시그니처 생성: signature={}", result);
+    return result;
+  }
+
+  private String safeString(String str) {
+    return str != null ? str : "null";
   }
 
   @Transactional(readOnly = true)

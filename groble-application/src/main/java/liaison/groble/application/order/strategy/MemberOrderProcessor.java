@@ -8,6 +8,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Component;
 
 import liaison.groble.application.content.ContentReader;
+import liaison.groble.application.guest.reader.GuestUserReader;
+import liaison.groble.application.order.dto.CreateOrderRequestDTO;
 import liaison.groble.application.order.dto.CreateOrderSuccessDTO;
 import liaison.groble.application.purchase.service.PurchaseReader;
 import liaison.groble.application.terms.dto.TermsAgreementDTO;
@@ -18,6 +20,7 @@ import liaison.groble.common.event.EventPublisher;
 import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.coupon.entity.UserCoupon;
 import liaison.groble.domain.coupon.repository.UserCouponRepository;
+import liaison.groble.domain.guest.repository.GuestUserRepository;
 import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.order.entity.Purchaser;
 import liaison.groble.domain.order.repository.OrderRepository;
@@ -38,23 +41,27 @@ public class MemberOrderProcessor extends BaseOrderProcessor {
   public MemberOrderProcessor(
       ContentReader contentReader,
       PurchaseReader purchaseReader,
+      UserReader userReader, // 추가된 파라미터
+      GuestUserReader guestUserReader,
       OrderRepository orderRepository,
       UserCouponRepository userCouponRepository,
       PurchaseRepository purchaseRepository,
       PaymentRepository paymentRepository,
+      GuestUserRepository guestUserRepository,
       OrderTermsService orderTermsService,
-      EventPublisher eventPublisher,
-      UserReader userReader) {
+      EventPublisher eventPublisher) {
     super(
         contentReader,
         purchaseReader,
+        guestUserReader,
         orderRepository,
         userCouponRepository,
         purchaseRepository,
         paymentRepository,
+        guestUserRepository,
         orderTermsService,
         eventPublisher);
-    this.userReader = userReader;
+    this.userReader = userReader; // 이제 정상적으로 초기화됨
   }
 
   @Override
@@ -113,21 +120,32 @@ public class MemberOrderProcessor extends BaseOrderProcessor {
   }
 
   @Override
-  protected void processTermsAgreement(UserContext userContext, HttpServletRequest httpRequest) {
+  protected void processTermsAgreement(
+      UserContext userContext, HttpServletRequest httpRequest, boolean buyerInfoStorageAgreed) {
     try {
-      TermsAgreementDTO termsAgreementDTO = createTermsAgreementDTO();
+      TermsAgreementDTO termsAgreementDTO = createTermsAgreementDTO(buyerInfoStorageAgreed);
       termsAgreementDTO.setUserId(userContext.getId());
       // IP 및 User-Agent 설정
       termsAgreementDTO.setIpAddress(httpRequest.getRemoteAddr());
       termsAgreementDTO.setUserAgent(httpRequest.getHeader("User-Agent"));
 
       orderTermsService.agreeToOrderTerms(termsAgreementDTO);
-      log.info("회원 주문 약관 동의 처리 완료 - userId: {}", userContext.getId());
+      log.info(
+          "회원 주문 약관 동의 처리 완료 - userId: {}, buyerInfoStorage: {}",
+          userContext.getId(),
+          buyerInfoStorageAgreed);
 
     } catch (Exception e) {
       log.error("회원 주문 약관 동의 처리 실패 - userId: {}", userContext.getId(), e);
       // 약관 동의 실패는 주문을 중단시키지 않음
     }
+  }
+
+  @Override
+  protected void handlePostFreeOrderProcessing(
+      Order order, UserContext userContext, CreateOrderRequestDTO createOrderRequestDTO) {
+    // 회원은 Guest 전용 처리가 필요 없음
+    log.info("회원 무료 주문 후 처리 완료 - userId: {}", userContext.getId());
   }
 
   /** 사용자 정보로부터 구매자 정보 생성 */

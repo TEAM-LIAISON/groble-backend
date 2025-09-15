@@ -12,4 +12,8 @@ public class GuestTokenDTO {
   private String guestToken;
   private boolean authenticated;
   private boolean hasCompleteUserInfo;
+  private boolean buyerInfoStorageAgreed;
+
+  /** 레거시 정보는 있으나 동의가 없어 재동의가 필요한지 */
+  private boolean needsBuyerInfoConsent;
 }

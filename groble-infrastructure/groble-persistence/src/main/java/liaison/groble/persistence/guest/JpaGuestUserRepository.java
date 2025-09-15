@@ -13,6 +13,8 @@ public interface JpaGuestUserRepository extends JpaRepository<GuestUser, Long> {
 
   Optional<GuestUser> findByPhoneNumber(String phoneNumber);
 
+  Optional<GuestUser> getByPhoneNumberAndBuyerInfoStorageAgreedTrue(String phoneNumber);
+
   boolean existsByPhoneNumber(String phoneNumber);
 
   boolean existsById(Long guestUserId);
@@ -20,6 +22,8 @@ public interface JpaGuestUserRepository extends JpaRepository<GuestUser, Long> {
   @Query(
       "SELECT COUNT(gu) > 0 FROM GuestUser gu WHERE gu.phoneNumber = :phoneNumber AND gu.email IS NOT NULL AND gu.email != '' AND gu.username IS NOT NULL AND gu.username != ''")
   boolean existsByPhoneNumberAndHasCompleteUserInfo(@Param("phoneNumber") String phoneNumber);
+
+  boolean existsByPhoneNumberAndBuyerInfoStorageAgreedTrue(String phoneNumber);
 
   long count();
 

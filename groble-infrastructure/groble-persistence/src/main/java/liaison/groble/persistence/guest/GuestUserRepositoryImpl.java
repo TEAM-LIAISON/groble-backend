@@ -40,6 +40,16 @@ public class GuestUserRepositoryImpl implements GuestUserRepository {
   }
 
   @Override
+  public boolean existsByPhoneNumberAndBuyerInfoStorageAgreedTrue(String phoneNumber) {
+    return jpaGuestUserRepository.existsByPhoneNumberAndBuyerInfoStorageAgreedTrue(phoneNumber);
+  }
+
+  @Override
+  public Optional<GuestUser> getByPhoneNumberAndBuyerInfoStorageAgreedTrue(String phoneNumber) {
+    return jpaGuestUserRepository.getByPhoneNumberAndBuyerInfoStorageAgreedTrue(phoneNumber);
+  }
+
+  @Override
   public long count() {
     return jpaGuestUserRepository.count();
   }

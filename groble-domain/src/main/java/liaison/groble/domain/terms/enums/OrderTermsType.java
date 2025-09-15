@@ -6,9 +6,11 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum OrderTermsType {
-  ELECTRONIC_FINANCIAL("전자금융거래 이용약관에 동의", true),
-  PURCHASE_POLICY("결제 진행 및 구매조건에 동의", true),
-  PERSONAL_INFORMATION("개인정보 수집 및 제3자 제공에 동의", true);
+  PERSONAL_INFO_COLLECTION_AND_THIRD_PARTY_PROVISION("개인정보 수집 및 제3자 제공", true),
+  TERMS_OF_SERVICE("서비스 이용약관", true),
+  REFUND_POLICY("환불 규정", true),
+  BUYER_INFORMATION_STORAGE("구매자 정보 저장", false),
+  MARKETPLACE_INTERMEDIARY_NOTICE("그로블은 통신판매중개자이며 상품·서비스의 제공 및 책임은 판매자에게 있습니다", true);
 
   private final String description;
   private final boolean required;

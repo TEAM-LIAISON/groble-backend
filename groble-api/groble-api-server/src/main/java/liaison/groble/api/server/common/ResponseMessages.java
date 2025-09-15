@@ -19,6 +19,8 @@ public final class ResponseMessages {
         "개인 • 법인 사업자 메이커 계좌 및 통장 사본 저장 요청이 성공적으로 처리되었습니다.";
     public static final String BUSINESS_MAKER_VERIFICATION_SUCCESS =
         "개인 • 법인 사업자 메이커 인증 요청이 성공적으로 처리되었습니다.";
+    public static final String LOGOUT_SUCCESS = "로그아웃이 성공적으로 처리되었습니다.";
+    public static final String GUEST_LOGOUT_SUCCESS = "게스트 로그아웃이 성공적으로 처리되었습니다.";
   }
 
   public static final class Content {
@@ -76,6 +78,10 @@ public final class ResponseMessages {
   }
 
   public static final class User {
+    public static final String USER_HEADER_INFORM_SUCCESS = "사용자 헤더 정보 조회에 성공했습니다.";
+    public static final String MY_PAGE_SUMMARY_SUCCESS = "마이페이지 요약 정보 조회에 성공했습니다.";
+    public static final String MY_PAGE_DETAIL_SUCCESS = "마이페이지 상세 정보 조회에 성공했습니다.";
+    public static final String PROFILE_IMAGE_UPLOAD_SUCCESS = "프로필 이미지가 성공적으로 업로드되었습니다.";
     public static final String PROFILE_UPDATED = "프로필이 성공적으로 수정되었습니다.";
     public static final String ROLE_SWITCHED = "가입 유형이 전환되었습니다.";
     public static final String PASSWORD_CHANGED = "비밀번호가 성공적으로 변경되었습니다.";
