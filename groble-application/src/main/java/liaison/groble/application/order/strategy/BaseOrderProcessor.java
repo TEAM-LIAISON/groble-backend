@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import jakarta.servlet.http.HttpServletRequest;
 
 import liaison.groble.application.content.ContentReader;
+import liaison.groble.application.guest.reader.GuestUserReader;
 import liaison.groble.application.order.dto.CreateOrderRequestDTO;
 import liaison.groble.application.order.dto.CreateOrderSuccessDTO;
 import liaison.groble.application.order.dto.OrderSuccessDTO;
@@ -22,6 +23,7 @@ import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.content.entity.ContentOption;
 import liaison.groble.domain.coupon.entity.UserCoupon;
 import liaison.groble.domain.coupon.repository.UserCouponRepository;
+import liaison.groble.domain.guest.repository.GuestUserRepository;
 import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.order.entity.OrderItem;
 import liaison.groble.domain.order.repository.OrderRepository;
@@ -31,7 +33,6 @@ import liaison.groble.domain.payment.repository.PaymentRepository;
 import liaison.groble.domain.purchase.entity.Purchase;
 import liaison.groble.domain.purchase.repository.PurchaseRepository;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -40,24 +41,55 @@ import lombok.extern.slf4j.Slf4j;
  * <p>Template Method Pattern을 사용하여 공통 로직을 정의하고, 사용자 타입별 차이점만 서브클래스에서 구현합니다.
  */
 @Slf4j
-@RequiredArgsConstructor
 public abstract class BaseOrderProcessor implements OrderProcessorStrategy {
 
   // Readers
-  protected final ContentReader contentReader;
-  protected final PurchaseReader purchaseReader;
+  protected ContentReader contentReader;
+  protected PurchaseReader purchaseReader;
+  protected GuestUserReader guestUserReader;
 
   // Repositories
-  protected final OrderRepository orderRepository;
-  protected final UserCouponRepository userCouponRepository;
-  protected final PurchaseRepository purchaseRepository;
-  protected final PaymentRepository paymentRepository;
+  protected OrderRepository orderRepository;
+  protected UserCouponRepository userCouponRepository;
+  protected PurchaseRepository purchaseRepository;
+  protected PaymentRepository paymentRepository;
+  protected GuestUserRepository guestUserRepository;
 
   // Services
-  protected final OrderTermsService orderTermsService;
+  protected OrderTermsService orderTermsService;
 
   // Event Publisher
-  protected final EventPublisher eventPublisher;
+  protected EventPublisher eventPublisher;
+
+  protected BaseOrderProcessor(
+      ContentReader contentReader,
+      PurchaseReader purchaseReader,
+      GuestUserReader guestUserReader,
+      OrderRepository orderRepository,
+      UserCouponRepository userCouponRepository,
+      PurchaseRepository purchaseRepository,
+      PaymentRepository paymentRepository,
+      GuestUserRepository guestUserRepository,
+      OrderTermsService orderTermsService,
+      EventPublisher eventPublisher) {
+    log.info("=== BaseOrderProcessor 생성자 호출 시작 ===");
+    log.info("contentReader: {}", contentReader);
+    log.info("purchaseReader: {}", purchaseReader);
+    log.info("guestUserReader: {}", guestUserReader);
+
+    this.contentReader = contentReader;
+    this.purchaseReader = purchaseReader;
+    this.guestUserReader = guestUserReader;
+    this.orderRepository = orderRepository;
+    this.userCouponRepository = userCouponRepository;
+    this.purchaseRepository = purchaseRepository;
+    this.paymentRepository = paymentRepository;
+    this.guestUserRepository = guestUserRepository;
+    this.orderTermsService = orderTermsService;
+    this.eventPublisher = eventPublisher;
+
+    log.info("=== BaseOrderProcessor 생성자 완료 - this.contentReader: {} ===", this.contentReader);
+  }
 
   @Override
   public final CreateOrderSuccessDTO createOrder(
@@ -69,6 +101,10 @@ public abstract class BaseOrderProcessor implements OrderProcessorStrategy {
         getUserTypeString(userContext),
         userContext.getId(),
         createOrderRequestDTO.getContentId());
+
+    log.info("=== createOrder 시점의 contentReader 상태 확인 ===");
+    log.info("this.contentReader: {}", this.contentReader);
+    log.info("contentReader == null: {}", this.contentReader == null);
 
     // 1. 콘텐츠 조회
     final Content content = contentReader.getContentById(createOrderRequestDTO.getContentId());
@@ -99,15 +135,13 @@ public abstract class BaseOrderProcessor implements OrderProcessorStrategy {
     // 6. 주문 저장 및 merchantUid 생성
     order = saveOrderWithMerchantUid(order);
 
-    // 7. 약관 동의 처리
-    processTermsAgreement(userContext, httpRequest);
-
-    // 8. 무료 주문 처리
+    // 7. 무료 주문 처리
     if (willBeFreePurchase) {
       boolean success = processFreeOrderPurchase(order);
-      if (!success) {
-        throw new RuntimeException("무료 주문 처리 실패 - 트랜잭션 롤백");
-      }
+      if (!success) throw new RuntimeException("무료 주문 처리 실패 - 트랜잭션 롤백");
+
+      // Guest 전용 처리는 서브클래스에서 처리
+      handlePostFreeOrderProcessing(order, userContext, createOrderRequestDTO);
     }
 
     // 9. 주문 생성 로그 기록
@@ -159,7 +193,11 @@ public abstract class BaseOrderProcessor implements OrderProcessorStrategy {
 
   /** 약관 동의 처리 */
   protected abstract void processTermsAgreement(
-      UserContext userContext, HttpServletRequest httpRequest);
+      UserContext userContext, HttpServletRequest httpRequest, boolean buyerInfoStorageAgreed);
+
+  /** 무료 주문 후 처리 (Guest 전용 로직 등) */
+  protected abstract void handlePostFreeOrderProcessing(
+      Order order, UserContext userContext, CreateOrderRequestDTO createOrderRequestDTO);
 
   // ===== 공통 메서드들 =====
 
@@ -441,9 +479,19 @@ public abstract class BaseOrderProcessor implements OrderProcessorStrategy {
   }
 
   /** 공통 약관 동의 DTO 생성 */
-  protected TermsAgreementDTO createTermsAgreementDTO() {
+  protected TermsAgreementDTO createTermsAgreementDTO(boolean includeBuyerInfoStorage) {
     List<String> termTypeStrs =
-        List.of("ELECTRONIC_FINANCIAL", "PURCHASE_POLICY", "PERSONAL_INFORMATION");
+        new java.util.ArrayList<>(
+            List.of(
+                "PERSONAL_INFO_COLLECTION_AND_THIRD_PARTY_PROVISION",
+                "TERMS_OF_SERVICE",
+                "REFUND_POLICY",
+                "MARKETPLACE_INTERMEDIARY_NOTICE"));
+
+    // 구매자 정보 저장 약관 동의 시에만 추가
+    if (includeBuyerInfoStorage) {
+      termTypeStrs.add("BUYER_INFORMATION_STORAGE");
+    }
 
     return TermsAgreementDTO.builder().termsTypeStrings(termTypeStrs).build();
   }

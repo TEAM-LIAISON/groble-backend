@@ -7,6 +7,7 @@ import liaison.groble.application.auth.dto.VerifyBusinessMakerAccountDTO;
 import liaison.groble.application.auth.dto.VerifyPersonalMakerAccountDTO;
 import liaison.groble.application.auth.util.BankCodeUtil;
 import liaison.groble.application.user.service.UserReader;
+import liaison.groble.common.utils.BirthDateUtil;
 import liaison.groble.domain.user.entity.SellerInfo;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.enums.BusinessType;
@@ -37,10 +38,12 @@ public class AccountVerificationService {
     User user = sellerInfo.getUser();
     // 은행명으로 기관 코드 조회
     String bankCode = BankCodeUtil.getBankCode(dto.getBankName());
+    String parsedBirthDate = BirthDateUtil.convertToSixDigit(dto.getBirthDate());
 
     // 직접 업데이트
     sellerInfo.updatePersonalMakerBankInfo(
         dto.getBankAccountOwner(),
+        parsedBirthDate,
         dto.getBankName(),
         dto.getBankAccountNumber(),
         dto.getCopyOfBankbookUrl(),
@@ -67,10 +70,12 @@ public class AccountVerificationService {
 
     // 은행명으로 기관 코드 조회
     String bankCode = BankCodeUtil.getBankCode(dto.getBankName());
+    String parsedBirthDate = BirthDateUtil.convertToSixDigit(dto.getBirthDate());
 
     // 직접 업데이트
     sellerInfo.updateBusinessMakerBankInfo(
         dto.getBankAccountOwner(),
+        parsedBirthDate,
         dto.getBankName(),
         dto.getBankAccountNumber(),
         dto.getCopyOfBankbookUrl(),
@@ -84,6 +89,7 @@ public class AccountVerificationService {
     // 직접 업데이트
     sellerInfo.updateBusinessInfo(
         BusinessType.valueOf(dto.getBusinessType().name()),
+        dto.getBusinessNumber(),
         dto.getBusinessCategory(),
         dto.getBusinessSector(),
         dto.getBusinessName(),
@@ -97,10 +103,12 @@ public class AccountVerificationService {
             .userId(user.getId())
             .nickname(user.getNickname())
             .bankAccountOwner(sellerInfo.getBankAccountOwner())
+            .birthDate(sellerInfo.getBirthDate())
             .bankName(sellerInfo.getBankName())
             .bankAccountNumber(sellerInfo.getBankAccountNumber())
             .copyOfBankbookUrl(sellerInfo.getCopyOfBankbookUrl())
             .businessType(dto.getBusinessType().name())
+            .businessNumber(dto.getBusinessNumber())
             .businessCategory(dto.getBusinessCategory())
             .businessSector(dto.getBusinessSector())
             .businessName(dto.getBusinessName())

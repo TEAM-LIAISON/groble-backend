@@ -23,7 +23,8 @@ public interface OrderMapper {
     return CreateOrderRequestDTO.of(
         request.getContentId(),
         toOrderOptionDTOList(request.getOptions()),
-        request.getCouponCodes());
+        request.getCouponCodes(),
+        request.isBuyerInfoStorageAgreed());
   }
 
   @Mapping(target = "optionType", expression = "java(mapOptionType(request.getOptionType()))")

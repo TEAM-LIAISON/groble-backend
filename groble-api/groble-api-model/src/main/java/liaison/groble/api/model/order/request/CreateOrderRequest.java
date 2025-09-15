@@ -33,7 +33,10 @@ public class CreateOrderRequest {
   @Schema(description = "쿠폰 코드 목록 (선택사항)", example = "[\"WELCOME10\", \"SALE50\"]")
   private List<String> couponCodes;
 
-  @AssertTrue(message = "주문 약관 동의는 필수입니다.")
-  @Schema(description = "주문 약관 동의 여부", example = "true")
+  @AssertTrue(message = "결제 진행 필수 동의")
+  @Schema(description = "결제 진행 필수 동의", example = "true")
   private boolean orderTermsAgreed;
+
+  @Schema(description = "구매자 정보 저장 약관 동의 여부 (선택사항)", example = "true")
+  private boolean buyerInfoStorageAgreed;
 }

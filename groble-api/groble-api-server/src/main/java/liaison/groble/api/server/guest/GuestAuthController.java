@@ -127,7 +127,7 @@ public class GuestAuthController extends BaseController {
   @PostMapping(ApiPaths.Guest.UPDATE_GUEST_USER_INFO)
   public ResponseEntity<GrobleResponse<UpdateGuestUserInfoResponse>> updateGuestUserInfo(
       @Valid @RequestBody UpdateGuestUserInfoRequest updateGuestUserInfoRequest,
-      @Auth Accessor accessor,
+      @Auth(required = false) Accessor accessor,
       HttpServletResponse response) {
 
     // DTO 변환

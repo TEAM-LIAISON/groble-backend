@@ -10,6 +10,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import liaison.groble.application.guest.reader.GuestUserReader;
 import liaison.groble.application.order.service.OrderReader;
 import liaison.groble.application.payment.dto.PaymentAuthInfo;
 import liaison.groble.application.payment.dto.PaymentCancelInfo;
@@ -24,7 +25,10 @@ import liaison.groble.application.settlement.writer.SettlementWriter;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.content.repository.ContentRepository;
+import liaison.groble.domain.guest.entity.GuestUser;
+import liaison.groble.domain.guest.repository.GuestUserRepository;
 import liaison.groble.domain.order.entity.Order;
+import liaison.groble.domain.order.repository.OrderRepository;
 import liaison.groble.domain.payment.entity.Payment;
 import liaison.groble.domain.payment.entity.PayplePayment;
 import liaison.groble.domain.payment.repository.PaymentRepository;
@@ -56,11 +60,14 @@ public class PaymentTransactionService {
   private final OrderReader orderReader;
   private final PurchaseReader purchaseReader;
   private final PaymentReader paymentReader;
+  private final GuestUserReader guestUserReader;
   private final PaymentValidator paymentValidator;
   private final PayplePaymentRepository payplePaymentRepository;
+  private final OrderRepository orderRepository;
   private final ContentRepository contentRepository;
   private final PaymentRepository paymentRepository;
   private final PurchaseRepository purchaseRepository;
+  private final GuestUserRepository guestUserRepository;
   private final SettlementReader settlementReader;
   private final SettlementWriter settlementWriter;
   private final UserReader userReader;
@@ -147,6 +154,10 @@ public class PaymentTransactionService {
 
     // 5. Order 결제 완료 처리
     order.completePayment();
+
+    // ✅ 5.5 결제 성공 → 게스트 동의 승격 (intent=true일 때만)
+    //    - 내부에서 행잠금/유니크 충돌 처리까지 수행
+    applyBuyerConsentAfterPaymentSuccess(order);
 
     // 6. Purchase 생성 및 저장
     Purchase purchase = createPurchase(order);
@@ -773,5 +784,49 @@ public class PaymentTransactionService {
         .pcdUserDefine1(dto.getUserDefine1())
         .pcdUserDefine2(dto.getUserDefine2())
         .build();
+  }
+
+  /**
+   * 결제 성공 시점에만 호출: - 게스트 주문 + intent=true 인 경우에 GuestUser 동의=true로 승격 - 이메일/이름 비어있으면 주문 스냅샷으로 보강 -
+   * 부분 유니크(uk_guest_phone_when_agreed) 충돌 시 정본으로 주문 재지정
+   */
+  private void applyBuyerConsentAfterPaymentSuccess(Order order) {
+    // 게스트 주문이 아니거나, 의사(intent) 없으면 아무 것도 안 함
+    if (!order.isGuestOrder() || !order.isBuyerInfoConsentIntent()) return;
+
+    // 게스트/주문은 같은 트랜잭션에서 잠그는 게 안전합니다.
+    // getByIdForUpdate / getOrderByIdForUpdate 같은 "FOR UPDATE" 리더를 사용하는 걸 권장
+    GuestUser guest = guestUserReader.getGuestUserById(order.getGuestUser().getId());
+    if (guest.isBuyerInfoStorageAgreed()) return; // 이미 동의된 경우 스킵
+
+    // 주문에 저장된 스냅샷(주문 생성 시 기록)을 가져와 보강
+    String usernameSnapshot = emptyToNull(order.getBuyerUsernameSnapshot());
+    String emailSnapshot = emptyToNull(order.getBuyerEmailSnapshot());
+
+    try {
+      // 동의 승격 + 보강 (동의 시각까지 세팅되는 도메인 메서드 권장)
+      guest.agreeBuyerInfo(usernameSnapshot, emailSnapshot);
+      guestUserRepository.save(guest); // 🔒 여기서 uk_guest_phone_when_agreed 제약이 검증됨
+
+      log.info("게스트 동의 승격 완료 - orderId={}, guestUserId={}", order.getId(), guest.getId());
+
+    } catch (DataIntegrityViolationException dup) {
+      // 같은 전화번호로 이미 동의=TRUE 정본이 존재 → 그 정본으로 주문 연결
+      GuestUser canonical =
+          guestUserReader.getByPhoneNumberAndBuyerInfoStorageAgreedTrue(guest.getPhoneNumber());
+      order.setGuestUserId(canonical);
+      orderRepository.save(order);
+
+      log.info(
+          "동의 유니크 충돌 → 정본으로 주문 재지정 - orderId={}, fromGuestId={}, toGuestId={}",
+          order.getId(),
+          guest.getId(),
+          canonical.getId());
+      // (선택) mergeGuestData(guest, canonical);
+    }
+  }
+
+  private static String emptyToNull(String s) {
+    return (s == null || s.isBlank()) ? null : s.trim();
   }
 }

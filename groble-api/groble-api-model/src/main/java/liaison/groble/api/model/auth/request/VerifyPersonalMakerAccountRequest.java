@@ -5,10 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Getter
-@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -17,6 +15,10 @@ public class VerifyPersonalMakerAccountRequest {
   /** 정산받을 은행 계좌 소유자 이름 */
   @Schema(description = "정산받을 은행 계좌 소유자 이름", example = "홍길동")
   private String bankAccountOwner;
+
+  /** 정산받을 개인메이커의 생년월일 */
+  @Schema(description = "정산받을 개인메이커의 생년월일", example = "19900101")
+  private String birthDate;
 
   /** 정산받을 은행명 */
   @Schema(description = "정산받을 은행명", example = "신한은행")

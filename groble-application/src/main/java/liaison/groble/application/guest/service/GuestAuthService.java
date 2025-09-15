@@ -59,69 +59,64 @@ public class GuestAuthService {
   }
 
   public GuestTokenDTO verifyGuestAuthCode(VerifyGuestAuthCodeDTO verifyGuestAuthCodeDTO) {
-    String phoneNumber = verifyGuestAuthCodeDTO.getPhoneNumber();
-    String sanitized = PhoneUtils.sanitizePhoneNumber(phoneNumber);
+    String inputPhone = verifyGuestAuthCodeDTO.getPhoneNumber();
+    String phone = PhoneUtils.sanitizePhoneNumber(inputPhone);
     String authCode = verifyGuestAuthCodeDTO.getAuthCode();
 
-    // 1. 인증 코드 검증
-    boolean isValidCode =
-        verificationCodePort.validateVerificationCodeForGuest(sanitized, authCode);
+    // 1) 인증 코드 검증
+    boolean isValidCode = verificationCodePort.validateVerificationCodeForGuest(phone, authCode);
     if (!isValidCode) {
       throw new InvalidGuestAuthCodeException();
     }
 
-    // 2. 사용자 정보 완성 여부 확인 (email, username이 모두 존재하는지)
-    boolean hasCompleteUserInfo = guestUserReader.hasCompleteUserInfo(phoneNumber);
+    // 2) 동의된 게스트 존재 여부 및 개체 조회 (있으면 그 개체를 사용)
+    boolean hasAgreedUser =
+        guestUserReader.existsByPhoneNumberAndBuyerInfoStorageAgreedTrue(inputPhone);
+    GuestUser guestUser =
+        hasAgreedUser
+            ? guestUserReader.getByPhoneNumberAndBuyerInfoStorageAgreedTrue(inputPhone) // 동의된 개체
+            : GuestUser.builder()
+                .phoneNumber(inputPhone)
+                .build(); // 동의된 개체가 없으면 무조건 신규 생성(agreed=false)
 
-    // 3. 기존 GuestUser 조회
-    GuestUser existingGuestUser = guestUserReader.getByPhoneNumberIfExists(phoneNumber);
+    // 레거시: 동의는 없지만 과거 저장된 이름/이메일이 존재하는지(재동의 유도용)
+    boolean legacyInfoExists = guestUserReader.hasCompleteUserInfo(inputPhone);
 
-    GuestUser guestUser;
-    String email = null;
-    String username = null;
+    // 3) 개인정보 반환/스코프 판단은 "동의+정보완비" 기준
+    boolean buyerAgreed = hasAgreedUser; // 이번에 토큰을 부여할 개체의 동의 상태
+    boolean hasCompleteInfo =
+        buyerAgreed
+            && guestUser.getEmail() != null
+            && !guestUser.getEmail().isBlank()
+            && guestUser.getUsername() != null
+            && !guestUser.getUsername().isBlank();
 
-    if (hasCompleteUserInfo && existingGuestUser != null) {
-      // 완전한 사용자 정보가 있는 경우: 기존 정보 사용 및 로그인 처리
-      guestUser = existingGuestUser;
-      email = guestUser.getEmail();
-      username = guestUser.getUsername();
+    boolean canReturnUserInfo = hasCompleteInfo; // 동의 + (이름/이메일) 완비
+    boolean needsBuyerInfoConsent = !buyerAgreed && legacyInfoExists; // 레거시 정보는 있으나 동의 없음
 
-      log.info(
-          "완전한 사용자 정보가 있는 비회원 인증 완료 - 자동 로그인: phoneNumber={}, email={}, username={}",
-          sanitized,
-          email,
-          username);
-    } else {
-      // 사용자 정보가 불완전한 경우: 이메일과 이름을 응답에 포함하지 않음
-      if (existingGuestUser != null) {
-        guestUser = existingGuestUser;
-      } else {
-        // 새로운 GuestUser 생성 (이메일과 이름은 빈 값으로 생성)
-        guestUser = GuestUser.builder().phoneNumber(phoneNumber).build();
-      }
+    GuestTokenScope scope =
+        canReturnUserInfo ? GuestTokenScope.FULL_ACCESS : GuestTokenScope.PHONE_VERIFIED;
 
-      log.info("사용자 정보가 불완전한 비회원 인증 완료: phoneNumber={}", phoneNumber);
-    }
-
-    // 4. 전화번호 인증 완료 처리
+    // 4) 전화번호 인증 처리 및 저장 (신규 생성된 경우에도 동일 처리)
     guestUser.verifyPhone();
-    guestUserWriter.save(guestUser);
+    guestUser = guestUserWriter.save(guestUser);
 
-    // 5. 인증 코드 삭제
-    verificationCodePort.removeVerificationCodeForGuest(sanitized);
+    // 5) 인증 코드 삭제
+    verificationCodePort.removeVerificationCodeForGuest(phone);
 
-    // 6. 게스트 토큰 생성 (스코프에 따라 다른 토큰 생성)
-    GuestTokenScope tokenScope =
-        hasCompleteUserInfo ? GuestTokenScope.FULL_ACCESS : GuestTokenScope.PHONE_VERIFIED;
-    String guestToken = securityPort.createGuestTokenWithScope(guestUser.getId(), tokenScope);
+    // 6) 토큰 생성(이 토큰은 방금 선택/생성된 guestUser.id에 귀속됨)
+    String guestToken = securityPort.createGuestTokenWithScope(guestUser.getId(), scope);
 
+    // 7) 응답 (개인정보는 동의+완비일 때만 반환)
     return GuestTokenDTO.builder()
-        .phoneNumber(phoneNumber)
-        .email(email) // 사용자 정보가 불완전하면 null
-        .username(username) // 사용자 정보가 불완전하면 null
+        .phoneNumber(inputPhone) // 일관성 위해 sanitized 반환 권장
+        .email(canReturnUserInfo ? guestUser.getEmail() : null)
+        .username(canReturnUserInfo ? guestUser.getUsername() : null)
         .guestToken(guestToken)
         .authenticated(true)
-        .hasCompleteUserInfo(hasCompleteUserInfo)
+        .hasCompleteUserInfo(canReturnUserInfo)
+        .buyerInfoStorageAgreed(buyerAgreed)
+        .needsBuyerInfoConsent(needsBuyerInfoConsent)
         .build();
   }
 
@@ -161,7 +156,8 @@ public class GuestAuthService {
 
   // 기존 GuestUser 상태 확인 및 처리
   private void handleExistingGuestUser(String phoneNumber) {
-    boolean existingGuest = guestUserReader.existsByPhoneNumber(phoneNumber);
+    boolean existingGuest =
+        guestUserReader.existsByPhoneNumberAndBuyerInfoStorageAgreedTrue(phoneNumber);
 
     if (existingGuest) {
       GuestUser guestUser = guestUserReader.getByPhoneNumber(phoneNumber);

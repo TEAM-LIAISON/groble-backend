@@ -58,10 +58,12 @@ public final class ApiPaths {
   public static final class User {
     public static final String BASE = API_V1 + "/users";
 
-    public static final String SWITCH_ROLE = "/switch-role";
-    public static final String MY_PAGE_SUMMARY = "/me/summary";
-    public static final String MY_PAGE_DETAIL = "/me/detail";
-    public static final String PROFILE_IMAGE = "/profile/image";
+    public static final String SWITCH_ROLE = BASE + "/switch-role";
+    public static final String MY_PAGE_SUMMARY = BASE + "/me/summary";
+    public static final String MY_PAGE_DETAIL = BASE + "/me/detail";
+    public static final String UPLOAD_PROFILE_IMAGE = BASE + "/me/profile-image";
+
+    public static final String MY_PAGE = API_V1 + "/me";
 
     private User() {}
   }

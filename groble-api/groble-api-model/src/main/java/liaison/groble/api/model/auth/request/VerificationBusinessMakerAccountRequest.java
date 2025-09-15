@@ -5,10 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Getter
-@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -17,6 +15,10 @@ public class VerificationBusinessMakerAccountRequest {
   /** 정산받을 은행 계좌 소유자 이름 */
   @Schema(description = "정산받을 은행 계좌 소유자 이름", example = "홍길동")
   private String bankAccountOwner;
+
+  /** 정산받을 개인메이커의 생년월일 */
+  @Schema(description = "정산받을 개인메이커의 생년월일", example = "19900101")
+  private String birthDate;
 
   /** 정산받을 은행명 */
   @Schema(description = "정산받을 은행명", example = "신한은행")
@@ -39,6 +41,10 @@ public class VerificationBusinessMakerAccountRequest {
       example = "INDIVIDUAL_NORMAL",
       allowableValues = {"INDIVIDUAL_SIMPLIFIED", "INDIVIDUAL_NORMAL", "CORPORATE"})
   private BusinessType businessType;
+
+  /** 사업자등록번호 */
+  @Schema(description = "사업자등록번호", example = "1234-56-78901")
+  private String businessNumber;
 
   /** 업종 */
   @Schema(description = "업종", example = "IT 서비스")
