@@ -6,8 +6,8 @@ public class OrderSwaggerDocs {
   private OrderSwaggerDocs() {}
 
   // === 공통 태그 ===
-  public static final String TAG_NAME = SwaggerTags.Purchase.REVIEW;
-  public static final String TAG_DESCRIPTION = SwaggerTags.Purchase.REVIEW_DESC;
+  public static final String TAG_NAME = SwaggerTags.Order.ORDER;
+  public static final String TAG_DESCRIPTION = SwaggerTags.Order.ORDER_DESC;
 
   // === 회원/비회원 통합 주문 생성 요청 API ===
   public static final String CREATE_ORDER_SUMMARY = "[✅ 통합 주문 발행] 회원/비회원 자동 판단 주문 발행 요청";
