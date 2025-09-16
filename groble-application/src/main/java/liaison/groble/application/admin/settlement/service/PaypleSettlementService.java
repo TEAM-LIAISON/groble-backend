@@ -284,6 +284,7 @@ public class PaypleSettlementService {
     params.put("custKey", paypleConfig.getCustKey());
     params.put("billing_tran_id", billingTranId);
     params.put("tran_amt", tranAmt);
+    params.put("print_content", "그로블");
 
     // 중복 이체 방지를 위한 고유 키 생성 (UUID 기반)
     String distinctKey = generateDistinctKey();
