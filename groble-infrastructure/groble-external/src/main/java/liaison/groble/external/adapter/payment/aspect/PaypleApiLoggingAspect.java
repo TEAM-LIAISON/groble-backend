@@ -71,8 +71,17 @@ public class PaypleApiLoggingAspect {
     try {
       if (result instanceof JSONObject) {
         JSONObject jsonResult = (JSONObject) result;
-        String resultCode = getStringValue(jsonResult, "PCD_PAY_RST");
-        String message = getStringValue(jsonResult, "PCD_PAY_MSG");
+        // 새로운 API 응답 형식의 키들을 먼저 확인
+        String resultCode = getStringValue(jsonResult, "result");
+        String message = getStringValue(jsonResult, "message");
+
+        // 기존 API 응답 형식 키들로 fallback
+        if (resultCode.isEmpty()) {
+          resultCode = getStringValue(jsonResult, "PCD_PAY_RST");
+        }
+        if (message.isEmpty()) {
+          message = getStringValue(jsonResult, "PCD_PAY_MSG");
+        }
 
         if ("success".equals(resultCode)
             || "A0000".equals(resultCode)
