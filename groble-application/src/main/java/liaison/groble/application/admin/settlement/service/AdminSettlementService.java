@@ -531,9 +531,13 @@ public class AdminSettlementService {
       return birthDate;
     }
 
-    // businessSellerRequest가 true이나 isBusinessSeller가 false이면 "0" 입력
+    // businessSellerRequest가 true이나 isBusinessSeller가 false이면 생년월일 입력 (사업자 신청 중인 상태)
     if (isBusinessSeller == null || !isBusinessSeller) {
-      return "0";
+      String birthDate = sellerInfo.getBirthDate();
+      if (birthDate == null || birthDate.trim().isEmpty()) {
+        throw new IllegalArgumentException("사업자 신청 중인 판매자의 생년월일이 설정되지 않았습니다.");
+      }
+      return birthDate;
     }
 
     // businessSellerRequest가 true이고 isBusinessSeller가 true이면 사업자등록번호(businessNumber) 입력
