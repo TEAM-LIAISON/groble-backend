@@ -349,8 +349,8 @@ public abstract class BaseOrderProcessor implements OrderProcessorStrategy {
   /** 무료 결제 정보 생성 및 완료 처리 */
   protected Payment createAndCompleteFreePayment(Order order) {
     Payment freePayment = Payment.createFreePayment(order);
-    freePayment.completeFreePayment();
     Payment savedPayment = paymentRepository.save(freePayment);
+    savedPayment.completeFreePayment();
     savedPayment.publishPaymentCreatedEvent();
     return savedPayment;
   }
