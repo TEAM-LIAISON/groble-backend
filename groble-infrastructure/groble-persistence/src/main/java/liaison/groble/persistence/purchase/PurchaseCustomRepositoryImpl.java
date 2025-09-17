@@ -983,7 +983,7 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
 
   @Override
   public Optional<FlatPurchaseContentDetailDTO> getPurchaseContentDetailForGuest(
-      Long guestUserId, String merchantUid) {
+      String merchantUid) {
     QContent qContent = QContent.content;
     QPurchase qPurchase = QPurchase.purchase;
     QOrder qOrder = QOrder.order;
@@ -1106,7 +1106,7 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
             .leftJoin(qPurchase.content, qContent)
             .leftJoin(qPurchase.order, qOrder)
             .leftJoin(qPurchase.guestUser, qGuestUser)
-            .where(qPurchase.guestUser.id.eq(guestUserId).and(qOrder.merchantUid.eq(merchantUid)))
+            .where(qOrder.merchantUid.eq(merchantUid))
             .fetchOne();
 
     return Optional.ofNullable(result);

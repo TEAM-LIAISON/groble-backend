@@ -137,7 +137,7 @@ public class PurchaseService {
   public PurchasedContentDetailDTO getMyPurchasedContentForGuest(
       Long guestUserId, String merchantUid) {
     FlatPurchaseContentDetailDTO flatPurchaseContentDetailDTO =
-        purchaseReader.getPurchaseContentDetailForGuest(guestUserId, merchantUid);
+        purchaseReader.getPurchaseContentDetailForGuest(merchantUid);
 
     return toPurchasedContentDetailDTO(flatPurchaseContentDetailDTO);
   }
