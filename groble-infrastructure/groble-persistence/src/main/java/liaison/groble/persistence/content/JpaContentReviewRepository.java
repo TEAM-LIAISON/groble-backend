@@ -1,5 +1,7 @@
 package liaison.groble.persistence.content;
 
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import liaison.groble.domain.content.entity.ContentReview;
@@ -12,4 +14,6 @@ public interface JpaContentReviewRepository extends JpaRepository<ContentReview,
 
   boolean existsByGuestUserIdAndContentIdAndReviewStatus(
       Long guestUserId, Long contentId, ReviewStatus reviewStatus);
+
+  Optional<ContentReview> findByPurchaseId(Long purchaseId);
 }

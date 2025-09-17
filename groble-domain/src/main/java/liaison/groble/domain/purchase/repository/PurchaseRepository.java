@@ -12,4 +12,7 @@ public interface PurchaseRepository {
   Optional<Purchase> findByOrderId(Long orderId);
 
   Optional<Purchase> findByMerchantUidAndUserIdWithOrderAndContent(String merchantUid, Long userId);
+
+  Optional<Purchase> findByMerchantUidAndGuestUserIdWithOrderAndContent(
+      String merchantUid, Long guestUserId);
 }

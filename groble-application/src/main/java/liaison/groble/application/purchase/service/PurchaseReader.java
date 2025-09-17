@@ -36,6 +36,12 @@ public class PurchaseReader {
         .orElseThrow(() -> new EntityNotFoundException("구매 정보를 찾을 수 없습니다."));
   }
 
+  public Purchase getGuestPurchaseWithOrderAndContent(String merchantUid, Long guestUserId) {
+    return purchaseRepository
+        .findByMerchantUidAndGuestUserIdWithOrderAndContent(merchantUid, guestUserId)
+        .orElseThrow(() -> new EntityNotFoundException("구매 정보를 찾을 수 없습니다."));
+  }
+
   public FlatPurchaseContentDetailDTO getPurchaseContentDetail(Long userId, String merchantUid) {
     return purchaseCustomRepository
         .getPurchaseContentDetail(userId, merchantUid)

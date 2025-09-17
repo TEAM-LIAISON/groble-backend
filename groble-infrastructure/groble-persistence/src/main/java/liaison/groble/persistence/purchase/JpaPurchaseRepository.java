@@ -24,4 +24,14 @@ public interface JpaPurchaseRepository extends JpaRepository<Purchase, Long> {
       """)
   Optional<Purchase> findByMerchantUidAndUserIdWithOrderAndContent(
       @Param("merchantUid") String merchantUid, @Param("userId") Long userId);
+
+  @Query(
+      """
+      SELECT p FROM Purchase p
+      JOIN FETCH p.order o
+      JOIN FETCH p.content c
+      WHERE o.guestUser.id = :guestUserId AND o.merchantUid = :merchantUid
+      """)
+  Optional<Purchase> findByMerchantUidAndGuestUserIdWithOrderAndContent(
+      @Param("merchantUid") String merchantUid, @Param("guestUserId") Long guestUserId);
 }
