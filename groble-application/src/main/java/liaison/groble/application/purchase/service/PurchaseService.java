@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import liaison.groble.application.guest.reader.GuestUserReader;
 import liaison.groble.application.market.dto.ContactInfoDTO;
 import liaison.groble.application.order.service.OrderReader;
 import liaison.groble.application.purchase.dto.PurchaseContentCardDTO;
@@ -32,6 +33,7 @@ public class PurchaseService {
   private final OrderReader orderReader;
   private final PurchaseReader purchaseReader;
   private final SellerContactReader sellerContactReader;
+  private final GuestUserReader guestUserReader;
 
   // 내가 구매한 콘텐츠 목록 조회 (회원용)
   @Transactional(readOnly = true)
@@ -60,8 +62,10 @@ public class PurchaseService {
       Long guestUserId, String state, Pageable pageable) {
     List<Order.OrderStatus> orderStatuses = parseOrderStatuses(state);
 
+    String guestPhoneNumber = guestUserReader.getGuestUserById(guestUserId).getPhoneNumber();
+
     Page<FlatPurchaseContentPreviewDTO> page =
-        purchaseReader.findMyPurchasedContentsForGuest(guestUserId, orderStatuses, pageable);
+        purchaseReader.findMyPurchasedContentsForGuest(guestPhoneNumber, orderStatuses, pageable);
 
     List<PurchaseContentCardDTO> items =
         page.getContent().stream().map(this::convertFlatDTOToCardDTO).toList();

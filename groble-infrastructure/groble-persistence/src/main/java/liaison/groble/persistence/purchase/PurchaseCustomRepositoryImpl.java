@@ -510,14 +510,14 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
 
   @Override
   public Page<FlatPurchaseContentPreviewDTO> findMyPurchasedContentsForGuest(
-      Long guestUserId, List<Order.OrderStatus> orderStatuses, Pageable pageable) {
+      String guestPhoneNumber, List<Order.OrderStatus> orderStatuses, Pageable pageable) {
     QPurchase qPurchase = QPurchase.purchase;
     QOrder qOrder = QOrder.order;
     QContent qContent = QContent.content;
     QContentOption qContentOption = QContentOption.contentOption;
     QGuestUser qGuestUser = QGuestUser.guestUser;
 
-    BooleanExpression conditions = qPurchase.guestUser.id.eq(guestUserId);
+    BooleanExpression conditions = qGuestUser.phoneNumber.eq(guestPhoneNumber);
     if (orderStatuses != null) {
       conditions = conditions.and(qOrder.status.in(orderStatuses));
     }
@@ -581,6 +581,7 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
                 queryFactory
                     .select(qPurchase.count())
                     .from(qPurchase)
+                    .leftJoin(qPurchase.guestUser, qGuestUser)
                     .leftJoin(qPurchase.order, qOrder)
                     .where(conditions)
                     .fetchOne())

@@ -91,9 +91,9 @@ public class PurchaseReader {
   }
 
   public Page<FlatPurchaseContentPreviewDTO> findMyPurchasedContentsForGuest(
-      Long guestUserId, List<Order.OrderStatus> orderStatuses, Pageable pageable) {
+      String guestPhoneNumber, List<Order.OrderStatus> orderStatuses, Pageable pageable) {
     return purchaseCustomRepository.findMyPurchasedContentsForGuest(
-        guestUserId, orderStatuses, pageable);
+        guestPhoneNumber, orderStatuses, pageable);
   }
 
   public FlatSellManageDetailDTO getSellManageDetail(Long userId, Long contentId) {
