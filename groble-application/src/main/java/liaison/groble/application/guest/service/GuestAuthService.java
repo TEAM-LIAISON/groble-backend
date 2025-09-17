@@ -160,7 +160,8 @@ public class GuestAuthService {
         guestUserReader.existsByPhoneNumberAndBuyerInfoStorageAgreedTrue(phoneNumber);
 
     if (existingGuest) {
-      GuestUser guestUser = guestUserReader.getByPhoneNumber(phoneNumber);
+      GuestUser guestUser =
+          guestUserReader.getByPhoneNumberAndBuyerInfoStorageAgreedTrue(phoneNumber);
 
       // 인증 만료된 경우 상태 업데이트
       if (guestUser.isVerificationExpired()) {
