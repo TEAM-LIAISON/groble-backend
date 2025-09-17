@@ -43,6 +43,15 @@ public class PurchaseReader {
             () -> new EntityNotFoundException("구매 정보를 찾을 수 없습니다. Merchant UID: " + merchantUid));
   }
 
+  // 비회원 구매 상세 정보 조회
+  public FlatPurchaseContentDetailDTO getPurchaseContentDetailForGuest(
+      Long guestUserId, String merchantUid) {
+    return purchaseCustomRepository
+        .getPurchaseContentDetailForGuest(guestUserId, merchantUid)
+        .orElseThrow(
+            () -> new EntityNotFoundException("구매 정보를 찾을 수 없습니다. Merchant UID: " + merchantUid));
+  }
+
   // 주문 ID로 구매 정보 조회
   public Purchase getPurchaseByOrderId(Long orderId) {
     return purchaseRepository

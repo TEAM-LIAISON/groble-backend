@@ -979,4 +979,135 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
 
     return query;
   }
+
+  @Override
+  public Optional<FlatPurchaseContentDetailDTO> getPurchaseContentDetailForGuest(
+      Long guestUserId, String merchantUid) {
+    QContent qContent = QContent.content;
+    QPurchase qPurchase = QPurchase.purchase;
+    QOrder qOrder = QOrder.order;
+    QGuestUser qGuestUser = QGuestUser.guestUser;
+    QDocumentOption qDocOpt = QDocumentOption.documentOption;
+    QPayplePayment qPayplePayment = QPayplePayment.payplePayment;
+
+    Expression<String> documentOptionActionUrl =
+        ExpressionUtils.as(
+            Expressions.cases()
+                .when(qContent.contentType.eq(ContentType.DOCUMENT))
+                .then(
+                    JPAExpressions.select(qDocOpt.documentFileUrl.coalesce(qDocOpt.documentLinkUrl))
+                        .from(qDocOpt)
+                        .where(qDocOpt.id.eq(qPurchase.selectedOptionId))
+                        .limit(1))
+                .otherwise(Expressions.nullExpression(String.class)),
+            "documentOptionActionUrl");
+
+    Expression<Integer> one = ExpressionUtils.as(Expressions.constant(1), "selectedOptionQuantity");
+
+    // ★ isRefundable: order.status == PAID 일 때만 true
+    Expression<Boolean> isRefundableExpr =
+        ExpressionUtils.as(
+            new CaseBuilder()
+                .when(
+                    qOrder
+                        .status
+                        .eq(Order.OrderStatus.PAID)
+                        .and(qContent.contentType.eq(ContentType.COACHING)))
+                .then(true)
+                .otherwise(false),
+            "isRefundable");
+
+    // --- PayplePayment 서브쿼리 수정 ---
+
+    // payType 수정
+    Expression<String> payTypeExpr =
+        ExpressionUtils.as(
+            Expressions.cases()
+                .when(
+                    JPAExpressions.select(qPayplePayment.pcdPayMethod)
+                        .from(qPayplePayment)
+                        .where(qPayplePayment.pcdPayOid.eq(qOrder.merchantUid))
+                        .limit(1)
+                        .in("kakaoPay", "naverPay"))
+                .then(Expressions.nullExpression(String.class))
+                .otherwise(
+                    JPAExpressions.select(qPayplePayment.pcdPayType)
+                        .from(qPayplePayment)
+                        .where(qPayplePayment.pcdPayOid.eq(qOrder.merchantUid))
+                        .limit(1)),
+            "payType");
+
+    // payCardName 수정
+    Expression<String> payCardNameExpr =
+        ExpressionUtils.as(
+            Expressions.cases()
+                .when(
+                    JPAExpressions.select(qPayplePayment.pcdPayMethod)
+                        .from(qPayplePayment)
+                        .where(qPayplePayment.pcdPayOid.eq(qOrder.merchantUid))
+                        .limit(1)
+                        .eq("kakaoPay"))
+                .then("카카오페이")
+                .when(
+                    JPAExpressions.select(qPayplePayment.pcdPayMethod)
+                        .from(qPayplePayment)
+                        .where(qPayplePayment.pcdPayOid.eq(qOrder.merchantUid))
+                        .limit(1)
+                        .eq("naverPay"))
+                .then("네이버페이")
+                .otherwise(
+                    JPAExpressions.select(qPayplePayment.pcdPayCardName)
+                        .from(qPayplePayment)
+                        .where(qPayplePayment.pcdPayOid.eq(qOrder.merchantUid))
+                        .limit(1)),
+            "payCardName");
+
+    Expression<String> payCardNumExpr =
+        ExpressionUtils.as(
+            JPAExpressions.select(qPayplePayment.pcdPayCardNum)
+                .from(qPayplePayment)
+                .where(qPayplePayment.pcdPayOid.eq(qOrder.merchantUid))
+                .limit(1),
+            "payCardNum");
+
+    FlatPurchaseContentDetailDTO result =
+        queryFactory
+            .select(
+                Projections.fields(
+                    FlatPurchaseContentDetailDTO.class,
+                    qOrder.status.stringValue().as("orderStatus"),
+                    qOrder.merchantUid.as("merchantUid"),
+                    qPurchase.purchasedAt.as("purchasedAt"),
+                    qPurchase.cancelRequestedAt.as("cancelRequestedAt"),
+                    qPurchase.cancelledAt.as("cancelledAt"),
+                    qContent.id.as("contentId"),
+                    qContent.user.userProfile.nickname.as("sellerName"),
+                    qContent.title.as("contentTitle"),
+                    qPurchase.selectedOptionName.as("selectedOptionName"),
+                    one,
+                    qPurchase.selectedOptionType.stringValue().as("selectedOptionType"),
+                    documentOptionActionUrl,
+                    Expressions.cases()
+                        .<Boolean>when(qPurchase.finalPrice.eq(BigDecimal.ZERO))
+                        .then(true)
+                        .otherwise(false)
+                        .as("isFreePurchase"),
+                    qPurchase.originalPrice.as("originalPrice"),
+                    qPurchase.discountPrice.as("discountPrice"),
+                    qPurchase.finalPrice.as("finalPrice"),
+                    payTypeExpr,
+                    payCardNameExpr,
+                    payCardNumExpr,
+                    qContent.thumbnailUrl.as("thumbnailUrl"),
+                    isRefundableExpr,
+                    qPurchase.cancelReason.stringValue().as("cancelReason")))
+            .from(qPurchase)
+            .leftJoin(qPurchase.content, qContent)
+            .leftJoin(qPurchase.order, qOrder)
+            .leftJoin(qPurchase.guestUser, qGuestUser)
+            .where(qPurchase.guestUser.id.eq(guestUserId).and(qOrder.merchantUid.eq(merchantUid)))
+            .fetchOne();
+
+    return Optional.ofNullable(result);
+  }
 }

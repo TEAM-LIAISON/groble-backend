@@ -69,6 +69,13 @@ public class ContentReviewReader {
     return contentReviewCustomRepository.getContentReviewDetailDTOByContentId(userId, contentId);
   }
 
+  // 비회원 콘텐츠 리뷰 상세 조회
+  public Optional<FlatContentReviewDetailDTO> getContentReviewDetailForGuest(
+      Long guestUserId, Long contentId) {
+    return contentReviewCustomRepository.getContentReviewDetailDTOByContentIdForGuest(
+        guestUserId, contentId);
+  }
+
   public List<FlatContentReviewReplyDTO> findReviewsWithRepliesByContentId(Long contentId) {
     return contentReviewCustomRepository.findReviewsWithRepliesByContentId(contentId);
   }

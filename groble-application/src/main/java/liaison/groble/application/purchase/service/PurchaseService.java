@@ -114,6 +114,30 @@ public class PurchaseService {
     return getContactInfo(user);
   }
 
+  // 비회원 판매자 연락처 정보 조회
+  @Transactional(readOnly = true)
+  public ContactInfoDTO getContactInfoForGuest(Long guestUserId, String merchantUid) {
+    Order order = orderReader.getOrderByMerchantUidAndGuestUserId(merchantUid, guestUserId);
+
+    List<OrderItem> items = order.getOrderItems();
+    if (items.isEmpty()) {
+      throw new IllegalStateException("주문에 아이템이 없습니다.");
+    }
+
+    User user = items.get(0).getContent().getUser();
+    return getContactInfo(user);
+  }
+
+  // 비회원 구매 콘텐츠 상세 조회
+  @Transactional(readOnly = true)
+  public PurchasedContentDetailDTO getMyPurchasedContentForGuest(
+      Long guestUserId, String merchantUid) {
+    FlatPurchaseContentDetailDTO flatPurchaseContentDetailDTO =
+        purchaseReader.getPurchaseContentDetailForGuest(guestUserId, merchantUid);
+
+    return toPurchasedContentDetailDTO(flatPurchaseContentDetailDTO);
+  }
+
   private ContactInfoDTO getContactInfo(User user) {
     try {
       List<SellerContact> contacts = sellerContactReader.getContactsByUser(user);

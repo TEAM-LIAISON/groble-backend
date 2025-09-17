@@ -45,4 +45,7 @@ public interface PurchaseCustomRepository {
   FlatDashboardOverviewDTO getDashboardOverviewStats(Long sellerId);
 
   FlatDashboardOverviewDTO getAdminDashboardOverviewStats();
+
+  Optional<FlatPurchaseContentDetailDTO> getPurchaseContentDetailForGuest(
+      Long guestUserId, String merchantUid);
 }
