@@ -136,18 +136,24 @@ public class GuestOrderProcessor extends BaseOrderProcessor {
   @Override
   protected void handlePostFreeOrderProcessing(
       Order order, UserContext userContext, CreateOrderRequestDTO createOrderRequestDTO) {
-    // Guest 전용: 구매자 정보 저장 동의 처리
+    // 무료 결제 성공 시점이므로 동의 승격 처리
     if (userContext.isGuest()) {
-      // 동의 의사와 스냅샷 기록
-      String emailSnapshot = safeTrim(order.getGuestUser().getEmail());
-      String usernameSnapshot = safeTrim(order.getGuestUser().getUsername());
-
-      recordBuyerConsentIntentAndSnapshot(
-          order, createOrderRequestDTO.isBuyerInfoStorageAgreed(), emailSnapshot, usernameSnapshot);
-
-      // 무료 결제 성공 시점이므로 동의 승격 처리
       applyBuyerConsentAfterPaymentSuccess(order);
     }
+  }
+
+  @Override
+  protected void handleBuyerConsentIntent(
+      Order order, UserContext userContext, CreateOrderRequestDTO createOrderRequestDTO) {
+    if (!userContext.isGuest()) {
+      return;
+    }
+
+    String emailSnapshot = safeTrim(order.getGuestUser().getEmail());
+    String usernameSnapshot = safeTrim(order.getGuestUser().getUsername());
+
+    recordBuyerConsentIntentAndSnapshot(
+        order, createOrderRequestDTO.isBuyerInfoStorageAgreed(), emailSnapshot, usernameSnapshot);
   }
 
   /** 주문 생성 시점: '동의 의사'와 '스냅샷(이메일/이름)'만 orders 테이블에 기록 */

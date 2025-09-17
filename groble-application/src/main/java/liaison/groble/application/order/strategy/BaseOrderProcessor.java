@@ -135,6 +135,9 @@ public abstract class BaseOrderProcessor implements OrderProcessorStrategy {
     // 6. 주문 저장 및 merchantUid 생성
     order = saveOrderWithMerchantUid(order);
 
+    // 6.5. 주문별 구매자 정보 저장 의사 기록 (게스트 전용 등)
+    handleBuyerConsentIntent(order, userContext, createOrderRequestDTO);
+
     // 7. 무료 주문 처리
     if (willBeFreePurchase) {
       boolean success = processFreeOrderPurchase(order);
@@ -198,6 +201,10 @@ public abstract class BaseOrderProcessor implements OrderProcessorStrategy {
   /** 무료 주문 후 처리 (Guest 전용 로직 등) */
   protected abstract void handlePostFreeOrderProcessing(
       Order order, UserContext userContext, CreateOrderRequestDTO createOrderRequestDTO);
+
+  /** 주문별 구매자 정보 저장 동의 의사 기록 (게스트 등 필요 시 오버라이드) */
+  protected void handleBuyerConsentIntent(
+      Order order, UserContext userContext, CreateOrderRequestDTO createOrderRequestDTO) {}
 
   // ===== 공통 메서드들 =====
 
