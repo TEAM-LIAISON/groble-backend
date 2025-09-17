@@ -112,4 +112,10 @@ public class GuestUser extends BaseTimeEntity {
       this.email = email;
     }
   }
+
+  public void updatePhoneNumber(String phoneNumber) {
+    if (phoneNumber != null && !phoneNumber.trim().isEmpty()) {
+      this.phoneNumber = phoneNumber;
+    }
+  }
 }
