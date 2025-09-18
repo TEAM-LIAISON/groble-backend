@@ -56,12 +56,6 @@ public class GuestUser extends BaseTimeEntity {
   @Column(name = "verification_expires_at")
   private LocalDateTime verificationExpiresAt;
 
-  @Column(name = "buyer_info_storage_agreed")
-  private boolean buyerInfoStorageAgreed;
-
-  @Column(name = "buyer_info_storage_agreed_at")
-  private LocalDateTime buyerInfoStorageAgreedAt;
-
   @Builder
   public GuestUser(String username, String phoneNumber, String email) {
     this.username = username;
@@ -94,14 +88,6 @@ public class GuestUser extends BaseTimeEntity {
   public boolean isVerificationExpired() {
     return this.verificationExpiresAt != null
         && this.verificationExpiresAt.isBefore(LocalDateTime.now());
-  }
-
-  // 동의 승격 전용 도메인 메서드 (결제 성공 시 사용)
-  public void agreeBuyerInfo(String username, String email) {
-    this.buyerInfoStorageAgreed = true;
-    this.buyerInfoStorageAgreedAt = LocalDateTime.now();
-    if (this.username == null || this.username.isBlank()) this.username = username;
-    if (this.email == null || this.email.isBlank()) this.email = email;
   }
 
   public void updateUserInfo(String username, String email) {

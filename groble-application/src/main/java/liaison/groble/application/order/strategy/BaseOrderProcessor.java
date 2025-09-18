@@ -15,8 +15,6 @@ import liaison.groble.application.order.dto.ValidatedOrderOptionDTO;
 import liaison.groble.application.payment.dto.completion.FreePaymentCompletionResult;
 import liaison.groble.application.payment.event.PaymentCompletedEvent;
 import liaison.groble.application.purchase.service.PurchaseReader;
-import liaison.groble.application.terms.dto.TermsAgreementDTO;
-import liaison.groble.application.terms.service.OrderTermsService;
 import liaison.groble.common.context.UserContext;
 import liaison.groble.common.event.EventPublisher;
 import liaison.groble.domain.content.entity.Content;
@@ -55,9 +53,6 @@ public abstract class BaseOrderProcessor implements OrderProcessorStrategy {
   protected PaymentRepository paymentRepository;
   protected GuestUserRepository guestUserRepository;
 
-  // Services
-  protected OrderTermsService orderTermsService;
-
   // Event Publisher
   protected EventPublisher eventPublisher;
 
@@ -70,7 +65,6 @@ public abstract class BaseOrderProcessor implements OrderProcessorStrategy {
       PurchaseRepository purchaseRepository,
       PaymentRepository paymentRepository,
       GuestUserRepository guestUserRepository,
-      OrderTermsService orderTermsService,
       EventPublisher eventPublisher) {
     log.info("=== BaseOrderProcessor 생성자 호출 시작 ===");
     log.info("contentReader: {}", contentReader);
@@ -85,7 +79,6 @@ public abstract class BaseOrderProcessor implements OrderProcessorStrategy {
     this.purchaseRepository = purchaseRepository;
     this.paymentRepository = paymentRepository;
     this.guestUserRepository = guestUserRepository;
-    this.orderTermsService = orderTermsService;
     this.eventPublisher = eventPublisher;
 
     log.info("=== BaseOrderProcessor 생성자 완료 - this.contentReader: {} ===", this.contentReader);
@@ -134,9 +127,6 @@ public abstract class BaseOrderProcessor implements OrderProcessorStrategy {
 
     // 6. 주문 저장 및 merchantUid 생성
     order = saveOrderWithMerchantUid(order);
-
-    // 6.5. 주문별 구매자 정보 저장 의사 기록 (게스트 전용 등)
-    handleBuyerConsentIntent(order, userContext, createOrderRequestDTO);
 
     // 7. 무료 주문 처리
     if (willBeFreePurchase) {
@@ -194,17 +184,9 @@ public abstract class BaseOrderProcessor implements OrderProcessorStrategy {
   protected abstract UserCoupon findAndValidateBestCoupon(
       Order order, UserContext userContext, List<String> couponCodes);
 
-  /** 약관 동의 처리 */
-  protected abstract void processTermsAgreement(
-      UserContext userContext, HttpServletRequest httpRequest, boolean buyerInfoStorageAgreed);
-
   /** 무료 주문 후 처리 (Guest 전용 로직 등) */
   protected abstract void handlePostFreeOrderProcessing(
       Order order, UserContext userContext, CreateOrderRequestDTO createOrderRequestDTO);
-
-  /** 주문별 구매자 정보 저장 동의 의사 기록 (게스트 등 필요 시 오버라이드) */
-  protected void handleBuyerConsentIntent(
-      Order order, UserContext userContext, CreateOrderRequestDTO createOrderRequestDTO) {}
 
   // ===== 공통 메서드들 =====
 
@@ -483,24 +465,6 @@ public abstract class BaseOrderProcessor implements OrderProcessorStrategy {
       log.error("무료 결제 이벤트 발행 중 예외 발생 - orderId: {}", freePaymentCompletionResult.getOrderId(), e);
       throw e;
     }
-  }
-
-  /** 공통 약관 동의 DTO 생성 */
-  protected TermsAgreementDTO createTermsAgreementDTO(boolean includeBuyerInfoStorage) {
-    List<String> termTypeStrs =
-        new java.util.ArrayList<>(
-            List.of(
-                "PERSONAL_INFO_COLLECTION_AND_THIRD_PARTY_PROVISION",
-                "TERMS_OF_SERVICE",
-                "REFUND_POLICY",
-                "MARKETPLACE_INTERMEDIARY_NOTICE"));
-
-    // 구매자 정보 저장 약관 동의 시에만 추가
-    if (includeBuyerInfoStorage) {
-      termTypeStrs.add("BUYER_INFORMATION_STORAGE");
-    }
-
-    return TermsAgreementDTO.builder().termsTypeStrings(termTypeStrs).build();
   }
 
   /** 사용자 타입 문자열 반환 */

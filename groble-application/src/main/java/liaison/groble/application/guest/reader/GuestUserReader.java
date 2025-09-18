@@ -37,16 +37,6 @@ public class GuestUserReader {
     return guestUserRepository.existsByPhoneNumberAndHasCompleteUserInfo(phoneNumber);
   }
 
-  public boolean existsByPhoneNumberAndBuyerInfoStorageAgreedTrue(String phoneNumber) {
-    return guestUserRepository.existsByPhoneNumberAndBuyerInfoStorageAgreedTrue(phoneNumber);
-  }
-
-  public GuestUser getByPhoneNumberAndBuyerInfoStorageAgreedTrue(String phoneNumber) {
-    return guestUserRepository
-        .getByPhoneNumberAndBuyerInfoStorageAgreedTrue(phoneNumber)
-        .orElseThrow(() -> new EntityNotFoundException("해당 전화번호의 비회원 사용자를 찾을 수 없습니다."));
-  }
-
   public GuestUser getByPhoneNumberIfExists(String phoneNumber) {
     return guestUserRepository.findByPhoneNumber(phoneNumber).orElse(null);
   }

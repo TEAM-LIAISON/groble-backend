@@ -73,19 +73,15 @@ public class GuestAuthService {
     // 2) 기존 게스트 사용자 조회 또는 생성
     GuestUser guestUser = resolveGuestUserByPhone(inputPhone, sanitizedPhone);
 
-    // 3) 개인정보 반환/스코프 판단 (동의 + 정보 완비 기준)
-    boolean buyerAgreed = guestUser.isBuyerInfoStorageAgreed();
+    // 3) 개인정보 반환/스코프 판단 (정보 완비 기준)
     boolean hasCompleteInfo =
         guestUser.getEmail() != null
             && !guestUser.getEmail().isBlank()
             && guestUser.getUsername() != null
             && !guestUser.getUsername().isBlank();
 
-    boolean canReturnUserInfo = buyerAgreed && hasCompleteInfo;
-    boolean needsBuyerInfoConsent = !buyerAgreed && hasCompleteInfo;
-
     GuestTokenScope scope =
-        canReturnUserInfo ? GuestTokenScope.FULL_ACCESS : GuestTokenScope.PHONE_VERIFIED;
+        hasCompleteInfo ? GuestTokenScope.FULL_ACCESS : GuestTokenScope.PHONE_VERIFIED;
 
     // 4) 전화번호 인증 처리 및 저장 (신규 생성된 경우에도 동일 처리)
     guestUser.updatePhoneNumber(sanitizedPhone);
@@ -98,16 +94,14 @@ public class GuestAuthService {
     // 6) 토큰 생성(이 토큰은 방금 선택/생성된 guestUser.id에 귀속됨)
     String guestToken = securityPort.createGuestTokenWithScope(guestUser.getId(), scope);
 
-    // 7) 응답 (개인정보는 동의+완비일 때만 반환)
+    // 7) 응답 (개인정보는 정보가 완비된 경우에만 반환)
     return GuestTokenDTO.builder()
         .phoneNumber(sanitizedPhone)
-        .email(canReturnUserInfo ? guestUser.getEmail() : null)
-        .username(canReturnUserInfo ? guestUser.getUsername() : null)
+        .email(hasCompleteInfo ? guestUser.getEmail() : null)
+        .username(hasCompleteInfo ? guestUser.getUsername() : null)
         .guestToken(guestToken)
         .authenticated(true)
-        .hasCompleteUserInfo(canReturnUserInfo)
-        .buyerInfoStorageAgreed(buyerAgreed)
-        .needsBuyerInfoConsent(needsBuyerInfoConsent)
+        .hasCompleteUserInfo(hasCompleteInfo)
         .build();
   }
 
