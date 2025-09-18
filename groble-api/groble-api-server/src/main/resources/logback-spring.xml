@@ -91,15 +91,23 @@
         <neverBlock>true</neverBlock>
     </appender>
 
-    <logger name="org.springframework" level="WARN"/>
-    <logger name="org.hibernate" level="WARN"/>
-
     <root level="INFO">
         <appender-ref ref="JSON_CONSOLE"/>
         <appender-ref ref="JSON_FILE_ASYNC"/>
     </root>
 
+    <springProfile name="prod">
+        <logger name="liaison.groble" level="INFO"/>
+        <logger name="org.springframework" level="WARN"/>
+        <logger name="org.springframework.web" level="WARN"/>
+        <logger name="org.hibernate" level="WARN"/>
+    </springProfile>
+
     <springProfile name="local,dev">
+        <logger name="liaison.groble" level="DEBUG"/>
+        <logger name="org.springframework" level="INFO"/>
+        <logger name="org.springframework.security" level="DEBUG"/>
+        <logger name="org.hibernate" level="INFO"/>
         <root level="INFO">
             <appender-ref ref="DEV_CONSOLE"/>
             <appender-ref ref="JSON_FILE_ASYNC"/>
