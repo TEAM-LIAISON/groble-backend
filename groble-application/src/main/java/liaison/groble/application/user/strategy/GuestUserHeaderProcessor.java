@@ -76,7 +76,7 @@ public class GuestUserHeaderProcessor extends BaseUserHeaderProcessor {
       boolean isGuestUser = hasFullAccess || isPhoneVerified;
 
       return UserHeaderDTO.builder()
-          .isLogin(hasFullAccess) // FULL_ACCESS 스코프만 로그인 상태로 처리
+          .isLogin(false) // 게스트는 어떤 스코프에서도 로그인으로 간주하지 않음
           .nickname(guestUser.getUsername()) // 게스트 사용자명 사용
           .email(guestUser.getEmail()) // 게스트 이메일 정보
           .profileImageUrl(null) // 게스트는 프로필 이미지 없음
@@ -84,7 +84,7 @@ public class GuestUserHeaderProcessor extends BaseUserHeaderProcessor {
           .unreadNotificationCount(0) // 게스트는 알림 없음
           .alreadyRegisteredAsSeller(false) // 게스트는 판매자 등록 불가
           .lastUserType(null) // 게스트는 사용자 타입 없음
-          .isGuest(isGuestUser) // PHONE_VERIFIED 이상의 게스트 토큰이면 true
+          .isGuest(isGuestUser) // PHONE_VERIFIED 및 FULL_ACCESS 스코프 모두 게스트로 유지
           .build();
     } catch (Exception e) {
       // 게스트 사용자 조회 실패 시 익명 게스트로 처리
