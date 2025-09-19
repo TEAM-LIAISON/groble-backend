@@ -1,7 +1,5 @@
 package liaison.groble.api.server.admin;
 
-import static org.springframework.http.HttpStatus.OK;
-
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,6 +9,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import liaison.groble.api.model.admin.response.AdminUserSummaryInfoResponse;
 import liaison.groble.api.model.admin.response.swagger.AdminUserSummaryInfo;
+import liaison.groble.api.server.common.ApiPaths;
+import liaison.groble.api.server.common.BaseController;
+import liaison.groble.api.server.common.ResponseMessages;
+import liaison.groble.api.server.common.swagger.SwaggerTags;
 import liaison.groble.application.admin.dto.AdminUserSummaryInfoDTO;
 import liaison.groble.application.admin.service.AdminUserService;
 import liaison.groble.common.annotation.RequireRole;
@@ -22,32 +24,27 @@ import liaison.groble.mapping.admin.AdminUserMapper;
 
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 @RestController
-@RequiredArgsConstructor
-@RequestMapping("/api/v1/admin")
-@Tag(name = "[✅ 관리자] 관리자 전체 사용자 목록 조회 API", description = "DB에 저장된 모든 사용자 정보를 조회합니다.")
-public class AdminUserController {
-  // API 경로 상수화
-  private static final String ADMIN_USER_SUMMARY_INFO_PATH = "/users";
-  // 응답 메시지 상수화
-  private static final String ADMIN_USER_SUMMARY_INFO_SUCCESS_MESSAGE = "관리자 전체 사용자 목록 조회에 성공했습니다.";
+@RequestMapping(ApiPaths.Admin.BASE)
+@Tag(name = SwaggerTags.Admin.USER, description = SwaggerTags.Admin.USER_DESC)
+public class AdminUserController extends BaseController {
 
-  // Service
   private final AdminUserService adminUserService;
-
-  // Mapper
   private final AdminUserMapper adminUserMapper;
 
-  // Helper
-  private final ResponseHelper responseHelper;
+  public AdminUserController(
+      ResponseHelper responseHelper,
+      AdminUserService adminUserService,
+      AdminUserMapper adminUserMapper) {
+    super(responseHelper);
+    this.adminUserService = adminUserService;
+    this.adminUserMapper = adminUserMapper;
+  }
 
   @AdminUserSummaryInfo
   @RequireRole("ROLE_ADMIN")
-  @GetMapping(ADMIN_USER_SUMMARY_INFO_PATH)
+  @GetMapping(ApiPaths.Admin.ADMIN_USER_SUMMARY_INFO)
   public ResponseEntity<GrobleResponse<PageResponse<AdminUserSummaryInfoResponse>>> getAllUsers(
       @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
           @RequestParam(value = "page", defaultValue = "0")
@@ -63,6 +60,6 @@ public class AdminUserController {
     PageResponse<AdminUserSummaryInfoResponse> responsePage =
         adminUserMapper.toAdminUserSummaryInfoResponsePage(response);
 
-    return responseHelper.success(responsePage, ADMIN_USER_SUMMARY_INFO_SUCCESS_MESSAGE, OK);
+    return success(responsePage, ResponseMessages.Admin.USER_SUMMARY_INFO_RETRIEVED);
   }
 }

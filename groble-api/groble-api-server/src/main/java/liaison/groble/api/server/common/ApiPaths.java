@@ -9,8 +9,12 @@ public final class ApiPaths {
   public static final class Admin {
     public static final String BASE = API_V1 + "/admin";
 
+    // 어드민 홈 탭
     public static final String DASHBOARD_BASE = BASE + "/dashboard";
     public static final String DASHBOARD_OVERVIEW = "/overview";
+
+    // 어드민 사용자 탭
+    public static final String ADMIN_USER_SUMMARY_INFO = "/users";
 
     public static final String SETTLEMENT_BASE = BASE + "/settlements";
 
