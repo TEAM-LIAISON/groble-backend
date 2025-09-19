@@ -101,9 +101,9 @@ public class AdminUserSummaryInfoResponse {
   /** 5. 사업자 유형 */
   @Schema(
       description = "사업자 유형 (예: 개인·간이, 개인·일반, 법인)",
-      example = "individual-simple",
+      example = "INDIVIDUAL_SIMPLIFIED",
       type = "string",
-      allowableValues = {"individual-simple", "individual-general", "corporation"},
+      allowableValues = {"INDIVIDUAL_SIMPLIFIED", "INDIVIDUAL_NORMAL", "CORPORATE", "NONE"},
       requiredMode = Schema.RequiredMode.REQUIRED)
   private String businessType;
 
