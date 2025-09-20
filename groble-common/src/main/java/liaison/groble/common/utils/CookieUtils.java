@@ -97,6 +97,7 @@ public class CookieUtils {
       boolean secure,
       String sameSite,
       String domain) {
+    String cookieValue = value == null ? "" : value;
     // SameSite=None인 경우 Secure 강제
     if ("None".equalsIgnoreCase(sameSite)) {
       secure = true;
@@ -110,7 +111,7 @@ public class CookieUtils {
     header
         .append(name)
         .append("=")
-        .append(value)
+        .append(cookieValue)
         .append("; Path=")
         .append(path)
         .append("; Max-Age=")
