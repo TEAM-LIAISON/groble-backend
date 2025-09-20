@@ -1,48 +1,7 @@
 spring:
-  profiles:
-    group:
-      blue: blue, common, secret-dev
-      green: green, common, secret-dev
-
-server:
-  env: blue
-
----
-
-spring:
   config:
     activate:
-      on-profile: blue
-
-server:
-  port: 8080
-  servlet:
-    context-path: /
-  error:
-    include-message: always
-    include-binding-errors: always
-
----
-
-spring:
-  config:
-    activate:
-      on-profile: green
-
-server:
-  port: 8080
-  servlet:
-    context-path: /
-  error:
-    include-message: always
-    include-binding-errors: always
-
----
-
-spring:
-  config:
-    activate:
-      on-profile: common
+      on-profile: dev
 
   application:
     name: groble
@@ -116,8 +75,10 @@ app:
   frontend-url: https://dev.groble.im
   backend-url: https://api.dev.groble.im
   cookie:
-    domain: dev.groble.im
-    admin-domain: dev.groble.im
+    domain: 
+    domain.dev: dev.groble.im
+    admin-domain: 
+    admin-domain.dev: admin.dev.groble.im
   reset:
     base-url: https://dev.groble.im
     path: /reset-password

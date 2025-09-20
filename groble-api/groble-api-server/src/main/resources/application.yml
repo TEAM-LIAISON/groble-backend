@@ -91,7 +91,9 @@ app:
   backend-url: http://localhost:8080
   cookie:
     domain:
+    domain.dev:
     admin-domain:
+    admin-domain.dev:
   reset:
     base-url: http://localhost:3000
     path: /reset-password
