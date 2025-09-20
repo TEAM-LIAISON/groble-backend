@@ -79,6 +79,8 @@ app:
     domain.dev: dev.groble.im
     admin-domain: 
     admin-domain.dev: admin.dev.groble.im
+  jwt:
+    environment: dev
   reset:
     base-url: https://dev.groble.im
     path: /reset-password

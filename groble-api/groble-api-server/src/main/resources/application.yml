@@ -94,6 +94,8 @@ app:
     domain.dev:
     admin-domain:
     admin-domain.dev:
+  jwt:
+    environment: local
   reset:
     base-url: http://localhost:3000
     path: /reset-password
