@@ -9,12 +9,19 @@ public final class ApiPaths {
   public static final class Admin {
     public static final String BASE = API_V1 + "/admin";
 
+    public static final String AUTH_BASE = BASE + "/auth";
+    public static final String AUTH_SIGN_IN = "/sign-in";
+    public static final String AUTH_LOGOUT = "/logout";
+
     // 어드민 홈 탭
     public static final String DASHBOARD_BASE = BASE + "/dashboard";
     public static final String DASHBOARD_OVERVIEW = "/overview";
 
     // 어드민 사용자 탭
     public static final String ADMIN_USER_SUMMARY_INFO = "/users";
+
+    public static final String CONTENTS = "/contents";
+    public static final String CONTENT_EXAMINE = "/content/{contentId}/examine";
 
     public static final String SETTLEMENT_BASE = BASE + "/settlements";
 
@@ -23,6 +30,16 @@ public final class ApiPaths {
     public static final String ALL_USERS_SETTLEMENTS = "/all-users";
     public static final String SETTLEMENT_DETAIL = "/{settlementId}";
     public static final String SALES_LIST = "/sales/{settlementId}";
+
+    public static final String ORDERS = "/orders";
+    public static final String ORDER_CANCEL_REQUEST = "/order/{merchantUid}/cancel-request";
+    public static final String ORDER_CANCELLATION_REASON =
+        "/order/{merchantUid}/cancellation-reason";
+
+    public static final String MAKER_BASE = BASE + "/maker";
+    public static final String MAKER_DETAIL = "/{nickname}";
+    public static final String MAKER_VERIFY = "/verify";
+    public static final String MAKER_MEMO = "/memo/{nickname}";
 
     private Admin() {}
   }
