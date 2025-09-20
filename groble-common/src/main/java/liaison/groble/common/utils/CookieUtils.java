@@ -16,8 +16,6 @@ public class CookieUtils {
   // 기본 쿠키 설정값
   private static final String DEFAULT_PATH = "/";
   private static final boolean DEFAULT_HTTP_ONLY = true;
-  private static final boolean DEFAULT_SECURE_DEV = false; // 개발 환경
-  private static final boolean DEFAULT_SECURE_PROD = true; // 운영 환경
   private static final String DEFAULT_SAME_SITE = "Lax"; // 기본값을 Lax로 변경 (보안과 편의성 균형)
 
   /**

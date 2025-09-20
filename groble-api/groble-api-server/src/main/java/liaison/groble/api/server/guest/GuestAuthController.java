@@ -67,11 +67,7 @@ public class GuestAuthController extends BaseController {
       summary = GuestAuthSwaggerDocs.CODE_REQUEST_SUMMARY,
       description = GuestAuthSwaggerDocs.CODE_REQUEST_DESCRIPTION)
   @GuestAuthPostResponses.AuthCodeRequestResponses
-  @Logging(
-      item = "Guest",
-      action = "sendGuestPhoneNumberAuthCode",
-      includeParam = true,
-      includeResult = true)
+  @Logging(item = "Guest", action = "sendGuestPhoneNumberAuthCode", includeResult = true)
   @PostMapping(ApiPaths.Guest.PHONE_CODE_REQUEST)
   public ResponseEntity<GrobleResponse<GuestAuthCodeResponse>> sendGuestPhoneNumberAuthCode(
       @Valid @RequestBody GuestAuthCodeRequest guestAuthCodeRequest) {
@@ -90,11 +86,7 @@ public class GuestAuthController extends BaseController {
       summary = GuestAuthSwaggerDocs.CODE_VERIFY_SUMMARY,
       description = GuestAuthSwaggerDocs.CODE_VERIFY_DESCRIPTION)
   @GuestAuthPostResponses.VerifyAuthCodeResponses
-  @Logging(
-      item = "Guest",
-      action = "verifyGuestPhoneNumberAuthCode",
-      includeParam = true,
-      includeResult = true)
+  @Logging(item = "Guest", action = "verifyGuestPhoneNumberAuthCode", includeResult = true)
   @PostMapping(ApiPaths.Guest.PHONE_CODE_VERIFY)
   public ResponseEntity<GrobleResponse<VerifyAuthCodeResponse>> verifyGuestPhoneNumberAuthCode(
       @Valid @RequestBody VerifyGuestAuthCodeRequest verifyGuestAuthCodeRequest,
@@ -119,11 +111,7 @@ public class GuestAuthController extends BaseController {
       summary = GuestAuthSwaggerDocs.UPDATE_GUEST_USER_INFO_SUMMARY,
       description = GuestAuthSwaggerDocs.UPDATE_GUEST_USER_INFO_DESCRIPTION)
   @GuestAuthPostResponses.UpdateGuestUserInfoResponses
-  @Logging(
-      item = "Guest",
-      action = "updateGuestUserInfo",
-      includeParam = true,
-      includeResult = true)
+  @Logging(item = "Guest", action = "updateGuestUserInfo", includeResult = true)
   @PostMapping(ApiPaths.Guest.UPDATE_GUEST_USER_INFO)
   public ResponseEntity<GrobleResponse<UpdateGuestUserInfoResponse>> updateGuestUserInfo(
       @Valid @RequestBody UpdateGuestUserInfoRequest updateGuestUserInfoRequest,
