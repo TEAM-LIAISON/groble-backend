@@ -108,8 +108,18 @@ public class AdminUserSummaryInfoResponse {
   private String businessType;
 
   @Schema(
-      description = "사용자 탈퇴 사유 (탈퇴 사용자인 경우)",
-      example = "서비스를 잘 이용하지 않아요",
+      description =
+          "사용자 탈퇴 사유 (탈퇴 사용자인 경우, BAD_EXPERIENCE/COST_BURDEN/INCONVENIENT/LACKS_CONTENT/NOT_USING/OTHER)",
+      example = "BAD_EXPERIENCE",
+      type = "string",
+      allowableValues = {
+        "BAD_EXPERIENCE",
+        "COST_BURDEN",
+        "INCONVENIENT",
+        "LACKS_CONTENT",
+        "NOT_USING",
+        "OTHER"
+      },
       requiredMode = Schema.RequiredMode.NOT_REQUIRED)
   private String withdrawalReason;
 }
