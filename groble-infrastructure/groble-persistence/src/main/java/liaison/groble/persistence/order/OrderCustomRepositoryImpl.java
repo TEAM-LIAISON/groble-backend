@@ -103,4 +103,17 @@ public class OrderCustomRepositoryImpl implements OrderCustomRepository {
 
     return Optional.ofNullable(order);
   }
+
+  @Override
+  public Optional<Order> findByMerchantUidAndGuestUserId(String merchantUid, Long guestUserId) {
+    QOrder qOrder = QOrder.order;
+
+    Order order =
+        jpaQueryFactory
+            .selectFrom(qOrder)
+            .where(qOrder.merchantUid.eq(merchantUid).and(qOrder.guestUser.id.eq(guestUserId)))
+            .fetchOne();
+
+    return Optional.ofNullable(order);
+  }
 }

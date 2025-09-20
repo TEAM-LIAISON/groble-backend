@@ -1,6 +1,8 @@
 package liaison.groble.common.utils;
 
 import java.time.Duration;
+import java.util.Arrays;
+import java.util.Locale;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -27,6 +29,12 @@ public class TokenCookieService {
 
   @Value("${app.cookie.admin-domain:}") // 기본값을 빈 문자열로 설정
   private String adminCookieDomain;
+
+  @Value("${app.cookie.domain.dev:}")
+  private String devCookieDomain;
+
+  @Value("${app.cookie.admin-domain.dev:}")
+  private String adminDevCookieDomain;
 
   private static final int ACCESS_TOKEN_MAX_AGE = (int) Duration.ofHours(1).toSeconds();
   private static final int REFRESH_TOKEN_MAX_AGE = (int) Duration.ofDays(7).toSeconds();
@@ -299,19 +307,13 @@ public class TokenCookieService {
     String domain;
 
     if (isLocalProfile) {
-      // [시나리오] 백엔드 로컬 개발 (localhost:8080)
-      // 프론트엔드도 localhost:3000 이므로, host-only 쿠키로 설정.
-      // http 환경이므로 secure=false, SameSite=Lax
       sameSite = "Lax";
       secure = false;
-      domain = null; // host-only cookie for localhost
+      domain = null;
     } else {
-      // [시나리오] 개발/운영 서버 (api.dev.groble.im, api.groble.im)
-      // 프론트엔드(dev.groble.im, groble.im) 및 로컬(localhost:3000)에서의 요청을 모두 처리해야 함.
-      // 크로스-도메인/서브도메인 통신을 위해 SameSite=None, secure=true 로 설정.
       sameSite = "None";
       secure = true;
-      domain = (cookieDomain != null && !cookieDomain.isBlank()) ? cookieDomain : null;
+      domain = determineDomain(req, cookieDomain, devCookieDomain);
     }
 
     return new CookieSettings(sameSite, secure, domain, fromLocalhost);
@@ -322,34 +324,93 @@ public class TokenCookieService {
     HttpServletRequest req = resolveRequest(request);
     boolean fromLocalhost = isRequestFromLocalhost(req);
     boolean isLocalProfile = env.matchesProfiles("local");
-    boolean isDevProfile = env.matchesProfiles("blue", "green", "dev");
+    boolean devRequest = isDevRequest(req);
 
     String sameSite;
     boolean secure;
     String domain = null;
 
     if (isLocalProfile) {
-      // 백엔드가 로컬 환경에서 실행될 때
       sameSite = "Lax";
       secure = false;
     } else {
-      // 백엔드가 개발 또는 운영 환경에서 실행될 때
       secure = true;
-      domain =
-          (adminCookieDomain != null && !adminCookieDomain.isBlank()) ? adminCookieDomain : null;
+      domain = determineDomain(req, adminCookieDomain, adminDevCookieDomain);
       if (fromLocalhost) {
-        // 프론트엔드만 로컬일 경우 (localhost -> api.dev.groble.im)
         sameSite = "None";
-      } else if (isDevProfile) {
-        // 개발 환경 (dev.admin.groble.im -> api.dev.groble.im)
+      } else if (devRequest) {
         sameSite = "Lax";
       } else {
-        // 운영 환경 (admin.groble.im -> api.groble.im)
         sameSite = "None";
       }
     }
 
     return new CookieSettings(sameSite, secure, domain, fromLocalhost);
+  }
+
+  private String determineDomain(
+      HttpServletRequest request, String primaryDomain, String devDomain) {
+    if (request == null) {
+      return firstNonBlank(primaryDomain, devDomain);
+    }
+
+    String host = request.getServerName();
+    if (host == null || host.isBlank()) {
+      return firstNonBlank(primaryDomain, devDomain);
+    }
+
+    if (isLocalHost(host)) {
+      return null;
+    }
+
+    String lower = host.toLowerCase(Locale.ROOT);
+    boolean devHost = isDevHost(lower);
+
+    if (devHost) {
+      return firstNonBlank(devDomain, deriveDomain(lower, 3));
+    }
+
+    return firstNonBlank(primaryDomain, deriveDomain(lower, 2));
+  }
+
+  private String deriveDomain(String host, int preferredParts) {
+    String[] parts = host.split("\\.");
+    if (parts.length <= preferredParts) {
+      return host;
+    }
+    int startIdx = parts.length - preferredParts;
+    return String.join(".", Arrays.copyOfRange(parts, startIdx, parts.length));
+  }
+
+  private boolean isDevRequest(HttpServletRequest request) {
+    if (request == null) {
+      return env.matchesProfiles("dev");
+    }
+    String host = request.getServerName();
+    if (host == null) {
+      return env.matchesProfiles("dev");
+    }
+    return isDevHost(host.toLowerCase(Locale.ROOT));
+  }
+
+  private boolean isDevHost(String lowerHost) {
+    return lowerHost.contains(".dev.")
+        || lowerHost.startsWith("dev.")
+        || lowerHost.endsWith(".dev");
+  }
+
+  private boolean isLocalHost(String host) {
+    String lower = host.toLowerCase(Locale.ROOT);
+    return lower.equals("localhost") || lower.equals("127.0.0.1") || lower.equals("::1");
+  }
+
+  private String firstNonBlank(String... values) {
+    for (String value : values) {
+      if (value != null && !value.isBlank()) {
+        return value;
+      }
+    }
+    return null;
   }
 
   // 설정 값 묶음

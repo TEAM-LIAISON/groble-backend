@@ -8,6 +8,8 @@ import lombok.Builder;
 public record ContentPaymentSuccessReportDTO(
     Long userId,
     String nickname,
+    Long guestUserId,
+    String guestUserName,
     Long contentId,
     String contentTitle,
     String contentType,

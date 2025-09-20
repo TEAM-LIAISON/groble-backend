@@ -32,4 +32,9 @@ public class ContentReviewRepositoryImpl implements ContentReviewRepository {
     return jpaContentReviewRepository.existsByGuestUserIdAndContentIdAndReviewStatus(
         guestUserId, contentId, ReviewStatus.ACTIVE);
   }
+
+  @Override
+  public Optional<ContentReview> findByPurchaseId(Long purchaseId) {
+    return jpaContentReviewRepository.findByPurchaseId(purchaseId);
+  }
 }

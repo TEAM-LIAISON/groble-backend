@@ -40,33 +40,42 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
                         "nickname": "동민통합local",
                         "email": "kwondm7@naver.com",
                         "phoneNumber": "010-3661-4067",
+                        "userStatus": "ACTIVE",
                         "verificationStatus": "PENDING",
                         "businessSeller": false,
+                        "businessType": "NONE",
                         "sellerTermsAgreed": true,
                         "marketingAgreed": true,
-                        "sellerInfo": false
+                        "sellerInfo": false,
+                        "withdrawalReason": null
                       },
                       {
                         "createdAt": "2025-06-02 17:13:49",
                         "nickname": "테스트",
                         "email": "kwondm7@naver.com",
                         "phoneNumber": "010-3661-4067",
+                        "userStatus": "PENDING_VERIFICATION",
                         "verificationStatus": "VERIFIED",
                         "businessSeller": true,
+                        "businessType": "CORPORATE",
                         "sellerTermsAgreed": true,
                         "marketingAgreed": true,
-                        "sellerInfo": true
+                        "sellerInfo": true,
+                        "withdrawalReason": null
                       },
                       {
                         "createdAt": "2025-06-02 15:16:18",
                         "nickname": "testuser",
                         "email": "test@example.com1",
                         "phoneNumber": "010-1111-1111",
+                        "userStatus": "WITHDRAWN",
                         "verificationStatus": "VERIFIED",
                         "businessSeller": false,
+                        "businessType": "NONE",
                         "sellerTermsAgreed": false,
                         "marketingAgreed": false,
-                        "sellerInfo": false
+                        "sellerInfo": false,
+                        "withdrawalReason": "서비스를 잘 이용하지 않아요 - 더 나은 옵션을 찾았어요"
                       }
                     ],
                     "pageInfo": {

@@ -3,8 +3,6 @@ package liaison.groble.application.order.strategy;
 import java.math.BigDecimal;
 import java.util.List;
 
-import jakarta.servlet.http.HttpServletRequest;
-
 import org.springframework.stereotype.Component;
 
 import liaison.groble.application.content.ContentReader;
@@ -12,8 +10,6 @@ import liaison.groble.application.guest.reader.GuestUserReader;
 import liaison.groble.application.order.dto.CreateOrderRequestDTO;
 import liaison.groble.application.order.dto.CreateOrderSuccessDTO;
 import liaison.groble.application.purchase.service.PurchaseReader;
-import liaison.groble.application.terms.dto.TermsAgreementDTO;
-import liaison.groble.application.terms.service.OrderTermsService;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.common.context.UserContext;
 import liaison.groble.common.event.EventPublisher;
@@ -48,7 +44,6 @@ public class MemberOrderProcessor extends BaseOrderProcessor {
       PurchaseRepository purchaseRepository,
       PaymentRepository paymentRepository,
       GuestUserRepository guestUserRepository,
-      OrderTermsService orderTermsService,
       EventPublisher eventPublisher) {
     super(
         contentReader,
@@ -59,7 +54,6 @@ public class MemberOrderProcessor extends BaseOrderProcessor {
         purchaseRepository,
         paymentRepository,
         guestUserRepository,
-        orderTermsService,
         eventPublisher);
     this.userReader = userReader; // 이제 정상적으로 초기화됨
   }
@@ -117,28 +111,6 @@ public class MemberOrderProcessor extends BaseOrderProcessor {
 
     final User user = userReader.getUserById(userContext.getId());
     return findBestCoupon(user, couponCodes, order.getOriginalPrice());
-  }
-
-  @Override
-  protected void processTermsAgreement(
-      UserContext userContext, HttpServletRequest httpRequest, boolean buyerInfoStorageAgreed) {
-    try {
-      TermsAgreementDTO termsAgreementDTO = createTermsAgreementDTO(buyerInfoStorageAgreed);
-      termsAgreementDTO.setUserId(userContext.getId());
-      // IP 및 User-Agent 설정
-      termsAgreementDTO.setIpAddress(httpRequest.getRemoteAddr());
-      termsAgreementDTO.setUserAgent(httpRequest.getHeader("User-Agent"));
-
-      orderTermsService.agreeToOrderTerms(termsAgreementDTO);
-      log.info(
-          "회원 주문 약관 동의 처리 완료 - userId: {}, buyerInfoStorage: {}",
-          userContext.getId(),
-          buyerInfoStorageAgreed);
-
-    } catch (Exception e) {
-      log.error("회원 주문 약관 동의 처리 실패 - userId: {}", userContext.getId(), e);
-      // 약관 동의 실패는 주문을 중단시키지 않음
-    }
   }
 
   @Override

@@ -103,15 +103,6 @@ public class Order extends BaseTimeEntity {
 
   @Version private Long version;
 
-  @Column(name = "buyer_info_consent_intent", nullable = false)
-  private boolean buyerInfoConsentIntent;
-
-  @Column(name = "buyer_email_snapshot", length = 100)
-  private String buyerEmailSnapshot;
-
-  @Column(name = "buyer_username_snapshot", length = 50)
-  private String buyerUsernameSnapshot;
-
   // 생성자 수정
   @Builder(access = AccessLevel.PACKAGE)
   private Order(
@@ -513,13 +504,6 @@ public class Order extends BaseTimeEntity {
 
   public void changeStatus(OrderStatus newStatus) {
     this.status = newStatus;
-  }
-
-  // 주문 생성 시 의사/스냅샷 세팅 (예: Application 계층에서)
-  public void setBuyerConsentIntentAndSnapshot(boolean intent, String email, String username) {
-    this.buyerInfoConsentIntent = intent;
-    this.buyerEmailSnapshot = email;
-    this.buyerUsernameSnapshot = username;
   }
 
   public void setGuestUserId(GuestUser guestUser) {

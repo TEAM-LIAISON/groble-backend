@@ -89,6 +89,12 @@ public class ContentReview extends BaseTimeEntity {
     this.reviewContent = reviewContent;
   }
 
+  public void reactivate(BigDecimal rating, String reviewContent) {
+    updateReview(rating, reviewContent);
+    this.reviewStatus = ReviewStatus.ACTIVE;
+    this.deletionRequestedAt = null;
+  }
+
   // 유틸리티 메서드들
   /**
    * 회원 리뷰인지 확인

@@ -12,4 +12,6 @@ public interface OrderCustomRepository {
   Page<FlatAdminOrderSummaryInfoDTO> findOrdersByPageable(Pageable pageable);
 
   Optional<Order> findByMerchantUidAndUserId(String merchantUid, Long userId);
+
+  Optional<Order> findByMerchantUidAndGuestUserId(String merchantUid, Long guestUserId);
 }

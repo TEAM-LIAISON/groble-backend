@@ -54,6 +54,22 @@ public class AdminUserSummaryInfoResponse {
   private String phoneNumber;
 
   @Schema(
+      description = "사용자 상태",
+      example = "ACTIVE",
+      allowableValues = {
+        "ACTIVE",
+        "INACTIVE",
+        "DORMANT",
+        "LOCKED",
+        "SUSPENDED",
+        "PENDING_WITHDRAWAL",
+        "WITHDRAWN",
+        "PENDING_VERIFICATION"
+      },
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private String userStatus;
+
+  @Schema(
       description = "마케팅 수신 동의 여부",
       example = "false",
       type = "boolean",
@@ -85,9 +101,25 @@ public class AdminUserSummaryInfoResponse {
   /** 5. 사업자 유형 */
   @Schema(
       description = "사업자 유형 (예: 개인·간이, 개인·일반, 법인)",
-      example = "individual-simple",
+      example = "INDIVIDUAL_SIMPLIFIED",
       type = "string",
-      allowableValues = {"individual-simple", "individual-general", "corporation"},
+      allowableValues = {"INDIVIDUAL_SIMPLIFIED", "INDIVIDUAL_NORMAL", "CORPORATE", "NONE"},
       requiredMode = Schema.RequiredMode.REQUIRED)
   private String businessType;
+
+  @Schema(
+      description =
+          "사용자 탈퇴 사유 (탈퇴 사용자인 경우, BAD_EXPERIENCE/COST_BURDEN/INCONVENIENT/LACKS_CONTENT/NOT_USING/OTHER)",
+      example = "BAD_EXPERIENCE",
+      type = "string",
+      allowableValues = {
+        "BAD_EXPERIENCE",
+        "COST_BURDEN",
+        "INCONVENIENT",
+        "LACKS_CONTENT",
+        "NOT_USING",
+        "OTHER"
+      },
+      requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  private String withdrawalReason;
 }

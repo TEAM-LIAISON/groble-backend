@@ -26,12 +26,6 @@ public class QOrder extends EntityPathBase<Order> {
 
     public final liaison.groble.domain.coupon.entity.QUserCoupon appliedCoupon;
 
-    public final StringPath buyerEmailSnapshot = createString("buyerEmailSnapshot");
-
-    public final BooleanPath buyerInfoConsentIntent = createBoolean("buyerInfoConsentIntent");
-
-    public final StringPath buyerUsernameSnapshot = createString("buyerUsernameSnapshot");
-
     public final NumberPath<java.math.BigDecimal> couponDiscountPrice = createNumber("couponDiscountPrice", java.math.BigDecimal.class);
 
     //inherited

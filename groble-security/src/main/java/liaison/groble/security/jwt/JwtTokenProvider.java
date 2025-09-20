@@ -41,6 +41,9 @@ public class JwtTokenProvider {
   private final long refreshTokenExpirationMs;
   private final long guestTokenExpirationMs;
   private final String issuer;
+  private final String environment;
+
+  private static final String ENV_CLAIM = "env";
 
   /** 생성자 - 설정 값 주입 및 초기화 */
   public JwtTokenProvider(
@@ -50,7 +53,8 @@ public class JwtTokenProvider {
       @Value("${app.jwt.access-token.expiration-ms}") long accessTokenExpirationMs,
       @Value("${app.jwt.refresh-token.expiration-ms}") long refreshTokenExpirationMs,
       @Value("${app.jwt.guest-token.expiration-ms}") long guestTokenExpirationMs,
-      @Value("${app.jwt.issuer:auth-service}") String issuer) {
+      @Value("${app.jwt.issuer:auth-service}") String issuer,
+      @Value("${app.jwt.environment:local}") String environment) {
 
     // 안전한 키 생성 (HMAC-SHA-512 알고리즘용 키)
     this.accessTokenKey = Keys.hmacShaKeyFor(accessTokenSecret.getBytes(StandardCharsets.UTF_8));
@@ -60,6 +64,7 @@ public class JwtTokenProvider {
     this.refreshTokenExpirationMs = refreshTokenExpirationMs;
     this.guestTokenExpirationMs = guestTokenExpirationMs; // 1 hour for guest tokens
     this.issuer = issuer;
+    this.environment = environment;
 
     log.info(
         "JWT 토큰 제공자 초기화 완료 - 액세스 토큰 만료: {}ms, 리프레시 토큰 만료: {}ms",
@@ -84,6 +89,7 @@ public class JwtTokenProvider {
     claims.put("jti", tokenId);
     claims.put("userId", userId);
     claims.put("email", email);
+    claims.put(ENV_CLAIM, environment);
 
     String token =
         Jwts.builder()
@@ -127,7 +133,13 @@ public class JwtTokenProvider {
 
   /** 토큰 파싱하여 Claims 반환 */
   private Claims parseToken(String token, Key key) {
-    return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();
+    return Jwts.parserBuilder()
+        .setSigningKey(key)
+        .requireIssuer(issuer)
+        .require(ENV_CLAIM, environment)
+        .build()
+        .parseClaimsJws(token)
+        .getBody();
   }
 
   /** 액세스 토큰 만료 시간 (밀리초) 반환 */
@@ -237,7 +249,13 @@ public class JwtTokenProvider {
 
   public Claims parseClaimsJws(String token, TokenType type) {
     Key key = getKeyForTokenType(type); // ACCESS/REFRESH 키 반환
-    return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();
+    return Jwts.parserBuilder()
+        .setSigningKey(key)
+        .requireIssuer(issuer)
+        .require(ENV_CLAIM, environment)
+        .build()
+        .parseClaimsJws(token)
+        .getBody();
   }
 
   /** 리프레시 토큰의 만료 시간을 고려하여 액세스 토큰을 생성 액세스 토큰은 리프레시 토큰보다 길게 유효하지 않음 */
@@ -283,10 +301,12 @@ public class JwtTokenProvider {
     return Jwts.builder()
         .setSubject("guest:" + guestUserId)
         .claim("type", "GUEST")
+        .claim(ENV_CLAIM, environment)
         .claim("scope", scope.getCode())
         .claim("roles", List.of("ROLE_GUEST"))
         .setIssuedAt(new Date())
         .setExpiration(Date.from(expiryDate.atZone(ZoneId.systemDefault()).toInstant()))
+        .setIssuer(issuer)
         .signWith(guestTokenKey)
         .compact();
   }
@@ -318,6 +338,8 @@ public class JwtTokenProvider {
     try {
       return Jwts.parserBuilder()
           .setSigningKey(guestTokenKey) // secretKey → guestTokenKey로 변경
+          .requireIssuer(issuer)
+          .require(ENV_CLAIM, environment)
           .setAllowedClockSkewSeconds(60) // 스큐 허용
           .build()
           .parseClaimsJws(token)

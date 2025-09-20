@@ -34,4 +34,11 @@ public class PurchaseRepositoryImpl implements PurchaseRepository {
       String merchantUid, Long userId) {
     return jpaPurchaseRepository.findByMerchantUidAndUserIdWithOrderAndContent(merchantUid, userId);
   }
+
+  @Override
+  public Optional<Purchase> findByMerchantUidAndGuestUserIdWithOrderAndContent(
+      String merchantUid, Long guestUserId) {
+    return jpaPurchaseRepository.findByMerchantUidAndGuestUserIdWithOrderAndContent(
+        merchantUid, guestUserId);
+  }
 }

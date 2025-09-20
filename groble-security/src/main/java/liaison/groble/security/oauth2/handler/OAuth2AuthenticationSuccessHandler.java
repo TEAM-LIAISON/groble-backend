@@ -104,7 +104,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
     } else if (user.getUserProfile() != null && user.getUserProfile().getNickname() != null) {
       log.info("전화번호 미설정 사용자 - 전화번호 설정 페이지로 리다이렉트");
-      targetUrl = frontendDomain + "/auth/sign-up/phone";
+      targetUrl = frontendDomain + "/auth/sign-up/phone/request";
 
     } else {
       log.info("닉네임 미입력 사용자 - 온보딩 페이지로 리다이렉트");

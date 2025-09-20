@@ -10,6 +10,7 @@ import liaison.groble.application.payment.exception.refund.DuplicateCancelReques
 import liaison.groble.application.payment.exception.refund.OrderCancellationException;
 import liaison.groble.application.payment.exception.refund.PaymentRefundBadRequestException;
 import liaison.groble.application.purchase.service.PurchaseReader;
+import liaison.groble.common.context.UserContext;
 import liaison.groble.domain.content.enums.ContentType;
 import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.payment.entity.PayplePayment;
@@ -34,12 +35,20 @@ public class PaymentService {
 
   @Transactional
   public void requestPaymentCancel(
-      Long userId, String merchantUid, PaymentCancelDTO paymentCancelDTO) {
+      UserContext userContext, String merchantUid, PaymentCancelDTO paymentCancelDTO) {
     CancelReason cancelReason = parseCancelReason(paymentCancelDTO.getCancelReason());
 
-    log.info("결제 취소 요청 처리 시작 - 주문번호: {}, 사유: {}", merchantUid, cancelReason.getDescription());
+    String userTypeInfo = userContext.isMember() ? "회원" : "비회원";
+    Long requesterId = userContext.getId();
+    log.info(
+        "결제 취소 요청 처리 시작 - {} ID: {}, 주문번호: {}, 사유: {}",
+        userTypeInfo,
+        requesterId,
+        merchantUid,
+        cancelReason.getDescription());
+
     try {
-      Purchase purchase = purchaseReader.getPurchaseWithOrderAndContent(merchantUid, userId);
+      Purchase purchase = getPurchaseWithOrderAndContent(userContext, merchantUid);
       if (purchase.getContent().getContentType().equals(ContentType.DOCUMENT)) {
         throw new PaymentRefundBadRequestException("자료");
       }
@@ -47,28 +56,49 @@ public class PaymentService {
       Order order = purchase.getOrder();
       // 주문 상태 검증
       validateRequestCancellableStatus(order);
-      log.info("환불 요청 가능 상태 검증 완료 - 주문번호: {}", merchantUid);
+      log.info("환불 요청 가능 상태 검증 완료 - {} ID: {}, 주문번호: {}", userTypeInfo, requesterId, merchantUid);
 
       // 환불 요청
       handlePaymentCancelSuccess(order, purchase, cancelReason, paymentCancelDTO.getDetailReason());
 
       // 디스코드 알림 발송
-      sendDiscordPaymentRefundRequestNotification(userId, purchase, order);
+      sendDiscordPaymentRefundRequestNotification(userContext, purchase, order);
     } catch (IllegalArgumentException | IllegalStateException e) {
-      log.warn("결제 취소 처리 실패 - 주문번호: {}, 사유: {}", merchantUid, e.getMessage());
+      log.warn(
+          "결제 취소 처리 실패 - {} ID: {}, 주문번호: {}, 사유: {}",
+          userTypeInfo,
+          requesterId,
+          merchantUid,
+          e.getMessage());
       throw e;
     } catch (Exception e) {
-      log.error("결제 취소 처리 중 예상치 못한 오류 발생 - 주문번호: {}", merchantUid, e);
+      log.error(
+          "결제 취소 처리 중 예상치 못한 오류 발생 - {} ID: {}, 주문번호: {}",
+          userTypeInfo,
+          requesterId,
+          merchantUid,
+          e);
       throw e;
     }
   }
 
   private void sendDiscordPaymentRefundRequestNotification(
-      Long userId, Purchase purchase, Order order) {
+      UserContext userContext, Purchase purchase, Order order) {
+    String nickname = null;
+    if (purchase.getUser() != null) {
+      nickname = purchase.getUser().getNickname();
+    } else if (purchase.getGuestUser() != null) {
+      nickname = purchase.getGuestUser().getUsername();
+    }
+
+    if ((nickname == null || nickname.isBlank()) && order.getPurchaser() != null) {
+      nickname = order.getPurchaser().getName();
+    }
+
     ContentPaymentRefundReportDTO contentPaymentRefundReportDTO =
         ContentPaymentRefundReportDTO.builder()
-            .userId(userId)
-            .nickname(purchase.getUser().getNickname())
+            .userId(userContext.getId())
+            .nickname(nickname != null ? nickname : "비회원 구매자")
             .contentId(purchase.getContent().getId())
             .contentTitle(purchase.getContent().getTitle())
             .contentType(purchase.getContent().getContentType().name())
@@ -76,7 +106,8 @@ public class PaymentService {
             .selectedOptionName(purchase.getSelectedOptionName())
             .merchantUid(order.getMerchantUid())
             .purchasedAt(purchase.getPurchasedAt())
-            .cancelReason(purchase.getCancelReason().name())
+            .cancelReason(
+                purchase.getCancelReason() != null ? purchase.getCancelReason().name() : null)
             .cancelRequestedAt(purchase.getCancelRequestedAt())
             .build();
 
@@ -84,10 +115,20 @@ public class PaymentService {
         contentPaymentRefundReportDTO);
   }
 
+  private Purchase getPurchaseWithOrderAndContent(UserContext userContext, String merchantUid) {
+    if (userContext.isMember()) {
+      return purchaseReader.getPurchaseWithOrderAndContent(merchantUid, userContext.getId());
+    }
+    return purchaseReader.getGuestPurchaseWithOrderAndContent(merchantUid, userContext.getId());
+  }
+
   @Transactional(readOnly = true)
-  public PaymentCancelInfoDTO getPaymentCancelInfo(Long userId, String merchantUid) {
+  public PaymentCancelInfoDTO getPaymentCancelInfo(UserContext userContext, String merchantUid) {
     PayplePayment payplePayment = paymentReader.getPayplePaymentByOid(merchantUid);
-    Order order = orderReader.getOrderByMerchantUidAndUserId(merchantUid, userId);
+    Order order =
+        userContext.isMember()
+            ? orderReader.getOrderByMerchantUidAndUserId(merchantUid, userContext.getId())
+            : orderReader.getOrderByMerchantUidAndGuestUserId(merchantUid, userContext.getId());
 
     if (order.getStatus() != Order.OrderStatus.CANCEL_REQUEST) {
       throw new IllegalStateException("취소 요청 상태가 아닌 주문입니다.");

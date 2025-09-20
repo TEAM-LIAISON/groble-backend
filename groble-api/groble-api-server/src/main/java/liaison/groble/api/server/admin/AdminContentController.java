@@ -3,7 +3,6 @@ package liaison.groble.api.server.admin;
 import jakarta.validation.Valid;
 
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -17,6 +16,10 @@ import liaison.groble.api.model.admin.response.AdminContentSummaryInfoResponse;
 import liaison.groble.api.model.admin.response.swagger.AdminContentSummaryInfo;
 import liaison.groble.api.model.content.request.examine.ContentExamineRequest;
 import liaison.groble.api.model.content.response.swagger.ContentExamine;
+import liaison.groble.api.server.admin.docs.AdminContentSwaggerDocs;
+import liaison.groble.api.server.common.ApiPaths;
+import liaison.groble.api.server.common.BaseController;
+import liaison.groble.api.server.common.ResponseMessages;
 import liaison.groble.application.admin.dto.AdminContentSummaryInfoDTO;
 import liaison.groble.application.admin.service.AdminContentService;
 import liaison.groble.common.annotation.Auth;
@@ -28,39 +31,33 @@ import liaison.groble.common.response.ResponseHelper;
 import liaison.groble.common.utils.PageUtils;
 import liaison.groble.mapping.admin.AdminContentMapper;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 @RestController
-@RequiredArgsConstructor
-@RequestMapping("/api/v1/admin")
-@Tag(name = "[✅ 관리자] 관리자의 콘텐츠 목록 조회 및 모니터링 API")
-public class AdminContentController {
+@RequestMapping(ApiPaths.Admin.BASE)
+@Tag(name = AdminContentSwaggerDocs.TAG_NAME, description = AdminContentSwaggerDocs.TAG_DESCRIPTION)
+public class AdminContentController extends BaseController {
 
-  // API 경로 상수화
-  private static final String ADMIN_CONTENT_SUMMARY_INFO_PATH = "/contents";
-  private static final String ADMIN_CONTENT_EXAMINE_PATH = "/content/{contentId}/examine";
-
-  // 응답 메시지 상수화
-  private static final String ADMIN_CONTENT_SUMMARY_INFO_SUCCESS_MESSAGE = "관리자 콘텐츠 목록 조회에 성공했습니다.";
-  private static final String ADMIN_CONTENT_EXAMINE_SUCCESS_MESSAGE = "콘텐츠 심사 승인에 성공했습니다.";
-  private static final String ADMIN_CONTENT_REJECT_SUCCESS_MESSAGE = "콘텐츠 심사 반려에 성공했습니다.";
-
-  // Service
   private final AdminContentService adminContentService;
-
-  // Mapper
   private final AdminContentMapper adminContentMapper;
 
-  // Helper
-  private final ResponseHelper responseHelper;
+  public AdminContentController(
+      ResponseHelper responseHelper,
+      AdminContentService adminContentService,
+      AdminContentMapper adminContentMapper) {
+    super(responseHelper);
+    this.adminContentService = adminContentService;
+    this.adminContentMapper = adminContentMapper;
+  }
 
+  @Operation(
+      summary = AdminContentSwaggerDocs.GET_ALL_CONTENTS_SUMMARY,
+      description = AdminContentSwaggerDocs.GET_ALL_CONTENTS_DESCRIPTION)
   @AdminContentSummaryInfo
   @RequireRole("ROLE_ADMIN")
-  @GetMapping(ADMIN_CONTENT_SUMMARY_INFO_PATH)
+  @GetMapping(ApiPaths.Admin.CONTENTS)
   public ResponseEntity<GrobleResponse<PageResponse<AdminContentSummaryInfoResponse>>>
       getAllContents(
           @Auth Accessor accessor,
@@ -79,13 +76,15 @@ public class AdminContentController {
     PageResponse<AdminContentSummaryInfoResponse> responsePage =
         adminContentMapper.toAdminContentSummaryInfoResponsePage(infoDTOPage);
 
-    return responseHelper.success(
-        responsePage, ADMIN_CONTENT_SUMMARY_INFO_SUCCESS_MESSAGE, HttpStatus.OK);
+    return success(responsePage, ResponseMessages.Admin.CONTENT_SUMMARY_INFO_RETRIEVED);
   }
 
+  @Operation(
+      summary = AdminContentSwaggerDocs.EXAMINE_CONTENT_SUMMARY,
+      description = AdminContentSwaggerDocs.EXAMINE_CONTENT_DESCRIPTION)
   @ContentExamine
   @RequireRole("ROLE_ADMIN")
-  @PostMapping(ADMIN_CONTENT_EXAMINE_PATH)
+  @PostMapping(ApiPaths.Admin.CONTENT_EXAMINE)
   public ResponseEntity<GrobleResponse<Void>> examineContent(
       @Parameter(hidden = true) @Auth Accessor accessor,
       @PathVariable("contentId") Long contentId,
@@ -94,11 +93,11 @@ public class AdminContentController {
     return switch (examineRequest.getAction()) {
       case APPROVE -> {
         adminContentService.approveContent(contentId);
-        yield responseHelper.success(null, ADMIN_CONTENT_EXAMINE_SUCCESS_MESSAGE, HttpStatus.OK);
+        yield successVoid(ResponseMessages.Admin.CONTENT_EXAMINE_APPROVED);
       }
       case REJECT -> {
         adminContentService.rejectContent(contentId, examineRequest.getRejectReason());
-        yield responseHelper.success(null, ADMIN_CONTENT_REJECT_SUCCESS_MESSAGE, HttpStatus.OK);
+        yield successVoid(ResponseMessages.Admin.CONTENT_EXAMINE_REJECTED);
       }
     };
   }
