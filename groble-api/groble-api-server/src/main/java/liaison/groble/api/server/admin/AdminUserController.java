@@ -3,25 +3,34 @@ package liaison.groble.api.server.admin;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import liaison.groble.api.model.admin.response.AdminAccountVerificationResponse;
 import liaison.groble.api.model.admin.response.AdminUserSummaryInfoResponse;
 import liaison.groble.api.model.admin.response.swagger.AdminUserSummaryInfo;
 import liaison.groble.api.server.common.ApiPaths;
 import liaison.groble.api.server.common.BaseController;
 import liaison.groble.api.server.common.ResponseMessages;
 import liaison.groble.api.server.common.swagger.SwaggerTags;
+import liaison.groble.application.admin.dto.AdminAccountVerificationResultDTO;
 import liaison.groble.application.admin.dto.AdminUserSummaryInfoDTO;
+import liaison.groble.application.admin.service.AdminAccountVerificationService;
 import liaison.groble.application.admin.service.AdminUserService;
+import liaison.groble.common.annotation.Auth;
+import liaison.groble.common.annotation.Logging;
 import liaison.groble.common.annotation.RequireRole;
+import liaison.groble.common.model.Accessor;
 import liaison.groble.common.response.GrobleResponse;
 import liaison.groble.common.response.PageResponse;
 import liaison.groble.common.response.ResponseHelper;
 import liaison.groble.common.utils.PageUtils;
 import liaison.groble.mapping.admin.AdminUserMapper;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
@@ -32,14 +41,17 @@ public class AdminUserController extends BaseController {
 
   private final AdminUserService adminUserService;
   private final AdminUserMapper adminUserMapper;
+  private final AdminAccountVerificationService adminAccountVerificationService;
 
   public AdminUserController(
       ResponseHelper responseHelper,
       AdminUserService adminUserService,
-      AdminUserMapper adminUserMapper) {
+      AdminUserMapper adminUserMapper,
+      AdminAccountVerificationService adminAccountVerificationService) {
     super(responseHelper);
     this.adminUserService = adminUserService;
     this.adminUserMapper = adminUserMapper;
+    this.adminAccountVerificationService = adminAccountVerificationService;
   }
 
   @AdminUserSummaryInfo
@@ -61,5 +73,30 @@ public class AdminUserController extends BaseController {
         adminUserMapper.toAdminUserSummaryInfoResponsePage(response);
 
     return success(responsePage, ResponseMessages.Admin.USER_SUMMARY_INFO_RETRIEVED);
+  }
+
+  @Logging(
+      item = "AdminUser",
+      action = "verifyUserAccount",
+      includeParam = true,
+      includeResult = true)
+  @RequireRole("ROLE_ADMIN")
+  @PostMapping(ApiPaths.Admin.ADMIN_USER_ACCOUNT_VERIFICATION)
+  @Operation(summary = "관리자 계좌 인증", description = "관리자가 Payple 계좌 인증을 즉시 실행합니다.")
+  public ResponseEntity<GrobleResponse<AdminAccountVerificationResponse>> verifyUserAccount(
+      @Auth Accessor accessor, @PathVariable("userId") Long userId) {
+
+    AdminAccountVerificationResultDTO resultDTO =
+        adminAccountVerificationService.verifyAccount(userId);
+
+    AdminAccountVerificationResponse response =
+        adminUserMapper.toAdminAccountVerificationResponse(resultDTO);
+
+    String message =
+        resultDTO.isSuccess()
+            ? ResponseMessages.Admin.USER_ACCOUNT_VERIFICATION_SUCCESS
+            : ResponseMessages.Admin.USER_ACCOUNT_VERIFICATION_FAILED;
+
+    return success(response, message);
   }
 }

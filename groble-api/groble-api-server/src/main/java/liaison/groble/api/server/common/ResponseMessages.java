@@ -25,6 +25,8 @@ public final class ResponseMessages {
     public static final String MAKER_VERIFY_APPROVED = "메이커 인증 승인에 성공했습니다.";
     public static final String MAKER_VERIFY_REJECTED = "메이커 인증 거절에 성공했습니다.";
     public static final String MAKER_MEMO_SAVED = "관리자 메모 저장에 성공했습니다.";
+    public static final String USER_ACCOUNT_VERIFICATION_SUCCESS = "관리자 계좌 인증이 성공적으로 완료되었습니다.";
+    public static final String USER_ACCOUNT_VERIFICATION_FAILED = "관리자 계좌 인증 처리 결과가 실패했습니다.";
   }
 
   public static final class Auth {
