@@ -27,6 +27,7 @@ public final class ResponseMessages {
     public static final String MAKER_MEMO_SAVED = "관리자 메모 저장에 성공했습니다.";
     public static final String USER_ACCOUNT_VERIFICATION_SUCCESS = "관리자 계좌 인증이 성공적으로 완료되었습니다.";
     public static final String USER_ACCOUNT_VERIFICATION_FAILED = "관리자 계좌 인증 처리 결과가 실패했습니다.";
+    public static final String USER_BUSINESS_INFO_UPDATED = "사업자 정보가 성공적으로 수정되었습니다.";
   }
 
   public static final class Auth {

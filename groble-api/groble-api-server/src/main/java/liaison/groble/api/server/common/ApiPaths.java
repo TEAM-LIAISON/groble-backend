@@ -21,6 +21,7 @@ public final class ApiPaths {
     public static final String ADMIN_USER_SUMMARY_INFO = "/users";
     public static final String ADMIN_USER_ACCOUNT_VERIFICATION =
         "/users/{userId}/account-verification";
+    public static final String ADMIN_USER_BUSINESS_INFO = "/users/{userId}/business-info";
 
     public static final String CONTENTS = "/contents";
     public static final String CONTENT_EXAMINE = "/content/{contentId}/examine";

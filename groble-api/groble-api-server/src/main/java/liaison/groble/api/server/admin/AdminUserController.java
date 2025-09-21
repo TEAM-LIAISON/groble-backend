@@ -1,14 +1,18 @@
 package liaison.groble.api.server.admin;
 
+import jakarta.validation.Valid;
+
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import liaison.groble.api.model.admin.request.AdminBusinessInfoUpdateRequest;
 import liaison.groble.api.model.admin.response.AdminAccountVerificationResponse;
 import liaison.groble.api.model.admin.response.AdminUserSummaryInfoResponse;
 import liaison.groble.api.model.admin.response.swagger.AdminUserSummaryInfo;
@@ -32,6 +36,7 @@ import liaison.groble.mapping.admin.AdminUserMapper;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
@@ -98,5 +103,25 @@ public class AdminUserController extends BaseController {
             : ResponseMessages.Admin.USER_ACCOUNT_VERIFICATION_FAILED;
 
     return success(response, message);
+  }
+
+  @Logging(
+      item = "AdminUser",
+      action = "updateBusinessInfo",
+      includeParam = true,
+      includeResult = true)
+  @RequireRole("ROLE_ADMIN")
+  @PostMapping(ApiPaths.Admin.ADMIN_USER_BUSINESS_INFO)
+  @Operation(summary = "사업자 정보 수정", description = "관리자가 사업자 정보를 업데이트합니다.")
+  @ApiResponse(responseCode = "200", description = "사업자 정보 수정 성공")
+  public ResponseEntity<GrobleResponse<Void>> updateBusinessInfo(
+      @Auth Accessor accessor,
+      @PathVariable("userId") Long userId,
+      @Valid @RequestBody AdminBusinessInfoUpdateRequest request) {
+
+    adminAccountVerificationService.updateBusinessInfo(
+        userId, adminUserMapper.toAdminBusinessInfoUpdateDTO(request));
+
+    return successVoid(ResponseMessages.Admin.USER_BUSINESS_INFO_UPDATED);
   }
 }

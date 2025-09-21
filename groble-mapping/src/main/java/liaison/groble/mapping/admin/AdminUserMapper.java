@@ -3,9 +3,11 @@ package liaison.groble.mapping.admin;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
+import liaison.groble.api.model.admin.request.AdminBusinessInfoUpdateRequest;
 import liaison.groble.api.model.admin.response.AdminAccountVerificationResponse;
 import liaison.groble.api.model.admin.response.AdminUserSummaryInfoResponse;
 import liaison.groble.application.admin.dto.AdminAccountVerificationResultDTO;
+import liaison.groble.application.admin.dto.AdminBusinessInfoUpdateDTO;
 import liaison.groble.application.admin.dto.AdminUserSummaryInfoDTO;
 import liaison.groble.common.response.PageResponse;
 import liaison.groble.mapping.common.PageResponseMapper;
@@ -27,4 +29,6 @@ public interface AdminUserMapper extends PageResponseMapper {
 
   AdminAccountVerificationResponse toAdminAccountVerificationResponse(
       AdminAccountVerificationResultDTO dto);
+
+  AdminBusinessInfoUpdateDTO toAdminBusinessInfoUpdateDTO(AdminBusinessInfoUpdateRequest request);
 }

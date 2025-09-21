@@ -2,13 +2,17 @@ package liaison.groble.application.admin.service;
 
 import org.json.simple.JSONObject;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import liaison.groble.application.admin.dto.AdminAccountVerificationResultDTO;
+import liaison.groble.application.admin.dto.AdminBusinessInfoUpdateDTO;
 import liaison.groble.application.admin.settlement.dto.PaypleAccountVerificationRequest;
 import liaison.groble.application.admin.settlement.dto.PayplePartnerAuthResult;
 import liaison.groble.application.admin.settlement.service.PaypleAccountVerificationFactory;
 import liaison.groble.application.admin.settlement.service.PaypleSettlementService;
 import liaison.groble.application.payment.exception.PaypleApiException;
+import liaison.groble.application.user.service.UserReader;
+import liaison.groble.domain.user.entity.SellerInfo;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +27,7 @@ public class AdminAccountVerificationService {
 
   private final PaypleSettlementService paypleSettlementService;
   private final PaypleAccountVerificationFactory paypleAccountVerificationFactory;
+  private final UserReader userReader;
 
   public AdminAccountVerificationResultDTO verifyAccount(Long targetUserId) {
     PayplePartnerAuthResult authResult = paypleSettlementService.requestPartnerAuth();
@@ -46,6 +51,28 @@ public class AdminAccountVerificationService {
         resultDTO.getResultCode());
 
     return resultDTO;
+  }
+
+  @Transactional
+  public void updateBusinessInfo(Long targetUserId, AdminBusinessInfoUpdateDTO dto) {
+    SellerInfo sellerInfo = userReader.getSellerInfoWithUser(targetUserId);
+
+    sellerInfo.updateBusinessInfo(
+        dto.getBusinessType(),
+        sellerInfo.getBusinessNumber(),
+        sellerInfo.getBusinessCategory(),
+        sellerInfo.getBusinessSector(),
+        dto.getBusinessName(),
+        dto.getRepresentativeName(),
+        dto.getBusinessAddress(),
+        sellerInfo.getBusinessLicenseFileUrl(),
+        sellerInfo.getTaxInvoiceEmail());
+
+    log.info(
+        "관리자 사업자 정보 수정 완료 - userId: {}, businessType: {}, businessName: {}",
+        targetUserId,
+        dto.getBusinessType(),
+        dto.getBusinessName());
   }
 
   private AdminAccountVerificationResultDTO buildResultDTO(JSONObject verificationResult) {
