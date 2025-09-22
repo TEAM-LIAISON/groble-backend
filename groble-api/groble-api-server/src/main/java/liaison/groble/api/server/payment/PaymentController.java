@@ -18,6 +18,8 @@ import liaison.groble.application.payment.dto.cancel.PaymentCancelInfoDTO;
 import liaison.groble.application.payment.service.PaymentService;
 import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.annotation.Logging;
+import liaison.groble.common.context.UserContext;
+import liaison.groble.common.factory.UserContextFactory;
 import liaison.groble.common.model.Accessor;
 import liaison.groble.common.response.GrobleResponse;
 import liaison.groble.common.response.ResponseHelper;
@@ -61,14 +63,16 @@ public class PaymentController {
   @Logging(item = "Payment", action = "Cancel", includeParam = true, includeResult = true)
   @PostMapping(PAYMENT_CANCEL_PATH)
   public ResponseEntity<GrobleResponse<Void>> requestPaymentCancel(
-      @Auth Accessor accessor,
+      @Auth(required = false) Accessor accessor,
       @Valid @PathVariable("merchantUid") String merchantUid,
       @Valid @RequestBody PaymentCancelRequest request) {
+    UserContext userContext = UserContextFactory.from(accessor);
+
     // 결제 취소 요청 DTO로 변환
     PaymentCancelDTO paymentCancelDTO = paymentMapper.toPaymentCancelDTO(request);
 
     // 결제 취소 요청 처리
-    paymentService.requestPaymentCancel(accessor.getUserId(), merchantUid, paymentCancelDTO);
+    paymentService.requestPaymentCancel(userContext, merchantUid, paymentCancelDTO);
 
     // 성공 응답 반환
     return responseHelper.success(null, PAYMENT_CANCEL_SUCCESS_MESSAGE, HttpStatus.OK);
@@ -87,10 +91,13 @@ public class PaymentController {
   @Logging(item = "Payment", action = "CancelInfo", includeParam = true, includeResult = true)
   @GetMapping(PAYMENT_CANCEL_INFO_PATH)
   public ResponseEntity<GrobleResponse<PaymentCancelInfoResponse>> getPaymentCancelInfo(
-      @Auth Accessor accessor, @Valid @PathVariable("merchantUid") String merchantUid) {
+      @Auth(required = false) Accessor accessor,
+      @Valid @PathVariable("merchantUid") String merchantUid) {
+    UserContext userContext = UserContextFactory.from(accessor);
+
     // 결제 취소 요청 정보 조회
     PaymentCancelInfoDTO paymentCancelInfoDTO =
-        paymentService.getPaymentCancelInfo(accessor.getUserId(), merchantUid);
+        paymentService.getPaymentCancelInfo(userContext, merchantUid);
 
     // 응답 변환
     PaymentCancelInfoResponse response =

@@ -29,8 +29,6 @@ import liaison.groble.domain.settlement.dto.FlatPerTransactionSettlement;
 import liaison.groble.domain.settlement.entity.Settlement;
 import liaison.groble.domain.settlement.entity.SettlementItem;
 import liaison.groble.domain.settlement.repository.SettlementRepository;
-import liaison.groble.domain.user.entity.SellerInfo;
-import liaison.groble.domain.user.repository.SellerInfoRepository;
 import liaison.groble.external.config.PaypleConfig;
 
 import lombok.RequiredArgsConstructor;
@@ -51,7 +49,7 @@ public class AdminSettlementService {
   private final PaypleSettlementService paypleSettlementService;
   private final SettlementReader settlementReader;
   private final PaypleConfig paypleConfig;
-  private final SellerInfoRepository sellerInfoRepository;
+  private final PaypleAccountVerificationFactory paypleAccountVerificationFactory;
 
   @Transactional(readOnly = true)
   public PageResponse<AdminSettlementOverviewDTO> getAllUsersSettlements(
@@ -395,51 +393,7 @@ public class AdminSettlementService {
   /** 계좌 인증 요청 생성 (SellerInfo에서 계좌 정보 가져오기) */
   private PaypleAccountVerificationRequest buildAccountVerificationRequest(
       SettlementItem settlementItem) {
-    // SettlementItem -> Settlement -> User -> SellerInfo 경로로 데이터 조회
-    Settlement settlement = settlementItem.getSettlement();
-    Long userId = settlement.getUser().getId();
-
-    SellerInfo sellerInfo =
-        sellerInfoRepository
-            .findByUserId(userId)
-            .orElseThrow(
-                () ->
-                    new IllegalArgumentException(
-                        "정산 대상 사용자의 SellerInfo를 찾을 수 없습니다. userId: " + userId));
-
-    // SellerInfo에서 필수 정보 검증
-    if (sellerInfo.getBankCode() == null || sellerInfo.getBankCode().isEmpty()) {
-      throw new IllegalArgumentException("은행 코드가 설정되지 않았습니다. userId: " + userId);
-    }
-    if (sellerInfo.getBankAccountNumber() == null || sellerInfo.getBankAccountNumber().isEmpty()) {
-      throw new IllegalArgumentException("계좌번호가 설정되지 않았습니다. userId: " + userId);
-    }
-    if (sellerInfo.getBankAccountOwner() == null || sellerInfo.getBankAccountOwner().isEmpty()) {
-      throw new IllegalArgumentException("예금주명이 설정되지 않았습니다. userId: " + userId);
-    }
-
-    // 계좌 인증 타입 결정 로직
-    String accountHolderInfoType = determineAccountHolderInfoType(sellerInfo);
-    // 계좌 소유자 정보 결정 로직
-    String accountHolderInfo = determineAccountHolderInfo(sellerInfo);
-
-    log.info(
-        "계좌 인증 요청 생성 - userId: {}, bankCode: {}, accountOwner: {}, holderInfoType: {}, holderInfo: {}",
-        userId,
-        sellerInfo.getBankCode(),
-        sellerInfo.getBankAccountOwner(),
-        accountHolderInfoType,
-        maskSensitiveData(accountHolderInfo));
-
-    return PaypleAccountVerificationRequest.builder()
-        .cstId(paypleConfig.getCstId())
-        .custKey(paypleConfig.getCustKey())
-        .bankCodeStd(sellerInfo.getBankCode()) // SellerInfo에서 은행 코드 가져오기
-        .accountNum(sellerInfo.getBankAccountNumber()) // SellerInfo에서 계좌번호 가져오기
-        .accountHolderInfoType(accountHolderInfoType) // SellerInfo 상태에 따라 동적 결정
-        .accountHolderInfo(accountHolderInfo) // SellerInfo 상태에 따라 생년월일, "0", 또는 사업자등록번호
-        .subId("groble_sub_" + userId) // 사용자별 고유한 subId 생성
-        .build();
+    return paypleAccountVerificationFactory.buildForSettlementItem(settlementItem);
   }
 
   /**
@@ -486,66 +440,6 @@ public class AdminSettlementService {
       log.error("빌링키 확보 실패 - Settlement ID: {}", settlement.getId(), e);
       throw new PaypleApiException("빌링키 확보 실패", e);
     }
-  }
-
-  /**
-   * SellerInfo 상태에 따라 계좌 인증 타입을 결정
-   *
-   * @param sellerInfo 판매자 정보
-   * @return accountHolderInfoType "0": 개인 판매자 또는 사업자 신청하지 않은 경우 "6": 승인된 사업자 판매자
-   */
-  private String determineAccountHolderInfoType(SellerInfo sellerInfo) {
-    Boolean businessSellerRequest = sellerInfo.getBusinessSellerRequest();
-    Boolean isBusinessSeller = sellerInfo.getIsBusinessSeller();
-
-    // businessSellerRequest가 false이면 "0"
-    if (businessSellerRequest == null || !businessSellerRequest) {
-      return "0";
-    }
-
-    // businessSellerRequest가 true이지만 isBusinessSeller가 false이면 "0"
-    if (isBusinessSeller == null || !isBusinessSeller) {
-      return "0";
-    }
-
-    // businessSellerRequest가 true이고 isBusinessSeller도 true이면 "6"
-    return "6";
-  }
-
-  /**
-   * SellerInfo 상태에 따라 계좌 소유자 정보를 결정
-   *
-   * @param sellerInfo 판매자 정보
-   * @return accountHolderInfo 생년월일, "0", 또는 사업자등록번호
-   */
-  private String determineAccountHolderInfo(SellerInfo sellerInfo) {
-    Boolean businessSellerRequest = sellerInfo.getBusinessSellerRequest();
-    Boolean isBusinessSeller = sellerInfo.getIsBusinessSeller();
-
-    // businessSellerRequest가 false이면 생년월일(birthDate) 입력
-    if (businessSellerRequest == null || !businessSellerRequest) {
-      String birthDate = sellerInfo.getBirthDate();
-      if (birthDate == null || birthDate.trim().isEmpty()) {
-        throw new IllegalArgumentException("개인 판매자의 생년월일이 설정되지 않았습니다.");
-      }
-      return birthDate;
-    }
-
-    // businessSellerRequest가 true이나 isBusinessSeller가 false이면 생년월일 입력 (사업자 신청 중인 상태)
-    if (isBusinessSeller == null || !isBusinessSeller) {
-      String birthDate = sellerInfo.getBirthDate();
-      if (birthDate == null || birthDate.trim().isEmpty()) {
-        throw new IllegalArgumentException("사업자 신청 중인 판매자의 생년월일이 설정되지 않았습니다.");
-      }
-      return birthDate;
-    }
-
-    // businessSellerRequest가 true이고 isBusinessSeller가 true이면 사업자등록번호(businessNumber) 입력
-    String businessNumber = sellerInfo.getBusinessNumber();
-    if (businessNumber == null || businessNumber.trim().isEmpty()) {
-      throw new IllegalArgumentException("사업자 판매자의 사업자등록번호가 설정되지 않았습니다.");
-    }
-    return businessNumber;
   }
 
   /** 승인 결과를 담는 내부 클래스 */

@@ -19,12 +19,13 @@ import liaison.groble.api.model.sell.response.ContentReviewDetailResponse;
 import liaison.groble.application.market.dto.ContactInfoDTO;
 import liaison.groble.application.purchase.dto.PurchaseContentCardDTO;
 import liaison.groble.application.purchase.dto.PurchasedContentDetailDTO;
-import liaison.groble.application.purchase.exception.PurchaseAuthenticationRequiredException;
-import liaison.groble.application.purchase.service.PurchaseService;
+import liaison.groble.application.purchase.strategy.PurchaseProcessorFactory;
+import liaison.groble.application.purchase.strategy.PurchaseProcessorStrategy;
 import liaison.groble.application.sell.dto.ContentReviewDetailDTO;
-import liaison.groble.application.sell.service.SellContentService;
 import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.annotation.Logging;
+import liaison.groble.common.context.UserContext;
+import liaison.groble.common.factory.UserContextFactory;
 import liaison.groble.common.model.Accessor;
 import liaison.groble.common.response.GrobleResponse;
 import liaison.groble.common.response.PageResponse;
@@ -66,9 +67,9 @@ public class PurchaseController {
   private static final String My_PURCHASED_CONTENT_REVIEW_SUCCESS_MESSAGE =
       "내가 구매한 콘텐츠 리뷰 상세 조회에 성공했습니다.";
 
-  // Service
-  private final PurchaseService purchaseService;
-  private final SellContentService sellContentService;
+  // Factory
+  private final PurchaseProcessorFactory processorFactory;
+
   // Mapper
   private final PurchaseMapper purchaseMapper;
   private final MarketMapper marketMapper;
@@ -87,11 +88,20 @@ public class PurchaseController {
       includeParam = true,
       includeResult = true)
   public ResponseEntity<GrobleResponse<ContactInfoResponse>> getSellerContactInfo(
-      @Auth Accessor accessor, @Valid @PathVariable("merchantUid") String merchantUid) {
+      @Auth(required = false) Accessor accessor,
+      @Valid @PathVariable("merchantUid") String merchantUid) {
 
-    ContactInfoDTO contactInfoDTO =
-        purchaseService.getContactInfo(accessor.getUserId(), merchantUid);
+    UserContext userContext = UserContextFactory.from(accessor);
+    PurchaseProcessorStrategy processor = processorFactory.getProcessor(userContext);
+    ContactInfoDTO contactInfoDTO = processor.getContactInfo(userContext, merchantUid);
     ContactInfoResponse response = marketMapper.toContactInfoResponse(contactInfoDTO);
+
+    String userTypeInfo = userContext.isMember() ? "회원" : "비회원";
+    log.info(
+        "{} 판매자 연락처 조회 - userId: {}, merchantUid: {}",
+        userTypeInfo,
+        userContext.getId(),
+        merchantUid);
 
     return responseHelper.success(response, SELLER_CONTACT_INFO_SUCCESS_MESSAGE, HttpStatus.OK);
   }
@@ -113,26 +123,36 @@ public class PurchaseController {
       includeParam = true,
       includeResult = true)
   public ResponseEntity<GrobleResponse<PurchasedContentDetailResponse>> getMyPurchasedContent(
-      @Auth Accessor accessor, @Valid @PathVariable("merchantUid") String merchantUid) {
+      @Auth(required = false) Accessor accessor,
+      @Valid @PathVariable("merchantUid") String merchantUid) {
+
+    UserContext userContext = UserContextFactory.from(accessor);
+    PurchaseProcessorStrategy processor = processorFactory.getProcessor(userContext);
+
     // 구매 콘텐츠 정보 조회
     PurchasedContentDetailDTO purchasedContentDetailDTO =
-        purchaseService.getMyPurchasedContent(accessor.getUserId(), merchantUid);
+        processor.getMyPurchasedContent(userContext, merchantUid);
 
     // 문의하기 정보 조회
-    ContactInfoDTO contactInfoDTO =
-        purchaseService.getContactInfo(accessor.getUserId(), merchantUid);
+    ContactInfoDTO contactInfoDTO = processor.getContactInfo(userContext, merchantUid);
     ContactInfoResponse contactInfoResponse = marketMapper.toContactInfoResponse(contactInfoDTO);
 
     // 리뷰 상세 정보 조회
     ContentReviewDetailDTO contentReviewDetailDTO =
-        sellContentService.getContentReviewDetail(accessor.getUserId(), merchantUid);
-
+        processor.getContentReviewDetail(userContext, merchantUid);
     ContentReviewDetailResponse contentReviewDetailResponse =
         sellMapper.toContentReviewDetailResponse(contentReviewDetailDTO);
 
     PurchasedContentDetailResponse response =
         purchaseMapper.toPurchasedContentDetailResponse(
             purchasedContentDetailDTO, contactInfoResponse, contentReviewDetailResponse);
+
+    String userTypeInfo = userContext.isMember() ? "회원" : "비회원";
+    log.info(
+        "{} 구매 콘텐츠 상세 조회 - userId: {}, merchantUid: {}",
+        userTypeInfo,
+        userContext.getId(),
+        merchantUid);
 
     return responseHelper.success(response, My_PURCHASED_CONTENT_SUCCESS_MESSAGE, HttpStatus.OK);
   }
@@ -154,21 +174,32 @@ public class PurchaseController {
       includeParam = true,
       includeResult = true)
   public ResponseEntity<GrobleResponse<PurchasedContentDetailResponse>> getMyPurchasedContentReview(
-      @Auth Accessor accessor, @Valid @PathVariable("merchantUid") String merchantUid) {
+      @Auth(required = false) Accessor accessor,
+      @Valid @PathVariable("merchantUid") String merchantUid) {
+
+    UserContext userContext = UserContextFactory.from(accessor);
+    PurchaseProcessorStrategy processor = processorFactory.getProcessor(userContext);
+
     // 구매 콘텐츠 정보 조회
     PurchasedContentDetailDTO purchasedContentDetailDTO =
-        purchaseService.getMyPurchasedContent(accessor.getUserId(), merchantUid);
+        processor.getMyPurchasedContent(userContext, merchantUid);
 
     // 리뷰 상세 정보 조회
     ContentReviewDetailDTO contentReviewDetailDTO =
-        sellContentService.getContentReviewDetail(accessor.getUserId(), merchantUid);
-
+        processor.getContentReviewDetail(userContext, merchantUid);
     ContentReviewDetailResponse contentReviewDetailResponse =
         sellMapper.toContentReviewDetailResponse(contentReviewDetailDTO);
 
     PurchasedContentDetailResponse response =
         purchaseMapper.toPurchasedContentDetailResponse(
             purchasedContentDetailDTO, null, contentReviewDetailResponse);
+
+    String userTypeInfo = userContext.isMember() ? "회원" : "비회원";
+    log.info(
+        "{} 구매 콘텐츠 리뷰 상세 조회 - userId: {}, merchantUid: {}",
+        userTypeInfo,
+        userContext.getId(),
+        merchantUid);
 
     return responseHelper.success(
         response, My_PURCHASED_CONTENT_REVIEW_SUCCESS_MESSAGE, HttpStatus.OK);
@@ -206,44 +237,19 @@ public class PurchaseController {
               String state) {
 
     Pageable pageable = PageUtils.createPageable(page, size, sort);
-    PageResponse<PurchaseContentCardDTO> DTOPageResponse;
-    String userTypeInfo;
 
-    // 토큰 종류에 따른 분기 처리
-    var result = getPurchasedContentsByUserType(accessor, state, pageable);
-    DTOPageResponse = result.dtoPageResponse;
-    userTypeInfo = result.userTypeInfo;
+    UserContext userContext = UserContextFactory.from(accessor);
+    PurchaseProcessorStrategy processor = processorFactory.getProcessor(userContext);
+    PageResponse<PurchaseContentCardDTO> DTOPageResponse =
+        processor.getMyPurchasedContents(userContext, state, pageable);
 
     PageResponse<PurchaserContentPreviewCardResponse> responsePage =
         purchaseMapper.toPurchaserContentPreviewCardResponsePage(DTOPageResponse);
 
+    String userTypeInfo = userContext.isMember() ? "회원" : "비회원";
+    log.info("{} 구매 목록 조회 - userId: {}, state: {}", userTypeInfo, userContext.getId(), state);
+
     return responseHelper.success(
         responsePage, userTypeInfo + " " + MY_PURCHASING_CONTENT_SUCCESS_MESSAGE, HttpStatus.OK);
-  }
-
-  /** 사용자 타입에 따른 구매 목록 조회 결과 */
-  private record PurchaseContentResult(
-      PageResponse<PurchaseContentCardDTO> dtoPageResponse, String userTypeInfo) {}
-
-  /** 사용자 타입에 따른 구매 콘텐츠 목록 조회 */
-  private PurchaseContentResult getPurchasedContentsByUserType(
-      Accessor accessor, String state, Pageable pageable) {
-
-    if (accessor.isAuthenticated() && !accessor.isGuest()) {
-      // 회원 구매 목록 조회
-      log.info("회원 구매 목록 조회 - userId: {}, state: {}", accessor.getUserId(), state);
-      return new PurchaseContentResult(
-          purchaseService.getMyPurchasedContents(accessor.getUserId(), state, pageable), "회원");
-
-    } else if (accessor.isGuest()) {
-      // 비회원 구매 목록 조회
-      log.info("비회원 구매 목록 조회 - guestUserId: {}, state: {}", accessor.getId(), state);
-      return new PurchaseContentResult(
-          purchaseService.getMyPurchasedContentsForGuest(accessor.getId(), state, pageable), "비회원");
-
-    } else {
-      // 인증되지 않은 사용자
-      throw PurchaseAuthenticationRequiredException.forPurchaseList();
-    }
   }
 }

@@ -1,48 +1,7 @@
 spring:
-  profiles:
-    group:
-      blue: blue, common, secret-prod
-      green: green, common, secret-prod
-
-server:
-  env: blue
-
----
-
-spring:
   config:
     activate:
-      on-profile: blue
-
-server:
-  port: 8080
-  servlet:
-    context-path: /
-  error:
-    include-message: always
-    include-binding-errors: always
-
----
-
-spring:
-  config:
-    activate:
-      on-profile: green
-
-server:
-  port: 8080
-  servlet:
-    context-path: /
-  error:
-    include-message: always
-    include-binding-errors: always
-
----
-
-spring:
-  config:
-    activate:
-      on-profile: common
+      on-profile: prod
 
   application:
     name: groble
@@ -113,7 +72,11 @@ app:
   backend-url: https://api.groble.im
   cookie:
     domain: groble.im
+    domain.dev: 
     admin-domain: groble.im
+    admin-domain.dev: 
+  jwt:
+    environment: prod
   reset:
     base-url: https://groble.im
     path: /reset-password

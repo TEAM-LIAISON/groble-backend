@@ -10,25 +10,17 @@ public class CreateOrderRequestDTO {
   private final Long contentId;
   private final List<OrderOptionDTO> options;
   private final List<String> couponCodes;
-  private final boolean buyerInfoStorageAgreed;
 
   private CreateOrderRequestDTO(
-      Long contentId,
-      List<OrderOptionDTO> options,
-      List<String> couponCodes,
-      boolean buyerInfoStorageAgreed) {
+      Long contentId, List<OrderOptionDTO> options, List<String> couponCodes) {
     this.contentId = contentId;
     this.options = options;
     this.couponCodes = couponCodes;
-    this.buyerInfoStorageAgreed = buyerInfoStorageAgreed;
   }
 
   public static CreateOrderRequestDTO of(
-      Long contentId,
-      List<OrderOptionDTO> options,
-      List<String> couponCodes,
-      boolean buyerInfoStorageAgreed) {
-    return new CreateOrderRequestDTO(contentId, options, couponCodes, buyerInfoStorageAgreed);
+      Long contentId, List<OrderOptionDTO> options, List<String> couponCodes) {
+    return new CreateOrderRequestDTO(contentId, options, couponCodes);
   }
 
   @Getter

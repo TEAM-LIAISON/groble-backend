@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import liaison.groble.application.guest.reader.GuestUserReader;
 import liaison.groble.application.market.dto.ContactInfoDTO;
 import liaison.groble.application.order.service.OrderReader;
 import liaison.groble.application.purchase.dto.PurchaseContentCardDTO;
@@ -32,6 +33,7 @@ public class PurchaseService {
   private final OrderReader orderReader;
   private final PurchaseReader purchaseReader;
   private final SellerContactReader sellerContactReader;
+  private final GuestUserReader guestUserReader;
 
   // 내가 구매한 콘텐츠 목록 조회 (회원용)
   @Transactional(readOnly = true)
@@ -60,8 +62,10 @@ public class PurchaseService {
       Long guestUserId, String state, Pageable pageable) {
     List<Order.OrderStatus> orderStatuses = parseOrderStatuses(state);
 
+    String guestPhoneNumber = guestUserReader.getGuestUserById(guestUserId).getPhoneNumber();
+
     Page<FlatPurchaseContentPreviewDTO> page =
-        purchaseReader.findMyPurchasedContentsForGuest(guestUserId, orderStatuses, pageable);
+        purchaseReader.findMyPurchasedContentsForGuest(guestPhoneNumber, orderStatuses, pageable);
 
     List<PurchaseContentCardDTO> items =
         page.getContent().stream().map(this::convertFlatDTOToCardDTO).toList();
@@ -112,6 +116,30 @@ public class PurchaseService {
 
     User user = items.get(0).getContent().getUser();
     return getContactInfo(user);
+  }
+
+  // 비회원 판매자 연락처 정보 조회
+  @Transactional(readOnly = true)
+  public ContactInfoDTO getContactInfoForGuest(Long guestUserId, String merchantUid) {
+    Order order = orderReader.getOrderByMerchantUidAndGuestUserId(merchantUid, guestUserId);
+
+    List<OrderItem> items = order.getOrderItems();
+    if (items.isEmpty()) {
+      throw new IllegalStateException("주문에 아이템이 없습니다.");
+    }
+
+    User user = items.get(0).getContent().getUser();
+    return getContactInfo(user);
+  }
+
+  // 비회원 구매 콘텐츠 상세 조회
+  @Transactional(readOnly = true)
+  public PurchasedContentDetailDTO getMyPurchasedContentForGuest(
+      Long guestUserId, String merchantUid) {
+    FlatPurchaseContentDetailDTO flatPurchaseContentDetailDTO =
+        purchaseReader.getPurchaseContentDetailForGuest(merchantUid);
+
+    return toPurchasedContentDetailDTO(flatPurchaseContentDetailDTO);
   }
 
   private ContactInfoDTO getContactInfo(User user) {

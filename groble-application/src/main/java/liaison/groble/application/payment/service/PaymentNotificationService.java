@@ -239,6 +239,8 @@ public class PaymentNotificationService {
           ContentPaymentSuccessReportDTO.builder()
               .userId(event.getUserId())
               .nickname(event.getNickname())
+              .guestUserId(event.getGuestUserId())
+              .guestUserName(resolveGuestUserName(event))
               .contentId(event.getContentId())
               .contentTitle(event.getContentTitle())
               .contentType(event.getContentType())
@@ -257,6 +259,14 @@ public class PaymentNotificationService {
     }
   }
 
+  private String resolveGuestUserName(PaymentCompletedEvent event) {
+    String guestUserName = event.getGuestUserName();
+    if (guestUserName != null && !guestUserName.isBlank()) {
+      return guestUserName;
+    }
+    return null;
+  }
+
   /** 디스코드 결제 성사 알림 발송 */
   private void sendDiscordFreePaymentSuccessNotification(FreePaymentCompletedEvent event) {
     try {
@@ -265,6 +275,8 @@ public class PaymentNotificationService {
           ContentPaymentSuccessReportDTO.builder()
               .userId(event.getUserId())
               .nickname(event.getNickname())
+              .guestUserId(null)
+              .guestUserName(null)
               .contentId(event.getContentId())
               .contentTitle(event.getContentTitle())
               .contentType(event.getContentType())

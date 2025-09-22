@@ -284,6 +284,67 @@ public class ContentReviewCustomRepositoryImpl implements ContentReviewCustomRep
   }
 
   @Override
+  public Optional<FlatContentReviewDetailDTO> getContentReviewDetailDTOByContentIdForGuest(
+      Long guestUserId, Long contentId) {
+
+    QUser qUser = QUser.user;
+    QGuestUser qGuestUser = QGuestUser.guestUser;
+    QContent qContent = QContent.content;
+    QPurchase qPurchase = QPurchase.purchase;
+    QContentReview qContentReview = QContentReview.contentReview;
+
+    /* 1) 서브쿼리 – min() 으로 다중 row 방지 - 리뷰와 연관된 구매 정보에서 선택옵션명 조회 */
+    Expression<String> selectedOptionNameExpr =
+        ExpressionUtils.as(
+            JPAExpressions.select(qPurchase.selectedOptionName.min()) // ★ 집계 함수
+                .from(qPurchase)
+                .where(
+                    qPurchase
+                        .content
+                        .id
+                        .eq(contentId)
+                        .and(qPurchase.id.eq(qContentReview.purchase.id))),
+            "selectedOptionName");
+
+    // 기본 조건 설정 (특정 guestUserId가 작성한 리뷰를 찾고, 해당 리뷰가 특정 contentId에 속하는지 확인)
+    BooleanExpression conditions =
+        qContentReview
+            .content
+            .id
+            .eq(contentId)
+            .and(qContentReview.guestUser.id.eq(guestUserId)) // 특정 비회원 사용자가 작성한 리뷰만
+            .and(qContentReview.reviewStatus.eq(ReviewStatus.ACTIVE));
+
+    FlatContentReviewDetailDTO result =
+        jpaQueryFactory
+            .select(
+                Projections.fields(
+                    FlatContentReviewDetailDTO.class,
+                    qContentReview.id.as("reviewId"),
+                    qContent.title.as("contentTitle"),
+                    qContentReview.createdAt.as("createdAt"),
+                    // 리뷰어 닉네임 - 회원/비회원 구분
+                    cases()
+                        .when(qContentReview.user.isNotNull())
+                        .then(qUser.userProfile.nickname)
+                        .when(qContentReview.guestUser.isNotNull())
+                        .then(qGuestUser.username)
+                        .otherwise(nullExpression(String.class))
+                        .as("reviewerNickname"),
+                    qContentReview.reviewContent.as("reviewContent"),
+                    selectedOptionNameExpr,
+                    qContentReview.rating.as("rating")))
+            .from(qContentReview)
+            .leftJoin(qContentReview.content, qContent)
+            .leftJoin(qContentReview.user, qUser)
+            .leftJoin(qContentReview.guestUser, qGuestUser)
+            .where(conditions)
+            .fetchOne();
+
+    return Optional.ofNullable(result);
+  }
+
+  @Override
   public List<FlatContentReviewReplyDTO> findReviewsWithRepliesByContentId(Long contentId) {
     QContentReview qContentReview = QContentReview.contentReview;
     QContentReply qContentReply = QContentReply.contentReply;

@@ -1,5 +1,7 @@
 package liaison.groble.application.purchase.strategy;
 
+import java.util.Optional;
+
 import liaison.groble.application.content.ContentReviewReader;
 import liaison.groble.application.content.ContentReviewWriter;
 import liaison.groble.application.notification.dto.KakaoNotificationDTO;
@@ -8,6 +10,7 @@ import liaison.groble.application.notification.service.KakaoNotificationService;
 import liaison.groble.application.notification.service.NotificationService;
 import liaison.groble.application.order.service.OrderReader;
 import liaison.groble.application.purchase.dto.PurchaserContentReviewDTO;
+import liaison.groble.application.purchase.exception.ReviewAlreadyExistsException;
 import liaison.groble.application.purchase.service.PurchaseReader;
 import liaison.groble.common.context.UserContext;
 import liaison.groble.domain.content.entity.Content;
@@ -48,8 +51,26 @@ public abstract class BaseReviewProcessor implements ReviewProcessorStrategy {
     validatePurchase(userId, content.getId());
     validateReviewNotExists(userId, content.getId());
 
-    ContentReview contentReview = createContentReview(userContext, purchase, content, reviewDTO);
-    ContentReview savedContentReview = contentReviewWriter.save(contentReview);
+    Optional<ContentReview> existingReview = contentReviewReader.findByPurchaseId(purchase.getId());
+
+    ContentReview savedContentReview;
+    if (existingReview.isPresent()) {
+      ContentReview contentReview = existingReview.get();
+
+      if (!isReviewOwner(contentReview, userContext)) {
+        throw reviewAlreadyExistsException(content.getId(), userContext);
+      }
+
+      if (contentReview.getReviewStatus() == ReviewStatus.DELETED) {
+        contentReview.reactivate(reviewDTO.getRating(), reviewDTO.getReviewContent());
+        savedContentReview = contentReviewWriter.save(contentReview);
+      } else {
+        throw reviewAlreadyExistsException(content.getId(), userContext);
+      }
+    } else {
+      ContentReview contentReview = createContentReview(userContext, purchase, content, reviewDTO);
+      savedContentReview = contentReviewWriter.save(contentReview);
+    }
 
     String reviewerName = getUserDisplayName(userContext);
     sendReviewNotifications(content, purchase, reviewerName, savedContentReview.getId());
@@ -138,5 +159,23 @@ public abstract class BaseReviewProcessor implements ReviewProcessorStrategy {
         .rating(reviewDTO.getRating())
         .reviewContent(reviewDTO.getReviewContent())
         .reviewStatus(ReviewStatus.ACTIVE);
+  }
+
+  private boolean isReviewOwner(ContentReview contentReview, UserContext userContext) {
+    if (userContext.isMember()) {
+      return contentReview.isMemberReview()
+          && contentReview.getUser() != null
+          && contentReview.getUser().getId().equals(userContext.getId());
+    }
+    return contentReview.isGuestReview()
+        && contentReview.getGuestUser() != null
+        && contentReview.getGuestUser().getId().equals(userContext.getId());
+  }
+
+  private ReviewAlreadyExistsException reviewAlreadyExistsException(
+      Long contentId, UserContext userContext) {
+    return userContext.isGuest()
+        ? ReviewAlreadyExistsException.forGuest(contentId)
+        : ReviewAlreadyExistsException.forMember(contentId);
   }
 }

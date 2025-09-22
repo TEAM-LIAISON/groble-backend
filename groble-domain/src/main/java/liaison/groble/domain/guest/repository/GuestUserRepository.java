@@ -15,10 +15,6 @@ public interface GuestUserRepository {
 
   boolean existsByPhoneNumberAndHasCompleteUserInfo(String phoneNumber);
 
-  boolean existsByPhoneNumberAndBuyerInfoStorageAgreedTrue(String phoneNumber);
-
-  Optional<GuestUser> getByPhoneNumberAndBuyerInfoStorageAgreedTrue(String phoneNumber);
-
   long count();
 
   GuestUser save(GuestUser guestUser);

@@ -2,7 +2,6 @@ package liaison.groble.api.server.admin;
 
 import jakarta.validation.Valid;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,6 +15,10 @@ import liaison.groble.api.model.admin.request.AdminMemoRequest;
 import liaison.groble.api.model.admin.response.maker.AdminMakerDetailInfoResponse;
 import liaison.groble.api.model.admin.response.maker.AdminMemoResponse;
 import liaison.groble.api.model.maker.response.MakerIntroSectionResponse;
+import liaison.groble.api.server.admin.docs.AdminMakerSwaggerDocs;
+import liaison.groble.api.server.common.ApiPaths;
+import liaison.groble.api.server.common.BaseController;
+import liaison.groble.api.server.common.ResponseMessages;
 import liaison.groble.application.admin.dto.AdminMakerDetailInfoDTO;
 import liaison.groble.application.admin.dto.AdminMemoDTO;
 import liaison.groble.application.admin.service.AdminMakerService;
@@ -32,34 +35,27 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 @RestController
-@RequiredArgsConstructor
-@RequestMapping("/api/v1/admin")
-@Tag(
-    name = "[✅ 관리자] 관리자 메이커 상세 조회 및 메이커 인증 API",
-    description = "개인 메이커 및 사업자 메이커의 상세 정보를 조회하고, 메이커 인증 요청을 처리하는 API입니다.")
-public class AdminMakerController {
+@RequestMapping(ApiPaths.Admin.MAKER_BASE)
+@Tag(name = AdminMakerSwaggerDocs.TAG_NAME, description = AdminMakerSwaggerDocs.TAG_DESCRIPTION)
+public class AdminMakerController extends BaseController {
 
-  // API 경로 상수화
-  private static final String MAKER_DETAIL_INFO_PATH = "/maker/{nickname}";
-
-  // 응답 메시지 상수화
-  private static final String MAKER_DETAIL_INFO_SUCCESS_MESSAGE = "메이커 상세 정보 조회 성공";
-  private static final String ADMIN_MEMO_SAVE_SUCCESS_MESSAGE = "관리자 메모 저장 성공";
-  // Service
   private final AdminMakerService adminMakerService;
-
-  // Mapper
   private final AdminMakerMapper adminMakerMapper;
 
-  // Helper
-  private final ResponseHelper responseHelper;
+  public AdminMakerController(
+      ResponseHelper responseHelper,
+      AdminMakerService adminMakerService,
+      AdminMakerMapper adminMakerMapper) {
+    super(responseHelper);
+    this.adminMakerService = adminMakerService;
+    this.adminMakerMapper = adminMakerMapper;
+  }
 
-  @Operation(summary = "[✅ 관리자 메이커] 메이커 상세 정보 조회")
+  @Operation(
+      summary = AdminMakerSwaggerDocs.GET_MAKER_DETAIL_SUMMARY,
+      description = AdminMakerSwaggerDocs.GET_MAKER_DETAIL_DESCRIPTION)
   @ApiResponse(
       responseCode = "200",
       content = @Content(schema = @Schema(implementation = MakerIntroSectionResponse.class)))
@@ -69,7 +65,7 @@ public class AdminMakerController {
       includeParam = true,
       includeResult = true)
   @RequireRole("ROLE_ADMIN")
-  @GetMapping(MAKER_DETAIL_INFO_PATH)
+  @GetMapping(ApiPaths.Admin.MAKER_DETAIL)
   public ResponseEntity<GrobleResponse<AdminMakerDetailInfoResponse>> getMakerDetailInfo(
       @Auth Accessor accessor, @Valid @PathVariable("nickname") String nickname) {
 
@@ -78,30 +74,34 @@ public class AdminMakerController {
     AdminMakerDetailInfoResponse response =
         adminMakerMapper.toAdminMakerDetailInfoResponse(adminMakerServiceMakerDetailInfo);
 
-    return responseHelper.success(response, MAKER_DETAIL_INFO_SUCCESS_MESSAGE, HttpStatus.OK);
+    return success(response, ResponseMessages.Admin.MAKER_DETAIL_INFO_RETRIEVED);
   }
 
-  @Operation(summary = "[✅ 관리자 메이커] 메이커 인증 요청 처리", description = "메이커 인증 요청을 처리합니다. [수락/거절]")
+  @Operation(
+      summary = AdminMakerSwaggerDocs.VERIFY_MAKER_SUMMARY,
+      description = AdminMakerSwaggerDocs.VERIFY_MAKER_DESCRIPTION)
   @RequireRole("ROLE_ADMIN")
-  @PostMapping("/maker/verify")
+  @PostMapping(ApiPaths.Admin.MAKER_VERIFY)
   public ResponseEntity<GrobleResponse<Void>> verifyMakerAccount(
       @Auth Accessor accessor, @Valid @RequestBody AdminMakerVerifyRequest request) {
 
     return switch (request.getStatus()) {
       case APPROVED -> {
         adminMakerService.approveMaker(request.getNickname());
-        yield ResponseEntity.ok(GrobleResponse.success(null, "메이커 인증 승인 성공"));
+        yield successVoid(ResponseMessages.Admin.MAKER_VERIFY_APPROVED);
       }
       case REJECTED -> {
         adminMakerService.rejectMaker(request.getNickname());
-        yield ResponseEntity.ok(GrobleResponse.success(null, "메이커 인증 거절 성공"));
+        yield successVoid(ResponseMessages.Admin.MAKER_VERIFY_REJECTED);
       }
     };
   }
 
-  @Operation(summary = "[✅ 관리자] 메모 추가", description = "사용자에 대한 관리자 메모를 추가합니다.")
+  @Operation(
+      summary = AdminMakerSwaggerDocs.SAVE_ADMIN_MEMO_SUMMARY,
+      description = AdminMakerSwaggerDocs.SAVE_ADMIN_MEMO_DESCRIPTION)
   @RequireRole("ROLE_ADMIN")
-  @PostMapping("/maker/memo/{nickname}")
+  @PostMapping(ApiPaths.Admin.MAKER_MEMO)
   public ResponseEntity<GrobleResponse<AdminMemoResponse>> saveAdminMemo(
       @Auth Accessor accessor,
       @Valid @PathVariable("nickname") String nickname,
@@ -111,6 +111,6 @@ public class AdminMakerController {
     AdminMemoDTO savedAdminMemoDTO =
         adminMakerService.saveAdminMemo(accessor.getUserId(), nickname, memoDTO);
     AdminMemoResponse savedAdminMemo = adminMakerMapper.toAdminMemoResponse(savedAdminMemoDTO);
-    return responseHelper.success(savedAdminMemo, ADMIN_MEMO_SAVE_SUCCESS_MESSAGE, HttpStatus.OK);
+    return success(savedAdminMemo, ResponseMessages.Admin.MAKER_MEMO_SAVED);
   }
 }

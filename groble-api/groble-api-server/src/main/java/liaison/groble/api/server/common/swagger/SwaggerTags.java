@@ -81,6 +81,12 @@ public final class SwaggerTags {
     public static final String SETTLEMENT = "[✅ 관리자 정산 관리] 정산 관리 API";
     public static final String SETTLEMENT_DESC = "정산 내역 조회 및 정산 완료 기능을 제공합니다.";
 
+    public static final String ORDER = "[✅ 관리자 주문 관리] 주문 목록 및 취소 요청 관리 API";
+    public static final String ORDER_DESC = "관리자의 주문 목록 조회, 취소 요청 처리, 취소 사유 조회 기능을 제공합니다.";
+
+    public static final String MAKER = "[✅ 관리자 메이커 관리] 메이커 상세 조회 및 인증 API";
+    public static final String MAKER_DESC = "관리자의 메이커 상세 조회, 인증 처리, 메모 관리 기능을 제공합니다.";
+
     private Admin() {}
   }
 

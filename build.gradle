@@ -168,6 +168,9 @@ project(':groble-api:groble-api-server') {
         implementation 'io.opentelemetry:opentelemetry-exporter-otlp:1.40.0'
         implementation 'io.opentelemetry:opentelemetry-exporter-logging-otlp:1.40.0'
         implementation 'io.opentelemetry:opentelemetry-exporter-logging:1.40.0'
+
+        // Structured logging (JSON) encoder
+        implementation 'net.logstash.logback:logstash-logback-encoder:7.4'
     }
 
     tasks.named('bootJar') {

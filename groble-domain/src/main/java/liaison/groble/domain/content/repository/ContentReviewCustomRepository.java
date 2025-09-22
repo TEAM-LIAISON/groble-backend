@@ -21,6 +21,9 @@ public interface ContentReviewCustomRepository {
   Optional<FlatContentReviewDetailDTO> getContentReviewDetailDTOByContentId(
       Long userId, Long contentId);
 
+  Optional<FlatContentReviewDetailDTO> getContentReviewDetailDTOByContentIdForGuest(
+      Long guestUserId, Long contentId);
+
   List<FlatContentReviewReplyDTO> findReviewsWithRepliesByContentId(Long contentId);
 
   void updateContentReviewStatusToDeleteRequested(Long userId, Long reviewId);

@@ -36,7 +36,4 @@ public class CreateOrderRequest {
   @AssertTrue(message = "결제 진행 필수 동의")
   @Schema(description = "결제 진행 필수 동의", example = "true")
   private boolean orderTermsAgreed;
-
-  @Schema(description = "구매자 정보 저장 약관 동의 여부 (선택사항)", example = "true")
-  private boolean buyerInfoStorageAgreed;
 }

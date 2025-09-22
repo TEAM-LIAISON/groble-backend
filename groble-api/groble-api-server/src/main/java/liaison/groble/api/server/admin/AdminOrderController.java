@@ -3,7 +3,6 @@ package liaison.groble.api.server.admin;
 import jakarta.validation.Valid;
 
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -17,6 +16,10 @@ import liaison.groble.api.model.admin.response.AdminOrderCancellationReasonRespo
 import liaison.groble.api.model.admin.response.AdminOrderSummaryInfoResponse;
 import liaison.groble.api.model.admin.response.swagger.AdminOrderSummaryInfo;
 import liaison.groble.api.model.admin.validation.ValidOrderCancelAction;
+import liaison.groble.api.server.admin.docs.AdminOrderSwaggerDocs;
+import liaison.groble.api.server.common.ApiPaths;
+import liaison.groble.api.server.common.BaseController;
+import liaison.groble.api.server.common.ResponseMessages;
 import liaison.groble.application.admin.dto.AdminOrderCancelRequestDTO;
 import liaison.groble.application.admin.dto.AdminOrderCancellationReasonDTO;
 import liaison.groble.application.admin.dto.AdminOrderSummaryInfoDTO;
@@ -35,44 +38,30 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 @RestController
-@RequiredArgsConstructor
-@RequestMapping("/api/v1/admin")
-@Tag(
-    name = "[✅ 관리자 주문 페이지] 모든 주문을 조회하고 취소 사유 조회 기능 API",
-    description = "모든 주문 목록을 조회하고, 취소 요청 및 환불 완료 주문에 대한 사유를 조회하는 API입니다.")
-public class AdminOrderController {
+@RequestMapping(ApiPaths.Admin.BASE)
+@Tag(name = AdminOrderSwaggerDocs.TAG_NAME, description = AdminOrderSwaggerDocs.TAG_DESCRIPTION)
+public class AdminOrderController extends BaseController {
 
-  // API 경로 상수화
-  private static final String ADMIN_ORDERS_PATH = "/orders";
-  private static final String CANCEL_REQUEST_ORDER_PATH = "/order/{merchantUid}/cancel-request";
-  private static final String ORDER_CANCELLATION_REASON_PATH =
-      "/order/{merchantUid}/cancellation-reason";
-
-  // 응답 메시지 상수화
-  private static final String ADMIN_ORDERS_RESPONSE_MESSAGE = "모든 주문 목록을 조회하는 데 성공했습니다.";
-  private static final String CANCEL_REQUEST_ORDER_RESPONSE_MESSAGE =
-      "결제 취소 요청 주문에 대한 승인 및 거절 처리에 성공했습니다.";
-  private static final String ORDER_CANCELLATION_REASON_RESPONSE_MESSAGE =
-      "결제 취소 주문에 대한 사유 조회에 성공했습니다.";
-
-  // Service
   private final AdminOrderService adminOrderService;
-
-  // Mapper
   private final AdminOrderMapper adminOrderMapper;
 
-  // Helper
-  private final ResponseHelper responseHelper;
+  public AdminOrderController(
+      ResponseHelper responseHelper,
+      AdminOrderService adminOrderService,
+      AdminOrderMapper adminOrderMapper) {
+    super(responseHelper);
+    this.adminOrderService = adminOrderService;
+    this.adminOrderMapper = adminOrderMapper;
+  }
 
-  // 1. 주문 목록 전체 조회 (결제 완료 이후에 대한 주문만 모두 조회 가능)
+  @Operation(
+      summary = AdminOrderSwaggerDocs.GET_ALL_ORDERS_SUMMARY,
+      description = AdminOrderSwaggerDocs.GET_ALL_ORDERS_DESCRIPTION)
   @AdminOrderSummaryInfo
   @RequireRole("ROLE_ADMIN")
-  @GetMapping(ADMIN_ORDERS_PATH)
+  @GetMapping(ApiPaths.Admin.ORDERS)
   @Logging(item = "AdminOrder", action = "getAllOrders", includeParam = true, includeResult = true)
   public ResponseEntity<GrobleResponse<PageResponse<AdminOrderSummaryInfoResponse>>> getAllOrders(
       @Auth Accessor accessor,
@@ -90,13 +79,14 @@ public class AdminOrderController {
     PageResponse<AdminOrderSummaryInfoResponse> responsePage =
         adminOrderMapper.toAdminOrderSummaryInfoResponsePage(infoDTOPage);
 
-    return responseHelper.success(responsePage, ADMIN_ORDERS_RESPONSE_MESSAGE, HttpStatus.OK);
+    return success(responsePage, ResponseMessages.Admin.ORDER_SUMMARY_INFO_RETRIEVED);
   }
 
-  // 2. 결제 취소 주문에 대한 사유 조회
-  @Operation(summary = "[✅ 관리자 주문 관리] 결제 취소 주문에 대한 사유 조회", description = "결제 취소 주문에 대한 사유를 조회합니다.")
+  @Operation(
+      summary = AdminOrderSwaggerDocs.GET_CANCELLATION_REASON_SUMMARY,
+      description = AdminOrderSwaggerDocs.GET_CANCELLATION_REASON_DESCRIPTION)
   @RequireRole("ROLE_ADMIN")
-  @GetMapping(ORDER_CANCELLATION_REASON_PATH)
+  @GetMapping(ApiPaths.Admin.ORDER_CANCELLATION_REASON)
   @Logging(
       item = "AdminOrder",
       action = "getOrderCancellationReason",
@@ -109,16 +99,14 @@ public class AdminOrderController {
         adminOrderService.getOrderCancellationReason(merchantUid);
     AdminOrderCancellationReasonResponse reasonResponse =
         adminOrderMapper.toAdminOrderCancellationReasonResponse(reasonDTO);
-    return responseHelper.success(
-        reasonResponse, ORDER_CANCELLATION_REASON_RESPONSE_MESSAGE, HttpStatus.OK);
+    return success(reasonResponse, ResponseMessages.Admin.ORDER_CANCELLATION_REASON_RETRIEVED);
   }
 
-  // 3. 결제 취소 요청 주문 (승인 및 거절)
   @Operation(
-      summary = "[✅ 관리자 주문 관리] 결제 취소 요청 주문 승인 및 거절",
-      description = "결제 취소 요청 주문을 승인하거나 거절합니다.")
+      summary = AdminOrderSwaggerDocs.HANDLE_CANCEL_REQUEST_SUMMARY,
+      description = AdminOrderSwaggerDocs.HANDLE_CANCEL_REQUEST_DESCRIPTION)
   @RequireRole("ROLE_ADMIN")
-  @PostMapping(CANCEL_REQUEST_ORDER_PATH)
+  @PostMapping(ApiPaths.Admin.ORDER_CANCEL_REQUEST)
   @Logging(
       item = "AdminOrder",
       action = "cancelRequestOrder",
@@ -139,6 +127,6 @@ public class AdminOrderController {
         adminOrderService.handleCancelRequestOrder(merchantUid, action);
     AdminOrderCancelRequestResponse response =
         adminOrderMapper.toAdminOrderCancelRequestResponse(adminOrderCancelRequestDTO);
-    return responseHelper.success(response, CANCEL_REQUEST_ORDER_RESPONSE_MESSAGE, HttpStatus.OK);
+    return success(response, ResponseMessages.Admin.ORDER_CANCEL_REQUEST_PROCESSED);
   }
 }
