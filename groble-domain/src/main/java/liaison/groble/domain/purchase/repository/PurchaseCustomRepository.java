@@ -34,7 +34,7 @@ public interface PurchaseCustomRepository {
       Long userId, List<Order.OrderStatus> orderStatuses, Pageable pageable);
 
   Page<FlatPurchaseContentPreviewDTO> findMyPurchasedContentsForGuest(
-      Long guestUserId, List<Order.OrderStatus> orderStatuses, Pageable pageable);
+      String guestPhoneNumber, List<Order.OrderStatus> orderStatuses, Pageable pageable);
 
   Optional<FlatSellManageDetailDTO> getSellManageDetail(Long userId, Long contentId);
 
@@ -45,4 +45,6 @@ public interface PurchaseCustomRepository {
   FlatDashboardOverviewDTO getDashboardOverviewStats(Long sellerId);
 
   FlatDashboardOverviewDTO getAdminDashboardOverviewStats();
+
+  Optional<FlatPurchaseContentDetailDTO> getPurchaseContentDetailForGuest(String merchantUid);
 }

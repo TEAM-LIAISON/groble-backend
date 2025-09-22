@@ -18,6 +18,8 @@ public class AdminUserSummaryInfoDTO {
 
   private String phoneNumber;
 
+  private String userStatus;
+
   private boolean isMarketingAgreed;
 
   private boolean isSellerInfo;
@@ -27,4 +29,6 @@ public class AdminUserSummaryInfoDTO {
   private boolean isBusinessSeller;
 
   private String businessType;
+
+  private String withdrawalReason;
 }

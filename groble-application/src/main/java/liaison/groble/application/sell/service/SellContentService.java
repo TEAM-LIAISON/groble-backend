@@ -185,6 +185,39 @@ public class SellContentService {
         .orElse(null); // 리뷰가 없으면 null 반환
   }
 
+  // 비회원 콘텐츠 리뷰 상세 조회
+  @Transactional(readOnly = true)
+  public ContentReviewDetailDTO getContentReviewDetailForGuest(
+      Long guestUserId, String merchantUid) {
+    Order order = orderReader.getOrderByMerchantUidAndGuestUserId(merchantUid, guestUserId);
+    Purchase purchase = purchaseReader.getPurchaseByOrderId(order.getId());
+    Long contentId = purchase.getContent().getId();
+    Optional<FlatContentReviewDetailDTO> reviewOpt =
+        contentReviewReader.getContentReviewDetailForGuest(guestUserId, contentId);
+    // 2) 리뷰 + 리플리 조회 후 DTO 조합
+    return reviewOpt
+        .map(
+            flat -> {
+              // flat.getReviewId() 기준으로 답글들 불러오기
+              List<FlatReviewReplyDTO> replies =
+                  contentReplyReader.findRepliesByReviewId(flat.getReviewId());
+              // (2) Collectors.toList() 사용
+              List<ReviewReplyDTO> replyDTOs =
+                  replies.stream()
+                      .map(
+                          reply ->
+                              ReviewReplyDTO.builder()
+                                  .replyId(reply.getReplyId())
+                                  .replyContent(reply.getReplyContent())
+                                  .replierNickname(reply.getReplierNickname())
+                                  .createdAt(reply.getCreatedAt())
+                                  .build())
+                      .collect(Collectors.toList());
+              return buildContentReviewDetail(flat, replyDTOs);
+            })
+        .orElse(null); // 리뷰가 없으면 null 반환
+  }
+
   @Transactional
   public void deleteReviewRequest(Long userId, Long reviewId) {
     contentReviewWriter.updateContentReviewStatusToDeleteRequested(userId, reviewId);

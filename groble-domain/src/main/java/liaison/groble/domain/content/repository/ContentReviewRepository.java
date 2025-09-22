@@ -12,4 +12,6 @@ public interface ContentReviewRepository {
   boolean existsContentReview(Long userId, Long contentId);
 
   boolean existsContentReviewForGuest(Long guestUserId, Long contentId);
+
+  Optional<ContentReview> findByPurchaseId(Long purchaseId);
 }

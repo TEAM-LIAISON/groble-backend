@@ -36,9 +36,23 @@ public class PurchaseReader {
         .orElseThrow(() -> new EntityNotFoundException("구매 정보를 찾을 수 없습니다."));
   }
 
+  public Purchase getGuestPurchaseWithOrderAndContent(String merchantUid, Long guestUserId) {
+    return purchaseRepository
+        .findByMerchantUidAndGuestUserIdWithOrderAndContent(merchantUid, guestUserId)
+        .orElseThrow(() -> new EntityNotFoundException("구매 정보를 찾을 수 없습니다."));
+  }
+
   public FlatPurchaseContentDetailDTO getPurchaseContentDetail(Long userId, String merchantUid) {
     return purchaseCustomRepository
         .getPurchaseContentDetail(userId, merchantUid)
+        .orElseThrow(
+            () -> new EntityNotFoundException("구매 정보를 찾을 수 없습니다. Merchant UID: " + merchantUid));
+  }
+
+  // 비회원 구매 상세 정보 조회
+  public FlatPurchaseContentDetailDTO getPurchaseContentDetailForGuest(String merchantUid) {
+    return purchaseCustomRepository
+        .getPurchaseContentDetailForGuest(merchantUid)
         .orElseThrow(
             () -> new EntityNotFoundException("구매 정보를 찾을 수 없습니다. Merchant UID: " + merchantUid));
   }
@@ -76,9 +90,9 @@ public class PurchaseReader {
   }
 
   public Page<FlatPurchaseContentPreviewDTO> findMyPurchasedContentsForGuest(
-      Long guestUserId, List<Order.OrderStatus> orderStatuses, Pageable pageable) {
+      String guestPhoneNumber, List<Order.OrderStatus> orderStatuses, Pageable pageable) {
     return purchaseCustomRepository.findMyPurchasedContentsForGuest(
-        guestUserId, orderStatuses, pageable);
+        guestPhoneNumber, orderStatuses, pageable);
   }
 
   public FlatSellManageDetailDTO getSellManageDetail(Long userId, Long contentId) {

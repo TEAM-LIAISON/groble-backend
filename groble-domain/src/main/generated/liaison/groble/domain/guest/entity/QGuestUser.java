@@ -21,10 +21,6 @@ public class QGuestUser extends EntityPathBase<GuestUser> {
 
     public final liaison.groble.domain.common.entity.QBaseTimeEntity _super = new liaison.groble.domain.common.entity.QBaseTimeEntity(this);
 
-    public final BooleanPath buyerInfoStorageAgreed = createBoolean("buyerInfoStorageAgreed");
-
-    public final DateTimePath<java.time.LocalDateTime> buyerInfoStorageAgreedAt = createDateTime("buyerInfoStorageAgreedAt", java.time.LocalDateTime.class);
-
     //inherited
     public final DateTimePath<java.time.LocalDateTime> createdAt = _super.createdAt;
 

@@ -22,6 +22,8 @@ public class FlatAdminUserSummaryInfoDTO {
 
   private String phoneNumber;
 
+  private String userStatus;
+
   private boolean isMarketingAgreed;
 
   private boolean isSellerInfo;
@@ -31,4 +33,8 @@ public class FlatAdminUserSummaryInfoDTO {
   private boolean isBusinessSeller;
 
   private String businessType;
+
+  private String withdrawalReason;
+
+  private String withdrawalAdditionalComment;
 }

@@ -10,6 +10,7 @@ import org.springframework.stereotype.Repository;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.JPAExpressions;
+import com.querydsl.jpa.JPQLQuery;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
@@ -20,6 +21,7 @@ import liaison.groble.domain.user.entity.QIntegratedAccount;
 import liaison.groble.domain.user.entity.QSellerInfo;
 import liaison.groble.domain.user.entity.QSocialAccount;
 import liaison.groble.domain.user.entity.QUser;
+import liaison.groble.domain.user.entity.QUserWithdrawalHistory;
 import liaison.groble.domain.user.enums.UserStatus;
 import liaison.groble.domain.user.repository.UserCustomRepository;
 
@@ -61,6 +63,13 @@ public class UserCustomRepositoryImpl implements UserCustomRepository {
     QSocialAccount qSoc = QSocialAccount.socialAccount;
     QUserTerms ut = QUserTerms.userTerms;
     QSellerInfo qSellerInfo = QSellerInfo.sellerInfo;
+    QUserWithdrawalHistory qWithdrawalHistory = QUserWithdrawalHistory.userWithdrawalHistory;
+    QUserWithdrawalHistory qWithdrawalHistorySub =
+        new QUserWithdrawalHistory("userWithdrawalHistorySub");
+    QUserWithdrawalHistory qWithdrawalHistoryComment =
+        new QUserWithdrawalHistory("userWithdrawalHistoryComment");
+    QUserWithdrawalHistory qWithdrawalHistoryCommentSub =
+        new QUserWithdrawalHistory("userWithdrawalHistoryCommentSub");
 
     // 마케팅 수신 동의 존재 여부
     BooleanExpression marketingAgreedExists =
@@ -80,6 +89,28 @@ public class UserCustomRepositoryImpl implements UserCustomRepository {
                 ut.agreed.isTrue())
             .exists();
 
+    JPQLQuery<String> latestWithdrawalReason =
+        JPAExpressions.select(qWithdrawalHistory.reason.stringValue())
+            .from(qWithdrawalHistory)
+            .where(
+                qWithdrawalHistory.userId.eq(qUser.id),
+                qWithdrawalHistory.withdrawalDate.eq(
+                    JPAExpressions.select(qWithdrawalHistorySub.withdrawalDate.max())
+                        .from(qWithdrawalHistorySub)
+                        .where(qWithdrawalHistorySub.userId.eq(qUser.id))))
+            .limit(1);
+
+    JPQLQuery<String> latestWithdrawalComment =
+        JPAExpressions.select(qWithdrawalHistoryComment.additionalComment)
+            .from(qWithdrawalHistoryComment)
+            .where(
+                qWithdrawalHistoryComment.userId.eq(qUser.id),
+                qWithdrawalHistoryComment.withdrawalDate.eq(
+                    JPAExpressions.select(qWithdrawalHistoryCommentSub.withdrawalDate.max())
+                        .from(qWithdrawalHistoryCommentSub)
+                        .where(qWithdrawalHistoryCommentSub.userId.eq(qUser.id))))
+            .limit(1);
+
     JPAQuery<FlatAdminUserSummaryInfoDTO> query =
         queryFactory
             .select(
@@ -90,6 +121,12 @@ public class UserCustomRepositoryImpl implements UserCustomRepository {
                     qUser.userProfile.nickname.as("nickname"),
                     qInt.integratedAccountEmail.coalesce(qSoc.socialAccountEmail),
                     qUser.userProfile.phoneNumber.as("phoneNumber"),
+                    qUser
+                        .userStatusInfo
+                        .status
+                        .stringValue()
+                        .coalesce(UserStatus.ACTIVE.name())
+                        .as("userStatus"),
                     marketingAgreedExists.as("isMarketingAgreed"),
                     qSellerInfo
                         .businessLicenseFileUrl
@@ -102,7 +139,9 @@ public class UserCustomRepositoryImpl implements UserCustomRepository {
                         .coalesce("NONE")
                         .as("verificationStatus"),
                     qSellerInfo.businessSellerRequest.coalesce(false).as("isBusinessSeller"),
-                    qSellerInfo.businessType.stringValue().coalesce("NONE").as("businessType")))
+                    qSellerInfo.businessType.stringValue().coalesce("NONE").as("businessType"),
+                    latestWithdrawalReason,
+                    latestWithdrawalComment))
             .from(qUser)
             .leftJoin(qUser.integratedAccount, qInt)
             .leftJoin(qUser.socialAccount, qSoc)
