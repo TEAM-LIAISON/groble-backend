@@ -33,6 +33,7 @@ import liaison.groble.api.model.content.response.swagger.UploadContentThumbnail;
 import liaison.groble.api.model.dashboard.request.referrer.ReferrerRequest;
 import liaison.groble.api.model.file.response.FileUploadResponse;
 import liaison.groble.api.model.maker.response.ContactInfoResponse;
+import liaison.groble.api.model.maker.response.MakerInfoResponse;
 import liaison.groble.api.server.content.docs.ContentSwaggerDocs;
 import liaison.groble.api.server.util.FileUtil;
 import liaison.groble.api.server.util.FileValidationUtil;
@@ -47,6 +48,7 @@ import liaison.groble.application.dashboard.service.ReferrerService;
 import liaison.groble.application.file.FileService;
 import liaison.groble.application.file.dto.FileDTO;
 import liaison.groble.application.file.dto.FileUploadDTO;
+import liaison.groble.application.maker.service.MakerInfoService;
 import liaison.groble.application.market.dto.ContactInfoDTO;
 import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.annotation.Logging;
@@ -59,6 +61,7 @@ import liaison.groble.common.utils.PageUtils;
 import liaison.groble.mapping.content.ContentMapper;
 import liaison.groble.mapping.content.ContentReviewMapper;
 import liaison.groble.mapping.dashboard.ReferrerMapper;
+import liaison.groble.mapping.maker.MakerMapper;
 import liaison.groble.mapping.market.MarketMapper;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -82,6 +85,7 @@ public class ContentController {
 
   // API 경로 상수화
   private static final String CONTENT_DETAIL_PATH = "/content/{contentId}";
+  private static final String CONTENT_MAKER_INFO_PATH = "/content/{contentId}/maker";
   private static final String HOME_CONTENTS_PATH = "/home/contents";
   private static final String UPLOAD_CONTENT_THUMBNAIL_PATH = "/content/thumbnail/image";
   private static final String UPLOAD_CONTENT_DETAIL_IMAGES_PATH = "/content/detail/images";
@@ -94,6 +98,7 @@ public class ContentController {
   // 응답 메시지 상수화
   private static final String CONTENT_DETAIL_SUCCESS_MESSAGE = "콘텐츠 상세 조회에 성공하였습니다.";
   private static final String HOME_CONTENTS_SUCCESS_MESSAGE = "홈화면 콘텐츠 조회에 성공하였습니다.";
+  private static final String CONTENT_MAKER_INFO_SUCCESS_MESSAGE = "콘텐츠 메이커 정보 조회에 성공했습니다.";
   private static final String UPLOAD_CONTENT_THUMBNAIL_SUCCESS_MESSAGE =
       "콘텐츠 썸네일 이미지 업로드가 성공적으로 완료되었습니다.";
   private static final String CONTENT_REVIEWS_SUCCESS_MESSAGE = "콘텐츠 리뷰 목록 조회에 성공하였습니다.";
@@ -105,11 +110,13 @@ public class ContentController {
   private final FileService fileService;
   private final ContentViewCountService contentViewCountService;
   private final ReferrerService referrerService;
+  private final MakerInfoService makerInfoService;
 
   // Mapper
   private final MarketMapper marketMapper;
   private final ContentMapper contentMapper;
   private final ContentReviewMapper contentReviewMapper;
+  private final MakerMapper makerMapper;
 
   // Util
   private final RequestUtil requestUtil;
@@ -199,6 +206,24 @@ public class ContentController {
 
     HomeContentsResponse payload = new HomeContentsResponse(items);
     return responseHelper.success(payload, HOME_CONTENTS_SUCCESS_MESSAGE, HttpStatus.OK);
+  }
+
+  @Operation(summary = "[✅ 콘텐츠] 콘텐츠 메이커 정보 조회", description = "콘텐츠를 등록한 메이커의 인증 및 기본 정보를 조회합니다.")
+  @ApiResponse(
+      responseCode = "200",
+      description = "콘텐츠 메이커 정보 조회 성공",
+      content =
+          @Content(
+              mediaType = "application/json",
+              schema = @Schema(implementation = MakerInfoResponse.class)))
+  @Logging(item = "Content", action = "getMakerInfo", includeParam = true, includeResult = true)
+  @GetMapping(CONTENT_MAKER_INFO_PATH)
+  public ResponseEntity<GrobleResponse<MakerInfoResponse>> getMakerInfoByContent(
+      @PathVariable("contentId") Long contentId) {
+
+    MakerInfoResponse response =
+        makerMapper.toMakerInfoResponse(makerInfoService.getMakerInfoByContentId(contentId));
+    return responseHelper.success(response, CONTENT_MAKER_INFO_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 
   @ContentsCoachingCategory
