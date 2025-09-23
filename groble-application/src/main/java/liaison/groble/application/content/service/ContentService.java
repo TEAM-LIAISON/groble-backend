@@ -473,20 +473,13 @@ public class ContentService {
   }
 
   /**
-   * 홈화면 콘텐츠 목록을 List 형태로 조회합니다.
+   * 홈화면에 노출할 콘텐츠 목록을 sortOrder 기준으로 조회합니다.
    *
-   * @param type 콘텐츠 타입 (COACHING 또는 DOCUMENT)
    * @return 콘텐츠 카드 DTO 목록
    */
   @Transactional(readOnly = true)
-  public List<ContentCardDTO> getHomeContentsList(String type) {
-    // 콘텐츠 타입 파싱
-    ContentType contentType = parseContentType(type);
-
-    // contentCustomRepository를 통해 데이터 조회 (커서 없이)
-    List<FlatContentPreviewDTO> flatDTOs = contentCustomRepository.findHomeContents(contentType);
-
-    // DTO 변환
+  public List<ContentCardDTO> getHomeContents() {
+    List<FlatContentPreviewDTO> flatDTOs = contentCustomRepository.findHomeContents();
     return flatDTOs.stream().map(this::convertFlatDTOToCardDTO).collect(Collectors.toList());
   }
 
@@ -687,19 +680,6 @@ public class ContentService {
         .status(flat.getStatus())
         .isDeletable(flat.getIsDeletable())
         .build();
-  }
-
-  private ContentType parseContentType(String type) {
-    if (type == null || type.isBlank()) {
-      return null;
-    }
-
-    try {
-      return ContentType.valueOf(type.toUpperCase());
-    } catch (IllegalArgumentException e) {
-      log.warn("유효하지 않은 콘텐츠 유형: {}", type);
-      return null;
-    }
   }
 
   /** Content를 DTO로 변환합니다. */

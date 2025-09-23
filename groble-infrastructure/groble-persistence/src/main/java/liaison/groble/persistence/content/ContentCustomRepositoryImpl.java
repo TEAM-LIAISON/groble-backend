@@ -144,13 +144,13 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
   }
 
   @Override
-  public List<FlatContentPreviewDTO> findHomeContents(ContentType contentType) {
+  public List<FlatContentPreviewDTO> findHomeContents() {
     QContent qContent = QContent.content;
     QUser qUser = QUser.user;
     QContentOption qContentOption = QContentOption.contentOption;
 
     BooleanExpression conditions =
-        qContent.contentType.eq(contentType).and(qContent.status.eq(ContentStatus.ACTIVE));
+        qContent.status.eq(ContentStatus.ACTIVE).and(qContent.sortOrder.ne(0));
 
     return queryFactory
         .select(
@@ -173,7 +173,6 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
         .where(conditions)
         // --- sortOrder DESC를 가장 먼저 두고, 동일한 sortOrder끼리는 createdAt 기준으로 최신순 정렬 ---
         .orderBy(qContent.sortOrder.desc(), qContent.createdAt.desc())
-        .limit(12)
         .fetch();
   }
 

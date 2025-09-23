@@ -27,12 +27,13 @@ import liaison.groble.api.model.content.response.HomeContentsResponse;
 import liaison.groble.api.model.content.response.review.ContentReviewResponse;
 import liaison.groble.api.model.content.response.swagger.ContentsCoachingCategory;
 import liaison.groble.api.model.content.response.swagger.ContentsDocumentCategory;
-import liaison.groble.api.model.content.response.swagger.HomeContents;
+import liaison.groble.api.model.content.response.swagger.HomeContentsApiResponse;
 import liaison.groble.api.model.content.response.swagger.UploadContentDownloadFile;
 import liaison.groble.api.model.content.response.swagger.UploadContentThumbnail;
 import liaison.groble.api.model.dashboard.request.referrer.ReferrerRequest;
 import liaison.groble.api.model.file.response.FileUploadResponse;
 import liaison.groble.api.model.maker.response.ContactInfoResponse;
+import liaison.groble.api.server.content.docs.ContentSwaggerDocs;
 import liaison.groble.api.server.util.FileUtil;
 import liaison.groble.api.server.util.FileValidationUtil;
 import liaison.groble.application.content.dto.ContentCardDTO;
@@ -65,6 +66,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -75,7 +77,7 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequestMapping("/api/v1")
 @RequiredArgsConstructor
-@Tag(name = "[📝 콘텐츠] 콘텐츠 관련 API", description = "콘텐츠 상세 조회, 콘텐츠 리뷰 목록 조회, 콘텐츠 이미지 업로드 등")
+@Tag(name = ContentSwaggerDocs.TAG_NAME, description = ContentSwaggerDocs.TAG_DESCRIPTION)
 public class ContentController {
 
   // API 경로 상수화
@@ -174,19 +176,28 @@ public class ContentController {
   }
 
   // 홈화면 콘텐츠 조회
-  @HomeContents
+  @Operation(
+      summary = ContentSwaggerDocs.HOME_CONTENTS_SUMMARY,
+      description = ContentSwaggerDocs.HOME_CONTENTS_DESCRIPTION)
+  @ApiResponse(
+      responseCode = "200",
+      description = HOME_CONTENTS_SUCCESS_MESSAGE,
+      content =
+          @Content(
+              mediaType = "application/json",
+              schema = @Schema(implementation = HomeContentsApiResponse.class),
+              examples =
+                  @ExampleObject(
+                      name = "홈 콘텐츠 예시",
+                      summary = "sortOrder 기준 홈 콘텐츠 응답",
+                      value = ContentSwaggerDocs.HOME_CONTENTS_SUCCESS_EXAMPLE)))
   @GetMapping(HOME_CONTENTS_PATH)
   public ResponseEntity<GrobleResponse<HomeContentsResponse>> getHomeContents() {
-    List<ContentCardDTO> coachingContentCardDTOS = contentService.getHomeContentsList("COACHING");
-    List<ContentPreviewCardResponse> coachingItems =
-        coachingContentCardDTOS.stream().map(contentMapper::toContentPreviewCardResponse).toList();
+    List<ContentCardDTO> contentCardDTOS = contentService.getHomeContents();
+    List<ContentPreviewCardResponse> items =
+        contentCardDTOS.stream().map(contentMapper::toContentPreviewCardResponse).toList();
 
-    List<ContentCardDTO> documentContentCardDTOS = contentService.getHomeContentsList("DOCUMENT");
-    List<ContentPreviewCardResponse> documentItems =
-        documentContentCardDTOS.stream().map(contentMapper::toContentPreviewCardResponse).toList();
-
-    // Wrapper DTO에 담기
-    HomeContentsResponse payload = new HomeContentsResponse(coachingItems, documentItems);
+    HomeContentsResponse payload = new HomeContentsResponse(items);
     return responseHelper.success(payload, HOME_CONTENTS_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 
