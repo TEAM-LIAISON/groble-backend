@@ -17,6 +17,7 @@ import liaison.groble.application.order.service.OrderReader;
 import liaison.groble.application.payment.dto.cancel.PaymentCancelResponse;
 import liaison.groble.application.payment.service.PayplePaymentFacadeV2;
 import liaison.groble.application.purchase.service.PurchaseReader;
+import liaison.groble.common.exception.InvalidRequestException;
 import liaison.groble.common.response.PageResponse;
 import liaison.groble.domain.order.dto.FlatAdminOrderSummaryInfoDTO;
 import liaison.groble.domain.order.entity.Order;
@@ -80,13 +81,23 @@ public class AdminOrderService {
 
     Purchase purchase = purchaseReader.getPurchaseByOrderId(order.getId());
 
+    boolean memberOrder = order.isMemberOrder();
+    boolean guestOrder = order.isGuestOrder();
+
+    if (!memberOrder && !guestOrder) {
+      throw new InvalidRequestException("회원/비회원 정보가 없는 주문입니다. merchantUid: " + merchantUid);
+    }
+
     // 2. action에 따른 처리
     if ("approve".equalsIgnoreCase(action)) {
       // 취소 승인 - 페이플 실결제 취소 API 호출
       try {
         PaymentCancelResponse response =
-            payplePaymentFacadeV2.cancelPayment(
-                order.getUser().getId(), merchantUid, order.getOrderNote());
+            memberOrder
+                ? payplePaymentFacadeV2.cancelPayment(
+                    order.getUser().getId(), merchantUid, order.getOrderNote())
+                : payplePaymentFacadeV2.cancelPaymentForGuest(
+                    order.getGuestUser().getId(), merchantUid, order.getOrderNote());
 
         kakaoNotificationService.sendNotification(
             KakaoNotificationDTO.builder()
