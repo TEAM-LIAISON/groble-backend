@@ -16,14 +16,16 @@ public final class ContentSwaggerDocs {
   "code": 200,
   "message": "홈화면 콘텐츠 조회에 성공하였습니다.",
   "data": {
-    "items": [
+      "items": [
       {
         "contentId": 501,
-        "createdAt": "2025-05-05T11:00:00",
+        "createdAt": "2025-05-05 11:00:00",
         "title": "비즈니스 모델 구축 코칭",
         "thumbnailUrl": "https://cdn.groble.io/contents/501-thumb.png",
         "sellerName": "비즈니스전문가",
         "lowestPrice": 120000,
+        "categoryId": "COACHING_BRANDING",
+        "contentType": "COACHING",
         "priceOptionLength": 2,
         "isAvailableForSale": true,
         "status": "ACTIVE",
@@ -31,11 +33,13 @@ public final class ContentSwaggerDocs {
       },
       {
         "contentId": 312,
-        "createdAt": "2025-05-02T09:15:00",
+        "createdAt": "2025-05-02 09:15:00",
         "title": "스타트업 사업계획서 템플릿 모음",
         "thumbnailUrl": "https://cdn.groble.io/contents/312-thumb.png",
         "sellerName": "창업멘토",
         "lowestPrice": 25000,
+        "categoryId": "DOCUMENT_TEMPLATE",
+        "contentType": "DOCUMENT",
         "priceOptionLength": 1,
         "isAvailableForSale": true,
         "status": "ACTIVE",
