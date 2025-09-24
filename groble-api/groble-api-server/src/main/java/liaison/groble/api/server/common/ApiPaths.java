@@ -122,6 +122,14 @@ public final class ApiPaths {
     public static final String GET_ORDER_SUCCESS = "/success/{merchantUid}";
   }
 
+  public static final class HomeTest {
+    public static final String BASE = API_V1 + "/home/payment-test";
+    public static final String SEND_CODE = "/code-request";
+    public static final String VERIFY_CODE = "/verify-request";
+
+    private HomeTest() {}
+  }
+
   public static final class Purchase {
     public static final String BASE = API_V1 + "/purchase";
 
