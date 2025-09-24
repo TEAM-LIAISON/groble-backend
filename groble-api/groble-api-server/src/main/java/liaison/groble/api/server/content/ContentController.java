@@ -84,9 +84,9 @@ import lombok.extern.slf4j.Slf4j;
 public class ContentController {
 
   // API 경로 상수화
-  private static final String CONTENT_DETAIL_PATH = "/content/{contentId}";
-  private static final String CONTENT_MAKER_INFO_PATH = "/content/{contentId}/maker";
   private static final String HOME_CONTENTS_PATH = "/home/contents";
+  private static final String CONTENT_DETAIL_PATH = "/content/{contentId}";
+  private static final String CONTENT_MAKER_INFO_PATH = "/content/maker-info/{contentId}";
   private static final String UPLOAD_CONTENT_THUMBNAIL_PATH = "/content/thumbnail/image";
   private static final String UPLOAD_CONTENT_DETAIL_IMAGES_PATH = "/content/detail/images";
   private static final String CONTENT_COACHING_CATEGORY_PATH = "/contents/coaching/category";
