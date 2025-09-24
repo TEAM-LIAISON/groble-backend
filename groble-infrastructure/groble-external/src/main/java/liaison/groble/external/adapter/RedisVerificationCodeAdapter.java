@@ -28,6 +28,9 @@ public class RedisVerificationCodeAdapter implements VerificationCodePort {
   private static final String PHONE_AUTH_GUEST_PREFIX = "phone:auth:guest:";
   private static final String PHONE_VERIFIED_GUEST_PREFIX = "phone:verified:guest:";
 
+  // 홈 테스트 전화번호 인증
+  private static final String PHONE_AUTH_HOME_TEST_PREFIX = "phone:auth:payment-test:";
+
   public RedisVerificationCodeAdapter(RedisTemplate<String, String> redisTemplate) {
     this.redisTemplate = redisTemplate;
   }
@@ -226,6 +229,10 @@ public class RedisVerificationCodeAdapter implements VerificationCodePort {
     return PHONE_VERIFIED_GUEST_PREFIX + phoneNumber;
   }
 
+  private String homeTestPhoneAuthKey(String phoneNumber) {
+    return PHONE_AUTH_HOME_TEST_PREFIX + phoneNumber;
+  }
+
   // === 비회원 전화번호 인증 관련 ===
 
   @Override
@@ -263,6 +270,46 @@ public class RedisVerificationCodeAdapter implements VerificationCodePort {
       log.debug("비회원 전화번호 인증 코드 삭제: key={}", key);
     } catch (DataAccessException e) {
       log.warn("Redis에서 비회원 전화번호 인증 코드 삭제 실패: key={}, error={}", key, e.getMessage());
+    }
+  }
+
+  // === 홈 테스트 전화번호 인증 관련 ===
+
+  @Override
+  public void saveVerificationCodeForHomeTest(
+      String phoneNumber, String code, long expirationTimeInMinutes) {
+    String key = homeTestPhoneAuthKey(phoneNumber);
+    try {
+      redisTemplate.opsForValue().set(key, code, expirationTimeInMinutes, TimeUnit.MINUTES);
+      log.debug("홈 테스트 전화번호 인증 코드 저장: key={}", key);
+    } catch (DataAccessException e) {
+      log.error("Redis에 홈 테스트 전화번호 인증 코드 저장 실패: key={}, error={}", key, e.getMessage());
+      throw new RuntimeException("인증 코드를 저장하는 중 오류가 발생했습니다.", e);
+    }
+  }
+
+  @Override
+  public boolean validateVerificationCodeForHomeTest(String phoneNumber, String code) {
+    String key = homeTestPhoneAuthKey(phoneNumber);
+    try {
+      String storedCode = redisTemplate.opsForValue().get(key);
+      boolean isValid = storedCode != null && storedCode.equals(code);
+      log.debug("홈 테스트 전화번호 인증 코드 검증: key={}, valid={}", key, isValid);
+      return isValid;
+    } catch (DataAccessException e) {
+      log.error("Redis에서 홈 테스트 전화번호 인증 코드 검증 실패: key={}, error={}", key, e.getMessage());
+      return false;
+    }
+  }
+
+  @Override
+  public void removeVerificationCodeForHomeTest(String phoneNumber) {
+    String key = homeTestPhoneAuthKey(phoneNumber);
+    try {
+      redisTemplate.delete(key);
+      log.debug("홈 테스트 전화번호 인증 코드 삭제: key={}", key);
+    } catch (DataAccessException e) {
+      log.warn("Redis에서 홈 테스트 전화번호 인증 코드 삭제 실패: key={}, error={}", key, e.getMessage());
     }
   }
 }
