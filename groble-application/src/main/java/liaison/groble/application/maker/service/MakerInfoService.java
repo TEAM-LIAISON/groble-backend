@@ -54,7 +54,7 @@ public class MakerInfoService {
     String verificationStatusLabel = resolveVerificationLabel(status, verified);
     String name = resolveName(makerType, sellerInfo, user);
     String email = resolveEmail(user, sellerInfo);
-    String phoneNumber = resolvePhoneNumber(user);
+    String phoneNumber = resolvePhoneNumber(user, makerType, verified);
 
     BusinessMakerInfoDTO businessInfo = null;
     if (makerType == MakerType.BUSINESS) {
@@ -112,8 +112,11 @@ public class MakerInfoService {
     return optionalOrHyphen(sellerInfo.getTaxInvoiceEmail());
   }
 
-  private String resolvePhoneNumber(User user) {
-    return optionalOrHyphen(user.getPhoneNumber());
+  private String resolvePhoneNumber(User user, MakerType makerType, boolean verified) {
+    if (makerType == MakerType.BUSINESS && verified) {
+      return optionalOrHyphen(user.getPhoneNumber());
+    }
+    return HYPHEN;
   }
 
   private String optionalOrHyphen(String value) {
