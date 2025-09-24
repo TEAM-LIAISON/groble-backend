@@ -56,10 +56,7 @@ public class MessageFormatter {
   // [Groble] 홈 테스트 결제 흐름 안내
   public static String homeTestPurchase(String nickname) {
     return String.format(
-            "%s님, 결제가 완료되었어요!\n"
-                    + "\n"
-                    + "- 상품명: 그로블 링크 결제 체험 상품 \n"
-                    + "- 결제금액: 150,000원",
+        "%s님, 결제가 완료되었어요!\n" + "\n" + "- 상품명: 그로블 링크 결제 체험 상품 \n" + "- 결제금액: 150,000원",
         nickname, nickname);
   }
 

@@ -48,7 +48,8 @@ public interface VerificationCodePort {
 
   // === 홈 테스트 전화번호 인증 관련 ===
   /** 홈 테스트 전화번호 인증 코드 저장 Redis Key: phone:auth:home-test:{phoneNumber} */
-  void saveVerificationCodeForHomeTest(String phoneNumber, String code, long expirationTimeInMinutes);
+  void saveVerificationCodeForHomeTest(
+      String phoneNumber, String code, long expirationTimeInMinutes);
 
   /** 홈 테스트 전화번호 인증 코드 검증 */
   boolean validateVerificationCodeForHomeTest(String phoneNumber, String code);

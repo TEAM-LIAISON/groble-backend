@@ -2,8 +2,10 @@ package liaison.groble.application.notification.template;
 
 import java.util.Collections;
 import java.util.List;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+
 import liaison.groble.application.notification.dto.KakaoNotificationDTO;
 import liaison.groble.application.notification.enums.KakaoNotificationType;
 import liaison.groble.external.infotalk.dto.message.ButtonInfo;
