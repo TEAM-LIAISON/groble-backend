@@ -17,10 +17,12 @@ import liaison.groble.api.model.content.response.ContentPreviewCardResponse;
 import liaison.groble.api.model.content.response.swagger.ContentListResponse;
 import liaison.groble.api.model.dashboard.request.referrer.ReferrerRequest;
 import liaison.groble.api.model.maker.request.MarketEditRequest;
+import liaison.groble.api.model.maker.response.MakerInfoResponse;
 import liaison.groble.api.model.maker.response.MakerIntroSectionResponse;
 import liaison.groble.application.content.dto.ContentCardDTO;
 import liaison.groble.application.dashboard.dto.referrer.ReferrerDTO;
 import liaison.groble.application.dashboard.service.ReferrerService;
+import liaison.groble.application.maker.service.MakerInfoService;
 import liaison.groble.application.market.dto.MarketEditDTO;
 import liaison.groble.application.market.dto.MarketIntroSectionDTO;
 import liaison.groble.application.market.dto.MarketViewCountDTO;
@@ -36,6 +38,7 @@ import liaison.groble.common.response.ResponseHelper;
 import liaison.groble.common.utils.PageUtils;
 import liaison.groble.mapping.content.ContentMapper;
 import liaison.groble.mapping.dashboard.ReferrerMapper;
+import liaison.groble.mapping.maker.MakerMapper;
 import liaison.groble.mapping.market.MarketMapper;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -57,6 +60,7 @@ public class MarketController {
   private static final String MARKET_EDIT_INTRO_PATH = "/edit/intro";
   private static final String MARKET_INTRO_PATH = "/intro/{marketLinkUrl}";
   private static final String MARKET_CONTENTS_PATH = "/contents/{marketLinkUrl}";
+  private static final String MARKET_MAKER_INFO_PATH = "/maker-info/{marketLinkUrl}";
   private static final String MARKET_EDIT_PATH = "/edit";
   private static final String MARKET_LINK_CHECK_PATH = "/link-check";
   private static final String MARKET_VIEW_PATH = "/view/{marketLinkUrl}";
@@ -72,15 +76,18 @@ public class MarketController {
   private static final String MARKET_LINK_CHECK_SUCCESS_MESSAGE = "사용 가능한 마켓 링크입니다.";
   private static final String MARKET_VIEW_SUCCESS_MESSAGE = "마켓 뷰어 화면을 성공적으로 조회했습니다.";
   private static final String MARKET_REFERRER_SUCCESS_MESSAGE = "마켓 유입경로 저장에 성공하였습니다.";
+  private static final String MARKET_MAKER_INFO_SUCCESS_MESSAGE = "마켓 메이커 정보 조회에 성공했습니다.";
 
   // Service
   private final MarketService marketService;
   private final MarketViewCountService marketViewCountService;
+  private final MakerInfoService makerInfoService;
 
   // Mapper
   private final ContentMapper contentMapper;
   private final MarketMapper marketMapper;
   private final ReferrerMapper referrerMapper;
+  private final MakerMapper makerMapper;
 
   // Helper
   private final ResponseHelper responseHelper;
@@ -124,6 +131,26 @@ public class MarketController {
         marketMapper.toMakerIntroSectionResponse(makerIntroSectionDTO);
 
     return responseHelper.success(response, MARKET_INTRO_SUCCESS_MESSAGE, HttpStatus.OK);
+  }
+
+  @Operation(
+      summary = "[✅ 마켓 관리] 마켓 메이커 정보 조회",
+      description = "마켓 링크를 기반으로 메이커의 인증 및 기본 정보를 조회합니다.")
+  @ApiResponse(
+      responseCode = "200",
+      description = "마켓 메이커 정보 조회 성공",
+      content =
+          @Content(
+              mediaType = "application/json",
+              schema = @Schema(implementation = MakerInfoResponse.class)))
+  @Logging(item = "Market", action = "getMakerInfo", includeParam = true, includeResult = true)
+  @GetMapping(MARKET_MAKER_INFO_PATH)
+  public ResponseEntity<GrobleResponse<MakerInfoResponse>> getMakerInfoByMarket(
+      @Valid @PathVariable("marketLinkUrl") String marketLinkUrl) {
+
+    MakerInfoResponse response =
+        makerMapper.toMakerInfoResponse(makerInfoService.getMakerInfoByMarketLink(marketLinkUrl));
+    return responseHelper.success(response, MARKET_MAKER_INFO_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 
   @Operation(

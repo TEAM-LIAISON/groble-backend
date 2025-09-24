@@ -23,4 +23,6 @@ public class FlatContentPreviewDTO {
   private Boolean isAvailableForSale;
   private String status;
   private Boolean isDeletable;
+  private String categoryId;
+  private String contentType;
 }
