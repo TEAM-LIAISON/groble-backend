@@ -202,6 +202,10 @@ public class SecurityConfig {
                     .requestMatchers(
                         "/api/v1/guest/auth/code-request", "/api/v1/guest/auth/verify-request")
                     .permitAll()
+                    .requestMatchers(
+                        "/api/v1/home/payment-test/code-request",
+                        "/api/v1/home/payment-test/verify-request")
+                    .permitAll()
                     .requestMatchers("/login/**")
                     .permitAll()
                     .requestMatchers("/error")
