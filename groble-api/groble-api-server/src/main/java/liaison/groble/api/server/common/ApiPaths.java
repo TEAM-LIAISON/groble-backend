@@ -126,6 +126,7 @@ public final class ApiPaths {
     public static final String BASE = API_V1 + "/home/payment-test";
     public static final String SEND_CODE = "/code-request";
     public static final String VERIFY_CODE = "/verify-request";
+    public static final String COMPLETE = "/complete";
 
     private HomeTest() {}
   }
