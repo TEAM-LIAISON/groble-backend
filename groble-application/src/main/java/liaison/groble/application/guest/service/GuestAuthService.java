@@ -46,7 +46,7 @@ public class GuestAuthService {
     String sanitized = PhoneUtils.sanitizePhoneNumber(guestAuthDTO.getPhoneNumber());
 
     // 1. 기존 GuestUser 상태 확인 및 처리
-    handleExistingGuestUser(guestAuthDTO.getPhoneNumber());
+    handleExistingGuestUser(guestAuthDTO.getPhoneNumber(), sanitized);
     String code = CodeGenerator.generateVerificationCode(6);
 
     // 2. Redis 인증 코드 저장 (5분 유효)
@@ -85,7 +85,7 @@ public class GuestAuthService {
         hasCompleteInfo ? GuestTokenScope.FULL_ACCESS : GuestTokenScope.PHONE_VERIFIED;
 
     // 4) 전화번호 인증 처리 및 저장 (신규 생성된 경우에도 동일 처리)
-    guestUser.updatePhoneNumber(sanitizedPhone);
+    guestUser.updatePhoneNumber(inputPhone);
     guestUser.verifyPhone();
     guestUser = guestUserWriter.save(guestUser);
 
@@ -147,16 +147,14 @@ public class GuestAuthService {
   }
 
   // 기존 GuestUser 상태 확인 및 처리
-  private void handleExistingGuestUser(String phoneNumber) {
-    String sanitized = PhoneUtils.sanitizePhoneNumber(phoneNumber);
+  private void handleExistingGuestUser(String rawPhoneNumber, String sanitizedPhoneNumber) {
+    GuestUser guestUser = guestUserReader.getByPhoneNumberIfExists(rawPhoneNumber);
 
-    GuestUser guestUser = guestUserReader.getByPhoneNumberIfExists(sanitized);
-
-    if (guestUser == null && !sanitized.equals(phoneNumber)) {
-      guestUser = guestUserReader.getByPhoneNumberIfExists(phoneNumber);
+    if (guestUser == null && !sanitizedPhoneNumber.equals(rawPhoneNumber)) {
+      guestUser = guestUserReader.getByPhoneNumberIfExists(sanitizedPhoneNumber);
       if (guestUser != null) {
-        guestUser.updatePhoneNumber(sanitized);
-        guestUser = guestUserWriter.save(guestUser);
+        guestUser.updatePhoneNumber(rawPhoneNumber);
+        guestUserWriter.save(guestUser);
       }
     }
 
@@ -173,17 +171,17 @@ public class GuestAuthService {
 
     // 이미 인증된 사용자라면 재인증 허용하되 로그 남김
     if (guestUser.isVerified()) {
-      log.info("이미 인증된 비회원 사용자 재인증 요청: phoneNumber={}", sanitized);
+      log.info("이미 인증된 비회원 사용자 재인증 요청: phoneNumber={}", rawPhoneNumber);
     }
   }
 
   private GuestUser resolveGuestUserByPhone(String originalPhone, String sanitizedPhone) {
-    GuestUser guestUser = guestUserReader.getByPhoneNumberIfExists(sanitizedPhone);
+    GuestUser guestUser = guestUserReader.getByPhoneNumberIfExists(originalPhone);
 
     if (guestUser == null && !sanitizedPhone.equals(originalPhone)) {
-      guestUser = guestUserReader.getByPhoneNumberIfExists(originalPhone);
+      guestUser = guestUserReader.getByPhoneNumberIfExists(sanitizedPhone);
       if (guestUser != null) {
-        guestUser.updatePhoneNumber(sanitizedPhone);
+        guestUser.updatePhoneNumber(originalPhone);
       }
     }
 
@@ -191,6 +189,6 @@ public class GuestAuthService {
       return guestUser;
     }
 
-    return GuestUser.builder().phoneNumber(sanitizedPhone).build();
+    return GuestUser.builder().phoneNumber(originalPhone).build();
   }
 }
