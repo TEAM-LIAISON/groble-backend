@@ -203,8 +203,9 @@ public class SecurityConfig {
                         "/api/v1/guest/auth/code-request", "/api/v1/guest/auth/verify-request")
                     .permitAll()
                     .requestMatchers(
-                        "/api/v1/home/payment-test/code-request",
-                        "/api/v1/home/payment-test/verify-request")
+                        "/api/v1/home-test/phone-auth/code",
+                        "/api/v1/home-test/phone-auth/verify",
+                        "/api/v1/home-test/phone-auth/complete")
                     .permitAll()
                     .requestMatchers("/login/**")
                     .permitAll()

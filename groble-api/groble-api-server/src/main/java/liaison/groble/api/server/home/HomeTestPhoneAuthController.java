@@ -8,13 +8,16 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import liaison.groble.api.model.hometest.phoneauth.request.HomeTestCompleteRequest;
 import liaison.groble.api.model.hometest.phoneauth.request.HomeTestPhoneAuthCodeRequest;
 import liaison.groble.api.model.hometest.phoneauth.request.HomeTestVerifyPhoneAuthRequest;
+import liaison.groble.api.model.hometest.phoneauth.response.HomeTestCompleteResponse;
 import liaison.groble.api.model.hometest.phoneauth.response.HomeTestPhoneAuthCodeResponse;
 import liaison.groble.api.model.hometest.phoneauth.response.HomeTestVerifyPhoneAuthResponse;
 import liaison.groble.api.server.common.ApiPaths;
 import liaison.groble.api.server.common.BaseController;
 import liaison.groble.api.server.common.ResponseMessages;
+import liaison.groble.application.hometest.dto.HomeTestCompleteDTO;
 import liaison.groble.application.hometest.dto.HomeTestPhoneAuthDTO;
 import liaison.groble.application.hometest.dto.HomeTestVerificationResultDTO;
 import liaison.groble.application.hometest.dto.HomeTestVerifyAuthDTO;
@@ -67,5 +70,18 @@ public class HomeTestPhoneAuthController extends BaseController {
         homeTestAuthMapper.toVerifyResponse(verificationResult);
 
     return success(response, ResponseMessages.HomeTest.PHONE_AUTH_VERIFIED);
+  }
+
+  @Operation(summary = "홈 테스트 결제 플로우 완료")
+  @PostMapping(ApiPaths.HomeTest.COMPLETE)
+  public ResponseEntity<GrobleResponse<HomeTestCompleteResponse>> completeTestFlow(
+      @Valid @RequestBody HomeTestCompleteRequest request) {
+
+    HomeTestCompleteDTO completeDTO = homeTestAuthMapper.toCompleteDTO(request);
+    HomeTestVerificationResultDTO resultDTO =
+        homeTestPhoneAuthService.completeTestFlow(completeDTO);
+    HomeTestCompleteResponse response = homeTestAuthMapper.toCompleteResponse(resultDTO);
+
+    return success(response, ResponseMessages.HomeTest.PHONE_AUTH_COMPLETED);
   }
 }

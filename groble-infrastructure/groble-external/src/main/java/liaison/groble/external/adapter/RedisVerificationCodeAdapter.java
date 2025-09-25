@@ -29,7 +29,7 @@ public class RedisVerificationCodeAdapter implements VerificationCodePort {
   private static final String PHONE_VERIFIED_GUEST_PREFIX = "phone:verified:guest:";
 
   // 홈 테스트 전화번호 인증
-  private static final String PHONE_AUTH_HOME_TEST_PREFIX = "phone:auth:payment-test:";
+  private static final String PHONE_AUTH_HOME_TEST_PREFIX = "phone:auth:home-test:";
 
   public RedisVerificationCodeAdapter(RedisTemplate<String, String> redisTemplate) {
     this.redisTemplate = redisTemplate;

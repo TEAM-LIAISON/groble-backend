@@ -7,16 +7,21 @@ import org.springframework.util.StringUtils;
 
 import liaison.groble.application.common.enums.SmsTemplate;
 import liaison.groble.application.common.service.SmsService;
+import liaison.groble.application.hometest.dto.HomeTestCompleteDTO;
 import liaison.groble.application.hometest.dto.HomeTestPhoneAuthDTO;
 import liaison.groble.application.hometest.dto.HomeTestVerificationResultDTO;
 import liaison.groble.application.hometest.dto.HomeTestVerifyAuthDTO;
+import liaison.groble.application.hometest.exception.HomeTestVerificationMismatchException;
+import liaison.groble.application.hometest.exception.HomeTestVerificationNotFoundException;
 import liaison.groble.application.hometest.exception.InvalidHomeTestAuthCodeException;
 import liaison.groble.application.notification.dto.KakaoNotificationDTO;
 import liaison.groble.application.notification.enums.KakaoNotificationType;
 import liaison.groble.application.notification.service.KakaoNotificationService;
 import liaison.groble.common.utils.CodeGenerator;
 import liaison.groble.common.utils.PhoneUtils;
+import liaison.groble.domain.port.HomeTestVerificationPort;
 import liaison.groble.domain.port.VerificationCodePort;
+import liaison.groble.domain.port.dto.HomeTestVerifiedInfo;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,9 +32,11 @@ import lombok.extern.slf4j.Slf4j;
 public class HomeTestPhoneAuthService {
 
   private static final long AUTH_CODE_EXPIRATION_MINUTES = Duration.ofMinutes(5).toMinutes();
+  private static final long VERIFIED_INFO_EXPIRATION_MINUTES = Duration.ofMinutes(30).toMinutes();
   private static final String DEFAULT_TEST_NICKNAME = "테스트 유저";
 
   private final VerificationCodePort verificationCodePort;
+  private final HomeTestVerificationPort homeTestVerificationPort;
   private final SmsService smsService;
   private final KakaoNotificationService kakaoNotificationService;
 
@@ -59,17 +66,56 @@ public class HomeTestPhoneAuthService {
 
     String nickname = resolveNickname(dto.getNickname());
     String email = resolveEmail(dto.getEmail());
-    kakaoNotificationService.sendNotification(
-        KakaoNotificationDTO.builder()
-            .type(KakaoNotificationType.HOME_TEST_PURCHASE)
+
+    homeTestVerificationPort.remove(sanitizedPhone);
+
+    homeTestVerificationPort.save(
+        HomeTestVerifiedInfo.builder()
             .phoneNumber(sanitizedPhone)
-            .testerNickname(nickname)
-            .build());
+            .nickname(nickname)
+            .email(email)
+            .build(),
+        VERIFIED_INFO_EXPIRATION_MINUTES);
 
     return HomeTestVerificationResultDTO.builder()
         .phoneNumber(sanitizedPhone)
         .nickname(nickname)
         .email(email)
+        .build();
+  }
+
+  public HomeTestVerificationResultDTO completeTestFlow(HomeTestCompleteDTO dto) {
+    String sanitizedPhone = PhoneUtils.sanitizePhoneNumber(dto.getPhoneNumber());
+
+    HomeTestVerifiedInfo verifiedInfo =
+        homeTestVerificationPort
+            .findByPhoneNumber(sanitizedPhone)
+            .orElseThrow(HomeTestVerificationNotFoundException::new);
+
+    String storedNickname = resolveNickname(verifiedInfo.getNickname());
+    String storedEmail = resolveEmail(verifiedInfo.getEmail());
+
+    String requestNickname = resolveNickname(dto.getNickname());
+    String requestEmail = resolveEmail(dto.getEmail());
+
+    if (!storedNickname.equals(requestNickname) || !equalsNullable(storedEmail, requestEmail)) {
+      throw new HomeTestVerificationMismatchException();
+    }
+
+    kakaoNotificationService.sendNotification(
+        KakaoNotificationDTO.builder()
+            .type(KakaoNotificationType.HOME_TEST_PURCHASE)
+            .phoneNumber(sanitizedPhone)
+            .testerNickname(storedNickname)
+            .build());
+
+    homeTestVerificationPort.remove(sanitizedPhone);
+    verificationCodePort.removeVerificationCodeForHomeTest(sanitizedPhone);
+
+    return HomeTestVerificationResultDTO.builder()
+        .phoneNumber(sanitizedPhone)
+        .nickname(storedNickname)
+        .email(storedEmail)
         .build();
   }
 
@@ -82,5 +128,15 @@ public class HomeTestPhoneAuthService {
 
   private String resolveEmail(String email) {
     return StringUtils.hasText(email) ? email.trim() : null;
+  }
+
+  private boolean equalsNullable(String a, String b) {
+    if (a == null && b == null) {
+      return true;
+    }
+    if (a == null || b == null) {
+      return false;
+    }
+    return a.equals(b);
   }
 }
