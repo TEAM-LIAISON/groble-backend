@@ -3,6 +3,7 @@ package liaison.groble.application.guest.service;
 import java.time.Duration;
 
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import liaison.groble.application.common.enums.SmsTemplate;
 import liaison.groble.application.common.service.SmsService;
@@ -113,6 +114,10 @@ public class GuestAuthService {
     // 1. GuestUser 조회
     GuestUser guestUser = guestUserReader.getGuestUserById(guestUserId);
 
+    boolean wasMissingInfo =
+        !StringUtils.hasText(guestUser.getEmail()) && !StringUtils.hasText(guestUser.getUsername());
+    boolean hasNewInfo = StringUtils.hasText(email) && StringUtils.hasText(username);
+
     // 2. 사용자 정보 업데이트
     guestUser.updateUserInfo(username, email);
     guestUserWriter.save(guestUser);
@@ -124,13 +129,15 @@ public class GuestAuthService {
     log.info(
         "비회원 사용자 정보 업데이트 완료: guestUserId={}, email={}, username={}", guestUserId, email, username);
 
-    guestReportService.sendGuestSignUpReport(
-        GuestSignUpReportDTO.builder()
-            .guestId(guestUserId)
-            .email(email)
-            .name(username)
-            .phoneNumber(guestUser.getPhoneNumber())
-            .build());
+    if (wasMissingInfo && hasNewInfo) {
+      guestReportService.sendGuestSignUpReport(
+          GuestSignUpReportDTO.builder()
+              .guestId(guestUserId)
+              .email(email)
+              .name(username)
+              .phoneNumber(guestUser.getPhoneNumber())
+              .build());
+    }
 
     return UpdateGuestUserInfoResultDTO.builder()
         .email(email)
