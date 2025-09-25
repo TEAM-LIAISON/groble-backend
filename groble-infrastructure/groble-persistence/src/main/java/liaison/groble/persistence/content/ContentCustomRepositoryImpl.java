@@ -35,6 +35,7 @@ import liaison.groble.domain.content.dto.FlatContentOverviewDTO;
 import liaison.groble.domain.content.dto.FlatContentPreviewDTO;
 import liaison.groble.domain.content.dto.FlatDynamicContentDTO;
 import liaison.groble.domain.content.entity.Content;
+import liaison.groble.domain.content.entity.QCategory;
 import liaison.groble.domain.content.entity.QCoachingOption;
 import liaison.groble.domain.content.entity.QContent;
 import liaison.groble.domain.content.entity.QContentOption;
@@ -60,6 +61,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
     QContent qContent = QContent.content;
     QUser qUser = QUser.user;
     QContentOption qContentOption = QContentOption.contentOption;
+    QCategory qCategory = QCategory.category;
 
     FlatContentPreviewDTO result =
         queryFactory
@@ -72,6 +74,8 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     qContent.thumbnailUrl.as("thumbnailUrl"),
                     qUser.userProfile.nickname.as("sellerName"),
                     qContent.lowestPrice.as("lowestPrice"),
+                    qCategory.code.as("categoryId"),
+                    qContent.contentType.stringValue().as("contentType"),
                     ExpressionUtils.as(
                         select(qContentOption.count().intValue())
                             .from(qContentOption)
@@ -80,6 +84,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     qContent.status.stringValue().as("status")))
             .from(qContent)
             .leftJoin(qContent.user, qUser)
+            .leftJoin(qContent.category, qCategory)
             .where(qContent.user.id.eq(userId).and(qContent.isRepresentative.isTrue()))
             .fetchOne();
 
@@ -91,6 +96,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
     QContent qContent = QContent.content;
     QUser qUser = QUser.user;
     QContentOption qContentOption = QContentOption.contentOption;
+    QCategory qCategory = QCategory.category;
 
     FlatContentPreviewDTO result =
         queryFactory
@@ -103,6 +109,8 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     qContent.thumbnailUrl.as("thumbnailUrl"),
                     qUser.userProfile.nickname.as("sellerName"),
                     qContent.lowestPrice.as("lowestPrice"),
+                    qCategory.code.as("categoryId"),
+                    qContent.contentType.stringValue().as("contentType"),
                     ExpressionUtils.as(
                         select(qContentOption.count().intValue())
                             .from(qContentOption)
@@ -111,6 +119,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     qContent.status.stringValue().as("status")))
             .from(qContent)
             .leftJoin(qContent.user, qUser)
+            .leftJoin(qContent.category, qCategory)
             .where(qContent.id.eq(contentId))
             .fetchOne();
 
@@ -122,6 +131,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
     QContent qContent = QContent.content;
     QUser qUser = QUser.user;
     QContentOption qContentOption = QContentOption.contentOption;
+    QCategory qCategory = QCategory.category;
 
     return queryFactory
         .select(
@@ -132,6 +142,8 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                 qContent.title.as("title"),
                 qContent.thumbnailUrl.as("thumbnailUrl"),
                 qUser.userProfile.nickname.as("sellerName"),
+                qCategory.code.as("categoryId"),
+                qContent.contentType.stringValue().as("contentType"),
                 ExpressionUtils.as(
                     select(qContentOption.count().intValue())
                         .from(qContentOption)
@@ -139,18 +151,20 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     "priceOptionLength"),
                 qContent.status.stringValue().as("status")))
         .from(qContent)
+        .leftJoin(qContent.category, qCategory)
         .where(qContent.user.id.eq(userId))
         .fetch();
   }
 
   @Override
-  public List<FlatContentPreviewDTO> findHomeContents(ContentType contentType) {
+  public List<FlatContentPreviewDTO> findHomeContents() {
     QContent qContent = QContent.content;
     QUser qUser = QUser.user;
     QContentOption qContentOption = QContentOption.contentOption;
+    QCategory qCategory = QCategory.category;
 
     BooleanExpression conditions =
-        qContent.contentType.eq(contentType).and(qContent.status.eq(ContentStatus.ACTIVE));
+        qContent.status.eq(ContentStatus.ACTIVE).and(qContent.sortOrder.ne(0));
 
     return queryFactory
         .select(
@@ -162,6 +176,8 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                 qContent.thumbnailUrl.as("thumbnailUrl"),
                 qUser.userProfile.nickname.as("sellerName"),
                 qContent.lowestPrice.as("lowestPrice"),
+                qCategory.code.as("categoryId"),
+                qContent.contentType.stringValue().as("contentType"),
                 ExpressionUtils.as(
                     select(qContentOption.count().intValue())
                         .from(qContentOption)
@@ -170,10 +186,10 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                 qContent.status.stringValue().as("status")))
         .from(qContent)
         .leftJoin(qContent.user, qUser)
+        .leftJoin(qContent.category, qCategory)
         .where(conditions)
         // --- sortOrder DESC를 가장 먼저 두고, 동일한 sortOrder끼리는 createdAt 기준으로 최신순 정렬 ---
         .orderBy(qContent.sortOrder.desc(), qContent.createdAt.desc())
-        .limit(12)
         .fetch();
   }
 
@@ -183,6 +199,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
     QUser qUser = QUser.user;
     QContentOption qContentOption = QContentOption.contentOption;
     QDocumentOption qDocOpt = QDocumentOption.documentOption;
+    QCategory qCategory = QCategory.category;
 
     // isRepresentative.isFalse() 조건 제거
     BooleanExpression condition =
@@ -226,6 +243,8 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                 qContent.thumbnailUrl.as("thumbnailUrl"),
                 qUser.userProfile.nickname.as("sellerName"),
                 qContent.lowestPrice.as("lowestPrice"),
+                qCategory.code.as("categoryId"),
+                qContent.contentType.stringValue().as("contentType"),
                 ExpressionUtils.as(
                     select(qContentOption.count().intValue())
                         .from(qContentOption)
@@ -235,6 +254,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                 qContent.status.stringValue().as("status")))
         .from(qContent)
         .leftJoin(qContent.user, qUser)
+        .leftJoin(qContent.category, qCategory)
         .where(condition)
         .orderBy(
             // 대표 콘텐츠를 먼저 (true = 1, false = 0으로 정렬)
@@ -250,6 +270,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
     QContent qContent = QContent.content;
     QUser qUser = QUser.user;
     QContentOption qContentOption = QContentOption.contentOption;
+    QCategory qCategory = QCategory.category;
 
     // 기본 조건 설정
     BooleanExpression conditions =
@@ -280,6 +301,8 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     qContent.thumbnailUrl.as("thumbnailUrl"),
                     qUser.userProfile.nickname.as("sellerName"),
                     qContent.lowestPrice.as("lowestPrice"),
+                    qCategory.code.as("categoryId"),
+                    qContent.contentType.stringValue().as("contentType"),
                     ExpressionUtils.as(
                         select(qContentOption.count().intValue())
                             .from(qContentOption)
@@ -288,6 +311,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     qContent.status.stringValue().as("status")))
             .from(qContent)
             .leftJoin(qContent.user, qUser)
+            .leftJoin(qContent.category, qCategory)
             .where(conditions)
             .orderBy(qContent.id.desc())
             .limit(fetchSize)
@@ -322,6 +346,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
     QContent qContent = QContent.content;
     QUser qUser = QUser.user;
     QContentOption qContentOption = QContentOption.contentOption;
+    QCategory qCategory = QCategory.category;
 
     // 기본 조건 설정
     BooleanExpression conditions = qContent.user.id.eq(userId);
@@ -351,6 +376,8 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     qContent.thumbnailUrl.as("thumbnailUrl"),
                     qUser.userProfile.nickname.as("sellerName"),
                     qContent.lowestPrice.as("lowestPrice"),
+                    qCategory.code.as("categoryId"),
+                    qContent.contentType.stringValue().as("contentType"),
                     ExpressionUtils.as(
                         select(qContentOption.count().intValue())
                             .from(qContentOption)
@@ -359,6 +386,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     qContent.status.stringValue().as("status")))
             .from(qContent)
             .leftJoin(qContent.user, qUser)
+            .leftJoin(qContent.category, qCategory)
             .where(conditions)
             .orderBy(qContent.id.desc())
             .limit(fetchSize)
@@ -394,6 +422,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
     QContent qContent = QContent.content;
     QUser qUser = QUser.user;
     QContentOption qContentOption = QContentOption.contentOption;
+    QCategory qCategory = QCategory.category;
 
     // 기본 조건 설정
     BooleanExpression conditions = qContent.contentType.eq(contentType);
@@ -417,6 +446,8 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     qContent.thumbnailUrl.as("thumbnailUrl"),
                     qUser.userProfile.nickname.as("sellerName"),
                     qContent.lowestPrice.as("lowestPrice"),
+                    qCategory.code.as("categoryId"),
+                    qContent.contentType.stringValue().as("contentType"),
                     ExpressionUtils.as(
                         select(qContentOption.count().intValue())
                             .from(qContentOption)
@@ -425,6 +456,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     qContent.status.stringValue().as("status")))
             .from(qContent)
             .leftJoin(qContent.user, qUser)
+            .leftJoin(qContent.category, qCategory)
             .where(conditions)
             .orderBy(qContent.id.desc())
             .limit(fetchSize)
@@ -488,6 +520,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
     QContent q = QContent.content;
     QUser u = QUser.user;
     QContentOption qContentOption = QContentOption.contentOption;
+    QCategory qCategory = QCategory.category;
 
     // 1) 기본 조건
     BooleanExpression cond = q.contentType.eq(contentType).and(q.status.eq(ContentStatus.ACTIVE));
@@ -504,6 +537,8 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     q.thumbnailUrl.as("thumbnailUrl"),
                     u.userProfile.nickname.as("sellerName"),
                     q.lowestPrice.as("lowestPrice"),
+                    qCategory.code.as("categoryId"),
+                    q.contentType.stringValue().as("contentType"),
                     ExpressionUtils.as(
                         select(qContentOption.count().intValue())
                             .from(qContentOption)
@@ -512,6 +547,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     q.status.stringValue().as("status")))
             .from(q)
             .leftJoin(q.user, u)
+            .leftJoin(q.category, qCategory)
             .where(cond);
 
     // 3) Sort 적용
@@ -553,6 +589,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
     QContent qContent = QContent.content;
     QUser qUser = QUser.user;
     QContentOption qContentOption = QContentOption.contentOption;
+    QCategory qCategory = QCategory.category;
 
     // 1) 기본 조건
     BooleanExpression condition =
@@ -573,6 +610,8 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     qContent.thumbnailUrl.as("thumbnailUrl"),
                     qUser.userProfile.nickname.as("sellerName"),
                     qContent.lowestPrice.as("lowestPrice"),
+                    qCategory.code.as("categoryId"),
+                    qContent.contentType.stringValue().as("contentType"),
                     ExpressionUtils.as(
                         select(qContentOption.count().intValue())
                             .from(qContentOption)
@@ -581,6 +620,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     qContent.status.stringValue().as("status")))
             .from(qContent)
             .leftJoin(qContent.user, qUser)
+            .leftJoin(qContent.category, qCategory)
             .where(condition);
 
     // 3) Pageable의 Sort 적용 (여기서는 예시로 createdAt 기준)
@@ -623,6 +663,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
     QContent qContent = QContent.content;
     QUser qUser = QUser.user;
     QContentOption qContentOption = QContentOption.contentOption;
+    QCategory qCategory = QCategory.category;
     // 1) 기본 조건
     BooleanExpression cond =
         qContent
@@ -643,6 +684,8 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     qContent.thumbnailUrl.as("thumbnailUrl"),
                     qUser.userProfile.nickname.as("sellerName"),
                     qContent.lowestPrice.as("lowestPrice"),
+                    qCategory.code.as("categoryId"),
+                    qContent.contentType.stringValue().as("contentType"),
                     ExpressionUtils.as(
                         select(qContentOption.count().intValue())
                             .from(qContentOption)
@@ -651,6 +694,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     qContent.status.stringValue().as("status")))
             .from(qContent)
             .leftJoin(qContent.user, qUser) // 사용자 정보는 반드시 필요하니까 남겨두고
+            .leftJoin(qContent.category, qCategory)
             .where(cond);
 
     // 3) Pageable의 Sort 적용 (여기서는 예시로 createdAt 기준)
@@ -768,6 +812,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
     QCoachingOption qCoachOpt = QCoachingOption.coachingOption;
     QUser qUser = QUser.user;
     QPurchase qPurchase = QPurchase.purchase;
+    QCategory qCategory = QCategory.category;
 
     // 1) 상태 + 사용자 필터
     BooleanExpression statusFilter =
@@ -850,6 +895,8 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     qContent.thumbnailUrl.as("thumbnailUrl"),
                     qUser.userProfile.nickname.as("sellerName"),
                     qContent.lowestPrice.as("lowestPrice"),
+                    qCategory.code.as("categoryId"),
+                    qContent.contentType.stringValue().as("contentType"),
                     ExpressionUtils.as(
                         JPAExpressions.select(qOption.count().intValue())
                             .from(qOption)
@@ -860,6 +907,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     ExpressionUtils.as(isDeletableExpr, "isDeletable")))
             .from(qContent)
             .leftJoin(qContent.user, qUser)
+            .leftJoin(qContent.category, qCategory)
             .where(whereClause);
 
     // 8) 정렬 적용

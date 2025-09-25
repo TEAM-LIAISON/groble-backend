@@ -157,7 +157,8 @@ public class SecurityConfig {
                         "/api/v1/auth/password/reset-request",
                         "/api/v1/auth/password/reset",
                         "/api/v1/market/contents/**",
-                        "/api/v1/market/intro/**")
+                        "/api/v1/market/intro/**",
+                        "/api/v1/market/maker-info/**")
                     .permitAll()
                     .requestMatchers("/api/v1/oauth2/**")
                     .permitAll()
@@ -177,6 +178,8 @@ public class SecurityConfig {
                     .permitAll()
                     .requestMatchers(
                         new RegexRequestMatcher("^/api/v1/content/\\d+$", HttpMethod.GET.name()))
+                    .permitAll()
+                    .requestMatchers("/api/v1/content/maker-info/**")
                     .permitAll()
                     .requestMatchers(
                         new RegexRequestMatcher(
@@ -198,6 +201,11 @@ public class SecurityConfig {
                     .permitAll()
                     .requestMatchers(
                         "/api/v1/guest/auth/code-request", "/api/v1/guest/auth/verify-request")
+                    .permitAll()
+                    .requestMatchers(
+                        "/api/v1/home-test/phone-auth/code",
+                        "/api/v1/home-test/phone-auth/verify",
+                        "/api/v1/home-test/phone-auth/complete")
                     .permitAll()
                     .requestMatchers("/login/**")
                     .permitAll()

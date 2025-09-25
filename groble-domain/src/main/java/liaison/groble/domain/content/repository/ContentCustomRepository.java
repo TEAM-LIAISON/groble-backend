@@ -22,7 +22,7 @@ public interface ContentCustomRepository {
 
   List<FlatContentPreviewDTO> findFlatContentsByUserId(Long userId);
 
-  List<FlatContentPreviewDTO> findHomeContents(ContentType contentType);
+  List<FlatContentPreviewDTO> findHomeContents();
 
   List<FlatContentPreviewDTO> findAllMarketContentsByUserId(Long userId);
 

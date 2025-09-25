@@ -36,6 +36,12 @@ public class ContentPreviewCardResponse {
   @Schema(description = "콘텐츠 최저가 가격 (null인 경우 -> 가격미정)", example = "100000")
   private BigDecimal lowestPrice;
 
+  @Schema(description = "콘텐츠 카테고리 코드", example = "COACHING_BRANDING")
+  private String categoryId;
+
+  @Schema(description = "콘텐츠 유형", example = "COACHING")
+  private String contentType;
+
   @Schema(description = "가격 옵션 개수", example = "3")
   private int priceOptionLength;
 
