@@ -40,5 +40,7 @@ public class DiscordGuestReportService implements GuestReportService {
             guestSignUpReportDTO.email(),
             guestSignUpReportDTO.phoneNumber(),
             LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+
+    discordService.sendMessages(url, msg);
   }
 }

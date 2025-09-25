@@ -15,6 +15,7 @@ public class KakaoNotificationDTO {
   private String sellerName;
   private String buyerName;
   private String phoneNumber;
+  private String testerNickname;
 
   // Purchase_Complete_Template
   private String contentTitle;
