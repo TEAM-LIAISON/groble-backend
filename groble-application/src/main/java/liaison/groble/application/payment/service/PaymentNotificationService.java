@@ -4,6 +4,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import liaison.groble.application.content.ContentReader;
+import liaison.groble.application.guest.reader.GuestUserReader;
 import liaison.groble.application.notification.dto.KakaoNotificationDTO;
 import liaison.groble.application.notification.enums.KakaoNotificationType;
 import liaison.groble.application.notification.service.KakaoNotificationService;
@@ -13,6 +14,7 @@ import liaison.groble.application.payment.event.PaymentCompletedEvent;
 import liaison.groble.application.payment.event.PaymentRefundedEvent;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.domain.content.entity.Content;
+import liaison.groble.domain.guest.entity.GuestUser;
 import liaison.groble.domain.port.EmailSenderPort;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.external.discord.dto.payment.ContentPaymentSuccessReportDTO;
@@ -28,6 +30,7 @@ public class PaymentNotificationService {
   private final NotificationService notificationService;
   private final EmailSenderPort emailSenderPort;
   private final UserReader userReader;
+  private final GuestUserReader guestUserReader;
   private final ContentReader contentReader;
   private final ContentPaymentSuccessReportService contentPaymentSuccessReportService;
   private final KakaoNotificationService kakaoNotificationService;
@@ -108,6 +111,10 @@ public class PaymentNotificationService {
 
   /** 구매자 알림 발송 */
   private void sendBuyerNotification(PaymentCompletedEvent event) {
+    if (event.getUserId() == null) {
+      log.debug("구매자 알림 발송 스킵 - 회원 사용자 ID 없음 (비회원 결제) orderId: {}", event.getOrderId());
+      return;
+    }
     try {
       User buyer = userReader.getUserById(event.getUserId());
       Content content = contentReader.getContentById(event.getContentId());
@@ -122,23 +129,50 @@ public class PaymentNotificationService {
 
   private void sendBuyerATNotification(PaymentCompletedEvent event) {
     try {
-      User buyer = userReader.getUserById(event.getUserId());
-      kakaoNotificationService.sendNotification(
-          KakaoNotificationDTO.builder()
-              .type(KakaoNotificationType.PURCHASE_COMPLETE)
-              .phoneNumber(buyer.getPhoneNumber())
-              .buyerName(buyer.getNickname())
-              .contentTitle(event.getContentTitle())
-              .price(event.getAmount())
-              .merchantUid(event.getMerchantUid())
-              .build());
+      if (event.getUserId() != null) {
+        User buyer = userReader.getUserById(event.getUserId());
+        kakaoNotificationService.sendNotification(
+            KakaoNotificationDTO.builder()
+                .type(KakaoNotificationType.PURCHASE_COMPLETE)
+                .phoneNumber(buyer.getPhoneNumber())
+                .buyerName(buyer.getNickname())
+                .contentTitle(event.getContentTitle())
+                .price(event.getAmount())
+                .merchantUid(event.getMerchantUid())
+                .build());
+        return;
+      }
+
+      if (event.getGuestUserId() != null) {
+        GuestUser guestUser = guestUserReader.getGuestUserById(event.getGuestUserId());
+        kakaoNotificationService.sendNotification(
+            KakaoNotificationDTO.builder()
+                .type(KakaoNotificationType.PURCHASE_COMPLETE)
+                .phoneNumber(guestUser.getPhoneNumber())
+                .buyerName(resolveGuestBuyerName(event, guestUser))
+                .contentTitle(event.getContentTitle())
+                .price(event.getAmount())
+                .merchantUid(event.getMerchantUid())
+                .build());
+        return;
+      }
+
+      log.warn("구매자 알림 발송 실패 - 식별 가능한 구매자 ID 없음 orderId: {}", event.getOrderId());
     } catch (Exception e) {
-      log.error("구매자 알림 발송 실패 - buyerId: {}", event.getUserId(), e);
+      log.error(
+          "구매자 알림 발송 실패 - buyerId: {}, guestUserId: {}",
+          event.getUserId(),
+          event.getGuestUserId(),
+          e);
     }
   }
 
   /** 구매자 무료 결제 알림 발송 */
   private void sendBuyerFreePayNotification(FreePaymentCompletedEvent event) {
+    if (event.getUserId() == null) {
+      log.debug("구매자 무료 결제 알림 스킵 - 회원 사용자 ID 없음 (비회원 결제) orderId: {}", event.getOrderId());
+      return;
+    }
     try {
       User buyer = userReader.getUserById(event.getUserId());
       Content content = contentReader.getContentById(event.getContentId());
@@ -155,6 +189,10 @@ public class PaymentNotificationService {
 
   /** 판매자 알림 발송 */
   private void sendSellerNotification(PaymentCompletedEvent event) {
+    if (event.getSellerId() == null) {
+      log.warn("판매자 알림 발송 스킵 - sellerId 없음 orderId: {}", event.getOrderId());
+      return;
+    }
     try {
       User seller = userReader.getUserById(event.getSellerId());
       Content content = contentReader.getContentById(event.getContentId());
@@ -168,14 +206,24 @@ public class PaymentNotificationService {
   }
 
   private void sendSellerATNotification(PaymentCompletedEvent event) {
+    if (event.getSellerId() == null) {
+      log.warn("판매자 AT 알림 발송 스킵 - sellerId 없음 orderId: {}", event.getOrderId());
+      return;
+    }
     try {
       User seller = userReader.getUserById(event.getSellerId());
-      User buyer = userReader.getUserById(event.getUserId());
+      String buyerName = "비회원 구매자";
+      if (event.getUserId() != null) {
+        buyerName = userReader.getUserById(event.getUserId()).getNickname();
+      } else if (event.getGuestUserId() != null) {
+        GuestUser guestUser = guestUserReader.getGuestUserById(event.getGuestUserId());
+        buyerName = resolveGuestBuyerName(event, guestUser);
+      }
       kakaoNotificationService.sendNotification(
           KakaoNotificationDTO.builder()
               .type(KakaoNotificationType.SALE_COMPLETE)
               .phoneNumber(seller.getPhoneNumber())
-              .buyerName(buyer.getNickname())
+              .buyerName(buyerName)
               .contentTitle(event.getContentTitle())
               .price(event.getAmount())
               .contentId(event.getContentId())
@@ -187,6 +235,10 @@ public class PaymentNotificationService {
 
   /** 판매자 무료 결제 알림 발송 */
   private void sendSellerFreePayNotification(FreePaymentCompletedEvent event) {
+    if (event.getSellerId() == null) {
+      log.warn("판매자 무료 결제 알림 스킵 - sellerId 없음 orderId: {}", event.getOrderId());
+      return;
+    }
     try {
       User seller = userReader.getUserById(event.getSellerId());
       Content content = contentReader.getContentById(event.getContentId());
@@ -265,6 +317,19 @@ public class PaymentNotificationService {
       return guestUserName;
     }
     return null;
+  }
+
+  private String resolveGuestBuyerName(PaymentCompletedEvent event, GuestUser guestUser) {
+    if (guestUser != null
+        && guestUser.getUsername() != null
+        && !guestUser.getUsername().isBlank()) {
+      return guestUser.getUsername();
+    }
+    String guestUserName = resolveGuestUserName(event);
+    if (guestUserName != null && !guestUserName.isBlank()) {
+      return guestUserName;
+    }
+    return "비회원 구매자";
   }
 
   /** 디스코드 결제 성사 알림 발송 */
