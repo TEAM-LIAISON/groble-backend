@@ -73,6 +73,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     qContent.title.as("title"),
                     qContent.thumbnailUrl.as("thumbnailUrl"),
                     qUser.userProfile.nickname.as("sellerName"),
+                    qUser.userProfile.profileImageUrl.as("sellerProfileImageUrl"),
                     qContent.lowestPrice.as("lowestPrice"),
                     qCategory.code.as("categoryId"),
                     qContent.contentType.stringValue().as("contentType"),
@@ -108,6 +109,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     qContent.title.as("title"),
                     qContent.thumbnailUrl.as("thumbnailUrl"),
                     qUser.userProfile.nickname.as("sellerName"),
+                    qUser.userProfile.profileImageUrl.as("sellerProfileImageUrl"),
                     qContent.lowestPrice.as("lowestPrice"),
                     qCategory.code.as("categoryId"),
                     qContent.contentType.stringValue().as("contentType"),
@@ -142,6 +144,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                 qContent.title.as("title"),
                 qContent.thumbnailUrl.as("thumbnailUrl"),
                 qUser.userProfile.nickname.as("sellerName"),
+                qUser.userProfile.profileImageUrl.as("sellerProfileImageUrl"),
                 qCategory.code.as("categoryId"),
                 qContent.contentType.stringValue().as("contentType"),
                 ExpressionUtils.as(
@@ -151,6 +154,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     "priceOptionLength"),
                 qContent.status.stringValue().as("status")))
         .from(qContent)
+        .leftJoin(qContent.user, qUser)
         .leftJoin(qContent.category, qCategory)
         .where(qContent.user.id.eq(userId))
         .fetch();
@@ -175,6 +179,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                 qContent.title.as("title"),
                 qContent.thumbnailUrl.as("thumbnailUrl"),
                 qUser.userProfile.nickname.as("sellerName"),
+                qUser.userProfile.profileImageUrl.as("sellerProfileImageUrl"),
                 qContent.lowestPrice.as("lowestPrice"),
                 qCategory.code.as("categoryId"),
                 qContent.contentType.stringValue().as("contentType"),
@@ -242,6 +247,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                 qContent.title.as("title"),
                 qContent.thumbnailUrl.as("thumbnailUrl"),
                 qUser.userProfile.nickname.as("sellerName"),
+                qUser.userProfile.profileImageUrl.as("sellerProfileImageUrl"),
                 qContent.lowestPrice.as("lowestPrice"),
                 qCategory.code.as("categoryId"),
                 qContent.contentType.stringValue().as("contentType"),
@@ -300,6 +306,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     qContent.title.as("title"),
                     qContent.thumbnailUrl.as("thumbnailUrl"),
                     qUser.userProfile.nickname.as("sellerName"),
+                    qUser.userProfile.profileImageUrl.as("sellerProfileImageUrl"),
                     qContent.lowestPrice.as("lowestPrice"),
                     qCategory.code.as("categoryId"),
                     qContent.contentType.stringValue().as("contentType"),
@@ -375,6 +382,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     qContent.title.as("title"),
                     qContent.thumbnailUrl.as("thumbnailUrl"),
                     qUser.userProfile.nickname.as("sellerName"),
+                    qUser.userProfile.profileImageUrl.as("sellerProfileImageUrl"),
                     qContent.lowestPrice.as("lowestPrice"),
                     qCategory.code.as("categoryId"),
                     qContent.contentType.stringValue().as("contentType"),
@@ -445,6 +453,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     qContent.title.as("title"),
                     qContent.thumbnailUrl.as("thumbnailUrl"),
                     qUser.userProfile.nickname.as("sellerName"),
+                    qUser.userProfile.profileImageUrl.as("sellerProfileImageUrl"),
                     qContent.lowestPrice.as("lowestPrice"),
                     qCategory.code.as("categoryId"),
                     qContent.contentType.stringValue().as("contentType"),
@@ -609,6 +618,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     qContent.title.as("title"),
                     qContent.thumbnailUrl.as("thumbnailUrl"),
                     qUser.userProfile.nickname.as("sellerName"),
+                    qUser.userProfile.profileImageUrl.as("sellerProfileImageUrl"),
                     qContent.lowestPrice.as("lowestPrice"),
                     qCategory.code.as("categoryId"),
                     qContent.contentType.stringValue().as("contentType"),
@@ -683,6 +693,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     qContent.title.as("title"),
                     qContent.thumbnailUrl.as("thumbnailUrl"),
                     qUser.userProfile.nickname.as("sellerName"),
+                    qUser.userProfile.profileImageUrl.as("sellerProfileImageUrl"),
                     qContent.lowestPrice.as("lowestPrice"),
                     qCategory.code.as("categoryId"),
                     qContent.contentType.stringValue().as("contentType"),
@@ -894,6 +905,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     qContent.title.as("title"),
                     qContent.thumbnailUrl.as("thumbnailUrl"),
                     qUser.userProfile.nickname.as("sellerName"),
+                    qUser.userProfile.profileImageUrl.as("sellerProfileImageUrl"),
                     qContent.lowestPrice.as("lowestPrice"),
                     qCategory.code.as("categoryId"),
                     qContent.contentType.stringValue().as("contentType"),

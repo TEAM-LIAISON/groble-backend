@@ -253,6 +253,7 @@ public class MarketService {
         .title(flat.getTitle())
         .thumbnailUrl(flat.getThumbnailUrl())
         .sellerName(flat.getSellerName())
+        .sellerProfileImageUrl(flat.getSellerProfileImageUrl())
         .lowestPrice(flat.getLowestPrice())
         .categoryId(flat.getCategoryId())
         .contentType(flat.getContentType())

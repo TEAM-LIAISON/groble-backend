@@ -33,6 +33,9 @@ public class ContentPreviewCardResponse {
   @Schema(description = "판매자 이름", example = "개발자킴")
   private String sellerName;
 
+  @Schema(description = "판매자 프로필 이미지 URL", example = "https://example.com/profile.jpg")
+  private String sellerProfileImageUrl;
+
   @Schema(description = "콘텐츠 최저가 가격 (null인 경우 -> 가격미정)", example = "100000")
   private BigDecimal lowestPrice;
 
