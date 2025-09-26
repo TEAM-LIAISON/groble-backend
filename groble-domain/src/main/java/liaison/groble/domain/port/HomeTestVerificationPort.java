@@ -5,9 +5,12 @@ import java.util.Optional;
 import liaison.groble.domain.port.dto.HomeTestVerifiedInfo;
 
 public interface HomeTestVerificationPort {
-  void save(HomeTestVerifiedInfo info, long expirationTimeInMinutes);
 
-  Optional<HomeTestVerifiedInfo> findByPhoneNumber(String phoneNumber);
+  void save(String token, HomeTestVerifiedInfo info, long expirationTimeInMinutes);
 
-  void remove(String phoneNumber);
+  Optional<HomeTestVerifiedInfo> findByToken(String token);
+
+  void removeByToken(String token);
+
+  void removeByPhoneNumber(String phoneNumber);
 }
