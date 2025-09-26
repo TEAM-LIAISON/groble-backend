@@ -308,10 +308,14 @@ public abstract class BaseOrderProcessor implements OrderProcessorStrategy {
 
       // 회원/비회원에 따른 정보 설정
       if (order.isMemberOrder()) {
-        resultBuilder.userId(order.getUser().getId()).nickname(order.getUser().getNickname());
+        resultBuilder
+            .userId(order.getUser().getId())
+            .guestUserId(null)
+            .nickname(order.getUser().getNickname());
       } else if (order.isGuestOrder()) {
         resultBuilder
             .userId(null) // 비회원은 userId가 없음
+            .guestUserId(order.getGuestUser().getId())
             .nickname(order.getGuestUser().getUsername()); // GuestUser의 username 사용
       }
 
@@ -442,6 +446,7 @@ public abstract class BaseOrderProcessor implements OrderProcessorStrategy {
               .paymentId(freePaymentCompletionResult.getPaymentId())
               .purchaseId(freePaymentCompletionResult.getPurchaseId())
               .userId(freePaymentCompletionResult.getUserId())
+              .guestUserId(freePaymentCompletionResult.getGuestUserId())
               .contentId(freePaymentCompletionResult.getContentId())
               .sellerId(freePaymentCompletionResult.getSellerId())
               .amount(freePaymentCompletionResult.getAmount())

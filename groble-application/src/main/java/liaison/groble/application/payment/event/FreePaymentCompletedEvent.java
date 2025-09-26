@@ -19,6 +19,7 @@ public class FreePaymentCompletedEvent {
   private Long paymentId;
   private Long purchaseId;
   private Long userId;
+  private Long guestUserId;
   private Long contentId;
   private Long sellerId;
   private BigDecimal amount;

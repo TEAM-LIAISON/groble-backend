@@ -15,6 +15,7 @@ public class FreePaymentCompletionResult {
   private final Long paymentId;
   private final Long purchaseId;
   private final Long userId;
+  private final Long guestUserId;
   private final Long contentId;
   private final Long sellerId;
   private final BigDecimal amount;
