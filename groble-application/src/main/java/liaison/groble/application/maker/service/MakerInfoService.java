@@ -52,7 +52,7 @@ public class MakerInfoService {
 
     MakerType makerType = resolveMakerType(verified, businessMaker);
     String verificationStatusLabel = resolveVerificationLabel(status, verified);
-    String name = resolveName(makerType, sellerInfo, user);
+    String name = resolveName(makerType, sellerInfo);
     String email = resolveEmail(user, sellerInfo);
     String phoneNumber = resolvePhoneNumber(user, makerType, verified);
 
@@ -61,7 +61,7 @@ public class MakerInfoService {
       businessInfo =
           BusinessMakerInfoDTO.builder()
               .businessName(optionalOrHyphen(sellerInfo.getBusinessName()))
-              .representativeName(optionalOrHyphen(sellerInfo.getRepresentativeName()))
+              .representativeName(optionalOrHyphen(sellerInfo.getBankAccountOwner()))
               .businessNumber(optionalOrHyphen(sellerInfo.getBusinessNumber()))
               .businessAddress(optionalOrHyphen(sellerInfo.getBusinessAddress()))
               .build();
@@ -96,10 +96,9 @@ public class MakerInfoService {
     return Optional.ofNullable(status.getDisplayName()).orElse(DEFAULT_UNVERIFIED_LABEL);
   }
 
-  private String resolveName(MakerType makerType, SellerInfo sellerInfo, User user) {
+  private String resolveName(MakerType makerType, SellerInfo sellerInfo) {
     return switch (makerType) {
-      case PERSONAL -> optionalOrHyphen(sellerInfo.getBankAccountOwner());
-      case BUSINESS -> optionalOrHyphen(sellerInfo.getRepresentativeName());
+      case PERSONAL, BUSINESS -> optionalOrHyphen(sellerInfo.getBankAccountOwner());
       default -> HYPHEN;
     };
   }
