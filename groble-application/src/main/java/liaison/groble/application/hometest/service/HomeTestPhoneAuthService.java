@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import liaison.groble.application.common.enums.SmsTemplate;
@@ -19,6 +20,8 @@ import liaison.groble.application.notification.enums.KakaoNotificationType;
 import liaison.groble.application.notification.service.KakaoNotificationService;
 import liaison.groble.common.utils.CodeGenerator;
 import liaison.groble.common.utils.PhoneUtils;
+import liaison.groble.domain.hometest.entity.HomeTestContact;
+import liaison.groble.domain.hometest.repository.HomeTestContactRepository;
 import liaison.groble.domain.port.HomeTestVerificationPort;
 import liaison.groble.domain.port.VerificationCodePort;
 import liaison.groble.domain.port.dto.HomeTestVerifiedInfo;
@@ -37,6 +40,7 @@ public class HomeTestPhoneAuthService {
 
   private final VerificationCodePort verificationCodePort;
   private final HomeTestVerificationPort homeTestVerificationPort;
+  private final HomeTestContactRepository homeTestContactRepository;
   private final SmsService smsService;
   private final KakaoNotificationService kakaoNotificationService;
 
@@ -88,6 +92,7 @@ public class HomeTestPhoneAuthService {
         .build();
   }
 
+  @Transactional
   public HomeTestVerificationResultDTO completeTestFlow(HomeTestCompleteDTO dto) {
     HomeTestVerifiedInfo verifiedInfo =
         homeTestVerificationPort
@@ -97,6 +102,8 @@ public class HomeTestPhoneAuthService {
     String sanitizedPhone = PhoneUtils.sanitizePhoneNumber(verifiedInfo.getPhoneNumber());
     String storedNickname = resolveNickname(verifiedInfo.getNickname());
     String storedEmail = resolveEmail(verifiedInfo.getEmail());
+
+    saveOrUpdateHomeTestContact(sanitizedPhone, storedEmail, storedNickname);
 
     kakaoNotificationService.sendNotification(
         KakaoNotificationDTO.builder()
@@ -114,6 +121,16 @@ public class HomeTestPhoneAuthService {
         .email(storedEmail)
         .verificationToken(dto.getVerificationToken())
         .build();
+  }
+
+  private void saveOrUpdateHomeTestContact(String phoneNumber, String email, String nickname) {
+    HomeTestContact contact =
+        homeTestContactRepository
+            .findByPhoneNumber(phoneNumber)
+            .map(existing -> existing.updateContactInfo(email, nickname))
+            .orElseGet(() -> HomeTestContact.create(phoneNumber, email, nickname));
+
+    homeTestContactRepository.save(contact);
   }
 
   private String resolveNickname(String nickname) {
