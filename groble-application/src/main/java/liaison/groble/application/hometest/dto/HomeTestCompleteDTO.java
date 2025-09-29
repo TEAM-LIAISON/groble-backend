@@ -6,7 +6,5 @@ import lombok.Getter;
 @Getter
 @Builder
 public class HomeTestCompleteDTO {
-  private final String phoneNumber;
-  private final String nickname;
-  private final String email;
+  private final String verificationToken;
 }

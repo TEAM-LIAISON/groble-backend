@@ -74,6 +74,7 @@ public class AdminMakerService {
         .businessLicenseFileUrl(sellerInfo.getBusinessLicenseFileUrl())
         .taxInvoiceEmail(sellerInfo.getTaxInvoiceEmail())
         .phoneNumber(sellerInfo.getUser().getPhoneNumber())
+        .birthDate(sellerInfo.getBirthDate())
         .marketLinkUrl(marketLinkUrl)
         .adminMemo(sellerInfo.getUser().getAdminMemo())
         .build();

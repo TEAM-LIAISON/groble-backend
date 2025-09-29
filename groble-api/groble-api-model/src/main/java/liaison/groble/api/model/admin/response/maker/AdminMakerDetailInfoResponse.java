@@ -149,6 +149,14 @@ public class AdminMakerDetailInfoResponse {
       requiredMode = Schema.RequiredMode.REQUIRED)
   private String phoneNumber;
 
+  /** 13-1. 회원 생년월일 */
+  @Schema(
+      description = "회원 생년월일(YYMMDD)",
+      example = "900101",
+      type = "string",
+      requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  private String birthDate;
+
   /** 14. 마켓 링크 URL */
   @Schema(
       description = "마켓 링크 URL",

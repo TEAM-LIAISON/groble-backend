@@ -1,8 +1,10 @@
 package liaison.groble.application.hometest.service;
 
 import java.time.Duration;
+import java.util.UUID;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import liaison.groble.application.common.enums.SmsTemplate;
@@ -11,7 +13,6 @@ import liaison.groble.application.hometest.dto.HomeTestCompleteDTO;
 import liaison.groble.application.hometest.dto.HomeTestPhoneAuthDTO;
 import liaison.groble.application.hometest.dto.HomeTestVerificationResultDTO;
 import liaison.groble.application.hometest.dto.HomeTestVerifyAuthDTO;
-import liaison.groble.application.hometest.exception.HomeTestVerificationMismatchException;
 import liaison.groble.application.hometest.exception.HomeTestVerificationNotFoundException;
 import liaison.groble.application.hometest.exception.InvalidHomeTestAuthCodeException;
 import liaison.groble.application.notification.dto.KakaoNotificationDTO;
@@ -19,6 +20,8 @@ import liaison.groble.application.notification.enums.KakaoNotificationType;
 import liaison.groble.application.notification.service.KakaoNotificationService;
 import liaison.groble.common.utils.CodeGenerator;
 import liaison.groble.common.utils.PhoneUtils;
+import liaison.groble.domain.hometest.entity.HomeTestContact;
+import liaison.groble.domain.hometest.repository.HomeTestContactRepository;
 import liaison.groble.domain.port.HomeTestVerificationPort;
 import liaison.groble.domain.port.VerificationCodePort;
 import liaison.groble.domain.port.dto.HomeTestVerifiedInfo;
@@ -37,6 +40,7 @@ public class HomeTestPhoneAuthService {
 
   private final VerificationCodePort verificationCodePort;
   private final HomeTestVerificationPort homeTestVerificationPort;
+  private final HomeTestContactRepository homeTestContactRepository;
   private final SmsService smsService;
   private final KakaoNotificationService kakaoNotificationService;
 
@@ -67,9 +71,12 @@ public class HomeTestPhoneAuthService {
     String nickname = resolveNickname(dto.getNickname());
     String email = resolveEmail(dto.getEmail());
 
-    homeTestVerificationPort.remove(sanitizedPhone);
+    homeTestVerificationPort.removeByPhoneNumber(sanitizedPhone);
+
+    String verificationToken = UUID.randomUUID().toString();
 
     homeTestVerificationPort.save(
+        verificationToken,
         HomeTestVerifiedInfo.builder()
             .phoneNumber(sanitizedPhone)
             .nickname(nickname)
@@ -81,26 +88,22 @@ public class HomeTestPhoneAuthService {
         .phoneNumber(sanitizedPhone)
         .nickname(nickname)
         .email(email)
+        .verificationToken(verificationToken)
         .build();
   }
 
+  @Transactional
   public HomeTestVerificationResultDTO completeTestFlow(HomeTestCompleteDTO dto) {
-    String sanitizedPhone = PhoneUtils.sanitizePhoneNumber(dto.getPhoneNumber());
-
     HomeTestVerifiedInfo verifiedInfo =
         homeTestVerificationPort
-            .findByPhoneNumber(sanitizedPhone)
+            .findByToken(dto.getVerificationToken())
             .orElseThrow(HomeTestVerificationNotFoundException::new);
 
+    String sanitizedPhone = PhoneUtils.sanitizePhoneNumber(verifiedInfo.getPhoneNumber());
     String storedNickname = resolveNickname(verifiedInfo.getNickname());
     String storedEmail = resolveEmail(verifiedInfo.getEmail());
 
-    String requestNickname = resolveNickname(dto.getNickname());
-    String requestEmail = resolveEmail(dto.getEmail());
-
-    if (!storedNickname.equals(requestNickname) || !equalsNullable(storedEmail, requestEmail)) {
-      throw new HomeTestVerificationMismatchException();
-    }
+    saveOrUpdateHomeTestContact(sanitizedPhone, storedEmail, storedNickname);
 
     kakaoNotificationService.sendNotification(
         KakaoNotificationDTO.builder()
@@ -109,14 +112,25 @@ public class HomeTestPhoneAuthService {
             .testerNickname(storedNickname)
             .build());
 
-    homeTestVerificationPort.remove(sanitizedPhone);
+    homeTestVerificationPort.removeByToken(dto.getVerificationToken());
     verificationCodePort.removeVerificationCodeForHomeTest(sanitizedPhone);
 
     return HomeTestVerificationResultDTO.builder()
         .phoneNumber(sanitizedPhone)
         .nickname(storedNickname)
         .email(storedEmail)
+        .verificationToken(dto.getVerificationToken())
         .build();
+  }
+
+  private void saveOrUpdateHomeTestContact(String phoneNumber, String email, String nickname) {
+    HomeTestContact contact =
+        homeTestContactRepository
+            .findByPhoneNumber(phoneNumber)
+            .map(existing -> existing.updateContactInfo(email, nickname))
+            .orElseGet(() -> HomeTestContact.create(phoneNumber, email, nickname));
+
+    homeTestContactRepository.save(contact);
   }
 
   private String resolveNickname(String nickname) {
@@ -128,15 +142,5 @@ public class HomeTestPhoneAuthService {
 
   private String resolveEmail(String email) {
     return StringUtils.hasText(email) ? email.trim() : null;
-  }
-
-  private boolean equalsNullable(String a, String b) {
-    if (a == null && b == null) {
-      return true;
-    }
-    if (a == null || b == null) {
-      return false;
-    }
-    return a.equals(b);
   }
 }

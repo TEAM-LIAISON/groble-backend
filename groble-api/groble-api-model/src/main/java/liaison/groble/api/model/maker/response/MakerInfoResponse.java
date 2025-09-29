@@ -28,7 +28,7 @@ public class MakerInfoResponse {
       allowableValues = {"PENDING", "IN_PROGRESS", "FAILED", "VERIFIED"})
   private String verificationStatus;
 
-  @Schema(description = "메이커 인증 상태 라벨", example = "인증 완료 ✅")
+  @Schema(description = "메이커 인증 상태 라벨", example = "메이커 인증 완료")
   private String verificationStatusLabel;
 
   @Schema(description = "메이커 이름", example = "홍길동")
