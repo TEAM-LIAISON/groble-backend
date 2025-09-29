@@ -24,6 +24,7 @@ public class AdminMakerDetailInfoDTO {
   private String taxInvoiceEmail;
 
   private String phoneNumber;
+  private String birthDate;
   private String marketLinkUrl;
   private String adminMemo;
 }

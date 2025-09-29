@@ -25,7 +25,7 @@ import lombok.RequiredArgsConstructor;
 public class MakerInfoService {
 
   private static final String DEFAULT_UNVERIFIED_LABEL = "메이커 인증 전";
-  private static final String VERIFIED_LABEL = "인증 완료 ✅";
+  private static final String VERIFIED_LABEL = "메이커 인증 완료";
   private static final String HYPHEN = "-";
 
   private final ContentReader contentReader;
