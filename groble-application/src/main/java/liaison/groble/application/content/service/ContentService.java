@@ -360,6 +360,7 @@ public class ContentService {
         .contentType(safeEnumName(content.getContentType()))
         .categoryId(content.getCategory() != null ? content.getCategory().getCode() : null)
         .title(content.getTitle())
+        .isSearchExposed(content.getIsSearchExposed())
         .sellerProfileImageUrl(sellerProfileImageUrl)
         .sellerName(sellerName)
         .lowestPrice(content.getLowestPrice())
@@ -443,6 +444,7 @@ public class ContentService {
         .contentType(safeEnumName(content.getContentType()))
         .categoryId(content.getCategory() != null ? content.getCategory().getCode() : null)
         .title(content.getTitle())
+        .isSearchExposed(content.getIsSearchExposed())
         .sellerProfileImageUrl(sellerProfileImageUrl)
         .sellerName(sellerName)
         .lowestPrice(content.getLowestPrice())
@@ -578,6 +580,10 @@ public class ContentService {
       content.setMakerIntro(dto.getMakerIntro());
     }
 
+    if (dto.getIsSearchExposed() != null) {
+      content.setSearchExposed(dto.getIsSearchExposed());
+    }
+
     content.setStatus(ContentStatus.DRAFT);
   }
 
@@ -682,6 +688,7 @@ public class ContentService {
         .isAvailableForSale(flat.getIsAvailableForSale())
         .status(flat.getStatus())
         .isDeletable(flat.getIsDeletable())
+        .isSearchExposed(flat.getIsSearchExposed())
         .build();
   }
 
@@ -739,6 +746,8 @@ public class ContentService {
     } else {
       dtoBuilder.status(ContentStatus.DRAFT.name()); // 기본값
     }
+
+    dtoBuilder.isSearchExposed(content.getIsSearchExposed());
 
     // 카테고리가 null이 아닌 경우에만 ID 설정
     if (content.getCategory() != null) {

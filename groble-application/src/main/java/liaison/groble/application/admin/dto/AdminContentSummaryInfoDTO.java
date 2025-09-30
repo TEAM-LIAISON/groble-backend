@@ -18,4 +18,5 @@ public class AdminContentSummaryInfoDTO {
   private BigDecimal minPrice;
   private String contentStatus;
   private String adminContentCheckingStatus;
+  private Boolean isSearchExposed;
 }

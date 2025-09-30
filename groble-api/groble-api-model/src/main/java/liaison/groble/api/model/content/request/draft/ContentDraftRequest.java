@@ -35,6 +35,9 @@ public class ContentDraftRequest {
   @Schema(description = "썸네일 이미지 URL", example = "https://example.com/thumbnail.jpg")
   private String thumbnailUrl;
 
+  @Schema(description = "검색 엔진 노출 여부", example = "true")
+  private Boolean isSearchExposed;
+
   @Valid
   @Schema(description = "코칭 옵션 목록 (contentType이 COACHING인 경우)")
   private List<BaseOptionDraftRequest> coachingOptions;
