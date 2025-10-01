@@ -67,6 +67,17 @@ storage:
   s3:
     bucket: image.groble.im
 
+groble:
+  fee-policy:
+    defaults:
+      platform-fee-rate-applied: 0.0150
+      platform-fee-rate-display: 0.0150
+      platform-fee-rate-baseline: 0.0150
+      pg-fee-rate-applied: 0.0290
+      pg-fee-rate-display: 0.0170
+      pg-fee-rate-baseline: 0.0170
+      vat-rate: 0.1000
+
 app:
   frontend-url: https://groble.im
   backend-url: https://api.groble.im

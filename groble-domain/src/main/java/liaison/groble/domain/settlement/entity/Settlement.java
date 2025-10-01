@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import jakarta.persistence.CascadeType;
@@ -28,6 +29,7 @@ import jakarta.persistence.Version;
 import liaison.groble.domain.common.entity.BaseTimeEntity;
 import liaison.groble.domain.settlement.enums.SettlementCycle;
 import liaison.groble.domain.settlement.enums.SettlementType;
+import liaison.groble.domain.settlement.vo.FeePolicySnapshot;
 import liaison.groble.domain.user.entity.User;
 
 import lombok.AccessLevel;
@@ -107,8 +109,14 @@ public class Settlement extends BaseTimeEntity {
   @Column(name = "platform_fee", nullable = false, precision = 14, scale = 2)
   private BigDecimal platformFee = BigDecimal.ZERO; // 플랫폼 수수료 (1.5%)
 
+  @Column(name = "platform_fee_forgone", nullable = false, precision = 14, scale = 2)
+  private BigDecimal platformFeeForgone = BigDecimal.ZERO; // 이벤트 등으로 면제된 플랫폼 수수료
+
   @Column(name = "pg_fee", nullable = false, precision = 14, scale = 2)
   private BigDecimal pgFee = BigDecimal.ZERO; // PG사 수수료 (1.7%)
+
+  @Column(name = "pg_fee_refund_expected", nullable = false, precision = 14, scale = 2)
+  private BigDecimal pgFeeRefundExpected = BigDecimal.ZERO; // PG 추가 수수료 환급 예상액
 
   // 수수료 VAT (수수료 합계의 10%) - 신규 필드
   @Column(name = "fee_vat", nullable = false, precision = 14, scale = 2)
@@ -149,10 +157,22 @@ public class Settlement extends BaseTimeEntity {
 
   // 수수료율 (기본값: 플랫폼 1.5%, PG 1.7%)
   @Column(name = "platform_fee_rate", nullable = false, precision = 5, scale = 4)
-  private BigDecimal platformFeeRate = new BigDecimal("0.0150"); // 1.5%
+  private BigDecimal platformFeeRate = new BigDecimal("0.0150"); // 적용 수수료율
+
+  @Column(name = "platform_fee_rate_display", nullable = false, precision = 5, scale = 4)
+  private BigDecimal platformFeeRateDisplay = new BigDecimal("0.0150"); // 사용자 표시용 수수료율
+
+  @Column(name = "platform_fee_rate_baseline", nullable = false, precision = 5, scale = 4)
+  private BigDecimal platformFeeRateBaseline = new BigDecimal("0.0150"); // 기준 수수료율
 
   @Column(name = "pg_fee_rate", nullable = false, precision = 5, scale = 4)
-  private BigDecimal pgFeeRate = new BigDecimal("0.0170"); // 1.7%
+  private BigDecimal pgFeeRate = new BigDecimal("0.0170"); // 적용 PG 수수료율
+
+  @Column(name = "pg_fee_rate_display", nullable = false, precision = 5, scale = 4)
+  private BigDecimal pgFeeRateDisplay = new BigDecimal("0.0170"); // 사용자 표시용 PG 수수료율
+
+  @Column(name = "pg_fee_rate_baseline", nullable = false, precision = 5, scale = 4)
+  private BigDecimal pgFeeRateBaseline = new BigDecimal("0.0170"); // 기준 PG 수수료율
 
   // VAT율 - 신규 필드
   @Column(name = "vat_rate", nullable = false, precision = 5, scale = 4)
@@ -249,6 +269,19 @@ public class Settlement extends BaseTimeEntity {
     this.bankName = bankName;
     this.accountNumber = accountNumber;
     this.accountHolder = accountHolder;
+  }
+
+  /** 수수료 정책 스냅샷을 적용해 수수료율을 갱신한다. */
+  public void applyFeePolicySnapshot(FeePolicySnapshot snapshot) {
+    Objects.requireNonNull(snapshot, "snapshot");
+
+    this.platformFeeRate = snapshot.platformFeeRateApplied();
+    this.platformFeeRateDisplay = snapshot.platformFeeRateDisplay();
+    this.platformFeeRateBaseline = snapshot.platformFeeRateBaseline();
+    this.pgFeeRate = snapshot.pgFeeRateApplied();
+    this.pgFeeRateDisplay = snapshot.pgFeeRateDisplay();
+    this.pgFeeRateBaseline = snapshot.pgFeeRateBaseline();
+    this.vatRate = snapshot.vatRate();
   }
 
   // === 비즈니스 메서드 ===
@@ -430,7 +463,9 @@ public class Settlement extends BaseTimeEntity {
   public void recalcFromItems() {
     BigDecimal gross = BigDecimal.ZERO;
     BigDecimal platformFeeSum = BigDecimal.ZERO;
+    BigDecimal platformFeeForgoneSum = BigDecimal.ZERO;
     BigDecimal pgFeeSum = BigDecimal.ZERO;
+    BigDecimal pgFeeRefundExpectedSum = BigDecimal.ZERO;
     BigDecimal feeVatSum = BigDecimal.ZERO;
     BigDecimal totalFeeSum = BigDecimal.ZERO;
     BigDecimal net = BigDecimal.ZERO;
@@ -448,7 +483,11 @@ public class Settlement extends BaseTimeEntity {
       // 정상 항목
       gross = gross.add(nullSafeValue(item.getSalesAmount()));
       platformFeeSum = platformFeeSum.add(nullSafeValue(item.getPlatformFee()));
+      platformFeeForgoneSum =
+          platformFeeForgoneSum.add(nullSafeValue(item.getPlatformFeeForgone()));
       pgFeeSum = pgFeeSum.add(nullSafeValue(item.getPgFee()));
+      pgFeeRefundExpectedSum =
+          pgFeeRefundExpectedSum.add(nullSafeValue(item.getPgFeeRefundExpected()));
       feeVatSum = feeVatSum.add(nullSafeValue(item.getFeeVat()));
       totalFeeSum = totalFeeSum.add(nullSafeValue(item.getTotalFee()));
       net = net.add(nullSafeValue(item.getSettlementAmount()));
@@ -457,7 +496,9 @@ public class Settlement extends BaseTimeEntity {
     // 원화 처리 - 소수점 없음
     this.totalSalesAmount = gross;
     this.platformFee = platformFeeSum;
+    this.platformFeeForgone = platformFeeForgoneSum;
     this.pgFee = pgFeeSum;
+    this.pgFeeRefundExpected = pgFeeRefundExpectedSum;
     this.feeVat = feeVatSum;
     this.totalFee = totalFeeSum;
     this.settlementAmount = net;

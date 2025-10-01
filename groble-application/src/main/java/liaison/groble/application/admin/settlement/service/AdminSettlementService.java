@@ -80,7 +80,9 @@ public class AdminSettlementService {
         .scheduledSettlementDate(settlement.getScheduledSettlementDate())
         .settlementAmount(settlement.getSettlementAmount())
         .pgFee(settlement.getPgFee())
+        .pgFeeRefundExpected(settlement.getPgFeeRefundExpected())
         .platformFee(settlement.getPlatformFee())
+        .platformFeeForgone(settlement.getPlatformFeeForgone())
         .vatAmount(settlement.getFeeVat())
         .build();
   }

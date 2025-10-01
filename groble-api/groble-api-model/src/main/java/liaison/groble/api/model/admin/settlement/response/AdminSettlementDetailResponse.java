@@ -63,6 +63,13 @@ public class AdminSettlementDetailResponse {
       requiredMode = Schema.RequiredMode.REQUIRED)
   private BigDecimal pgFee; // PG사 수수료 (1.7%)
 
+  @Schema(
+      description = "PG 추가 수수료 환급 예정액 (실제 적용 수수료와 기준 수수료 차이 + VAT)",
+      example = "13200",
+      type = "number",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private BigDecimal pgFeeRefundExpected;
+
   // 그로블 수수료(1.5%)
   @Schema(
       description = "플랫폼 수수료 (1.5%)",
@@ -70,6 +77,13 @@ public class AdminSettlementDetailResponse {
       type = "number",
       requiredMode = Schema.RequiredMode.REQUIRED)
   private BigDecimal platformFee; // 플랫폼 수수료 (1.5%)
+
+  @Schema(
+      description = "플랫폼에서 면제한 수수료 (이벤트/프로모션 등)",
+      example = "15000",
+      type = "number",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private BigDecimal platformFeeForgone;
 
   // VAT (10%)
   @Schema(

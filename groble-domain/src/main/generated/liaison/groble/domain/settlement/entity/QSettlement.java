@@ -61,9 +61,21 @@ public class QSettlement extends EntityPathBase<Settlement> {
 
     public final NumberPath<java.math.BigDecimal> pgFeeRate = createNumber("pgFeeRate", java.math.BigDecimal.class);
 
+    public final NumberPath<java.math.BigDecimal> pgFeeRateBaseline = createNumber("pgFeeRateBaseline", java.math.BigDecimal.class);
+
+    public final NumberPath<java.math.BigDecimal> pgFeeRateDisplay = createNumber("pgFeeRateDisplay", java.math.BigDecimal.class);
+
+    public final NumberPath<java.math.BigDecimal> pgFeeRefundExpected = createNumber("pgFeeRefundExpected", java.math.BigDecimal.class);
+
     public final NumberPath<java.math.BigDecimal> platformFee = createNumber("platformFee", java.math.BigDecimal.class);
 
+    public final NumberPath<java.math.BigDecimal> platformFeeForgone = createNumber("platformFeeForgone", java.math.BigDecimal.class);
+
     public final NumberPath<java.math.BigDecimal> platformFeeRate = createNumber("platformFeeRate", java.math.BigDecimal.class);
+
+    public final NumberPath<java.math.BigDecimal> platformFeeRateBaseline = createNumber("platformFeeRateBaseline", java.math.BigDecimal.class);
+
+    public final NumberPath<java.math.BigDecimal> platformFeeRateDisplay = createNumber("platformFeeRateDisplay", java.math.BigDecimal.class);
 
     public final NumberPath<Integer> refundCount = createNumber("refundCount", Integer.class);
 

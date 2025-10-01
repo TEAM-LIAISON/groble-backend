@@ -28,7 +28,15 @@ public class QSettlementItem extends EntityPathBase<SettlementItem> {
 
     public final NumberPath<java.math.BigDecimal> capturedPgFeeRate = createNumber("capturedPgFeeRate", java.math.BigDecimal.class);
 
+    public final NumberPath<java.math.BigDecimal> capturedPgFeeRateBaseline = createNumber("capturedPgFeeRateBaseline", java.math.BigDecimal.class);
+
+    public final NumberPath<java.math.BigDecimal> capturedPgFeeRateDisplay = createNumber("capturedPgFeeRateDisplay", java.math.BigDecimal.class);
+
     public final NumberPath<java.math.BigDecimal> capturedPlatformFeeRate = createNumber("capturedPlatformFeeRate", java.math.BigDecimal.class);
+
+    public final NumberPath<java.math.BigDecimal> capturedPlatformFeeRateBaseline = createNumber("capturedPlatformFeeRateBaseline", java.math.BigDecimal.class);
+
+    public final NumberPath<java.math.BigDecimal> capturedPlatformFeeRateDisplay = createNumber("capturedPlatformFeeRateDisplay", java.math.BigDecimal.class);
 
     public final NumberPath<java.math.BigDecimal> capturedVatRate = createNumber("capturedVatRate", java.math.BigDecimal.class);
 
@@ -47,7 +55,11 @@ public class QSettlementItem extends EntityPathBase<SettlementItem> {
 
     public final NumberPath<java.math.BigDecimal> pgFee = createNumber("pgFee", java.math.BigDecimal.class);
 
+    public final NumberPath<java.math.BigDecimal> pgFeeRefundExpected = createNumber("pgFeeRefundExpected", java.math.BigDecimal.class);
+
     public final NumberPath<java.math.BigDecimal> platformFee = createNumber("platformFee", java.math.BigDecimal.class);
+
+    public final NumberPath<java.math.BigDecimal> platformFeeForgone = createNumber("platformFeeForgone", java.math.BigDecimal.class);
 
     public final liaison.groble.domain.purchase.entity.QPurchase purchase;
 
