@@ -50,7 +50,7 @@ public class SettlementDetailResponse {
 
   // PG사 수수료(1.7%)
   @Schema(
-      description = "PG사 수수료 (1.7%)",
+      description = "PG사 수수료 (표시용, 예: 1.7%)",
       example = "17000",
       type = "number",
       requiredMode = Schema.RequiredMode.REQUIRED)
@@ -65,7 +65,7 @@ public class SettlementDetailResponse {
 
   // 그로블 수수료(1.5%)
   @Schema(
-      description = "플랫폼 수수료 (1.5%)",
+      description = "플랫폼 수수료 (표시용)",
       example = "15000",
       type = "number",
       requiredMode = Schema.RequiredMode.REQUIRED)
@@ -80,7 +80,7 @@ public class SettlementDetailResponse {
 
   // VAT (10%)
   @Schema(
-      description = "부가세 (10%)",
+      description = "부가세 (표시용, 10%)",
       example = "1500",
       type = "number",
       requiredMode = Schema.RequiredMode.REQUIRED)

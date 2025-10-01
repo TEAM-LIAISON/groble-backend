@@ -1,6 +1,7 @@
 package liaison.groble.application.settlement.service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.YearMonth;
 import java.util.List;
 import java.util.Objects;
@@ -111,27 +112,52 @@ public class SettlementService {
           taxInvoiceReader.getTaxInvoiceUrl(settlement.getId(), TaxInvoice.InvoiceStatus.ISSUED);
     }
 
+    BigDecimal totalSalesAmount = nullSafe(settlement.getTotalSalesAmount());
+    BigDecimal displayPlatformFee =
+        roundToWon(totalSalesAmount, settlement.getPlatformFeeRateDisplay());
+    BigDecimal displayPgFee = roundToWon(totalSalesAmount, settlement.getPgFeeRateDisplay());
+    BigDecimal displayVat =
+        roundToWon(displayPlatformFee.add(displayPgFee), settlement.getVatRate());
+    BigDecimal displayTotalFee = displayPlatformFee.add(displayPgFee).add(displayVat);
+    BigDecimal displaySettlementAmount = totalSalesAmount.subtract(displayTotalFee);
+    if (displaySettlementAmount.signum() < 0) {
+      displaySettlementAmount = BigDecimal.ZERO;
+    }
+
+    BigDecimal pgFeeExtra = settlement.getPgFee().subtract(displayPgFee);
+    if (pgFeeExtra.signum() < 0) {
+      pgFeeExtra = BigDecimal.ZERO;
+    }
+    BigDecimal vatExtra = settlement.getFeeVat().subtract(displayVat);
+    if (vatExtra.signum() < 0) {
+      vatExtra = BigDecimal.ZERO;
+    }
+    BigDecimal pgFeeRefundExpected = pgFeeExtra.add(vatExtra);
+
     return SettlementDetailDTO.builder()
         .settlementStartDate(settlement.getSettlementStartDate())
         .settlementEndDate(settlement.getSettlementEndDate())
         .scheduledSettlementDate(settlement.getScheduledSettlementDate())
-        .settlementAmount(settlement.getSettlementAmount())
-        .pgFee(calculateDisplayPgFee(settlement))
-        .pgFeeRefundExpected(settlement.getPgFeeRefundExpected())
-        .platformFee(settlement.getPlatformFee())
+        .settlementAmount(displaySettlementAmount)
+        .pgFee(displayPgFee)
+        .pgFeeRefundExpected(pgFeeRefundExpected)
+        .platformFee(displayPlatformFee)
         .platformFeeForgone(settlement.getPlatformFeeForgone())
-        .vatAmount(settlement.getFeeVat())
+        .vatAmount(displayVat)
         .isTaxInvoiceButtonEnabled(isTaxInvoiceButtonEnabled)
         .isTaxInvoiceIssuable(isTaxInvoiceIssuable)
         .taxInvoiceUrl(taxInvoiceUrl)
         .build();
   }
 
-  private BigDecimal calculateDisplayPgFee(Settlement settlement) {
-    BigDecimal applied = nullSafe(settlement.getPgFee());
-    BigDecimal refund = nullSafe(settlement.getPgFeeRefundExpected());
-    BigDecimal display = applied.subtract(refund);
-    return display.signum() >= 0 ? display : BigDecimal.ZERO;
+  private BigDecimal roundToWon(BigDecimal amount, BigDecimal rate) {
+    if (amount == null) {
+      return BigDecimal.ZERO;
+    }
+    if (rate == null) {
+      rate = BigDecimal.ZERO;
+    }
+    return amount.multiply(rate).setScale(0, RoundingMode.HALF_UP);
   }
 
   private BigDecimal nullSafe(BigDecimal value) {

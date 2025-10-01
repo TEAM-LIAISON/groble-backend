@@ -47,6 +47,8 @@ public class QSettlementItem extends EntityPathBase<SettlementItem> {
 
     public final NumberPath<java.math.BigDecimal> feeVat = createNumber("feeVat", java.math.BigDecimal.class);
 
+    public final NumberPath<java.math.BigDecimal> feeVatDisplay = createNumber("feeVatDisplay", java.math.BigDecimal.class);
+
     public final NumberPath<Long> id = createNumber("id", Long.class);
 
     public final BooleanPath isRefunded = createBoolean("isRefunded");
@@ -55,9 +57,13 @@ public class QSettlementItem extends EntityPathBase<SettlementItem> {
 
     public final NumberPath<java.math.BigDecimal> pgFee = createNumber("pgFee", java.math.BigDecimal.class);
 
+    public final NumberPath<java.math.BigDecimal> pgFeeDisplay = createNumber("pgFeeDisplay", java.math.BigDecimal.class);
+
     public final NumberPath<java.math.BigDecimal> pgFeeRefundExpected = createNumber("pgFeeRefundExpected", java.math.BigDecimal.class);
 
     public final NumberPath<java.math.BigDecimal> platformFee = createNumber("platformFee", java.math.BigDecimal.class);
+
+    public final NumberPath<java.math.BigDecimal> platformFeeDisplay = createNumber("platformFeeDisplay", java.math.BigDecimal.class);
 
     public final NumberPath<java.math.BigDecimal> platformFeeForgone = createNumber("platformFeeForgone", java.math.BigDecimal.class);
 
@@ -75,11 +81,15 @@ public class QSettlementItem extends EntityPathBase<SettlementItem> {
 
     public final NumberPath<java.math.BigDecimal> settlementAmount = createNumber("settlementAmount", java.math.BigDecimal.class);
 
+    public final NumberPath<java.math.BigDecimal> settlementAmountDisplay = createNumber("settlementAmountDisplay", java.math.BigDecimal.class);
+
     public final BooleanPath taxInvoiceEligible = createBoolean("taxInvoiceEligible");
 
     public final ListPath<TaxInvoice, QTaxInvoice> taxInvoices = this.<TaxInvoice, QTaxInvoice>createList("taxInvoices", TaxInvoice.class, QTaxInvoice.class, PathInits.DIRECT2);
 
     public final NumberPath<java.math.BigDecimal> totalFee = createNumber("totalFee", java.math.BigDecimal.class);
+
+    public final NumberPath<java.math.BigDecimal> totalFeeDisplay = createNumber("totalFeeDisplay", java.math.BigDecimal.class);
 
     //inherited
     public final DateTimePath<java.time.LocalDateTime> updatedAt = _super.updatedAt;

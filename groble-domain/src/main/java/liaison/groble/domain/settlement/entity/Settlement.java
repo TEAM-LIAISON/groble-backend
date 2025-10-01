@@ -109,11 +109,17 @@ public class Settlement extends BaseTimeEntity {
   @Column(name = "platform_fee", nullable = false, precision = 14, scale = 2)
   private BigDecimal platformFee = BigDecimal.ZERO; // 플랫폼 수수료 (1.5%)
 
+  @Column(name = "platform_fee_display", nullable = false, precision = 14, scale = 2)
+  private BigDecimal platformFeeDisplay = BigDecimal.ZERO; // 사용자 노출용 플랫폼 수수료
+
   @Column(name = "platform_fee_forgone", nullable = false, precision = 14, scale = 2)
   private BigDecimal platformFeeForgone = BigDecimal.ZERO; // 이벤트 등으로 면제된 플랫폼 수수료
 
   @Column(name = "pg_fee", nullable = false, precision = 14, scale = 2)
   private BigDecimal pgFee = BigDecimal.ZERO; // PG사 수수료 (1.7%)
+
+  @Column(name = "pg_fee_display", nullable = false, precision = 14, scale = 2)
+  private BigDecimal pgFeeDisplay = BigDecimal.ZERO; // 사용자 노출용 PG 수수료
 
   @Column(name = "pg_fee_refund_expected", nullable = false, precision = 14, scale = 2)
   private BigDecimal pgFeeRefundExpected = BigDecimal.ZERO; // PG 추가 수수료 환급 예상액
@@ -122,11 +128,20 @@ public class Settlement extends BaseTimeEntity {
   @Column(name = "fee_vat", nullable = false, precision = 14, scale = 2)
   private BigDecimal feeVat = BigDecimal.ZERO;
 
+  @Column(name = "fee_vat_display", nullable = false, precision = 14, scale = 2)
+  private BigDecimal feeVatDisplay = BigDecimal.ZERO; // 사용자 노출용 VAT
+
   @Column(name = "total_fee", nullable = false, precision = 14, scale = 2)
   private BigDecimal totalFee = BigDecimal.ZERO; // 총 수수료 (플랫폼 + PG)
 
+  @Column(name = "total_fee_display", nullable = false, precision = 14, scale = 2)
+  private BigDecimal totalFeeDisplay = BigDecimal.ZERO; // 사용자 노출용 총 수수료
+
   @Column(name = "settlement_amount", nullable = false, precision = 14, scale = 2)
   private BigDecimal settlementAmount = BigDecimal.ZERO; // 실 정산 금액 (판매금액 - 총수수료)
+
+  @Column(name = "settlement_amount_display", nullable = false, precision = 14, scale = 2)
+  private BigDecimal settlementAmountDisplay = BigDecimal.ZERO; // 사용자 노출용 정산 금액
 
   // 환불 집계 정보 추가
   @Column(name = "total_refund_amount", nullable = false, precision = 14, scale = 2)
@@ -464,11 +479,16 @@ public class Settlement extends BaseTimeEntity {
     BigDecimal gross = BigDecimal.ZERO;
     BigDecimal platformFeeSum = BigDecimal.ZERO;
     BigDecimal platformFeeForgoneSum = BigDecimal.ZERO;
+    BigDecimal platformFeeDisplaySum = BigDecimal.ZERO;
     BigDecimal pgFeeSum = BigDecimal.ZERO;
+    BigDecimal pgFeeDisplaySum = BigDecimal.ZERO;
     BigDecimal pgFeeRefundExpectedSum = BigDecimal.ZERO;
     BigDecimal feeVatSum = BigDecimal.ZERO;
+    BigDecimal feeVatDisplaySum = BigDecimal.ZERO;
     BigDecimal totalFeeSum = BigDecimal.ZERO;
+    BigDecimal totalFeeDisplaySum = BigDecimal.ZERO;
     BigDecimal net = BigDecimal.ZERO;
+    BigDecimal netDisplay = BigDecimal.ZERO;
     BigDecimal refund = BigDecimal.ZERO;
     int refundCnt = 0;
 
@@ -485,23 +505,34 @@ public class Settlement extends BaseTimeEntity {
       platformFeeSum = platformFeeSum.add(nullSafeValue(item.getPlatformFee()));
       platformFeeForgoneSum =
           platformFeeForgoneSum.add(nullSafeValue(item.getPlatformFeeForgone()));
+      platformFeeDisplaySum =
+          platformFeeDisplaySum.add(nullSafeValue(item.getPlatformFeeDisplay()));
       pgFeeSum = pgFeeSum.add(nullSafeValue(item.getPgFee()));
+      pgFeeDisplaySum = pgFeeDisplaySum.add(nullSafeValue(item.getPgFeeDisplay()));
       pgFeeRefundExpectedSum =
           pgFeeRefundExpectedSum.add(nullSafeValue(item.getPgFeeRefundExpected()));
       feeVatSum = feeVatSum.add(nullSafeValue(item.getFeeVat()));
+      feeVatDisplaySum = feeVatDisplaySum.add(nullSafeValue(item.getFeeVatDisplay()));
       totalFeeSum = totalFeeSum.add(nullSafeValue(item.getTotalFee()));
+      totalFeeDisplaySum = totalFeeDisplaySum.add(nullSafeValue(item.getTotalFeeDisplay()));
       net = net.add(nullSafeValue(item.getSettlementAmount()));
+      netDisplay = netDisplay.add(nullSafeValue(item.getSettlementAmountDisplay()));
     }
 
     // 원화 처리 - 소수점 없음
     this.totalSalesAmount = gross;
     this.platformFee = platformFeeSum;
+    this.platformFeeDisplay = platformFeeDisplaySum;
     this.platformFeeForgone = platformFeeForgoneSum;
     this.pgFee = pgFeeSum;
+    this.pgFeeDisplay = pgFeeDisplaySum;
     this.pgFeeRefundExpected = pgFeeRefundExpectedSum;
     this.feeVat = feeVatSum;
+    this.feeVatDisplay = feeVatDisplaySum;
     this.totalFee = totalFeeSum;
+    this.totalFeeDisplay = totalFeeDisplaySum;
     this.settlementAmount = net;
+    this.settlementAmountDisplay = netDisplay;
     this.totalRefundAmount = refund;
     this.refundCount = refundCnt;
   }

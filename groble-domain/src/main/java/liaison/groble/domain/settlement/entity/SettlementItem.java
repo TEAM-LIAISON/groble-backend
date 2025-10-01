@@ -65,11 +65,17 @@ public class SettlementItem extends BaseTimeEntity {
   @Column(name = "platform_fee", nullable = false, precision = 14, scale = 2)
   private BigDecimal platformFee; // 플랫폼 수수료 (1.5%)
 
+  @Column(name = "platform_fee_display", nullable = false, precision = 14, scale = 2)
+  private BigDecimal platformFeeDisplay = BigDecimal.ZERO; // 사용자 노출용 플랫폼 수수료
+
   @Column(name = "platform_fee_forgone", nullable = false, precision = 14, scale = 2)
   private BigDecimal platformFeeForgone = BigDecimal.ZERO; // 면제된 플랫폼 수수료
 
   @Column(name = "pg_fee", nullable = false, precision = 14, scale = 2)
   private BigDecimal pgFee; // PG사 수수료 (1.7%)
+
+  @Column(name = "pg_fee_display", nullable = false, precision = 14, scale = 2)
+  private BigDecimal pgFeeDisplay = BigDecimal.ZERO; // 사용자 노출용 PG 수수료
 
   @Column(name = "pg_fee_refund_expected", nullable = false, precision = 14, scale = 2)
   private BigDecimal pgFeeRefundExpected = BigDecimal.ZERO; // PG 추가 수수료 환급 예상액
@@ -78,11 +84,20 @@ public class SettlementItem extends BaseTimeEntity {
   @Column(name = "fee_vat", nullable = false, precision = 14, scale = 2)
   private BigDecimal feeVat;
 
+  @Column(name = "fee_vat_display", nullable = false, precision = 14, scale = 2)
+  private BigDecimal feeVatDisplay = BigDecimal.ZERO; // 사용자 노출용 VAT
+
   @Column(name = "total_fee", nullable = false, precision = 14, scale = 2)
   private BigDecimal totalFee; // 총 수수료 (플랫폼 + PG)
 
+  @Column(name = "total_fee_display", nullable = false, precision = 14, scale = 2)
+  private BigDecimal totalFeeDisplay = BigDecimal.ZERO; // 사용자 노출용 총 수수료
+
   @Column(name = "settlement_amount", nullable = false, precision = 14, scale = 2)
   private BigDecimal settlementAmount; // 실 정산 금액 (판매금액 - 총수수료)
+
+  @Column(name = "settlement_amount_display", nullable = false, precision = 14, scale = 2)
+  private BigDecimal settlementAmountDisplay = BigDecimal.ZERO; // 사용자 노출용 정산 금액
 
   // 수수료율 스냅샷 (회계 추적용)
   @Column(name = "captured_platform_fee_rate", nullable = false, precision = 5, scale = 4)
@@ -193,50 +208,50 @@ public class SettlementItem extends BaseTimeEntity {
     // 판매 금액 (이미 원 단위라고 가정)
     this.salesAmount = finalPrice.setScale(0, RoundingMode.UNNECESSARY);
 
-    // 수수료 계산 - 원 단위로 반올림
+    // 수수료 계산 - 원 단위로 반올림 (적용/표시/기준)
     BigDecimal platformFeeRaw = this.salesAmount.multiply(platformFeeRate);
+    BigDecimal platformFeeDisplayRaw = this.salesAmount.multiply(platformFeeRateDisplay);
     BigDecimal platformFeeBaselineRaw = this.salesAmount.multiply(platformFeeRateBaseline);
     BigDecimal pgFeeRaw = this.salesAmount.multiply(pgFeeRate);
+    BigDecimal pgFeeDisplayRaw = this.salesAmount.multiply(pgFeeRateDisplay);
     BigDecimal pgFeeBaselineRaw = this.salesAmount.multiply(pgFeeRateBaseline);
 
-    // 각 수수료를 원 단위로 반올림
     this.platformFee = platformFeeRaw.setScale(0, RoundingMode.HALF_UP);
+    this.platformFeeDisplay = platformFeeDisplayRaw.setScale(0, RoundingMode.HALF_UP);
     BigDecimal platformFeeBaselineRounded =
         platformFeeBaselineRaw.setScale(0, RoundingMode.HALF_UP);
     this.pgFee = pgFeeRaw.setScale(0, RoundingMode.HALF_UP);
+    this.pgFeeDisplay = pgFeeDisplayRaw.setScale(0, RoundingMode.HALF_UP);
     BigDecimal pgFeeBaselineRounded = pgFeeBaselineRaw.setScale(0, RoundingMode.HALF_UP);
 
     BigDecimal platformForgone = platformFeeBaselineRounded.subtract(this.platformFee);
-    if (platformForgone.signum() > 0) {
-      this.platformFeeForgone = platformForgone;
-    } else {
-      this.platformFeeForgone = BigDecimal.ZERO;
-    }
+    this.platformFeeForgone = platformForgone.signum() > 0 ? platformForgone : BigDecimal.ZERO;
 
-    // 수수료 VAT 계산 (수수료 합계의 10%)
-    BigDecimal baseFee = this.platformFee.add(this.pgFee);
-    BigDecimal feeVatRaw = baseFee.multiply(vatRate);
+    // 수수료 VAT 계산 (수수료 합계의 10%) - 적용 및 표시 금액 모두 계산
+    BigDecimal baseFeeApplied = this.platformFee.add(this.pgFee);
+    BigDecimal baseFeeDisplay = this.platformFeeDisplay.add(this.pgFeeDisplay);
+    BigDecimal feeVatRaw = baseFeeApplied.multiply(vatRate);
+    BigDecimal feeVatDisplayRaw = baseFeeDisplay.multiply(vatRate);
     this.feeVat = feeVatRaw.setScale(0, RoundingMode.HALF_UP);
+    this.feeVatDisplay = feeVatDisplayRaw.setScale(0, RoundingMode.HALF_UP);
 
-    BigDecimal baseFeeBaseline = platformFeeBaselineRounded.add(pgFeeBaselineRounded);
-    BigDecimal feeVatBaseline = baseFeeBaseline.multiply(vatRate).setScale(0, RoundingMode.HALF_UP);
-
-    BigDecimal pgFeeExtra = this.pgFee.subtract(pgFeeBaselineRounded);
-    if (pgFeeExtra.signum() > 0) {
-      BigDecimal pgVatExtra = this.feeVat.subtract(feeVatBaseline);
-      if (pgVatExtra.signum() < 0) {
-        pgVatExtra = BigDecimal.ZERO;
-      }
-      this.pgFeeRefundExpected = pgFeeExtra.add(pgVatExtra);
-    } else {
-      this.pgFeeRefundExpected = BigDecimal.ZERO;
+    BigDecimal pgFeeExtra = this.pgFee.subtract(this.pgFeeDisplay);
+    if (pgFeeExtra.signum() < 0) {
+      pgFeeExtra = BigDecimal.ZERO;
     }
+    BigDecimal feeVatExtra = this.feeVat.subtract(this.feeVatDisplay);
+    if (feeVatExtra.signum() < 0) {
+      feeVatExtra = BigDecimal.ZERO;
+    }
+    this.pgFeeRefundExpected = pgFeeExtra.add(feeVatExtra);
 
     // 총 수수료 (플랫폼 + PG + VAT)
     this.totalFee = this.platformFee.add(this.pgFee).add(this.feeVat);
+    this.totalFeeDisplay = this.platformFeeDisplay.add(this.pgFeeDisplay).add(this.feeVatDisplay);
 
     // 실 정산 금액 계산
     this.settlementAmount = this.salesAmount.subtract(this.totalFee);
+    this.settlementAmountDisplay = this.salesAmount.subtract(this.totalFeeDisplay);
 
     // ============ VAT 계산 완료 ============
 
@@ -270,6 +285,7 @@ public class SettlementItem extends BaseTimeEntity {
 
     // 환불 시 정산 금액을 0으로 설정
     this.settlementAmount = BigDecimal.ZERO;
+    this.settlementAmountDisplay = BigDecimal.ZERO;
 
     // Settlement의 금액 재계산 호출
     if (settlement != null) {
@@ -288,6 +304,7 @@ public class SettlementItem extends BaseTimeEntity {
 
     // 정산 금액 복원 (원래 수수료 적용)
     this.settlementAmount = this.salesAmount.subtract(this.totalFee);
+    this.settlementAmountDisplay = this.salesAmount.subtract(this.totalFeeDisplay);
 
     // Settlement의 금액 재계산 호출
     if (settlement != null) {
@@ -334,14 +351,18 @@ public class SettlementItem extends BaseTimeEntity {
 
     // 수수료 재계산 - 원 단위로 반올림
     BigDecimal platformFeeRaw = this.salesAmount.multiply(newPlatformFeeRate);
+    BigDecimal platformFeeDisplayRaw = this.salesAmount.multiply(newPlatformFeeRateDisplay);
     BigDecimal platformFeeBaselineRaw = this.salesAmount.multiply(newPlatformFeeRateBaseline);
     BigDecimal pgFeeRaw = this.salesAmount.multiply(newPgFeeRate);
+    BigDecimal pgFeeDisplayRaw = this.salesAmount.multiply(newPgFeeRateDisplay);
     BigDecimal pgFeeBaselineRaw = this.salesAmount.multiply(newPgFeeRateBaseline);
 
     this.platformFee = platformFeeRaw.setScale(0, RoundingMode.HALF_UP);
+    this.platformFeeDisplay = platformFeeDisplayRaw.setScale(0, RoundingMode.HALF_UP);
     BigDecimal platformFeeBaselineRounded =
         platformFeeBaselineRaw.setScale(0, RoundingMode.HALF_UP);
     this.pgFee = pgFeeRaw.setScale(0, RoundingMode.HALF_UP);
+    this.pgFeeDisplay = pgFeeDisplayRaw.setScale(0, RoundingMode.HALF_UP);
     BigDecimal pgFeeBaselineRounded = pgFeeBaselineRaw.setScale(0, RoundingMode.HALF_UP);
 
     BigDecimal platformForgone = platformFeeBaselineRounded.subtract(this.platformFee);
@@ -349,29 +370,29 @@ public class SettlementItem extends BaseTimeEntity {
 
     // 수수료 VAT 재계산
     BigDecimal baseFee = this.platformFee.add(this.pgFee);
+    BigDecimal baseFeeDisplay = this.platformFeeDisplay.add(this.pgFeeDisplay);
     BigDecimal feeVatRaw = baseFee.multiply(this.capturedVatRate);
+    BigDecimal feeVatDisplayRaw = baseFeeDisplay.multiply(this.capturedVatRate);
     this.feeVat = feeVatRaw.setScale(0, RoundingMode.HALF_UP);
+    this.feeVatDisplay = feeVatDisplayRaw.setScale(0, RoundingMode.HALF_UP);
 
-    BigDecimal baseFeeBaseline = platformFeeBaselineRounded.add(pgFeeBaselineRounded);
-    BigDecimal feeVatBaseline =
-        baseFeeBaseline.multiply(this.capturedVatRate).setScale(0, RoundingMode.HALF_UP);
-
-    BigDecimal pgFeeExtra = this.pgFee.subtract(pgFeeBaselineRounded);
-    if (pgFeeExtra.signum() > 0) {
-      BigDecimal pgVatExtra = this.feeVat.subtract(feeVatBaseline);
-      if (pgVatExtra.signum() < 0) {
-        pgVatExtra = BigDecimal.ZERO;
-      }
-      this.pgFeeRefundExpected = pgFeeExtra.add(pgVatExtra);
-    } else {
-      this.pgFeeRefundExpected = BigDecimal.ZERO;
+    BigDecimal pgFeeExtra = this.pgFee.subtract(this.pgFeeDisplay);
+    if (pgFeeExtra.signum() < 0) {
+      pgFeeExtra = BigDecimal.ZERO;
     }
+    BigDecimal feeVatExtra = this.feeVat.subtract(this.feeVatDisplay);
+    if (feeVatExtra.signum() < 0) {
+      feeVatExtra = BigDecimal.ZERO;
+    }
+    this.pgFeeRefundExpected = pgFeeExtra.add(feeVatExtra);
 
     // 총 수수료 재계산
     this.totalFee = this.platformFee.add(this.pgFee).add(this.feeVat);
+    this.totalFeeDisplay = this.platformFeeDisplay.add(this.pgFeeDisplay).add(this.feeVatDisplay);
 
     // 실 정산 금액 재계산
     this.settlementAmount = this.salesAmount.subtract(this.totalFee);
+    this.settlementAmountDisplay = this.salesAmount.subtract(this.totalFeeDisplay);
 
     // Settlement의 금액 재계산
     if (settlement != null) {

@@ -16,16 +16,16 @@ public class SettlementDetailDTO {
   // 정산(예정)일
   private LocalDate scheduledSettlementDate;
   // 정산(예정)금액
-  private BigDecimal settlementAmount; // 정산 예정 금액 (원화 표기)
-  // PG사 수수료(1.7%)
-  private BigDecimal pgFee; // PG사 수수료 (1.7%)
+  private BigDecimal settlementAmount; // 사용자 노출용 정산 예정 금액 (표시 수수료 기준)
+  // PG사 수수료(표시용 1.7%)
+  private BigDecimal pgFee; // 사용자 노출용 PG 수수료
   // PG 추가 수수료 환급 예상액
   private BigDecimal pgFeeRefundExpected;
-  // 그로블 수수료(1.5%)
-  private BigDecimal platformFee; // 플랫폼 수수료 (1.5%)
+  // 그로블 수수료(표시용)
+  private BigDecimal platformFee; // 사용자 노출용 플랫폼 수수료
   // 이벤트 등으로 면제한 플랫폼 수수료
   private BigDecimal platformFeeForgone;
-  // VAT (10%)
+  // VAT (표시용)
   private BigDecimal vatAmount;
 
   // 세금계산서 버튼 활성화 값
