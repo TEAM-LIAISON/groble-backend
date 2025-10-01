@@ -116,7 +116,7 @@ public class SettlementService {
         .settlementEndDate(settlement.getSettlementEndDate())
         .scheduledSettlementDate(settlement.getScheduledSettlementDate())
         .settlementAmount(settlement.getSettlementAmount())
-        .pgFee(settlement.getPgFee())
+        .pgFee(calculateDisplayPgFee(settlement))
         .pgFeeRefundExpected(settlement.getPgFeeRefundExpected())
         .platformFee(settlement.getPlatformFee())
         .platformFeeForgone(settlement.getPlatformFeeForgone())
@@ -125,6 +125,17 @@ public class SettlementService {
         .isTaxInvoiceIssuable(isTaxInvoiceIssuable)
         .taxInvoiceUrl(taxInvoiceUrl)
         .build();
+  }
+
+  private BigDecimal calculateDisplayPgFee(Settlement settlement) {
+    BigDecimal applied = nullSafe(settlement.getPgFee());
+    BigDecimal refund = nullSafe(settlement.getPgFeeRefundExpected());
+    BigDecimal display = applied.subtract(refund);
+    return display.signum() >= 0 ? display : BigDecimal.ZERO;
+  }
+
+  private BigDecimal nullSafe(BigDecimal value) {
+    return value != null ? value : BigDecimal.ZERO;
   }
 
   @Transactional
