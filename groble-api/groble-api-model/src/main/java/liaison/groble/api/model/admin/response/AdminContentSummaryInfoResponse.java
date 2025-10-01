@@ -76,4 +76,7 @@ public class AdminContentSummaryInfoResponse {
       allowableValues = {"PENDING", "VALIDATED", "DISCONTINUED"},
       requiredMode = Schema.RequiredMode.REQUIRED)
   private String adminContentCheckingStatus;
+
+  @Schema(description = "검색 엔진 노출 여부", example = "true")
+  private Boolean isSearchExposed;
 }

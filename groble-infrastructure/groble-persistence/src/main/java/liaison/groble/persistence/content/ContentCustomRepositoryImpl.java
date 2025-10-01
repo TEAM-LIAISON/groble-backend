@@ -82,7 +82,8 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                             .from(qContentOption)
                             .where(qContentOption.content.eq(qContent)),
                         "priceOptionLength"),
-                    qContent.status.stringValue().as("status")))
+                    qContent.status.stringValue().as("status"),
+                    qContent.isSearchExposed.as("isSearchExposed")))
             .from(qContent)
             .leftJoin(qContent.user, qUser)
             .leftJoin(qContent.category, qCategory)
@@ -118,7 +119,8 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                             .from(qContentOption)
                             .where(qContentOption.content.eq(qContent)),
                         "priceOptionLength"),
-                    qContent.status.stringValue().as("status")))
+                    qContent.status.stringValue().as("status"),
+                    qContent.isSearchExposed.as("isSearchExposed")))
             .from(qContent)
             .leftJoin(qContent.user, qUser)
             .leftJoin(qContent.category, qCategory)
@@ -152,7 +154,8 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                         .from(qContentOption)
                         .where(qContentOption.content.eq(qContent)),
                     "priceOptionLength"),
-                qContent.status.stringValue().as("status")))
+                qContent.status.stringValue().as("status"),
+                qContent.isSearchExposed.as("isSearchExposed")))
         .from(qContent)
         .leftJoin(qContent.user, qUser)
         .leftJoin(qContent.category, qCategory)
@@ -188,7 +191,8 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                         .from(qContentOption)
                         .where(qContentOption.content.eq(qContent)),
                     "priceOptionLength"),
-                qContent.status.stringValue().as("status")))
+                qContent.status.stringValue().as("status"),
+                qContent.isSearchExposed.as("isSearchExposed")))
         .from(qContent)
         .leftJoin(qContent.user, qUser)
         .leftJoin(qContent.category, qCategory)
@@ -257,7 +261,8 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                         .where(qContentOption.content.eq(qContent)),
                     "priceOptionLength"),
                 ExpressionUtils.as(availableForSale, "isAvailableForSale"),
-                qContent.status.stringValue().as("status")))
+                qContent.status.stringValue().as("status"),
+                qContent.isSearchExposed.as("isSearchExposed")))
         .from(qContent)
         .leftJoin(qContent.user, qUser)
         .leftJoin(qContent.category, qCategory)
@@ -315,7 +320,8 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                             .from(qContentOption)
                             .where(qContentOption.content.eq(qContent)),
                         "priceOptionLength"),
-                    qContent.status.stringValue().as("status")))
+                    qContent.status.stringValue().as("status"),
+                    qContent.isSearchExposed.as("isSearchExposed")))
             .from(qContent)
             .leftJoin(qContent.user, qUser)
             .leftJoin(qContent.category, qCategory)
@@ -391,7 +397,8 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                             .from(qContentOption)
                             .where(qContentOption.content.eq(qContent)),
                         "priceOptionLength"),
-                    qContent.status.stringValue().as("status")))
+                    qContent.status.stringValue().as("status"),
+                    qContent.isSearchExposed.as("isSearchExposed")))
             .from(qContent)
             .leftJoin(qContent.user, qUser)
             .leftJoin(qContent.category, qCategory)
@@ -462,7 +469,8 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                             .from(qContentOption)
                             .where(qContentOption.content.eq(qContent)),
                         "priceOptionLength"),
-                    qContent.status.stringValue().as("status")))
+                    qContent.status.stringValue().as("status"),
+                    qContent.isSearchExposed.as("isSearchExposed")))
             .from(qContent)
             .leftJoin(qContent.user, qUser)
             .leftJoin(qContent.category, qCategory)
@@ -553,7 +561,8 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                             .from(qContentOption)
                             .where(qContentOption.content.eq(q)),
                         "priceOptionLength"),
-                    q.status.stringValue().as("status")))
+                    q.status.stringValue().as("status"),
+                    q.isSearchExposed.as("isSearchExposed")))
             .from(q)
             .leftJoin(q.user, u)
             .leftJoin(q.category, qCategory)
@@ -627,7 +636,8 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                             .from(qContentOption)
                             .where(qContentOption.content.eq(qContent)),
                         "priceOptionLength"),
-                    qContent.status.stringValue().as("status")))
+                    qContent.status.stringValue().as("status"),
+                    qContent.isSearchExposed.as("isSearchExposed")))
             .from(qContent)
             .leftJoin(qContent.user, qUser)
             .leftJoin(qContent.category, qCategory)
@@ -702,7 +712,8 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                             .from(qContentOption)
                             .where(qContentOption.content.eq(qContent)),
                         "priceOptionLength"),
-                    qContent.status.stringValue().as("status")))
+                    qContent.status.stringValue().as("status"),
+                    qContent.isSearchExposed.as("isSearchExposed")))
             .from(qContent)
             .leftJoin(qContent.user, qUser) // 사용자 정보는 반드시 필요하니까 남겨두고
             .leftJoin(qContent.category, qCategory)
@@ -788,7 +799,8 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     qContent
                         .adminContentCheckingStatus
                         .stringValue()
-                        .as("adminContentCheckingStatus")))
+                        .as("adminContentCheckingStatus"),
+                    qContent.isSearchExposed))
             .from(qContent)
             .orderBy(qContent.createdAt.desc())
             .offset(pageable.getOffset())
@@ -916,7 +928,8 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                         "priceOptionLength"),
                     ExpressionUtils.as(availableForSale, "isAvailableForSale"),
                     qContent.status.stringValue().as("status"),
-                    ExpressionUtils.as(isDeletableExpr, "isDeletable")))
+                    ExpressionUtils.as(isDeletableExpr, "isDeletable"),
+                    qContent.isSearchExposed.as("isSearchExposed")))
             .from(qContent)
             .leftJoin(qContent.user, qUser)
             .leftJoin(qContent.category, qCategory)

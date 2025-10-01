@@ -31,6 +31,9 @@ public class ContentResponse {
   @Schema(description = "콘텐츠 상태", example = "DRAFT")
   private String status;
 
+  @Schema(description = "검색 엔진 노출 여부", example = "true")
+  private Boolean isSearchExposed;
+
   @Schema(description = "옵션 목록")
   private List<OptionResponse> options;
 

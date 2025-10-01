@@ -98,6 +98,8 @@ public class AccountVerificationService {
         dto.getBusinessLicenseFileUrl(),
         dto.getTaxInvoiceEmail());
 
+    String normalizedBusinessNumber = sellerInfo.getBusinessNumber();
+
     final BusinessMakerVerificationCreateReportDTO businessMakerVerificationCreateReportDTO =
         BusinessMakerVerificationCreateReportDTO.builder()
             .userId(user.getId())
@@ -108,7 +110,7 @@ public class AccountVerificationService {
             .bankAccountNumber(sellerInfo.getBankAccountNumber())
             .copyOfBankbookUrl(sellerInfo.getCopyOfBankbookUrl())
             .businessType(dto.getBusinessType().name())
-            .businessNumber(dto.getBusinessNumber())
+            .businessNumber(normalizedBusinessNumber)
             .businessCategory(dto.getBusinessCategory())
             .businessSector(dto.getBusinessSector())
             .businessName(dto.getBusinessName())

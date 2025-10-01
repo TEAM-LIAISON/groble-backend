@@ -67,4 +67,7 @@ public class ContentPreviewCardResponse {
       type = "boolean",
       requiredMode = Schema.RequiredMode.REQUIRED)
   private Boolean isDeletable;
+
+  @Schema(description = "검색 엔진 노출 여부", example = "true")
+  private Boolean isSearchExposed;
 }

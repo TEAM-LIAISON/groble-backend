@@ -39,6 +39,9 @@ public class ContentDetailResponse {
   @Schema(description = "콘텐츠 이름", example = "사업계획서 컨설팅")
   private String title;
 
+  @Schema(description = "검색 엔진 노출 여부", example = "true")
+  private Boolean isSearchExposed;
+
   @Schema(description = "판매자 프로필 이미지 URL")
   private String sellerProfileImageUrl;
 
