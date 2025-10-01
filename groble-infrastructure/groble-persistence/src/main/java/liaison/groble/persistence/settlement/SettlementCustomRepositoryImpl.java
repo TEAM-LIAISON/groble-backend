@@ -65,6 +65,7 @@ public class SettlementCustomRepositoryImpl implements SettlementCustomRepositor
                     qSettlement.scheduledSettlementDate.as("scheduledSettlementDate"),
                     qSettlement.settlementType.stringValue().as("contentType"),
                     qSettlement.settlementAmount.as("settlementAmount"),
+                    qSettlement.settlementAmountDisplay.as("settlementAmountDisplay"),
                     qSettlement.status.stringValue().as("settlementStatus")))
             .from(qSettlement)
             .leftJoin(qSettlement.user, user)
@@ -112,6 +113,7 @@ public class SettlementCustomRepositoryImpl implements SettlementCustomRepositor
                     FlatPerTransactionSettlement.class,
                     qSettlementItem.contentTitle.as("contentTitle"),
                     qSettlementItem.settlementAmount.as("settlementAmount"),
+                    qSettlementItem.settlementAmountDisplay.as("settlementAmountDisplay"),
                     qSettlementItem.purchase.order.status.stringValue().as("orderStatus"),
                     qSettlementItem.purchasedAt.as("purchasedAt")))
             .from(qSettlementItem)
@@ -161,6 +163,7 @@ public class SettlementCustomRepositoryImpl implements SettlementCustomRepositor
                     FlatPerTransactionSettlement.class,
                     qSettlementItem.contentTitle.as("contentTitle"),
                     qSettlementItem.settlementAmount.as("settlementAmount"),
+                    qSettlementItem.settlementAmountDisplay.as("settlementAmountDisplay"),
                     qSettlementItem.purchase.order.status.stringValue().as("orderStatus"),
                     qSettlementItem.purchasedAt.as("purchasedAt")))
             .from(qSettlementItem)
@@ -215,6 +218,7 @@ public class SettlementCustomRepositoryImpl implements SettlementCustomRepositor
                     qSettlement.scheduledSettlementDate.as("scheduledSettlementDate"),
                     qSettlement.settlementType.stringValue().as("contentType"),
                     qSettlement.settlementAmount.as("settlementAmount"),
+                    qSettlement.settlementAmountDisplay.as("settlementAmountDisplay"),
                     qSettlement.status.stringValue().as("settlementStatus"),
                     // SellerInfo 필드들
                     qSellerInfo.verificationStatus.stringValue().as("verificationStatus"),

@@ -1,7 +1,6 @@
 package liaison.groble.application.settlement.service;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.YearMonth;
 import java.util.List;
 import java.util.Objects;
@@ -48,7 +47,7 @@ public class SettlementService {
     // 2) 누적 정산 금액 = 모든 Settlement의 settlementAmount 합계
     BigDecimal totalSettlementAmount =
         settlementReader.findAllByUserId(userId).stream()
-            .map(Settlement::getSettlementAmount)
+            .map(Settlement::getSettlementAmountDisplay)
             .filter(Objects::nonNull)
             .reduce(BigDecimal.ZERO, BigDecimal::add);
 
@@ -85,7 +84,7 @@ public class SettlementService {
         .settlementEndDate(flat.getSettlementEndDate())
         .scheduledSettlementDate(flat.getScheduledSettlementDate())
         .contentType(flat.getContentType())
-        .settlementAmount(flat.getSettlementAmount())
+        .settlementAmount(flat.getSettlementAmountDisplay())
         .settlementStatus(flat.getSettlementStatus())
         .build();
   }
@@ -112,27 +111,12 @@ public class SettlementService {
           taxInvoiceReader.getTaxInvoiceUrl(settlement.getId(), TaxInvoice.InvoiceStatus.ISSUED);
     }
 
-    BigDecimal totalSalesAmount = nullSafe(settlement.getTotalSalesAmount());
-    BigDecimal displayPlatformFee =
-        roundToWon(totalSalesAmount, settlement.getPlatformFeeRateDisplay());
-    BigDecimal displayPgFee = roundToWon(totalSalesAmount, settlement.getPgFeeRateDisplay());
-    BigDecimal displayVat =
-        roundToWon(displayPlatformFee.add(displayPgFee), settlement.getVatRate());
-    BigDecimal displayTotalFee = displayPlatformFee.add(displayPgFee).add(displayVat);
-    BigDecimal displaySettlementAmount = totalSalesAmount.subtract(displayTotalFee);
-    if (displaySettlementAmount.signum() < 0) {
-      displaySettlementAmount = BigDecimal.ZERO;
-    }
-
-    BigDecimal pgFeeExtra = settlement.getPgFee().subtract(displayPgFee);
-    if (pgFeeExtra.signum() < 0) {
-      pgFeeExtra = BigDecimal.ZERO;
-    }
-    BigDecimal vatExtra = settlement.getFeeVat().subtract(displayVat);
-    if (vatExtra.signum() < 0) {
-      vatExtra = BigDecimal.ZERO;
-    }
-    BigDecimal pgFeeRefundExpected = pgFeeExtra.add(vatExtra);
+    BigDecimal displayPlatformFee = nullSafe(settlement.getPlatformFeeDisplay());
+    BigDecimal displayPgFee = nullSafe(settlement.getPgFeeDisplay());
+    BigDecimal displayVat = nullSafe(settlement.getFeeVatDisplay());
+    BigDecimal displayTotalFee = nullSafe(settlement.getTotalFeeDisplay());
+    BigDecimal displaySettlementAmount = nullSafe(settlement.getSettlementAmountDisplay());
+    BigDecimal pgFeeRefundExpected = nullSafe(settlement.getPgFeeRefundExpected());
 
     return SettlementDetailDTO.builder()
         .settlementStartDate(settlement.getSettlementStartDate())
@@ -148,16 +132,6 @@ public class SettlementService {
         .isTaxInvoiceIssuable(isTaxInvoiceIssuable)
         .taxInvoiceUrl(taxInvoiceUrl)
         .build();
-  }
-
-  private BigDecimal roundToWon(BigDecimal amount, BigDecimal rate) {
-    if (amount == null) {
-      return BigDecimal.ZERO;
-    }
-    if (rate == null) {
-      rate = BigDecimal.ZERO;
-    }
-    return amount.multiply(rate).setScale(0, RoundingMode.HALF_UP);
   }
 
   private BigDecimal nullSafe(BigDecimal value) {
@@ -213,7 +187,7 @@ public class SettlementService {
       FlatPerTransactionSettlement flat) {
     return PerTransactionSettlementOverviewDTO.builder()
         .contentTitle(flat.getContentTitle())
-        .settlementAmount(flat.getSettlementAmount())
+        .settlementAmount(flat.getSettlementAmountDisplay())
         .orderStatus(flat.getOrderStatus())
         .purchasedAt(flat.getPurchasedAt())
         .build();

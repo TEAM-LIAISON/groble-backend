@@ -535,7 +535,7 @@ public class AdminSettlementService {
         .settlementId(flatAdminSettlementsDTO.getSettlementId())
         .scheduledSettlementDate(flatAdminSettlementsDTO.getScheduledSettlementDate())
         .contentType(flatAdminSettlementsDTO.getContentType())
-        .settlementAmount(flatAdminSettlementsDTO.getSettlementAmount())
+        .settlementAmount(flatAdminSettlementsDTO.getSettlementAmountDisplay())
         .settlementStatus(flatAdminSettlementsDTO.getSettlementStatus())
         .verificationStatus(flatAdminSettlementsDTO.getVerificationStatus())
         .isBusinessSeller(flatAdminSettlementsDTO.getIsBusinessSeller())
@@ -552,7 +552,7 @@ public class AdminSettlementService {
       FlatPerTransactionSettlement flat) {
     return PerTransactionAdminSettlementOverviewDTO.builder()
         .contentTitle(flat.getContentTitle())
-        .settlementAmount(flat.getSettlementAmount())
+        .settlementAmount(flat.getSettlementAmountDisplay())
         .orderStatus(flat.getOrderStatus())
         .purchasedAt(flat.getPurchasedAt())
         .build();

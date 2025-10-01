@@ -19,5 +19,6 @@ public class FlatSettlementsDTO {
   private LocalDate scheduledSettlementDate;
   private String contentType;
   private BigDecimal settlementAmount;
+  private BigDecimal settlementAmountDisplay;
   private String settlementStatus;
 }
