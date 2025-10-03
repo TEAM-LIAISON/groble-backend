@@ -73,10 +73,8 @@ public class HomeTestPhoneAuthService {
 
     homeTestVerificationPort.removeByPhoneNumber(sanitizedPhone);
 
-    String verificationToken = UUID.randomUUID().toString();
-
     homeTestVerificationPort.save(
-        verificationToken,
+        sanitizedPhone,
         HomeTestVerifiedInfo.builder().phoneNumber(sanitizedPhone).nickname(nickname).build(),
         VERIFIED_INFO_EXPIRATION_MINUTES);
 
@@ -84,22 +82,24 @@ public class HomeTestPhoneAuthService {
         .phoneNumber(sanitizedPhone)
         .nickname(nickname)
         .email(null)
-        .verificationToken(verificationToken)
+        .verificationToken(null)
         .build();
   }
 
   public HomeTestVerificationResultDTO saveEmail(HomeTestSaveEmailDTO dto) {
+    String sanitizedPhone = PhoneUtils.sanitizePhoneNumber(dto.getPhoneNumber());
     HomeTestVerifiedInfo verifiedInfo =
         homeTestVerificationPort
-            .findByToken(dto.getVerificationToken())
+            .findByToken(sanitizedPhone)
             .orElseThrow(HomeTestVerificationNotFoundException::new);
 
-    String sanitizedPhone = PhoneUtils.sanitizePhoneNumber(verifiedInfo.getPhoneNumber());
     String nickname = resolveNickname(verifiedInfo.getNickname());
     String email = resolveEmail(dto.getEmail());
 
+    String verificationToken = UUID.randomUUID().toString();
+
     homeTestVerificationPort.save(
-        dto.getVerificationToken(),
+        verificationToken,
         HomeTestVerifiedInfo.builder()
             .phoneNumber(sanitizedPhone)
             .nickname(nickname)
@@ -111,7 +111,7 @@ public class HomeTestPhoneAuthService {
         .phoneNumber(sanitizedPhone)
         .nickname(nickname)
         .email(email)
-        .verificationToken(dto.getVerificationToken())
+        .verificationToken(verificationToken)
         .build();
   }
 

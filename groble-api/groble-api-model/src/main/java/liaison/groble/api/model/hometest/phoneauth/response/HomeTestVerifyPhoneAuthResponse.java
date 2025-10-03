@@ -18,7 +18,7 @@ public class HomeTestVerifyPhoneAuthResponse {
   private String email;
 
   @Schema(
-      description = "홈 테스트 플로우 완료 시 사용할 인증 토큰",
+      description = "홈 테스트 플로우 완료 시 사용할 인증 토큰 (이메일 저장 단계 이후 발급)",
       example = "f2c1d8c6-1a6b-4a49-9a8e-1234567890ab")
   private String verificationToken;
 }
