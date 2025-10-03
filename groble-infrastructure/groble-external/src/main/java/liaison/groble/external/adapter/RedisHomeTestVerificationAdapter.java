@@ -70,6 +70,30 @@ public class RedisHomeTestVerificationAdapter implements HomeTestVerificationPor
   }
 
   @Override
+  public Optional<HomeTestVerifiedInfo> findByPhoneNumber(String phoneNumber) {
+    String phoneKey = buildPhoneKey(phoneNumber);
+    try {
+      String token = redisTemplate.opsForValue().get(phoneKey);
+      if (!StringUtils.hasText(token)) {
+        return Optional.empty();
+      }
+
+      String value = redisTemplate.opsForValue().get(buildTokenKey(token));
+      if (!StringUtils.hasText(value)) {
+        return Optional.empty();
+      }
+
+      return Optional.of(objectMapper.readValue(value, HomeTestVerifiedInfo.class));
+    } catch (JsonProcessingException e) {
+      log.error("홈 테스트 검증 정보 역직렬화 실패: phoneKey={}, error={}", phoneKey, e.getMessage());
+      return Optional.empty();
+    } catch (DataAccessException e) {
+      log.error("Redis에서 홈 테스트 검증 정보 조회 실패: phoneKey={}, error={}", phoneKey, e.getMessage());
+      return Optional.empty();
+    }
+  }
+
+  @Override
   public void removeByToken(String token) {
     String tokenKey = buildTokenKey(token);
     try {

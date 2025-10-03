@@ -90,7 +90,7 @@ public class HomeTestPhoneAuthService {
     String sanitizedPhone = PhoneUtils.sanitizePhoneNumber(dto.getPhoneNumber());
     HomeTestVerifiedInfo verifiedInfo =
         homeTestVerificationPort
-            .findByToken(sanitizedPhone)
+            .findByPhoneNumber(sanitizedPhone)
             .orElseThrow(HomeTestVerificationNotFoundException::new);
 
     String nickname = resolveNickname(verifiedInfo.getNickname());

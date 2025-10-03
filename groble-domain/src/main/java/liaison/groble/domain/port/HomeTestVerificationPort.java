@@ -10,6 +10,8 @@ public interface HomeTestVerificationPort {
 
   Optional<HomeTestVerifiedInfo> findByToken(String token);
 
+  Optional<HomeTestVerifiedInfo> findByPhoneNumber(String phoneNumber);
+
   void removeByToken(String token);
 
   void removeByPhoneNumber(String phoneNumber);
