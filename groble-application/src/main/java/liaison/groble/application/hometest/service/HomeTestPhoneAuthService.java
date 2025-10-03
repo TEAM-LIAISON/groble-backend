@@ -11,6 +11,7 @@ import liaison.groble.application.common.enums.SmsTemplate;
 import liaison.groble.application.common.service.SmsService;
 import liaison.groble.application.hometest.dto.HomeTestCompleteDTO;
 import liaison.groble.application.hometest.dto.HomeTestPhoneAuthDTO;
+import liaison.groble.application.hometest.dto.HomeTestSaveEmailDTO;
 import liaison.groble.application.hometest.dto.HomeTestVerificationResultDTO;
 import liaison.groble.application.hometest.dto.HomeTestVerifyAuthDTO;
 import liaison.groble.application.hometest.exception.HomeTestVerificationNotFoundException;
@@ -68,8 +69,7 @@ public class HomeTestPhoneAuthService {
 
     verificationCodePort.removeVerificationCodeForHomeTest(sanitizedPhone);
 
-    String nickname = resolveNickname(dto.getNickname());
-    String email = resolveEmail(dto.getEmail());
+    String nickname = resolveNickname(null);
 
     homeTestVerificationPort.removeByPhoneNumber(sanitizedPhone);
 
@@ -77,6 +77,29 @@ public class HomeTestPhoneAuthService {
 
     homeTestVerificationPort.save(
         verificationToken,
+        HomeTestVerifiedInfo.builder().phoneNumber(sanitizedPhone).nickname(nickname).build(),
+        VERIFIED_INFO_EXPIRATION_MINUTES);
+
+    return HomeTestVerificationResultDTO.builder()
+        .phoneNumber(sanitizedPhone)
+        .nickname(nickname)
+        .email(null)
+        .verificationToken(verificationToken)
+        .build();
+  }
+
+  public HomeTestVerificationResultDTO saveEmail(HomeTestSaveEmailDTO dto) {
+    HomeTestVerifiedInfo verifiedInfo =
+        homeTestVerificationPort
+            .findByToken(dto.getVerificationToken())
+            .orElseThrow(HomeTestVerificationNotFoundException::new);
+
+    String sanitizedPhone = PhoneUtils.sanitizePhoneNumber(verifiedInfo.getPhoneNumber());
+    String nickname = resolveNickname(verifiedInfo.getNickname());
+    String email = resolveEmail(dto.getEmail());
+
+    homeTestVerificationPort.save(
+        dto.getVerificationToken(),
         HomeTestVerifiedInfo.builder()
             .phoneNumber(sanitizedPhone)
             .nickname(nickname)
@@ -88,7 +111,7 @@ public class HomeTestPhoneAuthService {
         .phoneNumber(sanitizedPhone)
         .nickname(nickname)
         .email(email)
-        .verificationToken(verificationToken)
+        .verificationToken(dto.getVerificationToken())
         .build();
   }
 

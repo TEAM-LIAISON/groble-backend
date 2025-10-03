@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import liaison.groble.api.model.hometest.phoneauth.request.HomeTestCompleteRequest;
 import liaison.groble.api.model.hometest.phoneauth.request.HomeTestPhoneAuthCodeRequest;
+import liaison.groble.api.model.hometest.phoneauth.request.HomeTestSaveEmailRequest;
 import liaison.groble.api.model.hometest.phoneauth.request.HomeTestVerifyPhoneAuthRequest;
 import liaison.groble.api.model.hometest.phoneauth.response.HomeTestCompleteResponse;
 import liaison.groble.api.model.hometest.phoneauth.response.HomeTestPhoneAuthCodeResponse;
@@ -75,6 +76,20 @@ public class HomeTestPhoneAuthController extends BaseController {
         homeTestAuthMapper.toVerifyResponse(verificationResult);
 
     return success(response, ResponseMessages.HomeTest.PHONE_AUTH_VERIFIED);
+  }
+
+  @Operation(
+      summary = HomeTestSwaggerDocs.SAVE_EMAIL_SUMMARY,
+      description = HomeTestSwaggerDocs.SAVE_EMAIL_DESCRIPTION)
+  @PostMapping(ApiPaths.HomeTest.SAVE_EMAIL)
+  public ResponseEntity<GrobleResponse<HomeTestVerifyPhoneAuthResponse>> savePhoneAuthEmail(
+      @Valid @RequestBody HomeTestSaveEmailRequest request) {
+
+    HomeTestVerificationResultDTO result =
+        homeTestPhoneAuthService.saveEmail(homeTestAuthMapper.toSaveEmailDTO(request));
+    HomeTestVerifyPhoneAuthResponse response = homeTestAuthMapper.toVerifyResponse(result);
+
+    return success(response, ResponseMessages.HomeTest.PHONE_AUTH_EMAIL_SAVED);
   }
 
   @Operation(
