@@ -20,7 +20,7 @@ public final class ApiPaths {
     // 어드민 사용자 탭
     public static final String ADMIN_USER_SUMMARY_INFO = "/users";
     public static final String ADMIN_USER_ACCOUNT_VERIFICATION =
-        "/users/{userId}/account-verification";
+        "/users/{nickname}/account-verification";
     public static final String ADMIN_USER_BUSINESS_INFO = "/users/{userId}/business-info";
 
     public static final String CONTENTS = "/contents";
