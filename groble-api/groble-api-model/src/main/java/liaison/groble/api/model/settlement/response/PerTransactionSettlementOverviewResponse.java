@@ -23,7 +23,7 @@ public class PerTransactionSettlementOverviewResponse {
 
   // 정산 금액
   @Schema(
-      description = "실 정산 금액 (원화 표기)",
+      description = "표시용 정산 금액 (플랫폼/PG 표시 수수료 기준)",
       example = "9980000",
       type = "string",
       requiredMode = Schema.RequiredMode.REQUIRED)

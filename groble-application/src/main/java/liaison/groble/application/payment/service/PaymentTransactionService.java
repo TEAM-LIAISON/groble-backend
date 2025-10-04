@@ -19,6 +19,7 @@ import liaison.groble.application.payment.dto.PaypleAuthResultDTO;
 import liaison.groble.application.payment.dto.completion.PaymentCompletionResult;
 import liaison.groble.application.payment.validator.PaymentValidator;
 import liaison.groble.application.purchase.service.PurchaseReader;
+import liaison.groble.application.settlement.policy.FeePolicyService;
 import liaison.groble.application.settlement.reader.SettlementReader;
 import liaison.groble.application.settlement.writer.SettlementWriter;
 import liaison.groble.application.user.service.UserReader;
@@ -37,6 +38,7 @@ import liaison.groble.domain.settlement.entity.Settlement;
 import liaison.groble.domain.settlement.entity.SettlementItem;
 import liaison.groble.domain.settlement.enums.SettlementCycle;
 import liaison.groble.domain.settlement.enums.SettlementType;
+import liaison.groble.domain.settlement.vo.FeePolicySnapshot;
 import liaison.groble.domain.user.entity.SellerInfo;
 import liaison.groble.domain.user.entity.User;
 
@@ -65,6 +67,7 @@ public class PaymentTransactionService {
   private final PurchaseRepository purchaseRepository;
   private final SettlementReader settlementReader;
   private final SettlementWriter settlementWriter;
+  private final FeePolicyService feePolicyService;
   private final UserReader userReader;
 
   /**
@@ -350,7 +353,11 @@ public class PaymentTransactionService {
             .settlement(settlement)
             .purchase(purchase)
             .platformFeeRate(settlement.getPlatformFeeRate())
+            .platformFeeRateDisplay(settlement.getPlatformFeeRateDisplay())
+            .platformFeeRateBaseline(settlement.getPlatformFeeRateBaseline())
             .pgFeeRate(settlement.getPgFeeRate())
+            .pgFeeRateDisplay(settlement.getPgFeeRateDisplay())
+            .pgFeeRateBaseline(settlement.getPgFeeRateBaseline())
             .vatRate(settlement.getVatRate())
             .build();
 
@@ -401,9 +408,7 @@ public class PaymentTransactionService {
       // SellerInfo에서 은행 정보 조회
       SellerInfo sellerInfo = userReader.getSellerInfo(sellerId);
 
-      BigDecimal platformFeeRate = new BigDecimal("0.0150"); // 1.5%
-      BigDecimal pgFeeRate = new BigDecimal("0.0170"); // 1.7%
-      BigDecimal vatRate = new BigDecimal("0.1000"); // 10%
+      FeePolicySnapshot feeSnapshot = feePolicyService.resolveForSeller(sellerId);
 
       // 정산 주기 결정
       SettlementCycle cycle = determineSettlementCycle(settlementType);
@@ -423,9 +428,9 @@ public class PaymentTransactionService {
               .user(seller)
               .settlementStartDate(periodStart)
               .settlementEndDate(periodEnd)
-              .platformFeeRate(platformFeeRate)
-              .pgFeeRate(pgFeeRate)
-              .vatRate(vatRate)
+              .platformFeeRate(feeSnapshot.platformFeeRateApplied())
+              .pgFeeRate(feeSnapshot.pgFeeRateApplied())
+              .vatRate(feeSnapshot.vatRate())
               .settlementType(settlementType)
               .settlementCycle(cycle)
               .settlementRound(settlementRound)
@@ -433,6 +438,8 @@ public class PaymentTransactionService {
               .accountNumber(sellerInfo.getBankAccountNumber())
               .accountHolder(sellerInfo.getBankAccountOwner())
               .build();
+
+      settlement.applyFeePolicySnapshot(feeSnapshot);
 
       return settlementWriter.saveSettlement(settlement);
 

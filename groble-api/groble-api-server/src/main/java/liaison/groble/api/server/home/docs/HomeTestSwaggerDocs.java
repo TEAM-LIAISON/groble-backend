@@ -18,12 +18,18 @@ public final class HomeTestSwaggerDocs {
   // === 홈 테스트 전화 인증 코드 검증 ===
   public static final String VERIFY_CODE_SUMMARY = "[✅ 홈 테스트] 전화번호 인증 코드 검증";
   public static final String VERIFY_CODE_DESCRIPTION =
-      "이전에 발송된 인증 코드를 검증하여 홈 테스트 인증 절차를 완료합니다.<br/>"
-          + "- 요청 성공 시, 인증 성공 여부와 함께 이후 플로우에서 사용할 `verificationToken`을 응답합니다.";
+      "이전에 발송된 인증 코드를 검증하여 홈 테스트 인증 절차를 진행합니다.<br/>"
+          + "- 요청 성공 시, 인증된 전화번호 정보를 반환하며 `verificationToken`은 이메일 저장 단계에서 발급됩니다.";
+
+  // === 홈 테스트 이메일 저장 ===
+  public static final String SAVE_EMAIL_SUMMARY = "[📧 홈 테스트] 이메일 정보 저장";
+  public static final String SAVE_EMAIL_DESCRIPTION =
+      "전화번호 인증을 완료한 뒤 이메일 정보를 저장하고 최종 `verificationToken`을 발급합니다.<br/>"
+          + "- 요청 성공 시, 저장된 이메일 정보와 함께 이후 플로우 완료에 사용할 `verificationToken`을 응답합니다.";
 
   // === 홈 테스트 플로우 완료 ===
   public static final String COMPLETE_FLOW_SUMMARY = "[🏁 홈 테스트] 인증 플로우 완료 처리";
   public static final String COMPLETE_FLOW_DESCRIPTION =
-      "verify 단계에서 발급받은 `verificationToken`을 사용해 홈 테스트 플로우를 최종 완료 처리합니다.<br/>"
+      "이메일 저장 단계에서 발급받은 `verificationToken`을 사용해 홈 테스트 플로우를 최종 완료 처리합니다.<br/>"
           + "- 요청 성공 시, 검증된 사용자 정보와 함께 완료 결과를 응답합니다.";
 }

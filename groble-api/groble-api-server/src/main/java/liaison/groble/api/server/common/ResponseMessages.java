@@ -108,7 +108,8 @@ public final class ResponseMessages {
 
   public static final class HomeTest {
     public static final String PHONE_AUTH_CODE_SENT = "테스트용 인증 코드 발송이 완료되었습니다.";
-    public static final String PHONE_AUTH_VERIFIED = "테스트용 전화번호 인증이 완료되었습니다.";
+    public static final String PHONE_AUTH_VERIFIED = "테스트용 전화번호 인증이 완료되었습니다. 이메일을 입력해주세요.";
+    public static final String PHONE_AUTH_EMAIL_SAVED = "테스트용 이메일 정보가 저장되었습니다.";
     public static final String PHONE_AUTH_COMPLETED = "테스트 결제 체험이 완료되었습니다.";
 
     private HomeTest() {}

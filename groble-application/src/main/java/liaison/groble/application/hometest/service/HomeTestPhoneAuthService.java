@@ -11,6 +11,7 @@ import liaison.groble.application.common.enums.SmsTemplate;
 import liaison.groble.application.common.service.SmsService;
 import liaison.groble.application.hometest.dto.HomeTestCompleteDTO;
 import liaison.groble.application.hometest.dto.HomeTestPhoneAuthDTO;
+import liaison.groble.application.hometest.dto.HomeTestSaveEmailDTO;
 import liaison.groble.application.hometest.dto.HomeTestVerificationResultDTO;
 import liaison.groble.application.hometest.dto.HomeTestVerifyAuthDTO;
 import liaison.groble.application.hometest.exception.HomeTestVerificationNotFoundException;
@@ -68,10 +69,32 @@ public class HomeTestPhoneAuthService {
 
     verificationCodePort.removeVerificationCodeForHomeTest(sanitizedPhone);
 
-    String nickname = resolveNickname(dto.getNickname());
-    String email = resolveEmail(dto.getEmail());
+    String nickname = resolveNickname(null);
 
     homeTestVerificationPort.removeByPhoneNumber(sanitizedPhone);
+
+    homeTestVerificationPort.save(
+        sanitizedPhone,
+        HomeTestVerifiedInfo.builder().phoneNumber(sanitizedPhone).nickname(nickname).build(),
+        VERIFIED_INFO_EXPIRATION_MINUTES);
+
+    return HomeTestVerificationResultDTO.builder()
+        .phoneNumber(sanitizedPhone)
+        .nickname(nickname)
+        .email(null)
+        .verificationToken(null)
+        .build();
+  }
+
+  public HomeTestVerificationResultDTO saveEmail(HomeTestSaveEmailDTO dto) {
+    String sanitizedPhone = PhoneUtils.sanitizePhoneNumber(dto.getPhoneNumber());
+    HomeTestVerifiedInfo verifiedInfo =
+        homeTestVerificationPort
+            .findByPhoneNumber(sanitizedPhone)
+            .orElseThrow(HomeTestVerificationNotFoundException::new);
+
+    String nickname = resolveNickname(verifiedInfo.getNickname());
+    String email = resolveEmail(dto.getEmail());
 
     String verificationToken = UUID.randomUUID().toString();
 

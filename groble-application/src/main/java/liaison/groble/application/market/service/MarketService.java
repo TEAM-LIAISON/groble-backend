@@ -260,6 +260,7 @@ public class MarketService {
         .priceOptionLength(flat.getPriceOptionLength())
         .isAvailableForSale(flat.getIsAvailableForSale())
         .status(flat.getStatus())
+        .isSearchExposed(flat.getIsSearchExposed())
         .build();
   }
 

@@ -130,6 +130,10 @@ public class Content extends BaseTimeEntity {
   @Column(name = "is_representative", nullable = false)
   private Boolean isRepresentative = false;
 
+  // 검색 엔진 노출 여부
+  @Column(name = "is_search_exposed", nullable = false)
+  private Boolean isSearchExposed = true;
+
   // 비즈니스 로직으로 옵션 유형 검증
   public void addOption(ContentOption option) {
     if (contentType == ContentType.DOCUMENT && !(option instanceof DocumentOption)) {
@@ -190,6 +194,10 @@ public class Content extends BaseTimeEntity {
 
   public void setRepresentative(Boolean isRepresentative) {
     this.isRepresentative = isRepresentative;
+  }
+
+  public void setSearchExposed(Boolean isSearchExposed) {
+    this.isSearchExposed = isSearchExposed;
   }
 
   public void incrementSaleCount() {

@@ -15,6 +15,7 @@ public class ContentDetailDTO {
   private String contentType;
   private String categoryId;
   private String title;
+  private Boolean isSearchExposed;
   private String sellerProfileImageUrl;
   private String sellerName;
   private BigDecimal lowestPrice;

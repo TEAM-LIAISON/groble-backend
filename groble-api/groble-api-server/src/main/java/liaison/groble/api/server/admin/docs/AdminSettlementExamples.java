@@ -85,10 +85,28 @@ public final class AdminSettlementExamples {
           "settlementStartDate": "2025-01-01",
           "settlementEndDate": "2025-01-31",
           "scheduledSettlementDate": "2025-02-15",
+          "totalSalesAmount": 2150000.00,
+          "totalRefundAmount": 150000.00,
+          "refundCount": 2,
+          "totalFee": 45600.00,
+          "totalFeeDisplay": 48000.00,
           "settlementAmount": 180000.00,
+          "settlementAmountDisplay": 192000.00,
           "pgFee": 3060.00,
+          "pgFeeDisplay": 3240.00,
           "platformFee": 2700.00,
-          "vatAmount": 270.00
+          "platformFeeDisplay": 2970.00,
+          "pgFeeRefundExpected": 1320.00,
+          "platformFeeForgone": 540.00,
+          "vatAmount": 270.00,
+          "feeVatDisplay": 300.00,
+          "platformFeeRate": 0.0150,
+          "platformFeeRateDisplay": 0.0165,
+          "platformFeeRateBaseline": 0.0180,
+          "pgFeeRate": 0.0170,
+          "pgFeeRateDisplay": 0.0180,
+          "pgFeeRateBaseline": 0.0195,
+          "vatRate": 0.1000
         }
       }
       """;

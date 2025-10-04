@@ -182,7 +182,7 @@ public class SellerInfo {
       this.birthDate = updatedInfo.getBirthDate();
     }
     if (updatedInfo.getBusinessNumber() != null) {
-      this.businessNumber = updatedInfo.getBusinessNumber();
+      this.businessNumber = normalizeBusinessNumber(updatedInfo.getBusinessNumber());
     }
   }
 
@@ -286,7 +286,7 @@ public class SellerInfo {
       String businessLicenseFileUrl,
       String taxInvoiceEmail) {
     this.businessType = businessType;
-    this.businessNumber = businessNumber;
+    this.businessNumber = normalizeBusinessNumber(businessNumber);
     this.businessCategory = businessCategory;
     this.businessSector = businessSector;
     this.businessName = businessName;
@@ -314,5 +314,24 @@ public class SellerInfo {
         .user(user)
         .verificationStatus(SellerVerificationStatus.PENDING)
         .build();
+  }
+
+  private String normalizeBusinessNumber(String businessNumber) {
+    if (businessNumber == null) {
+      return null;
+    }
+
+    String digitsOnly = businessNumber.replaceAll("\\D", "");
+    if (digitsOnly.length() != 10) {
+      return businessNumber;
+    }
+
+    return new StringBuilder(12)
+        .append(digitsOnly, 0, 3)
+        .append('-')
+        .append(digitsOnly, 3, 5)
+        .append('-')
+        .append(digitsOnly, 5, 10)
+        .toString();
   }
 }

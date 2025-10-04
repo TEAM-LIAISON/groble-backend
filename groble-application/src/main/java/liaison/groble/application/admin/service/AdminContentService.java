@@ -110,6 +110,7 @@ public class AdminContentService {
         .minPrice(flat.getMinPrice())
         .contentStatus(flat.getContentStatus())
         .adminContentCheckingStatus(flat.getAdminContentCheckingStatus())
+        .isSearchExposed(flat.getIsSearchExposed())
         .build();
   }
 }
