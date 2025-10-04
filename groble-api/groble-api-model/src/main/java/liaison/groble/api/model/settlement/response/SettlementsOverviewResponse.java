@@ -53,7 +53,7 @@ public class SettlementsOverviewResponse {
   private String contentType;
 
   @Schema(
-      description = "정산(예정)금액 (원화 표기)",
+      description = "정산(예정)금액 (표시 수수료 기준)",
       example = "1000000",
       type = "number",
       requiredMode = Schema.RequiredMode.REQUIRED)

@@ -47,7 +47,7 @@ public class SettlementService {
     // 2) 누적 정산 금액 = 모든 Settlement의 settlementAmount 합계
     BigDecimal totalSettlementAmount =
         settlementReader.findAllByUserId(userId).stream()
-            .map(Settlement::getSettlementAmount)
+            .map(Settlement::getSettlementAmountDisplay)
             .filter(Objects::nonNull)
             .reduce(BigDecimal.ZERO, BigDecimal::add);
 
@@ -84,7 +84,7 @@ public class SettlementService {
         .settlementEndDate(flat.getSettlementEndDate())
         .scheduledSettlementDate(flat.getScheduledSettlementDate())
         .contentType(flat.getContentType())
-        .settlementAmount(flat.getSettlementAmount())
+        .settlementAmount(flat.getSettlementAmountDisplay())
         .settlementStatus(flat.getSettlementStatus())
         .build();
   }
@@ -111,18 +111,31 @@ public class SettlementService {
           taxInvoiceReader.getTaxInvoiceUrl(settlement.getId(), TaxInvoice.InvoiceStatus.ISSUED);
     }
 
+    BigDecimal displayPlatformFee = nullSafe(settlement.getPlatformFeeDisplay());
+    BigDecimal displayPgFee = nullSafe(settlement.getPgFeeDisplay());
+    BigDecimal displayVat = nullSafe(settlement.getFeeVatDisplay());
+    BigDecimal displayTotalFee = nullSafe(settlement.getTotalFeeDisplay());
+    BigDecimal displaySettlementAmount = nullSafe(settlement.getSettlementAmountDisplay());
+    BigDecimal pgFeeRefundExpected = nullSafe(settlement.getPgFeeRefundExpected());
+
     return SettlementDetailDTO.builder()
         .settlementStartDate(settlement.getSettlementStartDate())
         .settlementEndDate(settlement.getSettlementEndDate())
         .scheduledSettlementDate(settlement.getScheduledSettlementDate())
-        .settlementAmount(settlement.getSettlementAmount())
-        .pgFee(settlement.getPgFee())
-        .platformFee(settlement.getPlatformFee())
-        .vatAmount(settlement.getFeeVat())
+        .settlementAmount(displaySettlementAmount)
+        .pgFee(displayPgFee)
+        .pgFeeRefundExpected(pgFeeRefundExpected)
+        .platformFee(displayPlatformFee)
+        .platformFeeForgone(settlement.getPlatformFeeForgone())
+        .vatAmount(displayVat)
         .isTaxInvoiceButtonEnabled(isTaxInvoiceButtonEnabled)
         .isTaxInvoiceIssuable(isTaxInvoiceIssuable)
         .taxInvoiceUrl(taxInvoiceUrl)
         .build();
+  }
+
+  private BigDecimal nullSafe(BigDecimal value) {
+    return value != null ? value : BigDecimal.ZERO;
   }
 
   @Transactional
@@ -174,7 +187,7 @@ public class SettlementService {
       FlatPerTransactionSettlement flat) {
     return PerTransactionSettlementOverviewDTO.builder()
         .contentTitle(flat.getContentTitle())
-        .settlementAmount(flat.getSettlementAmount())
+        .settlementAmount(flat.getSettlementAmountDisplay())
         .orderStatus(flat.getOrderStatus())
         .purchasedAt(flat.getPurchasedAt())
         .build();

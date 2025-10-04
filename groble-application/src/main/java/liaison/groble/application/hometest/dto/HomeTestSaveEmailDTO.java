@@ -5,7 +5,7 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public class HomeTestVerifyAuthDTO {
+public class HomeTestSaveEmailDTO {
   private final String phoneNumber;
-  private final String authCode;
+  private final String email;
 }

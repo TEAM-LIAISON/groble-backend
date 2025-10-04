@@ -20,7 +20,7 @@ public final class ApiPaths {
     // 어드민 사용자 탭
     public static final String ADMIN_USER_SUMMARY_INFO = "/users";
     public static final String ADMIN_USER_ACCOUNT_VERIFICATION =
-        "/users/{userId}/account-verification";
+        "/users/{nickname}/account-verification";
     public static final String ADMIN_USER_BUSINESS_INFO = "/users/{userId}/business-info";
 
     public static final String CONTENTS = "/contents";
@@ -126,6 +126,7 @@ public final class ApiPaths {
     public static final String BASE = API_V1 + "/home/payment-test";
     public static final String SEND_CODE = "/code-request";
     public static final String VERIFY_CODE = "/verify-request";
+    public static final String SAVE_EMAIL = "/email";
     public static final String COMPLETE = "/complete";
 
     private HomeTest() {}

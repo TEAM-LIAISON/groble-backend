@@ -29,7 +29,7 @@ public interface JpaSettlementRepository extends JpaRepository<Settlement, Long>
   Optional<Settlement> findById(Long settlementId);
 
   @Query(
-      "SELECT COALESCE(SUM(s.settlementAmount), 0) FROM Settlement s "
+      "SELECT COALESCE(SUM(s.settlementAmountDisplay), 0) FROM Settlement s "
           + "WHERE s.user.id = :sellerId "
           + "AND s.status = 'PENDING'")
   BigDecimal calculatePendingSettlementAmount(@Param("sellerId") Long sellerId);

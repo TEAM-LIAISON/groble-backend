@@ -28,7 +28,15 @@ public class QSettlementItem extends EntityPathBase<SettlementItem> {
 
     public final NumberPath<java.math.BigDecimal> capturedPgFeeRate = createNumber("capturedPgFeeRate", java.math.BigDecimal.class);
 
+    public final NumberPath<java.math.BigDecimal> capturedPgFeeRateBaseline = createNumber("capturedPgFeeRateBaseline", java.math.BigDecimal.class);
+
+    public final NumberPath<java.math.BigDecimal> capturedPgFeeRateDisplay = createNumber("capturedPgFeeRateDisplay", java.math.BigDecimal.class);
+
     public final NumberPath<java.math.BigDecimal> capturedPlatformFeeRate = createNumber("capturedPlatformFeeRate", java.math.BigDecimal.class);
+
+    public final NumberPath<java.math.BigDecimal> capturedPlatformFeeRateBaseline = createNumber("capturedPlatformFeeRateBaseline", java.math.BigDecimal.class);
+
+    public final NumberPath<java.math.BigDecimal> capturedPlatformFeeRateDisplay = createNumber("capturedPlatformFeeRateDisplay", java.math.BigDecimal.class);
 
     public final NumberPath<java.math.BigDecimal> capturedVatRate = createNumber("capturedVatRate", java.math.BigDecimal.class);
 
@@ -39,6 +47,8 @@ public class QSettlementItem extends EntityPathBase<SettlementItem> {
 
     public final NumberPath<java.math.BigDecimal> feeVat = createNumber("feeVat", java.math.BigDecimal.class);
 
+    public final NumberPath<java.math.BigDecimal> feeVatDisplay = createNumber("feeVatDisplay", java.math.BigDecimal.class);
+
     public final NumberPath<Long> id = createNumber("id", Long.class);
 
     public final BooleanPath isRefunded = createBoolean("isRefunded");
@@ -47,7 +57,15 @@ public class QSettlementItem extends EntityPathBase<SettlementItem> {
 
     public final NumberPath<java.math.BigDecimal> pgFee = createNumber("pgFee", java.math.BigDecimal.class);
 
+    public final NumberPath<java.math.BigDecimal> pgFeeDisplay = createNumber("pgFeeDisplay", java.math.BigDecimal.class);
+
+    public final NumberPath<java.math.BigDecimal> pgFeeRefundExpected = createNumber("pgFeeRefundExpected", java.math.BigDecimal.class);
+
     public final NumberPath<java.math.BigDecimal> platformFee = createNumber("platformFee", java.math.BigDecimal.class);
+
+    public final NumberPath<java.math.BigDecimal> platformFeeDisplay = createNumber("platformFeeDisplay", java.math.BigDecimal.class);
+
+    public final NumberPath<java.math.BigDecimal> platformFeeForgone = createNumber("platformFeeForgone", java.math.BigDecimal.class);
 
     public final liaison.groble.domain.purchase.entity.QPurchase purchase;
 
@@ -63,11 +81,15 @@ public class QSettlementItem extends EntityPathBase<SettlementItem> {
 
     public final NumberPath<java.math.BigDecimal> settlementAmount = createNumber("settlementAmount", java.math.BigDecimal.class);
 
+    public final NumberPath<java.math.BigDecimal> settlementAmountDisplay = createNumber("settlementAmountDisplay", java.math.BigDecimal.class);
+
     public final BooleanPath taxInvoiceEligible = createBoolean("taxInvoiceEligible");
 
     public final ListPath<TaxInvoice, QTaxInvoice> taxInvoices = this.<TaxInvoice, QTaxInvoice>createList("taxInvoices", TaxInvoice.class, QTaxInvoice.class, PathInits.DIRECT2);
 
     public final NumberPath<java.math.BigDecimal> totalFee = createNumber("totalFee", java.math.BigDecimal.class);
+
+    public final NumberPath<java.math.BigDecimal> totalFeeDisplay = createNumber("totalFeeDisplay", java.math.BigDecimal.class);
 
     //inherited
     public final DateTimePath<java.time.LocalDateTime> updatedAt = _super.updatedAt;

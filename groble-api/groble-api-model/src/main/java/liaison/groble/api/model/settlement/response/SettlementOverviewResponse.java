@@ -21,14 +21,14 @@ public class SettlementOverviewResponse {
 
   // 누적 정산 금액 (전체 합산) -> 모든 월에 대한 settlementAmount의 합산
   @Schema(
-      description = "누적 정산 금액 (전체 합산)",
+      description = "누적 정산 금액 (표시 수수료 기준)",
       example = "5000000",
       type = "number",
       requiredMode = Schema.RequiredMode.REQUIRED)
   private BigDecimal totalSettlementAmount;
 
   @Schema(
-      description = "정산 예정 금액",
+      description = "정산 예정 금액 (표시 수수료 기준)",
       example = "900000",
       type = "number",
       requiredMode = Schema.RequiredMode.REQUIRED)

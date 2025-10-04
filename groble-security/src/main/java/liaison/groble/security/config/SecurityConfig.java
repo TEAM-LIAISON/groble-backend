@@ -198,6 +198,7 @@ public class SecurityConfig {
                     .requestMatchers(
                         "/api/v1/home/payment-test/code-request",
                         "/api/v1/home/payment-test/verify-request",
+                        "/api/v1/home/payment-test/email",
                         "/api/v1/home/payment-test/complete")
                     .permitAll()
                     .requestMatchers("/api/v1/payments/**")
