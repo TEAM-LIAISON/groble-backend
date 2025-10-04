@@ -33,10 +33,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
     description = AdminDashboardSwaggerDocs.TAG_DESCRIPTION)
 public class AdminDashboardController extends BaseController {
 
-  // Service
-
   // Mapper
   private final AdminDashboardMapper adminDashboardMapper;
+
+  // Service
   private final AdminDashboardService adminDashboardService;
 
   public AdminDashboardController(
