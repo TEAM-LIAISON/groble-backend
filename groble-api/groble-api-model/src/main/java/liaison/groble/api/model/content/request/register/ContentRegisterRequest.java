@@ -43,9 +43,9 @@ public class ContentRegisterRequest {
   @Schema(description = "썸네일 이미지 URL", example = "https://example.com/thumbnail.jpg")
   private String thumbnailUrl;
 
-  @NotNull(message = "검색 엔진 노출 여부는 필수 입력 항목입니다")
   @Schema(description = "검색 엔진 노출 여부", example = "true")
-  private Boolean isSearchExposed;
+  @Builder.Default
+  private Boolean isSearchExposed = Boolean.FALSE;
 
   @Valid
   @Schema(description = "코칭 옵션 목록 (contentType이 COACHING인 경우)")
