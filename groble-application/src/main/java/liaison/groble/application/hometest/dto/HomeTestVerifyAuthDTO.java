@@ -8,6 +8,4 @@ import lombok.Getter;
 public class HomeTestVerifyAuthDTO {
   private final String phoneNumber;
   private final String authCode;
-  private final String nickname;
-  private final String email;
 }

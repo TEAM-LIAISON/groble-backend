@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import liaison.groble.api.model.hometest.phoneauth.request.HomeTestCompleteRequest;
 import liaison.groble.api.model.hometest.phoneauth.request.HomeTestPhoneAuthCodeRequest;
+import liaison.groble.api.model.hometest.phoneauth.request.HomeTestSaveEmailRequest;
 import liaison.groble.api.model.hometest.phoneauth.request.HomeTestVerifyPhoneAuthRequest;
 import liaison.groble.api.model.hometest.phoneauth.response.HomeTestCompleteResponse;
 import liaison.groble.api.model.hometest.phoneauth.response.HomeTestPhoneAuthCodeResponse;
@@ -17,6 +18,7 @@ import liaison.groble.api.model.hometest.phoneauth.response.HomeTestVerifyPhoneA
 import liaison.groble.api.server.common.ApiPaths;
 import liaison.groble.api.server.common.BaseController;
 import liaison.groble.api.server.common.ResponseMessages;
+import liaison.groble.api.server.home.docs.HomeTestSwaggerDocs;
 import liaison.groble.application.hometest.dto.HomeTestCompleteDTO;
 import liaison.groble.application.hometest.dto.HomeTestPhoneAuthDTO;
 import liaison.groble.application.hometest.dto.HomeTestVerificationResultDTO;
@@ -31,7 +33,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
 @RequestMapping(ApiPaths.HomeTest.BASE)
-@Tag(name = "HomeTest", description = "홈 화면 테스트용 전화번호 인증 API")
+@Tag(name = HomeTestSwaggerDocs.TAG_NAME, description = HomeTestSwaggerDocs.TAG_DESCRIPTION)
 public class HomeTestPhoneAuthController extends BaseController {
 
   private final HomeTestAuthMapper homeTestAuthMapper;
@@ -46,7 +48,9 @@ public class HomeTestPhoneAuthController extends BaseController {
     this.homeTestPhoneAuthService = homeTestPhoneAuthService;
   }
 
-  @Operation(summary = "홈 테스트 인증 코드 발송")
+  @Operation(
+      summary = HomeTestSwaggerDocs.SEND_CODE_SUMMARY,
+      description = HomeTestSwaggerDocs.SEND_CODE_DESCRIPTION)
   @PostMapping(ApiPaths.HomeTest.SEND_CODE)
   public ResponseEntity<GrobleResponse<HomeTestPhoneAuthCodeResponse>> sendPhoneAuthCode(
       @Valid @RequestBody HomeTestPhoneAuthCodeRequest request) {
@@ -58,7 +62,9 @@ public class HomeTestPhoneAuthController extends BaseController {
     return success(response, ResponseMessages.HomeTest.PHONE_AUTH_CODE_SENT);
   }
 
-  @Operation(summary = "홈 테스트 인증 코드 검증")
+  @Operation(
+      summary = HomeTestSwaggerDocs.VERIFY_CODE_SUMMARY,
+      description = HomeTestSwaggerDocs.VERIFY_CODE_DESCRIPTION)
   @PostMapping(ApiPaths.HomeTest.VERIFY_CODE)
   public ResponseEntity<GrobleResponse<HomeTestVerifyPhoneAuthResponse>> verifyPhoneAuthCode(
       @Valid @RequestBody HomeTestVerifyPhoneAuthRequest request) {
@@ -72,7 +78,23 @@ public class HomeTestPhoneAuthController extends BaseController {
     return success(response, ResponseMessages.HomeTest.PHONE_AUTH_VERIFIED);
   }
 
-  @Operation(summary = "홈 테스트 결제 플로우 완료")
+  @Operation(
+      summary = HomeTestSwaggerDocs.SAVE_EMAIL_SUMMARY,
+      description = HomeTestSwaggerDocs.SAVE_EMAIL_DESCRIPTION)
+  @PostMapping(ApiPaths.HomeTest.SAVE_EMAIL)
+  public ResponseEntity<GrobleResponse<HomeTestVerifyPhoneAuthResponse>> savePhoneAuthEmail(
+      @Valid @RequestBody HomeTestSaveEmailRequest request) {
+
+    HomeTestVerificationResultDTO result =
+        homeTestPhoneAuthService.saveEmail(homeTestAuthMapper.toSaveEmailDTO(request));
+    HomeTestVerifyPhoneAuthResponse response = homeTestAuthMapper.toVerifyResponse(result);
+
+    return success(response, ResponseMessages.HomeTest.PHONE_AUTH_EMAIL_SAVED);
+  }
+
+  @Operation(
+      summary = HomeTestSwaggerDocs.COMPLETE_FLOW_SUMMARY,
+      description = HomeTestSwaggerDocs.COMPLETE_FLOW_DESCRIPTION)
   @PostMapping(ApiPaths.HomeTest.COMPLETE)
   public ResponseEntity<GrobleResponse<HomeTestCompleteResponse>> completeTestFlow(
       @Valid @RequestBody HomeTestCompleteRequest request) {

@@ -17,6 +17,7 @@ public class FlatAdminSettlementsDTO {
   private LocalDate scheduledSettlementDate;
   private String contentType;
   private BigDecimal settlementAmount;
+  private BigDecimal settlementAmountDisplay;
   private String settlementStatus;
 
   // SellerInfo 존재

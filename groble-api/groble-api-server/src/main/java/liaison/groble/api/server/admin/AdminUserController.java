@@ -89,10 +89,13 @@ public class AdminUserController extends BaseController {
   @PostMapping(ApiPaths.Admin.ADMIN_USER_ACCOUNT_VERIFICATION)
   @Operation(summary = "관리자 계좌 인증", description = "관리자가 Payple 계좌 인증을 즉시 실행합니다.")
   public ResponseEntity<GrobleResponse<AdminAccountVerificationResponse>> verifyUserAccount(
-      @Auth Accessor accessor, @PathVariable("userId") Long userId) {
+      @Auth Accessor accessor,
+      @Parameter(description = "계좌 인증 대상 사용자 닉네임", example = "groble_maker")
+          @PathVariable("nickname")
+          String nickname) {
 
     AdminAccountVerificationResultDTO resultDTO =
-        adminAccountVerificationService.verifyAccount(userId);
+        adminAccountVerificationService.verifyAccount(nickname);
 
     AdminAccountVerificationResponse response =
         adminUserMapper.toAdminAccountVerificationResponse(resultDTO);

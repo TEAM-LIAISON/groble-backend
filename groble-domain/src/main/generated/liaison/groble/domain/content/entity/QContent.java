@@ -39,6 +39,8 @@ public class QContent extends EntityPathBase<Content> {
 
     public final BooleanPath isRepresentative = createBoolean("isRepresentative");
 
+    public final BooleanPath isSearchExposed = createBoolean("isSearchExposed");
+
     public final NumberPath<java.math.BigDecimal> lowestPrice = createNumber("lowestPrice", java.math.BigDecimal.class);
 
     public final StringPath makerIntro = createString("makerIntro");

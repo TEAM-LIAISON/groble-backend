@@ -14,6 +14,7 @@ public class ContentDTO {
   private String categoryId;
   private String thumbnailUrl;
   private String status;
+  private Boolean isSearchExposed;
   private List<ContentOptionDTO> options;
   private String contentIntroduction;
   private String serviceTarget;

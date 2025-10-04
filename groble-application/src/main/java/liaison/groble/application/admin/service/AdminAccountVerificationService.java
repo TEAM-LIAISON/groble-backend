@@ -29,7 +29,10 @@ public class AdminAccountVerificationService {
   private final PaypleAccountVerificationFactory paypleAccountVerificationFactory;
   private final UserReader userReader;
 
-  public AdminAccountVerificationResultDTO verifyAccount(Long targetUserId) {
+  public AdminAccountVerificationResultDTO verifyAccount(String targetNickname) {
+    SellerInfo sellerInfo = userReader.getSellerInfoWithUser(targetNickname);
+    Long targetUserId = sellerInfo.getUser().getId();
+
     PayplePartnerAuthResult authResult = paypleSettlementService.requestPartnerAuth();
 
     if (!authResult.isSuccess()) {
@@ -45,7 +48,8 @@ public class AdminAccountVerificationService {
     AdminAccountVerificationResultDTO resultDTO = buildResultDTO(verificationResult);
 
     log.info(
-        "관리자 계좌 인증 처리 완료 - userId: {}, success: {}, resultCode: {}",
+        "관리자 계좌 인증 처리 완료 - nickname: {}, userId: {}, success: {}, resultCode: {}",
+        targetNickname,
         targetUserId,
         resultDTO.isSuccess(),
         resultDTO.getResultCode());

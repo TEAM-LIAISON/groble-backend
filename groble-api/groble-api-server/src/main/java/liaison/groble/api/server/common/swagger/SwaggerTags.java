@@ -59,6 +59,14 @@ public final class SwaggerTags {
     private Content() {}
   }
 
+  public static final class HomeTest {
+    public static final String PHONE_AUTH = "[🧪 홈 테스트] 홈 화면 전화번호 인증 테스트 API";
+    public static final String PHONE_AUTH_DESC =
+        "홈 화면 테스트 시나리오를 위한 전화번호 인증 코드 발송, 검증, 플로우 완료 기능을 제공합니다.";
+
+    private HomeTest() {}
+  }
+
   public static final class Market {
     public static final String MANAGEMENT = "[🏷 마켓 관리] 마켓 관리 및 마켓 뷰어 API";
     public static final String MANAGEMENT_DESC = "마켓 관리 및 마켓 뷰어 화면에서 사용되는 모든 기능을 제공합니다.";

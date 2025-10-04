@@ -14,11 +14,13 @@ public class ContentCardDTO {
   private String title;
   private String thumbnailUrl;
   private String sellerName;
+  private String sellerProfileImageUrl;
   private BigDecimal lowestPrice;
   private int priceOptionLength;
   private Boolean isAvailableForSale;
   private String status;
   private Boolean isDeletable;
+  private Boolean isSearchExposed;
   private String categoryId;
   private String contentType;
 }
