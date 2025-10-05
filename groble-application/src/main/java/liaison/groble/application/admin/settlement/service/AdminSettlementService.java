@@ -553,12 +553,14 @@ public class AdminSettlementService {
 
   private AdminSettlementOverviewDTO convertFlatDTOToAdminSettlementsDTO(
       FlatAdminSettlementsDTO flatAdminSettlementsDTO) {
+    BigDecimal displayAmount = flatAdminSettlementsDTO.getSettlementAmountDisplay();
     return AdminSettlementOverviewDTO.builder()
         .settlementId(flatAdminSettlementsDTO.getSettlementId())
         .scheduledSettlementDate(flatAdminSettlementsDTO.getScheduledSettlementDate())
         .contentType(flatAdminSettlementsDTO.getContentType())
-        .settlementAmount(flatAdminSettlementsDTO.getSettlementAmountDisplay())
-        .settlementStatus(flatAdminSettlementsDTO.getSettlementStatus())
+        .settlementAmount(displayAmount)
+        .settlementStatus(
+            resolveDisplayStatus(flatAdminSettlementsDTO.getSettlementStatus(), displayAmount))
         .verificationStatus(flatAdminSettlementsDTO.getVerificationStatus())
         .isBusinessSeller(flatAdminSettlementsDTO.getIsBusinessSeller())
         .businessType(flatAdminSettlementsDTO.getBusinessType())
@@ -578,5 +580,12 @@ public class AdminSettlementService {
         .orderStatus(flat.getOrderStatus())
         .purchasedAt(flat.getPurchasedAt())
         .build();
+  }
+
+  private String resolveDisplayStatus(String originalStatus, BigDecimal amount) {
+    if (amount == null || amount.compareTo(BigDecimal.ZERO) == 0) {
+      return Settlement.SettlementStatus.NOT_APPLICABLE.name();
+    }
+    return originalStatus;
   }
 }
