@@ -87,16 +87,17 @@ public class AdminUserController extends BaseController {
   @RequireRole("ROLE_ADMIN")
   @GetMapping(ApiPaths.Admin.ADMIN_GUEST_USER_SUMMARY_INFO)
   @Operation(summary = "비회원 사용자 목록 조회", description = "관리자가 비회원 사용자 목록을 조회합니다.")
-  public ResponseEntity<GrobleResponse<PageResponse<AdminGuestUserSummaryResponse>>> getAllGuestUsers(
-      @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
-          @RequestParam(value = "page", defaultValue = "0")
-          int page,
-      @Parameter(description = "페이지당 사용자 수", example = "12")
-          @RequestParam(value = "size", defaultValue = "12")
-          int size,
-      @Parameter(description = "정렬 기준 (property,direction)", example = "createdAt,desc")
-          @RequestParam(value = "sort", defaultValue = "createdAt")
-          String sort) {
+  public ResponseEntity<GrobleResponse<PageResponse<AdminGuestUserSummaryResponse>>>
+      getAllGuestUsers(
+          @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
+              @RequestParam(value = "page", defaultValue = "0")
+              int page,
+          @Parameter(description = "페이지당 사용자 수", example = "12")
+              @RequestParam(value = "size", defaultValue = "12")
+              int size,
+          @Parameter(description = "정렬 기준 (property,direction)", example = "createdAt,desc")
+              @RequestParam(value = "sort", defaultValue = "createdAt")
+              String sort) {
     Pageable pageable = PageUtils.createPageable(page, size, sort);
     PageResponse<AdminGuestUserSummaryDTO> response = adminUserService.getAllGuestUsers(pageable);
     PageResponse<AdminGuestUserSummaryResponse> responsePage =
@@ -107,9 +108,7 @@ public class AdminUserController extends BaseController {
 
   @RequireRole("ROLE_ADMIN")
   @GetMapping(ApiPaths.Admin.ADMIN_HOME_TEST_CONTACTS)
-  @Operation(
-      summary = "홈 테스트 연락처 목록 조회",
-      description = "관리자가 홈 테스트 연락처 정보를 조회합니다.")
+  @Operation(summary = "홈 테스트 연락처 목록 조회", description = "관리자가 홈 테스트 연락처 정보를 조회합니다.")
   public ResponseEntity<GrobleResponse<PageResponse<AdminHomeTestContactResponse>>>
       getAllHomeTestContacts(
           @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")

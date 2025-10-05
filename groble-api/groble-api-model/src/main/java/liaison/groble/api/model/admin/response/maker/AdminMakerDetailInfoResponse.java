@@ -92,6 +92,14 @@ public class AdminMakerDetailInfoResponse {
       requiredMode = Schema.RequiredMode.REQUIRED)
   private String businessSector;
 
+  /** 7-1. 사업자등록번호 */
+  @Schema(
+      description = "사업자등록번호",
+      example = "123-45-67890",
+      type = "string",
+      requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  private String businessNumber;
+
   /** 8. 상호(사업체명) */
   @Schema(
       description = "사업자 등록 상의 상호명",
