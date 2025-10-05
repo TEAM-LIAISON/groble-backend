@@ -5,9 +5,13 @@ import org.mapstruct.Mapping;
 
 import liaison.groble.api.model.admin.request.AdminBusinessInfoUpdateRequest;
 import liaison.groble.api.model.admin.response.AdminAccountVerificationResponse;
+import liaison.groble.api.model.admin.response.AdminGuestUserSummaryResponse;
+import liaison.groble.api.model.admin.response.AdminHomeTestContactResponse;
 import liaison.groble.api.model.admin.response.AdminUserSummaryInfoResponse;
 import liaison.groble.application.admin.dto.AdminAccountVerificationResultDTO;
 import liaison.groble.application.admin.dto.AdminBusinessInfoUpdateDTO;
+import liaison.groble.application.admin.dto.AdminGuestUserSummaryDTO;
+import liaison.groble.application.admin.dto.AdminHomeTestContactDTO;
 import liaison.groble.application.admin.dto.AdminUserSummaryInfoDTO;
 import liaison.groble.common.response.PageResponse;
 import liaison.groble.mapping.common.PageResponseMapper;
@@ -25,6 +29,20 @@ public interface AdminUserMapper extends PageResponseMapper {
   default PageResponse<AdminUserSummaryInfoResponse> toAdminUserSummaryInfoResponsePage(
       PageResponse<AdminUserSummaryInfoDTO> dtoPage) {
     return toPageResponse(dtoPage, this::toAdminUserSummaryInfoResponse);
+  }
+
+  AdminGuestUserSummaryResponse toAdminGuestUserSummaryResponse(AdminGuestUserSummaryDTO dto);
+
+  default PageResponse<AdminGuestUserSummaryResponse> toAdminGuestUserSummaryResponsePage(
+      PageResponse<AdminGuestUserSummaryDTO> dtoPage) {
+    return toPageResponse(dtoPage, this::toAdminGuestUserSummaryResponse);
+  }
+
+  AdminHomeTestContactResponse toAdminHomeTestContactResponse(AdminHomeTestContactDTO dto);
+
+  default PageResponse<AdminHomeTestContactResponse> toAdminHomeTestContactResponsePage(
+      PageResponse<AdminHomeTestContactDTO> dtoPage) {
+    return toPageResponse(dtoPage, this::toAdminHomeTestContactResponse);
   }
 
   AdminAccountVerificationResponse toAdminAccountVerificationResponse(

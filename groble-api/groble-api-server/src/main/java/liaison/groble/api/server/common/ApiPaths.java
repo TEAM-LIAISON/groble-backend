@@ -16,9 +16,13 @@ public final class ApiPaths {
     // 어드민 홈 탭
     public static final String DASHBOARD_BASE = BASE + "/dashboard";
     public static final String DASHBOARD_OVERVIEW = "/overview";
+    public static final String DASHBOARD_TRENDS = "/trends";
+    public static final String DASHBOARD_TOP_CONTENTS = "/top-contents";
 
     // 어드민 사용자 탭
     public static final String ADMIN_USER_SUMMARY_INFO = "/users";
+    public static final String ADMIN_GUEST_USER_SUMMARY_INFO = "/guest-users";
+    public static final String ADMIN_HOME_TEST_CONTACTS = "/home-test-contacts";
     public static final String ADMIN_USER_ACCOUNT_VERIFICATION =
         "/users/{nickname}/account-verification";
     public static final String ADMIN_USER_BUSINESS_INFO = "/users/{userId}/business-info";
