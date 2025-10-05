@@ -61,9 +61,16 @@ public class SettlementsOverviewResponse {
 
   @Schema(
       description =
-          "정산 상태 (PENDING: 정산 예정, PROCESSING: 정산 처리중, COMPLETED: 정산 완료, ON_HOLD: 정산 보류, CANCELLED: 정산 취소)",
+          "정산 상태 (PENDING: 정산 예정, PROCESSING: 정산 처리중, COMPLETED: 정산 완료, ON_HOLD: 정산 보류, CANCELLED: 정산 취소, NOT_APPLICABLE: 정산 미해당)",
       example = "COMPLETED",
-      allowableValues = {"PENDING", "PROCESSING", "COMPLETED", "ON_HOLD", "CANCELLED"},
+      allowableValues = {
+        "PENDING",
+        "PROCESSING",
+        "COMPLETED",
+        "ON_HOLD",
+        "CANCELLED",
+        "NOT_APPLICABLE"
+      },
       requiredMode = Schema.RequiredMode.REQUIRED)
   private String settlementStatus;
 }
