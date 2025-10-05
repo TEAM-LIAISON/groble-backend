@@ -7,16 +7,21 @@ import org.springframework.stereotype.Repository;
 import liaison.groble.domain.user.entity.SellerInfo;
 import liaison.groble.domain.user.repository.SellerInfoRepository;
 
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 
 @Repository
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class SellerInfoRepositoryImpl implements SellerInfoRepository {
   private final JpaSellerInfoRepository jpaSellerInfoRepository;
 
   @Override
   public SellerInfo save(SellerInfo sellerInfo) {
     return jpaSellerInfoRepository.save(sellerInfo);
+  }
+
+  @Override
+  public SellerInfo saveAndFlush(SellerInfo sellerInfo) {
+    return jpaSellerInfoRepository.saveAndFlush(sellerInfo);
   }
 
   @Override

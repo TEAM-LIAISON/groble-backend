@@ -1,5 +1,9 @@
 package liaison.groble.api.model.admin.response.maker;
 
+import java.time.LocalDateTime;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -180,4 +184,15 @@ public class AdminMakerDetailInfoResponse {
       type = "string",
       requiredMode = Schema.RequiredMode.NOT_REQUIRED)
   private String adminMemo;
+
+  @Schema(
+      description = "최근 계좌 또는 메이커 인증 처리 메시지",
+      example = "페이플 계좌 인증 실패 (code=A1000, message=계좌번호 불일치)",
+      type = "string",
+      requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  private String verificationMessage;
+
+  @Schema(description = "최근 계좌 또는 메이커 인증 처리 시각", example = "2024-05-30 12:34:56")
+  @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+  private LocalDateTime lastVerificationAttempt;
 }

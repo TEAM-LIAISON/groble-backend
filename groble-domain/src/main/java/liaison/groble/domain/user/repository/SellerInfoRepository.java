@@ -8,6 +8,8 @@ public interface SellerInfoRepository {
   // 판매자 정보 저장
   SellerInfo save(SellerInfo sellerInfo);
 
+  SellerInfo saveAndFlush(SellerInfo sellerInfo);
+
   Optional<SellerInfo> findByUserId(Long userId);
 
   Optional<SellerInfo> findByUserIdWithUser(Long userId);
