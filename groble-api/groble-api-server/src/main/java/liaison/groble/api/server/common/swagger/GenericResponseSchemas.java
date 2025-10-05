@@ -1,6 +1,8 @@
 package liaison.groble.api.server.common.swagger;
 
 import liaison.groble.api.model.admin.dashboard.response.AdminDashboardOverviewResponse;
+import liaison.groble.api.model.admin.dashboard.response.AdminDashboardTopContentsResponse;
+import liaison.groble.api.model.admin.dashboard.response.AdminDashboardTrendResponse;
 import liaison.groble.api.model.purchase.response.PurchaserContentReviewResponse;
 import liaison.groble.api.model.sell.response.ReplyContentResponse;
 import liaison.groble.api.server.common.ResponseMessages;
@@ -92,6 +94,46 @@ public final class GenericResponseSchemas {
 
     @Schema(description = "관리자 대시보드 개요 데이터")
     public AdminDashboardOverviewResponse data;
+
+    @Schema(description = "응답 시간", example = "2025-08-31T07:06:06.312Z")
+    public String timestamp;
+  }
+
+  @Schema(description = CommonSwaggerDocs.GROBLE_RESPONSE_DESC + " - 관리자 대시보드 추세 응답")
+  public static class ApiAdminDashboardTrendResponse {
+
+    @Schema(description = "응답 상태", example = CommonSwaggerDocs.STATUS_SUCCESS)
+    public String status;
+
+    @Schema(description = "HTTP 상태 코드", example = "200")
+    public int code;
+
+    @Schema(description = "응답 메시지", example = ResponseMessages.Admin.DASHBOARD_TRENDS_RETRIEVED)
+    public String message;
+
+    @Schema(description = "관리자 대시보드 일자별 추세 데이터")
+    public AdminDashboardTrendResponse data;
+
+    @Schema(description = "응답 시간", example = "2025-08-31T07:06:06.312Z")
+    public String timestamp;
+  }
+
+  @Schema(description = CommonSwaggerDocs.GROBLE_RESPONSE_DESC + " - 관리자 대시보드 인기 콘텐츠 응답")
+  public static class ApiAdminDashboardTopContentsResponse {
+
+    @Schema(description = "응답 상태", example = CommonSwaggerDocs.STATUS_SUCCESS)
+    public String status;
+
+    @Schema(description = "HTTP 상태 코드", example = "200")
+    public int code;
+
+    @Schema(
+        description = "응답 메시지",
+        example = ResponseMessages.Admin.DASHBOARD_TOP_CONTENTS_RETRIEVED)
+    public String message;
+
+    @Schema(description = "관리자 대시보드 인기 콘텐츠 리스트")
+    public AdminDashboardTopContentsResponse data;
 
     @Schema(description = "응답 시간", example = "2025-08-31T07:06:06.312Z")
     public String timestamp;

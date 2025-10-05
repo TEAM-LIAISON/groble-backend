@@ -1,5 +1,6 @@
 package liaison.groble.application.purchase.service;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
@@ -11,9 +12,11 @@ import liaison.groble.common.exception.EntityNotFoundException;
 import liaison.groble.domain.dashboard.dto.FlatDashboardOverviewDTO;
 import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.purchase.dto.FlatContentSellDetailDTO;
+import liaison.groble.domain.purchase.dto.FlatDailyTransactionStatDTO;
 import liaison.groble.domain.purchase.dto.FlatPurchaseContentDetailDTO;
 import liaison.groble.domain.purchase.dto.FlatPurchaseContentPreviewDTO;
 import liaison.groble.domain.purchase.dto.FlatSellManageDetailDTO;
+import liaison.groble.domain.purchase.dto.FlatTopContentStatDTO;
 import liaison.groble.domain.purchase.entity.Purchase;
 import liaison.groble.domain.purchase.repository.PurchaseCustomRepository;
 import liaison.groble.domain.purchase.repository.PurchaseRepository;
@@ -112,6 +115,16 @@ public class PurchaseReader {
   // 관리자 대시보드 개요 조회
   public FlatDashboardOverviewDTO getAdminDashboardOverviewStats() {
     return purchaseCustomRepository.getAdminDashboardOverviewStats();
+  }
+
+  public List<FlatDailyTransactionStatDTO> getAdminDailyTransactionStats(
+      LocalDate startDate, LocalDate endDate) {
+    return purchaseCustomRepository.getAdminDailyTransactionStats(startDate, endDate);
+  }
+
+  public List<FlatTopContentStatDTO> getAdminTopContentStats(
+      LocalDate startDate, LocalDate endDate, long limit) {
+    return purchaseCustomRepository.getAdminTopContentStats(startDate, endDate, limit);
   }
 
   public boolean isContentPurchasedByUser(Long userId, Long contentId) {

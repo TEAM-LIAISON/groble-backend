@@ -1,5 +1,6 @@
 package liaison.groble.domain.purchase.repository;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -10,9 +11,11 @@ import liaison.groble.common.response.CursorResponse;
 import liaison.groble.domain.dashboard.dto.FlatDashboardOverviewDTO;
 import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.purchase.dto.FlatContentSellDetailDTO;
+import liaison.groble.domain.purchase.dto.FlatDailyTransactionStatDTO;
 import liaison.groble.domain.purchase.dto.FlatPurchaseContentDetailDTO;
 import liaison.groble.domain.purchase.dto.FlatPurchaseContentPreviewDTO;
 import liaison.groble.domain.purchase.dto.FlatSellManageDetailDTO;
+import liaison.groble.domain.purchase.dto.FlatTopContentStatDTO;
 
 public interface PurchaseCustomRepository {
 
@@ -47,4 +50,10 @@ public interface PurchaseCustomRepository {
   FlatDashboardOverviewDTO getAdminDashboardOverviewStats();
 
   Optional<FlatPurchaseContentDetailDTO> getPurchaseContentDetailForGuest(String merchantUid);
+
+  List<FlatDailyTransactionStatDTO> getAdminDailyTransactionStats(
+      LocalDate startDate, LocalDate endDate);
+
+  List<FlatTopContentStatDTO> getAdminTopContentStats(
+      LocalDate startDate, LocalDate endDate, long limit);
 }

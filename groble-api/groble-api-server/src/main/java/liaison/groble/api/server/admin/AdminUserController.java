@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import liaison.groble.api.model.admin.request.AdminBusinessInfoUpdateRequest;
 import liaison.groble.api.model.admin.response.AdminAccountVerificationResponse;
+import liaison.groble.api.model.admin.response.AdminGuestUserSummaryResponse;
+import liaison.groble.api.model.admin.response.AdminHomeTestContactResponse;
 import liaison.groble.api.model.admin.response.AdminUserSummaryInfoResponse;
 import liaison.groble.api.model.admin.response.swagger.AdminUserSummaryInfo;
 import liaison.groble.api.server.common.ApiPaths;
@@ -21,6 +23,8 @@ import liaison.groble.api.server.common.BaseController;
 import liaison.groble.api.server.common.ResponseMessages;
 import liaison.groble.api.server.common.swagger.SwaggerTags;
 import liaison.groble.application.admin.dto.AdminAccountVerificationResultDTO;
+import liaison.groble.application.admin.dto.AdminGuestUserSummaryDTO;
+import liaison.groble.application.admin.dto.AdminHomeTestContactDTO;
 import liaison.groble.application.admin.dto.AdminUserSummaryInfoDTO;
 import liaison.groble.application.admin.service.AdminAccountVerificationService;
 import liaison.groble.application.admin.service.AdminUserService;
@@ -78,6 +82,52 @@ public class AdminUserController extends BaseController {
         adminUserMapper.toAdminUserSummaryInfoResponsePage(response);
 
     return success(responsePage, ResponseMessages.Admin.USER_SUMMARY_INFO_RETRIEVED);
+  }
+
+  @RequireRole("ROLE_ADMIN")
+  @GetMapping(ApiPaths.Admin.ADMIN_GUEST_USER_SUMMARY_INFO)
+  @Operation(summary = "비회원 사용자 목록 조회", description = "관리자가 비회원 사용자 목록을 조회합니다.")
+  public ResponseEntity<GrobleResponse<PageResponse<AdminGuestUserSummaryResponse>>> getAllGuestUsers(
+      @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
+          @RequestParam(value = "page", defaultValue = "0")
+          int page,
+      @Parameter(description = "페이지당 사용자 수", example = "12")
+          @RequestParam(value = "size", defaultValue = "12")
+          int size,
+      @Parameter(description = "정렬 기준 (property,direction)", example = "createdAt,desc")
+          @RequestParam(value = "sort", defaultValue = "createdAt")
+          String sort) {
+    Pageable pageable = PageUtils.createPageable(page, size, sort);
+    PageResponse<AdminGuestUserSummaryDTO> response = adminUserService.getAllGuestUsers(pageable);
+    PageResponse<AdminGuestUserSummaryResponse> responsePage =
+        adminUserMapper.toAdminGuestUserSummaryResponsePage(response);
+
+    return success(responsePage, ResponseMessages.Admin.GUEST_USER_SUMMARY_INFO_RETRIEVED);
+  }
+
+  @RequireRole("ROLE_ADMIN")
+  @GetMapping(ApiPaths.Admin.ADMIN_HOME_TEST_CONTACTS)
+  @Operation(
+      summary = "홈 테스트 연락처 목록 조회",
+      description = "관리자가 홈 테스트 연락처 정보를 조회합니다.")
+  public ResponseEntity<GrobleResponse<PageResponse<AdminHomeTestContactResponse>>>
+      getAllHomeTestContacts(
+          @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
+              @RequestParam(value = "page", defaultValue = "0")
+              int page,
+          @Parameter(description = "페이지당 데이터 수", example = "12")
+              @RequestParam(value = "size", defaultValue = "12")
+              int size,
+          @Parameter(description = "정렬 기준 (property,direction)", example = "createdAt,desc")
+              @RequestParam(value = "sort", defaultValue = "createdAt")
+              String sort) {
+    Pageable pageable = PageUtils.createPageable(page, size, sort);
+    PageResponse<AdminHomeTestContactDTO> response =
+        adminUserService.getAllHomeTestContacts(pageable);
+    PageResponse<AdminHomeTestContactResponse> responsePage =
+        adminUserMapper.toAdminHomeTestContactResponsePage(response);
+
+    return success(responsePage, ResponseMessages.Admin.HOME_TEST_CONTACTS_RETRIEVED);
   }
 
   @Logging(

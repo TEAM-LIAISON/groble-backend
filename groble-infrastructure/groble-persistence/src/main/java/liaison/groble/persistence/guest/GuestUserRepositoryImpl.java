@@ -2,6 +2,8 @@ package liaison.groble.persistence.guest;
 
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import liaison.groble.domain.guest.entity.GuestUser;
@@ -47,5 +49,10 @@ public class GuestUserRepositoryImpl implements GuestUserRepository {
   @Override
   public GuestUser save(GuestUser guestUser) {
     return jpaGuestUserRepository.save(guestUser);
+  }
+
+  @Override
+  public Page<GuestUser> findAll(Pageable pageable) {
+    return jpaGuestUserRepository.findAll(pageable);
   }
 }
