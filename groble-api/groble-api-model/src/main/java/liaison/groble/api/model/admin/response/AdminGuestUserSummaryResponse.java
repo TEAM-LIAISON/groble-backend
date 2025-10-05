@@ -24,7 +24,10 @@ public class AdminGuestUserSummaryResponse {
   @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
   private LocalDateTime createdAt;
 
-  @Schema(description = "비회원 사용자 이름", example = "홍길동", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  @Schema(
+      description = "비회원 사용자 이름",
+      example = "홍길동",
+      requiredMode = Schema.RequiredMode.NOT_REQUIRED)
   private String username;
 
   @Schema(

@@ -16,6 +16,7 @@ public class AdminMakerDetailInfoDTO {
   private String businessType;
   private String businessCategory;
   private String businessSector;
+  private String businessNumber;
   private String businessName;
   private String representativeName;
   private String businessAddress;

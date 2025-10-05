@@ -67,6 +67,7 @@ public class AdminMakerService {
             sellerInfo.getBusinessType() != null ? sellerInfo.getBusinessType().name() : null)
         .businessCategory(sellerInfo.getBusinessCategory())
         .businessSector(sellerInfo.getBusinessSector())
+        .businessNumber(sellerInfo.getBusinessNumber())
         .businessName(sellerInfo.getBusinessName())
         .representativeName(sellerInfo.getRepresentativeName())
         .businessAddress(sellerInfo.getBusinessAddress())

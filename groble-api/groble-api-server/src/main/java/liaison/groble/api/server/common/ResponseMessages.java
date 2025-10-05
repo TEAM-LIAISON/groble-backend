@@ -14,8 +14,7 @@ public final class ResponseMessages {
     public static final String SETTLEMENT_DETAIL_RETRIEVED = "사용자 정산 상세 내역 조회에 성공하였습니다.";
     public static final String SALES_LIST_RETRIEVED = "정산별 판매 내역 조회에 성공하였습니다.";
     public static final String USER_SUMMARY_INFO_RETRIEVED = "관리자 전체 사용자 목록 조회에 성공하였습니다.";
-    public static final String GUEST_USER_SUMMARY_INFO_RETRIEVED =
-        "관리자 비회원 사용자 목록 조회에 성공하였습니다.";
+    public static final String GUEST_USER_SUMMARY_INFO_RETRIEVED = "관리자 비회원 사용자 목록 조회에 성공하였습니다.";
     public static final String ADMIN_SIGN_IN_SUCCESS = "관리자 로그인에 성공했습니다.";
     public static final String ADMIN_LOGOUT_SUCCESS = "관리자 로그아웃이 성공적으로 처리되었습니다.";
     public static final String CONTENT_SUMMARY_INFO_RETRIEVED = "관리자 콘텐츠 목록 조회에 성공하였습니다.";
@@ -32,8 +31,7 @@ public final class ResponseMessages {
     public static final String USER_ACCOUNT_VERIFICATION_SUCCESS = "관리자 계좌 인증이 성공적으로 완료되었습니다.";
     public static final String USER_ACCOUNT_VERIFICATION_FAILED = "관리자 계좌 인증 처리 결과가 실패했습니다.";
     public static final String USER_BUSINESS_INFO_UPDATED = "사업자 정보가 성공적으로 수정되었습니다.";
-    public static final String HOME_TEST_CONTACTS_RETRIEVED =
-        "관리자 홈 테스트 연락처 목록 조회에 성공하였습니다.";
+    public static final String HOME_TEST_CONTACTS_RETRIEVED = "관리자 홈 테스트 연락처 목록 조회에 성공하였습니다.";
   }
 
   public static final class Auth {

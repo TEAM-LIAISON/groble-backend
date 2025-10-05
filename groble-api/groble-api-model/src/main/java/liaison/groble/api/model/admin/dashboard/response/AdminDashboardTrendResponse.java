@@ -18,8 +18,10 @@ import lombok.NoArgsConstructor;
 public class AdminDashboardTrendResponse {
   @JsonFormat(pattern = "yyyy-MM-dd")
   private LocalDate startDate;
+
   @JsonFormat(pattern = "yyyy-MM-dd")
   private LocalDate endDate;
+
   private BigDecimal totalRevenue;
   private Long totalSalesCount;
   private BigDecimal averageOrderValue;
@@ -32,6 +34,7 @@ public class AdminDashboardTrendResponse {
   public static class DailyMetricResponse {
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate date;
+
     private BigDecimal totalRevenue;
     private Long totalSalesCount;
     private BigDecimal averageOrderValue;

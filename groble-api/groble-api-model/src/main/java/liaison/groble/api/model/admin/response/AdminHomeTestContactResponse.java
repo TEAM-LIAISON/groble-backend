@@ -40,9 +40,6 @@ public class AdminHomeTestContactResponse {
       requiredMode = Schema.RequiredMode.NOT_REQUIRED)
   private String email;
 
-  @Schema(
-      description = "연락처 닉네임",
-      example = "테스터",
-      requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  @Schema(description = "연락처 닉네임", example = "테스터", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
   private String nickname;
 }

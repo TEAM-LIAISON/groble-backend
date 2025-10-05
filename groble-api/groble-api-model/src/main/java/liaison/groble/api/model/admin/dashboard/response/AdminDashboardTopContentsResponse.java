@@ -17,8 +17,10 @@ import lombok.NoArgsConstructor;
 public class AdminDashboardTopContentsResponse {
   @JsonFormat(pattern = "yyyy-MM-dd")
   private LocalDate startDate;
+
   @JsonFormat(pattern = "yyyy-MM-dd")
   private LocalDate endDate;
+
   private Integer limit;
   private List<AdminDashboardTopContentResponse> contents;
 }
