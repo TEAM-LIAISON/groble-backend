@@ -341,8 +341,10 @@ public class Settlement extends BaseTimeEntity {
 
   /** 정산 보류 처리 */
   public void hold(String reason) {
-    if (this.status == SettlementStatus.COMPLETED || this.status == SettlementStatus.CANCELLED) {
-      throw new IllegalStateException("완료되거나 취소된 정산은 보류할 수 없습니다.");
+    if (this.status == SettlementStatus.COMPLETED
+        || this.status == SettlementStatus.CANCELLED
+        || this.status == SettlementStatus.NOT_APPLICABLE) {
+      throw new IllegalStateException("완료되었거나 취소/미해당 정산은 보류할 수 없습니다.");
     }
     this.status = SettlementStatus.ON_HOLD;
     this.settlementNote = reason;
@@ -359,10 +361,25 @@ public class Settlement extends BaseTimeEntity {
 
   /** 정산 취소 처리 */
   public void cancel(String reason) {
-    if (this.status == SettlementStatus.COMPLETED) {
-      throw new IllegalStateException("완료된 정산은 취소할 수 없습니다.");
+    if (this.status == SettlementStatus.COMPLETED
+        || this.status == SettlementStatus.NOT_APPLICABLE) {
+      throw new IllegalStateException("완료되었거나 미해당인 정산은 취소할 수 없습니다.");
     }
     this.status = SettlementStatus.CANCELLED;
+    this.settlementNote = reason;
+  }
+
+  /** 정산 미해당 처리 */
+  public void markNotApplicable(String reason) {
+    if (this.status == SettlementStatus.COMPLETED) {
+      throw new IllegalStateException("완료된 정산은 미해당으로 변경할 수 없습니다.");
+    }
+    if (this.status == SettlementStatus.CANCELLED) {
+      throw new IllegalStateException("취소된 정산은 미해당으로 변경할 수 없습니다.");
+    }
+
+    this.status = SettlementStatus.NOT_APPLICABLE;
+    this.settledAt = null;
     this.settlementNote = reason;
   }
 
@@ -372,6 +389,9 @@ public class Settlement extends BaseTimeEntity {
     }
     if (this.status == SettlementStatus.CANCELLED) {
       throw new IllegalStateException("취소된 정산은 승인할 수 없습니다: " + this.id);
+    }
+    if (this.status == SettlementStatus.NOT_APPLICABLE) {
+      throw new IllegalStateException("정산 미해당 상태는 승인할 수 없습니다: " + this.id);
     }
 
     this.status = SettlementStatus.COMPLETED;
@@ -383,8 +403,10 @@ public class Settlement extends BaseTimeEntity {
 
   /** 수정 가능 여부 확인 */
   private void ensureModifiable() {
-    if (this.status == SettlementStatus.COMPLETED || this.status == SettlementStatus.CANCELLED) {
-      throw new IllegalStateException("완료되거나 취소된 정산은 변경할 수 없습니다.");
+    if (this.status == SettlementStatus.COMPLETED
+        || this.status == SettlementStatus.CANCELLED
+        || this.status == SettlementStatus.NOT_APPLICABLE) {
+      throw new IllegalStateException("완료되었거나 취소/미해당 정산은 변경할 수 없습니다.");
     }
   }
 
@@ -458,7 +480,8 @@ public class Settlement extends BaseTimeEntity {
     PROCESSING("정산 처리중"),
     COMPLETED("정산 완료"),
     ON_HOLD("정산 보류"),
-    CANCELLED("정산 취소");
+    CANCELLED("정산 취소"),
+    NOT_APPLICABLE("정산 미해당");
 
     private final String description;
 

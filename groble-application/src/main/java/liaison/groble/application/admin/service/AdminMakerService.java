@@ -54,6 +54,9 @@ public class AdminMakerService {
       businessLicenseOriginalFileName = businessLicenseFileInfo.getOriginalFilename();
     }
 
+    log.info("verificationMessage: {}", sellerInfo.getVerificationMessage());
+    log.info("lastVerificationAttempt : {}", sellerInfo.getLastVerificationAttempt());
+
     /* 4) DTO 매핑 */
     return AdminMakerDetailInfoDTO.builder()
         .isBusinessMaker(sellerInfo.getBusinessSellerRequest())
@@ -67,6 +70,7 @@ public class AdminMakerService {
             sellerInfo.getBusinessType() != null ? sellerInfo.getBusinessType().name() : null)
         .businessCategory(sellerInfo.getBusinessCategory())
         .businessSector(sellerInfo.getBusinessSector())
+        .businessNumber(sellerInfo.getBusinessNumber())
         .businessName(sellerInfo.getBusinessName())
         .representativeName(sellerInfo.getRepresentativeName())
         .businessAddress(sellerInfo.getBusinessAddress())
@@ -77,6 +81,8 @@ public class AdminMakerService {
         .birthDate(sellerInfo.getBirthDate())
         .marketLinkUrl(marketLinkUrl)
         .adminMemo(sellerInfo.getUser().getAdminMemo())
+        .verificationMessage(sellerInfo.getVerificationMessage())
+        .lastVerificationAttempt(sellerInfo.getLastVerificationAttempt())
         .build();
   }
 

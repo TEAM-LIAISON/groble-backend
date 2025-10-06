@@ -85,7 +85,8 @@ public class SettlementService {
         .scheduledSettlementDate(flat.getScheduledSettlementDate())
         .contentType(flat.getContentType())
         .settlementAmount(flat.getSettlementAmountDisplay())
-        .settlementStatus(flat.getSettlementStatus())
+        .settlementStatus(
+            resolveDisplayStatus(flat.getSettlementStatus(), flat.getSettlementAmountDisplay()))
         .build();
   }
 
@@ -136,6 +137,13 @@ public class SettlementService {
 
   private BigDecimal nullSafe(BigDecimal value) {
     return value != null ? value : BigDecimal.ZERO;
+  }
+
+  private String resolveDisplayStatus(String originalStatus, BigDecimal amount) {
+    if (amount == null || amount.compareTo(BigDecimal.ZERO) == 0) {
+      return Settlement.SettlementStatus.NOT_APPLICABLE.name();
+    }
+    return originalStatus;
   }
 
   @Transactional

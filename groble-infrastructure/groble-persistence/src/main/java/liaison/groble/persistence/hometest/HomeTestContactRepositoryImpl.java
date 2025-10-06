@@ -2,6 +2,8 @@ package liaison.groble.persistence.hometest;
 
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import liaison.groble.domain.hometest.entity.HomeTestContact;
@@ -23,5 +25,10 @@ public class HomeTestContactRepositoryImpl implements HomeTestContactRepository 
   @Override
   public HomeTestContact save(HomeTestContact contact) {
     return jpaHomeTestContactRepository.save(contact);
+  }
+
+  @Override
+  public Page<HomeTestContact> findAll(Pageable pageable) {
+    return jpaHomeTestContactRepository.findAll(pageable);
   }
 }

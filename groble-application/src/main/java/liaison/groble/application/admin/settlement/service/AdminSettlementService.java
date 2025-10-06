@@ -239,6 +239,9 @@ public class AdminSettlementService {
     if (settlement.getStatus() == Settlement.SettlementStatus.COMPLETED) {
       throw new IllegalStateException("이미 완료된 정산입니다: " + settlement.getId());
     }
+    if (settlement.getStatus() == Settlement.SettlementStatus.NOT_APPLICABLE) {
+      throw new IllegalStateException("정산 미해당 상태는 승인 대상이 아닙니다: " + settlement.getId());
+    }
 
     // 환불되지 않은 정산 항목들만 계산
     List<SettlementItem> validItems =
@@ -274,6 +277,9 @@ public class AdminSettlementService {
   private ApprovalResult approveSettlement(Settlement settlement) {
     if (settlement.getStatus() == Settlement.SettlementStatus.COMPLETED) {
       throw new IllegalStateException("이미 완료된 정산입니다: " + settlement.getId());
+    }
+    if (settlement.getStatus() == Settlement.SettlementStatus.NOT_APPLICABLE) {
+      throw new IllegalStateException("정산 미해당 상태는 승인할 수 없습니다: " + settlement.getId());
     }
 
     // 환불되지 않은 정산 항목들만 계산
@@ -547,12 +553,14 @@ public class AdminSettlementService {
 
   private AdminSettlementOverviewDTO convertFlatDTOToAdminSettlementsDTO(
       FlatAdminSettlementsDTO flatAdminSettlementsDTO) {
+    BigDecimal displayAmount = flatAdminSettlementsDTO.getSettlementAmountDisplay();
     return AdminSettlementOverviewDTO.builder()
         .settlementId(flatAdminSettlementsDTO.getSettlementId())
         .scheduledSettlementDate(flatAdminSettlementsDTO.getScheduledSettlementDate())
         .contentType(flatAdminSettlementsDTO.getContentType())
-        .settlementAmount(flatAdminSettlementsDTO.getSettlementAmountDisplay())
-        .settlementStatus(flatAdminSettlementsDTO.getSettlementStatus())
+        .settlementAmount(displayAmount)
+        .settlementStatus(
+            resolveDisplayStatus(flatAdminSettlementsDTO.getSettlementStatus(), displayAmount))
         .verificationStatus(flatAdminSettlementsDTO.getVerificationStatus())
         .isBusinessSeller(flatAdminSettlementsDTO.getIsBusinessSeller())
         .businessType(flatAdminSettlementsDTO.getBusinessType())
@@ -572,5 +580,12 @@ public class AdminSettlementService {
         .orderStatus(flat.getOrderStatus())
         .purchasedAt(flat.getPurchasedAt())
         .build();
+  }
+
+  private String resolveDisplayStatus(String originalStatus, BigDecimal amount) {
+    if (amount == null || amount.compareTo(BigDecimal.ZERO) == 0) {
+      return Settlement.SettlementStatus.NOT_APPLICABLE.name();
+    }
+    return originalStatus;
   }
 }

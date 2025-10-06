@@ -1,5 +1,7 @@
 package liaison.groble.application.admin.dto;
 
+import java.time.LocalDateTime;
+
 import lombok.Builder;
 import lombok.Getter;
 
@@ -16,6 +18,7 @@ public class AdminMakerDetailInfoDTO {
   private String businessType;
   private String businessCategory;
   private String businessSector;
+  private String businessNumber;
   private String businessName;
   private String representativeName;
   private String businessAddress;
@@ -27,4 +30,6 @@ public class AdminMakerDetailInfoDTO {
   private String birthDate;
   private String marketLinkUrl;
   private String adminMemo;
+  private String verificationMessage;
+  private LocalDateTime lastVerificationAttempt;
 }

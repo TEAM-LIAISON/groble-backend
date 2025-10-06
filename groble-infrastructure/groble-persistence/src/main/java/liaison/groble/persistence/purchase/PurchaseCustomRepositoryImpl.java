@@ -3,8 +3,10 @@ package liaison.groble.persistence.purchase;
 import static com.querydsl.jpa.JPAExpressions.select;
 
 import java.math.BigDecimal;
+import java.sql.Date;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -42,9 +44,11 @@ import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.order.entity.QOrder;
 import liaison.groble.domain.payment.entity.QPayplePayment;
 import liaison.groble.domain.purchase.dto.FlatContentSellDetailDTO;
+import liaison.groble.domain.purchase.dto.FlatDailyTransactionStatDTO;
 import liaison.groble.domain.purchase.dto.FlatPurchaseContentDetailDTO;
 import liaison.groble.domain.purchase.dto.FlatPurchaseContentPreviewDTO;
 import liaison.groble.domain.purchase.dto.FlatSellManageDetailDTO;
+import liaison.groble.domain.purchase.dto.FlatTopContentStatDTO;
 import liaison.groble.domain.purchase.entity.QPurchase;
 import liaison.groble.domain.purchase.repository.PurchaseCustomRepository;
 import liaison.groble.domain.user.entity.QIntegratedAccount;
@@ -917,6 +921,97 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
         .totalCustomers(totalCustomers)
         .recentCustomers(recentCustomers)
         .build();
+  }
+
+  @Override
+  public List<FlatDailyTransactionStatDTO> getAdminDailyTransactionStats(
+      LocalDate startDate, LocalDate endDate) {
+    QPurchase purchase = QPurchase.purchase;
+
+    LocalDateTime startDateTime = startDate.atStartOfDay();
+    LocalDateTime endDateTime = endDate.atTime(LocalTime.MAX);
+
+    var purchaseDate = Expressions.dateTemplate(LocalDate.class, "DATE({0})", purchase.purchasedAt);
+
+    List<Tuple> tuples =
+        queryFactory
+            .select(
+                purchaseDate,
+                purchase.finalPrice.sum().coalesce(BigDecimal.ZERO),
+                purchase.id.count())
+            .from(purchase)
+            .where(
+                purchase.cancelledAt.isNull(),
+                purchase.purchasedAt.isNotNull(),
+                purchase.purchasedAt.goe(startDateTime),
+                purchase.purchasedAt.loe(endDateTime))
+            .groupBy(purchaseDate)
+            .orderBy(purchaseDate.asc())
+            .fetch();
+
+    return tuples.stream()
+        .map(
+            tuple -> {
+              LocalDate date =
+                  Optional.ofNullable(tuple.get(0, Date.class)).map(Date::toLocalDate).orElse(null);
+
+              return FlatDailyTransactionStatDTO.builder()
+                  .date(date)
+                  .totalRevenue(
+                      Optional.ofNullable(tuple.get(1, BigDecimal.class)).orElse(BigDecimal.ZERO))
+                  .totalSalesCount(Optional.ofNullable(tuple.get(2, Long.class)).orElse(0L))
+                  .build();
+            })
+        .collect(Collectors.toList());
+  }
+
+  @Override
+  public List<FlatTopContentStatDTO> getAdminTopContentStats(
+      LocalDate startDate, LocalDate endDate, long limit) {
+    QPurchase purchase = QPurchase.purchase;
+    QContent content = QContent.content;
+    QUser seller = QUser.user;
+
+    LocalDateTime startDateTime = startDate.atStartOfDay();
+    LocalDateTime endDateTime = endDate.atTime(LocalTime.MAX);
+
+    var revenueSum = purchase.finalPrice.sum();
+
+    List<Tuple> tuples =
+        queryFactory
+            .select(
+                content.id,
+                content.title,
+                seller.id,
+                seller.userProfile.nickname,
+                revenueSum.coalesce(BigDecimal.ZERO),
+                purchase.id.count())
+            .from(purchase)
+            .join(purchase.content, content)
+            .join(content.user, seller)
+            .where(
+                purchase.cancelledAt.isNull(),
+                purchase.purchasedAt.isNotNull(),
+                purchase.purchasedAt.goe(startDateTime),
+                purchase.purchasedAt.loe(endDateTime))
+            .groupBy(content.id, content.title, seller.id, seller.userProfile.nickname)
+            .orderBy(revenueSum.desc())
+            .limit(limit)
+            .fetch();
+
+    return tuples.stream()
+        .map(
+            tuple ->
+                FlatTopContentStatDTO.builder()
+                    .contentId(tuple.get(0, Long.class))
+                    .contentTitle(tuple.get(1, String.class))
+                    .sellerId(tuple.get(2, Long.class))
+                    .sellerNickname(tuple.get(3, String.class))
+                    .totalRevenue(
+                        Optional.ofNullable(tuple.get(4, BigDecimal.class)).orElse(BigDecimal.ZERO))
+                    .totalSalesCount(Optional.ofNullable(tuple.get(5, Long.class)).orElse(0L))
+                    .build())
+        .collect(Collectors.toList());
   }
 
   /** 구매자 닉네임 표현식을 생성합니다. 회원인 경우 User의 닉네임을, 비회원인 경우 GuestUser의 username을 반환합니다. */
