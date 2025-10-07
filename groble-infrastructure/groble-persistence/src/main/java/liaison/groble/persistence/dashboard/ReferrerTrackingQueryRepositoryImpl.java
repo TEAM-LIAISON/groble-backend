@@ -22,6 +22,16 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ReferrerTrackingQueryRepositoryImpl implements ReferrerTrackingQueryRepository {
 
+  private static final String DOMAIN_EXPRESSION =
+      "CASE "
+          + "WHEN rt.referrer_domain IS NOT NULL AND rt.referrer_domain <> '' THEN "
+          + "LOWER(SUBSTRING_INDEX(rt.referrer_domain, ':', 1)) "
+          + "WHEN rt.referrer_url IS NULL OR rt.referrer_url = '' THEN NULL "
+          + "ELSE LOWER(SUBSTRING_INDEX(SUBSTRING_INDEX(SUBSTRING_INDEX(rt.referrer_url, '://', -1), '/', 1), ':', 1)) "
+          + "END";
+
+  private static final String DOMAIN_GROUP_EXPRESSION = "(" + DOMAIN_EXPRESSION + ")";
+
   private static final String CONTENT_BASE_FILTER =
       " FROM referrer_tracking rt "
           + "WHERE rt.content_id = :contentId "
@@ -33,12 +43,6 @@ public class ReferrerTrackingQueryRepositoryImpl implements ReferrerTrackingQuer
           + "WHERE rt.market_link_url = :marketLinkUrl "
           + "AND COALESCE(rt.event_timestamp, rt.created_at) >= :start "
           + "AND COALESCE(rt.event_timestamp, rt.created_at) < :end";
-
-  private static final String DOMAIN_EXPRESSION =
-      "CASE WHEN rt.referrer_url IS NULL OR rt.referrer_url = '' THEN '(direct)' "
-          + "ELSE LOWER(SUBSTRING_INDEX(SUBSTRING_INDEX(rt.referrer_url, '://', -1), '/', 1)) END";
-
-  private static final String DOMAIN_GROUP_EXPRESSION = "(" + DOMAIN_EXPRESSION + ")";
 
   private static final String GROUP_BY_COLUMNS =
       " GROUP BY rt.referrer_url, "

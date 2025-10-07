@@ -42,6 +42,8 @@ public class QReferrerTracking extends EntityPathBase<ReferrerTracking> {
 
     public final StringPath referrerChain = createString("referrerChain");
 
+    public final StringPath referrerDomain = createString("referrerDomain");
+
     public final StringPath referrerMetadata = createString("referrerMetadata");
 
     public final StringPath referrerUrl = createString("referrerUrl");

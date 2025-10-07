@@ -463,7 +463,8 @@ public class ContentController {
     ReferrerDTO referrerDTO = referrerMapper.toContentReferrerDTO(referrerRequest);
     String userAgent = requestUtil.getUserAgent();
     String clientIp = requestUtil.getClientIp();
-    referrerService.recordContentReferrer(contentId, referrerDTO, userAgent, clientIp);
+    String referer = requestUtil.getReferer();
+    referrerService.recordContentReferrer(contentId, referrerDTO, referer, userAgent, clientIp);
     return responseHelper.success(null, CONTENT_REFERRAL_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 }

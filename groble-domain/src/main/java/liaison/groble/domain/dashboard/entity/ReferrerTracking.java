@@ -59,6 +59,10 @@ public class ReferrerTracking extends BaseTimeEntity {
   @Comment("직전 페이지 URL")
   private String referrerUrl;
 
+  @Column(name = "referrer_domain", length = 255)
+  @Comment("직전 페이지 도메인")
+  private String referrerDomain;
+
   @Column(name = "utm_source", length = 255)
   @Comment("UTM 소스")
   private String utmSource;
@@ -123,11 +127,13 @@ public class ReferrerTracking extends BaseTimeEntity {
       String lastPageUrl,
       String referrerChain,
       String referrerMetadata,
+      String referrerDomain,
       String userAgent,
       String ipAddress,
       LocalDateTime eventTimestamp) {
     this.pageUrl = pageUrl;
     this.referrerUrl = referrerUrl;
+    this.referrerDomain = referrerDomain;
     this.utmSource = utmSource;
     this.utmMedium = utmMedium;
     this.utmCampaign = utmCampaign;
@@ -156,6 +162,7 @@ public class ReferrerTracking extends BaseTimeEntity {
       String referrerChain,
       String referrerMetadata,
       String sessionId,
+      String referrerDomain,
       String userAgent,
       String ipAddress,
       LocalDateTime eventTimestamp) {
@@ -163,6 +170,7 @@ public class ReferrerTracking extends BaseTimeEntity {
         .contentId(contentId == null ? null : contentId.toString())
         .pageUrl(pageUrl)
         .referrerUrl(referrerUrl)
+        .referrerDomain(referrerDomain)
         .utmSource(utmSource)
         .utmMedium(utmMedium)
         .utmCampaign(utmCampaign)
@@ -193,6 +201,7 @@ public class ReferrerTracking extends BaseTimeEntity {
       String referrerChain,
       String referrerMetadata,
       String sessionId,
+      String referrerDomain,
       String userAgent,
       String ipAddress,
       LocalDateTime eventTimestamp) {
@@ -200,6 +209,7 @@ public class ReferrerTracking extends BaseTimeEntity {
         .marketLinkUrl(marketLinkUrl)
         .pageUrl(pageUrl)
         .referrerUrl(referrerUrl)
+        .referrerDomain(referrerDomain)
         .utmSource(utmSource)
         .utmMedium(utmMedium)
         .utmCampaign(utmCampaign)

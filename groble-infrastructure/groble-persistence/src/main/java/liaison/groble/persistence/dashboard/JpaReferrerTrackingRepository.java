@@ -15,5 +15,8 @@ public interface JpaReferrerTrackingRepository extends JpaRepository<ReferrerTra
   Optional<ReferrerTracking> findFirstBySessionIdAndMarketLinkUrlOrderByCreatedAtDesc(
       String sessionId, String marketLinkUrl);
 
+  Optional<ReferrerTracking> findFirstBySessionIdAndMarketLinkUrlIsNotNullOrderByCreatedAtDesc(
+      String sessionId);
+
   long deleteByCreatedAtBefore(LocalDateTime threshold);
 }

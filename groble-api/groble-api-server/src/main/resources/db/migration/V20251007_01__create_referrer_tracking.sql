@@ -7,6 +7,7 @@ CREATE TABLE referrer_tracking (
 
     page_url VARCHAR(500) NOT NULL COMMENT '현재 페이지 URL',
     referrer_url VARCHAR(500) COMMENT '직전 페이지 URL',
+    referrer_domain VARCHAR(255) COMMENT '리퍼러 도메인',
 
     utm_source VARCHAR(255) COMMENT 'UTM 소스',
     utm_medium VARCHAR(255) COMMENT 'UTM 매체',
@@ -30,6 +31,7 @@ CREATE TABLE referrer_tracking (
     INDEX idx_referrer_tracking_content_id (content_id),
     INDEX idx_referrer_tracking_market_link_url (market_link_url),
     INDEX idx_referrer_tracking_session_id (session_id),
+    INDEX idx_referrer_tracking_referrer_domain (referrer_domain),
     INDEX idx_referrer_tracking_created_at (created_at),
     INDEX idx_referrer_tracking_utm_source (utm_source),
     INDEX idx_referrer_tracking_utm_campaign (utm_campaign)

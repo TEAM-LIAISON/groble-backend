@@ -13,5 +13,7 @@ public interface ReferrerTrackingRepository {
 
   Optional<ReferrerTracking> findRecentMarketTracking(String sessionId, String marketLinkUrl);
 
+  Optional<ReferrerTracking> findLatestMarketNavigation(String sessionId);
+
   long deleteAllByCreatedAtBefore(LocalDateTime threshold);
 }

@@ -1,5 +1,7 @@
 package liaison.groble.application.dashboard.service;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -25,6 +27,7 @@ import liaison.groble.domain.dashboard.repository.ContentReferrerStatsRepository
 import liaison.groble.domain.dashboard.repository.MarketReferrerEventRepository;
 import liaison.groble.domain.dashboard.repository.MarketReferrerStatsRepository;
 import liaison.groble.domain.dashboard.repository.ReferrerTrackingRepository;
+import liaison.groble.domain.dashboard.support.ReferrerDomainUtils;
 import liaison.groble.domain.market.entity.Market;
 
 import io.micrometer.core.instrument.MeterRegistry;
@@ -48,24 +51,29 @@ public class ReferrerService {
   private final MeterRegistry meterRegistry;
 
   public void recordContentReferrer(
-      Long contentId, ReferrerDTO referrerDTO, String userAgent, String clientIp) {
+      Long contentId,
+      ReferrerDTO referrerDTO,
+      String refererHeader,
+      String userAgent,
+      String clientIp) {
     if (referrerDTO == null) {
       log.warn("Received null ReferrerDTO for contentId={}.", contentId);
       return;
     }
 
-    String referrerUrl = resolveReferrerUrl(referrerDTO);
-    if (referrerUrl != null && referrerUrl.contains("admin.groble.im")) {
-      log.debug("Skip tracking admin console referral for contentId={}.", contentId);
-      recordMetric("content", "ignored_admin");
-      return;
-    }
-
+    boolean persisted;
     try {
-      persistContentReferrerTracking(contentId, referrerDTO, userAgent, clientIp);
+      persisted =
+          persistContentReferrerTracking(
+              contentId, referrerDTO, refererHeader, userAgent, clientIp);
     } catch (Exception e) {
       log.error("Failed to persist content referrer tracking for contentId={}", contentId, e);
       recordMetric("content", "error");
+      return;
+    }
+
+    if (!persisted) {
+      return;
     }
 
     try {
@@ -88,7 +96,11 @@ public class ReferrerService {
   }
 
   public void recordMarketReferrer(
-      String marketLinkUrl, ReferrerDTO referrerDTO, String userAgent, String clientIp) {
+      String marketLinkUrl,
+      ReferrerDTO referrerDTO,
+      String refererHeader,
+      String userAgent,
+      String clientIp) {
     if (referrerDTO == null) {
       log.warn("Received null ReferrerDTO for marketLinkUrl={}.", marketLinkUrl);
       return;
@@ -109,12 +121,25 @@ public class ReferrerService {
         referrerDTO.getLastPageUrl(),
         referrerDTO.getSessionId());
 
+    boolean persisted;
     try {
-      persistMarketReferrerTracking(marketLinkUrl, referrerDTO, userAgent, clientIp);
+      persisted =
+          persistMarketReferrerTracking(
+              marketLinkUrl, referrerDTO, refererHeader, userAgent, clientIp);
     } catch (Exception e) {
       log.error(
           "Failed to persist market referrer tracking for marketLinkUrl={}", marketLinkUrl, e);
       recordMetric("market", "error");
+      log.info("=== MARKET REFERRER DEBUG END (ERROR) ===");
+      return;
+    }
+
+    if (!persisted) {
+      log.info(
+          "Skipping market referrer stats for marketLinkUrl={} due to filtered tracking.",
+          marketLinkUrl);
+      log.info("=== MARKET REFERRER DEBUG END (SKIPPED) ===");
+      return;
     }
 
     try {
@@ -170,22 +195,74 @@ public class ReferrerService {
     return removed;
   }
 
-  private void persistContentReferrerTracking(
-      Long contentId, ReferrerDTO referrerDTO, String userAgent, String clientIp)
+  private boolean persistContentReferrerTracking(
+      Long contentId,
+      ReferrerDTO referrerDTO,
+      String refererHeader,
+      String userAgent,
+      String clientIp)
       throws JsonProcessingException {
     if (!StringUtils.hasText(referrerDTO.getSessionId())) {
       log.debug("Skip content tracking due to missing sessionId. contentId={}", contentId);
       recordMetric("content", "invalid_session");
-      return;
+      return false;
     }
 
     String contentIdStr = contentId == null ? null : contentId.toString();
-    String resolvedReferrerUrl = resolveReferrerUrl(referrerDTO);
+    String resolvedReferrerUrl = resolveReferrerUrl(referrerDTO, refererHeader);
+    if (StringUtils.hasText(resolvedReferrerUrl)) {
+      resolvedReferrerUrl =
+          ensureAbsoluteUrl(decodeUrl(resolvedReferrerUrl), referrerDTO.getPageUrl());
+    }
     String chainJson = toReferrerChainJson(referrerDTO.getReferrerChain());
     String metadataJson = toMetadataJson(referrerDTO.getReferrerDetails());
     String maskedIp = maskIpAddress(clientIp);
     String sanitizedUserAgent = sanitizeUserAgent(userAgent);
     LocalDateTime eventTimestamp = defaultEventTimestamp(referrerDTO.getTimestamp());
+
+    String chainFallback = lastElement(referrerDTO.getReferrerChain());
+    if (!StringUtils.hasText(resolvedReferrerUrl) && StringUtils.hasText(chainFallback)) {
+      resolvedReferrerUrl = ensureAbsoluteUrl(decodeUrl(chainFallback), referrerDTO.getPageUrl());
+    }
+
+    String referrerDomain = resolveReferrerDomain(resolvedReferrerUrl);
+    String lastPageUrl = referrerDTO.getLastPageUrl();
+    if (!StringUtils.hasText(referrerDomain) && StringUtils.hasText(lastPageUrl)) {
+      resolvedReferrerUrl = ensureAbsoluteUrl(decodeUrl(lastPageUrl), referrerDTO.getPageUrl());
+      referrerDomain = resolveReferrerDomain(resolvedReferrerUrl);
+    }
+
+    if (ReferrerDomainUtils.isInternalDomain(referrerDomain)
+        && StringUtils.hasText(referrerDTO.getSessionId())) {
+      final String sessionId = referrerDTO.getSessionId();
+      final String pageUrl = referrerDTO.getPageUrl();
+      final String[] resolvedHolder = {resolvedReferrerUrl};
+      final String[] domainHolder = {referrerDomain};
+
+      referrerTrackingRepository
+          .findLatestMarketNavigation(sessionId)
+          .ifPresent(
+              recentMarket -> {
+                if (!StringUtils.hasText(recentMarket.getPageUrl())) {
+                  return;
+                }
+                String candidate = ensureAbsoluteUrl(decodeUrl(recentMarket.getPageUrl()), pageUrl);
+                String candidateDomain = resolveReferrerDomain(candidate);
+                if (StringUtils.hasText(candidateDomain)) {
+                  resolvedHolder[0] = candidate;
+                  domainHolder[0] = candidateDomain;
+                }
+              });
+
+      resolvedReferrerUrl = resolvedHolder[0];
+      referrerDomain = domainHolder[0];
+    }
+
+    if (StringUtils.hasText(referrerDomain) && referrerDomain.contains("admin.groble.im")) {
+      log.debug("Skip admin referral for contentId={}.", contentId);
+      recordMetric("content", "ignored_admin");
+      return false;
+    }
 
     Optional<ReferrerTracking> existing =
         referrerTrackingRepository.findRecentContentTracking(
@@ -199,6 +276,7 @@ public class ReferrerService {
           chainJson,
           metadataJson,
           resolvedReferrerUrl,
+          referrerDomain,
           eventTimestamp,
           sanitizedUserAgent,
           maskedIp)) {
@@ -208,7 +286,7 @@ public class ReferrerService {
             referrerDTO.getSessionId(),
             referrerDTO.getPageUrl());
         recordMetric("content", "duplicate");
-        return;
+        return false;
       }
 
       tracking.refreshTracking(
@@ -223,13 +301,14 @@ public class ReferrerService {
           referrerDTO.getLastPageUrl(),
           chainJson,
           metadataJson,
+          referrerDomain,
           sanitizedUserAgent,
           maskedIp,
           eventTimestamp);
 
       referrerTrackingRepository.save(tracking);
       recordMetric("content", "updated");
-      return;
+      return true;
     }
 
     ReferrerTracking tracking =
@@ -247,29 +326,54 @@ public class ReferrerService {
             chainJson,
             metadataJson,
             referrerDTO.getSessionId(),
+            referrerDomain,
             sanitizedUserAgent,
             maskedIp,
             eventTimestamp);
 
     referrerTrackingRepository.save(tracking);
     recordMetric("content", "stored");
+    return true;
   }
 
-  private void persistMarketReferrerTracking(
-      String marketLinkUrl, ReferrerDTO referrerDTO, String userAgent, String clientIp)
+  private boolean persistMarketReferrerTracking(
+      String marketLinkUrl,
+      ReferrerDTO referrerDTO,
+      String refererHeader,
+      String userAgent,
+      String clientIp)
       throws JsonProcessingException {
     if (!StringUtils.hasText(referrerDTO.getSessionId())) {
       log.debug("Skip market tracking due to missing sessionId. marketLinkUrl={}", marketLinkUrl);
       recordMetric("market", "invalid_session");
-      return;
+      return false;
     }
 
-    String resolvedReferrerUrl = resolveReferrerUrl(referrerDTO);
+    String resolvedReferrerUrl = resolveReferrerUrl(referrerDTO, refererHeader);
+    if (StringUtils.hasText(resolvedReferrerUrl)) {
+      resolvedReferrerUrl =
+          ensureAbsoluteUrl(decodeUrl(resolvedReferrerUrl), referrerDTO.getPageUrl());
+    }
     String chainJson = toReferrerChainJson(referrerDTO.getReferrerChain());
     String metadataJson = toMetadataJson(referrerDTO.getReferrerDetails());
     String maskedIp = maskIpAddress(clientIp);
     String sanitizedUserAgent = sanitizeUserAgent(userAgent);
     LocalDateTime eventTimestamp = defaultEventTimestamp(referrerDTO.getTimestamp());
+
+    String chainFallbackMarket = lastElement(referrerDTO.getReferrerChain());
+    if (!StringUtils.hasText(resolvedReferrerUrl) && StringUtils.hasText(chainFallbackMarket)) {
+      resolvedReferrerUrl =
+          ensureAbsoluteUrl(decodeUrl(chainFallbackMarket), referrerDTO.getPageUrl());
+    }
+
+    String referrerDomain = resolveReferrerDomain(resolvedReferrerUrl);
+    String lastPageUrl = referrerDTO.getLastPageUrl();
+    if ((!StringUtils.hasText(referrerDomain)
+            || ReferrerDomainUtils.isInternalDomain(referrerDomain))
+        && StringUtils.hasText(lastPageUrl)) {
+      resolvedReferrerUrl = ensureAbsoluteUrl(decodeUrl(lastPageUrl), referrerDTO.getPageUrl());
+      referrerDomain = resolveReferrerDomain(resolvedReferrerUrl);
+    }
 
     Optional<ReferrerTracking> existing =
         referrerTrackingRepository.findRecentMarketTracking(
@@ -283,6 +387,7 @@ public class ReferrerService {
           chainJson,
           metadataJson,
           resolvedReferrerUrl,
+          referrerDomain,
           eventTimestamp,
           sanitizedUserAgent,
           maskedIp)) {
@@ -292,7 +397,7 @@ public class ReferrerService {
             referrerDTO.getSessionId(),
             referrerDTO.getPageUrl());
         recordMetric("market", "duplicate");
-        return;
+        return false;
       }
 
       tracking.refreshTracking(
@@ -307,13 +412,14 @@ public class ReferrerService {
           referrerDTO.getLastPageUrl(),
           chainJson,
           metadataJson,
+          referrerDomain,
           sanitizedUserAgent,
           maskedIp,
           eventTimestamp);
 
       referrerTrackingRepository.save(tracking);
       recordMetric("market", "updated");
-      return;
+      return true;
     }
 
     ReferrerTracking tracking =
@@ -331,15 +437,21 @@ public class ReferrerService {
             chainJson,
             metadataJson,
             referrerDTO.getSessionId(),
+            referrerDomain,
             sanitizedUserAgent,
             maskedIp,
             eventTimestamp);
 
     referrerTrackingRepository.save(tracking);
     recordMetric("market", "stored");
+    return true;
   }
 
   private String resolveReferrerUrl(ReferrerDTO referrerDTO) {
+    return resolveReferrerUrl(referrerDTO, null);
+  }
+
+  private String resolveReferrerUrl(ReferrerDTO referrerDTO, String refererHeader) {
     if (referrerDTO == null) {
       return null;
     }
@@ -348,29 +460,62 @@ public class ReferrerService {
       return direct;
     }
     Map<String, Object> details = referrerDTO.getReferrerDetails();
-    if (details == null || details.isEmpty()) {
-      return null;
-    }
-    String[] candidates = {
-      "documentReferrer",
-      "document_referrer",
-      "openerUrl",
-      "opener",
-      "parentUrl",
-      "parent",
-      "referrer",
-      "referrerUrl",
-      "origin",
-      "sourceUrl",
-      "externalReferrer"
-    };
-    for (String key : candidates) {
-      Object value = details.get(key);
-      if (value instanceof String str && StringUtils.hasText(str)) {
-        return str;
+    if (details != null && !details.isEmpty()) {
+      String[] candidates = {
+        "documentReferrer",
+        "document_referrer",
+        "openerUrl",
+        "opener",
+        "parentUrl",
+        "parent",
+        "referrer",
+        "referrerUrl",
+        "origin",
+        "sourceUrl",
+        "externalReferrer"
+      };
+      for (String key : candidates) {
+        Object value = details.get(key);
+        if (value instanceof String str && StringUtils.hasText(str)) {
+          return str;
+        }
       }
     }
+    if (StringUtils.hasText(refererHeader)) {
+      return refererHeader;
+    }
     return null;
+  }
+
+  private String resolveReferrerDomain(String referrerUrl) {
+    if (!StringUtils.hasText(referrerUrl)) {
+      return null;
+    }
+
+    String host = extractHost(referrerUrl);
+    if (!StringUtils.hasText(host)) {
+      host = extractHost("http://" + referrerUrl);
+    }
+    if (!StringUtils.hasText(host)) {
+      return null;
+    }
+
+    String normalized = host.toLowerCase();
+    return normalized.startsWith("www.") ? normalized.substring(4) : normalized;
+  }
+
+  private String extractHost(String url) {
+    try {
+      URI uri = new URI(url);
+      String host = uri.getHost();
+      if (!StringUtils.hasText(host)) {
+        return null;
+      }
+      int port = uri.getPort();
+      return port > 0 ? host + ":" + port : host;
+    } catch (URISyntaxException e) {
+      return null;
+    }
   }
 
   private String toReferrerChainJson(List<String> referrerChain) throws JsonProcessingException {
@@ -378,6 +523,49 @@ public class ReferrerService {
       return "[]";
     }
     return objectMapper.writeValueAsString(referrerChain);
+  }
+
+  private String lastElement(List<String> values) {
+    if (values == null || values.isEmpty()) {
+      return null;
+    }
+    for (int i = values.size() - 1; i >= 0; i--) {
+      String candidate = values.get(i);
+      if (StringUtils.hasText(candidate)) {
+        return candidate;
+      }
+    }
+    return null;
+  }
+
+  private String decodeUrl(String url) {
+    if (!StringUtils.hasText(url)) {
+      return url;
+    }
+    try {
+      return java.net.URLDecoder.decode(url, java.nio.charset.StandardCharsets.UTF_8);
+    } catch (IllegalArgumentException e) {
+      return url;
+    }
+  }
+
+  private String ensureAbsoluteUrl(String url, String pageUrl) {
+    if (!StringUtils.hasText(url)) {
+      return url;
+    }
+    try {
+      java.net.URI candidate = new java.net.URI(url);
+      if (candidate.isAbsolute()) {
+        return candidate.toString();
+      }
+      if (!StringUtils.hasText(pageUrl)) {
+        return url;
+      }
+      java.net.URI base = new java.net.URI(pageUrl);
+      return base.resolve(candidate).toString();
+    } catch (java.net.URISyntaxException e) {
+      return url;
+    }
   }
 
   private String toMetadataJson(Map<String, Object> referrerDetails)
@@ -398,6 +586,7 @@ public class ReferrerService {
       String incomingChain,
       String incomingMetadata,
       String incomingReferrerUrl,
+      String incomingReferrerDomain,
       LocalDateTime incomingTimestamp,
       String sanitizedUserAgent,
       String maskedIpAddress) {
@@ -405,6 +594,7 @@ public class ReferrerService {
     boolean matchesCore =
         equalsNullable(existing.getPageUrl(), incoming.getPageUrl())
             && equalsNullable(existing.getReferrerUrl(), incomingReferrerUrl)
+            && equalsNullable(existing.getReferrerDomain(), incomingReferrerDomain)
             && equalsNullable(existing.getLandingPageUrl(), incoming.getLandingPageUrl())
             && equalsNullable(existing.getLastPageUrl(), incoming.getLastPageUrl())
             && equalsNullable(existing.getReferrerChain(), incomingChain)

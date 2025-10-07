@@ -243,7 +243,8 @@ public class MarketController {
     ReferrerDTO referrerDTO = referrerMapper.toContentReferrerDTO(referrerRequest);
     String userAgent = requestUtil.getUserAgent();
     String clientIp = requestUtil.getClientIp();
-    referrerService.recordMarketReferrer(marketLinkUrl, referrerDTO, userAgent, clientIp);
+    String referer = requestUtil.getReferer();
+    referrerService.recordMarketReferrer(marketLinkUrl, referrerDTO, referer, userAgent, clientIp);
     return responseHelper.success(null, MARKET_REFERRER_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 }

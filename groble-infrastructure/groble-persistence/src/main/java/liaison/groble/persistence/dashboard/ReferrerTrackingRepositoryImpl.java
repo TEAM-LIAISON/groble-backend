@@ -35,6 +35,12 @@ public class ReferrerTrackingRepositoryImpl implements ReferrerTrackingRepositor
   }
 
   @Override
+  public Optional<ReferrerTracking> findLatestMarketNavigation(String sessionId) {
+    return jpaReferrerTrackingRepository
+        .findFirstBySessionIdAndMarketLinkUrlIsNotNullOrderByCreatedAtDesc(sessionId);
+  }
+
+  @Override
   public long deleteAllByCreatedAtBefore(LocalDateTime threshold) {
     return jpaReferrerTrackingRepository.deleteByCreatedAtBefore(threshold);
   }

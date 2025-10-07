@@ -41,6 +41,7 @@ import liaison.groble.domain.dashboard.repository.ContentViewStatsRepository;
 import liaison.groble.domain.dashboard.repository.MarketViewStatsCustomRepository;
 import liaison.groble.domain.dashboard.repository.MarketViewStatsRepository;
 import liaison.groble.domain.dashboard.repository.ReferrerTrackingQueryRepository;
+import liaison.groble.domain.dashboard.support.ReferrerDomainUtils;
 import liaison.groble.domain.market.entity.Market;
 import liaison.groble.domain.user.entity.SellerInfo;
 
@@ -51,8 +52,6 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 public class DashboardService {
-  private static final Set<String> INTERNAL_DOMAIN_KEYWORDS =
-      Set.of("groble.im", "groble-dev", "groble.kr", "localhost", "127.0.0.1");
   private static final Set<String> SOCIAL_DOMAIN_KEYWORDS =
       Set.of(
           "instagram.com",
@@ -538,13 +537,20 @@ public class DashboardService {
   }
 
   private ReferrerStatsDTO toReferrerStatsDTO(FlatReferrerStatsDTO flatReferrerStatsDTO) {
-    String rawDomain = flatReferrerStatsDTO.getReferrerDomain();
     String referrerUrl = flatReferrerStatsDTO.getReferrerUrl();
-    if (!StringUtils.hasText(rawDomain)) {
-      rawDomain = extractDomainFromUrl(referrerUrl);
+    String referrerPath =
+        StringUtils.hasText(flatReferrerStatsDTO.getReferrerPath())
+            ? flatReferrerStatsDTO.getReferrerPath()
+            : extractPathFromUrl(referrerUrl);
+
+    String domainCandidate = flatReferrerStatsDTO.getReferrerDomain();
+    if (!StringUtils.hasText(domainCandidate)) {
+      domainCandidate = extractDomainFromUrl(referrerUrl);
     }
 
-    String normalizedDomain = normalize(rawDomain);
+    String normalizedDomain = normalize(domainCandidate);
+    String domainLower = lowerCase(normalizedDomain);
+
     String source = normalize(flatReferrerStatsDTO.getSource());
     String medium = normalize(flatReferrerStatsDTO.getMedium());
     String campaign = normalize(flatReferrerStatsDTO.getCampaign());
@@ -552,24 +558,44 @@ public class DashboardService {
     String term = normalize(flatReferrerStatsDTO.getTerm());
 
     boolean isDirect =
-        !StringUtils.hasText(normalizedDomain) || "(direct)".equalsIgnoreCase(normalizedDomain);
-    boolean isInternal = isInternalDomain(normalizedDomain);
-    boolean external = StringUtils.hasText(normalizedDomain) && !isInternal && !isDirect;
+        !StringUtils.hasText(domainLower) || "(direct)".equalsIgnoreCase(domainLower);
+    boolean isInternal = ReferrerDomainUtils.isInternalDomain(domainLower);
+    boolean external = StringUtils.hasText(domainLower) && !isInternal && !isDirect;
 
     String domainForResponse =
-        isDirect ? "(direct)" : (normalizedDomain != null ? normalizedDomain : rawDomain);
-    String trafficType = resolveTrafficType(normalizedDomain, medium, campaign, isDirect, external);
+        isDirect
+            ? "(direct)"
+            : (StringUtils.hasText(normalizedDomain)
+                ? normalizedDomain
+                : extractDomainFromUrl(referrerUrl));
+
+    String trafficType = resolveTrafficType(domainLower, medium, campaign, isDirect, external);
     String displayLabel =
         resolveDisplayLabel(
             domainForResponse, source, campaign, external, isDirect, trafficType, referrerUrl);
 
+    if (!external && !isDirect && StringUtils.hasText(referrerPath)) {
+      displayLabel = domainForResponse + referrerPath;
+    }
+
+    if (!StringUtils.hasText(trafficType)) {
+      trafficType = isDirect ? "DIRECT" : (external ? "REFERRAL" : "INTERNAL");
+    }
+    if (!StringUtils.hasText(displayLabel)) {
+      displayLabel =
+          isDirect
+              ? "직접 방문"
+              : (StringUtils.hasText(domainForResponse) ? domainForResponse : "알 수 없음");
+    }
+
+    if (!StringUtils.hasText(domainForResponse)) {
+      domainForResponse = isDirect ? "(direct)" : domainForResponse;
+    }
+
     return ReferrerStatsDTO.builder()
         .referrerUrl(referrerUrl)
         .referrerDomain(domainForResponse)
-        .referrerPath(
-            StringUtils.hasText(flatReferrerStatsDTO.getReferrerPath())
-                ? flatReferrerStatsDTO.getReferrerPath()
-                : extractPathFromUrl(referrerUrl))
+        .referrerPath(referrerPath)
         .source(source)
         .medium(medium)
         .campaign(campaign)
@@ -673,7 +699,13 @@ public class DashboardService {
       return "(direct)";
     }
     try {
-      String clean = url.replaceFirst("^https?://", "").replaceFirst("^www\\.", "");
+      String decoded;
+      try {
+        decoded = java.net.URLDecoder.decode(url, java.nio.charset.StandardCharsets.UTF_8);
+      } catch (IllegalArgumentException ignore) {
+        decoded = url;
+      }
+      String clean = decoded.replaceFirst("^https?://", "").replaceFirst("^www\\.", "");
       int slash = clean.indexOf('/');
       return (slash >= 0 ? clean.substring(0, slash) : clean).toLowerCase();
     } catch (Exception e) {
@@ -686,7 +718,13 @@ public class DashboardService {
       return null;
     }
     try {
-      String clean = url.replaceFirst("^https?://", "");
+      String decoded;
+      try {
+        decoded = java.net.URLDecoder.decode(url, java.nio.charset.StandardCharsets.UTF_8);
+      } catch (IllegalArgumentException ignore) {
+        decoded = url;
+      }
+      String clean = decoded.replaceFirst("^https?://", "");
       int slash = clean.indexOf('/');
       if (slash < 0) {
         return null;
@@ -701,14 +739,6 @@ public class DashboardService {
 
   private String lowerCase(String value) {
     return value == null ? null : value.toLowerCase();
-  }
-
-  private boolean isInternalDomain(String domain) {
-    if (!StringUtils.hasText(domain)) {
-      return false;
-    }
-    String lower = domain.toLowerCase();
-    return INTERNAL_DOMAIN_KEYWORDS.stream().anyMatch(lower::contains);
   }
 
   private boolean isSocialDomain(String lowerDomain) {
