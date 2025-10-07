@@ -11,5 +11,12 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class FlatReferrerStatsDTO {
   private String referrerUrl;
+  private String referrerDomain;
+  private String referrerPath;
+  private String source;
+  private String medium;
+  private String campaign;
+  private String content;
+  private String term;
   private Long visitCount;
 }

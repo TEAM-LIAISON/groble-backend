@@ -461,7 +461,10 @@ public class ContentController {
       @PathVariable("contentId") Long contentId,
       @Valid @RequestBody ReferrerRequest referrerRequest) {
     ReferrerDTO referrerDTO = referrerMapper.toContentReferrerDTO(referrerRequest);
-    referrerService.recordContentReferrer(contentId, referrerDTO);
+    String userAgent = requestUtil.getUserAgent();
+    String clientIp = requestUtil.getClientIp();
+    String referer = requestUtil.getReferer();
+    referrerService.recordContentReferrer(contentId, referrerDTO, referer, userAgent, clientIp);
     return responseHelper.success(null, CONTENT_REFERRAL_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 }

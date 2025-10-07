@@ -62,7 +62,16 @@ public class MarketReferrerStatsCustomRepositoryImpl
         jpaQueryFactory
             .select(
                 Projections.constructor(
-                    FlatReferrerStatsDTO.class, qStats.referrerUrl, qStats.visitCount.longValue()))
+                    FlatReferrerStatsDTO.class,
+                    qStats.referrerUrl,
+                    qStats.referrerDomain,
+                    qStats.referrerPath,
+                    qStats.source,
+                    qStats.medium,
+                    qStats.campaign,
+                    qStats.content,
+                    qStats.term,
+                    qStats.visitCount.longValue()))
             .from(qStats)
             .where(qStats.marketId.eq(marketId))
             .orderBy(qStats.visitCount.desc())
