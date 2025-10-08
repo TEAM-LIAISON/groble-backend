@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import liaison.groble.api.model.admin.settlement.request.SettlementApprovalRequest;
 import liaison.groble.api.model.admin.settlement.response.AdminSettlementDetailResponse;
 import liaison.groble.api.model.admin.settlement.response.AdminSettlementsOverviewResponse;
+import liaison.groble.api.model.admin.settlement.response.PaypleAccountRemainResponse;
 import liaison.groble.api.model.admin.settlement.response.PerTransactionAdminSettlementOverviewResponse;
 import liaison.groble.api.model.admin.settlement.response.PgFeeAdjustmentResponse;
 import liaison.groble.api.model.admin.settlement.response.SettlementApprovalResponse;
@@ -205,6 +206,24 @@ public class AdminSettlementController extends BaseController {
         adminSettlementMapper.toPgFeeAdjustmentResponsePage(dtoPage);
 
     return success(responsePage, ResponseMessages.Admin.PG_FEE_ADJUSTMENTS_RETRIEVED);
+  }
+
+  @Operation(summary = "정산 지급 대행 잔액 조회", description = "페이플 이체 가능 잔액과 누적 정산 차액을 조회합니다.")
+  @RequireRole("ROLE_ADMIN")
+  @Logging(
+      item = "AdminSettlement",
+      action = "getPaypleAccountRemain",
+      includeParam = true,
+      includeResult = true)
+  @GetMapping(ApiPaths.Admin.SETTLEMENT_PAYPLE_REMAIN)
+  public ResponseEntity<GrobleResponse<PaypleAccountRemainResponse>> getPaypleAccountRemain(
+      @Auth Accessor accessor) {
+
+    PaypleAccountRemainResponse response =
+        adminSettlementMapper.toPaypleAccountRemainResponse(
+            adminSettlementService.getPaypleAccountRemain());
+
+    return success(response, ResponseMessages.Admin.SETTLEMENT_REMAIN_RETRIEVED);
   }
 
   /**

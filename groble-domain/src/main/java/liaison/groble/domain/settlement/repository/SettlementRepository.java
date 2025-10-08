@@ -36,4 +36,7 @@ public interface SettlementRepository {
    * @return 해당 빌링키를 가진 정산 목록
    */
   List<Settlement> findByPaypleBillingTranId(String billingTranId);
+
+  /** COMPLETED 상태 정산들의 PG 수수료 환급 예상액 합계 */
+  BigDecimal sumPgFeeRefundExpectedForCompleted();
 }

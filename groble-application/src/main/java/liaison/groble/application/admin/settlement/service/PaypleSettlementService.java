@@ -94,6 +94,29 @@ public class PaypleSettlementService {
   }
 
   /**
+   * 이체 가능 잔액 조회
+   *
+   * @param accessToken 파트너 인증으로 받은 액세스 토큰
+   * @return 잔액 조회 결과
+   */
+  @Retryable(value = PaypleApiException.class, maxAttempts = 2, backoff = @Backoff(delay = 500))
+  public JSONObject requestAccountRemain(String accessToken) {
+    log.info("페이플 이체 가능 잔액 조회 요청");
+
+    try {
+      Map<String, String> params = buildAccountRemainParams();
+      JSONObject result = paypleService.payAccountRemain(params, accessToken);
+
+      log.info("페이플 이체 가능 잔액 조회 완료");
+      return result;
+
+    } catch (Exception e) {
+      log.error("페이플 이체 가능 잔액 조회 중 오류 발생", e);
+      throw new PaypleApiException("페이플 이체 가능 잔액 조회 실패", e);
+    }
+  }
+
+  /**
    * 계좌 인증 결과를 Settlement에 저장
    *
    * @param settlement 정산 엔티티
@@ -274,6 +297,14 @@ public class PaypleSettlementService {
       params.put("sub_id", request.getSubId());
     }
 
+    return params;
+  }
+
+  /** 잔액 조회 파라미터 빌드 */
+  private Map<String, String> buildAccountRemainParams() {
+    Map<String, String> params = new HashMap<>();
+    params.put("cst_id", paypleConfig.getCstId());
+    params.put("custKey", paypleConfig.getCustKey());
     return params;
   }
 

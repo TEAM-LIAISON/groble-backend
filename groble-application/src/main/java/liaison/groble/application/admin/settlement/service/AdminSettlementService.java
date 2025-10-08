@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.json.simple.JSONObject;
@@ -16,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import liaison.groble.application.admin.settlement.dto.AdminSettlementDetailDTO;
 import liaison.groble.application.admin.settlement.dto.AdminSettlementOverviewDTO;
+import liaison.groble.application.admin.settlement.dto.PaypleAccountRemainDTO;
 import liaison.groble.application.admin.settlement.dto.PaypleAccountVerificationRequest;
 import liaison.groble.application.admin.settlement.dto.PayplePartnerAuthResult;
 import liaison.groble.application.admin.settlement.dto.PerTransactionAdminSettlementOverviewDTO;
@@ -125,6 +127,33 @@ public class AdminSettlementService {
         page.getContent().stream().map(this::convertFlatDTOToPgFeeAdjustmentDTO).toList();
 
     return PageResponse.from(page, items, buildMetaData(pageable));
+  }
+
+  @Transactional(readOnly = true)
+  public PaypleAccountRemainDTO getPaypleAccountRemain() {
+    PayplePartnerAuthResult authResult = paypleSettlementService.requestPartnerAuth();
+
+    if (!authResult.isSuccess()) {
+      throw new PaypleApiException(
+          "페이플 파트너 인증 실패: " + authResult.getMessage() + " (code: " + authResult.getCode() + ")");
+    }
+
+    JSONObject remainResult =
+        paypleSettlementService.requestAccountRemain(authResult.getAccessToken());
+    BigDecimal cumulativeDifference =
+        Optional.ofNullable(settlementRepository.sumPgFeeRefundExpectedForCompleted())
+            .orElse(BigDecimal.ZERO);
+
+    return PaypleAccountRemainDTO.builder()
+        .result(getStringValue(remainResult, "result"))
+        .message(getStringValue(remainResult, "message"))
+        .code(getStringValue(remainResult, "code"))
+        .totalAccountAmount(getDecimalValue(remainResult, "total_account_amt"))
+        .totalTransferAmount(getDecimalValue(remainResult, "total_transfer_amt"))
+        .remainAmount(getDecimalValue(remainResult, "remain_amt"))
+        .apiTranDtm(getStringValue(remainResult, "api_tran_dtm"))
+        .cumulativePgFeeRefundExpected(cumulativeDifference)
+        .build();
   }
 
   /**
@@ -552,6 +581,19 @@ public class AdminSettlementService {
     }
     Object value = json.get(key);
     return value != null ? value.toString() : null;
+  }
+
+  private BigDecimal getDecimalValue(JSONObject json, String key) {
+    String value = getStringValue(json, key);
+    if (value == null || value.trim().isEmpty()) {
+      return BigDecimal.ZERO;
+    }
+    try {
+      return new BigDecimal(value.trim());
+    } catch (NumberFormatException ex) {
+      log.warn("숫자 변환 실패 - key: {}, value: {}", key, value);
+      return BigDecimal.ZERO;
+    }
   }
 
   /** 민감한 데이터 마스킹 (그룹키 등) */

@@ -6,11 +6,13 @@ import org.mapstruct.Mapping;
 import liaison.groble.api.model.admin.settlement.request.SettlementApprovalRequest;
 import liaison.groble.api.model.admin.settlement.response.AdminSettlementDetailResponse;
 import liaison.groble.api.model.admin.settlement.response.AdminSettlementsOverviewResponse;
+import liaison.groble.api.model.admin.settlement.response.PaypleAccountRemainResponse;
 import liaison.groble.api.model.admin.settlement.response.PerTransactionAdminSettlementOverviewResponse;
 import liaison.groble.api.model.admin.settlement.response.PgFeeAdjustmentResponse;
 import liaison.groble.api.model.admin.settlement.response.SettlementApprovalResponse;
 import liaison.groble.application.admin.settlement.dto.AdminSettlementDetailDTO;
 import liaison.groble.application.admin.settlement.dto.AdminSettlementOverviewDTO;
+import liaison.groble.application.admin.settlement.dto.PaypleAccountRemainDTO;
 import liaison.groble.application.admin.settlement.dto.PerTransactionAdminSettlementOverviewDTO;
 import liaison.groble.application.admin.settlement.dto.PgFeeAdjustmentDTO;
 import liaison.groble.application.admin.settlement.dto.SettlementApprovalDTO;
@@ -57,6 +59,8 @@ public interface AdminSettlementMapper extends PageResponseMapper {
       PerTransactionAdminSettlementOverviewDTO perTransactionAdminSettlementOverviewDTO);
 
   PgFeeAdjustmentResponse toPgFeeAdjustmentResponse(PgFeeAdjustmentDTO dto);
+
+  PaypleAccountRemainResponse toPaypleAccountRemainResponse(PaypleAccountRemainDTO dto);
 
   /** PaypleSettlementResultDTO 매핑 */
   SettlementApprovalResponse.PaypleSettlementResult toPaypleResult(
