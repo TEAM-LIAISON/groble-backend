@@ -37,6 +37,7 @@ public final class ApiPaths {
     public static final String ALL_USERS_SETTLEMENTS = "/all-users";
     public static final String SETTLEMENT_DETAIL = "/{settlementId}";
     public static final String SALES_LIST = "/sales/{settlementId}";
+    public static final String PG_FEE_ADJUSTMENTS = "/pg-fee-adjustments";
 
     public static final String ORDERS = "/orders";
     public static final String ORDER_CANCEL_REQUEST = "/order/{merchantUid}/cancel-request";

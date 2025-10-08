@@ -7,6 +7,7 @@ import java.util.List;
 import liaison.groble.api.model.admin.settlement.response.AdminSettlementDetailResponse;
 import liaison.groble.api.model.admin.settlement.response.AdminSettlementsOverviewResponse;
 import liaison.groble.api.model.admin.settlement.response.PerTransactionAdminSettlementOverviewResponse;
+import liaison.groble.api.model.admin.settlement.response.PgFeeAdjustmentResponse;
 import liaison.groble.api.model.admin.settlement.response.SettlementApprovalResponse;
 import liaison.groble.common.response.GrobleResponse;
 import liaison.groble.common.response.PageResponse;
@@ -54,6 +55,18 @@ public final class AdminResponseSchemas {
     @Override
     @Schema(description = "페이징된 정산 판매 목록", implementation = PageResponse.class)
     public PageResponse<PerTransactionAdminSettlementOverviewResponse> getData() {
+      return super.getData();
+    }
+  }
+
+  /** 관리자 PG 수수료 차액 조회 응답 스키마 */
+  @Schema(description = "관리자 PG 수수료 차액 조회 응답")
+  public static class ApiAdminPgFeeAdjustmentsResponse
+      extends GrobleResponse<PageResponse<PgFeeAdjustmentResponse>> {
+
+    @Override
+    @Schema(description = "페이징된 PG 수수료 차액 목록", implementation = PageResponse.class)
+    public PageResponse<PgFeeAdjustmentResponse> getData() {
       return super.getData();
     }
   }

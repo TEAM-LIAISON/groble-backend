@@ -36,6 +36,7 @@ public final class AdminSettlementSwaggerDocs {
                     **응답 데이터:**
                     - 정산 항목의 상세 정보 포함
                     - 관련된 결제 및 환불 내역 포함
+                    - 페이플 응답 메모(settlementNote) 포함
                     """;
   // === 정산 상세 총 판매 내역 조회 API ===
   public static final String SETTLEMENT_DETAIL_SALES_SUMMARY =
@@ -50,5 +51,21 @@ public final class AdminSettlementSwaggerDocs {
                       **응답 데이터:**
                       - 해당 정산 항목에 포함된 모든 판매 내역 리스트
                       - 각 판매 내역에 대한 상세 정보 포함
+                      """;
+
+  public static final String PG_FEE_ADJUSTMENTS_SUMMARY =
+      "[✅ PG 수수료 차액 내역 조회] 관리자가 PG 2.9%와 기준 1.7% 간 차액을 확인합니다.";
+  public static final String PG_FEE_ADJUSTMENTS_DESCRIPTION =
+      """
+                      관리자가 PG 실제 청구 수수료(2.9%)와 표시 기준(1.7%) 간 차액을 거래 단위로 조회합니다.
+
+                      **요청 파라미터:**
+                      - startDate, endDate: 조회 기간 (선택)
+                      - settlementId: 특정 정산 묶음 필터 (선택)
+                      - sellerId: 판매자 필터 (선택)
+
+                      **응답 데이터:**
+                      - 각 거래별 PG 수수료 차액, VAT 차액, 환급 예상액 정보
+                      - 페이징 정보 포함
                       """;
 }

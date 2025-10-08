@@ -106,7 +106,8 @@ public final class AdminSettlementExamples {
           "pgFeeRate": 0.0170,
           "pgFeeRateDisplay": 0.0180,
           "pgFeeRateBaseline": 0.0195,
-          "vatRate": 0.1000
+          "vatRate": 0.1000,
+          "settlementNote": "Payple SUCCESS - code: A0000, message: 승인완료"
         }
       }
       """;
@@ -145,6 +146,55 @@ public final class AdminSettlementExamples {
             "totalElements": 52,
             "first": true,
             "last": false,
+            "empty": false
+          }
+        }
+      }
+      """;
+
+  public static final String PG_FEE_ADJUSTMENTS_SUCCESS_EXAMPLE =
+      """
+      {
+        "success": true,
+        "code": "SUCCESS",
+        "message": "PG 수수료 차액 내역 조회가 성공적으로 처리되었습니다.",
+        "data": {
+          "items": [
+            {
+              "settlementId": 321,
+              "settlementItemId": 654,
+              "purchaseId": 987,
+              "sellerId": 42,
+              "sellerNickname": "groble_maker",
+              "merchantUid": "ORD-20250201-00001",
+              "contentTitle": "AI 툴 개발 가이드",
+              "salesAmount": 150000.00,
+              "pgFeeApplied": 4350.00,
+              "pgFeeDisplay": 2550.00,
+              "pgFeeDifference": 1800.00,
+              "feeVat": 435.00,
+              "feeVatDisplay": 255.00,
+              "feeVatDifference": 180.00,
+              "pgFeeRefundExpected": 1980.00,
+              "totalFee": 4785.00,
+              "totalFeeDisplay": 2805.00,
+              "settlementAmount": 145215.00,
+              "settlementAmountDisplay": 147195.00,
+              "purchasedAt": "2025-02-01 12:34:56",
+              "orderStatus": "PAID",
+              "capturedPgFeeRate": 0.0290,
+              "capturedPgFeeRateDisplay": 0.0170,
+              "capturedPgFeeRateBaseline": 0.0170,
+              "capturedVatRate": 0.1000
+            }
+          ],
+          "pageInfo": {
+            "currentPage": 0,
+            "totalPages": 1,
+            "pageSize": 20,
+            "totalElements": 1,
+            "first": true,
+            "last": true,
             "empty": false
           }
         }

@@ -13,6 +13,7 @@ public final class ResponseMessages {
     public static final String ALL_USERS_SETTLEMENTS_RETRIEVED = "전체 사용자 정산 내역 조회에 성공하였습니다.";
     public static final String SETTLEMENT_DETAIL_RETRIEVED = "사용자 정산 상세 내역 조회에 성공하였습니다.";
     public static final String SALES_LIST_RETRIEVED = "정산별 판매 내역 조회에 성공하였습니다.";
+    public static final String PG_FEE_ADJUSTMENTS_RETRIEVED = "PG 수수료 차액 내역 조회에 성공하였습니다.";
     public static final String USER_SUMMARY_INFO_RETRIEVED = "관리자 전체 사용자 목록 조회에 성공하였습니다.";
     public static final String GUEST_USER_SUMMARY_INFO_RETRIEVED = "관리자 비회원 사용자 목록 조회에 성공하였습니다.";
     public static final String ADMIN_SIGN_IN_SUCCESS = "관리자 로그인에 성공했습니다.";

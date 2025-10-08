@@ -1,12 +1,14 @@
 package liaison.groble.domain.settlement.repository;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import liaison.groble.domain.settlement.dto.FlatAdminSettlementsDTO;
 import liaison.groble.domain.settlement.dto.FlatPerTransactionSettlement;
+import liaison.groble.domain.settlement.dto.FlatPgFeeAdjustmentDTO;
 import liaison.groble.domain.settlement.dto.FlatSettlementsDTO;
 
 public interface SettlementCustomRepository {
@@ -19,6 +21,9 @@ public interface SettlementCustomRepository {
       Long settlementId, Pageable pageable);
 
   Page<FlatAdminSettlementsDTO> findAdminSettlementsByUserId(Long adminUserId, Pageable pageable);
+
+  Page<FlatPgFeeAdjustmentDTO> findPgFeeAdjustments(
+      LocalDate startDate, LocalDate endDate, Long settlementId, Long sellerId, Pageable pageable);
 
   BigDecimal getTotalCompletedPlatformFee();
 }

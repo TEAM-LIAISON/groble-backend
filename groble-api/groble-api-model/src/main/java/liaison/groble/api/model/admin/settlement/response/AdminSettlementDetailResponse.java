@@ -204,4 +204,11 @@ public class AdminSettlementDetailResponse {
       type = "number",
       requiredMode = Schema.RequiredMode.REQUIRED)
   private BigDecimal vatRate;
+
+  @Schema(
+      description = "정산 비고(페이플 응답 등 관리자 참고 메모)",
+      example = "Payple SUCCESS - code: A0000, message: 승인완료",
+      type = "string",
+      requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  private String settlementNote;
 }

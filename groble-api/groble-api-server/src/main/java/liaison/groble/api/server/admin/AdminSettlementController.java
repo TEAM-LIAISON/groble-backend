@@ -1,8 +1,11 @@
 package liaison.groble.api.server.admin;
 
+import java.time.LocalDate;
+
 import jakarta.validation.Valid;
 
 import org.springframework.data.domain.Pageable;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,6 +20,7 @@ import liaison.groble.api.model.admin.settlement.request.SettlementApprovalReque
 import liaison.groble.api.model.admin.settlement.response.AdminSettlementDetailResponse;
 import liaison.groble.api.model.admin.settlement.response.AdminSettlementsOverviewResponse;
 import liaison.groble.api.model.admin.settlement.response.PerTransactionAdminSettlementOverviewResponse;
+import liaison.groble.api.model.admin.settlement.response.PgFeeAdjustmentResponse;
 import liaison.groble.api.model.admin.settlement.response.SettlementApprovalResponse;
 import liaison.groble.api.server.admin.docs.AdminSettlementApiResponses;
 import liaison.groble.api.server.admin.docs.AdminSettlementExampleResponses;
@@ -27,6 +31,7 @@ import liaison.groble.api.server.common.ResponseMessages;
 import liaison.groble.application.admin.settlement.dto.AdminSettlementDetailDTO;
 import liaison.groble.application.admin.settlement.dto.AdminSettlementOverviewDTO;
 import liaison.groble.application.admin.settlement.dto.PerTransactionAdminSettlementOverviewDTO;
+import liaison.groble.application.admin.settlement.dto.PgFeeAdjustmentDTO;
 import liaison.groble.application.admin.settlement.dto.SettlementApprovalDTO;
 import liaison.groble.application.admin.settlement.dto.SettlementApprovalRequestDTO;
 import liaison.groble.application.admin.settlement.service.AdminSettlementService;
@@ -165,6 +170,41 @@ public class AdminSettlementController extends BaseController {
         adminSettlementMapper.toPerTransactionAdminSettlementOverviewResponsePage(dtoPage);
 
     return success(responsePage, ResponseMessages.Admin.SALES_LIST_RETRIEVED);
+  }
+
+  @Operation(
+      summary = AdminSettlementSwaggerDocs.PG_FEE_ADJUSTMENTS_SUMMARY,
+      description = AdminSettlementSwaggerDocs.PG_FEE_ADJUSTMENTS_DESCRIPTION)
+  @AdminSettlementExampleResponses.PgFeeAdjustmentsSuccess
+  @RequireRole("ROLE_ADMIN")
+  @Logging(
+      item = "AdminSettlement",
+      action = "getPgFeeAdjustments",
+      includeParam = true,
+      includeResult = true)
+  @GetMapping(ApiPaths.Admin.PG_FEE_ADJUSTMENTS)
+  public ResponseEntity<GrobleResponse<PageResponse<PgFeeAdjustmentResponse>>> getPgFeeAdjustments(
+      @Auth Accessor accessor,
+      @RequestParam(value = "startDate", required = false)
+          @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+          LocalDate startDate,
+      @RequestParam(value = "endDate", required = false)
+          @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+          LocalDate endDate,
+      @RequestParam(value = "settlementId", required = false) Long settlementId,
+      @RequestParam(value = "sellerId", required = false) Long sellerId,
+      @RequestParam(value = "page", defaultValue = "0") int page,
+      @RequestParam(value = "size", defaultValue = "20") int size,
+      @RequestParam(value = "sort", defaultValue = "purchasedAt,desc") String sort) {
+
+    Pageable pageable = PageUtils.createPageable(page, size, sort);
+    PageResponse<PgFeeAdjustmentDTO> dtoPage =
+        adminSettlementService.getPgFeeAdjustments(
+            startDate, endDate, settlementId, sellerId, pageable);
+    PageResponse<PgFeeAdjustmentResponse> responsePage =
+        adminSettlementMapper.toPgFeeAdjustmentResponsePage(dtoPage);
+
+    return success(responsePage, ResponseMessages.Admin.PG_FEE_ADJUSTMENTS_RETRIEVED);
   }
 
   /**

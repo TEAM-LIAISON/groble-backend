@@ -659,6 +659,10 @@ public class Settlement extends BaseTimeEntity {
     }
   }
 
+  public void updateSettlementNote(String note) {
+    this.settlementNote = note;
+  }
+
   /** 페이플 이체 결과 정보 업데이트 */
   public void updatePaypleTransferResult(
       String apiTranId,
