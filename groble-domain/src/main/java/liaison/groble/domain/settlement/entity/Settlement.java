@@ -651,6 +651,13 @@ public class Settlement extends BaseTimeEntity {
     }
   }
 
+  /** 수동 정산 완료 처리 */
+  public void completeManually(String note) {
+    this.status = SettlementStatus.COMPLETED;
+    this.settledAt = LocalDateTime.now();
+    this.settlementNote = note;
+  }
+
   /** 이체 실패 처리 */
   public void failSettlement() {
     if (this.status == SettlementStatus.PROCESSING) {

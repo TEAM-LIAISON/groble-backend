@@ -15,6 +15,7 @@ public final class ResponseMessages {
     public static final String SALES_LIST_RETRIEVED = "정산별 판매 내역 조회에 성공하였습니다.";
     public static final String PG_FEE_ADJUSTMENTS_RETRIEVED = "PG 수수료 차액 내역 조회에 성공하였습니다.";
     public static final String SETTLEMENT_REMAIN_RETRIEVED = "정산 지급 대행 잔액 조회에 성공하였습니다.";
+    public static final String SETTLEMENT_COMPLETED_MANUALLY = "정산이 수동으로 완료 처리되었습니다.";
     public static final String USER_SUMMARY_INFO_RETRIEVED = "관리자 전체 사용자 목록 조회에 성공하였습니다.";
     public static final String GUEST_USER_SUMMARY_INFO_RETRIEVED = "관리자 비회원 사용자 목록 조회에 성공하였습니다.";
     public static final String ADMIN_SIGN_IN_SUCCESS = "관리자 로그인에 성공했습니다.";

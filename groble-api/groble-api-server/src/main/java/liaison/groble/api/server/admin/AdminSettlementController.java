@@ -259,4 +259,33 @@ public class AdminSettlementController extends BaseController {
 
     return success(response, ResponseMessages.Admin.SETTLEMENT_APPROVAL_SUCCESS);
   }
+
+  @Operation(
+      summary = AdminSettlementSwaggerDocs.SETTLEMENT_MANUAL_COMPLETE_SUMMARY,
+      description = AdminSettlementSwaggerDocs.SETTLEMENT_MANUAL_COMPLETE_DESCRIPTION)
+  @RequireRole("ROLE_ADMIN")
+  @Logging(
+      item = "AdminSettlement",
+      action = "completeSettlementManually",
+      includeParam = true,
+      includeResult = true)
+  @PostMapping(ApiPaths.Admin.COMPLETE_SETTLEMENT)
+  public ResponseEntity<GrobleResponse<AdminSettlementDetailResponse>> completeSettlementManually(
+      @Auth Accessor accessor,
+      @Parameter(
+              name = "settlementId",
+              description = "정산 ID",
+              example = "265",
+              schema = @Schema(type = "number"))
+          @PathVariable("settlementId")
+          Long settlementId) {
+
+    AdminSettlementDetailDTO detailDTO =
+        adminSettlementService.completeSettlementManually(settlementId);
+
+    AdminSettlementDetailResponse response =
+        adminSettlementMapper.toAdminSettlementDetailResponse(detailDTO);
+
+    return success(response, ResponseMessages.Admin.SETTLEMENT_COMPLETED_MANUALLY);
+  }
 }

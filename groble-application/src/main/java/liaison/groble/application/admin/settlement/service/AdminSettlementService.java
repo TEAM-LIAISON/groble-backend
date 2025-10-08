@@ -260,6 +260,16 @@ public class AdminSettlementService {
         .build();
   }
 
+  public AdminSettlementDetailDTO completeSettlementManually(Long settlementId) {
+    Settlement settlement = settlementReader.getSettlementById(settlementId);
+
+    settlement.completeManually("정산 수동 완료 처리 성공");
+
+    log.info("정산 수동 완료 처리 - ID: {}, settledAt: {}", settlement.getId(), settlement.getSettledAt());
+
+    return getSettlementDetail(settlementId);
+  }
+
   /** 정산 조회 및 검증 */
   private List<Settlement> validateAndRetrieveSettlements(List<Long> settlementIds) {
     List<Settlement> settlements = settlementRepository.findByIdIn(settlementIds);

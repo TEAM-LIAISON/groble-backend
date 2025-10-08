@@ -53,6 +53,20 @@ public final class AdminSettlementSwaggerDocs {
                       - 각 판매 내역에 대한 상세 정보 포함
                       """;
 
+  public static final String SETTLEMENT_MANUAL_COMPLETE_SUMMARY =
+      "[✅ 정산 수동 완료 처리] 관리자가 정산 상태를 완료로 지정하고 완료 일시/메모를 기록합니다.";
+  public static final String SETTLEMENT_MANUAL_COMPLETE_DESCRIPTION =
+      """
+                      관리자가 페이플 자동 처리를 거치지 않고 정산을 즉시 완료 상태로 변경합니다.
+
+                      **처리 내용:**
+                      - 완료 시각(settledAt)은 서버에서 현재 시간으로 설정합니다.
+                      - 정산 메모는 성공 여부에 따라 서버가 자동으로 기록합니다.
+
+                      **응답 데이터:**
+                      - 업데이트된 정산 상세 정보
+                      """;
+
   public static final String PG_FEE_ADJUSTMENTS_SUMMARY =
       "[✅ PG 수수료 차액 내역 조회] 관리자가 PG 2.9%와 기준 1.7% 간 차액을 확인합니다.";
   public static final String PG_FEE_ADJUSTMENTS_DESCRIPTION =
