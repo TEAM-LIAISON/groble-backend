@@ -651,12 +651,23 @@ public class Settlement extends BaseTimeEntity {
     }
   }
 
+  /** 수동 정산 완료 처리 */
+  public void completeManually(String note) {
+    this.status = SettlementStatus.COMPLETED;
+    this.settledAt = LocalDateTime.now();
+    this.settlementNote = note;
+  }
+
   /** 이체 실패 처리 */
   public void failSettlement() {
     if (this.status == SettlementStatus.PROCESSING) {
       this.status = SettlementStatus.ON_HOLD; // 실패 시 보류 상태로 변경
       this.settlementNote = "페이플 이체 실패로 인한 보류";
     }
+  }
+
+  public void updateSettlementNote(String note) {
+    this.settlementNote = note;
   }
 
   /** 페이플 이체 결과 정보 업데이트 */

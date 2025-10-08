@@ -39,4 +39,8 @@ public interface JpaSettlementRepository extends JpaRepository<Settlement, Long>
   List<Settlement> findByIdIn(List<Long> settlementIds);
 
   List<Settlement> findByPaypleBillingTranId(String billingTranId);
+
+  @Query(
+      "SELECT COALESCE(SUM(s.pgFeeRefundExpected), 0) FROM Settlement s WHERE s.status = 'COMPLETED'")
+  BigDecimal sumPgFeeRefundExpectedForCompleted();
 }

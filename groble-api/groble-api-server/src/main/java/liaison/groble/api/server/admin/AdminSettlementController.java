@@ -1,8 +1,11 @@
 package liaison.groble.api.server.admin;
 
+import java.time.LocalDate;
+
 import jakarta.validation.Valid;
 
 import org.springframework.data.domain.Pageable;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,7 +19,9 @@ import org.springframework.web.bind.annotation.RestController;
 import liaison.groble.api.model.admin.settlement.request.SettlementApprovalRequest;
 import liaison.groble.api.model.admin.settlement.response.AdminSettlementDetailResponse;
 import liaison.groble.api.model.admin.settlement.response.AdminSettlementsOverviewResponse;
+import liaison.groble.api.model.admin.settlement.response.PaypleAccountRemainResponse;
 import liaison.groble.api.model.admin.settlement.response.PerTransactionAdminSettlementOverviewResponse;
+import liaison.groble.api.model.admin.settlement.response.PgFeeAdjustmentResponse;
 import liaison.groble.api.model.admin.settlement.response.SettlementApprovalResponse;
 import liaison.groble.api.server.admin.docs.AdminSettlementApiResponses;
 import liaison.groble.api.server.admin.docs.AdminSettlementExampleResponses;
@@ -27,6 +32,7 @@ import liaison.groble.api.server.common.ResponseMessages;
 import liaison.groble.application.admin.settlement.dto.AdminSettlementDetailDTO;
 import liaison.groble.application.admin.settlement.dto.AdminSettlementOverviewDTO;
 import liaison.groble.application.admin.settlement.dto.PerTransactionAdminSettlementOverviewDTO;
+import liaison.groble.application.admin.settlement.dto.PgFeeAdjustmentDTO;
 import liaison.groble.application.admin.settlement.dto.SettlementApprovalDTO;
 import liaison.groble.application.admin.settlement.dto.SettlementApprovalRequestDTO;
 import liaison.groble.application.admin.settlement.service.AdminSettlementService;
@@ -167,6 +173,59 @@ public class AdminSettlementController extends BaseController {
     return success(responsePage, ResponseMessages.Admin.SALES_LIST_RETRIEVED);
   }
 
+  @Operation(
+      summary = AdminSettlementSwaggerDocs.PG_FEE_ADJUSTMENTS_SUMMARY,
+      description = AdminSettlementSwaggerDocs.PG_FEE_ADJUSTMENTS_DESCRIPTION)
+  @AdminSettlementExampleResponses.PgFeeAdjustmentsSuccess
+  @RequireRole("ROLE_ADMIN")
+  @Logging(
+      item = "AdminSettlement",
+      action = "getPgFeeAdjustments",
+      includeParam = true,
+      includeResult = true)
+  @GetMapping(ApiPaths.Admin.PG_FEE_ADJUSTMENTS)
+  public ResponseEntity<GrobleResponse<PageResponse<PgFeeAdjustmentResponse>>> getPgFeeAdjustments(
+      @Auth Accessor accessor,
+      @RequestParam(value = "startDate", required = false)
+          @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+          LocalDate startDate,
+      @RequestParam(value = "endDate", required = false)
+          @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+          LocalDate endDate,
+      @RequestParam(value = "settlementId", required = false) Long settlementId,
+      @RequestParam(value = "sellerId", required = false) Long sellerId,
+      @RequestParam(value = "page", defaultValue = "0") int page,
+      @RequestParam(value = "size", defaultValue = "20") int size,
+      @RequestParam(value = "sort", defaultValue = "purchasedAt,desc") String sort) {
+
+    Pageable pageable = PageUtils.createPageable(page, size, sort);
+    PageResponse<PgFeeAdjustmentDTO> dtoPage =
+        adminSettlementService.getPgFeeAdjustments(
+            startDate, endDate, settlementId, sellerId, pageable);
+    PageResponse<PgFeeAdjustmentResponse> responsePage =
+        adminSettlementMapper.toPgFeeAdjustmentResponsePage(dtoPage);
+
+    return success(responsePage, ResponseMessages.Admin.PG_FEE_ADJUSTMENTS_RETRIEVED);
+  }
+
+  @Operation(summary = "정산 지급 대행 잔액 조회", description = "페이플 이체 가능 잔액과 누적 정산 차액을 조회합니다.")
+  @RequireRole("ROLE_ADMIN")
+  @Logging(
+      item = "AdminSettlement",
+      action = "getPaypleAccountRemain",
+      includeParam = true,
+      includeResult = true)
+  @GetMapping(ApiPaths.Admin.SETTLEMENT_PAYPLE_REMAIN)
+  public ResponseEntity<GrobleResponse<PaypleAccountRemainResponse>> getPaypleAccountRemain(
+      @Auth Accessor accessor) {
+
+    PaypleAccountRemainResponse response =
+        adminSettlementMapper.toPaypleAccountRemainResponse(
+            adminSettlementService.getPaypleAccountRemain());
+
+    return success(response, ResponseMessages.Admin.SETTLEMENT_REMAIN_RETRIEVED);
+  }
+
   /**
    * 정산 승인 및 실행 처리
    *
@@ -199,5 +258,34 @@ public class AdminSettlementController extends BaseController {
     SettlementApprovalResponse response = adminSettlementMapper.toResponse(serviceResult);
 
     return success(response, ResponseMessages.Admin.SETTLEMENT_APPROVAL_SUCCESS);
+  }
+
+  @Operation(
+      summary = AdminSettlementSwaggerDocs.SETTLEMENT_MANUAL_COMPLETE_SUMMARY,
+      description = AdminSettlementSwaggerDocs.SETTLEMENT_MANUAL_COMPLETE_DESCRIPTION)
+  @RequireRole("ROLE_ADMIN")
+  @Logging(
+      item = "AdminSettlement",
+      action = "completeSettlementManually",
+      includeParam = true,
+      includeResult = true)
+  @PostMapping(ApiPaths.Admin.COMPLETE_SETTLEMENT)
+  public ResponseEntity<GrobleResponse<AdminSettlementDetailResponse>> completeSettlementManually(
+      @Auth Accessor accessor,
+      @Parameter(
+              name = "settlementId",
+              description = "정산 ID",
+              example = "265",
+              schema = @Schema(type = "number"))
+          @PathVariable("settlementId")
+          Long settlementId) {
+
+    AdminSettlementDetailDTO detailDTO =
+        adminSettlementService.completeSettlementManually(settlementId);
+
+    AdminSettlementDetailResponse response =
+        adminSettlementMapper.toAdminSettlementDetailResponse(detailDTO);
+
+    return success(response, ResponseMessages.Admin.SETTLEMENT_COMPLETED_MANUALLY);
   }
 }

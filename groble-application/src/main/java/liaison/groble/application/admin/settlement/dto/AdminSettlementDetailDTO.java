@@ -46,4 +46,5 @@ public class AdminSettlementDetailDTO {
   private BigDecimal pgFeeRateDisplay;
   private BigDecimal pgFeeRateBaseline;
   private BigDecimal vatRate;
+  private String settlementNote;
 }
