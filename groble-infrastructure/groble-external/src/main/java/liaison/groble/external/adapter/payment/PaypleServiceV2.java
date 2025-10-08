@@ -203,6 +203,28 @@ public class PaypleServiceV2 implements PaypleService {
   }
 
   @Override
+  public JSONObject payAccountRemain(Map<String, String> params, String accessToken) {
+    log.info("페이플 이체 가능 잔액 조회 요청 시작");
+
+    try {
+      HttpResponse response = executeAccountRemainRequest(params, accessToken);
+      return parseAndValidateResponse(response);
+
+    } catch (HttpClientException e) {
+      log.error("페이플 이체 가능 잔액 조회 HTTP 요청 실패", e);
+      return createErrorResponse("NETWORK_ERROR", "네트워크 오류가 발생했습니다: " + e.getMessage());
+
+    } catch (ParseException e) {
+      log.error("페이플 이체 가능 잔액 응답 파싱 실패", e);
+      return createErrorResponse("PARSE_ERROR", "응답 파싱 중 오류가 발생했습니다");
+
+    } catch (Exception e) {
+      log.error("페이플 이체 가능 잔액 조회 예상치 못한 오류", e);
+      return createErrorResponse("UNKNOWN_ERROR", "예상치 못한 오류가 발생했습니다");
+    }
+  }
+
+  @Override
   public JSONObject payTransferRequest(Map<String, String> params, String accessToken) {
     log.info(
         "페이플 이체 대기 요청 시작 - 빌링키: {}, 이체금액: {}",
@@ -430,6 +452,32 @@ public class PaypleServiceV2 implements PaypleService {
 
     HttpRequest httpRequest =
         HttpRequest.postWithHeaders(accountVerificationUrl, headers, requestBody.toJSONString());
+    return httpClient.post(httpRequest);
+  }
+
+  private HttpResponse executeAccountRemainRequest(Map<String, String> params, String accessToken)
+      throws HttpClientException {
+    JSONObject requestBody = new JSONObject();
+    requestBody.put("cst_id", params.get("cst_id"));
+    requestBody.put("custKey", params.get("custKey"));
+
+    if (params.get("sub_id") != null) {
+      requestBody.put("sub_id", params.get("sub_id"));
+    }
+
+    log.debug("페이플 이체 가능 잔액 요청 본문: {}", maskSensitiveRequestBody(requestBody));
+
+    String accountRemainUrl = paypleConfig.getAccountRemainUrl();
+
+    Map<String, String> headers = new HashMap<>();
+    headers.put("Authorization", "Bearer " + accessToken);
+    headers.put("content-type", "application/json");
+    headers.put("charset", "UTF-8");
+    headers.put("Cache-Control", "no-cache");
+    headers.put("referer", paypleConfig.getRefererUrl());
+
+    HttpRequest httpRequest =
+        HttpRequest.postWithHeaders(accountRemainUrl, headers, requestBody.toJSONString());
     return httpClient.post(httpRequest);
   }
 

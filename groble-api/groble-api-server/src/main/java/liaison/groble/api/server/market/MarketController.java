@@ -241,7 +241,10 @@ public class MarketController {
       @Valid @PathVariable("marketLinkUrl") String marketLinkUrl,
       @Valid @RequestBody ReferrerRequest referrerRequest) {
     ReferrerDTO referrerDTO = referrerMapper.toContentReferrerDTO(referrerRequest);
-    referrerService.recordMarketReferrer(marketLinkUrl, referrerDTO);
+    String userAgent = requestUtil.getUserAgent();
+    String clientIp = requestUtil.getClientIp();
+    String referer = requestUtil.getReferer();
+    referrerService.recordMarketReferrer(marketLinkUrl, referrerDTO, referer, userAgent, clientIp);
     return responseHelper.success(null, MARKET_REFERRER_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 }

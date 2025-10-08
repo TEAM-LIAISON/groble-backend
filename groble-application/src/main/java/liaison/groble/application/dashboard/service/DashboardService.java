@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -14,6 +15,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import liaison.groble.application.content.ContentReader;
 import liaison.groble.application.dashboard.dto.ContentTotalViewStatsDTO;
@@ -34,12 +36,12 @@ import liaison.groble.domain.dashboard.dto.FlatContentViewStatsDTO;
 import liaison.groble.domain.dashboard.dto.FlatDashboardOverviewDTO;
 import liaison.groble.domain.dashboard.dto.FlatMarketViewStatsDTO;
 import liaison.groble.domain.dashboard.dto.FlatReferrerStatsDTO;
-import liaison.groble.domain.dashboard.repository.ContentReferrerStatsCustomRepository;
 import liaison.groble.domain.dashboard.repository.ContentViewStatsCustomRepository;
 import liaison.groble.domain.dashboard.repository.ContentViewStatsRepository;
-import liaison.groble.domain.dashboard.repository.MarketReferrerStatsCustomRepository;
 import liaison.groble.domain.dashboard.repository.MarketViewStatsCustomRepository;
 import liaison.groble.domain.dashboard.repository.MarketViewStatsRepository;
+import liaison.groble.domain.dashboard.repository.ReferrerTrackingQueryRepository;
+import liaison.groble.domain.dashboard.support.ReferrerDomainUtils;
 import liaison.groble.domain.market.entity.Market;
 import liaison.groble.domain.user.entity.SellerInfo;
 
@@ -50,6 +52,25 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 public class DashboardService {
+  private static final Set<String> SOCIAL_DOMAIN_KEYWORDS =
+      Set.of(
+          "instagram.com",
+          "threads.com",
+          "threads.net",
+          "facebook.com",
+          "fb.com",
+          "tiktok.com",
+          "youtube.com",
+          "twitter.com",
+          "x.com",
+          "linkedin.com",
+          "kakao.com",
+          "kakaocorp.com",
+          "kakao.co.kr",
+          "t.co");
+  private static final Set<String> SEARCH_DOMAIN_KEYWORDS =
+      Set.of("google.", "naver.", "bing.", "daum.", "yahoo.", "baidu.", "duckduckgo.");
+
   // Reader
   private final UserReader userReader;
   private final ContentReader contentReader;
@@ -58,8 +79,7 @@ public class DashboardService {
   // Repository
   private final ContentViewStatsRepository contentViewStatsRepository;
   private final ContentViewStatsCustomRepository contentViewStatsCustomRepository;
-  private final ContentReferrerStatsCustomRepository contentReferrerStatsCustomRepository;
-  private final MarketReferrerStatsCustomRepository marketReferrerStatsCustomRepository;
+  private final ReferrerTrackingQueryRepository referrerTrackingQueryRepository;
   private final MarketViewStatsRepository marketViewStatsRepository;
   private final MarketViewStatsCustomRepository marketViewStatsCustomRepository;
 
@@ -450,7 +470,7 @@ public class DashboardService {
     }
 
     Page<FlatReferrerStatsDTO> page =
-        contentReferrerStatsCustomRepository.findContentReferrerStats(
+        referrerTrackingQueryRepository.findContentReferrerStats(
             contentId, startDate, endDate, pageable);
 
     List<ReferrerStatsDTO> items =
@@ -501,7 +521,7 @@ public class DashboardService {
     }
 
     Page<FlatReferrerStatsDTO> page =
-        marketReferrerStatsCustomRepository.findMarketReferrerStats(
+        referrerTrackingQueryRepository.findMarketReferrerStats(
             market.getMarketLinkUrl(), startDate, endDate, pageable);
 
     List<ReferrerStatsDTO> items =
@@ -517,10 +537,243 @@ public class DashboardService {
   }
 
   private ReferrerStatsDTO toReferrerStatsDTO(FlatReferrerStatsDTO flatReferrerStatsDTO) {
+    String referrerUrl = flatReferrerStatsDTO.getReferrerUrl();
+    String referrerPath =
+        StringUtils.hasText(flatReferrerStatsDTO.getReferrerPath())
+            ? flatReferrerStatsDTO.getReferrerPath()
+            : extractPathFromUrl(referrerUrl);
+
+    String domainCandidate = flatReferrerStatsDTO.getReferrerDomain();
+    if (!StringUtils.hasText(domainCandidate)) {
+      domainCandidate = extractDomainFromUrl(referrerUrl);
+    }
+
+    String normalizedDomain = normalize(domainCandidate);
+    String domainLower = lowerCase(normalizedDomain);
+
+    String source = normalize(flatReferrerStatsDTO.getSource());
+    String medium = normalize(flatReferrerStatsDTO.getMedium());
+    String campaign = normalize(flatReferrerStatsDTO.getCampaign());
+    String content = normalize(flatReferrerStatsDTO.getContent());
+    String term = normalize(flatReferrerStatsDTO.getTerm());
+
+    boolean isDirect =
+        !StringUtils.hasText(domainLower) || "(direct)".equalsIgnoreCase(domainLower);
+    boolean isInternal = ReferrerDomainUtils.isInternalDomain(domainLower);
+    boolean external = StringUtils.hasText(domainLower) && !isInternal && !isDirect;
+
+    String domainForResponse =
+        isDirect
+            ? "(direct)"
+            : (StringUtils.hasText(normalizedDomain)
+                ? normalizedDomain
+                : extractDomainFromUrl(referrerUrl));
+
+    String trafficType = resolveTrafficType(domainLower, medium, campaign, isDirect, external);
+    String displayLabel =
+        resolveDisplayLabel(
+            domainForResponse, source, campaign, external, isDirect, trafficType, referrerUrl);
+
+    if (!external && !isDirect && StringUtils.hasText(referrerPath)) {
+      displayLabel = domainForResponse + referrerPath;
+    }
+
+    if (!StringUtils.hasText(trafficType)) {
+      trafficType = isDirect ? "DIRECT" : (external ? "REFERRAL" : "INTERNAL");
+    }
+    if (!StringUtils.hasText(displayLabel)) {
+      displayLabel =
+          isDirect
+              ? "직접 방문"
+              : (StringUtils.hasText(domainForResponse) ? domainForResponse : "알 수 없음");
+    }
+
+    if (!StringUtils.hasText(domainForResponse)) {
+      domainForResponse = isDirect ? "(direct)" : domainForResponse;
+    }
+
     return ReferrerStatsDTO.builder()
-        .referrerUrl(flatReferrerStatsDTO.getReferrerUrl())
+        .referrerUrl(referrerUrl)
+        .referrerDomain(domainForResponse)
+        .referrerPath(referrerPath)
+        .source(source)
+        .medium(medium)
+        .campaign(campaign)
+        .content(content)
+        .term(term)
+        .trafficType(trafficType)
+        .external(external)
+        .displayLabel(displayLabel)
         .visitCount(flatReferrerStatsDTO.getVisitCount())
         .build();
+  }
+
+  private String resolveTrafficType(
+      String domain, String medium, String campaign, boolean isDirect, boolean external) {
+    if (isDirect) {
+      return "DIRECT";
+    }
+    if (!external) {
+      return "INTERNAL";
+    }
+    if (StringUtils.hasText(campaign)) {
+      return "CAMPAIGN";
+    }
+
+    String mediumLower = lowerCase(medium);
+    if (mediumLower != null) {
+      if (mediumLower.contains("social") || mediumLower.contains("sns")) {
+        return "SOCIAL";
+      }
+      if (mediumLower.contains("search")
+          || mediumLower.contains("cpc")
+          || mediumLower.contains("ppc")) {
+        return "SEARCH";
+      }
+      if (mediumLower.contains("email")) {
+        return "EMAIL";
+      }
+      if (mediumLower.contains("display") || mediumLower.contains("banner")) {
+        return "DISPLAY";
+      }
+    }
+
+    String domainLower = lowerCase(domain);
+    if (domainLower != null) {
+      if (isSocialDomain(domainLower)) {
+        return "SOCIAL";
+      }
+      if (isSearchDomain(domainLower)) {
+        return "SEARCH";
+      }
+    }
+
+    return "REFERRAL";
+  }
+
+  private String resolveDisplayLabel(
+      String domain,
+      String source,
+      String campaign,
+      boolean external,
+      boolean isDirect,
+      String trafficType,
+      String referrerUrl) {
+    if (isDirect) {
+      return "직접 방문";
+    }
+    if (!external) {
+      return "내부 이동";
+    }
+    if (StringUtils.hasText(campaign)) {
+      return campaign;
+    }
+
+    String prettySource = prettifyLabel(source);
+    if (StringUtils.hasText(prettySource)) {
+      return prettySource;
+    }
+
+    if (StringUtils.hasText(domain) && !"(direct)".equals(domain)) {
+      return domain;
+    }
+
+    if (StringUtils.hasText(referrerUrl)) {
+      return referrerUrl;
+    }
+
+    String prettyType = prettifyLabel(trafficType);
+    return StringUtils.hasText(prettyType) ? prettyType : "알 수 없음";
+  }
+
+  private String normalize(String value) {
+    if (!StringUtils.hasText(value)) {
+      return null;
+    }
+    String trimmed = value.trim();
+    return trimmed.isEmpty() ? null : trimmed;
+  }
+
+  private String extractDomainFromUrl(String url) {
+    if (!StringUtils.hasText(url)) {
+      return "(direct)";
+    }
+    try {
+      String decoded;
+      try {
+        decoded = java.net.URLDecoder.decode(url, java.nio.charset.StandardCharsets.UTF_8);
+      } catch (IllegalArgumentException ignore) {
+        decoded = url;
+      }
+      String clean = decoded.replaceFirst("^https?://", "").replaceFirst("^www\\.", "");
+      int slash = clean.indexOf('/');
+      return (slash >= 0 ? clean.substring(0, slash) : clean).toLowerCase();
+    } catch (Exception e) {
+      return "(unknown)";
+    }
+  }
+
+  private String extractPathFromUrl(String url) {
+    if (!StringUtils.hasText(url)) {
+      return null;
+    }
+    try {
+      String decoded;
+      try {
+        decoded = java.net.URLDecoder.decode(url, java.nio.charset.StandardCharsets.UTF_8);
+      } catch (IllegalArgumentException ignore) {
+        decoded = url;
+      }
+      String clean = decoded.replaceFirst("^https?://", "");
+      int slash = clean.indexOf('/');
+      if (slash < 0) {
+        return null;
+      }
+      String pathAndQuery = clean.substring(slash);
+      int question = pathAndQuery.indexOf('?');
+      return question >= 0 ? pathAndQuery.substring(0, question) : pathAndQuery;
+    } catch (Exception e) {
+      return null;
+    }
+  }
+
+  private String lowerCase(String value) {
+    return value == null ? null : value.toLowerCase();
+  }
+
+  private boolean isSocialDomain(String lowerDomain) {
+    return SOCIAL_DOMAIN_KEYWORDS.stream().anyMatch(lowerDomain::contains);
+  }
+
+  private boolean isSearchDomain(String lowerDomain) {
+    return SEARCH_DOMAIN_KEYWORDS.stream().anyMatch(lowerDomain::contains);
+  }
+
+  private String prettifyLabel(String value) {
+    String normalized = normalize(value);
+    if (normalized == null) {
+      return null;
+    }
+
+    normalized = normalized.replace('_', ' ').trim();
+    if (normalized.isEmpty()) {
+      return null;
+    }
+
+    String[] parts = normalized.split("\\s+");
+    StringBuilder builder = new StringBuilder();
+    for (int i = 0; i < parts.length; i++) {
+      String part = parts[i];
+      if (part.isEmpty()) {
+        continue;
+      }
+      String lower = part.toLowerCase();
+      builder.append(Character.toUpperCase(lower.charAt(0))).append(lower.substring(1));
+      if (i < parts.length - 1) {
+        builder.append(' ');
+      }
+    }
+    return builder.toString();
   }
 
   private MarketViewStatsDTO toMarketViewStatsDTO(FlatMarketViewStatsDTO flatMarketViewStatsDTO) {

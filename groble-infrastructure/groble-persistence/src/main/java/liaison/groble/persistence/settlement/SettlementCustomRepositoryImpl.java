@@ -1,6 +1,8 @@
 package liaison.groble.persistence.settlement;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -20,6 +22,7 @@ import liaison.groble.domain.order.entity.QOrder;
 import liaison.groble.domain.purchase.entity.QPurchase;
 import liaison.groble.domain.settlement.dto.FlatAdminSettlementsDTO;
 import liaison.groble.domain.settlement.dto.FlatPerTransactionSettlement;
+import liaison.groble.domain.settlement.dto.FlatPgFeeAdjustmentDTO;
 import liaison.groble.domain.settlement.dto.FlatSettlementsDTO;
 import liaison.groble.domain.settlement.entity.QSettlement;
 import liaison.groble.domain.settlement.entity.QSettlementItem;
@@ -255,6 +258,96 @@ public class SettlementCustomRepositoryImpl implements SettlementCustomRepositor
             .orElse(0L);
 
     return new PageImpl<>(items, pageable, total);
+  }
+
+  @Override
+  public Page<FlatPgFeeAdjustmentDTO> findPgFeeAdjustments(
+      LocalDate startDate, LocalDate endDate, Long settlementId, Long sellerId, Pageable pageable) {
+
+    QSettlementItem qSettlementItem = QSettlementItem.settlementItem;
+    QSettlement qSettlement = QSettlement.settlement;
+    QPurchase qPurchase = QPurchase.purchase;
+    QOrder qOrder = QOrder.order;
+    QUser qUser = QUser.user;
+
+    BooleanExpression cond = qSettlementItem.pgFeeRefundExpected.gt(BigDecimal.ZERO);
+
+    if (startDate != null) {
+      LocalDateTime startDateTime = startDate.atStartOfDay();
+      cond = cond.and(qSettlementItem.purchasedAt.goe(startDateTime));
+    }
+    if (endDate != null) {
+      LocalDateTime endDateTime = endDate.plusDays(1).atStartOfDay();
+      cond = cond.and(qSettlementItem.purchasedAt.lt(endDateTime));
+    }
+    if (settlementId != null) {
+      cond = cond.and(qSettlement.id.eq(settlementId));
+    }
+    if (sellerId != null) {
+      cond = cond.and(qSettlement.user.id.eq(sellerId));
+    }
+
+    JPAQuery<FlatPgFeeAdjustmentDTO> query =
+        jpaQueryFactory
+            .select(
+                Projections.fields(
+                    FlatPgFeeAdjustmentDTO.class,
+                    qSettlement.id.as("settlementId"),
+                    qSettlementItem.id.as("settlementItemId"),
+                    qPurchase.id.as("purchaseId"),
+                    qSettlement.user.id.as("sellerId"),
+                    qUser.userProfile.nickname.as("sellerNickname"),
+                    qOrder.merchantUid.as("merchantUid"),
+                    qSettlementItem.contentTitle.as("contentTitle"),
+                    qSettlementItem.salesAmount.as("salesAmount"),
+                    qSettlementItem.pgFee.as("pgFeeApplied"),
+                    qSettlementItem.pgFeeDisplay.as("pgFeeDisplay"),
+                    qSettlementItem
+                        .pgFee
+                        .subtract(qSettlementItem.pgFeeDisplay)
+                        .as("pgFeeDifference"),
+                    qSettlementItem.feeVat.as("feeVat"),
+                    qSettlementItem.feeVatDisplay.as("feeVatDisplay"),
+                    qSettlementItem
+                        .feeVat
+                        .subtract(qSettlementItem.feeVatDisplay)
+                        .as("feeVatDifference"),
+                    qSettlementItem.pgFeeRefundExpected.as("pgFeeRefundExpected"),
+                    qSettlementItem.totalFee.as("totalFee"),
+                    qSettlementItem.totalFeeDisplay.as("totalFeeDisplay"),
+                    qSettlementItem.settlementAmount.as("settlementAmount"),
+                    qSettlementItem.settlementAmountDisplay.as("settlementAmountDisplay"),
+                    qSettlementItem.purchasedAt.as("purchasedAt"),
+                    qOrder.status.stringValue().as("orderStatus"),
+                    qSettlementItem.capturedPgFeeRate.as("capturedPgFeeRate"),
+                    qSettlementItem.capturedPgFeeRateDisplay.as("capturedPgFeeRateDisplay"),
+                    qSettlementItem.capturedPgFeeRateBaseline.as("capturedPgFeeRateBaseline"),
+                    qSettlementItem.capturedVatRate.as("capturedVatRate")))
+            .from(qSettlementItem)
+            .leftJoin(qSettlementItem.settlement, qSettlement)
+            .leftJoin(qSettlementItem.purchase, qPurchase)
+            .leftJoin(qPurchase.order, qOrder)
+            .leftJoin(qSettlement.user, qUser)
+            .where(cond)
+            .orderBy(qSettlementItem.purchasedAt.desc(), qSettlementItem.id.desc());
+
+    List<FlatPgFeeAdjustmentDTO> content =
+        query.offset(pageable.getOffset()).limit(pageable.getPageSize()).fetch();
+
+    Long total =
+        Optional.ofNullable(
+                jpaQueryFactory
+                    .select(qSettlementItem.count())
+                    .from(qSettlementItem)
+                    .leftJoin(qSettlementItem.settlement, qSettlement)
+                    .leftJoin(qSettlementItem.purchase, qPurchase)
+                    .leftJoin(qPurchase.order, qOrder)
+                    .leftJoin(qSettlement.user, qUser)
+                    .where(cond)
+                    .fetchOne())
+            .orElse(0L);
+
+    return new PageImpl<>(content, pageable, total);
   }
 
   @Override

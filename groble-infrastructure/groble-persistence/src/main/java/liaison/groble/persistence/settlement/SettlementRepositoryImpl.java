@@ -59,4 +59,9 @@ public class SettlementRepositoryImpl implements SettlementRepository {
   public List<Settlement> findByPaypleBillingTranId(String billingTranId) {
     return jpaSettlementRepository.findByPaypleBillingTranId(billingTranId);
   }
+
+  @Override
+  public BigDecimal sumPgFeeRefundExpectedForCompleted() {
+    return jpaSettlementRepository.sumPgFeeRefundExpectedForCompleted();
+  }
 }

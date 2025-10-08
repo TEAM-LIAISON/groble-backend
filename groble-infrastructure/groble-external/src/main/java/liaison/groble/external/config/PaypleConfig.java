@@ -99,4 +99,11 @@ public class PaypleConfig {
         ? "https://api.dev.groble.im/api/webhooks/payple/transfer-result"
         : "https://api.groble.im/api/webhooks/payple/transfer-result";
   }
+
+  // 이체 가능 잔액 조회 URL
+  public String getAccountRemainUrl() {
+    return testMode
+        ? "https://demohub.payple.kr/account/remain"
+        : "https://hub.payple.kr/account/remain";
+  }
 }

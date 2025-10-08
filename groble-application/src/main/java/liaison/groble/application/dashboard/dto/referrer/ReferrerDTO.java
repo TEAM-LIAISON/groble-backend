@@ -1,5 +1,9 @@
 package liaison.groble.application.dashboard.dto.referrer;
 
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
+
 import lombok.Builder;
 import lombok.Getter;
 
@@ -13,4 +17,10 @@ public class ReferrerDTO {
   private String utmCampaign;
   private String utmContent;
   private String utmTerm;
+  private String landingPageUrl;
+  private String lastPageUrl;
+  private List<String> referrerChain;
+  private String sessionId;
+  private LocalDateTime timestamp;
+  private Map<String, Object> referrerDetails;
 }

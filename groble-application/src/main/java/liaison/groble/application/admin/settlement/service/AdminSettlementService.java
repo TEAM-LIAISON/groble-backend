@@ -1,22 +1,27 @@
 package liaison.groble.application.admin.settlement.service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.json.simple.JSONObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import liaison.groble.application.admin.settlement.dto.AdminSettlementDetailDTO;
 import liaison.groble.application.admin.settlement.dto.AdminSettlementOverviewDTO;
+import liaison.groble.application.admin.settlement.dto.PaypleAccountRemainDTO;
 import liaison.groble.application.admin.settlement.dto.PaypleAccountVerificationRequest;
 import liaison.groble.application.admin.settlement.dto.PayplePartnerAuthResult;
 import liaison.groble.application.admin.settlement.dto.PerTransactionAdminSettlementOverviewDTO;
+import liaison.groble.application.admin.settlement.dto.PgFeeAdjustmentDTO;
 import liaison.groble.application.admin.settlement.dto.SettlementApprovalDTO;
 import liaison.groble.application.admin.settlement.dto.SettlementApprovalDTO.FailedSettlementDTO;
 import liaison.groble.application.admin.settlement.dto.SettlementApprovalDTO.PaypleSettlementResultDTO;
@@ -26,6 +31,7 @@ import liaison.groble.application.settlement.reader.SettlementReader;
 import liaison.groble.common.response.PageResponse;
 import liaison.groble.domain.settlement.dto.FlatAdminSettlementsDTO;
 import liaison.groble.domain.settlement.dto.FlatPerTransactionSettlement;
+import liaison.groble.domain.settlement.dto.FlatPgFeeAdjustmentDTO;
 import liaison.groble.domain.settlement.entity.Settlement;
 import liaison.groble.domain.settlement.entity.SettlementItem;
 import liaison.groble.domain.settlement.repository.SettlementRepository;
@@ -60,13 +66,7 @@ public class AdminSettlementService {
     List<AdminSettlementOverviewDTO> items =
         page.getContent().stream().map(this::convertFlatDTOToAdminSettlementsDTO).toList();
 
-    PageResponse.MetaData meta =
-        PageResponse.MetaData.builder()
-            .sortBy(pageable.getSort().iterator().next().getProperty())
-            .sortDirection(pageable.getSort().iterator().next().getDirection().name())
-            .build();
-
-    return PageResponse.from(page, items, meta);
+    return PageResponse.from(page, items, buildMetaData(pageable));
   }
 
   @Transactional(readOnly = true)
@@ -100,6 +100,7 @@ public class AdminSettlementService {
         .pgFeeRateDisplay(settlement.getPgFeeRateDisplay())
         .pgFeeRateBaseline(settlement.getPgFeeRateBaseline())
         .vatRate(settlement.getVatRate())
+        .settlementNote(settlement.getSettlementNote())
         .build();
   }
 
@@ -112,13 +113,47 @@ public class AdminSettlementService {
     List<PerTransactionAdminSettlementOverviewDTO> items =
         page.getContent().stream().map(this::convertFlatDTOToPerTransactionDTO).toList();
 
-    PageResponse.MetaData meta =
-        PageResponse.MetaData.builder()
-            .sortBy(pageable.getSort().iterator().next().getProperty())
-            .sortDirection(pageable.getSort().iterator().next().getDirection().name())
-            .build();
+    return PageResponse.from(page, items, buildMetaData(pageable));
+  }
 
-    return PageResponse.from(page, items, meta);
+  @Transactional(readOnly = true)
+  public PageResponse<PgFeeAdjustmentDTO> getPgFeeAdjustments(
+      LocalDate startDate, LocalDate endDate, Long settlementId, Long sellerId, Pageable pageable) {
+
+    Page<FlatPgFeeAdjustmentDTO> page =
+        settlementReader.findPgFeeAdjustments(startDate, endDate, settlementId, sellerId, pageable);
+
+    List<PgFeeAdjustmentDTO> items =
+        page.getContent().stream().map(this::convertFlatDTOToPgFeeAdjustmentDTO).toList();
+
+    return PageResponse.from(page, items, buildMetaData(pageable));
+  }
+
+  @Transactional(readOnly = true)
+  public PaypleAccountRemainDTO getPaypleAccountRemain() {
+    PayplePartnerAuthResult authResult = paypleSettlementService.requestPartnerAuth();
+
+    if (!authResult.isSuccess()) {
+      throw new PaypleApiException(
+          "페이플 파트너 인증 실패: " + authResult.getMessage() + " (code: " + authResult.getCode() + ")");
+    }
+
+    JSONObject remainResult =
+        paypleSettlementService.requestAccountRemain(authResult.getAccessToken());
+    BigDecimal cumulativeDifference =
+        Optional.ofNullable(settlementRepository.sumPgFeeRefundExpectedForCompleted())
+            .orElse(BigDecimal.ZERO);
+
+    return PaypleAccountRemainDTO.builder()
+        .result(getStringValue(remainResult, "result"))
+        .message(getStringValue(remainResult, "message"))
+        .code(getStringValue(remainResult, "code"))
+        .totalAccountAmount(getDecimalValue(remainResult, "total_account_amt"))
+        .totalTransferAmount(getDecimalValue(remainResult, "total_transfer_amt"))
+        .remainAmount(getDecimalValue(remainResult, "remain_amt"))
+        .apiTranDtm(getStringValue(remainResult, "api_tran_dtm"))
+        .cumulativePgFeeRefundExpected(cumulativeDifference)
+        .build();
   }
 
   /**
@@ -178,23 +213,30 @@ public class AdminSettlementService {
         }
 
         paypleResult = executePaypleGroupSettlementImmediately(validItemsForPayple);
+        String paypleResponseNote = buildPaypleResponseNote(paypleResult);
 
         // 4. 페이플 정산 성공 시에만 DB 상태를 COMPLETED로 변경
         if (paypleResult != null && paypleResult.isSuccess()) {
           for (Settlement settlement : validSettlements) {
             settlement.completeSettlement(); // 웹훅에서도 호출되지만 즉시 실행이므로 여기서 완료 처리
+            if (paypleResponseNote != null) {
+              settlement.updateSettlementNote(paypleResponseNote);
+            }
             actualApprovedSettlementCount++;
             log.info("정산 최종 승인 완료 - ID: {}", settlement.getId());
           }
         } else {
           log.error("페이플 정산 실패로 인한 정산 승인 취소 - 정산 수: {}", validSettlements.size());
+          String failureNote =
+              paypleResponseNote != null ? paypleResponseNote : "Payple FAILURE - 코드/메시지 없음";
           // 페이플 실패 시 검증된 정산들을 실패 처리
           for (Settlement settlement : validSettlements) {
             settlement.failSettlement(); // 보류 상태로 변경
+            settlement.updateSettlementNote(failureNote);
             failedSettlements.add(
                 FailedSettlementDTO.builder()
                     .settlementId(settlement.getId())
-                    .failureReason("페이플 정산 실행 실패")
+                    .failureReason(failureNote)
                     .build());
           }
           // 성공 카운트들을 0으로 재설정
@@ -218,6 +260,16 @@ public class AdminSettlementService {
         .build();
   }
 
+  public AdminSettlementDetailDTO completeSettlementManually(Long settlementId) {
+    Settlement settlement = settlementReader.getSettlementById(settlementId);
+
+    settlement.completeManually("정산 수동 완료 처리 성공");
+
+    log.info("정산 수동 완료 처리 - ID: {}, settledAt: {}", settlement.getId(), settlement.getSettledAt());
+
+    return getSettlementDetail(settlementId);
+  }
+
   /** 정산 조회 및 검증 */
   private List<Settlement> validateAndRetrieveSettlements(List<Long> settlementIds) {
     List<Settlement> settlements = settlementRepository.findByIdIn(settlementIds);
@@ -238,6 +290,9 @@ public class AdminSettlementService {
   private ApprovalResult validateSettlementForApproval(Settlement settlement) {
     if (settlement.getStatus() == Settlement.SettlementStatus.COMPLETED) {
       throw new IllegalStateException("이미 완료된 정산입니다: " + settlement.getId());
+    }
+    if (settlement.getStatus() == Settlement.SettlementStatus.NOT_APPLICABLE) {
+      throw new IllegalStateException("정산 미해당 상태는 승인 대상이 아닙니다: " + settlement.getId());
     }
 
     // 환불되지 않은 정산 항목들만 계산
@@ -274,6 +329,9 @@ public class AdminSettlementService {
   private ApprovalResult approveSettlement(Settlement settlement) {
     if (settlement.getStatus() == Settlement.SettlementStatus.COMPLETED) {
       throw new IllegalStateException("이미 완료된 정산입니다: " + settlement.getId());
+    }
+    if (settlement.getStatus() == Settlement.SettlementStatus.NOT_APPLICABLE) {
+      throw new IllegalStateException("정산 미해당 상태는 승인할 수 없습니다: " + settlement.getId());
     }
 
     // 환불되지 않은 정산 항목들만 계산
@@ -535,6 +593,19 @@ public class AdminSettlementService {
     return value != null ? value.toString() : null;
   }
 
+  private BigDecimal getDecimalValue(JSONObject json, String key) {
+    String value = getStringValue(json, key);
+    if (value == null || value.trim().isEmpty()) {
+      return BigDecimal.ZERO;
+    }
+    try {
+      return new BigDecimal(value.trim());
+    } catch (NumberFormatException ex) {
+      log.warn("숫자 변환 실패 - key: {}, value: {}", key, value);
+      return BigDecimal.ZERO;
+    }
+  }
+
   /** 민감한 데이터 마스킹 (그룹키 등) */
   private String maskSensitiveData(String sensitiveData) {
     if (sensitiveData == null || sensitiveData.length() <= 8) {
@@ -545,14 +616,44 @@ public class AdminSettlementService {
         + sensitiveData.substring(sensitiveData.length() - 4);
   }
 
+  private PageResponse.MetaData buildMetaData(Pageable pageable) {
+    String sortBy = "createdAt";
+    String sortDirection = Sort.Direction.DESC.name();
+
+    if (pageable.getSort().isSorted()) {
+      Sort.Order order = pageable.getSort().iterator().next();
+      sortBy = order.getProperty();
+      sortDirection = order.getDirection().name();
+    }
+
+    return PageResponse.MetaData.builder().sortBy(sortBy).sortDirection(sortDirection).build();
+  }
+
+  private String buildPaypleResponseNote(PaypleSettlementResultDTO paypleResult) {
+    if (paypleResult == null) {
+      return null;
+    }
+
+    String status = paypleResult.isSuccess() ? "SUCCESS" : "FAILURE";
+    String responseCode =
+        paypleResult.getResponseCode() != null ? paypleResult.getResponseCode() : "N/A";
+    String responseMessage =
+        paypleResult.getResponseMessage() != null ? paypleResult.getResponseMessage() : "N/A";
+
+    return String.format(
+        "Payple %s - code: %s, message: %s", status, responseCode, responseMessage);
+  }
+
   private AdminSettlementOverviewDTO convertFlatDTOToAdminSettlementsDTO(
       FlatAdminSettlementsDTO flatAdminSettlementsDTO) {
+    BigDecimal displayAmount = flatAdminSettlementsDTO.getSettlementAmountDisplay();
     return AdminSettlementOverviewDTO.builder()
         .settlementId(flatAdminSettlementsDTO.getSettlementId())
         .scheduledSettlementDate(flatAdminSettlementsDTO.getScheduledSettlementDate())
         .contentType(flatAdminSettlementsDTO.getContentType())
-        .settlementAmount(flatAdminSettlementsDTO.getSettlementAmountDisplay())
-        .settlementStatus(flatAdminSettlementsDTO.getSettlementStatus())
+        .settlementAmount(displayAmount)
+        .settlementStatus(
+            resolveDisplayStatus(flatAdminSettlementsDTO.getSettlementStatus(), displayAmount))
         .verificationStatus(flatAdminSettlementsDTO.getVerificationStatus())
         .isBusinessSeller(flatAdminSettlementsDTO.getIsBusinessSeller())
         .businessType(flatAdminSettlementsDTO.getBusinessType())
@@ -564,6 +665,36 @@ public class AdminSettlementService {
         .build();
   }
 
+  private PgFeeAdjustmentDTO convertFlatDTOToPgFeeAdjustmentDTO(FlatPgFeeAdjustmentDTO flat) {
+    return PgFeeAdjustmentDTO.builder()
+        .settlementId(flat.getSettlementId())
+        .settlementItemId(flat.getSettlementItemId())
+        .purchaseId(flat.getPurchaseId())
+        .sellerId(flat.getSellerId())
+        .sellerNickname(flat.getSellerNickname())
+        .merchantUid(flat.getMerchantUid())
+        .contentTitle(flat.getContentTitle())
+        .salesAmount(flat.getSalesAmount())
+        .pgFeeApplied(flat.getPgFeeApplied())
+        .pgFeeDisplay(flat.getPgFeeDisplay())
+        .pgFeeDifference(flat.getPgFeeDifference())
+        .feeVat(flat.getFeeVat())
+        .feeVatDisplay(flat.getFeeVatDisplay())
+        .feeVatDifference(flat.getFeeVatDifference())
+        .pgFeeRefundExpected(flat.getPgFeeRefundExpected())
+        .totalFee(flat.getTotalFee())
+        .totalFeeDisplay(flat.getTotalFeeDisplay())
+        .settlementAmount(flat.getSettlementAmount())
+        .settlementAmountDisplay(flat.getSettlementAmountDisplay())
+        .purchasedAt(flat.getPurchasedAt())
+        .orderStatus(flat.getOrderStatus())
+        .capturedPgFeeRate(flat.getCapturedPgFeeRate())
+        .capturedPgFeeRateDisplay(flat.getCapturedPgFeeRateDisplay())
+        .capturedPgFeeRateBaseline(flat.getCapturedPgFeeRateBaseline())
+        .capturedVatRate(flat.getCapturedVatRate())
+        .build();
+  }
+
   private PerTransactionAdminSettlementOverviewDTO convertFlatDTOToPerTransactionDTO(
       FlatPerTransactionSettlement flat) {
     return PerTransactionAdminSettlementOverviewDTO.builder()
@@ -572,5 +703,12 @@ public class AdminSettlementService {
         .orderStatus(flat.getOrderStatus())
         .purchasedAt(flat.getPurchasedAt())
         .build();
+  }
+
+  private String resolveDisplayStatus(String originalStatus, BigDecimal amount) {
+    if (amount == null || amount.compareTo(BigDecimal.ZERO) == 0) {
+      return Settlement.SettlementStatus.NOT_APPLICABLE.name();
+    }
+    return originalStatus;
   }
 }

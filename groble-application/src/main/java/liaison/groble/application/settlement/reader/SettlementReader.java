@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import liaison.groble.common.exception.EntityNotFoundException;
 import liaison.groble.domain.settlement.dto.FlatAdminSettlementsDTO;
 import liaison.groble.domain.settlement.dto.FlatPerTransactionSettlement;
+import liaison.groble.domain.settlement.dto.FlatPgFeeAdjustmentDTO;
 import liaison.groble.domain.settlement.dto.FlatSettlementsDTO;
 import liaison.groble.domain.settlement.entity.Settlement;
 import liaison.groble.domain.settlement.entity.SettlementItem;
@@ -106,6 +107,12 @@ public class SettlementReader {
   public Page<FlatPerTransactionSettlement> findSalesListBySettlementId(
       Long settlementId, Pageable pageable) {
     return settlementCustomRepository.findSalesListBySettlementId(settlementId, pageable);
+  }
+
+  public Page<FlatPgFeeAdjustmentDTO> findPgFeeAdjustments(
+      LocalDate startDate, LocalDate endDate, Long settlementId, Long sellerId, Pageable pageable) {
+    return settlementCustomRepository.findPgFeeAdjustments(
+        startDate, endDate, settlementId, sellerId, pageable);
   }
 
   public List<Settlement> findAllByUserId(Long userId) {

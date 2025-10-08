@@ -35,4 +35,7 @@ public interface PaypleService {
 
   /** 정산지급대행 이체 대기 취소 API */
   JSONObject payTransferCancel(Map<String, String> params, String accessToken);
+
+  /** 정산지급대행 이체 가능 잔액 조회 API */
+  JSONObject payAccountRemain(Map<String, String> params, String accessToken);
 }
