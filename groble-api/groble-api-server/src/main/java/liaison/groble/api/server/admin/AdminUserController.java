@@ -84,6 +84,19 @@ public class AdminUserController extends BaseController {
     return success(responsePage, ResponseMessages.Admin.USER_SUMMARY_INFO_RETRIEVED);
   }
 
+  @AdminUserSummaryInfo
+  @RequireRole("ROLE_ADMIN")
+  @GetMapping(ApiPaths.Admin.ADMIN_USER_SUMMARY_INFO_SEARCH)
+  public ResponseEntity<GrobleResponse<AdminUserSummaryInfoResponse>> searchUserByNickname(
+      @Parameter(description = "검색할 사용자 닉네임", example = "groble_maker") @RequestParam("nickname")
+          String nickname) {
+    AdminUserSummaryInfoDTO userInfo = adminUserService.getUserByNickname(nickname);
+    AdminUserSummaryInfoResponse response =
+        adminUserMapper.toAdminUserSummaryInfoResponse(userInfo);
+
+    return success(response, ResponseMessages.Admin.USER_SUMMARY_INFO_SEARCH_RETRIEVED);
+  }
+
   @RequireRole("ROLE_ADMIN")
   @GetMapping(ApiPaths.Admin.ADMIN_GUEST_USER_SUMMARY_INFO)
   @Operation(summary = "비회원 사용자 목록 조회", description = "관리자가 비회원 사용자 목록을 조회합니다.")

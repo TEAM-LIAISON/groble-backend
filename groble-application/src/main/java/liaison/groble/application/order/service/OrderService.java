@@ -14,7 +14,7 @@ import liaison.groble.application.order.dto.CreateOrderSuccessDTO;
 import liaison.groble.application.order.dto.OrderSuccessDTO;
 import liaison.groble.application.order.dto.ValidatedOrderOptionDTO;
 import liaison.groble.application.payment.dto.completion.FreePaymentCompletionResult;
-import liaison.groble.application.payment.event.PaymentCompletedEvent;
+import liaison.groble.application.payment.event.FreePaymentCompletedEvent;
 import liaison.groble.application.purchase.service.PurchaseReader;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.common.event.EventPublisher;
@@ -479,7 +479,7 @@ public class OrderService {
         resultBuilder
             .userId(null) // 비회원은 userId가 없음
             .guestUserId(order.getGuestUser().getId())
-            .nickname(order.getGuestUser().getUsername()); // GuestUser의 username 사용
+            .guestUserName(order.getGuestUser().getUsername()); // GuestUser의 username 사용
       }
 
       FreePaymentCompletionResult freePaymentCompletionResult = resultBuilder.build();
@@ -864,8 +864,8 @@ public class OrderService {
     log.info("=== 무료 결제 이벤트 발행 시작 === orderId: {}", freePaymentCompletionResult.getOrderId());
 
     try {
-      PaymentCompletedEvent event =
-          PaymentCompletedEvent.builder()
+      FreePaymentCompletedEvent event =
+          FreePaymentCompletedEvent.builder()
               .orderId(freePaymentCompletionResult.getOrderId())
               .merchantUid(freePaymentCompletionResult.getMerchantUid())
               .paymentId(freePaymentCompletionResult.getPaymentId())
@@ -879,6 +879,7 @@ public class OrderService {
               .sellerEmail(freePaymentCompletionResult.getSellerEmail())
               .contentTitle(freePaymentCompletionResult.getContentTitle())
               .nickname(freePaymentCompletionResult.getNickname())
+              .guestUserName(freePaymentCompletionResult.getGuestUserName())
               .contentType(freePaymentCompletionResult.getContentType())
               .optionId(freePaymentCompletionResult.getOptionId())
               .selectedOptionName(freePaymentCompletionResult.getSelectedOptionName())
