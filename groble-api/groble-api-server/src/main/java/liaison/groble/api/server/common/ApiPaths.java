@@ -21,6 +21,7 @@ public final class ApiPaths {
 
     // 어드민 사용자 탭
     public static final String ADMIN_USER_SUMMARY_INFO = "/users";
+    public static final String ADMIN_USER_SUMMARY_INFO_SEARCH = "/users/search";
     public static final String ADMIN_GUEST_USER_SUMMARY_INFO = "/guest-users";
     public static final String ADMIN_HOME_TEST_CONTACTS = "/home-test-contacts";
     public static final String ADMIN_USER_ACCOUNT_VERIFICATION =

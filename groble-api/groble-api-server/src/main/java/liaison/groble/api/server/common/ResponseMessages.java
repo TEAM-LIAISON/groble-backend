@@ -17,6 +17,7 @@ public final class ResponseMessages {
     public static final String SETTLEMENT_REMAIN_RETRIEVED = "정산 지급 대행 잔액 조회에 성공하였습니다.";
     public static final String SETTLEMENT_COMPLETED_MANUALLY = "정산이 수동으로 완료 처리되었습니다.";
     public static final String USER_SUMMARY_INFO_RETRIEVED = "관리자 전체 사용자 목록 조회에 성공하였습니다.";
+    public static final String USER_SUMMARY_INFO_SEARCH_RETRIEVED = "관리자 회원 닉네임 검색 결과 조회에 성공하였습니다.";
     public static final String GUEST_USER_SUMMARY_INFO_RETRIEVED = "관리자 비회원 사용자 목록 조회에 성공하였습니다.";
     public static final String ADMIN_SIGN_IN_SUCCESS = "관리자 로그인에 성공했습니다.";
     public static final String ADMIN_LOGOUT_SUCCESS = "관리자 로그아웃이 성공적으로 처리되었습니다.";

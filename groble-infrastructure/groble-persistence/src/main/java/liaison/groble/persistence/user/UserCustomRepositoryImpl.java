@@ -1,6 +1,7 @@
 package liaison.groble.persistence.user;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -58,6 +59,34 @@ public class UserCustomRepositoryImpl implements UserCustomRepository {
 
   @Override
   public Page<FlatAdminUserSummaryInfoDTO> findUsersByPageable(Pageable pageable) {
+    return fetchAdminUserPage(pageable, null);
+  }
+
+  @Override
+  public Optional<FlatAdminUserSummaryInfoDTO> findUserByNickname(String nickname) {
+    BooleanExpression predicate = QUser.user.userProfile.nickname.eq(nickname);
+    return Optional.ofNullable(createAdminUserQuery(predicate).fetchFirst());
+  }
+
+  private Page<FlatAdminUserSummaryInfoDTO> fetchAdminUserPage(
+      Pageable pageable, BooleanExpression predicate) {
+    QUser qUser = QUser.user;
+
+    JPAQuery<FlatAdminUserSummaryInfoDTO> query =
+        createAdminUserQuery(predicate).offset(pageable.getOffset()).limit(pageable.getPageSize());
+
+    List<FlatAdminUserSummaryInfoDTO> content = query.fetch();
+    JPAQuery<Long> countQuery = queryFactory.select(qUser.count()).from(qUser);
+    if (predicate != null) {
+      countQuery.where(predicate);
+    }
+
+    Long total = countQuery.fetchOne();
+
+    return new PageImpl<>(content, pageable, total != null ? total : 0);
+  }
+
+  private JPAQuery<FlatAdminUserSummaryInfoDTO> createAdminUserQuery(BooleanExpression predicate) {
     QUser qUser = QUser.user;
     QIntegratedAccount qInt = QIntegratedAccount.integratedAccount;
     QSocialAccount qSoc = QSocialAccount.socialAccount;
@@ -71,7 +100,6 @@ public class UserCustomRepositoryImpl implements UserCustomRepository {
     QUserWithdrawalHistory qWithdrawalHistoryCommentSub =
         new QUserWithdrawalHistory("userWithdrawalHistoryCommentSub");
 
-    // 마케팅 수신 동의 존재 여부
     BooleanExpression marketingAgreedExists =
         JPAExpressions.selectOne()
             .from(ut)
@@ -79,7 +107,6 @@ public class UserCustomRepositoryImpl implements UserCustomRepository {
                 ut.user.eq(qUser), ut.terms.type.eq(TermsType.MARKETING_POLICY), ut.agreed.isTrue())
             .exists();
 
-    // 판매자 약관 동의 존재 여부
     BooleanExpression sellerAgreedExists =
         JPAExpressions.selectOne()
             .from(ut)
@@ -147,13 +174,12 @@ public class UserCustomRepositoryImpl implements UserCustomRepository {
             .leftJoin(qUser.socialAccount, qSoc)
             .leftJoin(qSellerInfo)
             .on(qSellerInfo.user.eq(qUser))
-            .orderBy(qUser.createdAt.desc())
-            .offset(pageable.getOffset())
-            .limit(pageable.getPageSize());
+            .orderBy(qUser.createdAt.desc());
 
-    List<FlatAdminUserSummaryInfoDTO> content = query.fetch();
-    Long total = queryFactory.select(qUser.count()).from(qUser).fetchOne();
+    if (predicate != null) {
+      query.where(predicate);
+    }
 
-    return new PageImpl<>(content, pageable, total != null ? total : 0);
+    return query;
   }
 }
