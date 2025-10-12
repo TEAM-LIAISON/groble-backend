@@ -7,11 +7,15 @@ import liaison.groble.api.model.admin.request.AdminBusinessInfoUpdateRequest;
 import liaison.groble.api.model.admin.response.AdminAccountVerificationResponse;
 import liaison.groble.api.model.admin.response.AdminGuestUserSummaryResponse;
 import liaison.groble.api.model.admin.response.AdminHomeTestContactResponse;
+import liaison.groble.api.model.admin.response.AdminUserStatisticsResponse;
+import liaison.groble.api.model.admin.response.AdminUserStatisticsResponse.BusinessTypeStats;
+import liaison.groble.api.model.admin.response.AdminUserStatisticsResponse.VerificationStats;
 import liaison.groble.api.model.admin.response.AdminUserSummaryInfoResponse;
 import liaison.groble.application.admin.dto.AdminAccountVerificationResultDTO;
 import liaison.groble.application.admin.dto.AdminBusinessInfoUpdateDTO;
 import liaison.groble.application.admin.dto.AdminGuestUserSummaryDTO;
 import liaison.groble.application.admin.dto.AdminHomeTestContactDTO;
+import liaison.groble.application.admin.dto.AdminUserStatisticsDTO;
 import liaison.groble.application.admin.dto.AdminUserSummaryInfoDTO;
 import liaison.groble.common.response.PageResponse;
 import liaison.groble.mapping.common.PageResponseMapper;
@@ -49,4 +53,53 @@ public interface AdminUserMapper extends PageResponseMapper {
       AdminAccountVerificationResultDTO dto);
 
   AdminBusinessInfoUpdateDTO toAdminBusinessInfoUpdateDTO(AdminBusinessInfoUpdateRequest request);
+
+  default AdminUserStatisticsResponse toAdminUserStatisticsResponse(AdminUserStatisticsDTO dto) {
+    if (dto == null) {
+      return null;
+    }
+
+    AdminUserStatisticsDTO.VerificationStats verificationStatsDto = dto.getVerificationStats();
+    VerificationStats verificationStats =
+        VerificationStats.builder()
+            .verified(verificationStatsDto != null ? verificationStatsDto.getVerified() : 0)
+            .pending(verificationStatsDto != null ? verificationStatsDto.getPending() : 0)
+            .inProgress(verificationStatsDto != null ? verificationStatsDto.getInProgress() : 0)
+            .failed(verificationStatsDto != null ? verificationStatsDto.getFailed() : 0)
+            .none(verificationStatsDto != null ? verificationStatsDto.getNone() : 0)
+            .build();
+
+    AdminUserStatisticsDTO.BusinessTypeStats businessTypeStatsDto = dto.getBusinessTypeStats();
+    BusinessTypeStats businessTypeStats =
+        BusinessTypeStats.builder()
+            .individualSimplified(
+                businessTypeStatsDto != null ? businessTypeStatsDto.getIndividualSimplified() : 0)
+            .individualNormal(
+                businessTypeStatsDto != null ? businessTypeStatsDto.getIndividualNormal() : 0)
+            .corporate(businessTypeStatsDto != null ? businessTypeStatsDto.getCorporate() : 0)
+            .none(businessTypeStatsDto != null ? businessTypeStatsDto.getNone() : 0)
+            .build();
+
+    return AdminUserStatisticsResponse.builder()
+        .totalUsers(dto.getTotalUsers())
+        .withdrawnUsers(dto.getWithdrawnUsers())
+        .newUsers7Days(dto.getNewUsers7Days())
+        .newUsers30Days(dto.getNewUsers30Days())
+        .buyerOnlyCount(dto.getBuyerOnlyCount())
+        .buyerAndSellerCount(dto.getBuyerAndSellerCount())
+        .buyerOnlyPercentage(dto.getBuyerOnlyPercentage())
+        .buyerAndSellerPercentage(dto.getBuyerAndSellerPercentage())
+        .marketingAgreedCount(dto.getMarketingAgreedCount())
+        .marketingAgreedPercentage(dto.getMarketingAgreedPercentage())
+        .phoneNumberProvidedCount(dto.getPhoneNumberProvidedCount())
+        .phoneNumberProvidedPercentage(dto.getPhoneNumberProvidedPercentage())
+        .phoneNumberNotProvidedCount(dto.getPhoneNumberNotProvidedCount())
+        .phoneNumberNotProvidedPercentage(dto.getPhoneNumberNotProvidedPercentage())
+        .sellerTermsAgreedCount(dto.getSellerTermsAgreedCount())
+        .sellerTermsAgreedPercentage(dto.getSellerTermsAgreedPercentage())
+        .verificationStats(verificationStats)
+        .verificationSuccessRate(dto.getVerificationSuccessRate())
+        .businessTypeStats(businessTypeStats)
+        .build();
+  }
 }

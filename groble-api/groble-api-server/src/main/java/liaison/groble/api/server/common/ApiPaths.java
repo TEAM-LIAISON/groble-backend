@@ -24,6 +24,7 @@ public final class ApiPaths {
     public static final String ADMIN_USER_SUMMARY_INFO_SEARCH = "/users/search";
     public static final String ADMIN_GUEST_USER_SUMMARY_INFO = "/guest-users";
     public static final String ADMIN_HOME_TEST_CONTACTS = "/home-test-contacts";
+    public static final String ADMIN_USER_STATISTICS = "/users/statistics";
     public static final String ADMIN_USER_ACCOUNT_VERIFICATION =
         "/users/{nickname}/account-verification";
     public static final String ADMIN_USER_BUSINESS_INFO = "/users/{userId}/business-info";
@@ -51,6 +52,12 @@ public final class ApiPaths {
     public static final String MAKER_DETAIL = "/{nickname}";
     public static final String MAKER_VERIFY = "/verify";
     public static final String MAKER_MEMO = "/memo/{nickname}";
+    public static final String NOTIFICATIONS = "/notifications";
+    public static final String NOTIFICATIONS_SCHEDULED = NOTIFICATIONS + "/scheduled";
+    public static final String NOTIFICATIONS_SCHEDULED_ID = NOTIFICATIONS_SCHEDULED + "/{id}";
+    public static final String NOTIFICATIONS_SEGMENTS = NOTIFICATIONS + "/segments";
+    public static final String NOTIFICATIONS_KAKAO_TEMPLATES = NOTIFICATIONS + "/kakao-templates";
+    public static final String NOTIFICATIONS_STATISTICS = NOTIFICATIONS + "/statistics";
 
     private Admin() {}
   }
