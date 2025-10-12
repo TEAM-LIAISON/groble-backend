@@ -106,9 +106,6 @@ public class UserCustomRepositoryImpl implements UserCustomRepository {
 
     BooleanExpression hasSellerInfo = qSellerInfo.id.isNotNull();
     BooleanExpression lacksSellerInfo = qSellerInfo.id.isNull();
-    BooleanExpression sellerFlagTrue = qSellerInfo.isBusinessSeller.isTrue();
-    BooleanExpression sellerFlagFalse =
-        qSellerInfo.isBusinessSeller.isFalse().or(qSellerInfo.isBusinessSeller.isNull());
     BooleanExpression businessTypeIsNull = qSellerInfo.businessType.isNull();
 
     NumberExpression<Long> totalActiveExpr =
@@ -192,16 +189,15 @@ public class UserCustomRepositoryImpl implements UserCustomRepository {
             .otherwise(0L);
     NumberExpression<Long> businessTypeNoneExpr =
         new CaseBuilder()
+            .when(isActive.and(lacksSellerInfo))
+            .then(1L)
+            .when(isActive.and(hasSellerInfo).and(qSellerInfo.isBusinessSeller.isFalse()))
+            .then(1L)
             .when(
-                isActive.and(
-                    lacksSellerInfo
-                        .or(sellerFlagFalse)
-                        .or(
-                            hasSellerInfo
-                                .and(businessTypeIsNull)
-                                .and(
-                                    qSellerInfo.verificationStatus.ne(
-                                        SellerVerificationStatus.VERIFIED)))))
+                isActive
+                    .and(hasSellerInfo)
+                    .and(businessTypeIsNull)
+                    .and(qSellerInfo.verificationStatus.ne(SellerVerificationStatus.VERIFIED)))
             .then(1L)
             .otherwise(0L);
 

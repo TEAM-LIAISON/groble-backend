@@ -21,12 +21,12 @@ public class AdminUserStatisticsDTO {
 
   private final long marketingAgreedCount;
   private final double marketingAgreedPercentage;
+  private final long sellerTermsAgreedCount;
+  private final double sellerTermsAgreedPercentage;
   private final long phoneNumberProvidedCount;
   private final double phoneNumberProvidedPercentage;
   private final long phoneNumberNotProvidedCount;
   private final double phoneNumberNotProvidedPercentage;
-  private final long sellerTermsAgreedCount;
-  private final double sellerTermsAgreedPercentage;
 
   private final VerificationStats verificationStats;
   private final double verificationSuccessRate;
