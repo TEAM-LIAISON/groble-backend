@@ -51,6 +51,12 @@ public final class ApiPaths {
     public static final String MAKER_DETAIL = "/{nickname}";
     public static final String MAKER_VERIFY = "/verify";
     public static final String MAKER_MEMO = "/memo/{nickname}";
+    public static final String NOTIFICATIONS = "/notifications";
+    public static final String NOTIFICATIONS_SCHEDULED = NOTIFICATIONS + "/scheduled";
+    public static final String NOTIFICATIONS_SCHEDULED_ID = NOTIFICATIONS_SCHEDULED + "/{id}";
+    public static final String NOTIFICATIONS_SEGMENTS = NOTIFICATIONS + "/segments";
+    public static final String NOTIFICATIONS_KAKAO_TEMPLATES = NOTIFICATIONS + "/kakao-templates";
+    public static final String NOTIFICATIONS_STATISTICS = NOTIFICATIONS + "/statistics";
 
     private Admin() {}
   }

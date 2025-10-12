@@ -1,5 +1,8 @@
 package liaison.groble.external.config;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.retry.annotation.EnableRetry;
@@ -34,7 +37,15 @@ public class BizppurioConfig {
   // 알림톡/친구톡 설정
   private String kakaoSenderKey; // 카카오톡 발신프로필키
 
+  private Map<String, Template> templates = new HashMap<>();
+
   // 재시도 설정
   private int maxRetryAttempts = 3;
   private long retryDelay = 1000; // 밀리초
+
+  @Data
+  public static class Template {
+    private String code;
+    private String name;
+  }
 }

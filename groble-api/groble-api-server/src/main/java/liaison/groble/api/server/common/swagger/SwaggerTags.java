@@ -95,6 +95,9 @@ public final class SwaggerTags {
     public static final String MAKER = "[✅ 관리자 메이커 관리] 메이커 상세 조회 및 인증 API";
     public static final String MAKER_DESC = "관리자의 메이커 상세 조회, 인증 처리, 메모 관리 기능을 제공합니다.";
 
+    public static final String NOTIFICATION = "[✅ 관리자 알림 관리] 예약 알림 API";
+    public static final String NOTIFICATION_DESC = "관리자가 예약 알림을 생성, 수정, 취소하고 통계를 조회합니다.";
+
     private Admin() {}
   }
 
