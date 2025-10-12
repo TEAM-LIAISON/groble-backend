@@ -77,6 +77,8 @@ public interface AdminUserMapper extends PageResponseMapper {
             .individualNormal(
                 businessTypeStatsDto != null ? businessTypeStatsDto.getIndividualNormal() : 0)
             .corporate(businessTypeStatsDto != null ? businessTypeStatsDto.getCorporate() : 0)
+            .individualMaker(
+                businessTypeStatsDto != null ? businessTypeStatsDto.getIndividualMaker() : 0)
             .none(businessTypeStatsDto != null ? businessTypeStatsDto.getNone() : 0)
             .build();
 

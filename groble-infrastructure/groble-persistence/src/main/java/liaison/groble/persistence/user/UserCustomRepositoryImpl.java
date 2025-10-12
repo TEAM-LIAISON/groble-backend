@@ -104,9 +104,9 @@ public class UserCustomRepositoryImpl implements UserCustomRepository {
     BooleanExpression phoneProvided =
         qUser.userProfile.phoneNumber.isNotNull().and(qUser.userProfile.phoneNumber.ne(""));
 
-    BooleanExpression isBusinessSellerTrue = qSellerInfo.isBusinessSeller.isTrue();
-    BooleanExpression isBusinessSellerFalse =
-        qSellerInfo.isBusinessSeller.isFalse().or(qSellerInfo.isBusinessSeller.isNull());
+    BooleanExpression hasSellerInfo = qSellerInfo.id.isNotNull();
+    BooleanExpression lacksSellerInfo = qSellerInfo.id.isNull();
+    BooleanExpression businessTypeIsNull = qSellerInfo.businessType.isNull();
 
     NumberExpression<Long> totalActiveExpr =
         new CaseBuilder().when(isActive).then(1L).otherwise(0L);
@@ -126,9 +126,9 @@ public class UserCustomRepositoryImpl implements UserCustomRepository {
             .then(1L)
             .otherwise(0L);
     NumberExpression<Long> buyerOnlyExpr =
-        new CaseBuilder().when(isActive.and(isBusinessSellerFalse)).then(1L).otherwise(0L);
+        new CaseBuilder().when(isActive.and(lacksSellerInfo)).then(1L).otherwise(0L);
     NumberExpression<Long> buyerAndSellerExpr =
-        new CaseBuilder().when(isActive.and(isBusinessSellerTrue)).then(1L).otherwise(0L);
+        new CaseBuilder().when(isActive.and(hasSellerInfo)).then(1L).otherwise(0L);
     NumberExpression<Long> marketingAgreedExpr =
         new CaseBuilder().when(isActive.and(marketingAgreedExists)).then(1L).otherwise(0L);
     NumberExpression<Long> phoneProvidedExpr =
@@ -178,15 +178,26 @@ public class UserCustomRepositoryImpl implements UserCustomRepository {
             .when(isActive.and(qSellerInfo.businessType.eq(BusinessType.CORPORATE)))
             .then(1L)
             .otherwise(0L);
-    NumberExpression<Long> businessTypeNoneExpr =
+    NumberExpression<Long> businessTypeIndividualMakerExpr =
         new CaseBuilder()
             .when(
-                isActive.and(
-                    qSellerInfo
-                        .id
-                        .isNull()
-                        .or(qSellerInfo.businessType.isNull())
-                        .or(isBusinessSellerFalse)))
+                isActive
+                    .and(hasSellerInfo)
+                    .and(businessTypeIsNull)
+                    .and(qSellerInfo.verificationStatus.eq(SellerVerificationStatus.VERIFIED)))
+            .then(1L)
+            .otherwise(0L);
+    NumberExpression<Long> businessTypeNoneExpr =
+        new CaseBuilder()
+            .when(isActive.and(lacksSellerInfo))
+            .then(1L)
+            .when(isActive.and(hasSellerInfo).and(qSellerInfo.isBusinessSeller.isFalse()))
+            .then(1L)
+            .when(
+                isActive
+                    .and(hasSellerInfo)
+                    .and(businessTypeIsNull)
+                    .and(qSellerInfo.verificationStatus.ne(SellerVerificationStatus.VERIFIED)))
             .then(1L)
             .otherwise(0L);
 
@@ -212,6 +223,7 @@ public class UserCustomRepositoryImpl implements UserCustomRepository {
                     businessTypeSimplifiedExpr.sum(),
                     businessTypeNormalExpr.sum(),
                     businessTypeCorporateExpr.sum(),
+                    businessTypeIndividualMakerExpr.sum(),
                     businessTypeNoneExpr.sum()))
             .from(qUser)
             .leftJoin(qSellerInfo)
@@ -219,7 +231,8 @@ public class UserCustomRepositoryImpl implements UserCustomRepository {
             .fetchOne();
 
     if (result == null) {
-      return new AdminUserStatisticsAggregate(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+      return new AdminUserStatisticsAggregate(
+          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
     }
     return result;
   }

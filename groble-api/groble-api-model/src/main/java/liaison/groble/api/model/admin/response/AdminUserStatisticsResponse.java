@@ -46,6 +46,12 @@ public class AdminUserStatisticsResponse {
   @Schema(description = "마케팅 수신 동의율", example = "71.8")
   private double marketingAgreedPercentage;
 
+  @Schema(description = "판매자 약관 동의 사용자 수", example = "3169")
+  private long sellerTermsAgreedCount;
+
+  @Schema(description = "판매자 약관 동의율", example = "20.0")
+  private double sellerTermsAgreedPercentage;
+
   @Schema(description = "전화번호 입력 완료 사용자 수", example = "14530")
   private long phoneNumberProvidedCount;
 
@@ -57,12 +63,6 @@ public class AdminUserStatisticsResponse {
 
   @Schema(description = "전화번호 미입력 비율", example = "8.3")
   private double phoneNumberNotProvidedPercentage;
-
-  @Schema(description = "판매자 약관 동의 사용자 수", example = "3169")
-  private long sellerTermsAgreedCount;
-
-  @Schema(description = "판매자 약관 동의율", example = "20.0")
-  private double sellerTermsAgreedPercentage;
 
   // 메이커 인증 통계
   @Schema(description = "메이커 인증 상태별 통계")
@@ -109,6 +109,9 @@ public class AdminUserStatisticsResponse {
 
     @Schema(description = "법인 사업자 수", example = "366")
     private long corporate;
+
+    @Schema(description = "개인 메이커(사업자 등록 없는 인증 완료) 수", example = "512")
+    private long individualMaker;
 
     @Schema(description = "미등록 사용자 수", example = "12678")
     private long none;

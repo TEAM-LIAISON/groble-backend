@@ -118,6 +118,7 @@ public class AdminUserService {
     long businessSimplified = aggregate.businessTypeIndividualSimplifiedCount();
     long businessNormal = aggregate.businessTypeIndividualNormalCount();
     long businessCorporate = aggregate.businessTypeCorporateCount();
+    long individualMakerCount = aggregate.businessTypeIndividualMakerCount();
     long businessNone = aggregate.businessTypeNoneCount();
 
     AdminUserStatisticsDTO.BusinessTypeStats businessTypeStats =
@@ -125,6 +126,7 @@ public class AdminUserService {
             .individualSimplified(businessSimplified)
             .individualNormal(businessNormal)
             .corporate(businessCorporate)
+            .individualMaker(individualMakerCount)
             .none(businessNone)
             .build();
 
@@ -139,13 +141,13 @@ public class AdminUserService {
         .buyerAndSellerPercentage(calculatePercentage(buyerAndSellerCount, totalUsers))
         .marketingAgreedCount(marketingAgreedCount)
         .marketingAgreedPercentage(calculatePercentage(marketingAgreedCount, totalUsers))
+        .sellerTermsAgreedCount(sellerTermsAgreedCount)
+        .sellerTermsAgreedPercentage(calculatePercentage(sellerTermsAgreedCount, totalUsers))
         .phoneNumberProvidedCount(phoneNumberProvidedCount)
         .phoneNumberProvidedPercentage(calculatePercentage(phoneNumberProvidedCount, totalUsers))
         .phoneNumberNotProvidedCount(phoneNumberNotProvidedCount)
         .phoneNumberNotProvidedPercentage(
             calculatePercentage(phoneNumberNotProvidedCount, totalUsers))
-        .sellerTermsAgreedCount(sellerTermsAgreedCount)
-        .sellerTermsAgreedPercentage(calculatePercentage(sellerTermsAgreedCount, totalUsers))
         .verificationStats(verificationStats)
         .verificationSuccessRate(calculatePercentage(verificationVerified, verificationBase))
         .businessTypeStats(businessTypeStats)
