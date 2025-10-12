@@ -24,6 +24,7 @@ public final class ApiPaths {
     public static final String ADMIN_USER_SUMMARY_INFO_SEARCH = "/users/search";
     public static final String ADMIN_GUEST_USER_SUMMARY_INFO = "/guest-users";
     public static final String ADMIN_HOME_TEST_CONTACTS = "/home-test-contacts";
+    public static final String ADMIN_USER_STATISTICS = "/users/statistics";
     public static final String ADMIN_USER_ACCOUNT_VERIFICATION =
         "/users/{nickname}/account-verification";
     public static final String ADMIN_USER_BUSINESS_INFO = "/users/{userId}/business-info";

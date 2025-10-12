@@ -1,5 +1,8 @@
 package liaison.groble.application.admin.service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
@@ -9,6 +12,7 @@ import org.springframework.util.StringUtils;
 
 import liaison.groble.application.admin.dto.AdminGuestUserSummaryDTO;
 import liaison.groble.application.admin.dto.AdminHomeTestContactDTO;
+import liaison.groble.application.admin.dto.AdminUserStatisticsDTO;
 import liaison.groble.application.admin.dto.AdminUserSummaryInfoDTO;
 import liaison.groble.common.exception.EntityNotFoundException;
 import liaison.groble.common.response.PageResponse;
@@ -16,6 +20,7 @@ import liaison.groble.domain.guest.entity.GuestUser;
 import liaison.groble.domain.guest.repository.GuestUserRepository;
 import liaison.groble.domain.hometest.entity.HomeTestContact;
 import liaison.groble.domain.hometest.repository.HomeTestContactRepository;
+import liaison.groble.domain.user.dto.AdminUserStatisticsAggregate;
 import liaison.groble.domain.user.dto.FlatAdminUserSummaryInfoDTO;
 import liaison.groble.domain.user.enums.WithdrawalReason;
 import liaison.groble.domain.user.repository.UserCustomRepository;
@@ -72,6 +77,79 @@ public class AdminUserService {
         contactPage.getContent().stream().map(this::convertContactToSummary).toList();
 
     return PageResponse.from(contactPage, items, resolveSortMeta(pageable));
+  }
+
+  public AdminUserStatisticsDTO getUserStatistics() {
+    LocalDateTime now = LocalDateTime.now();
+    LocalDateTime sevenDaysAgo = now.minusDays(7);
+    LocalDateTime thirtyDaysAgo = now.minusDays(30);
+
+    AdminUserStatisticsAggregate aggregate =
+        userCustomRepository.fetchUserStatistics(sevenDaysAgo, thirtyDaysAgo);
+
+    long totalUsers = aggregate.totalActiveUsers();
+    long withdrawnUsers = aggregate.withdrawnUsers();
+    long newUsers7Days = aggregate.newUsers7Days();
+    long newUsers30Days = aggregate.newUsers30Days();
+    long buyerOnlyCount = aggregate.buyerOnlyCount();
+    long buyerAndSellerCount = aggregate.buyerAndSellerCount();
+    long marketingAgreedCount = aggregate.marketingAgreedCount();
+    long phoneNumberProvidedCount = aggregate.phoneNumberProvidedCount();
+    long phoneNumberNotProvidedCount = Math.max(0, totalUsers - phoneNumberProvidedCount);
+    long sellerTermsAgreedCount = aggregate.sellerTermsAgreedCount();
+
+    long verificationVerified = aggregate.verificationVerifiedCount();
+    long verificationPending = aggregate.verificationPendingCount();
+    long verificationInProgress = aggregate.verificationInProgressCount();
+    long verificationFailed = aggregate.verificationFailedCount();
+    long verificationNone = aggregate.verificationNoneCount();
+
+    long verificationBase = verificationVerified + verificationFailed + verificationInProgress;
+
+    AdminUserStatisticsDTO.VerificationStats verificationStats =
+        AdminUserStatisticsDTO.VerificationStats.builder()
+            .verified(verificationVerified)
+            .pending(verificationPending)
+            .inProgress(verificationInProgress)
+            .failed(verificationFailed)
+            .none(verificationNone)
+            .build();
+
+    long businessSimplified = aggregate.businessTypeIndividualSimplifiedCount();
+    long businessNormal = aggregate.businessTypeIndividualNormalCount();
+    long businessCorporate = aggregate.businessTypeCorporateCount();
+    long businessNone = aggregate.businessTypeNoneCount();
+
+    AdminUserStatisticsDTO.BusinessTypeStats businessTypeStats =
+        AdminUserStatisticsDTO.BusinessTypeStats.builder()
+            .individualSimplified(businessSimplified)
+            .individualNormal(businessNormal)
+            .corporate(businessCorporate)
+            .none(businessNone)
+            .build();
+
+    return AdminUserStatisticsDTO.builder()
+        .totalUsers(totalUsers)
+        .withdrawnUsers(withdrawnUsers)
+        .newUsers7Days(newUsers7Days)
+        .newUsers30Days(newUsers30Days)
+        .buyerOnlyCount(buyerOnlyCount)
+        .buyerAndSellerCount(buyerAndSellerCount)
+        .buyerOnlyPercentage(calculatePercentage(buyerOnlyCount, totalUsers))
+        .buyerAndSellerPercentage(calculatePercentage(buyerAndSellerCount, totalUsers))
+        .marketingAgreedCount(marketingAgreedCount)
+        .marketingAgreedPercentage(calculatePercentage(marketingAgreedCount, totalUsers))
+        .phoneNumberProvidedCount(phoneNumberProvidedCount)
+        .phoneNumberProvidedPercentage(calculatePercentage(phoneNumberProvidedCount, totalUsers))
+        .phoneNumberNotProvidedCount(phoneNumberNotProvidedCount)
+        .phoneNumberNotProvidedPercentage(
+            calculatePercentage(phoneNumberNotProvidedCount, totalUsers))
+        .sellerTermsAgreedCount(sellerTermsAgreedCount)
+        .sellerTermsAgreedPercentage(calculatePercentage(sellerTermsAgreedCount, totalUsers))
+        .verificationStats(verificationStats)
+        .verificationSuccessRate(calculatePercentage(verificationVerified, verificationBase))
+        .businessTypeStats(businessTypeStats)
+        .build();
   }
 
   private AdminUserSummaryInfoDTO convertFlatDTOToInfoResponse(FlatAdminUserSummaryInfoDTO flat) {
@@ -156,5 +234,15 @@ public class AdminUserService {
         .sortBy(order.getProperty())
         .sortDirection(order.getDirection().name())
         .build();
+  }
+
+  private double calculatePercentage(long numerator, long denominator) {
+    if (denominator <= 0 || numerator <= 0) {
+      return 0.0;
+    }
+    return BigDecimal.valueOf(numerator)
+        .multiply(BigDecimal.valueOf(100))
+        .divide(BigDecimal.valueOf(denominator), 1, RoundingMode.HALF_UP)
+        .doubleValue();
   }
 }

@@ -36,6 +36,7 @@ public final class ResponseMessages {
     public static final String USER_ACCOUNT_VERIFICATION_FAILED = "관리자 계좌 인증 처리 결과가 실패했습니다.";
     public static final String USER_BUSINESS_INFO_UPDATED = "사업자 정보가 성공적으로 수정되었습니다.";
     public static final String HOME_TEST_CONTACTS_RETRIEVED = "관리자 홈 테스트 연락처 목록 조회에 성공하였습니다.";
+    public static final String USER_STATISTICS_RETRIEVED = "사용자 통계 조회에 성공하였습니다.";
     public static final String SCHEDULED_NOTIFICATION_CREATED = "예약 알림이 등록되었습니다.";
     public static final String SCHEDULED_NOTIFICATIONS_RETRIEVED = "예약 알림 목록 조회에 성공하였습니다.";
     public static final String SCHEDULED_NOTIFICATION_UPDATED = "예약 알림이 수정되었습니다.";

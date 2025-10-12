@@ -16,6 +16,7 @@ import liaison.groble.api.model.admin.request.AdminBusinessInfoUpdateRequest;
 import liaison.groble.api.model.admin.response.AdminAccountVerificationResponse;
 import liaison.groble.api.model.admin.response.AdminGuestUserSummaryResponse;
 import liaison.groble.api.model.admin.response.AdminHomeTestContactResponse;
+import liaison.groble.api.model.admin.response.AdminUserStatisticsResponse;
 import liaison.groble.api.model.admin.response.AdminUserSummaryInfoResponse;
 import liaison.groble.api.model.admin.response.swagger.AdminUserSummaryInfo;
 import liaison.groble.api.server.common.ApiPaths;
@@ -25,6 +26,7 @@ import liaison.groble.api.server.common.swagger.SwaggerTags;
 import liaison.groble.application.admin.dto.AdminAccountVerificationResultDTO;
 import liaison.groble.application.admin.dto.AdminGuestUserSummaryDTO;
 import liaison.groble.application.admin.dto.AdminHomeTestContactDTO;
+import liaison.groble.application.admin.dto.AdminUserStatisticsDTO;
 import liaison.groble.application.admin.dto.AdminUserSummaryInfoDTO;
 import liaison.groble.application.admin.service.AdminAccountVerificationService;
 import liaison.groble.application.admin.service.AdminUserService;
@@ -188,5 +190,18 @@ public class AdminUserController extends BaseController {
         userId, adminUserMapper.toAdminBusinessInfoUpdateDTO(request));
 
     return successVoid(ResponseMessages.Admin.USER_BUSINESS_INFO_UPDATED);
+  }
+
+  @RequireRole("ROLE_ADMIN")
+  @GetMapping(ApiPaths.Admin.ADMIN_USER_STATISTICS)
+  @Operation(summary = "사용자 통계 조회", description = "전체 사용자 통계를 조회합니다.")
+  public ResponseEntity<GrobleResponse<AdminUserStatisticsResponse>> getUserStatistics(
+      @Auth Accessor accessor) {
+
+    AdminUserStatisticsDTO statisticsDTO = adminUserService.getUserStatistics();
+    AdminUserStatisticsResponse response =
+        adminUserMapper.toAdminUserStatisticsResponse(statisticsDTO);
+
+    return success(response, ResponseMessages.Admin.USER_STATISTICS_RETRIEVED);
   }
 }

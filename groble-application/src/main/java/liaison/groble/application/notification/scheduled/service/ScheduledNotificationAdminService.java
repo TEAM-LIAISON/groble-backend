@@ -1,6 +1,12 @@
 package liaison.groble.application.notification.scheduled.service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -13,12 +19,15 @@ import org.springframework.transaction.annotation.Transactional;
 import liaison.groble.application.notification.scheduled.command.CreateScheduledNotificationCommand;
 import liaison.groble.application.notification.scheduled.command.UpdateScheduledNotificationCommand;
 import liaison.groble.application.notification.scheduled.dto.KakaoTemplateDTO;
+import liaison.groble.application.notification.scheduled.dto.ScheduledNotificationChannelStatisticsDTO;
 import liaison.groble.application.notification.scheduled.dto.ScheduledNotificationDTO;
 import liaison.groble.application.notification.scheduled.dto.ScheduledNotificationSegmentDTO;
 import liaison.groble.application.notification.scheduled.dto.ScheduledNotificationStatisticsDTO;
 import liaison.groble.common.exception.EntityNotFoundException;
 import liaison.groble.common.exception.InvalidRequestException;
 import liaison.groble.common.response.PageResponse;
+import liaison.groble.domain.notification.scheduled.dto.ScheduledNotificationChannelAggregate;
+import liaison.groble.domain.notification.scheduled.dto.ScheduledNotificationStatisticsAggregate;
 import liaison.groble.domain.notification.scheduled.entity.ScheduledNotification;
 import liaison.groble.domain.notification.scheduled.entity.ScheduledNotificationSegment;
 import liaison.groble.domain.notification.scheduled.enums.ScheduledNotificationChannel;
@@ -37,6 +46,8 @@ import lombok.RequiredArgsConstructor;
 public class ScheduledNotificationAdminService {
 
   private static final String DEFAULT_TIMEZONE = "Asia/Seoul";
+  private static final List<ScheduledNotificationChannel> CHANNELS_FOR_RESPONSE =
+      List.of(ScheduledNotificationChannel.SYSTEM, ScheduledNotificationChannel.KAKAO_BIZ);
 
   private final ScheduledNotificationRepository scheduledNotificationRepository;
   private final ScheduledNotificationSegmentRepository scheduledNotificationSegmentRepository;
@@ -160,20 +171,52 @@ public class ScheduledNotificationAdminService {
         .toList();
   }
 
-  public ScheduledNotificationStatisticsDTO getStatistics() {
-    long total = scheduledNotificationRepository.countAll();
-    long ready = scheduledNotificationRepository.countByStatus(ScheduledNotificationStatus.READY);
-    long sent = scheduledNotificationRepository.countByStatus(ScheduledNotificationStatus.SENT);
-    long failed = scheduledNotificationRepository.countByStatus(ScheduledNotificationStatus.FAILED);
-    long cancelled =
-        scheduledNotificationRepository.countByStatus(ScheduledNotificationStatus.CANCELLED);
+  public ScheduledNotificationStatisticsDTO getStatistics(
+      LocalDate startDate, LocalDate endDate, String channelParam) {
+    if (startDate != null && endDate != null && endDate.isBefore(startDate)) {
+      throw new InvalidRequestException("조회 종료일은 시작일 이후여야 합니다.");
+    }
+
+    LocalDateTime startDateTime = toStartOfDay(startDate);
+    LocalDateTime endDateTime = toEndOfDay(endDate);
+    ScheduledNotificationChannel channelFilter = parseChannel(channelParam);
+
+    ScheduledNotificationStatisticsAggregate aggregate =
+        scheduledNotificationRepository.aggregateStatistics(
+            startDateTime, endDateTime, channelFilter);
+    List<ScheduledNotificationChannelAggregate> channelAggregates =
+        scheduledNotificationRepository.aggregateStatisticsByChannel(
+            startDateTime, endDateTime, channelFilter);
+
+    Map<ScheduledNotificationChannel, ScheduledNotificationChannelStatisticsDTO> channelStats =
+        new EnumMap<>(ScheduledNotificationChannel.class);
+    CHANNELS_FOR_RESPONSE.forEach(channel -> channelStats.put(channel, buildChannelStats(0L, 0L)));
+
+    for (ScheduledNotificationChannelAggregate channelAggregate : channelAggregates) {
+      if (!channelStats.containsKey(channelAggregate.channel())) {
+        continue;
+      }
+      channelStats.put(
+          channelAggregate.channel(),
+          buildChannelStats(channelAggregate.totalScheduled(), channelAggregate.totalSent()));
+    }
+
+    ScheduledNotificationStatisticsDTO.ChannelStatisticsDTO channelStatisticsDTO =
+        ScheduledNotificationStatisticsDTO.ChannelStatisticsDTO.builder()
+            .system(
+                channelStats.getOrDefault(
+                    ScheduledNotificationChannel.SYSTEM, buildChannelStats(0L, 0L)))
+            .kakao(
+                channelStats.getOrDefault(
+                    ScheduledNotificationChannel.KAKAO_BIZ, buildChannelStats(0L, 0L)))
+            .build();
 
     return ScheduledNotificationStatisticsDTO.builder()
-        .totalNotifications(total)
-        .readyCount(ready)
-        .sentCount(sent)
-        .failedCount(failed)
-        .cancelledCount(cancelled)
+        .totalScheduled(aggregate.totalScheduled())
+        .totalSent(aggregate.totalSent())
+        .totalCancelled(aggregate.totalCancelled())
+        .deliveryRate(calculateDeliveryRate(aggregate.totalSent(), aggregate.totalScheduled()))
+        .channelStats(channelStatisticsDTO)
         .build();
   }
 
@@ -222,6 +265,48 @@ public class ScheduledNotificationAdminService {
       return segmentPayload;
     }
     return null;
+  }
+
+  private ScheduledNotificationChannelStatisticsDTO buildChannelStats(long scheduled, long sent) {
+    return ScheduledNotificationChannelStatisticsDTO.builder()
+        .scheduled(scheduled)
+        .sent(sent)
+        .deliveryRate(calculateDeliveryRate(sent, scheduled))
+        .build();
+  }
+
+  private double calculateDeliveryRate(long sent, long scheduled) {
+    if (scheduled == 0) {
+      return 0.0;
+    }
+    return BigDecimal.valueOf(sent)
+        .multiply(BigDecimal.valueOf(100))
+        .divide(BigDecimal.valueOf(scheduled), 1, RoundingMode.HALF_UP)
+        .doubleValue();
+  }
+
+  private ScheduledNotificationChannel parseChannel(String channelParam) {
+    if (channelParam == null || channelParam.isBlank() || channelParam.equalsIgnoreCase("all")) {
+      return null;
+    }
+    if (channelParam.equalsIgnoreCase("system")) {
+      return ScheduledNotificationChannel.SYSTEM;
+    }
+    if (channelParam.equalsIgnoreCase("kakao")) {
+      return ScheduledNotificationChannel.KAKAO_BIZ;
+    }
+    throw new InvalidRequestException("지원하지 않는 채널 필터입니다.");
+  }
+
+  private LocalDateTime toStartOfDay(LocalDate date) {
+    return date == null ? null : date.atStartOfDay();
+  }
+
+  private LocalDateTime toEndOfDay(LocalDate date) {
+    if (date == null) {
+      return null;
+    }
+    return date.atTime(LocalTime.of(23, 59, 59, 999_999_000));
   }
 
   private void validateChannel(ScheduledNotificationChannel channel, String bizTemplateCode) {

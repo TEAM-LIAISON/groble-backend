@@ -13,6 +13,7 @@ import liaison.groble.api.model.notification.scheduled.response.ScheduledNotific
 import liaison.groble.application.notification.scheduled.command.CreateScheduledNotificationCommand;
 import liaison.groble.application.notification.scheduled.command.UpdateScheduledNotificationCommand;
 import liaison.groble.application.notification.scheduled.dto.KakaoTemplateDTO;
+import liaison.groble.application.notification.scheduled.dto.ScheduledNotificationChannelStatisticsDTO;
 import liaison.groble.application.notification.scheduled.dto.ScheduledNotificationDTO;
 import liaison.groble.application.notification.scheduled.dto.ScheduledNotificationSegmentDTO;
 import liaison.groble.application.notification.scheduled.dto.ScheduledNotificationStatisticsDTO;
@@ -83,6 +84,42 @@ public interface ScheduledNotificationAdminMapper extends PageResponseMapper {
 
   List<KakaoTemplateResponse> toTemplateResponses(List<KakaoTemplateDTO> dtoList);
 
-  ScheduledNotificationStatisticsResponse toStatisticsResponse(
-      ScheduledNotificationStatisticsDTO dto);
+  default ScheduledNotificationStatisticsResponse toStatisticsResponse(
+      ScheduledNotificationStatisticsDTO dto) {
+    if (dto == null) {
+      return null;
+    }
+
+    ScheduledNotificationStatisticsDTO.ChannelStatisticsDTO channelStats = dto.getChannelStats();
+
+    ScheduledNotificationStatisticsResponse.ChannelStatsResponse channelStatsResponse =
+        ScheduledNotificationStatisticsResponse.ChannelStatsResponse.builder()
+            .system(toChannelStatResponse(channelStats != null ? channelStats.getSystem() : null))
+            .kakao(toChannelStatResponse(channelStats != null ? channelStats.getKakao() : null))
+            .build();
+
+    return ScheduledNotificationStatisticsResponse.builder()
+        .totalScheduled(dto.getTotalScheduled())
+        .totalSent(dto.getTotalSent())
+        .totalCancelled(dto.getTotalCancelled())
+        .deliveryRate(dto.getDeliveryRate())
+        .channelStats(channelStatsResponse)
+        .build();
+  }
+
+  private ScheduledNotificationStatisticsResponse.ChannelStatResponse toChannelStatResponse(
+      ScheduledNotificationChannelStatisticsDTO dto) {
+    if (dto == null) {
+      return ScheduledNotificationStatisticsResponse.ChannelStatResponse.builder()
+          .scheduled(0L)
+          .sent(0L)
+          .deliveryRate(0.0)
+          .build();
+    }
+    return ScheduledNotificationStatisticsResponse.ChannelStatResponse.builder()
+        .scheduled(dto.getScheduled())
+        .sent(dto.getSent())
+        .deliveryRate(dto.getDeliveryRate())
+        .build();
+  }
 }

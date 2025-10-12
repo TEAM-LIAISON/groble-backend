@@ -6,9 +6,16 @@ import lombok.Getter;
 @Getter
 @Builder
 public class ScheduledNotificationStatisticsDTO {
-  private final long totalNotifications;
-  private final long readyCount;
-  private final long sentCount;
-  private final long failedCount;
-  private final long cancelledCount;
+  private final long totalScheduled;
+  private final long totalSent;
+  private final long totalCancelled;
+  private final double deliveryRate;
+  private final ChannelStatisticsDTO channelStats;
+
+  @Getter
+  @Builder
+  public static class ChannelStatisticsDTO {
+    private final ScheduledNotificationChannelStatisticsDTO system;
+    private final ScheduledNotificationChannelStatisticsDTO kakao;
+  }
 }

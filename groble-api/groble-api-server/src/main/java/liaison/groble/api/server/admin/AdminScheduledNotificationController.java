@@ -1,5 +1,8 @@
 package liaison.groble.api.server.admin;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 
 import jakarta.validation.Valid;
@@ -32,6 +35,7 @@ import liaison.groble.application.notification.scheduled.dto.ScheduledNotificati
 import liaison.groble.application.notification.scheduled.service.ScheduledNotificationAdminService;
 import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.annotation.RequireRole;
+import liaison.groble.common.exception.InvalidRequestException;
 import liaison.groble.common.model.Accessor;
 import liaison.groble.common.response.GrobleResponse;
 import liaison.groble.common.response.PageResponse;
@@ -169,10 +173,33 @@ public class AdminScheduledNotificationController extends BaseController {
   @RequireRole("ROLE_ADMIN")
   @GetMapping(ApiPaths.Admin.NOTIFICATIONS_STATISTICS)
   public ResponseEntity<GrobleResponse<ScheduledNotificationStatisticsResponse>> getStatistics(
-      @Auth Accessor accessor) {
+      @Auth Accessor accessor,
+      @Parameter(description = "조회 시작일 (yyyy-MM-dd)", example = "2024-01-01")
+          @RequestParam(value = "startDate", required = false)
+          String startDate,
+      @Parameter(description = "조회 종료일 (yyyy-MM-dd)", example = "2024-01-31")
+          @RequestParam(value = "endDate", required = false)
+          String endDate,
+      @Parameter(description = "채널 필터", example = "all")
+          @RequestParam(value = "channel", required = false, defaultValue = "all")
+          String channel) {
+    LocalDate start = parseDate(startDate);
+    LocalDate end = parseDate(endDate);
+
     ScheduledNotificationStatisticsResponse response =
         scheduledNotificationAdminMapper.toStatisticsResponse(
-            scheduledNotificationAdminService.getStatistics());
+            scheduledNotificationAdminService.getStatistics(start, end, channel));
     return success(response, ResponseMessages.Admin.SCHEDULED_NOTIFICATION_STATISTICS_RETRIEVED);
+  }
+
+  private LocalDate parseDate(String value) {
+    if (value == null || value.isBlank()) {
+      return null;
+    }
+    try {
+      return LocalDate.parse(value, DateTimeFormatter.ISO_LOCAL_DATE);
+    } catch (DateTimeParseException ex) {
+      throw new InvalidRequestException("날짜 형식이 올바르지 않습니다. (yyyy-MM-dd)");
+    }
   }
 }
