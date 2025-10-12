@@ -110,6 +110,9 @@ public class AdminUserStatisticsResponse {
     @Schema(description = "법인 사업자 수", example = "366")
     private long corporate;
 
+    @Schema(description = "개인 메이커(사업자 등록 없는 인증 완료) 수", example = "512")
+    private long individualMaker;
+
     @Schema(description = "미등록 사용자 수", example = "12678")
     private long none;
   }

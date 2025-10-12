@@ -51,6 +51,7 @@ public class AdminUserStatisticsDTO {
     private final long individualSimplified;
     private final long individualNormal;
     private final long corporate;
+    private final long individualMaker;
     private final long none;
   }
 }

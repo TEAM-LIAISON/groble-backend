@@ -118,6 +118,7 @@ public class AdminUserService {
     long businessSimplified = aggregate.businessTypeIndividualSimplifiedCount();
     long businessNormal = aggregate.businessTypeIndividualNormalCount();
     long businessCorporate = aggregate.businessTypeCorporateCount();
+    long individualMakerCount = aggregate.businessTypeIndividualMakerCount();
     long businessNone = aggregate.businessTypeNoneCount();
 
     AdminUserStatisticsDTO.BusinessTypeStats businessTypeStats =
@@ -125,6 +126,7 @@ public class AdminUserService {
             .individualSimplified(businessSimplified)
             .individualNormal(businessNormal)
             .corporate(businessCorporate)
+            .individualMaker(individualMakerCount)
             .none(businessNone)
             .build();
 

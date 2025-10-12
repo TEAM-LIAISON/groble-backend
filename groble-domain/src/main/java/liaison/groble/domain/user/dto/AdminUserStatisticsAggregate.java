@@ -18,4 +18,5 @@ public record AdminUserStatisticsAggregate(
     long businessTypeIndividualSimplifiedCount,
     long businessTypeIndividualNormalCount,
     long businessTypeCorporateCount,
+    long businessTypeIndividualMakerCount,
     long businessTypeNoneCount) {}
