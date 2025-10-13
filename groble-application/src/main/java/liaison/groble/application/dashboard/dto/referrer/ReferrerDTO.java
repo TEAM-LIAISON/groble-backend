@@ -32,6 +32,7 @@ public class ReferrerDTO {
   private String userAgent;
   private Map<String, Object> socialAppInfo;
   private Map<String, Object> clientHints;
+  private Map<String, Object> referrerInfo;
   private String sessionId;
   private LocalDateTime timestamp;
   private Map<String, Object> referrerDetails;

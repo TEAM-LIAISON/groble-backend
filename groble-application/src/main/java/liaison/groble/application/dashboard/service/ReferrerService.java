@@ -472,6 +472,17 @@ public class ReferrerService {
     if (StringUtils.hasText(direct)) {
       return direct;
     }
+    Map<String, Object> referrerInfo = referrerDTO.getReferrerInfo();
+    if (referrerInfo != null && !referrerInfo.isEmpty()) {
+      Object infoReferrer = referrerInfo.get("referrerUrl");
+      if (infoReferrer instanceof String str && StringUtils.hasText(str)) {
+        return str;
+      }
+      Object fallbackReferrer = referrerInfo.get("url");
+      if (fallbackReferrer instanceof String str && StringUtils.hasText(str)) {
+        return str;
+      }
+    }
     Map<String, Object> details = referrerDTO.getReferrerDetails();
     if (details != null && !details.isEmpty()) {
       String[] candidates = {
@@ -593,6 +604,11 @@ public class ReferrerService {
       metadata.putAll(referrerDetails);
     }
 
+    Map<String, Object> referrerInfo = referrerDTO.getReferrerInfo();
+    if (referrerInfo != null && !referrerInfo.isEmpty()) {
+      metadata.put("referrerInfo", referrerInfo);
+    }
+
     putIfHasText(metadata, "connectionType", referrerDTO.getConnectionType());
     putIfNotNull(metadata, "deviceMemory", referrerDTO.getDeviceMemory());
     putIfNotNull(metadata, "hardwareConcurrency", referrerDTO.getHardwareConcurrency());
@@ -609,6 +625,15 @@ public class ReferrerService {
     Map<String, Object> socialAppInfo = referrerDTO.getSocialAppInfo();
     if (socialAppInfo != null && !socialAppInfo.isEmpty()) {
       metadata.put("socialAppInfo", socialAppInfo);
+    }
+    if ((socialAppInfo == null || socialAppInfo.isEmpty()) && referrerInfo != null) {
+      Object nestedSocial = referrerInfo.get("socialAppInfo");
+      if (nestedSocial instanceof Map<?, ?>) {
+        Map<?, ?> nestedMap = (Map<?, ?>) nestedSocial;
+        if (!nestedMap.isEmpty()) {
+          metadata.put("socialAppInfo", nestedMap);
+        }
+      }
     }
 
     Map<String, Object> clientHints = referrerDTO.getClientHints();
