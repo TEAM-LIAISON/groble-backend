@@ -5,6 +5,7 @@ import java.net.URISyntaxException;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -215,9 +216,9 @@ public class ReferrerService {
           ensureAbsoluteUrl(decodeUrl(resolvedReferrerUrl), referrerDTO.getPageUrl());
     }
     String chainJson = toReferrerChainJson(referrerDTO.getReferrerChain());
-    String metadataJson = toMetadataJson(referrerDTO.getReferrerDetails());
+    String metadataJson = toMetadataJson(referrerDTO);
     String maskedIp = maskIpAddress(clientIp);
-    String sanitizedUserAgent = sanitizeUserAgent(userAgent);
+    String sanitizedUserAgent = sanitizeUserAgent(resolveUserAgent(userAgent, referrerDTO));
     LocalDateTime eventTimestamp = defaultEventTimestamp(referrerDTO.getTimestamp());
 
     String chainFallback = lastElement(referrerDTO.getReferrerChain());
@@ -355,9 +356,9 @@ public class ReferrerService {
           ensureAbsoluteUrl(decodeUrl(resolvedReferrerUrl), referrerDTO.getPageUrl());
     }
     String chainJson = toReferrerChainJson(referrerDTO.getReferrerChain());
-    String metadataJson = toMetadataJson(referrerDTO.getReferrerDetails());
+    String metadataJson = toMetadataJson(referrerDTO);
     String maskedIp = maskIpAddress(clientIp);
-    String sanitizedUserAgent = sanitizeUserAgent(userAgent);
+    String sanitizedUserAgent = sanitizeUserAgent(resolveUserAgent(userAgent, referrerDTO));
     LocalDateTime eventTimestamp = defaultEventTimestamp(referrerDTO.getTimestamp());
 
     String chainFallbackMarket = lastElement(referrerDTO.getReferrerChain());
@@ -568,16 +569,78 @@ public class ReferrerService {
     }
   }
 
-  private String toMetadataJson(Map<String, Object> referrerDetails)
-      throws JsonProcessingException {
-    if (referrerDetails == null || referrerDetails.isEmpty()) {
+  private String toMetadataJson(ReferrerDTO referrerDTO) throws JsonProcessingException {
+    if (referrerDTO == null) {
       return null;
     }
-    return objectMapper.writeValueAsString(referrerDetails);
+
+    Map<String, Object> metadata = new LinkedHashMap<>();
+
+    Map<String, Object> referrerDetails = referrerDTO.getReferrerDetails();
+    if (referrerDetails != null && !referrerDetails.isEmpty()) {
+      metadata.putAll(referrerDetails);
+    }
+
+    putIfHasText(metadata, "connectionType", referrerDTO.getConnectionType());
+    putIfNotNull(metadata, "deviceMemory", referrerDTO.getDeviceMemory());
+    putIfNotNull(metadata, "hardwareConcurrency", referrerDTO.getHardwareConcurrency());
+    putIfHasText(metadata, "language", referrerDTO.getLanguage());
+    putIfHasText(metadata, "platform", referrerDTO.getPlatform());
+    putIfHasText(metadata, "screenResolution", referrerDTO.getScreenResolution());
+    putIfHasText(metadata, "timezone", referrerDTO.getTimezone());
+
+    String reportedUserAgent = referrerDTO.getUserAgent();
+    if (StringUtils.hasText(reportedUserAgent)) {
+      metadata.put("reportedUserAgent", reportedUserAgent);
+    }
+
+    Map<String, Object> socialAppInfo = referrerDTO.getSocialAppInfo();
+    if (socialAppInfo != null && !socialAppInfo.isEmpty()) {
+      metadata.put("socialAppInfo", socialAppInfo);
+    }
+
+    Map<String, Object> clientHints = referrerDTO.getClientHints();
+    if (clientHints != null && !clientHints.isEmpty()) {
+      metadata.put("clientHints", clientHints);
+    }
+
+    if (metadata.isEmpty()) {
+      return null;
+    }
+
+    return objectMapper.writeValueAsString(metadata);
   }
 
   private LocalDateTime defaultEventTimestamp(LocalDateTime timestamp) {
     return timestamp != null ? timestamp : LocalDateTime.now(ASIA_SEOUL);
+  }
+
+  private void putIfHasText(Map<String, Object> target, String key, String value) {
+    if (target == null || !StringUtils.hasText(key)) {
+      return;
+    }
+    if (StringUtils.hasText(value)) {
+      target.put(key, value);
+    }
+  }
+
+  private void putIfNotNull(Map<String, Object> target, String key, Object value) {
+    if (target == null || !StringUtils.hasText(key)) {
+      return;
+    }
+    if (value != null) {
+      target.put(key, value);
+    }
+  }
+
+  private String resolveUserAgent(String headerUserAgent, ReferrerDTO referrerDTO) {
+    if (StringUtils.hasText(headerUserAgent)) {
+      return headerUserAgent;
+    }
+    if (referrerDTO != null && StringUtils.hasText(referrerDTO.getUserAgent())) {
+      return referrerDTO.getUserAgent();
+    }
+    return null;
   }
 
   private boolean isDuplicateTracking(
