@@ -20,6 +20,16 @@ public class ReferrerDTO {
   private String landingPageUrl;
   private String lastPageUrl;
   private List<String> referrerChain;
+  private String connectionType;
+  private Double deviceMemory;
+  private Integer hardwareConcurrency;
+  private String language;
+  private String platform;
+  private String screenResolution;
+  private String timezone;
+  private String userAgent;
+  private Map<String, Object> socialAppInfo;
+  private Map<String, Object> clientHints;
   private String sessionId;
   private LocalDateTime timestamp;
   private Map<String, Object> referrerDetails;

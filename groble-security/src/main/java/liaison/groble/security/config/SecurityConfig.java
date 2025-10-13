@@ -166,6 +166,8 @@ public class SecurityConfig {
                     .permitAll()
                     .requestMatchers("/api/v1/me")
                     .permitAll()
+                    .requestMatchers("/api/v1/market/referrer/**", "/api/v1/content/referrer/**")
+                    .permitAll()
                     .requestMatchers(
                         "/api/v1/admin/dashboard/trends", "/api/v1/admin/dashboard/top-contents")
                     .permitAll()
