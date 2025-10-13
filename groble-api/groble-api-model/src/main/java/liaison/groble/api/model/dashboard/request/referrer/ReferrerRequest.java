@@ -48,6 +48,12 @@ public class ReferrerRequest {
   @Size(max = 20)
   private List<@Size(max = 500) String> referrerChain;
 
+  @Size(max = 500)
+  private String firstLandingPageUrl;
+
+  @Size(max = 500)
+  private String firstReferrerUrl;
+
   @Size(max = 50)
   private String connectionType;
 

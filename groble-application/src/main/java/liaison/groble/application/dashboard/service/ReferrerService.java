@@ -226,6 +226,12 @@ public class ReferrerService {
       resolvedReferrerUrl = ensureAbsoluteUrl(decodeUrl(chainFallback), referrerDTO.getPageUrl());
     }
 
+    String firstReferrerUrl = referrerDTO.getFirstReferrerUrl();
+    if (!StringUtils.hasText(resolvedReferrerUrl) && StringUtils.hasText(firstReferrerUrl)) {
+      resolvedReferrerUrl =
+          ensureAbsoluteUrl(decodeUrl(firstReferrerUrl), referrerDTO.getPageUrl());
+    }
+
     String referrerDomain = resolveReferrerDomain(resolvedReferrerUrl);
     String lastPageUrl = referrerDTO.getLastPageUrl();
     if (!StringUtils.hasText(referrerDomain) && StringUtils.hasText(lastPageUrl)) {
@@ -365,6 +371,12 @@ public class ReferrerService {
     if (!StringUtils.hasText(resolvedReferrerUrl) && StringUtils.hasText(chainFallbackMarket)) {
       resolvedReferrerUrl =
           ensureAbsoluteUrl(decodeUrl(chainFallbackMarket), referrerDTO.getPageUrl());
+    }
+
+    String firstReferrerUrl = referrerDTO.getFirstReferrerUrl();
+    if (!StringUtils.hasText(resolvedReferrerUrl) && StringUtils.hasText(firstReferrerUrl)) {
+      resolvedReferrerUrl =
+          ensureAbsoluteUrl(decodeUrl(firstReferrerUrl), referrerDTO.getPageUrl());
     }
 
     String referrerDomain = resolveReferrerDomain(resolvedReferrerUrl);
@@ -603,6 +615,9 @@ public class ReferrerService {
     if (clientHints != null && !clientHints.isEmpty()) {
       metadata.put("clientHints", clientHints);
     }
+
+    putIfHasText(metadata, "firstLandingPageUrl", referrerDTO.getFirstLandingPageUrl());
+    putIfHasText(metadata, "firstReferrerUrl", referrerDTO.getFirstReferrerUrl());
 
     if (metadata.isEmpty()) {
       return null;
