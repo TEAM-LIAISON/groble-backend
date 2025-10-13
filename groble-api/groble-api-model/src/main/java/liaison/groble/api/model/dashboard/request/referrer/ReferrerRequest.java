@@ -87,4 +87,6 @@ public class ReferrerRequest {
   @NotBlank private String timestamp;
 
   private Map<String, Object> referrerDetails;
+
+  private Map<String, Object> referrerInfo;
 }
