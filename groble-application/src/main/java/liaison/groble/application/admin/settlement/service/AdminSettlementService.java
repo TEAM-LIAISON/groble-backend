@@ -26,6 +26,9 @@ import liaison.groble.application.admin.settlement.dto.SettlementApprovalDTO;
 import liaison.groble.application.admin.settlement.dto.SettlementApprovalDTO.FailedSettlementDTO;
 import liaison.groble.application.admin.settlement.dto.SettlementApprovalDTO.PaypleSettlementResultDTO;
 import liaison.groble.application.admin.settlement.dto.SettlementApprovalRequestDTO;
+import liaison.groble.application.notification.dto.KakaoNotificationDTO;
+import liaison.groble.application.notification.enums.KakaoNotificationType;
+import liaison.groble.application.notification.service.KakaoNotificationService;
 import liaison.groble.application.payment.exception.PaypleApiException;
 import liaison.groble.application.settlement.reader.SettlementReader;
 import liaison.groble.common.response.PageResponse;
@@ -34,7 +37,9 @@ import liaison.groble.domain.settlement.dto.FlatPerTransactionSettlement;
 import liaison.groble.domain.settlement.dto.FlatPgFeeAdjustmentDTO;
 import liaison.groble.domain.settlement.entity.Settlement;
 import liaison.groble.domain.settlement.entity.SettlementItem;
+import liaison.groble.domain.settlement.enums.SettlementType;
 import liaison.groble.domain.settlement.repository.SettlementRepository;
+import liaison.groble.domain.user.entity.User;
 import liaison.groble.external.config.PaypleConfig;
 
 import lombok.RequiredArgsConstructor;
@@ -56,6 +61,7 @@ public class AdminSettlementService {
   private final SettlementReader settlementReader;
   private final PaypleConfig paypleConfig;
   private final PaypleAccountVerificationFactory paypleAccountVerificationFactory;
+  private final KakaoNotificationService kakaoNotificationService;
 
   @Transactional(readOnly = true)
   public PageResponse<AdminSettlementOverviewDTO> getAllUsersSettlements(
@@ -224,6 +230,7 @@ public class AdminSettlementService {
             }
             actualApprovedSettlementCount++;
             log.info("정산 최종 승인 완료 - ID: {}", settlement.getId());
+            sendSettlementCompletedNotification(settlement);
           }
         } else {
           log.error("페이플 정산 실패로 인한 정산 승인 취소 - 정산 수: {}", validSettlements.size());
@@ -264,10 +271,73 @@ public class AdminSettlementService {
     Settlement settlement = settlementReader.getSettlementById(settlementId);
 
     settlement.completeManually("정산 수동 완료 처리 성공");
+    sendSettlementCompletedNotification(settlement);
 
     log.info("정산 수동 완료 처리 - ID: {}, settledAt: {}", settlement.getId(), settlement.getSettledAt());
 
     return getSettlementDetail(settlementId);
+  }
+
+  private void sendSettlementCompletedNotification(Settlement settlement) {
+    try {
+      String phoneNumber =
+          Optional.ofNullable(settlement.getUser()).map(User::getPhoneNumber).orElse(null);
+      if (!hasText(phoneNumber)) {
+        log.warn("정산 완료 알림톡 발송 스킵 - 수신번호 없음 settlementId: {}", settlement.getId());
+        return;
+      }
+
+      LocalDate settlementDate =
+          Optional.ofNullable(settlement.getSettledAt())
+              .map(LocalDateTime::toLocalDate)
+              .orElse(LocalDate.now());
+      BigDecimal settlementAmount =
+          Optional.ofNullable(settlement.getSettlementAmountDisplay())
+              .orElse(settlement.getSettlementAmount());
+
+      kakaoNotificationService.sendNotification(
+          KakaoNotificationDTO.builder()
+              .type(KakaoNotificationType.SETTLEMENT_COMPLETED)
+              .phoneNumber(phoneNumber)
+              .sellerName(resolveMakerName(settlement))
+              .settlementDate(settlementDate)
+              .contentTypeLabel(resolveContentTypeLabel(settlement))
+              .settlementAmount(settlementAmount)
+              .build());
+
+      log.info("정산 완료 알림톡 발송 완료 - settlementId: {}", settlement.getId());
+    } catch (Exception e) {
+      log.error("정산 완료 알림톡 발송 실패 - settlementId: {}", settlement.getId(), e);
+    }
+  }
+
+  private String resolveMakerName(Settlement settlement) {
+    return Optional.ofNullable(settlement.getUser())
+        .map(User::getNickname)
+        .filter(this::hasText)
+        .orElseGet(
+            () -> {
+              if (hasText(settlement.getAccountHolder())) {
+                return settlement.getAccountHolder();
+              }
+              return "메이커";
+            });
+  }
+
+  private String resolveContentTypeLabel(Settlement settlement) {
+    SettlementType settlementType = settlement.getSettlementType();
+    if (settlementType == null) {
+      return "콘텐츠";
+    }
+    return switch (settlementType) {
+      case COACHING -> "서비스";
+      case DOCUMENT -> "자료";
+      default -> "콘텐츠";
+    };
+  }
+
+  private boolean hasText(String value) {
+    return value != null && !value.trim().isEmpty();
   }
 
   /** 정산 조회 및 검증 */
