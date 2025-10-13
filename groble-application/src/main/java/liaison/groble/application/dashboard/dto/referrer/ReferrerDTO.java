@@ -20,6 +20,8 @@ public class ReferrerDTO {
   private String landingPageUrl;
   private String lastPageUrl;
   private List<String> referrerChain;
+  private String firstLandingPageUrl;
+  private String firstReferrerUrl;
   private String connectionType;
   private Double deviceMemory;
   private Integer hardwareConcurrency;
