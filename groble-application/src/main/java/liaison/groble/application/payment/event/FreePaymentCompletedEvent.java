@@ -29,6 +29,7 @@ public class FreePaymentCompletedEvent {
 
   // 디스코드 알림용 변수 추가
   private String nickname;
+  private String guestUserName;
   private String contentType;
   private Long optionId;
   private String selectedOptionName;

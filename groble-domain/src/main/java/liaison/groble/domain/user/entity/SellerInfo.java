@@ -251,6 +251,7 @@ public class SellerInfo {
       String bankCode) {
     this.businessSellerRequest = false;
     this.bankAccountOwner = bankAccountOwner;
+    this.birthDate = birthDate;
     this.bankName = bankName;
     this.bankAccountNumber = bankAccountNumber;
     this.copyOfBankbookUrl = copyOfBankbookUrl;

@@ -1,6 +1,7 @@
 package liaison.groble.application.notification.dto;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 import liaison.groble.application.notification.enums.KakaoNotificationType;
 
@@ -30,4 +31,9 @@ public class KakaoNotificationDTO {
 
   // Approve_Cancel_Template
   private BigDecimal refundedAmount;
+
+  // Settlement_Completed_Template
+  private LocalDate settlementDate;
+  private BigDecimal settlementAmount;
+  private String contentTypeLabel;
 }
