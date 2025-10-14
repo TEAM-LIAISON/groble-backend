@@ -91,7 +91,7 @@ public class AdminMakerController extends BaseController {
         yield successVoid(ResponseMessages.Admin.MAKER_VERIFY_APPROVED);
       }
       case REJECTED -> {
-        adminMakerService.rejectMaker(request.getNickname());
+        adminMakerService.rejectMaker(request.getNickname(), request.getRejectionReason());
         yield successVoid(ResponseMessages.Admin.MAKER_VERIFY_REJECTED);
       }
     };

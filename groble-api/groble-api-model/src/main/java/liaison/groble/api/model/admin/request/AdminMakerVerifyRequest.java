@@ -23,6 +23,9 @@ public class AdminMakerVerifyRequest {
   @NotNull
   private VerificationStatus status;
 
+  @Schema(description = "인증 반려 사유 (REJECTED 시 필수)", example = "제출한 서류가 누락되었습니다.")
+  private String rejectionReason;
+
   public enum VerificationStatus {
     @Schema(description = "승인")
     APPROVED,
