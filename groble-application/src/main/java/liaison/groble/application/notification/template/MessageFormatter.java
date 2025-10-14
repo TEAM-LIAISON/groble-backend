@@ -48,6 +48,18 @@ public class MessageFormatter {
     return String.format("%s님, 메이커 인증이 완료되었습니다!", sellerName);
   }
 
+  // [Groble] 인증 반려
+  public static String verificationRejected(String sellerName, String rejectionReason) {
+    String reason =
+        (rejectionReason == null || rejectionReason.isBlank())
+            ? "제출한 정보를 다시 확인해 주세요."
+            : rejectionReason;
+
+    return String.format(
+        "%s님, 메이커 인증이 반려되었습니다.\n" + "\n" + "- 반려 사유 : %s\n" + "\n" + "사유를 확인하고 메이커 인증을 다시 진행해 주세요.",
+        sellerName, reason);
+  }
+
   // [Groble] 결제 취소 알림
   public static String approveCancel(
       String buyerName, String contentTitle, BigDecimal refundedAmount) {

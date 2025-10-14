@@ -305,8 +305,11 @@ public class SellerInfo {
   }
 
   // 메이커 인증 거절
-  public void updateRejectedMaker(SellerVerificationStatus sellerVerificationStatus) {
+  public void updateRejectedMaker(
+      SellerVerificationStatus sellerVerificationStatus, String rejectionMessage) {
     this.verificationStatus = sellerVerificationStatus;
+    this.verificationMessage = rejectionMessage;
+    this.lastVerificationAttempt = LocalDateTime.now();
   }
 
   // 판매자 정보 생성 팩토리 메소드

@@ -105,14 +105,27 @@ public class AdminMakerService {
 
   // 메이커 인증 반려 처리
   @Transactional
-  public void rejectMaker(String nickname) {
+  public void rejectMaker(String nickname, String rejectionReason) {
     // 판매자 정보 조회 (User fetch join)
     SellerInfo sellerInfo = userReader.getSellerInfoWithUser(nickname);
 
-    sellerInfo.updateRejectedMaker(SellerVerificationStatus.FAILED);
+    String normalizedReason =
+        rejectionReason != null && !rejectionReason.trim().isEmpty()
+            ? rejectionReason.trim()
+            : null;
+
+    sellerInfo.updateRejectedMaker(SellerVerificationStatus.FAILED, normalizedReason);
 
     notificationService.sendMakerRejectedVerificationNotificationAsync(
         sellerInfo.getUser().getId(), nickname);
+
+    kakaoNotificationService.sendNotification(
+        KakaoNotificationDTO.builder()
+            .type(KakaoNotificationType.VERIFICATION_REJECTED)
+            .phoneNumber(sellerInfo.getUser().getPhoneNumber())
+            .sellerName(sellerInfo.getUser().getNickname())
+            .rejectionReason(normalizedReason)
+            .build());
   }
 
   @Transactional
