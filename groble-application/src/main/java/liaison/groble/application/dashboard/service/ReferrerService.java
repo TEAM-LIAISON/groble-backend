@@ -210,11 +210,9 @@ public class ReferrerService {
     }
 
     String contentIdStr = contentId == null ? null : contentId.toString();
-    String resolvedReferrerUrl = resolveReferrerUrl(referrerDTO, refererHeader);
-    if (StringUtils.hasText(resolvedReferrerUrl)) {
-      resolvedReferrerUrl =
-          ensureAbsoluteUrl(decodeUrl(resolvedReferrerUrl), referrerDTO.getPageUrl());
-    }
+    String resolvedReferrerUrl =
+        normalizeReferrerUrl(
+            resolveReferrerUrl(referrerDTO, refererHeader), referrerDTO.getPageUrl());
     String chainJson = toReferrerChainJson(referrerDTO.getReferrerChain());
     String metadataJson = toMetadataJson(referrerDTO);
     String maskedIp = maskIpAddress(clientIp);
@@ -223,19 +221,18 @@ public class ReferrerService {
 
     String chainFallback = lastElement(referrerDTO.getReferrerChain());
     if (!StringUtils.hasText(resolvedReferrerUrl) && StringUtils.hasText(chainFallback)) {
-      resolvedReferrerUrl = ensureAbsoluteUrl(decodeUrl(chainFallback), referrerDTO.getPageUrl());
+      resolvedReferrerUrl = normalizeReferrerUrl(chainFallback, referrerDTO.getPageUrl());
     }
 
     String firstReferrerUrl = referrerDTO.getFirstReferrerUrl();
     if (!StringUtils.hasText(resolvedReferrerUrl) && StringUtils.hasText(firstReferrerUrl)) {
-      resolvedReferrerUrl =
-          ensureAbsoluteUrl(decodeUrl(firstReferrerUrl), referrerDTO.getPageUrl());
+      resolvedReferrerUrl = normalizeReferrerUrl(firstReferrerUrl, referrerDTO.getPageUrl());
     }
 
     String referrerDomain = resolveReferrerDomain(resolvedReferrerUrl);
     String lastPageUrl = referrerDTO.getLastPageUrl();
     if (!StringUtils.hasText(referrerDomain) && StringUtils.hasText(lastPageUrl)) {
-      resolvedReferrerUrl = ensureAbsoluteUrl(decodeUrl(lastPageUrl), referrerDTO.getPageUrl());
+      resolvedReferrerUrl = normalizeReferrerUrl(lastPageUrl, referrerDTO.getPageUrl());
       referrerDomain = resolveReferrerDomain(resolvedReferrerUrl);
     }
 
@@ -253,7 +250,7 @@ public class ReferrerService {
                 if (!StringUtils.hasText(recentMarket.getPageUrl())) {
                   return;
                 }
-                String candidate = ensureAbsoluteUrl(decodeUrl(recentMarket.getPageUrl()), pageUrl);
+                String candidate = normalizeReferrerUrl(recentMarket.getPageUrl(), pageUrl);
                 String candidateDomain = resolveReferrerDomain(candidate);
                 if (StringUtils.hasText(candidateDomain)) {
                   resolvedHolder[0] = candidate;
@@ -356,11 +353,9 @@ public class ReferrerService {
       return false;
     }
 
-    String resolvedReferrerUrl = resolveReferrerUrl(referrerDTO, refererHeader);
-    if (StringUtils.hasText(resolvedReferrerUrl)) {
-      resolvedReferrerUrl =
-          ensureAbsoluteUrl(decodeUrl(resolvedReferrerUrl), referrerDTO.getPageUrl());
-    }
+    String resolvedReferrerUrl =
+        normalizeReferrerUrl(
+            resolveReferrerUrl(referrerDTO, refererHeader), referrerDTO.getPageUrl());
     String chainJson = toReferrerChainJson(referrerDTO.getReferrerChain());
     String metadataJson = toMetadataJson(referrerDTO);
     String maskedIp = maskIpAddress(clientIp);
@@ -369,14 +364,12 @@ public class ReferrerService {
 
     String chainFallbackMarket = lastElement(referrerDTO.getReferrerChain());
     if (!StringUtils.hasText(resolvedReferrerUrl) && StringUtils.hasText(chainFallbackMarket)) {
-      resolvedReferrerUrl =
-          ensureAbsoluteUrl(decodeUrl(chainFallbackMarket), referrerDTO.getPageUrl());
+      resolvedReferrerUrl = normalizeReferrerUrl(chainFallbackMarket, referrerDTO.getPageUrl());
     }
 
     String firstReferrerUrl = referrerDTO.getFirstReferrerUrl();
     if (!StringUtils.hasText(resolvedReferrerUrl) && StringUtils.hasText(firstReferrerUrl)) {
-      resolvedReferrerUrl =
-          ensureAbsoluteUrl(decodeUrl(firstReferrerUrl), referrerDTO.getPageUrl());
+      resolvedReferrerUrl = normalizeReferrerUrl(firstReferrerUrl, referrerDTO.getPageUrl());
     }
 
     String referrerDomain = resolveReferrerDomain(resolvedReferrerUrl);
@@ -384,7 +377,7 @@ public class ReferrerService {
     if ((!StringUtils.hasText(referrerDomain)
             || ReferrerDomainUtils.isInternalDomain(referrerDomain))
         && StringUtils.hasText(lastPageUrl)) {
-      resolvedReferrerUrl = ensureAbsoluteUrl(decodeUrl(lastPageUrl), referrerDTO.getPageUrl());
+      resolvedReferrerUrl = normalizeReferrerUrl(lastPageUrl, referrerDTO.getPageUrl());
       referrerDomain = resolveReferrerDomain(resolvedReferrerUrl);
     }
 
@@ -592,6 +585,154 @@ public class ReferrerService {
     }
   }
 
+  private String normalizeReferrerUrl(String url, String pageUrl) {
+    if (!StringUtils.hasText(url)) {
+      return null;
+    }
+
+    String current = decodeUrl(url);
+
+    for (int i = 0; i < 3; i++) {
+      String unwrapped = unwrapRedirect(current);
+      if (!StringUtils.hasText(unwrapped) || unwrapped.equals(current)) {
+        break;
+      }
+      current = decodeUrl(unwrapped);
+    }
+
+    current = ensureAbsoluteUrl(current, pageUrl);
+    current = canonicalizeDomainSpecific(current);
+    return current;
+  }
+
+  private String unwrapRedirect(String url) {
+    if (!StringUtils.hasText(url)) {
+      return url;
+    }
+    try {
+      URI uri = new URI(url);
+      String host = uri.getHost();
+      if (!StringUtils.hasText(host) && StringUtils.hasText(uri.getAuthority())) {
+        host = uri.getAuthority();
+      }
+      if (!StringUtils.hasText(host)) {
+        return url;
+      }
+      String lowerHost = host.toLowerCase();
+      if ("l.threads.com".equals(lowerHost)) {
+        String redirected =
+            firstNonBlank(
+                getQueryParameter(uri, "u"),
+                getQueryParameter(uri, "url"),
+                getQueryParameter(uri, "target"),
+                getQueryParameter(uri, "redirect"));
+        if (StringUtils.hasText(redirected)) {
+          return redirected;
+        }
+        return "https://www.threads.com/";
+      }
+      return url;
+    } catch (URISyntaxException e) {
+      return url;
+    }
+  }
+
+  private String canonicalizeDomainSpecific(String url) {
+    if (!StringUtils.hasText(url)) {
+      return url;
+    }
+    try {
+      URI uri = new URI(url);
+      String host = uri.getHost();
+      if (!StringUtils.hasText(host) && StringUtils.hasText(uri.getAuthority())) {
+        host = uri.getAuthority();
+      }
+      if (!StringUtils.hasText(host)) {
+        return url;
+      }
+      String lowerHost = host.toLowerCase();
+
+      if ("blog.naver.com".equals(lowerHost)) {
+        String path = uri.getPath();
+        if (path != null && path.equalsIgnoreCase("/PostView.naver")) {
+          Map<String, String> params = splitQuery(uri.getRawQuery());
+          String blogId = firstNonBlank(params.get("blogId"), params.get("blogid"));
+          String logNo = firstNonBlank(params.get("logNo"), params.get("logno"));
+          if (StringUtils.hasText(blogId) && StringUtils.hasText(logNo)) {
+            return "https://blog.naver.com/" + blogId + "/" + logNo;
+          }
+        }
+      }
+
+      return url;
+    } catch (URISyntaxException e) {
+      return url;
+    }
+  }
+
+  private String getQueryParameter(URI uri, String... keys) {
+    if (uri == null || keys == null || keys.length == 0) {
+      return null;
+    }
+    Map<String, String> params = splitQuery(uri.getRawQuery());
+    for (String key : keys) {
+      if (!StringUtils.hasText(key)) {
+        continue;
+      }
+      String value = params.get(key);
+      if (StringUtils.hasText(value)) {
+        return value;
+      }
+    }
+    return null;
+  }
+
+  private Map<String, String> splitQuery(String rawQuery) {
+    Map<String, String> params = new LinkedHashMap<>();
+    if (!StringUtils.hasText(rawQuery)) {
+      return params;
+    }
+
+    String[] pairs = rawQuery.split("&");
+    for (String pair : pairs) {
+      if (!StringUtils.hasText(pair)) {
+        continue;
+      }
+      int idx = pair.indexOf('=');
+      String key = idx >= 0 ? pair.substring(0, idx) : pair;
+      String value = idx >= 0 ? pair.substring(idx + 1) : "";
+      key = decodeComponent(key);
+      value = decodeComponent(value);
+      if (!params.containsKey(key)) {
+        params.put(key, value);
+      }
+    }
+    return params;
+  }
+
+  private String decodeComponent(String value) {
+    if (!StringUtils.hasText(value)) {
+      return value;
+    }
+    try {
+      return java.net.URLDecoder.decode(value, java.nio.charset.StandardCharsets.UTF_8);
+    } catch (IllegalArgumentException e) {
+      return value;
+    }
+  }
+
+  private String firstNonBlank(String... values) {
+    if (values == null) {
+      return null;
+    }
+    for (String value : values) {
+      if (StringUtils.hasText(value)) {
+        return value;
+      }
+    }
+    return null;
+  }
+
   private String toMetadataJson(ReferrerDTO referrerDTO) throws JsonProcessingException {
     if (referrerDTO == null) {
       return null;
@@ -775,7 +916,8 @@ public class ReferrerService {
       Long contentId, ReferrerDTO referrerDTO) {
     log.info("--- findOrCreateContentReferrerStats START ---");
 
-    String resolvedReferrerUrl = resolveReferrerUrl(referrerDTO);
+    String resolvedReferrerUrl =
+        normalizeReferrerUrl(resolveReferrerUrl(referrerDTO), referrerDTO.getPageUrl());
 
     // referrerUrl에서 도메인 추출
     String referrerDomain = extractDomainFromUrl(resolvedReferrerUrl);
@@ -884,7 +1026,8 @@ public class ReferrerService {
       Long marketId, ReferrerDTO referrerDTO) {
     log.info("--- findOrCreateMarketReferrerStats START ---");
 
-    String resolvedReferrerUrl = resolveReferrerUrl(referrerDTO);
+    String resolvedReferrerUrl =
+        normalizeReferrerUrl(resolveReferrerUrl(referrerDTO), referrerDTO.getPageUrl());
 
     // referrerUrl에서 도메인 추출
     String referrerDomain = extractDomainFromUrl(resolvedReferrerUrl);

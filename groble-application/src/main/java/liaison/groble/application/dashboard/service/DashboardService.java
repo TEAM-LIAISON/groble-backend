@@ -56,7 +56,6 @@ public class DashboardService {
       Set.of(
           "instagram.com",
           "threads.com",
-          "threads.net",
           "facebook.com",
           "fb.com",
           "tiktok.com",
