@@ -6,6 +6,8 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import liaison.groble.application.content.dto.ContentViewCountDTO;
+import liaison.groble.application.dashboard.service.ViewTrackingKeyGenerator;
+import liaison.groble.application.dashboard.service.ViewTrackingKeyGenerator.ViewerIdentity;
 import liaison.groble.domain.dashboard.entity.ContentViewLog;
 import liaison.groble.domain.dashboard.repository.ContentViewLogRepository;
 import liaison.groble.domain.port.DailyViewPort;
@@ -25,6 +27,7 @@ public class ContentViewCountService {
 
   // Port
   private final DailyViewPort dailyViewPort;
+  private final ViewTrackingKeyGenerator viewTrackingKeyGenerator;
 
   @Async
   public void recordContentView(Long contentId, ContentViewCountDTO contentViewCountDTO) {
@@ -38,22 +41,21 @@ public class ContentViewCountService {
     // # 중복 방지 (1시간)
     // viewed:content:123:user:456 → "1"
     // viewed:content:123:ip:192.168.1.1:382910 → "1"
-    String viewerKey =
-        contentViewCountDTO.getUserId() != null
-            ? "user:" + contentViewCountDTO.getUserId()
-            : "ip:"
-                + contentViewCountDTO.getIp()
-                + ":"
-                + contentViewCountDTO.getUserAgent().hashCode();
+    ViewerIdentity identity =
+        viewTrackingKeyGenerator.generate(
+            contentViewCountDTO.getUserId(),
+            contentViewCountDTO.getIp(),
+            contentViewCountDTO.getUserAgent());
 
-    if (dailyViewPort.incrementViewIfNotDuplicate("content", contentId, viewerKey)) {
+    if (dailyViewPort.incrementViewIfNotDuplicate("content", contentId, identity.viewerKey())) {
       // 로그 저장
       ContentViewLog log =
           ContentViewLog.builder()
               .contentId(contentId)
               .viewerId(contentViewCountDTO.getUserId())
-              .viewerIp(contentViewCountDTO.getIp())
-              .userAgent(contentViewCountDTO.getUserAgent())
+              .viewerIp(identity.normalizedIp())
+              .userAgent(identity.normalizedUserAgent())
+              .visitorHash(identity.visitorHash())
               .viewedAt(LocalDateTime.now())
               .build();
 
