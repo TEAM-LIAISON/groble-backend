@@ -186,13 +186,24 @@ public class AdminMakerDetailInfoResponse {
   private String adminMemo;
 
   @Schema(
-      description = "최근 계좌 또는 메이커 인증 처리 메시지",
+      description = "최근 계좌 인증 처리 메시지",
       example = "페이플 계좌 인증 실패 (code=A1000, message=계좌번호 불일치)",
       type = "string",
       requiredMode = Schema.RequiredMode.NOT_REQUIRED)
-  private String verificationMessage;
+  private String accountVerificationMessage;
 
-  @Schema(description = "최근 계좌 또는 메이커 인증 처리 시각", example = "2024-05-30 12:34:56")
+  @Schema(description = "최근 계좌 인증 처리 시각", example = "2024-05-30 12:34:56")
   @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-  private LocalDateTime lastVerificationAttempt;
+  private LocalDateTime accountLastVerificationAttempt;
+
+  @Schema(
+      description = "최근 메이커 인증 처리 메시지",
+      example = "제출된 사업자등록증이 식별되지 않습니다.",
+      type = "string",
+      requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  private String makerVerificationMessage;
+
+  @Schema(description = "최근 메이커 인증 처리 시각", example = "2024-05-30 12:34:56")
+  @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+  private LocalDateTime makerLastVerificationAttempt;
 }

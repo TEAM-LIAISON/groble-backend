@@ -56,6 +56,10 @@ public class QSellerInfo extends EntityPathBase<SellerInfo> {
 
     public final DateTimePath<java.time.LocalDateTime> lastVerificationAttempt = createDateTime("lastVerificationAttempt", java.time.LocalDateTime.class);
 
+    public final DateTimePath<java.time.LocalDateTime> makerLastVerificationAttempt = createDateTime("makerLastVerificationAttempt", java.time.LocalDateTime.class);
+
+    public final StringPath makerVerificationMessage = createString("makerVerificationMessage");
+
     public final StringPath representativeName = createString("representativeName");
 
     public final StringPath taxInvoiceEmail = createString("taxInvoiceEmail");
