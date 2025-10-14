@@ -2,11 +2,14 @@ package liaison.groble.application.notification.template;
 
 import java.math.BigDecimal;
 import java.text.NumberFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 
 public class MessageFormatter {
   private static final Locale KOREA = Locale.KOREA;
   private static final NumberFormat CURRENCY_FORMAT = NumberFormat.getNumberInstance(KOREA);
+  private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
   // [Groble] 회원가입 완료
   public static String welcome(String username) {
@@ -45,6 +48,18 @@ public class MessageFormatter {
     return String.format("%s님, 메이커 인증이 완료되었습니다!", sellerName);
   }
 
+  // [Groble] 인증 반려
+  public static String verificationRejected(String sellerName, String rejectionReason) {
+    String reason =
+        (rejectionReason == null || rejectionReason.isBlank())
+            ? "제출한 정보를 다시 확인해 주세요."
+            : rejectionReason;
+
+    return String.format(
+        "%s님, 메이커 인증이 반려되었습니다.\n" + "\n" + "- 반려 사유 : %s\n" + "\n" + "사유를 확인하고 메이커 인증을 다시 진행해 주세요.",
+        sellerName, reason);
+  }
+
   // [Groble] 결제 취소 알림
   public static String approveCancel(
       String buyerName, String contentTitle, BigDecimal refundedAmount) {
@@ -60,8 +75,18 @@ public class MessageFormatter {
         nickname, nickname);
   }
 
+  // [Groble] 정산 완료 안내
+  public static String settlementCompleted(
+      String sellerName, LocalDate settlementDate, String contentTypeLabel, BigDecimal amount) {
+    String dateText = settlementDate != null ? settlementDate.format(DATE_FORMATTER) : "";
+    return String.format(
+        "%s님, 정산이 완료되었습니다!\n" + "\n" + "- 정산일: %s\n" + "- 콘텐츠 종류: %s\n" + "- 정산 금액: %s원",
+        sellerName, dateText, contentTypeLabel, formatCurrency(amount));
+  }
+
   // 원화 표기법 포맷팅
   private static String formatCurrency(BigDecimal amount) {
-    return CURRENCY_FORMAT.format(amount);
+    BigDecimal value = amount != null ? amount : BigDecimal.ZERO;
+    return CURRENCY_FORMAT.format(value);
   }
 }
