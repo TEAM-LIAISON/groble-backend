@@ -9,6 +9,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -50,6 +52,7 @@ public class ReferrerService {
   private final UserReader userReader;
   private final ObjectMapper objectMapper;
   private final MeterRegistry meterRegistry;
+  private final ConcurrentMap<String, Boolean> marketLinkCache = new ConcurrentHashMap<>();
 
   public void recordContentReferrer(
       Long contentId,
@@ -381,6 +384,12 @@ public class ReferrerService {
       referrerDomain = resolveReferrerDomain(resolvedReferrerUrl);
     }
 
+    if (StringUtils.hasText(referrerDomain) && referrerDomain.contains("admin.groble.im")) {
+      log.debug("Skip admin referral for marketLinkUrl={}.", marketLinkUrl);
+      recordMetric("market", "ignored_admin");
+      return false;
+    }
+
     Optional<ReferrerTracking> existing =
         referrerTrackingRepository.findRecentMarketTracking(
             referrerDTO.getSessionId(), marketLinkUrl);
@@ -652,6 +661,10 @@ public class ReferrerService {
       }
       String lowerHost = host.toLowerCase();
 
+      if (isGroblePrimaryHost(lowerHost)) {
+        return canonicalizeGrobleInternalUrl(uri, host);
+      }
+
       if ("blog.naver.com".equals(lowerHost)) {
         String path = uri.getPath();
         if (path != null && path.equalsIgnoreCase("/PostView.naver")) {
@@ -668,6 +681,63 @@ public class ReferrerService {
     } catch (URISyntaxException e) {
       return url;
     }
+  }
+
+  private boolean isGroblePrimaryHost(String host) {
+    if (!StringUtils.hasText(host)) {
+      return false;
+    }
+    String normalized = host.startsWith("www.") ? host.substring(4) : host;
+    normalized = normalized.toLowerCase();
+    return "groble.im".equals(normalized);
+  }
+
+  private String canonicalizeGrobleInternalUrl(URI uri, String host) {
+    String baseUrl = buildBaseUrl(uri.getScheme(), host);
+    String marketCandidate = firstPathSegment(uri.getPath());
+    if (isKnownMarketLink(marketCandidate)) {
+      return baseUrl + "/" + marketCandidate;
+    }
+    return baseUrl;
+  }
+
+  private String buildBaseUrl(String scheme, String host) {
+    String effectiveScheme = StringUtils.hasText(scheme) ? scheme : "https";
+    String canonicalHost = host != null ? host.toLowerCase() : "";
+    if (canonicalHost.startsWith("www.")) {
+      canonicalHost = canonicalHost.substring(4);
+    }
+    return effectiveScheme + "://" + canonicalHost;
+  }
+
+  private String firstPathSegment(String path) {
+    if (!StringUtils.hasText(path)) {
+      return null;
+    }
+    String[] segments = path.split("/");
+    for (String segment : segments) {
+      if (StringUtils.hasText(segment)) {
+        return segment;
+      }
+    }
+    return null;
+  }
+
+  private boolean isKnownMarketLink(String candidate) {
+    if (!StringUtils.hasText(candidate)) {
+      return false;
+    }
+    Boolean cached = marketLinkCache.get(candidate);
+    if (Boolean.TRUE.equals(cached)) {
+      return true;
+    }
+    boolean exists = userReader.existsByMarketLinkUrl(candidate);
+    if (exists) {
+      marketLinkCache.put(candidate, Boolean.TRUE);
+    } else {
+      marketLinkCache.remove(candidate);
+    }
+    return exists;
   }
 
   private String getQueryParameter(URI uri, String... keys) {
