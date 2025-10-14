@@ -24,4 +24,29 @@ public class MarketViewLogRepositoryImpl implements MarketViewLogRepository {
   public List<MarketViewLog> findByViewedAtBetween(LocalDateTime start, LocalDateTime end) {
     return jpaMarketViewLogRepository.findByViewedAtBetween(start, end);
   }
+
+  @Override
+  public List<MarketViewLog> findByMarketIdAndViewedAtBetween(
+      Long marketId, LocalDateTime start, LocalDateTime end) {
+    if (marketId == null) {
+      return List.of();
+    }
+    return jpaMarketViewLogRepository.findByMarketIdAndViewedAtBetween(marketId, start, end);
+  }
+
+  @Override
+  public Long countViews(Long marketId, LocalDateTime start, LocalDateTime end) {
+    if (marketId == null) {
+      return 0L;
+    }
+    return jpaMarketViewLogRepository.countViews(marketId, start, end);
+  }
+
+  @Override
+  public Long countDistinctViewers(Long marketId, LocalDateTime start, LocalDateTime end) {
+    if (marketId == null) {
+      return 0L;
+    }
+    return jpaMarketViewLogRepository.countDistinctViewers(marketId, start, end);
+  }
 }

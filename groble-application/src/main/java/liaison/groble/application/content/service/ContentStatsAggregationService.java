@@ -82,12 +82,9 @@ public class ContentStatsAggregationService {
               long uniqueViewerCount =
                   items.stream()
                       .map(
-                          log -> {
-                            // 로그인 유저가 있으면 ID, 아니면 IP로 식별
-                            return log.getViewerId() != null
-                                ? log.getViewerId().toString()
-                                : log.getViewerIp();
-                          })
+                          log ->
+                              resolveVisitorKey(
+                                  log.getViewerId(), log.getVisitorHash(), log.getViewerIp()))
                       .filter(Objects::nonNull)
                       .distinct()
                       .count();
@@ -137,9 +134,8 @@ public class ContentStatsAggregationService {
                   items.stream()
                       .map(
                           log ->
-                              log.getViewerId() != null
-                                  ? log.getViewerId().toString()
-                                  : log.getViewerIp())
+                              resolveVisitorKey(
+                                  log.getViewerId(), log.getVisitorHash(), log.getViewerIp()))
                       .filter(Objects::nonNull)
                       .distinct()
                       .count();
@@ -161,5 +157,15 @@ public class ContentStatsAggregationService {
                   .build();
             })
         .collect(Collectors.toList());
+  }
+
+  private String resolveVisitorKey(Long viewerId, String visitorHash, String viewerIp) {
+    if (viewerId != null) {
+      return "user:" + viewerId;
+    }
+    if (visitorHash != null && !visitorHash.isBlank()) {
+      return "anon:" + visitorHash;
+    }
+    return viewerIp;
   }
 }

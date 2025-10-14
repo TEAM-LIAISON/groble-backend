@@ -41,8 +41,7 @@ spring:
     baseline-version: 0
     validate-on-migrate: true
     clean-disabled: true
-    placeholders:
-      "visitor.hash.salt": "N58ooxTxrCLvczQ79Ya2eg=="
+
 
   jpa:
     database-platform: org.hibernate.dialect.MySQL8Dialect
