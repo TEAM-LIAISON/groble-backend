@@ -48,10 +48,21 @@ public final class ApiPaths {
     public static final String ORDER_CANCELLATION_REASON =
         "/order/{merchantUid}/cancellation-reason";
 
-    public static final String MAKER_BASE = BASE + "/maker";
+    public static final String MAKER_PATH_PREFIX = "/maker";
+    public static final String MAKER_BASE = BASE + MAKER_PATH_PREFIX;
     public static final String MAKER_DETAIL = "/{nickname}";
     public static final String MAKER_VERIFY = "/verify";
     public static final String MAKER_MEMO = "/memo/{nickname}";
+    public static final String MAKER_DASHBOARD_BASE = "/{marketLinkUrl}/dashboard";
+    public static final String MAKER_DASHBOARD_OVERVIEW = MAKER_DASHBOARD_BASE + "/overview";
+    public static final String MAKER_DASHBOARD_CONTENTS = MAKER_DASHBOARD_BASE + "/my-contents";
+    public static final String MAKER_DASHBOARD_CONTENT_VIEW_STATS =
+        MAKER_DASHBOARD_BASE + "/content/view-stats";
+    public static final String MAKER_DASHBOARD_VIEW_STATS = MAKER_DASHBOARD_BASE + "/view-stats";
+    public static final String MAKER_DASHBOARD_MARKET_VIEW_STATS =
+        MAKER_DASHBOARD_BASE + "/market/view-stats";
+    public static final String MAKER_DASHBOARD_MARKET_REFERRER_STATS =
+        MAKER_DASHBOARD_BASE + "/market/referrer-stats";
     public static final String NOTIFICATIONS = "/notifications";
     public static final String NOTIFICATIONS_SCHEDULED = NOTIFICATIONS + "/scheduled";
     public static final String NOTIFICATIONS_SCHEDULED_ID = NOTIFICATIONS_SCHEDULED + "/{id}";

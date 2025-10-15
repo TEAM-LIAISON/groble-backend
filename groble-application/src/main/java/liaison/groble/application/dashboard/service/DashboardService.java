@@ -88,6 +88,11 @@ public class DashboardService {
   private final MarketViewStatsRepository marketViewStatsRepository;
   private final MarketViewStatsCustomRepository marketViewStatsCustomRepository;
 
+  private Long resolveUserIdByMarketLink(String marketLinkUrl) {
+    Market market = userReader.getMarketWithUser(marketLinkUrl);
+    return market.getUser().getId();
+  }
+
   @Transactional(readOnly = true)
   public DashboardOverviewDTO getDashboardOverview(Long userId) {
     SellerInfo sellerInfo = userReader.getSellerInfoWithUser(userId);
@@ -112,6 +117,12 @@ public class DashboardService {
   }
 
   @Transactional(readOnly = true)
+  public DashboardOverviewDTO getDashboardOverviewByMarketLink(String marketLinkUrl) {
+    Long userId = resolveUserIdByMarketLink(marketLinkUrl);
+    return getDashboardOverview(userId);
+  }
+
+  @Transactional(readOnly = true)
   public PageResponse<DashboardContentOverviewDTO> getMyContentsList(
       Long userId, Pageable pageable) {
     Page<FlatContentOverviewDTO> page = contentReader.findMyContentsBySellerId(userId, pageable);
@@ -126,6 +137,13 @@ public class DashboardService {
             .build();
 
     return PageResponse.from(page, items, meta);
+  }
+
+  @Transactional(readOnly = true)
+  public PageResponse<DashboardContentOverviewDTO> getMyContentsListByMarketLink(
+      String marketLinkUrl, Pageable pageable) {
+    Long userId = resolveUserIdByMarketLink(marketLinkUrl);
+    return getMyContentsList(userId, pageable);
   }
 
   @Transactional(readOnly = true)
@@ -166,6 +184,12 @@ public class DashboardService {
         .totalContentViews(totalContentViews)
         .totalMarketViews(totalMarketViews)
         .build();
+  }
+
+  @Transactional(readOnly = true)
+  public DashboardViewStatsDTO getViewStatsByMarketLink(String marketLinkUrl, String period) {
+    Long userId = resolveUserIdByMarketLink(marketLinkUrl);
+    return getViewStats(userId, period);
   }
 
   @Transactional(readOnly = true)
@@ -245,6 +269,13 @@ public class DashboardService {
             .build();
 
     return PageResponse.from(page, items, meta);
+  }
+
+  @Transactional(readOnly = true)
+  public PageResponse<ContentTotalViewStatsDTO> getContentTotalViewStatsByMarketLink(
+      String marketLinkUrl, String period, Pageable pageable) {
+    Long userId = resolveUserIdByMarketLink(marketLinkUrl);
+    return getContentTotalViewStats(userId, period, pageable);
   }
 
   @Transactional(readOnly = true)
@@ -377,6 +408,13 @@ public class DashboardService {
             .build();
 
     return PageResponse.from(completePage, items, meta);
+  }
+
+  @Transactional(readOnly = true)
+  public PageResponse<MarketViewStatsDTO> getMarketViewStatsByMarketLink(
+      String marketLinkUrl, String period, Pageable pageable) {
+    Long userId = resolveUserIdByMarketLink(marketLinkUrl);
+    return getMarketViewStats(userId, period, pageable);
   }
 
   @Transactional(readOnly = true)
@@ -612,6 +650,13 @@ public class DashboardService {
             .build();
 
     return PageResponse.from(page, items, meta);
+  }
+
+  @Transactional(readOnly = true)
+  public PageResponse<ReferrerStatsDTO> getMarketReferrerStatsByMarketLink(
+      String marketLinkUrl, String period, Pageable pageable) {
+    Long userId = resolveUserIdByMarketLink(marketLinkUrl);
+    return getMarketReferrerStats(userId, period, pageable);
   }
 
   private ReferrerStatsDTO toReferrerStatsDTO(FlatReferrerStatsDTO flatReferrerStatsDTO) {
