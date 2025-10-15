@@ -35,4 +35,35 @@ public final class AdminMakerSwaggerDocs {
           특정 메이커에 대한 관리자 메모를 추가 또는 갱신합니다.
           \n- 기존 메모가 존재하면 덮어쓰고, 없으면 새로 생성합니다.
           """;
+
+  // === 메이커 대시보드 모니터링 ===
+  public static final String MAKER_DASHBOARD_OVERVIEW_SUMMARY = "[✅ 관리자 메이커] 메이커 대시보드 개요 조회";
+  public static final String MAKER_DASHBOARD_OVERVIEW_DESCRIPTION =
+      """
+          marketLinkUrl을 기준으로 메이커 대시보드 개요 지표를 조회합니다.
+          \n- 총 매출, 판매 건수, 검수 상태 등을 확인할 수 있습니다.
+          """;
+
+  public static final String MAKER_DASHBOARD_VIEW_STATS_SUMMARY = "[✅ 관리자 메이커] 메이커 대시보드 조회수 요약 조회";
+  public static final String MAKER_DASHBOARD_VIEW_STATS_DESCRIPTION =
+      """
+          지정한 기간 동안의 마켓 및 콘텐츠 조회수 총합을 조회합니다.
+          \n- TODAY, LAST_7_DAYS, LAST_30_DAYS, THIS_MONTH, LAST_MONTH 구간을 지원합니다.
+          """;
+
+  public static final String MAKER_DASHBOARD_MARKET_VIEW_STATS_SUMMARY =
+      "[✅ 관리자 메이커] 메이커 대시보드 마켓 조회수 통계 조회";
+  public static final String MAKER_DASHBOARD_MARKET_VIEW_STATS_DESCRIPTION =
+      """
+          기간별 마켓 조회수를 일자 단위로 조회합니다.
+          \n- 조회 기간에 따라 일수만큼 페이지 크기가 동적으로 조정됩니다.
+          """;
+
+  public static final String MAKER_DASHBOARD_MARKET_REFERRER_STATS_SUMMARY =
+      "[✅ 관리자 메이커] 메이커 대시보드 마켓 유입경로 조회";
+  public static final String MAKER_DASHBOARD_MARKET_REFERRER_STATS_DESCRIPTION =
+      """
+          기간별 마켓 유입경로 통계를 조회합니다.
+          \n- utm 정보와 도메인 정보를 포함한 방문 수를 확인할 수 있습니다.
+          """;
 }

@@ -27,4 +27,20 @@ public final class AdminContentSwaggerDocs {
           \n- 승인 시 콘텐츠는 판매 가능 상태로 전환됩니다.
           - 반려 시 반려 사유와 함께 심사 상태가 업데이트됩니다.
           """;
+
+  // === 메이커 대시보드 모니터링 ===
+  public static final String MAKER_DASHBOARD_CONTENTS_SUMMARY = "[✅ 관리자 콘텐츠] 메이커 대시보드 콘텐츠 목록 조회";
+  public static final String MAKER_DASHBOARD_CONTENTS_DESCRIPTION =
+      """
+          marketLinkUrl을 기준으로 메이커 대시보드에 노출되는 콘텐츠 목록을 조회합니다.
+          \n- 관리자 페이지에서 동일한 정렬/페이징 규칙으로 모니터링할 수 있습니다.
+          """;
+
+  public static final String MAKER_DASHBOARD_CONTENT_VIEW_STATS_SUMMARY =
+      "[✅ 관리자 콘텐츠] 메이커 대시보드 콘텐츠 조회수 통계 조회";
+  public static final String MAKER_DASHBOARD_CONTENT_VIEW_STATS_DESCRIPTION =
+      """
+          지정한 기간 동안의 콘텐츠별 조회수 합계를 조회합니다.
+          \n- TODAY, LAST_7_DAYS, LAST_30_DAYS, THIS_MONTH, LAST_MONTH 구간을 지원합니다.
+          """;
 }
