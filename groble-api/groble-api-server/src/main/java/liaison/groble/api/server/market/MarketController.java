@@ -238,13 +238,15 @@ public class MarketController {
       includeResult = true)
   @PostMapping(MARKET_REFERRER_PATH)
   public ResponseEntity<GrobleResponse<Void>> recordMarketReferrer(
+      @Auth(required = false) Accessor accessor,
       @Valid @PathVariable("marketLinkUrl") String marketLinkUrl,
       @Valid @RequestBody ReferrerRequest referrerRequest) {
     ReferrerDTO referrerDTO = referrerMapper.toContentReferrerDTO(referrerRequest);
     String userAgent = requestUtil.getUserAgent();
     String clientIp = requestUtil.getClientIp();
     String referer = requestUtil.getReferer();
-    referrerService.recordMarketReferrer(marketLinkUrl, referrerDTO, referer, userAgent, clientIp);
+    referrerService.recordMarketReferrer(
+        marketLinkUrl, referrerDTO, referer, userAgent, clientIp, accessor.getUserId());
     return responseHelper.success(null, MARKET_REFERRER_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 }

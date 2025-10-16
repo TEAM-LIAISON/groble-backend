@@ -458,13 +458,15 @@ public class ContentController {
       includeResult = true)
   @PostMapping(CONTENT_REFERRER_PATH)
   public ResponseEntity<GrobleResponse<Void>> recordContentReferrer(
+      @Auth(required = false) Accessor accessor,
       @PathVariable("contentId") Long contentId,
       @Valid @RequestBody ReferrerRequest referrerRequest) {
     ReferrerDTO referrerDTO = referrerMapper.toContentReferrerDTO(referrerRequest);
     String userAgent = requestUtil.getUserAgent();
     String clientIp = requestUtil.getClientIp();
     String referer = requestUtil.getReferer();
-    referrerService.recordContentReferrer(contentId, referrerDTO, referer, userAgent, clientIp);
+    referrerService.recordContentReferrer(
+        contentId, referrerDTO, referer, userAgent, clientIp, accessor.getUserId());
     return responseHelper.success(null, CONTENT_REFERRAL_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 }
