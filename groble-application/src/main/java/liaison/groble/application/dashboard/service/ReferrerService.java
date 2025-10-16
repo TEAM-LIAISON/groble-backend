@@ -18,8 +18,10 @@ import org.springframework.util.StringUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import liaison.groble.application.content.ContentReader;
 import liaison.groble.application.dashboard.dto.referrer.ReferrerDTO;
 import liaison.groble.application.user.service.UserReader;
+import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.dashboard.entity.ContentReferrerEvent;
 import liaison.groble.domain.dashboard.entity.ContentReferrerStats;
 import liaison.groble.domain.dashboard.entity.MarketReferrerEvent;
@@ -50,6 +52,7 @@ public class ReferrerService {
   private final MarketReferrerEventRepository marketReferrerEventRepository;
   private final ReferrerTrackingRepository referrerTrackingRepository;
   private final UserReader userReader;
+  private final ContentReader contentReader;
   private final ObjectMapper objectMapper;
   private final MeterRegistry meterRegistry;
   private final ConcurrentMap<String, Boolean> marketLinkCache = new ConcurrentHashMap<>();
@@ -59,10 +62,31 @@ public class ReferrerService {
       ReferrerDTO referrerDTO,
       String refererHeader,
       String userAgent,
-      String clientIp) {
+      String clientIp,
+      Long userId) {
     if (referrerDTO == null) {
       log.warn("Received null ReferrerDTO for contentId={}.", contentId);
       return;
+    }
+
+    if (userId != null) {
+      try {
+        Content content = contentReader.getContentById(contentId);
+        if (content.getUser() != null && userId.equals(content.getUser().getId())) {
+          log.debug(
+              "Skipping content referrer tracking for own content. contentId={}, userId={}",
+              contentId,
+              userId);
+          recordMetric("content", "self_view");
+          return;
+        }
+      } catch (Exception e) {
+        log.warn(
+            "Could not verify content ownership for self-view check. contentId={}, userId={}",
+            contentId,
+            userId,
+            e);
+      }
     }
 
     boolean persisted;
@@ -104,26 +128,29 @@ public class ReferrerService {
       ReferrerDTO referrerDTO,
       String refererHeader,
       String userAgent,
-      String clientIp) {
+      String clientIp,
+      Long userId) {
     if (referrerDTO == null) {
       log.warn("Received null ReferrerDTO for marketLinkUrl={}.", marketLinkUrl);
       return;
     }
 
-    log.info("=== MARKET REFERRER DEBUG START ===");
-    log.info("MarketLinkUrl: {}", marketLinkUrl);
-    log.info(
-        "Incoming ReferrerDTO: pageUrl={}, referrerUrl={}, utmSource={}, utmMedium={}, utmCampaign={}, utmContent={}, utmTerm={}, landingPage={}, lastPage={}, sessionId={}",
-        referrerDTO.getPageUrl(),
-        referrerDTO.getReferrerUrl(),
-        referrerDTO.getUtmSource(),
-        referrerDTO.getUtmMedium(),
-        referrerDTO.getUtmCampaign(),
-        referrerDTO.getUtmContent(),
-        referrerDTO.getUtmTerm(),
-        referrerDTO.getLandingPageUrl(),
-        referrerDTO.getLastPageUrl(),
-        referrerDTO.getSessionId());
+    Market market;
+    try {
+      market = userReader.getMarketWithUser(marketLinkUrl);
+    } catch (Exception e) {
+      log.error("Failed to find market for referrer tracking: {}", marketLinkUrl, e);
+      return;
+    }
+
+    if (userId != null && market.getUser() != null && userId.equals(market.getUser().getId())) {
+      log.debug(
+          "Skipping market referrer tracking for own market. marketLinkUrl={}, userId={}",
+          marketLinkUrl,
+          userId);
+      recordMetric("market", "self_view");
+      return;
+    }
 
     boolean persisted;
     try {
@@ -147,7 +174,6 @@ public class ReferrerService {
     }
 
     try {
-      Market market = userReader.getMarketWithUser(marketLinkUrl);
       log.info("Found Market: id={}, linkUrl={}", market.getId(), market.getMarketLinkUrl());
 
       MarketReferrerStats stats = findOrCreateMarketReferrerStats(market.getId(), referrerDTO);
@@ -233,6 +259,16 @@ public class ReferrerService {
     }
 
     String referrerDomain = resolveReferrerDomain(resolvedReferrerUrl);
+
+    if (ReferrerDomainUtils.isInternalDomain(referrerDomain)) {
+      if (!StringUtils.hasText(referrerDTO.getUtmSource())
+          && !StringUtils.hasText(referrerDTO.getUtmMedium())
+          && !StringUtils.hasText(referrerDTO.getUtmCampaign())) {
+        resolvedReferrerUrl = null;
+        referrerDomain = null;
+      }
+    }
+
     String lastPageUrl = referrerDTO.getLastPageUrl();
     if (!StringUtils.hasText(referrerDomain) && StringUtils.hasText(lastPageUrl)) {
       resolvedReferrerUrl = normalizeReferrerUrl(lastPageUrl, referrerDTO.getPageUrl());
@@ -277,16 +313,7 @@ public class ReferrerService {
 
     if (existing.isPresent()) {
       ReferrerTracking tracking = existing.get();
-      if (isDuplicateTracking(
-          tracking,
-          referrerDTO,
-          chainJson,
-          metadataJson,
-          resolvedReferrerUrl,
-          referrerDomain,
-          eventTimestamp,
-          sanitizedUserAgent,
-          maskedIp)) {
+      if (isDuplicateTracking(tracking, referrerDTO, resolvedReferrerUrl, eventTimestamp)) {
         log.debug(
             "Detected duplicate content tracking. contentId={}, sessionId={}, pageUrl={}",
             contentId,
@@ -376,6 +403,16 @@ public class ReferrerService {
     }
 
     String referrerDomain = resolveReferrerDomain(resolvedReferrerUrl);
+
+    if (ReferrerDomainUtils.isInternalDomain(referrerDomain)) {
+      if (!StringUtils.hasText(referrerDTO.getUtmSource())
+          && !StringUtils.hasText(referrerDTO.getUtmMedium())
+          && !StringUtils.hasText(referrerDTO.getUtmCampaign())) {
+        resolvedReferrerUrl = null;
+        referrerDomain = null;
+      }
+    }
+
     String lastPageUrl = referrerDTO.getLastPageUrl();
     if ((!StringUtils.hasText(referrerDomain)
             || ReferrerDomainUtils.isInternalDomain(referrerDomain))
@@ -396,16 +433,7 @@ public class ReferrerService {
 
     if (existing.isPresent()) {
       ReferrerTracking tracking = existing.get();
-      if (isDuplicateTracking(
-          tracking,
-          referrerDTO,
-          chainJson,
-          metadataJson,
-          resolvedReferrerUrl,
-          referrerDomain,
-          eventTimestamp,
-          sanitizedUserAgent,
-          maskedIp)) {
+      if (isDuplicateTracking(tracking, referrerDTO, resolvedReferrerUrl, eventTimestamp)) {
         log.debug(
             "Detected duplicate market tracking. marketLinkUrl={}, sessionId={}, pageUrl={}",
             marketLinkUrl,
@@ -661,8 +689,8 @@ public class ReferrerService {
       }
       String lowerHost = host.toLowerCase();
 
-      if (isGroblePrimaryHost(lowerHost)) {
-        return canonicalizeGrobleInternalUrl(uri, host);
+      if (ReferrerDomainUtils.isInternalDomain(lowerHost)) {
+        return canonicalizeGrobleInternalUrl(uri);
       }
 
       if ("blog.naver.com".equals(lowerHost)) {
@@ -683,31 +711,13 @@ public class ReferrerService {
     }
   }
 
-  private boolean isGroblePrimaryHost(String host) {
-    if (!StringUtils.hasText(host)) {
-      return false;
-    }
-    String normalized = host.startsWith("www.") ? host.substring(4) : host;
-    normalized = normalized.toLowerCase();
-    return "groble.im".equals(normalized);
-  }
-
-  private String canonicalizeGrobleInternalUrl(URI uri, String host) {
-    String baseUrl = buildBaseUrl(uri.getScheme(), host);
+  private String canonicalizeGrobleInternalUrl(URI uri) {
+    String baseUrl = "https://groble.im";
     String marketCandidate = firstPathSegment(uri.getPath());
     if (isKnownMarketLink(marketCandidate)) {
       return baseUrl + "/" + marketCandidate;
     }
     return baseUrl;
-  }
-
-  private String buildBaseUrl(String scheme, String host) {
-    String effectiveScheme = StringUtils.hasText(scheme) ? scheme : "https";
-    String canonicalHost = host != null ? host.toLowerCase() : "";
-    if (canonicalHost.startsWith("www.")) {
-      canonicalHost = canonicalHost.substring(4);
-    }
-    return effectiveScheme + "://" + canonicalHost;
   }
 
   private String firstPathSegment(String path) {
@@ -897,25 +907,15 @@ public class ReferrerService {
   private boolean isDuplicateTracking(
       ReferrerTracking existing,
       ReferrerDTO incoming,
-      String incomingChain,
-      String incomingMetadata,
       String incomingReferrerUrl,
-      String incomingReferrerDomain,
-      LocalDateTime incomingTimestamp,
-      String sanitizedUserAgent,
-      String maskedIpAddress) {
+      LocalDateTime incomingTimestamp) {
 
     boolean matchesCore =
-        equalsNullable(existing.getPageUrl(), incoming.getPageUrl())
+        equalsNullable(existing.getSessionId(), incoming.getSessionId())
             && equalsNullable(existing.getReferrerUrl(), incomingReferrerUrl)
-            && equalsNullable(existing.getReferrerDomain(), incomingReferrerDomain)
-            && equalsNullable(existing.getLandingPageUrl(), incoming.getLandingPageUrl())
-            && equalsNullable(existing.getLastPageUrl(), incoming.getLastPageUrl())
-            && equalsNullable(existing.getReferrerChain(), incomingChain)
-            && equalsNullable(existing.getReferrerMetadata(), incomingMetadata)
-            && equalsNullable(existing.getSessionId(), incoming.getSessionId())
-            && equalsNullable(existing.getUserAgent(), sanitizedUserAgent)
-            && equalsNullable(existing.getIpAddress(), maskedIpAddress);
+            && equalsNullable(existing.getUtmSource(), incoming.getUtmSource())
+            && equalsNullable(existing.getUtmMedium(), incoming.getUtmMedium())
+            && equalsNullable(existing.getUtmCampaign(), incoming.getUtmCampaign());
 
     if (!matchesCore) {
       return false;
