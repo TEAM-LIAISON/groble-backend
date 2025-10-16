@@ -310,18 +310,14 @@ public class SellerInfo {
   }
 
   // 메이커 인증 완료
-  public void updateApprovedMaker(
-      Boolean isBusinessSeller, SellerVerificationStatus sellerVerificationStatus) {
+  public void updateApprovedMaker(Boolean isBusinessSeller) {
     this.isBusinessSeller = isBusinessSeller;
-    this.verificationStatus = sellerVerificationStatus;
     this.makerVerificationMessage = null;
     this.makerLastVerificationAttempt = LocalDateTime.now();
   }
 
   // 메이커 인증 거절
-  public void updateRejectedMaker(
-      SellerVerificationStatus sellerVerificationStatus, String rejectionMessage) {
-    this.verificationStatus = sellerVerificationStatus;
+  public void updateRejectedMaker(String rejectionMessage) {
     this.makerVerificationMessage = rejectionMessage;
     this.makerLastVerificationAttempt = LocalDateTime.now();
   }
