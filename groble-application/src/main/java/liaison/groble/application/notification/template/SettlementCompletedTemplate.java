@@ -43,6 +43,12 @@ public class SettlementCompletedTemplate implements KakaoTemplate {
   @Override
   public List<ButtonInfo> buildButtons(
       KakaoNotificationDTO kakaoNotificationDTO, NotificationUrlBuilder urlBuilder) {
-    return Collections.emptyList();
+    return Collections.singletonList(
+        ButtonInfo.builder()
+            .name("확인하러 가기")
+            .type("WL")
+            .urlMobile(urlBuilder.getBaseUrl())
+            .urlPc(urlBuilder.getBaseUrl())
+            .build());
   }
 }
