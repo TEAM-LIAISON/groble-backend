@@ -21,6 +21,10 @@ public class AdminUserSummaryInfoResponse {
   @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
   private LocalDateTime createdAt;
 
+  @Schema(description = "사용자 마지막 로그인 시간", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+  private LocalDateTime lastLoginAt;
+
   @Schema(
       description = "메이커 이용 약관 동의 여부 (true: 메이커 및 구매자, false: 구매자)",
       example = "true",

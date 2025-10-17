@@ -313,6 +313,7 @@ public class UserCustomRepositoryImpl implements UserCustomRepository {
                 Projections.constructor(
                     FlatAdminUserSummaryInfoDTO.class,
                     qUser.createdAt.as("createdAt"),
+                    qUser.lastLoginAt.as("lastLoginAt"),
                     sellerAgreedExists.as("isSellerTermsAgreed"),
                     qUser.userProfile.nickname.as("nickname"),
                     qInt.integratedAccountEmail.coalesce(qSoc.socialAccountEmail),
