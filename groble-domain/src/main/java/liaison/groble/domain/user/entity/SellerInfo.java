@@ -146,6 +146,10 @@ public class SellerInfo {
     this.lastVerificationAttempt = LocalDateTime.now();
   }
 
+  public void updateVerificationMessage(String message) {
+    this.verificationMessage = message;
+  }
+
   public void updateSellerInfos(SellerInfo updatedInfo) {
     if (updatedInfo.getBusinessType() != null) {
       this.businessType = updatedInfo.getBusinessType();
