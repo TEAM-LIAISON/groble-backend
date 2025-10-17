@@ -157,6 +157,7 @@ public class AdminUserService {
   private AdminUserSummaryInfoDTO convertFlatDTOToInfoResponse(FlatAdminUserSummaryInfoDTO flat) {
     return AdminUserSummaryInfoDTO.builder()
         .createdAt(flat.getCreatedAt())
+        .lastLoginAt(flat.getLastLoginAt())
         .isSellerTermsAgreed(flat.isSellerTermsAgreed())
         .nickname(flat.getNickname())
         .email(flat.getEmail())
