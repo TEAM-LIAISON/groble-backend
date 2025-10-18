@@ -314,10 +314,12 @@ public class SellerInfo {
   }
 
   // 메이커 인증 완료
-  public void updateApprovedMaker(Boolean isBusinessSeller) {
+  public void updateApprovedMaker(
+      SellerVerificationStatus sellerVerificationStatus, Boolean isBusinessSeller) {
     this.isBusinessSeller = isBusinessSeller;
     this.makerVerificationMessage = null;
     this.makerLastVerificationAttempt = LocalDateTime.now();
+    this.verificationStatus = sellerVerificationStatus;
   }
 
   // 메이커 인증 거절
