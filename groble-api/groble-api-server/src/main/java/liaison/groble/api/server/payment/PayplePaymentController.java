@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import liaison.groble.api.model.payment.request.PaymentCancelRequest;
@@ -124,7 +125,9 @@ public class PayplePaymentController extends BaseController {
       summary = "모바일 Payple 결제 리다이렉트",
       description = "모바일 환경에서 Payple 결제 완료 후 프론트엔드 결제 완료 페이지로 리다이렉트합니다.")
   @Logging(item = "Payment", action = "MobileRedirect", includeParam = true, includeResult = false)
-  @PostMapping(ApiPaths.Payment.MOBILE_REDIRECT)
+  @RequestMapping(
+      value = ApiPaths.Payment.MOBILE_REDIRECT,
+      method = {RequestMethod.GET, RequestMethod.POST})
   public void handleMobileRedirect(
       @RequestParam(value = "PCD_PAY_OID", required = true) String merchantUid,
       @RequestParam(value = "PCD_PAY_RST", required = false, defaultValue = "error")
