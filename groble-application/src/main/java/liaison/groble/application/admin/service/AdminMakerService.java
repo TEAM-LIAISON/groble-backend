@@ -15,6 +15,7 @@ import liaison.groble.domain.file.repository.FileRepository;
 import liaison.groble.domain.market.entity.Market;
 import liaison.groble.domain.user.entity.SellerInfo;
 import liaison.groble.domain.user.entity.User;
+import liaison.groble.domain.user.enums.SellerVerificationStatus;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -88,7 +89,8 @@ public class AdminMakerService {
   public void approveMaker(String nickname) {
     SellerInfo sellerInfo = userReader.getSellerInfoWithUser(nickname);
 
-    sellerInfo.updateApprovedMaker(sellerInfo.isBusinessMakerVerificationRequested());
+    sellerInfo.updateApprovedMaker(
+        SellerVerificationStatus.VERIFIED, sellerInfo.isBusinessMakerVerificationRequested());
 
     notificationService.sendMakerCertifiedVerificationNotification(sellerInfo.getUser());
 
