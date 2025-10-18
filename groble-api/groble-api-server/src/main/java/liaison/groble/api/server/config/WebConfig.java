@@ -41,9 +41,7 @@ public class WebConfig implements WebMvcConfigurer {
             "http://localhost:3000",
             "http://localhost:3001",
             "https://*.groble.im", // ← www, api, dev 모두 허용
-            "https://*.payple.kr",
-            "https://*.paple.kr"
-            )
+            "https://*.payple.kr")
         .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS") // 허용할 HTTP 메서드
         .allowedHeaders("*") // 모든 헤더 허용
         .allowCredentials(true) // 쿠키 포함 요청 허용

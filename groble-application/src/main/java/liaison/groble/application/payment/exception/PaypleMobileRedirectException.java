@@ -29,6 +29,12 @@ public class PaypleMobileRedirectException extends RuntimeException {
     return new PaypleMobileRedirectException(DEFAULT_CLIENT_MESSAGE, message, cause);
   }
 
+  public static PaypleMobileRedirectException orderUserMissing(
+      String merchantUid, Throwable cause) {
+    String message = String.format("주문에 연결된 사용자 정보를 찾을 수 없습니다. merchantUid=%s", merchantUid);
+    return new PaypleMobileRedirectException(DEFAULT_CLIENT_MESSAGE, message, cause);
+  }
+
   public static PaypleMobileRedirectException unexpected(Throwable cause) {
     String message = "모바일 결제 리다이렉트 처리 중 예기치 못한 오류가 발생했습니다.";
     return new PaypleMobileRedirectException(DEFAULT_CLIENT_MESSAGE, message, cause);
