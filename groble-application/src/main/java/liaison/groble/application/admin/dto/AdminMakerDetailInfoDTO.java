@@ -30,6 +30,8 @@ public class AdminMakerDetailInfoDTO {
   private String birthDate;
   private String marketLinkUrl;
   private String adminMemo;
-  private String verificationMessage;
-  private LocalDateTime lastVerificationAttempt;
+  private String accountVerificationMessage;
+  private LocalDateTime accountLastVerificationAttempt;
+  private String makerVerificationMessage;
+  private LocalDateTime makerLastVerificationAttempt;
 }

@@ -9,4 +9,11 @@ public interface ContentViewLogRepository {
   ContentViewLog save(ContentViewLog contentViewLog);
 
   List<ContentViewLog> findByViewedAtBetween(LocalDateTime start, LocalDateTime end);
+
+  List<ContentViewLog> findByContentIdsAndViewedAtBetween(
+      List<Long> contentIds, LocalDateTime start, LocalDateTime end);
+
+  Long countViews(List<Long> contentIds, LocalDateTime start, LocalDateTime end);
+
+  Long countDistinctViewers(List<Long> contentIds, LocalDateTime start, LocalDateTime end);
 }

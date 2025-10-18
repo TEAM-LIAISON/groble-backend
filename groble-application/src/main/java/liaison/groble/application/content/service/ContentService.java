@@ -593,9 +593,6 @@ public class ContentService {
     List<ContentOptionDTO> options =
         dto.getOptions() != null ? dto.getOptions() : Collections.emptyList();
 
-    // 옵션 추가 전에 최저가 계산을 위한 리스트 생성
-    List<BigDecimal> validPrices = new ArrayList<>();
-
     for (ContentOptionDTO optionDTO : options) {
       // null 옵션 건너뛰기
       if (optionDTO == null) continue;
@@ -610,24 +607,10 @@ public class ContentService {
       ContentOption option = createOptionByContentType(content.getContentType(), optionDTO);
       if (option != null) {
         content.addOption(option);
-
-        // 유효한 가격인 경우 최저가 계산용 리스트에 추가
-        if (option.getPrice() != null) {
-          validPrices.add(option.getPrice());
-        }
       }
     }
 
-    // 최저가 계산 및 설정
-    if (!validPrices.isEmpty()) {
-      BigDecimal lowestPrice = Collections.min(validPrices);
-      content.setLowestPrice(lowestPrice);
-      log.debug("콘텐츠 최저가 설정: {}", lowestPrice);
-    } else {
-      // 유효한 가격이 없는 경우 최저가를 null로 설정
-      content.setLowestPrice(null);
-      log.debug("유효한 가격이 없어 최저가를 null로 설정");
-    }
+    updateLowestPriceFromActiveOptions(content);
   }
 
   /** Content 유형에 맞는 옵션을 생성합니다. */
@@ -1022,6 +1005,27 @@ public class ContentService {
           content.addOption(newOption);
           log.info("새 옵션 추가: name={}, price={}", newOption.getName(), newOption.getPrice());
         });
+
+    updateLowestPriceFromActiveOptions(content);
+  }
+
+  private void updateLowestPriceFromActiveOptions(Content content) {
+    List<BigDecimal> validPrices =
+        content.getOptions().stream()
+            .filter(ContentOption::isActive)
+            .map(ContentOption::getPrice)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toList());
+
+    if (validPrices.isEmpty()) {
+      content.setLowestPrice(null);
+      log.debug("활성화된 옵션 가격이 없어 최저가를 null로 설정: contentId={}", content.getId());
+      return;
+    }
+
+    BigDecimal lowestPrice = Collections.min(validPrices);
+    content.setLowestPrice(lowestPrice);
+    log.debug("콘텐츠 최저가 갱신: contentId={}, lowestPrice={}", content.getId(), lowestPrice);
   }
 
   private boolean hasOptionChanges(

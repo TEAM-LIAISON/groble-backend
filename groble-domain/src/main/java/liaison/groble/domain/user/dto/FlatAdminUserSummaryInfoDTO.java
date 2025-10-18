@@ -13,6 +13,7 @@ import lombok.NoArgsConstructor;
 @Builder
 public class FlatAdminUserSummaryInfoDTO {
   private LocalDateTime createdAt;
+  private LocalDateTime lastLoginAt;
 
   private boolean isSellerTermsAgreed;
 

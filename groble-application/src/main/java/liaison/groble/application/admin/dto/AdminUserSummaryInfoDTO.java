@@ -9,6 +9,7 @@ import lombok.Getter;
 @Builder
 public class AdminUserSummaryInfoDTO {
   private final LocalDateTime createdAt;
+  private final LocalDateTime lastLoginAt;
 
   private boolean isSellerTermsAgreed;
 

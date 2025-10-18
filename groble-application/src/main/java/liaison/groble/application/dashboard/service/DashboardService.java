@@ -1,6 +1,7 @@
 package liaison.groble.application.dashboard.service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.Collections;
 import java.util.Comparator;
@@ -36,8 +37,11 @@ import liaison.groble.domain.dashboard.dto.FlatContentViewStatsDTO;
 import liaison.groble.domain.dashboard.dto.FlatDashboardOverviewDTO;
 import liaison.groble.domain.dashboard.dto.FlatMarketViewStatsDTO;
 import liaison.groble.domain.dashboard.dto.FlatReferrerStatsDTO;
+import liaison.groble.domain.dashboard.entity.ContentViewLog;
+import liaison.groble.domain.dashboard.repository.ContentViewLogRepository;
 import liaison.groble.domain.dashboard.repository.ContentViewStatsCustomRepository;
 import liaison.groble.domain.dashboard.repository.ContentViewStatsRepository;
+import liaison.groble.domain.dashboard.repository.MarketViewLogRepository;
 import liaison.groble.domain.dashboard.repository.MarketViewStatsCustomRepository;
 import liaison.groble.domain.dashboard.repository.MarketViewStatsRepository;
 import liaison.groble.domain.dashboard.repository.ReferrerTrackingQueryRepository;
@@ -56,7 +60,6 @@ public class DashboardService {
       Set.of(
           "instagram.com",
           "threads.com",
-          "threads.net",
           "facebook.com",
           "fb.com",
           "tiktok.com",
@@ -77,11 +80,18 @@ public class DashboardService {
   private final PurchaseReader purchaseReader;
 
   // Repository
+  private final ContentViewLogRepository contentViewLogRepository;
   private final ContentViewStatsRepository contentViewStatsRepository;
   private final ContentViewStatsCustomRepository contentViewStatsCustomRepository;
   private final ReferrerTrackingQueryRepository referrerTrackingQueryRepository;
+  private final MarketViewLogRepository marketViewLogRepository;
   private final MarketViewStatsRepository marketViewStatsRepository;
   private final MarketViewStatsCustomRepository marketViewStatsCustomRepository;
+
+  private Long resolveUserIdByMarketLink(String marketLinkUrl) {
+    Market market = userReader.getMarketWithUser(marketLinkUrl);
+    return market.getUser().getId();
+  }
 
   @Transactional(readOnly = true)
   public DashboardOverviewDTO getDashboardOverview(Long userId) {
@@ -107,6 +117,12 @@ public class DashboardService {
   }
 
   @Transactional(readOnly = true)
+  public DashboardOverviewDTO getDashboardOverviewByMarketLink(String marketLinkUrl) {
+    Long userId = resolveUserIdByMarketLink(marketLinkUrl);
+    return getDashboardOverview(userId);
+  }
+
+  @Transactional(readOnly = true)
   public PageResponse<DashboardContentOverviewDTO> getMyContentsList(
       Long userId, Pageable pageable) {
     Page<FlatContentOverviewDTO> page = contentReader.findMyContentsBySellerId(userId, pageable);
@@ -121,6 +137,13 @@ public class DashboardService {
             .build();
 
     return PageResponse.from(page, items, meta);
+  }
+
+  @Transactional(readOnly = true)
+  public PageResponse<DashboardContentOverviewDTO> getMyContentsListByMarketLink(
+      String marketLinkUrl, Pageable pageable) {
+    Long userId = resolveUserIdByMarketLink(marketLinkUrl);
+    return getMyContentsList(userId, pageable);
   }
 
   @Transactional(readOnly = true)
@@ -164,6 +187,12 @@ public class DashboardService {
   }
 
   @Transactional(readOnly = true)
+  public DashboardViewStatsDTO getViewStatsByMarketLink(String marketLinkUrl, String period) {
+    Long userId = resolveUserIdByMarketLink(marketLinkUrl);
+    return getViewStats(userId, period);
+  }
+
+  @Transactional(readOnly = true)
   public PageResponse<ContentTotalViewStatsDTO> getContentTotalViewStats(
       Long userId, String period, Pageable pageable) {
     LocalDate endDate;
@@ -199,9 +228,38 @@ public class DashboardService {
         contentViewStatsCustomRepository.findTotalViewsByPeriodTypeAndStatDateBetween(
             userId, PeriodType.DAILY, startDate, endDate, pageable);
 
+    Map<Long, Long> todayViewIncrements;
+    if (endDate.isEqual(LocalDate.now())) {
+      List<Long> contentIdsForUser = contentReader.findIdsByUserId(userId);
+      if (!contentIdsForUser.isEmpty()) {
+        LocalDate today = LocalDate.now();
+        LocalDateTime todayStart = today.atStartOfDay();
+        LocalDateTime todayEnd = today.plusDays(1).atStartOfDay();
+        todayViewIncrements =
+            contentViewLogRepository
+                .findByContentIdsAndViewedAtBetween(contentIdsForUser, todayStart, todayEnd)
+                .stream()
+                .collect(
+                    Collectors.groupingBy(ContentViewLog::getContentId, Collectors.counting()));
+      } else {
+        todayViewIncrements = Collections.emptyMap();
+      }
+    } else {
+      todayViewIncrements = Collections.emptyMap();
+    }
+    final Map<Long, Long> todayViewIncrementMap = todayViewIncrements;
+
     List<ContentTotalViewStatsDTO> items =
         page.getContent().stream()
-            .map(this::toContentTotalViewStatsDTO)
+            .map(
+                dto ->
+                    ContentTotalViewStatsDTO.builder()
+                        .contentId(dto.getContentId())
+                        .contentTitle(dto.getContentTitle())
+                        .totalViews(
+                            (dto.getTotalViews() != null ? dto.getTotalViews() : 0L)
+                                + todayViewIncrementMap.getOrDefault(dto.getContentId(), 0L))
+                        .build())
             .collect(Collectors.toList());
 
     PageResponse.MetaData meta =
@@ -211,6 +269,13 @@ public class DashboardService {
             .build();
 
     return PageResponse.from(page, items, meta);
+  }
+
+  @Transactional(readOnly = true)
+  public PageResponse<ContentTotalViewStatsDTO> getContentTotalViewStatsByMarketLink(
+      String marketLinkUrl, String period, Pageable pageable) {
+    Long userId = resolveUserIdByMarketLink(marketLinkUrl);
+    return getContentTotalViewStats(userId, period, pageable);
   }
 
   @Transactional(readOnly = true)
@@ -249,6 +314,12 @@ public class DashboardService {
     Page<FlatMarketViewStatsDTO> page =
         marketViewStatsCustomRepository.findByMarketIdAndPeriodTypeAndStatDateBetween(
             market.getMarketLinkUrl(), PeriodType.DAILY, startDate, endDate, pageable);
+
+    Long aggregatedTotal =
+        marketViewStatsRepository.getTotalMarketViews(userId, startDate, endDate);
+    long totalViewsForPeriod = aggregatedTotal != null ? aggregatedTotal : 0L;
+    long realtimeIncrement = 0L;
+
     // 1. 전체 날짜 리스트 생성
     List<LocalDate> allDates =
         startDate
@@ -260,6 +331,28 @@ public class DashboardService {
     Map<LocalDate, FlatMarketViewStatsDTO> dataMap =
         page.getContent().stream()
             .collect(Collectors.toMap(FlatMarketViewStatsDTO::getViewDate, Function.identity()));
+
+    if (endDate.isEqual(LocalDate.now())) {
+      LocalDate today = LocalDate.now();
+      LocalDateTime todayStart = today.atStartOfDay();
+      LocalDateTime todayEnd = today.plusDays(1).atStartOfDay();
+      Long todayViews = marketViewLogRepository.countViews(market.getId(), todayStart, todayEnd);
+      long todayViewCount = todayViews != null ? todayViews : 0L;
+      FlatMarketViewStatsDTO existing = dataMap.get(today);
+      long baseCount =
+          existing != null && existing.getViewCount() != null ? existing.getViewCount() : 0L;
+      long delta = Math.max(todayViewCount - baseCount, 0L);
+      realtimeIncrement = delta;
+      if (todayViewCount > 0) {
+        dataMap.put(
+            today,
+            FlatMarketViewStatsDTO.builder()
+                .viewDate(today)
+                .dayOfWeek("")
+                .viewCount(baseCount + delta)
+                .build());
+      }
+    }
 
     // 3. 페이징 처리 (범위 체크 추가)
     int start = (int) pageable.getOffset();
@@ -302,12 +395,6 @@ public class DashboardService {
     Page<FlatMarketViewStatsDTO> completePage =
         new PageImpl<>(completeData, pageable, allDates.size());
 
-    // 총 조회수 계산
-    long totalViews =
-        completePage.getContent().stream()
-            .mapToLong(dto -> dto.getViewCount() != null ? dto.getViewCount() : 0L)
-            .sum();
-
     List<MarketViewStatsDTO> items =
         completePage.getContent().stream()
             .map(this::toMarketViewStatsDTO)
@@ -317,10 +404,17 @@ public class DashboardService {
         PageResponse.MetaData.builder()
             .sortBy(pageable.getSort().iterator().next().getProperty())
             .sortDirection(pageable.getSort().iterator().next().getDirection().name())
-            .totalViews(totalViews)
+            .totalViews(totalViewsForPeriod + realtimeIncrement)
             .build();
 
     return PageResponse.from(completePage, items, meta);
+  }
+
+  @Transactional(readOnly = true)
+  public PageResponse<MarketViewStatsDTO> getMarketViewStatsByMarketLink(
+      String marketLinkUrl, String period, Pageable pageable) {
+    Long userId = resolveUserIdByMarketLink(marketLinkUrl);
+    return getMarketViewStats(userId, period, pageable);
   }
 
   @Transactional(readOnly = true)
@@ -361,6 +455,11 @@ public class DashboardService {
         contentViewStatsCustomRepository.findByContentIdAndPeriodTypeAndStatDateBetween(
             contentId, PeriodType.DAILY, startDate, endDate, pageable);
 
+    Long aggregatedTotal =
+        contentViewStatsRepository.getTotalContentViews(List.of(contentId), startDate, endDate);
+    long totalViewsForPeriod = aggregatedTotal != null ? aggregatedTotal : 0L;
+    long realtimeIncrement = 0L;
+
     // 1. 전체 날짜 리스트 생성
     List<LocalDate> allDates =
         startDate
@@ -372,6 +471,29 @@ public class DashboardService {
     Map<LocalDate, FlatContentViewStatsDTO> dataMap =
         page.getContent().stream()
             .collect(Collectors.toMap(FlatContentViewStatsDTO::getViewDate, Function.identity()));
+
+    if (endDate.isEqual(LocalDate.now())) {
+      LocalDate today = LocalDate.now();
+      LocalDateTime todayStart = today.atStartOfDay();
+      LocalDateTime todayEnd = today.plusDays(1).atStartOfDay();
+      Long todayViews =
+          contentViewLogRepository.countViews(List.of(contentId), todayStart, todayEnd);
+      long todayViewCount = todayViews != null ? todayViews : 0L;
+      FlatContentViewStatsDTO existing = dataMap.get(today);
+      long baseCount =
+          existing != null && existing.getViewCount() != null ? existing.getViewCount() : 0L;
+      long delta = Math.max(todayViewCount - baseCount, 0L);
+      realtimeIncrement = delta;
+      if (todayViewCount > 0) {
+        dataMap.put(
+            today,
+            FlatContentViewStatsDTO.builder()
+                .viewDate(today)
+                .dayOfWeek("")
+                .viewCount(baseCount + delta)
+                .build());
+      }
+    }
 
     // 3. 페이징 처리 (범위 체크 추가)
     int start = (int) pageable.getOffset();
@@ -415,12 +537,6 @@ public class DashboardService {
     Page<FlatContentViewStatsDTO> completePage =
         new PageImpl<>(completeData, pageable, allDates.size());
 
-    // 총 조회수 계산 (completePage 사용)
-    long totalViews =
-        completePage.getContent().stream()
-            .mapToLong(dto -> dto.getViewCount() != null ? dto.getViewCount() : 0L)
-            .sum();
-
     List<ContentViewStatsDTO> items =
         completePage.getContent().stream()
             .map(this::toContentViewStatsDTO)
@@ -430,7 +546,7 @@ public class DashboardService {
         PageResponse.MetaData.builder()
             .sortBy(pageable.getSort().iterator().next().getProperty())
             .sortDirection(pageable.getSort().iterator().next().getDirection().name())
-            .totalViews(totalViews)
+            .totalViews(totalViewsForPeriod + realtimeIncrement)
             .contentTitle(content.getTitle())
             .build();
 
@@ -534,6 +650,13 @@ public class DashboardService {
             .build();
 
     return PageResponse.from(page, items, meta);
+  }
+
+  @Transactional(readOnly = true)
+  public PageResponse<ReferrerStatsDTO> getMarketReferrerStatsByMarketLink(
+      String marketLinkUrl, String period, Pageable pageable) {
+    Long userId = resolveUserIdByMarketLink(marketLinkUrl);
+    return getMarketReferrerStats(userId, period, pageable);
   }
 
   private ReferrerStatsDTO toReferrerStatsDTO(FlatReferrerStatsDTO flatReferrerStatsDTO) {
@@ -813,12 +936,23 @@ public class DashboardService {
   // 총 컨텐츠 조회수
   private Long getTotalContentViews(Long sellerId, LocalDate startDate, LocalDate endDate) {
     List<Long> contentIds = contentReader.findIdsByUserId(sellerId);
-    return contentViewStatsRepository.getTotalContentViews(contentIds, startDate, endDate);
+    if (contentIds == null || contentIds.isEmpty()) {
+      return 0L;
+    }
+    LocalDateTime startDateTime = startDate.atStartOfDay();
+    LocalDateTime endDateTime = endDate.plusDays(1).atStartOfDay();
+    return contentViewLogRepository.countViews(contentIds, startDateTime, endDateTime);
   }
 
   // 총 마켓 조회수
   private Long getTotalMarketViews(Long sellerId, LocalDate startDate, LocalDate endDate) {
-    return marketViewStatsRepository.getTotalMarketViews(sellerId, startDate, endDate);
+    Market market = userReader.getMarket(sellerId);
+    if (market == null) {
+      return 0L;
+    }
+    LocalDateTime startDateTime = startDate.atStartOfDay();
+    LocalDateTime endDateTime = endDate.plusDays(1).atStartOfDay();
+    return marketViewLogRepository.countViews(market.getId(), startDateTime, endDateTime);
   }
 
   private DashboardContentOverviewDTO toDashboardContentOverviewDTO(

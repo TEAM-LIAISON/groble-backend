@@ -146,21 +146,16 @@ public class AdminAccountVerificationService {
     }
 
     if (resultDTO.isSuccess()) {
-      SellerVerificationStatus nextStatus = SellerVerificationStatus.VERIFIED;
       String successMessage =
           StringUtils.hasText(resultDTO.getMessage())
               ? resultDTO.getMessage()
               : "페이플 계좌 인증이 성공했습니다.";
-      sellerInfo.updateSellerVerificationStatus(nextStatus, successMessage);
+      sellerInfo.updateVerificationMessage(successMessage);
       sellerInfoRepository.saveAndFlush(sellerInfo);
     } else {
       String failureMessage =
           buildFailureMessage(resultDTO.getResultCode(), resultDTO.getMessage());
-      SellerVerificationStatus nextStatus =
-          SellerVerificationStatus.VERIFIED.equals(sellerInfo.getVerificationStatus())
-              ? SellerVerificationStatus.VERIFIED
-              : SellerVerificationStatus.FAILED;
-      sellerInfo.updateSellerVerificationStatus(nextStatus, failureMessage);
+      sellerInfo.updateVerificationMessage(failureMessage);
       sellerInfoRepository.saveAndFlush(sellerInfo);
     }
   }

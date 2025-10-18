@@ -9,6 +9,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -16,8 +18,10 @@ import org.springframework.util.StringUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import liaison.groble.application.content.ContentReader;
 import liaison.groble.application.dashboard.dto.referrer.ReferrerDTO;
 import liaison.groble.application.user.service.UserReader;
+import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.dashboard.entity.ContentReferrerEvent;
 import liaison.groble.domain.dashboard.entity.ContentReferrerStats;
 import liaison.groble.domain.dashboard.entity.MarketReferrerEvent;
@@ -35,6 +39,70 @@ import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ *
+ *
+ * <h1>유입 경로 집계 서비스</h1>
+ *
+ * <p>본 서비스는 다음과 같은 규칙에 따라 유입 경로를 집계합니다.
+ *
+ * <h2>1. 직접 유입 (Direct)</h2>
+ *
+ * <ul>
+ *   <li><strong>정의:</strong> 외부 유입 경로 정보가 없는 모든 경우.
+ *   <li><strong>사례:</strong>
+ *       <ul>
+ *         <li>브라우저 주소창에 URL을 직접 입력하여 접속
+ *         <li>북마크(즐겨찾기)를 통해 접속
+ *         <li>브라우저가 리퍼러(이전 페이지) 정보를 제공하지 않는 모든 경우
+ *       </ul>
+ *   <li><strong>처리:</strong> 유입 소스는 <code>(direct)</code>로 기록됩니다.
+ * </ul>
+ *
+ * <h2>2. 외부 유입 (External)</h2>
+ *
+ * <ul>
+ *   <li><strong>정의:</strong> <code>google.com</code>, <code>instagram.com</code> 등 서비스 외부 도메인에서 유입된
+ *       모든 경우.
+ *   <li><strong>처리:</strong> 정상적으로 유입 경로로 집계되며, 어떤 도메인에서 유입되었는지 기록됩니다.
+ * </ul>
+ *
+ * <h2>3. 내부 이동 (Internal Navigation) - UTM 파라미터가 없는 경우</h2>
+ *
+ * <ul>
+ *   <li><strong>기본 원칙:</strong> 단순 페이지 이동은 새로운 유입으로 집계하지 않습니다.
+ *   <li><strong>유일한 예외:</strong> 사용자의 핵심적인 이동 경로인 <strong>마켓 페이지 → 콘텐츠 페이지</strong>로의 이동만 새로운 유입으로
+ *       집계합니다.
+ *   <li><strong>집계되지 않는 이동의 예:</strong>
+ *       <ul>
+ *         <li>콘텐츠 → 마켓 (뒤로가기 등)
+ *         <li>콘텐츠 → 콘텐츠
+ *         <li>마켓 → 마켓
+ *         <li>로그인 페이지 → 마켓/콘텐츠 페이지 등
+ *       </ul>
+ * </ul>
+ *
+ * <h2>4. 내부 캠페인 (Internal Campaign)</h2>
+ *
+ * <ul>
+ *   <li><strong>정의:</strong> 내부 이동이라도 URL에 UTM 파라미터(<code>utm_source</code> 등)가 포함된 경우.
+ *   <li><strong>처리:</strong> 내부 마케팅 활동 추적을 위해, 예외적으로 새로운 유입으로 집계합니다.
+ * </ul>
+ *
+ * <h2>5. 자가 유입 (Self-view)</h2>
+ *
+ * <ul>
+ *   <li><strong>정의:</strong> 로그인한 사용자가 자신이 소유한 마켓 또는 콘텐츠를 방문하는 경우.
+ *   <li><strong>처리:</strong> 유입 통계에 영향을 주지 않도록, 집계에서 완전히 제외됩니다.
+ * </ul>
+ *
+ * <h2>6. 중복 집계 방지</h2>
+ *
+ * <ul>
+ *   <li><strong>정의:</strong> 5분 이내에 동일한 세션, 동일한 리퍼러, 동일한 UTM 값을 가진 요청이 다시 들어온 경우.
+ *   <li><strong>처리:</strong> 페이지 새로고침 등으로 인한 노이즈로 간주하여 중복으로 집계하지 않습니다.
+ * </ul>
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -48,18 +116,42 @@ public class ReferrerService {
   private final MarketReferrerEventRepository marketReferrerEventRepository;
   private final ReferrerTrackingRepository referrerTrackingRepository;
   private final UserReader userReader;
+  private final ContentReader contentReader;
   private final ObjectMapper objectMapper;
   private final MeterRegistry meterRegistry;
+  private final ConcurrentMap<String, Boolean> marketLinkCache = new ConcurrentHashMap<>();
 
   public void recordContentReferrer(
       Long contentId,
       ReferrerDTO referrerDTO,
       String refererHeader,
       String userAgent,
-      String clientIp) {
+      String clientIp,
+      Long userId) {
     if (referrerDTO == null) {
       log.warn("Received null ReferrerDTO for contentId={}.", contentId);
       return;
+    }
+
+    // 5. 자가 유입 (Self-view)
+    if (userId != null) {
+      try {
+        Content content = contentReader.getContentById(contentId);
+        if (content.getUser() != null && userId.equals(content.getUser().getId())) {
+          log.debug(
+              "Skipping content referrer tracking for own content. contentId={}, userId={}",
+              contentId,
+              userId);
+          recordMetric("content", "self_view");
+          return;
+        }
+      } catch (Exception e) {
+        log.warn(
+            "Could not verify content ownership for self-view check. contentId={}, userId={}",
+            contentId,
+            userId,
+            e);
+      }
     }
 
     boolean persisted;
@@ -101,26 +193,30 @@ public class ReferrerService {
       ReferrerDTO referrerDTO,
       String refererHeader,
       String userAgent,
-      String clientIp) {
+      String clientIp,
+      Long userId) {
     if (referrerDTO == null) {
       log.warn("Received null ReferrerDTO for marketLinkUrl={}.", marketLinkUrl);
       return;
     }
 
-    log.info("=== MARKET REFERRER DEBUG START ===");
-    log.info("MarketLinkUrl: {}", marketLinkUrl);
-    log.info(
-        "Incoming ReferrerDTO: pageUrl={}, referrerUrl={}, utmSource={}, utmMedium={}, utmCampaign={}, utmContent={}, utmTerm={}, landingPage={}, lastPage={}, sessionId={}",
-        referrerDTO.getPageUrl(),
-        referrerDTO.getReferrerUrl(),
-        referrerDTO.getUtmSource(),
-        referrerDTO.getUtmMedium(),
-        referrerDTO.getUtmCampaign(),
-        referrerDTO.getUtmContent(),
-        referrerDTO.getUtmTerm(),
-        referrerDTO.getLandingPageUrl(),
-        referrerDTO.getLastPageUrl(),
-        referrerDTO.getSessionId());
+    Market market;
+    try {
+      market = userReader.getMarketWithUser(marketLinkUrl);
+    } catch (Exception e) {
+      log.error("Failed to find market for referrer tracking: {}", marketLinkUrl, e);
+      return;
+    }
+
+    // 5. 자가 유입 (Self-view)
+    if (userId != null && market.getUser() != null && userId.equals(market.getUser().getId())) {
+      log.debug(
+          "Skipping market referrer tracking for own market. marketLinkUrl={}, userId={}",
+          marketLinkUrl,
+          userId);
+      recordMetric("market", "self_view");
+      return;
+    }
 
     boolean persisted;
     try {
@@ -131,38 +227,15 @@ public class ReferrerService {
       log.error(
           "Failed to persist market referrer tracking for marketLinkUrl={}", marketLinkUrl, e);
       recordMetric("market", "error");
-      log.info("=== MARKET REFERRER DEBUG END (ERROR) ===");
       return;
     }
 
     if (!persisted) {
-      log.info(
-          "Skipping market referrer stats for marketLinkUrl={} due to filtered tracking.",
-          marketLinkUrl);
-      log.info("=== MARKET REFERRER DEBUG END (SKIPPED) ===");
       return;
     }
 
     try {
-      Market market = userReader.getMarketWithUser(marketLinkUrl);
-      log.info("Found Market: id={}, linkUrl={}", market.getId(), market.getMarketLinkUrl());
-
       MarketReferrerStats stats = findOrCreateMarketReferrerStats(market.getId(), referrerDTO);
-
-      log.info(
-          "Final MarketReferrerStats before save: id={}, marketId={}, referrerUrl={}, referrerDomain={}, referrerPath={}, source={}, medium={}, campaign={}, content={}, term={}, visitCount={}",
-          stats.getId(),
-          stats.getMarketId(),
-          stats.getReferrerUrl(),
-          stats.getReferrerDomain(),
-          stats.getReferrerPath(),
-          stats.getSource(),
-          stats.getMedium(),
-          stats.getCampaign(),
-          stats.getContent(),
-          stats.getTerm(),
-          stats.getVisitCount());
-
       stats.incrementVisitCount();
       marketReferrerStatsRepository.save(stats);
 
@@ -175,12 +248,8 @@ public class ReferrerService {
 
       marketReferrerEventRepository.save(event);
 
-      log.info("Successfully saved MarketReferrerStats with id: {}", stats.getId());
-      log.info("=== MARKET REFERRER DEBUG END ===");
-
     } catch (Exception e) {
       log.error("Failed to record market referrer stats for marketLinkUrl: " + marketLinkUrl, e);
-      log.info("=== MARKET REFERRER DEBUG END (ERROR) ===");
     }
   }
 
@@ -203,120 +272,135 @@ public class ReferrerService {
       String userAgent,
       String clientIp)
       throws JsonProcessingException {
-    if (!StringUtils.hasText(referrerDTO.getSessionId())) {
+
+    String sessionId = referrerDTO.getSessionId();
+
+    if (!StringUtils.hasText(sessionId)) {
+
       log.debug("Skip content tracking due to missing sessionId. contentId={}", contentId);
+
       recordMetric("content", "invalid_session");
+
       return false;
     }
 
-    String contentIdStr = contentId == null ? null : contentId.toString();
-    String resolvedReferrerUrl = resolveReferrerUrl(referrerDTO, refererHeader);
-    if (StringUtils.hasText(resolvedReferrerUrl)) {
-      resolvedReferrerUrl =
-          ensureAbsoluteUrl(decodeUrl(resolvedReferrerUrl), referrerDTO.getPageUrl());
-    }
-    String chainJson = toReferrerChainJson(referrerDTO.getReferrerChain());
-    String metadataJson = toMetadataJson(referrerDTO);
-    String maskedIp = maskIpAddress(clientIp);
-    String sanitizedUserAgent = sanitizeUserAgent(resolveUserAgent(userAgent, referrerDTO));
     LocalDateTime eventTimestamp = defaultEventTimestamp(referrerDTO.getTimestamp());
 
-    String chainFallback = lastElement(referrerDTO.getReferrerChain());
-    if (!StringUtils.hasText(resolvedReferrerUrl) && StringUtils.hasText(chainFallback)) {
-      resolvedReferrerUrl = ensureAbsoluteUrl(decodeUrl(chainFallback), referrerDTO.getPageUrl());
-    }
+    String resolvedReferrerUrl =
+        normalizeReferrerUrl(
+            resolveReferrerUrl(referrerDTO, refererHeader), referrerDTO.getPageUrl());
 
-    String firstReferrerUrl = referrerDTO.getFirstReferrerUrl();
-    if (!StringUtils.hasText(resolvedReferrerUrl) && StringUtils.hasText(firstReferrerUrl)) {
-      resolvedReferrerUrl =
-          ensureAbsoluteUrl(decodeUrl(firstReferrerUrl), referrerDTO.getPageUrl());
+    // 6. 중복 집계 방지
+
+    Optional<ReferrerTracking> existing =
+        referrerTrackingRepository.findRecentContentTracking(sessionId, contentId.toString());
+
+    if (existing.isPresent()
+        && isDuplicateTracking(existing.get(), referrerDTO, resolvedReferrerUrl, eventTimestamp)) {
+
+      log.debug(
+          "Detected duplicate content tracking. contentId={}, sessionId={}", contentId, sessionId);
+
+      recordMetric("content", "duplicate");
+
+      return false;
     }
 
     String referrerDomain = resolveReferrerDomain(resolvedReferrerUrl);
-    String lastPageUrl = referrerDTO.getLastPageUrl();
-    if (!StringUtils.hasText(referrerDomain) && StringUtils.hasText(lastPageUrl)) {
-      resolvedReferrerUrl = ensureAbsoluteUrl(decodeUrl(lastPageUrl), referrerDTO.getPageUrl());
-      referrerDomain = resolveReferrerDomain(resolvedReferrerUrl);
+
+    // 1. 직접 유입이 아닌 경우에만 내부/외부 유입 규칙 적용
+
+    if (StringUtils.hasText(resolvedReferrerUrl)) {
+
+      boolean isInternalCampaign = hasUtmParameters(referrerDTO);
+
+      // 3. 내부 이동 & 4. 내부 캠페인 (UTM 파라미터가 없는 경우)
+
+      if (ReferrerDomainUtils.isInternalDomain(referrerDomain) && !isInternalCampaign) {
+
+        boolean fromHome = false;
+
+        try {
+
+          URI referrerUri = new URI(resolvedReferrerUrl);
+
+          String path = referrerUri.getPath();
+
+          if (path == null || path.equals("/") || path.isEmpty()) {
+
+            fromHome = true;
+          }
+
+        } catch (URISyntaxException e) {
+
+          log.warn("Could not parse referrer URI: {}", resolvedReferrerUrl, e);
+        }
+
+        if (fromHome) {
+
+          // 홈 화면에서 온 유입은 허용 (아무것도 하지 않고 통과)
+
+          log.debug("Allowing navigation from home page to content page.");
+
+        } else {
+
+          // 홈 화면이 아닌 다른 내부 페이지에서 온 경우, 마켓->콘텐츠 규칙 적용
+
+          Optional<ReferrerTracking> recentMarketNav =
+              referrerTrackingRepository.findLatestMarketNavigation(sessionId);
+
+          if (recentMarketNav.isPresent()) {
+
+            // 마켓->콘텐츠 유입 허용
+
+            resolvedReferrerUrl = recentMarketNav.get().getPageUrl();
+
+            referrerDomain = resolveReferrerDomain(resolvedReferrerUrl);
+
+          } else {
+
+            // 그 외 모든 내부 유입은 차단
+
+            log.debug(
+                "Skipping internal navigation for contentId={}. Not from home or market page.",
+                contentId);
+
+            recordMetric("content", "internal_navigation_skipped");
+
+            return false;
+          }
+        }
+      }
+
+      // 2. 외부 유입 또는 내부 캠페인이면 항상 통과
+
     }
 
-    if (ReferrerDomainUtils.isInternalDomain(referrerDomain)
-        && StringUtils.hasText(referrerDTO.getSessionId())) {
-      final String sessionId = referrerDTO.getSessionId();
-      final String pageUrl = referrerDTO.getPageUrl();
-      final String[] resolvedHolder = {resolvedReferrerUrl};
-      final String[] domainHolder = {referrerDomain};
-
-      referrerTrackingRepository
-          .findLatestMarketNavigation(sessionId)
-          .ifPresent(
-              recentMarket -> {
-                if (!StringUtils.hasText(recentMarket.getPageUrl())) {
-                  return;
-                }
-                String candidate = ensureAbsoluteUrl(decodeUrl(recentMarket.getPageUrl()), pageUrl);
-                String candidateDomain = resolveReferrerDomain(candidate);
-                if (StringUtils.hasText(candidateDomain)) {
-                  resolvedHolder[0] = candidate;
-                  domainHolder[0] = candidateDomain;
-                }
-              });
-
-      resolvedReferrerUrl = resolvedHolder[0];
-      referrerDomain = domainHolder[0];
-    }
+    // admin.groble.im 유입은 항상 제외
 
     if (StringUtils.hasText(referrerDomain) && referrerDomain.contains("admin.groble.im")) {
+
       log.debug("Skip admin referral for contentId={}.", contentId);
+
       recordMetric("content", "ignored_admin");
+
       return false;
     }
 
-    Optional<ReferrerTracking> existing =
-        referrerTrackingRepository.findRecentContentTracking(
-            referrerDTO.getSessionId(), contentIdStr);
+    // 최종적으로 리퍼러가 없으면 (direct)로 설정
 
-    if (existing.isPresent()) {
-      ReferrerTracking tracking = existing.get();
-      if (isDuplicateTracking(
-          tracking,
-          referrerDTO,
-          chainJson,
-          metadataJson,
-          resolvedReferrerUrl,
-          referrerDomain,
-          eventTimestamp,
-          sanitizedUserAgent,
-          maskedIp)) {
-        log.debug(
-            "Detected duplicate content tracking. contentId={}, sessionId={}, pageUrl={}",
-            contentId,
-            referrerDTO.getSessionId(),
-            referrerDTO.getPageUrl());
-        recordMetric("content", "duplicate");
-        return false;
-      }
+    if (!StringUtils.hasText(resolvedReferrerUrl)) {
 
-      tracking.refreshTracking(
-          referrerDTO.getPageUrl(),
-          resolvedReferrerUrl,
-          referrerDTO.getUtmSource(),
-          referrerDTO.getUtmMedium(),
-          referrerDTO.getUtmCampaign(),
-          referrerDTO.getUtmContent(),
-          referrerDTO.getUtmTerm(),
-          referrerDTO.getLandingPageUrl(),
-          referrerDTO.getLastPageUrl(),
-          chainJson,
-          metadataJson,
-          referrerDomain,
-          sanitizedUserAgent,
-          maskedIp,
-          eventTimestamp);
-
-      referrerTrackingRepository.save(tracking);
-      recordMetric("content", "updated");
-      return true;
+      referrerDomain = "(direct)";
     }
+
+    String chainJson = toReferrerChainJson(referrerDTO.getReferrerChain());
+
+    String metadataJson = toMetadataJson(referrerDTO);
+
+    String maskedIp = maskIpAddress(clientIp);
+
+    String sanitizedUserAgent = sanitizeUserAgent(resolveUserAgent(userAgent, referrerDTO));
 
     ReferrerTracking tracking =
         ReferrerTracking.forContent(
@@ -332,14 +416,16 @@ public class ReferrerService {
             referrerDTO.getLastPageUrl(),
             chainJson,
             metadataJson,
-            referrerDTO.getSessionId(),
+            sessionId,
             referrerDomain,
             sanitizedUserAgent,
             maskedIp,
             eventTimestamp);
 
     referrerTrackingRepository.save(tracking);
+
     recordMetric("content", "stored");
+
     return true;
   }
 
@@ -350,90 +436,123 @@ public class ReferrerService {
       String userAgent,
       String clientIp)
       throws JsonProcessingException {
-    if (!StringUtils.hasText(referrerDTO.getSessionId())) {
+
+    String sessionId = referrerDTO.getSessionId();
+
+    if (!StringUtils.hasText(sessionId)) {
+
       log.debug("Skip market tracking due to missing sessionId. marketLinkUrl={}", marketLinkUrl);
+
       recordMetric("market", "invalid_session");
+
       return false;
     }
 
-    String resolvedReferrerUrl = resolveReferrerUrl(referrerDTO, refererHeader);
-    if (StringUtils.hasText(resolvedReferrerUrl)) {
-      resolvedReferrerUrl =
-          ensureAbsoluteUrl(decodeUrl(resolvedReferrerUrl), referrerDTO.getPageUrl());
-    }
-    String chainJson = toReferrerChainJson(referrerDTO.getReferrerChain());
-    String metadataJson = toMetadataJson(referrerDTO);
-    String maskedIp = maskIpAddress(clientIp);
-    String sanitizedUserAgent = sanitizeUserAgent(resolveUserAgent(userAgent, referrerDTO));
     LocalDateTime eventTimestamp = defaultEventTimestamp(referrerDTO.getTimestamp());
 
-    String chainFallbackMarket = lastElement(referrerDTO.getReferrerChain());
-    if (!StringUtils.hasText(resolvedReferrerUrl) && StringUtils.hasText(chainFallbackMarket)) {
-      resolvedReferrerUrl =
-          ensureAbsoluteUrl(decodeUrl(chainFallbackMarket), referrerDTO.getPageUrl());
-    }
+    String resolvedReferrerUrl =
+        normalizeReferrerUrl(
+            resolveReferrerUrl(referrerDTO, refererHeader), referrerDTO.getPageUrl());
 
-    String firstReferrerUrl = referrerDTO.getFirstReferrerUrl();
-    if (!StringUtils.hasText(resolvedReferrerUrl) && StringUtils.hasText(firstReferrerUrl)) {
-      resolvedReferrerUrl =
-          ensureAbsoluteUrl(decodeUrl(firstReferrerUrl), referrerDTO.getPageUrl());
+    // 6. 중복 집계 방지
+
+    Optional<ReferrerTracking> existing =
+        referrerTrackingRepository.findRecentMarketTracking(sessionId, marketLinkUrl);
+
+    if (existing.isPresent()
+        && isDuplicateTracking(existing.get(), referrerDTO, resolvedReferrerUrl, eventTimestamp)) {
+
+      log.debug(
+          "Detected duplicate market tracking. marketLinkUrl={}, sessionId={}",
+          marketLinkUrl,
+          sessionId);
+
+      recordMetric("market", "duplicate");
+
+      return false;
     }
 
     String referrerDomain = resolveReferrerDomain(resolvedReferrerUrl);
-    String lastPageUrl = referrerDTO.getLastPageUrl();
-    if ((!StringUtils.hasText(referrerDomain)
-            || ReferrerDomainUtils.isInternalDomain(referrerDomain))
-        && StringUtils.hasText(lastPageUrl)) {
-      resolvedReferrerUrl = ensureAbsoluteUrl(decodeUrl(lastPageUrl), referrerDTO.getPageUrl());
-      referrerDomain = resolveReferrerDomain(resolvedReferrerUrl);
-    }
 
-    Optional<ReferrerTracking> existing =
-        referrerTrackingRepository.findRecentMarketTracking(
-            referrerDTO.getSessionId(), marketLinkUrl);
+    // 1. 직접 유입이 아닌 경우에만 내부/외부 유입 규칙 적용
 
-    if (existing.isPresent()) {
-      ReferrerTracking tracking = existing.get();
-      if (isDuplicateTracking(
-          tracking,
-          referrerDTO,
-          chainJson,
-          metadataJson,
-          resolvedReferrerUrl,
-          referrerDomain,
-          eventTimestamp,
-          sanitizedUserAgent,
-          maskedIp)) {
-        log.debug(
-            "Detected duplicate market tracking. marketLinkUrl={}, sessionId={}, pageUrl={}",
-            marketLinkUrl,
-            referrerDTO.getSessionId(),
-            referrerDTO.getPageUrl());
-        recordMetric("market", "duplicate");
-        return false;
+    if (StringUtils.hasText(resolvedReferrerUrl)) {
+
+      boolean isInternalCampaign = hasUtmParameters(referrerDTO);
+
+      // 3. 내부 이동 & 4. 내부 캠페인
+
+      if (ReferrerDomainUtils.isInternalDomain(referrerDomain) && !isInternalCampaign) {
+
+        try {
+
+          URI referrerUri = new URI(resolvedReferrerUrl);
+
+          String path = referrerUri.getPath();
+
+          // 기본 경로("/")에서 온 경우 직접 유입처럼 처리
+
+          if (path == null || path.equals("/") || path.isEmpty()) {
+
+            resolvedReferrerUrl = null;
+
+            referrerDomain = null;
+
+          } else {
+
+            log.debug("Skipping internal navigation for marketLinkUrl={}", marketLinkUrl);
+
+            recordMetric("market", "internal_navigation_skipped");
+
+            return false;
+          }
+
+        } catch (URISyntaxException e) {
+
+          log.warn(
+              "Could not parse referrer URI for internal navigation check: {}",
+              resolvedReferrerUrl,
+              e);
+
+          log.debug(
+              "Skipping internal navigation due to URI parse error for marketLinkUrl={}",
+              marketLinkUrl);
+
+          recordMetric("market", "internal_navigation_skipped");
+
+          return false;
+        }
       }
 
-      tracking.refreshTracking(
-          referrerDTO.getPageUrl(),
-          resolvedReferrerUrl,
-          referrerDTO.getUtmSource(),
-          referrerDTO.getUtmMedium(),
-          referrerDTO.getUtmCampaign(),
-          referrerDTO.getUtmContent(),
-          referrerDTO.getUtmTerm(),
-          referrerDTO.getLandingPageUrl(),
-          referrerDTO.getLastPageUrl(),
-          chainJson,
-          metadataJson,
-          referrerDomain,
-          sanitizedUserAgent,
-          maskedIp,
-          eventTimestamp);
+      // 외부 유입 또는 내부 캠페인이면 통과
 
-      referrerTrackingRepository.save(tracking);
-      recordMetric("market", "updated");
-      return true;
     }
+
+    // admin.groble.im 유입은 항상 제외
+
+    if (StringUtils.hasText(referrerDomain) && referrerDomain.contains("admin.groble.im")) {
+
+      log.debug("Skip admin referral for marketLinkUrl={}.", marketLinkUrl);
+
+      recordMetric("market", "ignored_admin");
+
+      return false;
+    }
+
+    // 최종적으로 리퍼러가 없으면 (direct)로 설정
+
+    if (!StringUtils.hasText(resolvedReferrerUrl)) {
+
+      referrerDomain = "(direct)";
+    }
+
+    String chainJson = toReferrerChainJson(referrerDTO.getReferrerChain());
+
+    String metadataJson = toMetadataJson(referrerDTO);
+
+    String maskedIp = maskIpAddress(clientIp);
+
+    String sanitizedUserAgent = sanitizeUserAgent(resolveUserAgent(userAgent, referrerDTO));
 
     ReferrerTracking tracking =
         ReferrerTracking.forMarket(
@@ -449,24 +568,28 @@ public class ReferrerService {
             referrerDTO.getLastPageUrl(),
             chainJson,
             metadataJson,
-            referrerDTO.getSessionId(),
+            sessionId,
             referrerDomain,
             sanitizedUserAgent,
             maskedIp,
             eventTimestamp);
 
     referrerTrackingRepository.save(tracking);
+
     recordMetric("market", "stored");
+
     return true;
   }
 
-  private String resolveReferrerUrl(ReferrerDTO referrerDTO) {
-    return resolveReferrerUrl(referrerDTO, null);
+  private boolean hasUtmParameters(ReferrerDTO referrerDTO) {
+    return StringUtils.hasText(referrerDTO.getUtmSource())
+        || StringUtils.hasText(referrerDTO.getUtmMedium())
+        || StringUtils.hasText(referrerDTO.getUtmCampaign());
   }
 
   private String resolveReferrerUrl(ReferrerDTO referrerDTO, String refererHeader) {
     if (referrerDTO == null) {
-      return null;
+      return refererHeader;
     }
     String direct = referrerDTO.getReferrerUrl();
     if (StringUtils.hasText(direct)) {
@@ -515,7 +638,6 @@ public class ReferrerService {
     if (!StringUtils.hasText(referrerUrl)) {
       return null;
     }
-
     String host = extractHost(referrerUrl);
     if (!StringUtils.hasText(host)) {
       host = extractHost("http://" + referrerUrl);
@@ -523,7 +645,6 @@ public class ReferrerService {
     if (!StringUtils.hasText(host)) {
       return null;
     }
-
     String normalized = host.toLowerCase();
     return normalized.startsWith("www.") ? normalized.substring(4) : normalized;
   }
@@ -592,6 +713,194 @@ public class ReferrerService {
     }
   }
 
+  private String normalizeReferrerUrl(String url, String pageUrl) {
+    if (!StringUtils.hasText(url)) {
+      return null;
+    }
+    String current = decodeUrl(url);
+    for (int i = 0; i < 3; i++) {
+      String unwrapped = unwrapRedirect(current);
+      if (!StringUtils.hasText(unwrapped) || unwrapped.equals(current)) {
+        break;
+      }
+      current = decodeUrl(unwrapped);
+    }
+    current = ensureAbsoluteUrl(current, pageUrl);
+    current = canonicalizeDomainSpecific(current);
+    return current;
+  }
+
+  private String unwrapRedirect(String url) {
+    if (!StringUtils.hasText(url)) {
+      return url;
+    }
+    try {
+      URI uri = new URI(url);
+      String host = uri.getHost();
+      if (!StringUtils.hasText(host) && StringUtils.hasText(uri.getAuthority())) {
+        host = uri.getAuthority();
+      }
+      if (!StringUtils.hasText(host)) {
+        return url;
+      }
+      String lowerHost = host.toLowerCase();
+      if ("l.threads.com".equals(lowerHost)) {
+        String redirected =
+            firstNonBlank(
+                getQueryParameter(uri, "u"),
+                getQueryParameter(uri, "url"),
+                getQueryParameter(uri, "target"),
+                getQueryParameter(uri, "redirect"));
+        if (StringUtils.hasText(redirected)) {
+          return redirected;
+        }
+        return "https://www.threads.com/";
+      }
+      return url;
+    } catch (URISyntaxException e) {
+      return url;
+    }
+  }
+
+  private String canonicalizeDomainSpecific(String url) {
+    if (!StringUtils.hasText(url)) {
+      return url;
+    }
+    try {
+      URI uri = new URI(url);
+      String host = uri.getHost();
+      if (!StringUtils.hasText(host) && StringUtils.hasText(uri.getAuthority())) {
+        host = uri.getAuthority();
+      }
+      if (!StringUtils.hasText(host)) {
+        return url;
+      }
+      String lowerHost = host.toLowerCase();
+
+      if (ReferrerDomainUtils.isInternalDomain(lowerHost)) {
+        return canonicalizeGrobleInternalUrl(uri);
+      }
+
+      if ("blog.naver.com".equals(lowerHost)) {
+        String path = uri.getPath();
+        if (path != null && path.equalsIgnoreCase("/PostView.naver")) {
+          Map<String, String> params = splitQuery(uri.getRawQuery());
+          String blogId = firstNonBlank(params.get("blogId"), params.get("blogid"));
+          String logNo = firstNonBlank(params.get("logNo"), params.get("logno"));
+          if (StringUtils.hasText(blogId) && StringUtils.hasText(logNo)) {
+            return "https://blog.naver.com/" + blogId + "/" + logNo;
+          }
+        }
+      }
+
+      return url;
+    } catch (URISyntaxException e) {
+      return url;
+    }
+  }
+
+  private String canonicalizeGrobleInternalUrl(URI uri) {
+    String baseUrl = "https://groble.im";
+    String marketCandidate = firstPathSegment(uri.getPath());
+    if (isKnownMarketLink(marketCandidate)) {
+      return baseUrl + "/" + marketCandidate;
+    }
+    return baseUrl;
+  }
+
+  private String firstPathSegment(String path) {
+    if (!StringUtils.hasText(path)) {
+      return null;
+    }
+    String[] segments = path.split("/");
+    for (String segment : segments) {
+      if (StringUtils.hasText(segment)) {
+        return segment;
+      }
+    }
+    return null;
+  }
+
+  private boolean isKnownMarketLink(String candidate) {
+    if (!StringUtils.hasText(candidate)) {
+      return false;
+    }
+    Boolean cached = marketLinkCache.get(candidate);
+    if (Boolean.TRUE.equals(cached)) {
+      return true;
+    }
+    boolean exists = userReader.existsByMarketLinkUrl(candidate);
+    if (exists) {
+      marketLinkCache.put(candidate, Boolean.TRUE);
+    } else {
+      marketLinkCache.remove(candidate);
+    }
+    return exists;
+  }
+
+  private String getQueryParameter(URI uri, String... keys) {
+    if (uri == null || keys == null || keys.length == 0) {
+      return null;
+    }
+    Map<String, String> params = splitQuery(uri.getRawQuery());
+    for (String key : keys) {
+      if (!StringUtils.hasText(key)) {
+        continue;
+      }
+      String value = params.get(key);
+      if (StringUtils.hasText(value)) {
+        return value;
+      }
+    }
+    return null;
+  }
+
+  private Map<String, String> splitQuery(String rawQuery) {
+    Map<String, String> params = new LinkedHashMap<>();
+    if (!StringUtils.hasText(rawQuery)) {
+      return params;
+    }
+
+    String[] pairs = rawQuery.split("&");
+    for (String pair : pairs) {
+      if (!StringUtils.hasText(pair)) {
+        continue;
+      }
+      int idx = pair.indexOf('=');
+      String key = idx >= 0 ? pair.substring(0, idx) : pair;
+      String value = idx >= 0 ? pair.substring(idx + 1) : "";
+      key = decodeComponent(key);
+      value = decodeComponent(value);
+      if (!params.containsKey(key)) {
+        params.put(key, value);
+      }
+    }
+    return params;
+  }
+
+  private String decodeComponent(String value) {
+    if (!StringUtils.hasText(value)) {
+      return value;
+    }
+    try {
+      return java.net.URLDecoder.decode(value, java.nio.charset.StandardCharsets.UTF_8);
+    } catch (IllegalArgumentException e) {
+      return value;
+    }
+  }
+
+  private String firstNonBlank(String... values) {
+    if (values == null) {
+      return null;
+    }
+    for (String value : values) {
+      if (StringUtils.hasText(value)) {
+        return value;
+      }
+    }
+    return null;
+  }
+
   private String toMetadataJson(ReferrerDTO referrerDTO) throws JsonProcessingException {
     if (referrerDTO == null) {
       return null;
@@ -628,7 +937,7 @@ public class ReferrerService {
     }
     if ((socialAppInfo == null || socialAppInfo.isEmpty()) && referrerInfo != null) {
       Object nestedSocial = referrerInfo.get("socialAppInfo");
-      if (nestedSocial instanceof Map<?, ?>) {
+      if (nestedSocial instanceof Map) {
         Map<?, ?> nestedMap = (Map<?, ?>) nestedSocial;
         if (!nestedMap.isEmpty()) {
           metadata.put("socialAppInfo", nestedMap);
@@ -686,25 +995,15 @@ public class ReferrerService {
   private boolean isDuplicateTracking(
       ReferrerTracking existing,
       ReferrerDTO incoming,
-      String incomingChain,
-      String incomingMetadata,
       String incomingReferrerUrl,
-      String incomingReferrerDomain,
-      LocalDateTime incomingTimestamp,
-      String sanitizedUserAgent,
-      String maskedIpAddress) {
+      LocalDateTime incomingTimestamp) {
 
     boolean matchesCore =
-        equalsNullable(existing.getPageUrl(), incoming.getPageUrl())
+        equalsNullable(existing.getSessionId(), incoming.getSessionId())
             && equalsNullable(existing.getReferrerUrl(), incomingReferrerUrl)
-            && equalsNullable(existing.getReferrerDomain(), incomingReferrerDomain)
-            && equalsNullable(existing.getLandingPageUrl(), incoming.getLandingPageUrl())
-            && equalsNullable(existing.getLastPageUrl(), incoming.getLastPageUrl())
-            && equalsNullable(existing.getReferrerChain(), incomingChain)
-            && equalsNullable(existing.getReferrerMetadata(), incomingMetadata)
-            && equalsNullable(existing.getSessionId(), incoming.getSessionId())
-            && equalsNullable(existing.getUserAgent(), sanitizedUserAgent)
-            && equalsNullable(existing.getIpAddress(), maskedIpAddress);
+            && equalsNullable(existing.getUtmSource(), incoming.getUtmSource())
+            && equalsNullable(existing.getUtmMedium(), incoming.getUtmMedium())
+            && equalsNullable(existing.getUtmCampaign(), incoming.getUtmCampaign());
 
     if (!matchesCore) {
       return false;
@@ -773,16 +1072,9 @@ public class ReferrerService {
 
   private ContentReferrerStats findOrCreateContentReferrerStats(
       Long contentId, ReferrerDTO referrerDTO) {
-    log.info("--- findOrCreateContentReferrerStats START ---");
-
-    String resolvedReferrerUrl = resolveReferrerUrl(referrerDTO);
-
-    // referrerUrl에서 도메인 추출
+    String resolvedReferrerUrl =
+        normalizeReferrerUrl(resolveReferrerUrl(referrerDTO, null), referrerDTO.getPageUrl());
     String referrerDomain = extractDomainFromUrl(resolvedReferrerUrl);
-    log.info(
-        "Extracted referrerDomain: {} from referrerUrl: {}", referrerDomain, resolvedReferrerUrl);
-
-    // UTM 파라미터 또는 도메인 기반 값 설정
     String source =
         referrerDTO.getUtmSource() != null
             ? referrerDTO.getUtmSource()
@@ -793,53 +1085,24 @@ public class ReferrerService {
             : inferMediumFromDomain(referrerDomain);
     String campaign = referrerDTO.getUtmCampaign();
 
-    log.info(
-        "Computed values: source={} (from UTM: {}), medium={} (from UTM: {}), campaign={}",
-        source,
-        referrerDTO.getUtmSource(),
-        medium,
-        referrerDTO.getUtmMedium(),
-        campaign);
-
-    // 기존 통계가 있는지 확인 - 중복 데이터 처리
     List<ContentReferrerStats> existingList =
         contentReferrerStatsRepository
             .findAllByContentIdAndReferrerDomainAndSourceAndMediumAndCampaign(
                 contentId, referrerDomain, source, medium, campaign);
 
     if (!existingList.isEmpty()) {
-      // 중복 데이터가 있는 경우 처리
       if (existingList.size() > 1) {
-        log.warn(
-            "Found {} duplicate ContentReferrerStats for contentId: {}, consolidating...",
-            existingList.size(),
-            contentId);
-
-        // 가장 오래된 것을 기준으로 하고 나머지는 삭제
         ContentReferrerStats primary = existingList.get(0);
         for (int i = 1; i < existingList.size(); i++) {
           ContentReferrerStats duplicate = existingList.get(i);
-          // 방문 카운트를 합산
           primary.consolidateVisitCount(duplicate.getVisitCount());
-          // 중복 데이터 삭제
           contentReferrerStatsRepository.delete(duplicate);
-          log.info("Deleted duplicate ContentReferrerStats with id: {}", duplicate.getId());
         }
-        contentReferrerStatsRepository.save(primary);
-        log.info("Consolidated visits into ContentReferrerStats with id: {}", primary.getId());
-        log.info("--- findOrCreateContentReferrerStats END (CONSOLIDATED) ---");
-        return primary;
+        return contentReferrerStatsRepository.save(primary);
       }
-
-      ContentReferrerStats existing = existingList.get(0);
-      log.info("Found existing ContentReferrerStats with id: {}", existing.getId());
-      log.info("--- findOrCreateContentReferrerStats END (EXISTING) ---");
-      return existing;
+      return existingList.get(0);
     }
 
-    log.info("No existing stats found, creating new one...");
-
-    // 새로운 통계 생성
     ContentReferrerStats stats =
         ContentReferrerStats.builder()
             .contentId(contentId)
@@ -850,48 +1113,17 @@ public class ReferrerService {
             .campaign(campaign)
             .content(referrerDTO.getUtmContent())
             .term(referrerDTO.getUtmTerm())
-            .visitCount(1)
+            .visitCount(0) // incrementVisitCount에서 1로 시작
             .build();
-
-    log.info(
-        "Built ContentReferrerStats before parseReferrerUrl: referrerUrl={}, referrerDomain={}, source={}, medium={}, campaign={}, content={}, term={}",
-        stats.getReferrerUrl(),
-        stats.getReferrerDomain(),
-        stats.getSource(),
-        stats.getMedium(),
-        stats.getCampaign(),
-        stats.getContent(),
-        stats.getTerm());
-
-    // referrerUrl 파싱하여 추가 정보 설정
     stats.parseReferrerUrl();
-
-    log.info(
-        "After parseReferrerUrl: referrerDomain={}, referrerPath={}, source={}, medium={}",
-        stats.getReferrerDomain(),
-        stats.getReferrerPath(),
-        stats.getSource(),
-        stats.getMedium());
-
-    ContentReferrerStats savedStats = contentReferrerStatsRepository.save(stats);
-    log.info("Saved new ContentReferrerStats with id: {}", savedStats.getId());
-    log.info("--- findOrCreateContentReferrerStats END (NEW) ---");
-
-    return savedStats;
+    return contentReferrerStatsRepository.save(stats);
   }
 
   private MarketReferrerStats findOrCreateMarketReferrerStats(
       Long marketId, ReferrerDTO referrerDTO) {
-    log.info("--- findOrCreateMarketReferrerStats START ---");
-
-    String resolvedReferrerUrl = resolveReferrerUrl(referrerDTO);
-
-    // referrerUrl에서 도메인 추출
+    String resolvedReferrerUrl =
+        normalizeReferrerUrl(resolveReferrerUrl(referrerDTO, null), referrerDTO.getPageUrl());
     String referrerDomain = extractDomainFromUrl(resolvedReferrerUrl);
-    log.info(
-        "Extracted referrerDomain: {} from referrerUrl: {}", referrerDomain, resolvedReferrerUrl);
-
-    // UTM 파라미터 또는 도메인 기반 값 설정
     String source =
         referrerDTO.getUtmSource() != null
             ? referrerDTO.getUtmSource()
@@ -902,53 +1134,24 @@ public class ReferrerService {
             : inferMediumFromDomain(referrerDomain);
     String campaign = referrerDTO.getUtmCampaign();
 
-    log.info(
-        "Computed values: source={} (from UTM: {}), medium={} (from UTM: {}), campaign={}",
-        source,
-        referrerDTO.getUtmSource(),
-        medium,
-        referrerDTO.getUtmMedium(),
-        campaign);
-
-    // 기존 통계가 있는지 확인 - 중복 데이터 처리
     List<MarketReferrerStats> existingList =
         marketReferrerStatsRepository
             .findAllByMarketIdAndReferrerDomainAndSourceAndMediumAndCampaign(
                 marketId, referrerDomain, source, medium, campaign);
 
     if (!existingList.isEmpty()) {
-      // 중복 데이터가 있는 경우 처리
       if (existingList.size() > 1) {
-        log.warn(
-            "Found {} duplicate MarketReferrerStats for marketId: {}, consolidating...",
-            existingList.size(),
-            marketId);
-
-        // 가장 오래된 것을 기준으로 하고 나머지는 삭제
         MarketReferrerStats primary = existingList.get(0);
         for (int i = 1; i < existingList.size(); i++) {
           MarketReferrerStats duplicate = existingList.get(i);
-          // 방문 카운트를 합산
           primary.consolidateVisitCount(duplicate.getVisitCount());
-          // 중복 데이터 삭제
           marketReferrerStatsRepository.delete(duplicate);
-          log.info("Deleted duplicate MarketReferrerStats with id: {}", duplicate.getId());
         }
-        marketReferrerStatsRepository.save(primary);
-        log.info("Consolidated visits into MarketReferrerStats with id: {}", primary.getId());
-        log.info("--- findOrCreateMarketReferrerStats END (CONSOLIDATED) ---");
-        return primary;
+        return marketReferrerStatsRepository.save(primary);
       }
-
-      MarketReferrerStats existing = existingList.get(0);
-      log.info("Found existing MarketReferrerStats with id: {}", existing.getId());
-      log.info("--- findOrCreateMarketReferrerStats END (EXISTING) ---");
-      return existing;
+      return existingList.get(0);
     }
 
-    log.info("No existing stats found, creating new one...");
-
-    // 새로운 통계 생성
     MarketReferrerStats stats =
         MarketReferrerStats.builder()
             .marketId(marketId)
@@ -959,79 +1162,40 @@ public class ReferrerService {
             .campaign(campaign)
             .content(referrerDTO.getUtmContent())
             .term(referrerDTO.getUtmTerm())
-            .visitCount(1)
+            .visitCount(0) // incrementVisitCount에서 1로 시작
             .build();
-
-    log.info(
-        "Built MarketReferrerStats before parseReferrerUrl: referrerUrl={}, referrerDomain={}, source={}, medium={}, campaign={}, content={}, term={}",
-        stats.getReferrerUrl(),
-        stats.getReferrerDomain(),
-        stats.getSource(),
-        stats.getMedium(),
-        stats.getCampaign(),
-        stats.getContent(),
-        stats.getTerm());
-
-    // referrerUrl 파싱하여 추가 정보 설정
     stats.parseReferrerUrl();
-
-    log.info(
-        "After parseReferrerUrl: referrerDomain={}, referrerPath={}, source={}, medium={}",
-        stats.getReferrerDomain(),
-        stats.getReferrerPath(),
-        stats.getSource(),
-        stats.getMedium());
-
-    MarketReferrerStats savedStats = marketReferrerStatsRepository.save(stats);
-    log.info("Saved new MarketReferrerStats with id: {}", savedStats.getId());
-    log.info("--- findOrCreateMarketReferrerStats END (NEW) ---");
-
-    return savedStats;
+    return marketReferrerStatsRepository.save(stats);
   }
 
   private String extractDomainFromUrl(String url) {
-    log.debug("extractDomainFromUrl input: {}", url);
     if (url == null || url.isEmpty()) {
-      log.debug("extractDomainFromUrl output: (direct) - null/empty input");
       return "(direct)";
     }
     try {
       String clean = url.replaceAll("^https?://", "").replaceAll("^www\\.", "");
       int idx = clean.indexOf('/');
-      String result = idx > 0 ? clean.substring(0, idx).toLowerCase() : clean.toLowerCase();
-      log.debug("extractDomainFromUrl output: {} - from clean: {}", result, clean);
-      return result;
+      return idx > 0 ? clean.substring(0, idx).toLowerCase() : clean.toLowerCase();
     } catch (Exception e) {
-      log.debug("extractDomainFromUrl output: (unknown) - exception: {}", e.getMessage());
       return "(unknown)";
     }
   }
 
   private String mapDomainToSource(String domain) {
-    log.debug("mapDomainToSource input: {}", domain);
-    String result;
-    if (domain == null || "(direct)".equals(domain)) result = "(direct)";
-    else if (domain.contains("instagram.com")) result = "instagram";
-    else if (domain.contains("threads.com")) result = "threads";
-    else if (domain.contains("facebook.com")) result = "facebook";
-    else if (domain.contains("google.com")) result = "google";
-    else if (domain.contains("naver.com")) result = "naver";
-    else result = domain.replaceAll("\\.com$|\\.co\\.kr$|\\.net$", "");
-
-    log.debug("mapDomainToSource output: {}", result);
-    return result;
+    if (domain == null || "(direct)".equals(domain)) return "(direct)";
+    if (domain.contains("instagram.com")) return "instagram";
+    if (domain.contains("threads.com")) return "threads";
+    if (domain.contains("facebook.com")) return "facebook";
+    if (domain.contains("google.com")) return "google";
+    if (domain.contains("naver.com")) return "naver";
+    return domain.replaceAll("\\.com$|\\.co\\.kr$|\\.net$", "");
   }
 
   private String inferMediumFromDomain(String domain) {
-    log.debug("inferMediumFromDomain input: {}", domain);
-    String result;
-    if (domain == null || "(direct)".equals(domain)) result = "(none)";
-    else if (isSocialDomain(domain)) result = "social";
-    else if (domain.contains("google.com") || domain.contains("naver.com")) result = "search";
-    else result = "referral";
-
-    log.debug("inferMediumFromDomain output: {}", result);
-    return result;
+    if (domain == null || "(direct)".equals(domain)) return "(none)";
+    if (isSocialDomain(domain)) return "social";
+    if (domain.contains("google.com") || domain.contains("naver.com")) return "search";
+    return "referral";
   }
 
   private boolean isSocialDomain(String domain) {

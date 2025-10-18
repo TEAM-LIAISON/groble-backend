@@ -692,6 +692,7 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
 
     QPurchase purchase = QPurchase.purchase;
     QContent content = QContent.content;
+    QOrder order = QOrder.order;
 
     // 전체 통계 - 회원과 비회원 합계
     Tuple totalStats =
@@ -699,10 +700,12 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
             .select(purchase.finalPrice.sum().coalesce(BigDecimal.ZERO), purchase.count())
             .from(purchase)
             .join(purchase.content, content)
+            .join(purchase.order, order)
             .where(
                 content.user.id.eq(sellerId),
                 purchase.cancelledAt.isNull(),
-                purchase.purchasedAt.isNotNull())
+                purchase.purchasedAt.isNotNull(),
+                order.status.eq(Order.OrderStatus.PAID))
             .fetchOne();
 
     // 전체 고유 고객 수 (회원 + 비회원)
@@ -711,10 +714,12 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
             .select(purchase.user.id.countDistinct())
             .from(purchase)
             .join(purchase.content, content)
+            .join(purchase.order, order)
             .where(
                 content.user.id.eq(sellerId),
                 purchase.cancelledAt.isNull(),
                 purchase.purchasedAt.isNotNull(),
+                order.status.eq(Order.OrderStatus.PAID),
                 purchase.user.isNotNull())
             .fetchOne();
 
@@ -723,10 +728,12 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
             .select(purchase.guestUser.id.countDistinct())
             .from(purchase)
             .join(purchase.content, content)
+            .join(purchase.order, order)
             .where(
                 content.user.id.eq(sellerId),
                 purchase.cancelledAt.isNull(),
                 purchase.purchasedAt.isNotNull(),
+                order.status.eq(Order.OrderStatus.PAID),
                 purchase.guestUser.isNotNull())
             .fetchOne();
 
@@ -736,11 +743,13 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
             .select(purchase.finalPrice.sum().coalesce(BigDecimal.ZERO), purchase.count())
             .from(purchase)
             .join(purchase.content, content)
+            .join(purchase.order, order)
             .where(
                 content.user.id.eq(sellerId),
                 purchase.cancelledAt.isNull(),
                 purchase.purchasedAt.isNotNull(),
-                purchase.purchasedAt.goe(currentMonthStart))
+                purchase.purchasedAt.goe(currentMonthStart),
+                order.status.eq(Order.OrderStatus.PAID))
             .fetchOne();
 
     // 이번 달 고유 고객 수 (회원 + 비회원)
@@ -749,11 +758,13 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
             .select(purchase.user.id.countDistinct())
             .from(purchase)
             .join(purchase.content, content)
+            .join(purchase.order, order)
             .where(
                 content.user.id.eq(sellerId),
                 purchase.cancelledAt.isNull(),
                 purchase.purchasedAt.isNotNull(),
                 purchase.purchasedAt.goe(currentMonthStart),
+                order.status.eq(Order.OrderStatus.PAID),
                 purchase.user.isNotNull())
             .fetchOne();
 
@@ -762,11 +773,13 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
             .select(purchase.guestUser.id.countDistinct())
             .from(purchase)
             .join(purchase.content, content)
+            .join(purchase.order, order)
             .where(
                 content.user.id.eq(sellerId),
                 purchase.cancelledAt.isNull(),
                 purchase.purchasedAt.isNotNull(),
                 purchase.purchasedAt.goe(currentMonthStart),
+                order.status.eq(Order.OrderStatus.PAID),
                 purchase.guestUser.isNotNull())
             .fetchOne();
 

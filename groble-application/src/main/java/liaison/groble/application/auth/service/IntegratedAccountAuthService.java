@@ -75,6 +75,7 @@ public class IntegratedAccountAuthService {
       User user = createAndSetupUser(signUpDTO, userType, agreedTermsTypes);
 
       // 3. 사용자 저장 및 후처리
+      user.updateLoginTime();
       User savedUser = userRepository.save(user);
 
       // 4. 메이커로 가입한 경우에 SellerInfo 생성 필요
@@ -116,6 +117,7 @@ public class IntegratedAccountAuthService {
       existingUser.updateLastUserType(userType);
       termsHelper.processTermsAgreements(existingUser, agreedTermsTypes);
 
+      existingUser.updateLoginTime();
       User savedUser = userRepository.save(existingUser);
       TokenDTO tokenDTO = tokenHelper.issueTokens(savedUser);
       processPostSignUpTasks(signUpDTO.getEmail(), savedUser);

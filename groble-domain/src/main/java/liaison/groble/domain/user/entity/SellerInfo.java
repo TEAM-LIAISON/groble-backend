@@ -111,9 +111,17 @@ public class SellerInfo {
   @Column(name = "verification_message")
   private String verificationMessage;
 
+  /** 메이커 인증 관련 피드백 메시지 (반려 사유 등) */
+  @Column(name = "maker_verification_message", columnDefinition = "TEXT")
+  private String makerVerificationMessage;
+
   /** 마지막 인증 시도 시간 */
   @Column(name = "last_verification_attempt")
   private LocalDateTime lastVerificationAttempt;
+
+  /** 마지막 메이커 인증 시도 시간 */
+  @Column(name = "maker_last_verification_attempt")
+  private LocalDateTime makerLastVerificationAttempt;
 
   /** 통장 사본 첨부 URL */
   @Column(name = "copy_of_bankbook_url", columnDefinition = "TEXT")
@@ -136,6 +144,10 @@ public class SellerInfo {
     this.verificationStatus = status;
     this.verificationMessage = message;
     this.lastVerificationAttempt = LocalDateTime.now();
+  }
+
+  public void updateVerificationMessage(String message) {
+    this.verificationMessage = message;
   }
 
   public void updateSellerInfos(SellerInfo updatedInfo) {
@@ -227,6 +239,8 @@ public class SellerInfo {
     this.bankAccountOwner = null;
     this.birthDate = null;
     this.businessNumber = null;
+    this.makerVerificationMessage = null;
+    this.makerLastVerificationAttempt = null;
   }
 
   /**
@@ -238,6 +252,8 @@ public class SellerInfo {
     SellerInfo info = new SellerInfo();
     info.verificationStatus = status;
     info.verificationMessage = null;
+    info.makerVerificationMessage = null;
+    info.makerLastVerificationAttempt = null;
     return info;
   }
 
@@ -299,17 +315,17 @@ public class SellerInfo {
 
   // 메이커 인증 완료
   public void updateApprovedMaker(
-      Boolean isBusinessSeller, SellerVerificationStatus sellerVerificationStatus) {
+      SellerVerificationStatus sellerVerificationStatus, Boolean isBusinessSeller) {
     this.isBusinessSeller = isBusinessSeller;
+    this.makerVerificationMessage = null;
+    this.makerLastVerificationAttempt = LocalDateTime.now();
     this.verificationStatus = sellerVerificationStatus;
   }
 
   // 메이커 인증 거절
-  public void updateRejectedMaker(
-      SellerVerificationStatus sellerVerificationStatus, String rejectionMessage) {
-    this.verificationStatus = sellerVerificationStatus;
-    this.verificationMessage = rejectionMessage;
-    this.lastVerificationAttempt = LocalDateTime.now();
+  public void updateRejectedMaker(String rejectionMessage) {
+    this.makerVerificationMessage = rejectionMessage;
+    this.makerLastVerificationAttempt = LocalDateTime.now();
   }
 
   // 판매자 정보 생성 팩토리 메소드

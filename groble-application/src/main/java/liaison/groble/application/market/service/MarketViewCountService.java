@@ -5,6 +5,8 @@ import java.time.LocalDateTime;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import liaison.groble.application.dashboard.service.ViewTrackingKeyGenerator;
+import liaison.groble.application.dashboard.service.ViewTrackingKeyGenerator.ViewerIdentity;
 import liaison.groble.application.market.dto.MarketViewCountDTO;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.domain.dashboard.entity.MarketViewLog;
@@ -30,6 +32,7 @@ public class MarketViewCountService {
 
   // Port
   private final DailyViewPort dailyViewPort;
+  private final ViewTrackingKeyGenerator viewTrackingKeyGenerator;
 
   @Async
   public void recordMarketView(String marketLinkUrl, MarketViewCountDTO marketViewCountDTO) {
@@ -40,29 +43,37 @@ public class MarketViewCountService {
 
     Market market = userReader.getMarketWithUser(marketLinkUrl);
 
+    Long viewerId = marketViewCountDTO.getUserId();
+    if (viewerId != null && market.getUser() != null && viewerId.equals(market.getUser().getId())) {
+      log.debug(
+          "Skipping market view counting for owner access. marketId={}, userId={}",
+          market.getId(),
+          viewerId);
+      return;
+    }
+
     // # 일별 조회수
     // view:count:market:123:20250128 → "42"
 
-    // # 중복 방지 (1시간)
+    // # 중복 방지 (5분)
     // viewed:market:123:user:456 → "1"
     // viewed:market:123:ip:192.168.1.1:382910 → "1"
 
-    String viewerKey =
-        marketViewCountDTO.getUserId() != null
-            ? "user:" + marketViewCountDTO.getUserId()
-            : "ip:"
-                + marketViewCountDTO.getIp()
-                + ":"
-                + marketViewCountDTO.getUserAgent().hashCode();
+    ViewerIdentity identity =
+        viewTrackingKeyGenerator.generate(
+            marketViewCountDTO.getUserId(),
+            marketViewCountDTO.getIp(),
+            marketViewCountDTO.getUserAgent());
 
-    if (dailyViewPort.incrementViewIfNotDuplicate("market", market.getId(), viewerKey)) {
+    if (dailyViewPort.incrementViewIfNotDuplicate("market", market.getId(), identity.viewerKey())) {
       // 로그 저장
       MarketViewLog log =
           MarketViewLog.builder()
               .marketId(market.getId())
               .viewerId(marketViewCountDTO.getUserId())
-              .viewerIp(marketViewCountDTO.getIp())
-              .userAgent(marketViewCountDTO.getUserAgent())
+              .viewerIp(identity.normalizedIp())
+              .userAgent(identity.normalizedUserAgent())
+              .visitorHash(identity.visitorHash())
               .viewedAt(LocalDateTime.now())
               .build();
 

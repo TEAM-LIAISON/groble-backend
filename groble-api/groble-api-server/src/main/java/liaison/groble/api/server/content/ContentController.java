@@ -379,8 +379,8 @@ public class ContentController {
   @Operation(
       summary = "[✅ 콘텐츠 뷰어] 콘텐츠 뷰어 화면 조회",
       description =
-          "만료 시간 1시간 이내의 중복 조회를 방지하며, 콘텐츠 뷰어 화면을 조회합니다. "
-              + "조회수는 1시간 동안 중복되지 않으며, 이후에는 다시 조회수가 증가합니다.")
+          "만료 시간 5분 이내의 중복 조회를 방지하며, 콘텐츠 뷰어 화면을 조회합니다. "
+              + "조회수는 5분 동안 중복되지 않으며, 이후에는 다시 조회수가 증가합니다.")
   @Logging(item = "Content", action = "viewContent", includeParam = true, includeResult = true)
   @PostMapping(CONTENT_VIEW_PATH)
   public ResponseEntity<GrobleResponse<Void>> viewContent(
@@ -458,13 +458,15 @@ public class ContentController {
       includeResult = true)
   @PostMapping(CONTENT_REFERRER_PATH)
   public ResponseEntity<GrobleResponse<Void>> recordContentReferrer(
+      @Auth(required = false) Accessor accessor,
       @PathVariable("contentId") Long contentId,
       @Valid @RequestBody ReferrerRequest referrerRequest) {
     ReferrerDTO referrerDTO = referrerMapper.toContentReferrerDTO(referrerRequest);
     String userAgent = requestUtil.getUserAgent();
     String clientIp = requestUtil.getClientIp();
     String referer = requestUtil.getReferer();
-    referrerService.recordContentReferrer(contentId, referrerDTO, referer, userAgent, clientIp);
+    referrerService.recordContentReferrer(
+        contentId, referrerDTO, referer, userAgent, clientIp, accessor.getUserId());
     return responseHelper.success(null, CONTENT_REFERRAL_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 }

@@ -210,8 +210,8 @@ public class MarketController {
   @Operation(
       summary = "[✅ 마켓 뷰어] 마켓 뷰어 화면 조회",
       description =
-          "만료 시간 1시간 이내의 중복 조회를 방지하며, 마켓 뷰어 화면을 조회합니다. "
-              + "조회수는 1시간 동안 중복되지 않으며, 이후에는 다시 조회수가 증가합니다.")
+          "만료 시간 5분 이내의 중복 조회를 방지하며, 마켓 뷰어 화면을 조회합니다. "
+              + "조회수는 5분 동안 중복되지 않으며, 이후에는 다시 조회수가 증가합니다.")
   @Logging(item = "Market", action = "viewMarket", includeParam = true, includeResult = true)
   @PostMapping(MARKET_VIEW_PATH)
   public ResponseEntity<GrobleResponse<Void>> viewMarket(
@@ -238,13 +238,15 @@ public class MarketController {
       includeResult = true)
   @PostMapping(MARKET_REFERRER_PATH)
   public ResponseEntity<GrobleResponse<Void>> recordMarketReferrer(
+      @Auth(required = false) Accessor accessor,
       @Valid @PathVariable("marketLinkUrl") String marketLinkUrl,
       @Valid @RequestBody ReferrerRequest referrerRequest) {
     ReferrerDTO referrerDTO = referrerMapper.toContentReferrerDTO(referrerRequest);
     String userAgent = requestUtil.getUserAgent();
     String clientIp = requestUtil.getClientIp();
     String referer = requestUtil.getReferer();
-    referrerService.recordMarketReferrer(marketLinkUrl, referrerDTO, referer, userAgent, clientIp);
+    referrerService.recordMarketReferrer(
+        marketLinkUrl, referrerDTO, referer, userAgent, clientIp, accessor.getUserId());
     return responseHelper.success(null, MARKET_REFERRER_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 }
