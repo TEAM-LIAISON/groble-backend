@@ -20,7 +20,7 @@ public class RedisViewAdapter implements DailyViewPort {
 
   private static final String VIEW_COUNT_KEY = "view:count:%s:%d:%s"; // type:id:date
   private static final String VIEWER_KEY = "viewed:%s:%d:%s"; // type:id:viewerKey
-  private static final int DUPLICATE_PREVENT_HOURS = 1;
+  private static final int DUPLICATE_PREVENT_MINUTES = 5;
 
   @Override
   public boolean incrementViewIfNotDuplicate(String type, Long targetId, String viewerKey) {
@@ -30,7 +30,7 @@ public class RedisViewAdapter implements DailyViewPort {
     Boolean isNew =
         redisTemplate
             .opsForValue()
-            .setIfAbsent(duplicateKey, "1", Duration.ofHours(DUPLICATE_PREVENT_HOURS));
+            .setIfAbsent(duplicateKey, "1", Duration.ofMinutes(DUPLICATE_PREVENT_MINUTES));
 
     if (Boolean.TRUE.equals(isNew)) {
       // 조회수 증가

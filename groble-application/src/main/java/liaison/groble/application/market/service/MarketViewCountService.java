@@ -43,10 +43,19 @@ public class MarketViewCountService {
 
     Market market = userReader.getMarketWithUser(marketLinkUrl);
 
+    Long viewerId = marketViewCountDTO.getUserId();
+    if (viewerId != null && market.getUser() != null && viewerId.equals(market.getUser().getId())) {
+      log.debug(
+          "Skipping market view counting for owner access. marketId={}, userId={}",
+          market.getId(),
+          viewerId);
+      return;
+    }
+
     // # 일별 조회수
     // view:count:market:123:20250128 → "42"
 
-    // # 중복 방지 (1시간)
+    // # 중복 방지 (5분)
     // viewed:market:123:user:456 → "1"
     // viewed:market:123:ip:192.168.1.1:382910 → "1"
 
