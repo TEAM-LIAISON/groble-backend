@@ -1,5 +1,7 @@
 package liaison.groble.application.payment.service;
 
+import java.nio.charset.StandardCharsets;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -75,6 +77,7 @@ public class PaypleMobileRedirectService {
         .queryParam("merchantUid", context.getMerchantUid())
         .queryParam("success", isSuccess)
         .build()
+        .encode(StandardCharsets.UTF_8)
         .toUriString();
   }
 
@@ -90,6 +93,7 @@ public class PaypleMobileRedirectService {
         .queryParam("success", false)
         .queryParam("error", message)
         .build()
+        .encode(StandardCharsets.UTF_8)
         .toUriString();
   }
 
