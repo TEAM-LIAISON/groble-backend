@@ -98,6 +98,7 @@ public final class ApiPaths {
     public static final String PAYPLE_BASE = BASE + "/payple";
 
     public static final String APP_CARD_REQUEST = "/app-card/request";
+    public static final String MOBILE_REDIRECT = "/mobile-redirect";
     public static final String CANCEL = "/{merchantUid}/cancel";
     public static final String VERIFICATION = "/verification";
     public static final String REFUND = "/refund";

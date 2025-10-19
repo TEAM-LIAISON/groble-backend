@@ -314,6 +314,12 @@ public class DashboardService {
     Page<FlatMarketViewStatsDTO> page =
         marketViewStatsCustomRepository.findByMarketIdAndPeriodTypeAndStatDateBetween(
             market.getMarketLinkUrl(), PeriodType.DAILY, startDate, endDate, pageable);
+
+    Long aggregatedTotal =
+        marketViewStatsRepository.getTotalMarketViews(userId, startDate, endDate);
+    long totalViewsForPeriod = aggregatedTotal != null ? aggregatedTotal : 0L;
+    long realtimeIncrement = 0L;
+
     // 1. 전체 날짜 리스트 생성
     List<LocalDate> allDates =
         startDate
@@ -330,20 +336,20 @@ public class DashboardService {
       LocalDate today = LocalDate.now();
       LocalDateTime todayStart = today.atStartOfDay();
       LocalDateTime todayEnd = today.plusDays(1).atStartOfDay();
-      long todayViews =
-          marketViewLogRepository
-              .findByMarketIdAndViewedAtBetween(market.getId(), todayStart, todayEnd)
-              .size();
-      if (todayViews > 0) {
-        FlatMarketViewStatsDTO existing = dataMap.get(today);
-        long baseCount =
-            existing != null && existing.getViewCount() != null ? existing.getViewCount() : 0L;
+      Long todayViews = marketViewLogRepository.countViews(market.getId(), todayStart, todayEnd);
+      long todayViewCount = todayViews != null ? todayViews : 0L;
+      FlatMarketViewStatsDTO existing = dataMap.get(today);
+      long baseCount =
+          existing != null && existing.getViewCount() != null ? existing.getViewCount() : 0L;
+      long delta = Math.max(todayViewCount - baseCount, 0L);
+      realtimeIncrement = delta;
+      if (todayViewCount > 0) {
         dataMap.put(
             today,
             FlatMarketViewStatsDTO.builder()
                 .viewDate(today)
                 .dayOfWeek("")
-                .viewCount(baseCount + todayViews)
+                .viewCount(baseCount + delta)
                 .build());
       }
     }
@@ -389,12 +395,6 @@ public class DashboardService {
     Page<FlatMarketViewStatsDTO> completePage =
         new PageImpl<>(completeData, pageable, allDates.size());
 
-    // 총 조회수 계산
-    long totalViews =
-        completePage.getContent().stream()
-            .mapToLong(dto -> dto.getViewCount() != null ? dto.getViewCount() : 0L)
-            .sum();
-
     List<MarketViewStatsDTO> items =
         completePage.getContent().stream()
             .map(this::toMarketViewStatsDTO)
@@ -404,7 +404,7 @@ public class DashboardService {
         PageResponse.MetaData.builder()
             .sortBy(pageable.getSort().iterator().next().getProperty())
             .sortDirection(pageable.getSort().iterator().next().getDirection().name())
-            .totalViews(totalViews)
+            .totalViews(totalViewsForPeriod + realtimeIncrement)
             .build();
 
     return PageResponse.from(completePage, items, meta);
@@ -455,6 +455,11 @@ public class DashboardService {
         contentViewStatsCustomRepository.findByContentIdAndPeriodTypeAndStatDateBetween(
             contentId, PeriodType.DAILY, startDate, endDate, pageable);
 
+    Long aggregatedTotal =
+        contentViewStatsRepository.getTotalContentViews(List.of(contentId), startDate, endDate);
+    long totalViewsForPeriod = aggregatedTotal != null ? aggregatedTotal : 0L;
+    long realtimeIncrement = 0L;
+
     // 1. 전체 날짜 리스트 생성
     List<LocalDate> allDates =
         startDate
@@ -471,20 +476,21 @@ public class DashboardService {
       LocalDate today = LocalDate.now();
       LocalDateTime todayStart = today.atStartOfDay();
       LocalDateTime todayEnd = today.plusDays(1).atStartOfDay();
-      long todayViews =
-          contentViewLogRepository
-              .findByContentIdsAndViewedAtBetween(List.of(contentId), todayStart, todayEnd)
-              .size();
-      if (todayViews > 0) {
-        FlatContentViewStatsDTO existing = dataMap.get(today);
-        long baseCount =
-            existing != null && existing.getViewCount() != null ? existing.getViewCount() : 0L;
+      Long todayViews =
+          contentViewLogRepository.countViews(List.of(contentId), todayStart, todayEnd);
+      long todayViewCount = todayViews != null ? todayViews : 0L;
+      FlatContentViewStatsDTO existing = dataMap.get(today);
+      long baseCount =
+          existing != null && existing.getViewCount() != null ? existing.getViewCount() : 0L;
+      long delta = Math.max(todayViewCount - baseCount, 0L);
+      realtimeIncrement = delta;
+      if (todayViewCount > 0) {
         dataMap.put(
             today,
             FlatContentViewStatsDTO.builder()
                 .viewDate(today)
                 .dayOfWeek("")
-                .viewCount(baseCount + todayViews)
+                .viewCount(baseCount + delta)
                 .build());
       }
     }
@@ -531,12 +537,6 @@ public class DashboardService {
     Page<FlatContentViewStatsDTO> completePage =
         new PageImpl<>(completeData, pageable, allDates.size());
 
-    // 총 조회수 계산 (completePage 사용)
-    long totalViews =
-        completePage.getContent().stream()
-            .mapToLong(dto -> dto.getViewCount() != null ? dto.getViewCount() : 0L)
-            .sum();
-
     List<ContentViewStatsDTO> items =
         completePage.getContent().stream()
             .map(this::toContentViewStatsDTO)
@@ -546,7 +546,7 @@ public class DashboardService {
         PageResponse.MetaData.builder()
             .sortBy(pageable.getSort().iterator().next().getProperty())
             .sortDirection(pageable.getSort().iterator().next().getDirection().name())
-            .totalViews(totalViews)
+            .totalViews(totalViewsForPeriod + realtimeIncrement)
             .contentTitle(content.getTitle())
             .build();
 

@@ -379,8 +379,8 @@ public class ContentController {
   @Operation(
       summary = "[✅ 콘텐츠 뷰어] 콘텐츠 뷰어 화면 조회",
       description =
-          "만료 시간 1시간 이내의 중복 조회를 방지하며, 콘텐츠 뷰어 화면을 조회합니다. "
-              + "조회수는 1시간 동안 중복되지 않으며, 이후에는 다시 조회수가 증가합니다.")
+          "만료 시간 5분 이내의 중복 조회를 방지하며, 콘텐츠 뷰어 화면을 조회합니다. "
+              + "조회수는 5분 동안 중복되지 않으며, 이후에는 다시 조회수가 증가합니다.")
   @Logging(item = "Content", action = "viewContent", includeParam = true, includeResult = true)
   @PostMapping(CONTENT_VIEW_PATH)
   public ResponseEntity<GrobleResponse<Void>> viewContent(

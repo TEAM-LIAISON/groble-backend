@@ -89,7 +89,12 @@ public class SecurityConfig {
   public CorsConfigurationSource corsConfigurationSource() {
     CorsConfiguration configuration = new CorsConfiguration();
     configuration.setAllowedOriginPatterns(
-        List.of("https://*.groble.im", "http://localhost:3000", "http://localhost:3001"));
+        List.of(
+            "https://*.groble.im",
+            "http://localhost:3000",
+            "http://localhost:3001",
+            "https://*.payple.kr",
+            "https://*.paple.kr"));
     configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
 
     // 이 부분 수정: 더 많은 헤더 허용
