@@ -17,6 +17,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ReferrerRequest {
 
+  private Boolean isFromHomepage;
+
   @NotBlank
   @Size(max = 500)
   private String pageUrl;
