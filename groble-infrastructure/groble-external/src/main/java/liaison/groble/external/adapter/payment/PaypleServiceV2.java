@@ -96,12 +96,6 @@ public class PaypleServiceV2 implements PaypleService {
   }
 
   @Override
-  public JSONObject payConfirm(Map<String, String> params) {
-    log.info("페이플 결제 승인 요청 - 미구현");
-    return createErrorResponse("NOT_IMPLEMENTED", "결제 승인 기능은 구현되지 않았습니다");
-  }
-
-  @Override
   public JSONObject payAuth(Map<String, String> params) {
     log.info("페이플 결제 인증 요청 시작 - cst_id: {}", maskSensitiveData(params.get("cst_id")));
 
@@ -172,12 +166,6 @@ public class PaypleServiceV2 implements PaypleService {
       log.error("페이플 정산지급대행 인증 예상치 못한 오류", e);
       return createErrorResponse("UNKNOWN_ERROR", "예상치 못한 오류가 발생했습니다");
     }
-  }
-
-  @Override
-  public JSONObject paySimplePayment(Map<String, String> params) {
-    log.info("페이플 간편결제 요청 - 미구현");
-    return createErrorResponse("NOT_IMPLEMENTED", "간편결제 기능은 구현되지 않았습니다");
   }
 
   @Override
