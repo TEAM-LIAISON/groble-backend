@@ -264,7 +264,7 @@ public class DashboardController {
           @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
               @RequestParam(value = "page", defaultValue = "0")
               int page) {
-    Pageable pageable = PageRequest.of(page, 20, Sort.by(Sort.Direction.DESC, "statDate"));
+    Pageable pageable = PageRequest.of(page, 20, Sort.by(Sort.Direction.DESC, "viewCount"));
 
     PageResponse<ContentTotalViewStatsDTO> dtoPage =
         dashboardService.getContentTotalViewStats(accessor.getUserId(), period, pageable);

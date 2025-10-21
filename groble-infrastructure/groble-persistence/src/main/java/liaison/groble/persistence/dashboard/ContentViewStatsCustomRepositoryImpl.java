@@ -15,6 +15,7 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 
 import liaison.groble.domain.common.enums.PeriodType;
 import liaison.groble.domain.content.entity.QContent;
+import liaison.groble.domain.content.enums.ContentStatus;
 import liaison.groble.domain.dashboard.dto.FlatContentTotalViewStatsDTO;
 import liaison.groble.domain.dashboard.dto.FlatContentViewStatsDTO;
 import liaison.groble.domain.dashboard.entity.QContentViewStats;
@@ -85,7 +86,7 @@ public class ContentViewStatsCustomRepositoryImpl implements ContentViewStatsCus
         jpaQueryFactory
             .select(qContent.count())
             .from(qContent)
-            .where(qContent.user.id.eq(userId))
+            .where(qContent.user.id.eq(userId), qContent.status.ne(ContentStatus.DELETED))
             .fetchOne();
 
     // 2. 데이터 조회 - Content를 기준으로 LEFT JOIN
@@ -96,8 +97,8 @@ public class ContentViewStatsCustomRepositoryImpl implements ContentViewStatsCus
                     FlatContentTotalViewStatsDTO.class,
                     qContent.id,
                     qContent.title,
-                    qContentViewStats.viewCount.sum().coalesce(0L) // null인 경우 0으로 처리
-                    ))
+                    qContentViewStats.viewCount.sum().coalesce(0L), // null인 경우 0으로 처리
+                    qContent.createdAt))
             .from(qContent)
             .leftJoin(qContentViewStats)
             .on(
@@ -106,7 +107,7 @@ public class ContentViewStatsCustomRepositoryImpl implements ContentViewStatsCus
                     .eq(qContentViewStats.contentId)
                     .and(qContentViewStats.periodType.eq(periodType))
                     .and(qContentViewStats.statDate.between(startDate, endDate)))
-            .where(qContent.user.id.eq(userId))
+            .where(qContent.user.id.eq(userId), qContent.status.ne(ContentStatus.DELETED))
             .groupBy(qContent.id, qContent.title, qContent.createdAt); // createdAt 추가
 
     // 3. 정렬 처리 (간소화)

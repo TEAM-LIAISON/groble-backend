@@ -1,5 +1,7 @@
 package liaison.groble.domain.dashboard.dto;
 
+import java.time.LocalDateTime;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -13,4 +15,5 @@ public class FlatContentTotalViewStatsDTO {
   private Long contentId;
   private String contentTitle;
   private Long totalViews;
+  private LocalDateTime contentCreatedAt;
 }
