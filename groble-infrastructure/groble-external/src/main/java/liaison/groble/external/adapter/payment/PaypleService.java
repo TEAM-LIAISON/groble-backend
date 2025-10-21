@@ -8,8 +8,6 @@ public interface PaypleService {
 
   JSONObject payAppCard(Map<String, String> params);
 
-  JSONObject payConfirm(Map<String, String> params);
-
   /** 일반 결제 인증 (기존 호환성 유지) */
   JSONObject payAuth(Map<String, String> params);
 
@@ -21,8 +19,6 @@ public interface PaypleService {
 
   // 환불(결제 취소)
   JSONObject payRefund(PaypleRefundRequest request);
-
-  JSONObject paySimplePayment(Map<String, String> params);
 
   /** 정산지급대행 계좌 검증 API */
   JSONObject payAccountVerification(Map<String, String> params, String accessToken);

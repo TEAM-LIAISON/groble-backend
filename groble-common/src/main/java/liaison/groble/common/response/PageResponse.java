@@ -205,5 +205,11 @@ public class PageResponse<T> {
 
     @Schema(description = "콘텐츠 제목", example = "자바 프로그래밍 코칭")
     private String contentTitle;
+
+    @Schema(description = "마켓 링크 존재 여부", example = "true")
+    private Boolean hasMarketLink;
+
+    @Schema(description = "마켓 링크 URL", example = "groble.shop/my-market")
+    private String marketLinkUrl;
   }
 }
