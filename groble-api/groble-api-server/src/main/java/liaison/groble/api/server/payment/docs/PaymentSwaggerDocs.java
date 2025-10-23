@@ -40,6 +40,30 @@ public final class PaymentSwaggerDocs {
             - 매달 자동 결제되는 구독형 콘텐츠에 한해 결제가 진행됩니다
             """;
 
+  // === 빌링 파트너 인증 API ===
+  public static final String BILLING_AUTH_MO_SUMMARY =
+      "[✅ 빌링 파트너 인증 - MO] 페이플 빌링 등록(MO) 결제창 호출 정보를 발급합니다.";
+  public static final String BILLING_AUTH_MO_DESCRIPTION =
+      """
+            페이플 MO(redirect) 방식 빌링 결제창을 호출하기 위한 인증 정보를 제공합니다.
+
+            **주요 응답 값**
+            - `authKey`: 이후 결제 승인에 사용하는 인증 키
+            - `payUrl`: MO 방식 결제창 URL
+            - `returnUrl`: 결제 완료 후 리다이렉트 URL
+            """;
+
+  public static final String BILLING_AUTH_API_SUMMARY =
+      "[✅ 빌링 파트너 인증 - API] 페이플 빌링 API 호출용 인증 정보를 발급합니다.";
+  public static final String BILLING_AUTH_API_DESCRIPTION =
+      """
+            페이플 API(절대경로) 방식으로 빌링 결제를 요청할 때 필요한 인증 정보를 제공합니다.
+
+            **주요 응답 값**
+            - `authKey`: 빌링 결제 승인 시 사용할 인증 키
+            - `custKey`: 서버 간 통신 시 필요한 파트너 키
+            """;
+
   // === 앱카드 결제 취소 API ===
   public static final String CANCEL_SUMMARY = "[❌ 통합 결제 취소] 관리자가 서비스 유형에 한해 회원/비회원 결제를 취소합니다.";
   public static final String CANCEL_DESCRIPTION =

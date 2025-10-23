@@ -6,7 +6,9 @@ import liaison.groble.api.model.payment.request.PaymentCancelRequest;
 import liaison.groble.api.model.payment.request.PaypleAuthResultRequest;
 import liaison.groble.api.model.payment.response.AppCardPayplePaymentResponse;
 import liaison.groble.api.model.payment.response.PaymentCancelInfoResponse;
+import liaison.groble.api.model.payment.response.PaypleBillingAuthResponse;
 import liaison.groble.application.payment.dto.AppCardPayplePaymentDTO;
+import liaison.groble.application.payment.dto.PaypleAuthResponseDTO;
 import liaison.groble.application.payment.dto.PaypleAuthResultDTO;
 import liaison.groble.application.payment.dto.cancel.PaymentCancelDTO;
 import liaison.groble.application.payment.dto.cancel.PaymentCancelInfoDTO;
@@ -24,4 +26,7 @@ public interface PaymentMapper {
 
   AppCardPayplePaymentResponse toAppCardPayplePaymentResponse(
       AppCardPayplePaymentDTO appCardPayplePaymentDTO);
+
+  PaypleBillingAuthResponse toPaypleBillingAuthResponse(
+      PaypleAuthResponseDTO paypleAuthResponseDTO);
 }

@@ -102,6 +102,8 @@ public final class ApiPaths {
     public static final String CANCEL = "/{merchantUid}/cancel";
     public static final String VERIFICATION = "/verification";
     public static final String REFUND = "/refund";
+    public static final String BILLING_AUTH_MO = "/billing/auth/mo";
+    public static final String BILLING_AUTH_API = "/billing/auth/api";
 
     private Payment() {}
   }

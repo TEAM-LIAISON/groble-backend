@@ -94,6 +94,7 @@ public final class ResponseMessages {
     public static final String CANCEL_SUCCESS = "결제 취소 요청이 성공적으로 처리되었습니다.";
     public static final String VERIFICATION_SUCCESS = "결제 검증이 성공적으로 완료되었습니다.";
     public static final String REFUND_SUCCESS = "환불 요청이 성공적으로 처리되었습니다.";
+    public static final String BILLING_AUTH_SUCCESS = "정기 결제를 위한 페이플 인증 요청이 성공적으로 처리되었습니다.";
 
     private Payment() {}
   }

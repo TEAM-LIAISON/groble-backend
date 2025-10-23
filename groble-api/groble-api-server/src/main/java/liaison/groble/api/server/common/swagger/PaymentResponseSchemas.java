@@ -1,6 +1,7 @@
 package liaison.groble.api.server.common.swagger;
 
 import liaison.groble.api.model.payment.response.AppCardPayplePaymentResponse;
+import liaison.groble.api.model.payment.response.PaypleBillingAuthResponse;
 import liaison.groble.application.payment.dto.cancel.PaymentCancelResponse;
 import liaison.groble.common.response.GrobleResponse;
 
@@ -34,6 +35,17 @@ public final class PaymentResponseSchemas {
     @Override
     @Schema(description = "결제 취소 결과 데이터", implementation = PaymentCancelResponse.class)
     public PaymentCancelResponse getData() {
+      return super.getData();
+    }
+  }
+
+  /** 빌링 인증 응답 스키마 */
+  @Schema(description = "페이플 빌링 파트너 인증 응답")
+  public static class ApiBillingAuthResponse extends GrobleResponse<PaypleBillingAuthResponse> {
+
+    @Override
+    @Schema(description = "빌링 인증 결과 데이터", implementation = PaypleBillingAuthResponse.class)
+    public PaypleBillingAuthResponse getData() {
       return super.getData();
     }
   }

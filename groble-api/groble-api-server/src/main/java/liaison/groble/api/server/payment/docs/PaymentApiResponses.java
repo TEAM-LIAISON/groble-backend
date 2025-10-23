@@ -139,4 +139,64 @@ public final class PaymentApiResponses {
                         value = CommonSwaggerDocs.SERVER_ERROR_EXAMPLE)))
   })
   public @interface PaymentCancelResponses {}
+
+  /** 빌링 인증 API 응답 */
+  @Target(ElementType.METHOD)
+  @Retention(RetentionPolicy.RUNTIME)
+  @ApiResponses({
+    @ApiResponse(
+        responseCode = "200",
+        description = CommonSwaggerDocs.SUCCESS_200,
+        content =
+            @Content(
+                mediaType = "application/json",
+                schema =
+                    @Schema(implementation = PaymentResponseSchemas.ApiBillingAuthResponse.class))),
+    @ApiResponse(
+        responseCode = "400",
+        description = CommonSwaggerDocs.BAD_REQUEST,
+        content =
+            @Content(
+                mediaType = "application/json",
+                examples =
+                    @io.swagger.v3.oas.annotations.media.ExampleObject(
+                        value = CommonSwaggerDocs.BAD_REQUEST_EXAMPLE))),
+    @ApiResponse(
+        responseCode = "403",
+        description = CommonSwaggerDocs.FORBIDDEN,
+        content =
+            @Content(
+                mediaType = "application/json",
+                examples =
+                    @io.swagger.v3.oas.annotations.media.ExampleObject(
+                        value = CommonSwaggerDocs.FORBIDDEN_EXAMPLE))),
+    @ApiResponse(
+        responseCode = "404",
+        description = CommonSwaggerDocs.NOT_FOUND,
+        content =
+            @Content(
+                mediaType = "application/json",
+                examples =
+                    @io.swagger.v3.oas.annotations.media.ExampleObject(
+                        value = CommonSwaggerDocs.NOT_FOUND_EXAMPLE))),
+    @ApiResponse(
+        responseCode = "409",
+        description = CommonSwaggerDocs.CONFLICT,
+        content =
+            @Content(
+                mediaType = "application/json",
+                examples =
+                    @io.swagger.v3.oas.annotations.media.ExampleObject(
+                        value = CommonSwaggerDocs.CONFLICT_EXAMPLE))),
+    @ApiResponse(
+        responseCode = "500",
+        description = CommonSwaggerDocs.SERVER_ERROR,
+        content =
+            @Content(
+                mediaType = "application/json",
+                examples =
+                    @io.swagger.v3.oas.annotations.media.ExampleObject(
+                        value = CommonSwaggerDocs.SERVER_ERROR_EXAMPLE)))
+  })
+  public @interface BillingAuthResponses {}
 }

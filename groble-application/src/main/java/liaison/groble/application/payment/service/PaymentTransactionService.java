@@ -26,7 +26,6 @@ import liaison.groble.application.user.service.UserReader;
 import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.content.repository.ContentRepository;
 import liaison.groble.domain.order.entity.Order;
-import liaison.groble.domain.order.repository.OrderRepository;
 import liaison.groble.domain.payment.entity.Payment;
 import liaison.groble.domain.payment.entity.PayplePayment;
 import liaison.groble.domain.payment.repository.PaymentRepository;
@@ -61,7 +60,6 @@ public class PaymentTransactionService {
   private final PaymentReader paymentReader;
   private final PaymentValidator paymentValidator;
   private final PayplePaymentRepository payplePaymentRepository;
-  private final OrderRepository orderRepository;
   private final ContentRepository contentRepository;
   private final PaymentRepository paymentRepository;
   private final PurchaseRepository purchaseRepository;
@@ -148,7 +146,7 @@ public class PaymentTransactionService {
     updatePayplePaymentApproval(payplePayment, approvalResult);
 
     // 4. Payment 생성 및 저장
-    Payment payment = createPayment(order);
+    Payment payment = createPayment(order, payplePayment);
 
     // 5. Order 결제 완료 처리
     order.completePayment();
@@ -245,6 +243,7 @@ public class PaymentTransactionService {
         .pcdPayReqKey(dto.getPayReqKey())
         .pcdPayHost(dto.getPayHost())
         .pcdPayCofUrl(dto.getPayCofUrl())
+        .pcdPayerId(dto.getPayerId())
         .pcdPayerNo(order.getUser().getId().toString())
         .pcdPayerName(dto.getPayerName())
         .pcdPayerHp(dto.getPayerHp())
@@ -286,13 +285,18 @@ public class PaymentTransactionService {
   }
 
   /** Payment 생성 */
-  private Payment createPayment(Order order) {
+  private Payment createPayment(Order order, PayplePayment payplePayment) {
+    PaymentAmount amount = PaymentAmount.of(order.getFinalPrice());
+
+    boolean hasBillingKey =
+        payplePayment.getPcdPayerId() != null && !payplePayment.getPcdPayerId().isBlank();
+
     Payment payment =
-        Payment.createPgPayment(
-            order,
-            PaymentAmount.of(order.getFinalPrice()),
-            Payment.PaymentMethod.CARD,
-            order.getMerchantUid());
+        hasBillingKey
+            ? Payment.createBillingPayment(
+                order, amount, order.getMerchantUid(), payplePayment.getPcdPayerId())
+            : Payment.createPgPayment(
+                order, amount, Payment.PaymentMethod.CARD, order.getMerchantUid());
     Payment savedPayment = paymentRepository.save(payment);
     savedPayment.publishPaymentCreatedEvent();
     return savedPayment;
@@ -617,7 +621,7 @@ public class PaymentTransactionService {
     updatePayplePaymentApproval(payplePayment, approvalResult);
 
     // 4. Payment 생성 및 저장
-    Payment payment = createPayment(order);
+    Payment payment = createPayment(order, payplePayment);
 
     // 5. Order 결제 완료 처리
     order.completePayment();
@@ -756,6 +760,7 @@ public class PaymentTransactionService {
         .pcdPayReqKey(dto.getPayReqKey())
         .pcdPayHost(dto.getPayHost())
         .pcdPayCofUrl(dto.getPayCofUrl())
+        .pcdPayerId(dto.getPayerId())
         .pcdPayerNo(order.getGuestUser().getId().toString())
         .pcdPayerName(dto.getPayerName())
         .pcdPayerHp(dto.getPayerHp())

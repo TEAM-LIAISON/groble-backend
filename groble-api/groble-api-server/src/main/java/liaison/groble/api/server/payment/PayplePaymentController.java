@@ -12,6 +12,7 @@ import jakarta.validation.constraints.NotBlank;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -26,6 +27,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import liaison.groble.api.model.payment.request.PaymentCancelRequest;
 import liaison.groble.api.model.payment.request.PaypleAuthResultRequest;
 import liaison.groble.api.model.payment.response.AppCardPayplePaymentResponse;
+import liaison.groble.api.model.payment.response.PaypleBillingAuthResponse;
 import liaison.groble.api.server.common.ApiPaths;
 import liaison.groble.api.server.common.BaseController;
 import liaison.groble.api.server.common.ResponseMessages;
@@ -33,9 +35,11 @@ import liaison.groble.api.server.payment.docs.PaymentApiResponses;
 import liaison.groble.api.server.payment.docs.PaymentSwaggerDocs;
 import liaison.groble.api.server.payment.processor.PaymentProcessorFactory;
 import liaison.groble.application.payment.dto.AppCardPayplePaymentDTO;
+import liaison.groble.application.payment.dto.PaypleAuthResponseDTO;
 import liaison.groble.application.payment.dto.PaypleAuthResultDTO;
 import liaison.groble.application.payment.dto.cancel.PaymentCancelResponse;
 import liaison.groble.application.payment.exception.PaypleMobileRedirectException;
+import liaison.groble.application.payment.service.PaypleBillingAuthService;
 import liaison.groble.application.payment.service.PaypleMobileRedirectService;
 import liaison.groble.application.payment.service.PaypleMobileRedirectService.MobileRedirectContext;
 import liaison.groble.common.annotation.Auth;
@@ -65,6 +69,7 @@ public class PayplePaymentController extends BaseController {
   private final PaymentMapper paymentMapper;
 
   // Service
+  private final PaypleBillingAuthService paypleBillingAuthService;
   private final PaypleMobileRedirectService paypleMobileRedirectService;
   private final ObjectMapper objectMapper;
 
@@ -72,13 +77,47 @@ public class PayplePaymentController extends BaseController {
       ResponseHelper responseHelper,
       PaymentProcessorFactory processorFactory,
       PaymentMapper paymentMapper,
+      PaypleBillingAuthService paypleBillingAuthService,
       PaypleMobileRedirectService paypleMobileRedirectService,
       ObjectMapper objectMapper) {
     super(responseHelper);
     this.processorFactory = processorFactory;
     this.paymentMapper = paymentMapper;
+    this.paypleBillingAuthService = paypleBillingAuthService;
     this.paypleMobileRedirectService = paypleMobileRedirectService;
     this.objectMapper = objectMapper;
+  }
+
+  @Operation(
+      summary = PaymentSwaggerDocs.BILLING_AUTH_MO_SUMMARY,
+      description = PaymentSwaggerDocs.BILLING_AUTH_MO_DESCRIPTION)
+  @PaymentApiResponses.BillingAuthResponses
+  @Logging(
+      item = "Payment",
+      action = "requestBillingAuthMo",
+      includeParam = false,
+      includeResult = true)
+  @GetMapping(ApiPaths.Payment.BILLING_AUTH_MO)
+  public ResponseEntity<GrobleResponse<PaypleBillingAuthResponse>> requestBillingAuthMo() {
+    PaypleAuthResponseDTO authResponse = paypleBillingAuthService.requestMoAuth();
+    PaypleBillingAuthResponse response = paymentMapper.toPaypleBillingAuthResponse(authResponse);
+    return success(response, ResponseMessages.Payment.BILLING_AUTH_SUCCESS);
+  }
+
+  @Operation(
+      summary = PaymentSwaggerDocs.BILLING_AUTH_API_SUMMARY,
+      description = PaymentSwaggerDocs.BILLING_AUTH_API_DESCRIPTION)
+  @PaymentApiResponses.BillingAuthResponses
+  @Logging(
+      item = "Payment",
+      action = "requestBillingAuthApi",
+      includeParam = false,
+      includeResult = true)
+  @GetMapping(ApiPaths.Payment.BILLING_AUTH_API)
+  public ResponseEntity<GrobleResponse<PaypleBillingAuthResponse>> requestBillingAuthApi() {
+    PaypleAuthResponseDTO authResponse = paypleBillingAuthService.requestApiAuth();
+    PaypleBillingAuthResponse response = paymentMapper.toPaypleBillingAuthResponse(authResponse);
+    return success(response, ResponseMessages.Payment.BILLING_AUTH_SUCCESS);
   }
 
   @Operation(
