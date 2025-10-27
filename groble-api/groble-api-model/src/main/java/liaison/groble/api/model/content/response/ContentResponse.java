@@ -22,6 +22,9 @@ public class ContentResponse {
   @Schema(description = "콘텐츠 유형 [COACHING - 코칭], [DOCUMENT - 자료]", example = "COACHING")
   private String contentType;
 
+  @Schema(description = "결제 유형 [ONE_TIME - 단건 결제], [SUBSCRIPTION - 정기 결제]", example = "ONE_TIME")
+  private String paymentType;
+
   @Schema(description = "카테고리 ID", example = "1")
   private String categoryId;
 

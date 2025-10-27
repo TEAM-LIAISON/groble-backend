@@ -46,6 +46,7 @@ import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.content.entity.ContentOption;
 import liaison.groble.domain.content.entity.DocumentOption;
 import liaison.groble.domain.content.enums.AdminContentCheckingStatus;
+import liaison.groble.domain.content.enums.ContentPaymentType;
 import liaison.groble.domain.content.enums.ContentStatus;
 import liaison.groble.domain.content.enums.ContentType;
 import liaison.groble.domain.content.repository.CategoryRepository;
@@ -358,6 +359,7 @@ public class ContentService {
         .status(safeEnumName(content.getStatus()))
         .thumbnailUrl(content.getThumbnailUrl())
         .contentType(safeEnumName(content.getContentType()))
+        .paymentType(safeEnumName(content.getPaymentType()))
         .categoryId(content.getCategory() != null ? content.getCategory().getCode() : null)
         .title(content.getTitle())
         .isSearchExposed(content.getIsSearchExposed())
@@ -442,6 +444,7 @@ public class ContentService {
         .status(safeEnumName(content.getStatus()))
         .thumbnailUrl(content.getThumbnailUrl())
         .contentType(safeEnumName(content.getContentType()))
+        .paymentType(safeEnumName(content.getPaymentType()))
         .categoryId(content.getCategory() != null ? content.getCategory().getCode() : null)
         .title(content.getTitle())
         .isSearchExposed(content.getIsSearchExposed())
@@ -547,6 +550,14 @@ public class ContentService {
         content.setContentType(ContentType.valueOf(dto.getContentType()));
       } catch (IllegalArgumentException e) {
         log.warn("유효하지 않은 콘텐츠 유형: {}", dto.getContentType());
+      }
+    }
+
+    if (dto.getPaymentType() != null) {
+      try {
+        content.setPaymentType(ContentPaymentType.valueOf(dto.getPaymentType()));
+      } catch (IllegalArgumentException e) {
+        log.warn("유효하지 않은 결제 유형: {}", dto.getPaymentType());
       }
     }
 
@@ -724,6 +735,10 @@ public class ContentService {
       dtoBuilder.contentType(content.getContentType().name());
     }
 
+    if (content.getPaymentType() != null) {
+      dtoBuilder.paymentType(content.getPaymentType().name());
+    }
+
     if (content.getStatus() != null) {
       dtoBuilder.status(content.getStatus().name());
     } else {
@@ -776,12 +791,12 @@ public class ContentService {
       missingFields.add("콘텐츠 유형");
     }
 
-    if (contentDTO.getCategoryId() == null) {
-      missingFields.add("카테고리");
+    if (contentDTO.getPaymentType() == null || contentDTO.getPaymentType().trim().isEmpty()) {
+      missingFields.add("결제 유형");
     }
 
-    if (contentDTO.getThumbnailUrl() == null || contentDTO.getThumbnailUrl().trim().isEmpty()) {
-      missingFields.add("썸네일 이미지");
+    if (contentDTO.getCategoryId() == null) {
+      missingFields.add("카테고리");
     }
 
     //    if (contentDTO.getContentDetailImageUrls() == null

@@ -13,6 +13,7 @@ public class ContentDetailDTO {
   private String status;
   private String thumbnailUrl;
   private String contentType;
+  private String paymentType;
   private String categoryId;
   private String title;
   private Boolean isSearchExposed;

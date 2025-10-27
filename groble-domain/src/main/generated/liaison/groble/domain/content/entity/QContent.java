@@ -47,6 +47,8 @@ public class QContent extends EntityPathBase<Content> {
 
     public final ListPath<ContentOption, QContentOption> options = this.<ContentOption, QContentOption>createList("options", ContentOption.class, QContentOption.class, PathInits.DIRECT2);
 
+    public final EnumPath<liaison.groble.domain.content.enums.ContentPaymentType> paymentType = createEnum("paymentType", liaison.groble.domain.content.enums.ContentPaymentType.class);
+
     public final StringPath rejectReason = createString("rejectReason");
 
     public final NumberPath<Integer> saleCount = createNumber("saleCount", Integer.class);

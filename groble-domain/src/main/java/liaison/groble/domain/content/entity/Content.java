@@ -26,6 +26,7 @@ import org.hibernate.annotations.DynamicUpdate;
 
 import liaison.groble.domain.common.entity.BaseTimeEntity;
 import liaison.groble.domain.content.enums.AdminContentCheckingStatus;
+import liaison.groble.domain.content.enums.ContentPaymentType;
 import liaison.groble.domain.content.enums.ContentStatus;
 import liaison.groble.domain.content.enums.ContentType;
 import liaison.groble.domain.user.entity.User;
@@ -59,6 +60,10 @@ public class Content extends BaseTimeEntity {
   @Column(name = "content_type")
   @Enumerated(value = STRING)
   private ContentType contentType;
+
+  @Column(name = "payment_type", nullable = false)
+  @Enumerated(value = STRING)
+  private ContentPaymentType paymentType = ContentPaymentType.ONE_TIME;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "user_id", nullable = false)
@@ -150,6 +155,10 @@ public class Content extends BaseTimeEntity {
 
   public void setContentType(ContentType contentType) {
     this.contentType = contentType;
+  }
+
+  public void setPaymentType(ContentPaymentType paymentType) {
+    this.paymentType = paymentType != null ? paymentType : ContentPaymentType.ONE_TIME;
   }
 
   public void setCategory(Category category) {

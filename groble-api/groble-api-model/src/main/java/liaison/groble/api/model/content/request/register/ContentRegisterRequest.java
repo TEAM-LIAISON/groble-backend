@@ -39,13 +39,19 @@ public class ContentRegisterRequest {
   @Schema(description = "카테고리 ID", example = "1")
   private String categoryId;
 
-  @NotBlank(message = "썸네일 이미지 URL은 필수 입력 항목입니다")
   @Schema(description = "썸네일 이미지 URL", example = "https://example.com/thumbnail.jpg")
   private String thumbnailUrl;
 
   @Schema(description = "검색 엔진 노출 여부", example = "true")
   @Builder.Default
   private Boolean isSearchExposed = Boolean.FALSE;
+
+  @NotBlank(message = "결제 유형은 필수 입력 항목입니다")
+  @Pattern(
+      regexp = "^(ONE_TIME|SUBSCRIPTION)$",
+      message = "결제 유형은 ONE_TIME 또는 SUBSCRIPTION만 가능합니다.")
+  @Schema(description = "결제 유형 [ONE_TIME - 단건 결제], [SUBSCRIPTION - 정기 결제]", example = "ONE_TIME")
+  private String paymentType;
 
   @Valid
   @Schema(description = "코칭 옵션 목록 (contentType이 COACHING인 경우)")
@@ -58,18 +64,15 @@ public class ContentRegisterRequest {
   @Schema(description = "콘텐츠 소개", example = "사업계획서 컨설팅")
   private String contentIntroduction;
 
-  @Size(max = 1000, message = "서비스 타겟은 1000자 이내로 입력해야 합니다")
-  @NotBlank(message = "서비스 타겟은 필수 입력 항목입니다")
   @Schema(description = "서비스 타겟", example = "초창패, 창중, 예창패, 청창사 등을 준비하는 분")
+  @Size(max = 1000, message = "서비스 타겟은 1000자 이내로 입력해야 합니다")
   private String serviceTarget;
 
-  @Size(max = 1000, message = "제공 절차는 1000자 이내로 입력해야 합니다")
-  @NotBlank(message = "제공 절차는 필수 입력 항목입니다")
   @Schema(description = "제공 절차", example = "STANDARD/DELUXE/PREMIUM")
+  @Size(max = 1000, message = "제공 절차는 1000자 이내로 입력해야 합니다")
   private String serviceProcess;
 
-  @Size(max = 1000, message = "메이커 소개는 1000자 이내로 입력해야 합니다")
-  @NotBlank(message = "메이커 소개는 필수 입력 항목입니다")
   @Schema(description = "메이커 소개", example = "- 동국대학교 철학과 졸업")
+  @Size(max = 1000, message = "메이커 소개는 1000자 이내로 입력해야 합니다")
   private String makerIntro;
 }
