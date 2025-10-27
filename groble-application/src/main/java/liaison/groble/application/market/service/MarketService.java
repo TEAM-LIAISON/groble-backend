@@ -257,6 +257,7 @@ public class MarketService {
         .lowestPrice(flat.getLowestPrice())
         .categoryId(flat.getCategoryId())
         .contentType(flat.getContentType())
+        .paymentType(flat.getPaymentType())
         .priceOptionLength(flat.getPriceOptionLength())
         .isAvailableForSale(flat.getIsAvailableForSale())
         .status(flat.getStatus())

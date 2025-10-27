@@ -77,6 +77,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     qContent.lowestPrice.as("lowestPrice"),
                     qCategory.code.as("categoryId"),
                     qContent.contentType.stringValue().as("contentType"),
+                    qContent.paymentType.stringValue().as("paymentType"),
                     ExpressionUtils.as(
                         select(qContentOption.count().intValue())
                             .from(qContentOption)
@@ -114,6 +115,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     qContent.lowestPrice.as("lowestPrice"),
                     qCategory.code.as("categoryId"),
                     qContent.contentType.stringValue().as("contentType"),
+                    qContent.paymentType.stringValue().as("paymentType"),
                     ExpressionUtils.as(
                         select(qContentOption.count().intValue())
                             .from(qContentOption)
@@ -149,6 +151,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                 qUser.userProfile.profileImageUrl.as("sellerProfileImageUrl"),
                 qCategory.code.as("categoryId"),
                 qContent.contentType.stringValue().as("contentType"),
+                qContent.paymentType.stringValue().as("paymentType"),
                 ExpressionUtils.as(
                     select(qContentOption.count().intValue())
                         .from(qContentOption)
@@ -186,6 +189,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                 qContent.lowestPrice.as("lowestPrice"),
                 qCategory.code.as("categoryId"),
                 qContent.contentType.stringValue().as("contentType"),
+                qContent.paymentType.stringValue().as("paymentType"),
                 ExpressionUtils.as(
                     select(qContentOption.count().intValue())
                         .from(qContentOption)
@@ -255,6 +259,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                 qContent.lowestPrice.as("lowestPrice"),
                 qCategory.code.as("categoryId"),
                 qContent.contentType.stringValue().as("contentType"),
+                qContent.paymentType.stringValue().as("paymentType"),
                 ExpressionUtils.as(
                     select(qContentOption.count().intValue())
                         .from(qContentOption)
@@ -315,6 +320,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     qContent.lowestPrice.as("lowestPrice"),
                     qCategory.code.as("categoryId"),
                     qContent.contentType.stringValue().as("contentType"),
+                    qContent.paymentType.stringValue().as("paymentType"),
                     ExpressionUtils.as(
                         select(qContentOption.count().intValue())
                             .from(qContentOption)
@@ -392,6 +398,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     qContent.lowestPrice.as("lowestPrice"),
                     qCategory.code.as("categoryId"),
                     qContent.contentType.stringValue().as("contentType"),
+                    qContent.paymentType.stringValue().as("paymentType"),
                     ExpressionUtils.as(
                         select(qContentOption.count().intValue())
                             .from(qContentOption)
@@ -464,6 +471,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     qContent.lowestPrice.as("lowestPrice"),
                     qCategory.code.as("categoryId"),
                     qContent.contentType.stringValue().as("contentType"),
+                    qContent.paymentType.stringValue().as("paymentType"),
                     ExpressionUtils.as(
                         select(qContentOption.count().intValue())
                             .from(qContentOption)
@@ -556,6 +564,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     q.lowestPrice.as("lowestPrice"),
                     qCategory.code.as("categoryId"),
                     q.contentType.stringValue().as("contentType"),
+                    q.paymentType.stringValue().as("paymentType"),
                     ExpressionUtils.as(
                         select(qContentOption.count().intValue())
                             .from(qContentOption)
@@ -631,6 +640,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     qContent.lowestPrice.as("lowestPrice"),
                     qCategory.code.as("categoryId"),
                     qContent.contentType.stringValue().as("contentType"),
+                    qContent.paymentType.stringValue().as("paymentType"),
                     ExpressionUtils.as(
                         select(qContentOption.count().intValue())
                             .from(qContentOption)
@@ -707,6 +717,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     qContent.lowestPrice.as("lowestPrice"),
                     qCategory.code.as("categoryId"),
                     qContent.contentType.stringValue().as("contentType"),
+                    qContent.paymentType.stringValue().as("paymentType"),
                     ExpressionUtils.as(
                         select(qContentOption.count().intValue())
                             .from(qContentOption)

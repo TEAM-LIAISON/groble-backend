@@ -45,6 +45,9 @@ public class ContentPreviewCardResponse {
   @Schema(description = "콘텐츠 유형", example = "COACHING")
   private String contentType;
 
+  @Schema(description = "결제 유형", example = "SUBSCRIPTION")
+  private String paymentType;
+
   @Schema(description = "가격 옵션 개수", example = "3")
   private int priceOptionLength;
 
