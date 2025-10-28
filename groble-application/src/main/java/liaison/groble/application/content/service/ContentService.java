@@ -67,6 +67,9 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 public class ContentService {
+  private static final String DEFAULT_THUMBNAIL_URL =
+      "https://image.groble.im/contents/thumbnail/groble_default_img.png";
+
   // Reader
   private final UserReader userReader;
   private final ContentReader contentReader;
@@ -256,6 +259,9 @@ public class ContentService {
 
     // 5. Content 필드 업데이트
     updateContentFromDTO(content, contentDTO);
+    if (content.getThumbnailUrl() == null) {
+      content.setThumbnailUrl(DEFAULT_THUMBNAIL_URL);
+    }
     content.setCategory(category); // 카테고리 설정
     content.setStatus(ContentStatus.ACTIVE); // 심사중으로 설정
 
