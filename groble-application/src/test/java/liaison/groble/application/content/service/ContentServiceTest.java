@@ -99,6 +99,42 @@ class ContentServiceTest {
   }
 
   @Test
+  void draftContent_clearsTitleWhenNotProvided() {
+    // given
+    Long userId = 2L;
+    Long contentId = 30L;
+
+    User user = User.builder().id(userId).build();
+    Content content = new Content(user);
+    ReflectionTestUtils.setField(content, "id", contentId);
+    content.setTitle("Original Title");
+    content.setStatus(ContentStatus.DRAFT);
+
+    when(userReader.getUserById(userId)).thenReturn(user);
+    when(contentReader.getContentWithSeller(contentId)).thenReturn(content);
+    when(contentRepository.save(any(Content.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
+
+    ContentDTO requestDto =
+        ContentDTO.builder()
+            .contentId(contentId)
+            .paymentType(ContentPaymentType.ONE_TIME.name())
+            .isSearchExposed(false)
+            .contentType(ContentType.COACHING.name())
+            .serviceTarget("1")
+            .build();
+
+    // when
+    ContentDTO response = contentService.draftContent(userId, requestDto);
+
+    // then
+    ArgumentCaptor<Content> captor = ArgumentCaptor.forClass(Content.class);
+    verify(contentRepository).save(captor.capture());
+    assertThat(captor.getValue().getTitle()).isNull();
+    assertThat(response.getTitle()).isNull();
+  }
+
+  @Test
   void registerContent_updatesPaymentType() {
     // given
     Long userId = 1L;

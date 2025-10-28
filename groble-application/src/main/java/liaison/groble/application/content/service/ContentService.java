@@ -182,6 +182,9 @@ public class ContentService {
       }
 
       updateContentFromDTO(content, contentDTO);
+      if (contentDTO.getTitle() == null) {
+        content.setTitle(null);
+      }
 
       // 옵션 처리 - 옵션 데이터가 전달된 경우에만
       if (contentDTO.getOptions() != null && !contentDTO.getOptions().isEmpty()) {
