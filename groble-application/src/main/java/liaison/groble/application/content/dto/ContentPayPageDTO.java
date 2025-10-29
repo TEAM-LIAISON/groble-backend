@@ -22,6 +22,8 @@ public class ContentPayPageDTO {
   private final String title;
   // 콘텐츠 유형
   private final String contentType;
+  // 결제 유형
+  private final String paymentType;
   // 옵션 이름
   private final String optionName;
   // 옵션에 속하는 가격

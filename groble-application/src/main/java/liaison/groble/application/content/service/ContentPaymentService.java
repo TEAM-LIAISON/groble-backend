@@ -1,5 +1,6 @@
 package liaison.groble.application.content.service;
 
+import java.util.Collections;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -33,21 +34,26 @@ public class ContentPaymentService {
     // 2. 콘텐츠 옵션 조회
     ContentOption contentOption = findContentOptionById(content, optionId);
 
-    List<ContentPayPageDTO.UserCouponDTO> userCoupons = couponService.getUserCoupons(userId);
+    boolean isLoggedIn = userId != null;
+    List<ContentPayPageDTO.UserCouponDTO> userCoupons =
+        isLoggedIn ? couponService.getUserCoupons(userId) : Collections.emptyList();
 
     // 3. 응답 DTO 생성
-    return buildContentPayPageDTO(content, contentOption, userCoupons);
+    return buildContentPayPageDTO(isLoggedIn, content, contentOption, userCoupons);
   }
 
   private ContentPayPageDTO buildContentPayPageDTO(
+      boolean isLoggedIn,
       Content content,
       ContentOption contentOption,
       List<ContentPayPageDTO.UserCouponDTO> userCoupons) {
     return ContentPayPageDTO.builder()
+        .isLoggedIn(isLoggedIn)
         .thumbnailUrl(content.getThumbnailUrl())
         .sellerName(content.getUser().getNickname())
         .title(content.getTitle())
         .contentType(content.getContentType().name())
+        .paymentType(content.getPaymentType() != null ? content.getPaymentType().name() : null)
         .optionName(contentOption.getName())
         .price(contentOption.getPrice())
         .userCoupons(userCoupons)

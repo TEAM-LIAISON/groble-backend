@@ -49,6 +49,13 @@ public class ContentPayPageResponse {
   private String contentType;
 
   @Schema(
+      description = "결제 유형",
+      example = "ONE_TIME",
+      type = "string",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private String paymentType;
+
+  @Schema(
       description = "옵션 이름",
       example = "기본 옵션",
       type = "string",

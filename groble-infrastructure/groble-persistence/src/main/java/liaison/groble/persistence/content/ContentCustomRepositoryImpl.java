@@ -932,6 +932,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     qContent.lowestPrice.as("lowestPrice"),
                     qCategory.code.as("categoryId"),
                     qContent.contentType.stringValue().as("contentType"),
+                    qContent.paymentType.stringValue().as("paymentType"),
                     ExpressionUtils.as(
                         JPAExpressions.select(qOption.count().intValue())
                             .from(qOption)
