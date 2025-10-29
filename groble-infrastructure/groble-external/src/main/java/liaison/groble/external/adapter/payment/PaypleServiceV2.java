@@ -294,6 +294,7 @@ public class PaypleServiceV2 implements PaypleService {
         .custKey(params.get("PCD_CUST_KEY"))
         .authKey(params.get("PCD_AUTH_KEY"))
         .payReqKey(params.get("PCD_PAY_REQKEY"))
+        .cardQuota(params.get("PCD_PAY_CARDQUOTA"))
         .build();
   }
 
@@ -317,6 +318,7 @@ public class PaypleServiceV2 implements PaypleService {
     requestBody.put("PCD_CUST_KEY", request.getCustKey());
     requestBody.put("PCD_AUTH_KEY", request.getAuthKey());
     requestBody.put("PCD_PAY_REQKEY", request.getPayReqKey());
+    requestBody.put("PCD_PAY_CARDQUOTA", request.getCardQuota());
 
     log.debug("페이플 결제 요청 본문: {}", requestBody.toJSONString());
 

@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 import liaison.groble.application.payment.dto.PaypleApprovalResult;
 import liaison.groble.application.payment.exception.PaymentValidationException;
 import liaison.groble.application.payment.exception.UnauthorizedPaymentException;
+import liaison.groble.application.payment.util.CardQuotaNormalizer;
 import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.payment.entity.PayplePayment;
 
@@ -176,12 +177,13 @@ public class PaymentValidator {
     }
 
     // 할부개월수
-    if (payment.getPcdPayCardQuota() != null && approvalResult.getPayCardQuota() != null) {
-      if (!Objects.equals(payment.getPcdPayCardQuota(), approvalResult.getPayCardQuota())) {
-        log.warn(
-            "할부개월수 불일치 - DB: {}, 승인결과: {}",
-            payment.getPcdPayCardQuota(),
-            approvalResult.getPayCardQuota());
+    if (payment.getPcdPayCardQuota() != null || approvalResult.getPayCardQuota() != null) {
+      String normalizedPaymentQuota = CardQuotaNormalizer.normalize(payment.getPcdPayCardQuota());
+      String normalizedApprovalQuota =
+          CardQuotaNormalizer.normalize(approvalResult.getPayCardQuota());
+
+      if (!Objects.equals(normalizedPaymentQuota, normalizedApprovalQuota)) {
+        log.warn("할부개월수 불일치 - DB: {}, 승인결과: {}", normalizedPaymentQuota, normalizedApprovalQuota);
       }
     }
   }
