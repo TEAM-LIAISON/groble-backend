@@ -26,7 +26,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import liaison.groble.api.model.payment.request.PaymentCancelRequest;
 import liaison.groble.api.model.payment.request.PaypleAuthResultRequest;
+import liaison.groble.api.model.payment.request.PaypleBillingRegistrationRequest;
 import liaison.groble.api.model.payment.response.AppCardPayplePaymentResponse;
+import liaison.groble.api.model.payment.response.BillingKeyResponse;
 import liaison.groble.api.model.payment.response.PaypleBillingAuthResponse;
 import liaison.groble.api.server.common.ApiPaths;
 import liaison.groble.api.server.common.BaseController;
@@ -37,8 +39,11 @@ import liaison.groble.api.server.payment.processor.PaymentProcessorFactory;
 import liaison.groble.application.payment.dto.AppCardPayplePaymentDTO;
 import liaison.groble.application.payment.dto.PaypleAuthResponseDTO;
 import liaison.groble.application.payment.dto.PaypleAuthResultDTO;
+import liaison.groble.application.payment.dto.billing.RegisterBillingKeyCommand;
 import liaison.groble.application.payment.dto.cancel.PaymentCancelResponse;
+import liaison.groble.application.payment.exception.PaymentAuthenticationRequiredException;
 import liaison.groble.application.payment.exception.PaypleMobileRedirectException;
+import liaison.groble.application.payment.service.BillingKeyService;
 import liaison.groble.application.payment.service.PaypleBillingAuthService;
 import liaison.groble.application.payment.service.PaypleMobileRedirectService;
 import liaison.groble.application.payment.service.PaypleMobileRedirectService.MobileRedirectContext;
@@ -71,6 +76,7 @@ public class PayplePaymentController extends BaseController {
   // Service
   private final PaypleBillingAuthService paypleBillingAuthService;
   private final PaypleMobileRedirectService paypleMobileRedirectService;
+  private final BillingKeyService billingKeyService;
   private final ObjectMapper objectMapper;
 
   public PayplePaymentController(
@@ -79,12 +85,14 @@ public class PayplePaymentController extends BaseController {
       PaymentMapper paymentMapper,
       PaypleBillingAuthService paypleBillingAuthService,
       PaypleMobileRedirectService paypleMobileRedirectService,
+      BillingKeyService billingKeyService,
       ObjectMapper objectMapper) {
     super(responseHelper);
     this.processorFactory = processorFactory;
     this.paymentMapper = paymentMapper;
     this.paypleBillingAuthService = paypleBillingAuthService;
     this.paypleMobileRedirectService = paypleMobileRedirectService;
+    this.billingKeyService = billingKeyService;
     this.objectMapper = objectMapper;
   }
 
@@ -118,6 +126,32 @@ public class PayplePaymentController extends BaseController {
     PaypleAuthResponseDTO authResponse = paypleBillingAuthService.requestApiAuth();
     PaypleBillingAuthResponse response = paymentMapper.toPaypleBillingAuthResponse(authResponse);
     return success(response, ResponseMessages.Payment.BILLING_AUTH_SUCCESS);
+  }
+
+  @Operation(
+      summary = PaymentSwaggerDocs.BILLING_REGISTER_SUMMARY,
+      description = PaymentSwaggerDocs.BILLING_REGISTER_DESCRIPTION)
+  @PaymentApiResponses.BillingKeyResponses
+  @Logging(
+      item = "Payment",
+      action = "registerBillingKey",
+      includeParam = true,
+      includeResult = true)
+  @PostMapping(ApiPaths.Payment.BILLING_REGISTER)
+  public ResponseEntity<GrobleResponse<BillingKeyResponse>> registerBillingKey(
+      @Auth(required = true) Accessor accessor,
+      @Valid @RequestBody PaypleBillingRegistrationRequest request) {
+
+    UserContext userContext = UserContextFactory.from(accessor);
+    if (!userContext.isMember()) {
+      throw PaymentAuthenticationRequiredException.forPayment();
+    }
+
+    RegisterBillingKeyCommand command = paymentMapper.toRegisterBillingKeyCommand(request);
+    var billingKeyInfo = billingKeyService.registerBillingKey(userContext.getId(), command);
+    BillingKeyResponse response = paymentMapper.toBillingKeyResponse(billingKeyInfo);
+
+    return success(response, ResponseMessages.Payment.BILLING_KEY_REGISTERED);
   }
 
   @Operation(

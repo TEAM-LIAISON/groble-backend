@@ -4,12 +4,16 @@ import org.mapstruct.Mapper;
 
 import liaison.groble.api.model.payment.request.PaymentCancelRequest;
 import liaison.groble.api.model.payment.request.PaypleAuthResultRequest;
+import liaison.groble.api.model.payment.request.PaypleBillingRegistrationRequest;
 import liaison.groble.api.model.payment.response.AppCardPayplePaymentResponse;
+import liaison.groble.api.model.payment.response.BillingKeyResponse;
 import liaison.groble.api.model.payment.response.PaymentCancelInfoResponse;
 import liaison.groble.api.model.payment.response.PaypleBillingAuthResponse;
 import liaison.groble.application.payment.dto.AppCardPayplePaymentDTO;
 import liaison.groble.application.payment.dto.PaypleAuthResponseDTO;
 import liaison.groble.application.payment.dto.PaypleAuthResultDTO;
+import liaison.groble.application.payment.dto.billing.BillingKeyInfoDTO;
+import liaison.groble.application.payment.dto.billing.RegisterBillingKeyCommand;
 import liaison.groble.application.payment.dto.cancel.PaymentCancelDTO;
 import liaison.groble.application.payment.dto.cancel.PaymentCancelInfoDTO;
 import liaison.groble.mapping.config.GrobleMapperConfig;
@@ -18,6 +22,11 @@ import liaison.groble.mapping.config.GrobleMapperConfig;
 public interface PaymentMapper {
   // ====== 📥 Request → DTO 변환 ======
   PaypleAuthResultDTO toPaypleAuthResultDTO(PaypleAuthResultRequest paypleAuthResultRequest);
+
+  RegisterBillingKeyCommand toRegisterBillingKeyCommand(
+      PaypleBillingRegistrationRequest paypleBillingRegistrationRequest);
+
+  BillingKeyResponse toBillingKeyResponse(BillingKeyInfoDTO dto);
 
   PaymentCancelDTO toPaymentCancelDTO(PaymentCancelRequest paymentCancelRequest);
 

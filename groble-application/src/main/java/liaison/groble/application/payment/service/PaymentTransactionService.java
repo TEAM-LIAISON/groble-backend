@@ -22,8 +22,10 @@ import liaison.groble.application.purchase.service.PurchaseReader;
 import liaison.groble.application.settlement.policy.FeePolicyService;
 import liaison.groble.application.settlement.reader.SettlementReader;
 import liaison.groble.application.settlement.writer.SettlementWriter;
+import liaison.groble.application.subscription.service.SubscriptionService;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.domain.content.entity.Content;
+import liaison.groble.domain.content.enums.ContentPaymentType;
 import liaison.groble.domain.content.repository.ContentRepository;
 import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.payment.entity.Payment;
@@ -58,6 +60,7 @@ public class PaymentTransactionService {
   private final OrderReader orderReader;
   private final PurchaseReader purchaseReader;
   private final PaymentReader paymentReader;
+  private final BillingKeyService billingKeyService;
   private final PaymentValidator paymentValidator;
   private final PayplePaymentRepository payplePaymentRepository;
   private final ContentRepository contentRepository;
@@ -67,6 +70,7 @@ public class PaymentTransactionService {
   private final SettlementWriter settlementWriter;
   private final FeePolicyService feePolicyService;
   private final UserReader userReader;
+  private final SubscriptionService subscriptionService;
 
   /**
    * 인증 정보 저장 및 검증
@@ -87,8 +91,15 @@ public class PaymentTransactionService {
     paymentValidator.validateOrderStatus(order, Order.OrderStatus.PENDING);
     paymentValidator.validatePaymentAmount(order.getFinalPrice(), authResult.getPayTotal());
 
+    String overrideBillingKey = null;
+    Content content =
+        order.getOrderItems().isEmpty() ? null : order.getOrderItems().get(0).getContent();
+    if (content != null && content.getPaymentType() == ContentPaymentType.SUBSCRIPTION) {
+      overrideBillingKey = billingKeyService.getActiveBillingKey(userId).getBillingKey();
+    }
+
     // 3. PayplePayment 저장
-    PayplePayment payplePayment = createPayplePayment(order, authResult);
+    PayplePayment payplePayment = createPayplePayment(order, authResult, overrideBillingKey);
     payplePaymentRepository.save(payplePayment);
 
     log.info(
@@ -172,6 +183,10 @@ public class PaymentTransactionService {
         payment.getId(),
         purchase.getId());
 
+    if (purchase.getContent().getPaymentType() == ContentPaymentType.SUBSCRIPTION) {
+      registerSubscription(purchase, payment, payplePayment);
+    }
+
     return PaymentCompletionResult.builder()
         .orderId(order.getId())
         .merchantUid(order.getMerchantUid())
@@ -230,8 +245,27 @@ public class PaymentTransactionService {
         .build();
   }
 
+  private void registerSubscription(
+      Purchase purchase, Payment payment, PayplePayment payplePayment) {
+    String billingKey = payplePayment.getPcdPayerId();
+    if (billingKey == null || billingKey.isBlank()) {
+      throw new IllegalStateException("정기결제에는 빌링키가 필요합니다.");
+    }
+    subscriptionService.createSubscription(purchase, payment, billingKey);
+  }
+
   /** PayplePayment 생성 */
-  private PayplePayment createPayplePayment(Order order, PaypleAuthResultDTO dto) {
+  private PayplePayment createPayplePayment(
+      Order order, PaypleAuthResultDTO dto, String overrideBillingKey) {
+    if (order.getUser() == null) {
+      throw new IllegalStateException("회원 정보가 존재하지 않는 주문입니다.");
+    }
+
+    String payerId =
+        overrideBillingKey != null && !overrideBillingKey.isBlank()
+            ? overrideBillingKey
+            : dto.getPayerId();
+
     return PayplePayment.builder()
         .pcdPayRst(dto.getPayRst())
         .pcdPayCode(dto.getPayCode())
@@ -243,7 +277,7 @@ public class PaymentTransactionService {
         .pcdPayReqKey(dto.getPayReqKey())
         .pcdPayHost(dto.getPayHost())
         .pcdPayCofUrl(dto.getPayCofUrl())
-        .pcdPayerId(dto.getPayerId())
+        .pcdPayerId(payerId)
         .pcdPayerNo(order.getUser().getId().toString())
         .pcdPayerName(dto.getPayerName())
         .pcdPayerHp(dto.getPayerHp())
@@ -647,6 +681,10 @@ public class PaymentTransactionService {
         order.getId(),
         payment.getId(),
         purchase.getId());
+
+    if (purchase.getContent().getPaymentType() == ContentPaymentType.SUBSCRIPTION) {
+      throw new IllegalStateException("정기결제는 비회원 결제를 지원하지 않습니다.");
+    }
 
     return PaymentCompletionResult.builder()
         .orderId(order.getId())

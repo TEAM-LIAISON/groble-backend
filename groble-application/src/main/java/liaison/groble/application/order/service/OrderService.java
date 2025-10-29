@@ -20,6 +20,7 @@ import liaison.groble.application.user.service.UserReader;
 import liaison.groble.common.event.EventPublisher;
 import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.content.entity.ContentOption;
+import liaison.groble.domain.content.enums.ContentPaymentType;
 import liaison.groble.domain.coupon.entity.UserCoupon;
 import liaison.groble.domain.coupon.repository.UserCouponRepository;
 import liaison.groble.domain.guest.entity.GuestUser;
@@ -111,10 +112,25 @@ public class OrderService {
     // 1. 콘텐츠 조회
     final Content content = contentReader.getContentById(dto.getContentId());
 
+    if (content.getPaymentType() == ContentPaymentType.SUBSCRIPTION && guestUser != null) {
+      throw new IllegalArgumentException("정기결제 상품은 회원만 구매할 수 있습니다.");
+    }
+
     // 2. 주문 옵션 검증 및 변환
     final List<ValidatedOrderOptionDTO> validatedOptions =
         validateAndEnrichOptions(content, dto.getOptions());
     final List<OrderOptionInfo> orderOptions = convertToDomainOptions(validatedOptions);
+
+    if (content.getPaymentType() == ContentPaymentType.SUBSCRIPTION) {
+      if (validatedOptions.size() != 1) {
+        throw new IllegalArgumentException("정기결제 상품은 하나의 옵션만 선택할 수 있습니다.");
+      }
+
+      ValidatedOrderOptionDTO option = validatedOptions.get(0);
+      if (option.getQuantity() == null || option.getQuantity() != 1) {
+        throw new IllegalArgumentException("정기결제 상품은 옵션 수량 1개만 구매할 수 있습니다.");
+      }
+    }
 
     // 3. 주문 객체 생성
     Order order = createOrderByUserType(user, guestUser, content, orderOptions);

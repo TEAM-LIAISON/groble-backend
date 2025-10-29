@@ -586,19 +586,11 @@ public class ContentService {
     }
 
     // 콘텐츠 소개
-    if (dto.getContentIntroduction() != null) {
-      content.setContentIntroduction(dto.getContentIntroduction());
-    }
+    content.setContentIntroduction(dto.getContentIntroduction());
     // 서비스 타겟, 프로세스, 제작자 소개 업데이트
-    if (dto.getServiceTarget() != null) {
-      content.setServiceTarget(dto.getServiceTarget());
-    }
-    if (dto.getServiceProcess() != null) {
-      content.setServiceProcess(dto.getServiceProcess());
-    }
-    if (dto.getMakerIntro() != null) {
-      content.setMakerIntro(dto.getMakerIntro());
-    }
+    content.setServiceTarget(dto.getServiceTarget());
+    content.setServiceProcess(dto.getServiceProcess());
+    content.setMakerIntro(dto.getMakerIntro());
 
     if (dto.getIsSearchExposed() != null) {
       content.setSearchExposed(dto.getIsSearchExposed());

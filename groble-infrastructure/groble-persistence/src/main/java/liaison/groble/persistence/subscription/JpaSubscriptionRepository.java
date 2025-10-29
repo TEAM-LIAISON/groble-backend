@@ -1,0 +1,15 @@
+package liaison.groble.persistence.subscription;
+
+import java.util.Optional;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import liaison.groble.domain.subscription.entity.Subscription;
+import liaison.groble.domain.subscription.enums.SubscriptionStatus;
+
+public interface JpaSubscriptionRepository extends JpaRepository<Subscription, Long> {
+  Optional<Subscription> findByPurchaseId(Long purchaseId);
+
+  boolean existsByContentIdAndUserIdAndStatus(
+      Long contentId, Long userId, SubscriptionStatus status);
+}

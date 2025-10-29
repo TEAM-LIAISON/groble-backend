@@ -64,6 +64,19 @@ public final class PaymentSwaggerDocs {
             - `custKey`: 서버 간 통신 시 필요한 파트너 키
             """;
 
+  // === 빌링키 등록 API ===
+  public static final String BILLING_REGISTER_SUMMARY =
+      "[💳 빌링키 등록] 정기 결제를 위한 회원 카드 정보를 등록하고 빌링키를 저장합니다.";
+  public static final String BILLING_REGISTER_DESCRIPTION =
+      """
+            페이플 빌링 등록 완료 콜백으로 전달되는 정보를 받아 회원의 빌링키를 저장합니다.
+
+            **주의사항:**
+            - 회원 전용 API 입니다 (비회원/미로그인 불가)
+            - 동일 회원이 다시 등록하면 기존 빌링키는 비활성화됩니다
+            - 결제 승인 전 반드시 선행되어야 합니다
+            """;
+
   // === 앱카드 결제 취소 API ===
   public static final String CANCEL_SUMMARY = "[❌ 통합 결제 취소] 관리자가 서비스 유형에 한해 회원/비회원 결제를 취소합니다.";
   public static final String CANCEL_DESCRIPTION =
