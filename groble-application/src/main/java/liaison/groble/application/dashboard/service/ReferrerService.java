@@ -308,72 +308,69 @@ public class ReferrerService {
 
     String referrerDomain = resolveReferrerDomain(resolvedReferrerUrl);
 
-    // 1. 직접 유입이 아닌 경우에만 내부/외부 유입 규칙 적용
+    // 홈페이지에서 온 경우 명시적으로 처리
 
-    if (StringUtils.hasText(resolvedReferrerUrl)) {
+    if (Boolean.TRUE.equals(referrerDTO.isFromHomepage())) {
 
-      boolean isInternalCampaign = hasUtmParameters(referrerDTO);
+      resolvedReferrerUrl = "https://groble.im";
 
-      // 3. 내부 이동 & 4. 내부 캠페인 (UTM 파라미터가 없는 경우)
+      referrerDomain = "groble.im";
 
-      if (ReferrerDomainUtils.isInternalDomain(referrerDomain) && !isInternalCampaign) {
+      log.debug("Recording homepage referral for contentId={}", contentId);
 
-        boolean fromHome = false;
+    } else {
 
-        try {
+      // 1. 직접 유입이 아닌 경우에만 내부/외부 유입 규칙 적용
 
-          URI referrerUri = new URI(resolvedReferrerUrl);
+      if (StringUtils.hasText(resolvedReferrerUrl)) {
 
-          String path = referrerUri.getPath();
+        boolean isInternalCampaign = hasUtmParameters(referrerDTO);
 
-          if (path == null || path.equals("/") || path.isEmpty()) {
+        // 3. 내부 이동 & 4. 내부 캠페인 (UTM 파라미터가 없는 경우)
 
-            fromHome = true;
+        if (ReferrerDomainUtils.isInternalDomain(referrerDomain) && !isInternalCampaign) {
+
+          boolean fromHome = false;
+
+          try {
+
+            URI referrerUri = new URI(resolvedReferrerUrl);
+
+            String path = referrerUri.getPath();
+
+            if (path == null || path.equals("/") || path.isEmpty()) {
+
+              fromHome = true;
+            }
+
+          } catch (URISyntaxException e) {
+
+            log.warn("Could not parse referrer URI: {}", resolvedReferrerUrl, e);
           }
 
-        } catch (URISyntaxException e) {
+          // 기본 경로("/")에서 온 경우 직접 유입처럼 처리
 
-          log.warn("Could not parse referrer URI: {}", resolvedReferrerUrl, e);
-        }
+          if (fromHome) {
 
-        if (fromHome) {
+            resolvedReferrerUrl = null;
 
-          // 홈 화면에서 온 유입은 허용 (아무것도 하지 않고 통과)
-
-          log.debug("Allowing navigation from home page to content page.");
-
-        } else {
-
-          // 홈 화면이 아닌 다른 내부 페이지에서 온 경우, 마켓->콘텐츠 규칙 적용
-
-          Optional<ReferrerTracking> recentMarketNav =
-              referrerTrackingRepository.findLatestMarketNavigation(sessionId);
-
-          if (recentMarketNav.isPresent()) {
-
-            // 마켓->콘텐츠 유입 허용
-
-            resolvedReferrerUrl = recentMarketNav.get().getPageUrl();
-
-            referrerDomain = resolveReferrerDomain(resolvedReferrerUrl);
+            referrerDomain = null;
 
           } else {
 
-            // 그 외 모든 내부 유입은 차단
+            // 그 외 모든 내부 이동은 차단
 
-            log.debug(
-                "Skipping internal navigation for contentId={}. Not from home or market page.",
-                contentId);
+            log.debug("Skipping internal navigation for contentId={}", contentId);
 
             recordMetric("content", "internal_navigation_skipped");
 
             return false;
           }
         }
+
+        // 2. 외부 유입 또는 내부 캠페인이면 항상 통과
+
       }
-
-      // 2. 외부 유입 또는 내부 캠페인이면 항상 통과
-
     }
 
     // admin.groble.im 유입은 항상 제외
@@ -474,58 +471,71 @@ public class ReferrerService {
 
     String referrerDomain = resolveReferrerDomain(resolvedReferrerUrl);
 
-    // 1. 직접 유입이 아닌 경우에만 내부/외부 유입 규칙 적용
+    // 홈페이지에서 온 경우 명시적으로 처리
 
-    if (StringUtils.hasText(resolvedReferrerUrl)) {
+    if (Boolean.TRUE.equals(referrerDTO.isFromHomepage())) {
 
-      boolean isInternalCampaign = hasUtmParameters(referrerDTO);
+      resolvedReferrerUrl = "https://groble.im";
 
-      // 3. 내부 이동 & 4. 내부 캠페인
+      referrerDomain = "groble.im";
 
-      if (ReferrerDomainUtils.isInternalDomain(referrerDomain) && !isInternalCampaign) {
+      log.debug("Recording homepage referral for marketLinkUrl={}", marketLinkUrl);
 
-        try {
+    } else {
 
-          URI referrerUri = new URI(resolvedReferrerUrl);
+      // 1. 직접 유입이 아닌 경우에만 내부/외부 유입 규칙 적용
 
-          String path = referrerUri.getPath();
+      if (StringUtils.hasText(resolvedReferrerUrl)) {
 
-          // 기본 경로("/")에서 온 경우 직접 유입처럼 처리
+        boolean isInternalCampaign = hasUtmParameters(referrerDTO);
 
-          if (path == null || path.equals("/") || path.isEmpty()) {
+        // 3. 내부 이동 & 4. 내부 캠페인
 
-            resolvedReferrerUrl = null;
+        if (ReferrerDomainUtils.isInternalDomain(referrerDomain) && !isInternalCampaign) {
 
-            referrerDomain = null;
+          try {
 
-          } else {
+            URI referrerUri = new URI(resolvedReferrerUrl);
 
-            log.debug("Skipping internal navigation for marketLinkUrl={}", marketLinkUrl);
+            String path = referrerUri.getPath();
+
+            // 기본 경로("/")에서 온 경우 직접 유입처럼 처리
+
+            if (path == null || path.equals("/") || path.isEmpty()) {
+
+              resolvedReferrerUrl = null;
+
+              referrerDomain = null;
+
+            } else {
+
+              log.debug("Skipping internal navigation for marketLinkUrl={}", marketLinkUrl);
+
+              recordMetric("market", "internal_navigation_skipped");
+
+              return false;
+            }
+
+          } catch (URISyntaxException e) {
+
+            log.warn(
+                "Could not parse referrer URI for internal navigation check: {}",
+                resolvedReferrerUrl,
+                e);
+
+            log.debug(
+                "Skipping internal navigation due to URI parse error for marketLinkUrl={}",
+                marketLinkUrl);
 
             recordMetric("market", "internal_navigation_skipped");
 
             return false;
           }
-
-        } catch (URISyntaxException e) {
-
-          log.warn(
-              "Could not parse referrer URI for internal navigation check: {}",
-              resolvedReferrerUrl,
-              e);
-
-          log.debug(
-              "Skipping internal navigation due to URI parse error for marketLinkUrl={}",
-              marketLinkUrl);
-
-          recordMetric("market", "internal_navigation_skipped");
-
-          return false;
         }
+
+        // 외부 유입 또는 내부 캠페인이면 통과
+
       }
-
-      // 외부 유입 또는 내부 캠페인이면 통과
-
     }
 
     // admin.groble.im 유입은 항상 제외

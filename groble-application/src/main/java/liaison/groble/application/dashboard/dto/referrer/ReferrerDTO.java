@@ -36,4 +36,5 @@ public class ReferrerDTO {
   private String sessionId;
   private LocalDateTime timestamp;
   private Map<String, Object> referrerDetails;
+  private boolean isFromHomepage;
 }

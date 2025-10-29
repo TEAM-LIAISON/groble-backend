@@ -17,6 +17,7 @@ import liaison.groble.application.payment.dto.PaymentCancelResult;
 import liaison.groble.application.payment.dto.PaypleApprovalResult;
 import liaison.groble.application.payment.dto.PaypleAuthResultDTO;
 import liaison.groble.application.payment.dto.completion.PaymentCompletionResult;
+import liaison.groble.application.payment.util.CardQuotaNormalizer;
 import liaison.groble.application.payment.validator.PaymentValidator;
 import liaison.groble.application.purchase.service.PurchaseReader;
 import liaison.groble.application.settlement.policy.FeePolicyService;
@@ -291,7 +292,7 @@ public class PaymentTransactionService {
         .pcdPayIsTax(dto.getPayIsTax())
         .pcdPayCardName(dto.getPayCardName())
         .pcdPayCardNum(dto.getPayCardNum())
-        .pcdPayCardQuota(normalizeQuota(dto.getPayCardQuota()))
+        .pcdPayCardQuota(CardQuotaNormalizer.normalize(dto.getPayCardQuota()))
         .pcdPayCardTradeNum(dto.getPayCardTradeNum())
         .pcdPayCardAuthNo(dto.getPayCardAuthNo())
         .pcdPayCardReceipt(dto.getPayCardReceipt())
@@ -343,11 +344,6 @@ public class PaymentTransactionService {
     content.incrementSaleCount();
     contentRepository.save(content);
     return purchaseRepository.save(purchase);
-  }
-
-  /** 할부 개월수 정규화 */
-  private String normalizeQuota(String quota) {
-    return (quota == null || quota.trim().isEmpty()) ? "00" : quota;
   }
 
   /** 정산 데이터 생성 - 원화 반올림 로직 명확화 */
@@ -812,7 +808,7 @@ public class PaymentTransactionService {
         .pcdPayIsTax(dto.getPayIsTax())
         .pcdPayCardName(dto.getPayCardName())
         .pcdPayCardNum(dto.getPayCardNum())
-        .pcdPayCardQuota(normalizeQuota(dto.getPayCardQuota()))
+        .pcdPayCardQuota(CardQuotaNormalizer.normalize(dto.getPayCardQuota()))
         .pcdPayCardTradeNum(dto.getPayCardTradeNum())
         .pcdPayCardAuthNo(dto.getPayCardAuthNo())
         .pcdPayCardReceipt(dto.getPayCardReceipt())
