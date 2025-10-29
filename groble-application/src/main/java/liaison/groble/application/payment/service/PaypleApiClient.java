@@ -14,6 +14,7 @@ import liaison.groble.application.payment.dto.PaypleAuthResponseDTO;
 import liaison.groble.application.payment.dto.PaypleAuthResultDTO;
 import liaison.groble.application.payment.dto.PaypleRefundResult;
 import liaison.groble.application.payment.exception.PaypleApiException;
+import liaison.groble.application.payment.util.CardQuotaNormalizer;
 import liaison.groble.external.adapter.payment.PaypleCodeGenerator;
 import liaison.groble.external.adapter.payment.PaypleRefundRequest;
 import liaison.groble.external.adapter.payment.PaypleService;
@@ -148,6 +149,7 @@ public class PaypleApiClient {
     params.put("PCD_AUTH_KEY", authResult.getAuthKey());
     params.put("PCD_PAY_REQKEY", authResult.getPayReqKey());
     params.put("PCD_PAY_COFURL", authResult.getPayCofUrl());
+    params.put("PCD_PAY_CARDQUOTA", CardQuotaNormalizer.normalize(authResult.getPayCardQuota()));
 
     try {
       JSONObject approvalResult = paypleService.payAppCard(params);
