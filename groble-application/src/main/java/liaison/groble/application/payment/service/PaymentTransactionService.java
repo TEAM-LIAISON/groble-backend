@@ -16,6 +16,7 @@ import liaison.groble.application.payment.dto.PaymentCancelInfo;
 import liaison.groble.application.payment.dto.PaymentCancelResult;
 import liaison.groble.application.payment.dto.PaypleApprovalResult;
 import liaison.groble.application.payment.dto.PaypleAuthResultDTO;
+import liaison.groble.application.payment.dto.billing.BillingKeyAction;
 import liaison.groble.application.payment.dto.completion.PaymentCompletionResult;
 import liaison.groble.application.payment.util.CardQuotaNormalizer;
 import liaison.groble.application.payment.validator.PaymentValidator;
@@ -92,12 +93,9 @@ public class PaymentTransactionService {
     paymentValidator.validateOrderStatus(order, Order.OrderStatus.PENDING);
     paymentValidator.validatePaymentAmount(order.getFinalPrice(), authResult.getPayTotal());
 
-    String overrideBillingKey = null;
     Content content =
         order.getOrderItems().isEmpty() ? null : order.getOrderItems().get(0).getContent();
-    if (content != null && content.getPaymentType() == ContentPaymentType.SUBSCRIPTION) {
-      overrideBillingKey = billingKeyService.getActiveBillingKey(userId).getBillingKey();
-    }
+    String overrideBillingKey = resolveSubscriptionBillingKey(userId, authResult, content);
 
     // 3. PayplePayment 저장
     PayplePayment payplePayment = createPayplePayment(order, authResult, overrideBillingKey);
@@ -115,6 +113,24 @@ public class PaymentTransactionService {
         .merchantUid(order.getMerchantUid())
         .amount(order.getFinalPrice())
         .build();
+  }
+
+  private String resolveSubscriptionBillingKey(
+      Long userId, PaypleAuthResultDTO authResult, Content content) {
+    if (content == null || content.getPaymentType() != ContentPaymentType.SUBSCRIPTION) {
+      return null;
+    }
+
+    String payWork = authResult.getPayWork();
+    if (payWork == null) {
+      return null;
+    }
+
+    if (BillingKeyAction.REUSE.getPayWork().equalsIgnoreCase(payWork)) {
+      return billingKeyService.getActiveBillingKey(userId).getBillingKey();
+    }
+
+    return null;
   }
 
   /**

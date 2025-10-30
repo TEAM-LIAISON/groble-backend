@@ -11,6 +11,8 @@ import org.springframework.transaction.annotation.Transactional;
 import liaison.groble.application.content.ContentReader;
 import liaison.groble.application.content.dto.ContentPayPageDTO;
 import liaison.groble.application.coupon.service.CouponService;
+import liaison.groble.application.payment.dto.billing.SubscriptionPaymentMetadata;
+import liaison.groble.application.payment.service.SubscriptionPaymentMetadataProvider;
 import liaison.groble.common.exception.EntityNotFoundException;
 import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.content.entity.ContentOption;
@@ -31,6 +33,7 @@ public class ContentPaymentService {
 
   // Service
   private final CouponService couponService;
+  private final SubscriptionPaymentMetadataProvider subscriptionPaymentMetadataProvider;
 
   @Transactional(readOnly = true)
   public ContentPayPageDTO getContentPayPage(Long userId, Long contentId, Long optionId) {
@@ -45,15 +48,21 @@ public class ContentPaymentService {
         isLoggedIn ? couponService.getUserCoupons(userId) : Collections.emptyList();
 
     // 3. 응답 DTO 생성
-    return buildContentPayPageDTO(isLoggedIn, content, contentOption, userCoupons);
+    return buildContentPayPageDTO(userId, isLoggedIn, content, contentOption, userCoupons);
   }
 
   private ContentPayPageDTO buildContentPayPageDTO(
+      Long userId,
       boolean isLoggedIn,
       Content content,
       ContentOption contentOption,
       List<ContentPayPageDTO.UserCouponDTO> userCoupons) {
-    LocalDate nextPaymentDate = determineNextPaymentDate(content);
+    ContentPayPageDTO.SubscriptionMetaDTO subscriptionMeta =
+        buildSubscriptionMeta(userId, content, contentOption);
+    LocalDate nextPaymentDate =
+        subscriptionMeta != null
+            ? subscriptionMeta.getNextPaymentDate()
+            : determineNextPaymentDate(content);
 
     return ContentPayPageDTO.builder()
         .isLoggedIn(isLoggedIn)
@@ -63,6 +72,7 @@ public class ContentPaymentService {
         .contentType(content.getContentType().name())
         .paymentType(content.getPaymentType() != null ? content.getPaymentType().name() : null)
         .nextPaymentDate(nextPaymentDate)
+        .subscriptionMeta(subscriptionMeta)
         .optionName(contentOption.getName())
         .price(contentOption.getPrice())
         .userCoupons(userCoupons)
@@ -102,5 +112,31 @@ public class ContentPaymentService {
 
     LocalDate todayInBillingZone = LocalDate.now(BILLING_ZONE_ID);
     return todayInBillingZone.plusMonths(MONTHLY_BILLING_INTERVAL);
+  }
+
+  private ContentPayPageDTO.SubscriptionMetaDTO buildSubscriptionMeta(
+      Long userId, Content content, ContentOption option) {
+    return subscriptionPaymentMetadataProvider
+        .buildForContent(userId, content, option)
+        .map(this::toSubscriptionMetaDTO)
+        .orElse(null);
+  }
+
+  private ContentPayPageDTO.SubscriptionMetaDTO toSubscriptionMetaDTO(
+      SubscriptionPaymentMetadata metadata) {
+    return ContentPayPageDTO.SubscriptionMetaDTO.builder()
+        .hasActiveBillingKey(metadata.isHasActiveBillingKey())
+        .billingKeyId(metadata.getBillingKeyId())
+        .merchantUserKey(metadata.getMerchantUserKey())
+        .defaultPayMethod(metadata.getDefaultPayMethod())
+        .payWork(metadata.getPayWork())
+        .cardVer(metadata.getCardVer())
+        .regularFlag(metadata.getRegularFlag())
+        .nextPaymentDate(metadata.getNextPaymentDate())
+        .payYear(metadata.getPayYear())
+        .payMonth(metadata.getPayMonth())
+        .payDay(metadata.getPayDay())
+        .requiresImmediateCharge(metadata.isRequiresImmediateCharge())
+        .build();
   }
 }

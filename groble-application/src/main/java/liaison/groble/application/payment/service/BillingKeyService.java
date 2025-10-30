@@ -1,6 +1,7 @@
 package liaison.groble.application.payment.service;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -57,6 +58,11 @@ public class BillingKeyService {
     return billingKeyRepository
         .findByUserIdAndStatus(userId, BillingKeyStatus.ACTIVE)
         .orElseThrow(() -> new IllegalStateException("등록된 정기결제 카드가 없습니다."));
+  }
+
+  @Transactional(readOnly = true)
+  public Optional<BillingKey> findActiveBillingKey(Long userId) {
+    return billingKeyRepository.findByUserIdAndStatus(userId, BillingKeyStatus.ACTIVE);
   }
 
   @Transactional(readOnly = true)

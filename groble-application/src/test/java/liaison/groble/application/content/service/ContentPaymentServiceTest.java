@@ -7,6 +7,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Collections;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,6 +19,9 @@ import org.springframework.test.util.ReflectionTestUtils;
 import liaison.groble.application.content.ContentReader;
 import liaison.groble.application.content.dto.ContentPayPageDTO;
 import liaison.groble.application.coupon.service.CouponService;
+import liaison.groble.application.payment.dto.billing.BillingKeyAction;
+import liaison.groble.application.payment.dto.billing.SubscriptionPaymentMetadata;
+import liaison.groble.application.payment.service.SubscriptionPaymentMetadataProvider;
 import liaison.groble.domain.content.entity.CoachingOption;
 import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.content.enums.ContentPaymentType;
@@ -32,12 +36,15 @@ class ContentPaymentServiceTest {
 
   @Mock private ContentReader contentReader;
   @Mock private CouponService couponService;
+  @Mock private SubscriptionPaymentMetadataProvider subscriptionPaymentMetadataProvider;
 
   private ContentPaymentService contentPaymentService;
 
   @BeforeEach
   void setUp() {
-    contentPaymentService = new ContentPaymentService(contentReader, couponService);
+    contentPaymentService =
+        new ContentPaymentService(
+            contentReader, couponService, subscriptionPaymentMetadataProvider);
   }
 
   @Test
@@ -54,14 +61,36 @@ class ContentPaymentServiceTest {
 
     when(contentReader.getContentById(contentId)).thenReturn(content);
     when(couponService.getUserCoupons(userId)).thenReturn(Collections.emptyList());
+    LocalDate metadataNextPaymentDate = LocalDate.now(BILLING_ZONE_ID).plusMonths(1);
+    when(subscriptionPaymentMetadataProvider.buildForContent(userId, content, option))
+        .thenReturn(
+            Optional.of(
+                SubscriptionPaymentMetadata.builder()
+                    .billingKeyAction(BillingKeyAction.REGISTER_AND_CHARGE)
+                    .hasActiveBillingKey(false)
+                    .billingKeyId(null)
+                    .merchantUserKey(String.valueOf(userId))
+                    .defaultPayMethod("CARD")
+                    .payWork(BillingKeyAction.REGISTER_AND_CHARGE.getPayWork())
+                    .cardVer("02")
+                    .regularFlag("Y")
+                    .nextPaymentDate(metadataNextPaymentDate)
+                    .payYear(String.format("%04d", metadataNextPaymentDate.getYear()))
+                    .payMonth(String.format("%02d", metadataNextPaymentDate.getMonthValue()))
+                    .payDay(String.format("%02d", metadataNextPaymentDate.getDayOfMonth()))
+                    .requiresImmediateCharge(true)
+                    .build()));
 
     // when
     ContentPayPageDTO result = contentPaymentService.getContentPayPage(userId, contentId, optionId);
 
     // then
-    LocalDate expectedNextPaymentDate = LocalDate.now(BILLING_ZONE_ID).plusMonths(1);
+    LocalDate expectedNextPaymentDate = metadataNextPaymentDate;
     assertThat(result.getPaymentType()).isEqualTo(ContentPaymentType.SUBSCRIPTION.name());
     assertThat(result.getNextPaymentDate()).isEqualTo(expectedNextPaymentDate);
+    assertThat(result.getSubscriptionMeta()).isNotNull();
+    assertThat(result.getSubscriptionMeta().getPayWork())
+        .isEqualTo(BillingKeyAction.REGISTER_AND_CHARGE.getPayWork());
   }
 
   @Test
@@ -76,6 +105,8 @@ class ContentPaymentServiceTest {
     ReflectionTestUtils.setField(content, "id", contentId);
 
     when(contentReader.getContentById(contentId)).thenReturn(content);
+    when(subscriptionPaymentMetadataProvider.buildForContent(null, content, option))
+        .thenReturn(Optional.empty());
 
     // when
     ContentPayPageDTO result = contentPaymentService.getContentPayPage(null, contentId, optionId);

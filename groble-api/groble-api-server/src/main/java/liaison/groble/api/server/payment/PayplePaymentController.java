@@ -26,10 +26,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import liaison.groble.api.model.payment.request.PaymentCancelRequest;
 import liaison.groble.api.model.payment.request.PaypleAuthResultRequest;
+import liaison.groble.api.model.payment.request.PaypleBillingChargeRequest;
 import liaison.groble.api.model.payment.request.PaypleBillingRegistrationRequest;
 import liaison.groble.api.model.payment.response.AppCardPayplePaymentResponse;
 import liaison.groble.api.model.payment.response.BillingKeyResponse;
 import liaison.groble.api.model.payment.response.PaypleBillingAuthResponse;
+import liaison.groble.api.model.payment.response.PaypleSubscriptionResultResponse;
 import liaison.groble.api.server.common.ApiPaths;
 import liaison.groble.api.server.common.BaseController;
 import liaison.groble.api.server.common.ResponseMessages;
@@ -39,7 +41,9 @@ import liaison.groble.api.server.payment.processor.PaymentProcessorFactory;
 import liaison.groble.application.payment.dto.AppCardPayplePaymentDTO;
 import liaison.groble.application.payment.dto.PaypleAuthResponseDTO;
 import liaison.groble.application.payment.dto.PaypleAuthResultDTO;
+import liaison.groble.application.payment.dto.billing.BillingKeyAction;
 import liaison.groble.application.payment.dto.billing.RegisterBillingKeyCommand;
+import liaison.groble.application.payment.dto.billing.SubscriptionPaymentResult;
 import liaison.groble.application.payment.dto.cancel.PaymentCancelResponse;
 import liaison.groble.application.payment.exception.PaymentAuthenticationRequiredException;
 import liaison.groble.application.payment.exception.PaypleMobileRedirectException;
@@ -47,6 +51,7 @@ import liaison.groble.application.payment.service.BillingKeyService;
 import liaison.groble.application.payment.service.PaypleBillingAuthService;
 import liaison.groble.application.payment.service.PaypleMobileRedirectService;
 import liaison.groble.application.payment.service.PaypleMobileRedirectService.MobileRedirectContext;
+import liaison.groble.application.payment.service.SubscriptionPaymentService;
 import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.annotation.Logging;
 import liaison.groble.common.context.UserContext;
@@ -77,7 +82,12 @@ public class PayplePaymentController extends BaseController {
   private final PaypleBillingAuthService paypleBillingAuthService;
   private final PaypleMobileRedirectService paypleMobileRedirectService;
   private final BillingKeyService billingKeyService;
+  private final SubscriptionPaymentService subscriptionPaymentService;
   private final ObjectMapper objectMapper;
+
+  private static final String BILLING_CHARGE_SUCCESS_MESSAGE = "빌링키 결제가 완료되었습니다.";
+  private static final String BILLING_KEY_CONFIRM_SUCCESS_MESSAGE = "빌링키 등록이 완료되었습니다.";
+  private static final String SUBSCRIPTION_CONFIRM_SUCCESS_MESSAGE = "정기 결제가 완료되었습니다.";
 
   public PayplePaymentController(
       ResponseHelper responseHelper,
@@ -86,6 +96,7 @@ public class PayplePaymentController extends BaseController {
       PaypleBillingAuthService paypleBillingAuthService,
       PaypleMobileRedirectService paypleMobileRedirectService,
       BillingKeyService billingKeyService,
+      SubscriptionPaymentService subscriptionPaymentService,
       ObjectMapper objectMapper) {
     super(responseHelper);
     this.processorFactory = processorFactory;
@@ -93,7 +104,68 @@ public class PayplePaymentController extends BaseController {
     this.paypleBillingAuthService = paypleBillingAuthService;
     this.paypleMobileRedirectService = paypleMobileRedirectService;
     this.billingKeyService = billingKeyService;
+    this.subscriptionPaymentService = subscriptionPaymentService;
     this.objectMapper = objectMapper;
+  }
+
+  @Operation(summary = "빌링키 재과금", description = "활성 빌링키를 사용해 결제를 수행합니다.")
+  @Logging(
+      item = "Payment",
+      action = "chargeWithBillingKey",
+      includeParam = true,
+      includeResult = true)
+  @PostMapping("/billing/charge")
+  public ResponseEntity<GrobleResponse<PaypleSubscriptionResultResponse>> chargeWithBillingKey(
+      @Auth(required = true) Accessor accessor,
+      @Valid @RequestBody PaypleBillingChargeRequest request) {
+
+    SubscriptionPaymentResult result =
+        subscriptionPaymentService.chargeWithBillingKey(
+            accessor.getUserId(), request.getMerchantUid());
+
+    PaypleSubscriptionResultResponse response =
+        paymentMapper.toPaypleSubscriptionResultResponse(result);
+    return success(response, BILLING_CHARGE_SUCCESS_MESSAGE);
+  }
+
+  @Operation(summary = "빌링키 등록 확인", description = "페이플 AUTH 응답을 확인하고 빌링키를 저장합니다.")
+  @Logging(
+      item = "Payment",
+      action = "confirmBillingKey",
+      includeParam = true,
+      includeResult = true)
+  @PostMapping("/billingkey/confirm")
+  public ResponseEntity<GrobleResponse<PaypleSubscriptionResultResponse>> confirmBillingKey(
+      @Auth(required = true) Accessor accessor,
+      @Valid @RequestBody PaypleAuthResultRequest request) {
+
+    PaypleAuthResultDTO dto = paymentMapper.toPaypleAuthResultDTO(request);
+    SubscriptionPaymentResult result =
+        subscriptionPaymentService.confirmBillingKeyRegistration(accessor.getUserId(), dto);
+
+    PaypleSubscriptionResultResponse response =
+        paymentMapper.toPaypleSubscriptionResultResponse(result);
+    return success(response, BILLING_KEY_CONFIRM_SUCCESS_MESSAGE);
+  }
+
+  @Operation(summary = "정기결제 확정", description = "CERT 응답을 검증하고 결제 및 빌링키 저장을 완료합니다.")
+  @Logging(
+      item = "Payment",
+      action = "confirmSubscription",
+      includeParam = true,
+      includeResult = true)
+  @PostMapping("/subscription/confirm")
+  public ResponseEntity<GrobleResponse<PaypleSubscriptionResultResponse>> confirmSubscription(
+      @Auth(required = true) Accessor accessor,
+      @Valid @RequestBody PaypleAuthResultRequest request) {
+
+    PaypleAuthResultDTO dto = paymentMapper.toPaypleAuthResultDTO(request);
+    SubscriptionPaymentResult result =
+        subscriptionPaymentService.confirmSubscriptionPayment(accessor.getUserId(), dto);
+
+    PaypleSubscriptionResultResponse response =
+        paymentMapper.toPaypleSubscriptionResultResponse(result);
+    return success(response, SUBSCRIPTION_CONFIRM_SUCCESS_MESSAGE);
   }
 
   @Operation(
@@ -250,6 +322,44 @@ public class PayplePaymentController extends BaseController {
     try {
       MobileRedirectContext context = paypleMobileRedirectService.loadContext(merchantUid);
       boolean paymentProcessed = paypleMobileRedirectService.isAlreadyProcessed(context);
+      boolean subscriptionFlow = isSubscriptionFlow(request);
+      BillingKeyAction billingKeyAction =
+          subscriptionFlow ? resolveBillingKeyAction(request, authResultDTO) : null;
+
+      if (subscriptionFlow
+          && billingKeyAction != null
+          && context.getUserId() != null
+          && !paymentProcessed) {
+        try {
+          SubscriptionPaymentResult subscriptionResult =
+              processSubscriptionRedirect(billingKeyAction, authResultDTO, context, merchantUid);
+          paymentProcessed = true;
+          log.info(
+              "✅ 모바일 정기결제 처리 완료 - merchantUid: {}, action: {}, status: {}",
+              merchantUid,
+              billingKeyAction.name(),
+              subscriptionResult.getStatus());
+        } catch (PaypleMobileRedirectException e) {
+          log.error(
+              "❌ 모바일 정기결제 처리 실패 - merchantUid: {}, error: {}",
+              merchantUid,
+              e.getClientMessage(),
+              e);
+          String errorRedirectUrl =
+              paypleMobileRedirectService.buildFailureRedirectUrl(
+                  merchantUid, e.getClientMessage());
+          response.sendRedirect(errorRedirectUrl);
+          return;
+        } catch (Exception subscriptionException) {
+          log.error(
+              "❌ 모바일 정기결제 처리 중 예기치 못한 오류 - merchantUid: {}", merchantUid, subscriptionException);
+          String errorRedirectUrl =
+              paypleMobileRedirectService.buildFailureRedirectUrl(
+                  merchantUid, PaypleMobileRedirectException.defaultClientMessage());
+          response.sendRedirect(errorRedirectUrl);
+          return;
+        }
+      }
 
       if (!paymentProcessed && !paypleMobileRedirectService.isProcessableStatus(context)) {
         log.warn("결제 처리가 불가능한 주문 상태입니다 - merchantUid: {}", merchantUid);
@@ -314,6 +424,71 @@ public class PayplePaymentController extends BaseController {
         && StringUtils.hasText(dto.getPayReqKey())
         && StringUtils.hasText(dto.getPayCofUrl())
         && StringUtils.hasText(dto.getPayTotal());
+  }
+
+  private boolean isSubscriptionFlow(HttpServletRequest request) {
+    String subscriptionParam = request.getParameter("subscription");
+    return subscriptionParam != null && subscriptionParam.equalsIgnoreCase("true");
+  }
+
+  private BillingKeyAction resolveBillingKeyAction(
+      HttpServletRequest request, PaypleAuthResultDTO authResultDTO) {
+    BillingKeyAction action = parseBillingKeyAction(request.getParameter("billingKeyAction"));
+    if (action == null
+        && authResultDTO != null
+        && StringUtils.hasText(authResultDTO.getPayWork())) {
+      String payWork = authResultDTO.getPayWork();
+      if ("CERT".equalsIgnoreCase(payWork)) {
+        action = BillingKeyAction.REGISTER_AND_CHARGE;
+      } else if ("AUTH".equalsIgnoreCase(payWork)) {
+        action = BillingKeyAction.REGISTER;
+      }
+    }
+    return action;
+  }
+
+  private BillingKeyAction parseBillingKeyAction(String value) {
+    if (!StringUtils.hasText(value)) {
+      return null;
+    }
+    try {
+      return BillingKeyAction.valueOf(value.toUpperCase());
+    } catch (IllegalArgumentException ex) {
+      log.warn("알 수 없는 billingKeyAction 값: {}", value);
+      return null;
+    }
+  }
+
+  private SubscriptionPaymentResult processSubscriptionRedirect(
+      BillingKeyAction action,
+      PaypleAuthResultDTO authResultDTO,
+      MobileRedirectContext context,
+      String merchantUid) {
+
+    Long userId = context.getUserId();
+    if (userId == null) {
+      throw PaypleMobileRedirectException.orderUserMissing(merchantUid, null);
+    }
+
+    switch (action) {
+      case REUSE:
+        return subscriptionPaymentService.chargeWithBillingKey(userId, merchantUid);
+      case REGISTER:
+        if (authResultDTO == null) {
+          throw PaypleMobileRedirectException.unexpected(
+              new IllegalStateException("정기결제 인증 정보가 없습니다."));
+        }
+        return subscriptionPaymentService.confirmBillingKeyRegistration(userId, authResultDTO);
+      case REGISTER_AND_CHARGE:
+        if (authResultDTO == null) {
+          throw PaypleMobileRedirectException.unexpected(
+              new IllegalStateException("정기결제 인증 정보가 없습니다."));
+        }
+        return subscriptionPaymentService.confirmSubscriptionPayment(userId, authResultDTO);
+      default:
+        throw PaypleMobileRedirectException.unexpected(
+            new IllegalArgumentException("지원하지 않는 billingKeyAction: " + action));
+    }
   }
 
   private PaypleAuthResultDTO extractAuthResultDTO(

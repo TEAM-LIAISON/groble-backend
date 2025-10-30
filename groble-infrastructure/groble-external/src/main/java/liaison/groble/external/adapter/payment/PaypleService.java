@@ -34,4 +34,7 @@ public interface PaypleService {
 
   /** 정산지급대행 이체 가능 잔액 조회 API */
   JSONObject payAccountRemain(Map<String, String> params, String accessToken);
+
+  /** 빌링키(간편) 결제 API */
+  JSONObject paySimplePayment(PaypleSimplePayRequest request, String authKey);
 }

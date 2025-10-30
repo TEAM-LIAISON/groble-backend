@@ -13,8 +13,10 @@ import liaison.groble.application.order.dto.CreateOrderRequestDTO;
 import liaison.groble.application.order.dto.CreateOrderSuccessDTO;
 import liaison.groble.application.order.dto.OrderSuccessDTO;
 import liaison.groble.application.order.dto.ValidatedOrderOptionDTO;
+import liaison.groble.application.payment.dto.billing.SubscriptionPaymentMetadata;
 import liaison.groble.application.payment.dto.completion.FreePaymentCompletionResult;
 import liaison.groble.application.payment.event.FreePaymentCompletedEvent;
+import liaison.groble.application.payment.service.SubscriptionPaymentMetadataProvider;
 import liaison.groble.application.purchase.service.PurchaseReader;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.common.event.EventPublisher;
@@ -73,6 +75,7 @@ public class OrderService {
 
   // Event Publisher
   private final EventPublisher eventPublisher;
+  private final SubscriptionPaymentMetadataProvider subscriptionPaymentMetadataProvider;
 
   @Transactional
   public CreateOrderSuccessDTO createOrderForUser(CreateOrderRequestDTO dto, Long userId) {
@@ -871,6 +874,28 @@ public class OrderService {
         .contentTitle(contentTitle)
         .totalPrice(order.getTotalPrice())
         .isPurchasedContent(isPurchasedContent)
+        .paypleOptions(
+            subscriptionPaymentMetadataProvider
+                .buildForOrder(order)
+                .map(this::toPaypleOptionsDTO)
+                .orElse(null))
+        .build();
+  }
+
+  private CreateOrderSuccessDTO.PaypleOptionsDTO toPaypleOptionsDTO(
+      SubscriptionPaymentMetadata metadata) {
+    return CreateOrderSuccessDTO.PaypleOptionsDTO.builder()
+        .billingKeyAction(metadata.getBillingKeyAction().name())
+        .payWork(metadata.getPayWork())
+        .cardVer(metadata.getCardVer())
+        .regularFlag(metadata.getRegularFlag())
+        .defaultPayMethod(metadata.getDefaultPayMethod())
+        .merchantUserKey(metadata.getMerchantUserKey())
+        .billingKeyId(metadata.getBillingKeyId())
+        .nextPaymentDate(metadata.getNextPaymentDate())
+        .payYear(metadata.getPayYear())
+        .payMonth(metadata.getPayMonth())
+        .payDay(metadata.getPayDay())
         .build();
   }
 
