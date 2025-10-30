@@ -1,6 +1,7 @@
 package liaison.groble.application.content.dto;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -24,6 +25,8 @@ public class ContentPayPageDTO {
   private final String contentType;
   // 결제 유형
   private final String paymentType;
+  // 다음 결제 예정일 (정기 결제 시)
+  private final LocalDate nextPaymentDate;
   // 옵션 이름
   private final String optionName;
   // 옵션에 속하는 가격

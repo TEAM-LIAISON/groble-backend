@@ -1,6 +1,8 @@
 package liaison.groble.api.model.content.response.pay;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 import liaison.groble.api.model.coupon.response.UserCouponResponse;
@@ -54,6 +56,10 @@ public class ContentPayPageResponse {
       type = "string",
       requiredMode = Schema.RequiredMode.REQUIRED)
   private String paymentType;
+
+  @JsonFormat(pattern = "yyyy-MM-dd")
+  @Schema(description = "다음 결제 예정일 (정기 결제 시 제공)", example = "2024-11-15", type = "string")
+  private LocalDate nextPaymentDate;
 
   @Schema(
       description = "옵션 이름",

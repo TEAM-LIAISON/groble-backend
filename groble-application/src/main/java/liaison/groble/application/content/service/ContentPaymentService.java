@@ -1,5 +1,7 @@
 package liaison.groble.application.content.service;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Collections;
 import java.util.List;
 
@@ -12,6 +14,7 @@ import liaison.groble.application.coupon.service.CouponService;
 import liaison.groble.common.exception.EntityNotFoundException;
 import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.content.entity.ContentOption;
+import liaison.groble.domain.content.enums.ContentPaymentType;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +23,9 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 public class ContentPaymentService {
+  private static final ZoneId BILLING_ZONE_ID = ZoneId.of("Asia/Seoul");
+
+  private static final int MONTHLY_BILLING_INTERVAL = 1;
   // Reader
   private final ContentReader contentReader;
 
@@ -47,6 +53,8 @@ public class ContentPaymentService {
       Content content,
       ContentOption contentOption,
       List<ContentPayPageDTO.UserCouponDTO> userCoupons) {
+    LocalDate nextPaymentDate = determineNextPaymentDate(content);
+
     return ContentPayPageDTO.builder()
         .isLoggedIn(isLoggedIn)
         .thumbnailUrl(content.getThumbnailUrl())
@@ -54,6 +62,7 @@ public class ContentPaymentService {
         .title(content.getTitle())
         .contentType(content.getContentType().name())
         .paymentType(content.getPaymentType() != null ? content.getPaymentType().name() : null)
+        .nextPaymentDate(nextPaymentDate)
         .optionName(contentOption.getName())
         .price(contentOption.getPrice())
         .userCoupons(userCoupons)
@@ -79,5 +88,19 @@ public class ContentPaymentService {
                         + content.getId()
                         + ", OptionId: "
                         + optionId));
+  }
+
+  private LocalDate determineNextPaymentDate(Content content) {
+    if (content == null) {
+      return null;
+    }
+
+    ContentPaymentType paymentType = content.getPaymentType();
+    if (paymentType != ContentPaymentType.SUBSCRIPTION) {
+      return null;
+    }
+
+    LocalDate todayInBillingZone = LocalDate.now(BILLING_ZONE_ID);
+    return todayInBillingZone.plusMonths(MONTHLY_BILLING_INTERVAL);
   }
 }
