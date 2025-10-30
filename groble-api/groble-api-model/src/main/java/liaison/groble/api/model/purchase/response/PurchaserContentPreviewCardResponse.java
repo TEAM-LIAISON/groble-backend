@@ -52,4 +52,10 @@ public class PurchaserContentPreviewCardResponse {
       description = "콘텐츠 주문 상태 [PAID - 결제완료], [EXPIRED - 기간만료], [CANCELLED - 결제취소]",
       example = "PAID")
   private String orderStatus;
+
+  @Schema(description = "결제 타입 (단건결제: ONE_TIME, 정기결제: SUBSCRIPTION)", example = "SUBSCRIPTION")
+  private String paymentType;
+
+  @Schema(description = "정기결제 회차 (정기결제가 아닌 경우 null)", example = "2", nullable = true)
+  private Integer subscriptionRound;
 }

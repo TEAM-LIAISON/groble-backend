@@ -102,6 +102,8 @@ public class PurchaseService {
         .finalPrice(flat.getFinalPrice())
         .priceOptionLength(flat.getPriceOptionLength())
         .orderStatus(flat.getOrderStatus())
+        .paymentType(flat.getPaymentType())
+        .subscriptionRound(flat.getSubscriptionRound())
         .build();
   }
 

@@ -24,4 +24,6 @@ public class FlatPurchaseContentPreviewDTO {
   private BigDecimal finalPrice;
   private int priceOptionLength;
   private String orderStatus;
+  private String paymentType;
+  private Integer subscriptionRound;
 }
