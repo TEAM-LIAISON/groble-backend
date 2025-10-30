@@ -287,6 +287,8 @@ public class SellContentService {
         .purchaserPhoneNumber(contentSellDetailDTO.getPurchaserPhoneNumber())
         .selectedOptionName(contentSellDetailDTO.getSelectedOptionName())
         .finalPrice(contentSellDetailDTO.getFinalPrice())
+        .paymentType(contentSellDetailDTO.getPaymentType())
+        .subscriptionRound(contentSellDetailDTO.getSubscriptionRound())
         .build();
   }
 
@@ -337,6 +339,8 @@ public class SellContentService {
         .purchaserPhoneNumber(flat.getPurchaserPhoneNumber())
         .selectedOptionName(flat.getSelectedOptionName())
         .finalPrice(flat.getFinalPrice())
+        .paymentType(flat.getPaymentType())
+        .subscriptionRound(flat.getSubscriptionRound())
         .build();
   }
 
