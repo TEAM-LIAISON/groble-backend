@@ -23,8 +23,10 @@ import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.order.entity.Purchaser;
 import liaison.groble.domain.order.repository.OrderRepository;
 import liaison.groble.domain.order.vo.OrderOptionInfo;
+import liaison.groble.domain.payment.repository.BillingKeyRepository;
 import liaison.groble.domain.payment.repository.PaymentRepository;
 import liaison.groble.domain.purchase.repository.PurchaseRepository;
+import liaison.groble.domain.subscription.repository.SubscriptionRepository;
 import liaison.groble.domain.user.entity.User;
 
 import lombok.extern.slf4j.Slf4j;
@@ -47,6 +49,8 @@ public class MemberOrderProcessor extends BaseOrderProcessor {
       PurchaseRepository purchaseRepository,
       PaymentRepository paymentRepository,
       GuestUserRepository guestUserRepository,
+      SubscriptionRepository subscriptionRepository,
+      BillingKeyRepository billingKeyRepository,
       EventPublisher eventPublisher,
       SubscriptionPaymentMetadataProvider subscriptionPaymentMetadataProvider) {
     super(
@@ -58,6 +62,8 @@ public class MemberOrderProcessor extends BaseOrderProcessor {
         purchaseRepository,
         paymentRepository,
         guestUserRepository,
+        subscriptionRepository,
+        billingKeyRepository,
         eventPublisher);
     this.userReader = userReader; // 이제 정상적으로 초기화됨
     this.subscriptionPaymentMetadataProvider = subscriptionPaymentMetadataProvider;

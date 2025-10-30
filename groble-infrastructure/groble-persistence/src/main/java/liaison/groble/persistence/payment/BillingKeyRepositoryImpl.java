@@ -31,4 +31,9 @@ public class BillingKeyRepositoryImpl implements BillingKeyRepository {
   public List<BillingKey> findByUserId(Long userId) {
     return jpaBillingKeyRepository.findByUserId(userId);
   }
+
+  @Override
+  public Optional<BillingKey> findByBillingKey(String billingKey) {
+    return jpaBillingKeyRepository.findByBillingKey(billingKey);
+  }
 }

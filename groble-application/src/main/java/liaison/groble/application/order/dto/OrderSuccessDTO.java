@@ -1,6 +1,7 @@
 package liaison.groble.application.order.dto;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -19,6 +20,14 @@ public class OrderSuccessDTO {
   private final Long contentId;
 
   private final String contentTitle;
+
+  private final String paymentType;
+
+  private final LocalDate nextPaymentDate;
+
+  private final String cardName;
+
+  private final String cardNumberLast4;
 
   private final String sellerName;
 

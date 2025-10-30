@@ -1,7 +1,9 @@
 package liaison.groble.application.order.service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -31,10 +33,14 @@ import liaison.groble.domain.order.entity.OrderItem;
 import liaison.groble.domain.order.entity.Purchaser;
 import liaison.groble.domain.order.repository.OrderRepository;
 import liaison.groble.domain.order.vo.OrderOptionInfo;
+import liaison.groble.domain.payment.entity.BillingKey;
 import liaison.groble.domain.payment.entity.Payment;
+import liaison.groble.domain.payment.repository.BillingKeyRepository;
 import liaison.groble.domain.payment.repository.PaymentRepository;
 import liaison.groble.domain.purchase.entity.Purchase;
 import liaison.groble.domain.purchase.repository.PurchaseRepository;
+import liaison.groble.domain.subscription.entity.Subscription;
+import liaison.groble.domain.subscription.repository.SubscriptionRepository;
 import liaison.groble.domain.user.entity.User;
 
 import lombok.RequiredArgsConstructor;
@@ -72,6 +78,8 @@ public class OrderService {
   private final UserCouponRepository userCouponRepository;
   private final PurchaseRepository purchaseRepository;
   private final PaymentRepository paymentRepository;
+  private final SubscriptionRepository subscriptionRepository;
+  private final BillingKeyRepository billingKeyRepository;
 
   // Event Publisher
   private final EventPublisher eventPublisher;
@@ -694,12 +702,38 @@ public class OrderService {
     log.info(
         "주문 성공 응답 생성 - orderId: {}, purchasedAt: {}", order.getId(), purchase.getPurchasedAt());
 
+    LocalDate nextPaymentDate =
+        subscriptionRepository
+            .findByPurchaseId(purchase.getId())
+            .map(Subscription::getNextBillingDate)
+            .orElse(null);
+
+    String cardName = null;
+    String cardNumberLast4 = null;
+    Payment payment = purchase.getPayment();
+    if (payment != null) {
+      String billingKeyValue = payment.getBillingKey();
+      if (billingKeyValue != null && !billingKeyValue.isBlank()) {
+        Optional<BillingKey> billingKeyOptional =
+            billingKeyRepository.findByBillingKey(billingKeyValue);
+        if (billingKeyOptional.isPresent()) {
+          BillingKey billingKey = billingKeyOptional.get();
+          cardName = billingKey.getCardName();
+          cardNumberLast4 = extractCardLast4(billingKey.getCardNumberMasked());
+        }
+      }
+    }
+
     return OrderSuccessDTO.builder()
         // 주문 기본 정보
         .merchantUid(order.getMerchantUid())
         .purchasedAt(purchase.getPurchasedAt())
         .contentId(content.getId())
         .contentTitle(content.getTitle())
+        .paymentType(content.getPaymentType() != null ? content.getPaymentType().name() : null)
+        .nextPaymentDate(nextPaymentDate)
+        .cardName(cardName)
+        .cardNumberLast4(cardNumberLast4)
         .sellerName(content.getUser().getNickname())
         .orderStatus(order.getStatus().name())
 
@@ -721,6 +755,17 @@ public class OrderService {
 
         .isFreePurchase(order.getFinalPrice().compareTo(BigDecimal.ZERO) == 0)
         .build();
+  }
+
+  private String extractCardLast4(String masked) {
+    if (masked == null || masked.isBlank()) {
+      return null;
+    }
+    String digitsOnly = masked.replaceAll("\\D", "");
+    if (digitsOnly.length() < 4) {
+      return digitsOnly.isEmpty() ? null : digitsOnly;
+    }
+    return digitsOnly.substring(digitsOnly.length() - 4);
   }
 
   /**

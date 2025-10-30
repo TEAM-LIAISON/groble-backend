@@ -12,4 +12,6 @@ public interface JpaBillingKeyRepository extends JpaRepository<BillingKey, Long>
   Optional<BillingKey> findByUserIdAndStatus(Long userId, BillingKeyStatus status);
 
   List<BillingKey> findByUserId(Long userId);
+
+  Optional<BillingKey> findByBillingKey(String billingKey);
 }
