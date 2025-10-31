@@ -19,9 +19,11 @@ import liaison.groble.application.settlement.reader.SettlementReader;
 import liaison.groble.application.settlement.reader.TaxInvoiceReader;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.common.response.PageResponse;
+import liaison.groble.domain.content.enums.ContentPaymentType;
 import liaison.groble.domain.settlement.dto.FlatPerTransactionSettlement;
 import liaison.groble.domain.settlement.dto.FlatSettlementsDTO;
 import liaison.groble.domain.settlement.entity.Settlement;
+import liaison.groble.domain.settlement.entity.SettlementItem;
 import liaison.groble.domain.settlement.entity.TaxInvoice;
 import liaison.groble.domain.user.entity.SellerInfo;
 import liaison.groble.domain.user.enums.BusinessType;
@@ -113,6 +115,16 @@ public class SettlementService {
           taxInvoiceReader.getTaxInvoiceUrl(settlement.getId(), TaxInvoice.InvoiceStatus.ISSUED);
     }
 
+    boolean hasSubscriptionSettlement =
+        settlement.getSettlementItems().stream()
+            .filter(Objects::nonNull)
+            .anyMatch(SettlementItem::isSubscriptionSettlement);
+
+    String paymentType =
+        hasSubscriptionSettlement
+            ? ContentPaymentType.SUBSCRIPTION.name()
+            : ContentPaymentType.ONE_TIME.name();
+
     BigDecimal displayPlatformFee = nullSafe(settlement.getPlatformFeeDisplay());
     BigDecimal displayPgFee = nullSafe(settlement.getPgFeeDisplay());
     BigDecimal displayVat = nullSafe(settlement.getFeeVatDisplay());
@@ -124,6 +136,7 @@ public class SettlementService {
         .settlementStartDate(settlement.getSettlementStartDate())
         .settlementEndDate(settlement.getSettlementEndDate())
         .scheduledSettlementDate(settlement.getScheduledSettlementDate())
+        .paymentType(paymentType)
         .settlementAmount(displaySettlementAmount)
         .pgFee(displayPgFee)
         .pgFeeRefundExpected(pgFeeRefundExpected)
