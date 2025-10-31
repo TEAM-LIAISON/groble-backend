@@ -12,4 +12,7 @@ public interface JpaSubscriptionRepository extends JpaRepository<Subscription, L
 
   boolean existsByContentIdAndUserIdAndStatus(
       Long contentId, Long userId, SubscriptionStatus status);
+
+  Optional<Subscription> findByContentIdAndUserIdAndStatus(
+      Long contentId, Long userId, SubscriptionStatus status);
 }

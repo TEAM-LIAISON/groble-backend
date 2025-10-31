@@ -11,13 +11,17 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
+import com.querydsl.core.types.ExpressionUtils;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.NumberExpression;
+import com.querydsl.core.types.dsl.SimpleExpression;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
+import liaison.groble.domain.content.enums.ContentPaymentType;
 import liaison.groble.domain.order.entity.QOrder;
 import liaison.groble.domain.purchase.entity.QPurchase;
 import liaison.groble.domain.settlement.dto.FlatAdminSettlementsDTO;
@@ -45,8 +49,25 @@ public class SettlementCustomRepositoryImpl implements SettlementCustomRepositor
   public Page<FlatSettlementsDTO> findSettlementsByUserId(Long userId, Pageable pageable) {
     QSettlement qSettlement = QSettlement.settlement;
     QUser user = QUser.user;
+    QSettlementItem settlementItemSub = new QSettlementItem("settlementItemSub");
 
     BooleanExpression cond = qSettlement.user.id.eq(userId);
+
+    SimpleExpression<String> paymentTypeExpression =
+        new CaseBuilder()
+            .when(
+                JPAExpressions.selectOne()
+                    .from(settlementItemSub)
+                    .where(
+                        settlementItemSub
+                            .settlement
+                            .eq(qSettlement)
+                            .and(
+                                settlementItemSub.capturedPaymentType.eq(
+                                    ContentPaymentType.SUBSCRIPTION.name())))
+                    .exists())
+            .then(ContentPaymentType.SUBSCRIPTION.name())
+            .otherwise(ContentPaymentType.ONE_TIME.name());
 
     // settlementType에 따른 정렬 우선순위 설정 (COACHING = 0, DOCUMENT = 1)
     NumberExpression<Integer> typeOrder =
@@ -67,6 +88,7 @@ public class SettlementCustomRepositoryImpl implements SettlementCustomRepositor
                     qSettlement.settlementEndDate.as("settlementEndDate"),
                     qSettlement.scheduledSettlementDate.as("scheduledSettlementDate"),
                     qSettlement.settlementType.stringValue().as("contentType"),
+                    ExpressionUtils.as(paymentTypeExpression, "paymentType"),
                     qSettlement.settlementAmount.as("settlementAmount"),
                     qSettlement.settlementAmountDisplay.as("settlementAmountDisplay"),
                     qSettlement.status.stringValue().as("settlementStatus")))

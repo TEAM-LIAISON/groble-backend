@@ -31,4 +31,10 @@ public class SubscriptionRepositoryImpl implements SubscriptionRepository {
       Long contentId, Long userId, SubscriptionStatus status) {
     return jpaSubscriptionRepository.existsByContentIdAndUserIdAndStatus(contentId, userId, status);
   }
+
+  @Override
+  public Optional<Subscription> findByContentIdAndUserIdAndStatus(
+      Long contentId, Long userId, SubscriptionStatus status) {
+    return jpaSubscriptionRepository.findByContentIdAndUserIdAndStatus(contentId, userId, status);
+  }
 }

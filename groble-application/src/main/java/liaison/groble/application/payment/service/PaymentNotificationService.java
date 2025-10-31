@@ -14,11 +14,13 @@ import liaison.groble.application.payment.event.PaymentCompletedEvent;
 import liaison.groble.application.payment.event.PaymentRefundedEvent;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.domain.content.entity.Content;
+import liaison.groble.domain.content.enums.ContentPaymentType;
 import liaison.groble.domain.guest.entity.GuestUser;
 import liaison.groble.domain.port.EmailSenderPort;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.external.discord.dto.payment.ContentPaymentSuccessReportDTO;
 import liaison.groble.external.discord.service.payment.ContentPaymentSuccessReportService;
+import liaison.groble.external.discord.service.payment.SubscriptionPaymentSuccessReportService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +35,7 @@ public class PaymentNotificationService {
   private final GuestUserReader guestUserReader;
   private final ContentReader contentReader;
   private final ContentPaymentSuccessReportService contentPaymentSuccessReportService;
+  private final SubscriptionPaymentSuccessReportService subscriptionPaymentSuccessReportService;
   private final KakaoNotificationService kakaoNotificationService;
 
   @Async("defaultAsyncExecutor") // 명시적으로 Executor 지정
@@ -302,8 +305,13 @@ public class PaymentNotificationService {
               .purchasedAt(event.getPurchasedAt())
               .build();
 
-      contentPaymentSuccessReportService.sendContentPaymentSuccessReport(
-          contentPaymentSuccessReportDTO);
+      if (event.getPaymentType() == ContentPaymentType.SUBSCRIPTION) {
+        subscriptionPaymentSuccessReportService.sendSubscriptionPaymentSuccessReport(
+            contentPaymentSuccessReportDTO);
+      } else {
+        contentPaymentSuccessReportService.sendContentPaymentSuccessReport(
+            contentPaymentSuccessReportDTO);
+      }
 
       log.debug("디스코드 결제 성사 알림 발송");
     } catch (Exception e) {

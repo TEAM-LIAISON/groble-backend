@@ -150,4 +150,30 @@ public class Subscription extends BaseTimeEntity {
     this.status = SubscriptionStatus.CANCELLED;
     this.cancelledAt = cancelledAt != null ? cancelledAt : LocalDateTime.now();
   }
+
+  public void renew(
+      Purchase purchase,
+      Payment payment,
+      Long optionId,
+      String optionName,
+      BigDecimal price,
+      String billingKey,
+      LocalDate nextBillingDate) {
+    if (purchase == null || payment == null) {
+      throw new IllegalArgumentException("Renewal requires valid purchase and payment.");
+    }
+    if (billingKey == null || billingKey.isBlank()) {
+      throw new IllegalArgumentException("Billing key is required for subscription renewal.");
+    }
+
+    this.purchase = purchase;
+    this.payment = payment;
+    this.optionId = optionId;
+    this.optionName = optionName;
+    this.price = price;
+    this.billingKey = billingKey;
+    this.nextBillingDate = nextBillingDate;
+    this.status = SubscriptionStatus.ACTIVE;
+    this.cancelledAt = null;
+  }
 }

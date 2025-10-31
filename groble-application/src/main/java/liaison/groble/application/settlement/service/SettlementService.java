@@ -84,6 +84,7 @@ public class SettlementService {
         .settlementEndDate(flat.getSettlementEndDate())
         .scheduledSettlementDate(flat.getScheduledSettlementDate())
         .contentType(flat.getContentType())
+        .paymentType(flat.getPaymentType())
         .settlementAmount(flat.getSettlementAmountDisplay())
         .settlementStatus(
             resolveDisplayStatus(flat.getSettlementStatus(), flat.getSettlementAmountDisplay()))

@@ -138,7 +138,7 @@ public class PaymentValidator {
     }
 
     // 결제 금액 검증
-    if (!Objects.equals(payment.getPcdPayTotal(), approvalResult.getPayTotal())) {
+    if (!amountEquals(payment.getPcdPayTotal(), approvalResult.getPayTotal())) {
       throw new PaymentValidationException(
           String.format(
               "결제금액 불일치 - DB: %s, 승인결과: %s",
@@ -192,6 +192,20 @@ public class PaymentValidator {
   private void validateIfNotNull(String dbValue, String approvalValue, String fieldName) {
     if (dbValue != null && approvalValue != null && !dbValue.equals(approvalValue)) {
       log.warn("{} 불일치 - DB: {}, 승인결과: {}", fieldName, dbValue, approvalValue);
+    }
+  }
+
+  private boolean amountEquals(String lhs, String rhs) {
+    if (lhs == null || rhs == null) {
+      return Objects.equals(lhs, rhs);
+    }
+    try {
+      BigDecimal lhsAmount = new BigDecimal(lhs);
+      BigDecimal rhsAmount = new BigDecimal(rhs);
+      return lhsAmount.compareTo(rhsAmount) == 0;
+    } catch (NumberFormatException ex) {
+      log.warn("금액 비교 실패 - lhs: {}, rhs: {}", lhs, rhs, ex);
+      return Objects.equals(lhs, rhs);
     }
   }
 }

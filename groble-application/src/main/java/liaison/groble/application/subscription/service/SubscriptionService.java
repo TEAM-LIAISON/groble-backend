@@ -33,21 +33,30 @@ public class SubscriptionService {
     }
 
     Content content = purchase.getContent();
-    if (subscriptionRepository.existsByContentIdAndUserIdAndStatus(
-        content.getId(), user.getId(), SubscriptionStatus.ACTIVE)) {
-      log.warn(
-          "Duplicate subscription attempt detected - userId: {}, contentId: {}",
-          user.getId(),
-          content.getId());
-      throw new IllegalStateException("이미 동일한 콘텐츠에 대한 활성 구독이 존재합니다.");
-    }
+    Subscription existingSubscription =
+        subscriptionRepository
+            .findByContentIdAndUserIdAndStatus(
+                content.getId(), user.getId(), SubscriptionStatus.ACTIVE)
+            .orElse(null);
 
     Long optionId = purchase.getSelectedOptionId();
     String optionName = purchase.getSelectedOptionName();
     BigDecimal price = purchase.getFinalPrice();
 
     LocalDateTime now = LocalDateTime.now();
-    LocalDate nextBillingDate = now.toLocalDate().plusMonths(1);
+    LocalDate nextBillingDate = resolveNextBillingDate(existingSubscription, now);
+
+    if (existingSubscription != null) {
+      existingSubscription.renew(
+          purchase, payment, optionId, optionName, price, billingKey, nextBillingDate);
+      log.info(
+          "Subscription renewed - subscriptionId: {}, userId: {}, contentId: {}, nextBillingDate: {}",
+          existingSubscription.getId(),
+          user.getId(),
+          content.getId(),
+          nextBillingDate);
+      return existingSubscription;
+    }
 
     Subscription subscription =
         Subscription.create(
@@ -69,5 +78,17 @@ public class SubscriptionService {
         content.getId(),
         nextBillingDate);
     return saved;
+  }
+
+  private LocalDate resolveNextBillingDate(Subscription existing, LocalDateTime now) {
+    if (existing == null) {
+      return now.toLocalDate().plusMonths(1);
+    }
+
+    LocalDate currentNextBilling = existing.getNextBillingDate();
+    if (currentNextBilling != null && !currentNextBilling.isBefore(now.toLocalDate())) {
+      return currentNextBilling.plusMonths(1);
+    }
+    return now.toLocalDate().plusMonths(1);
   }
 }

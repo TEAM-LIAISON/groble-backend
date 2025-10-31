@@ -12,4 +12,7 @@ public interface SubscriptionRepository {
 
   boolean existsByContentIdAndUserIdAndStatus(
       Long contentId, Long userId, SubscriptionStatus status);
+
+  Optional<Subscription> findByContentIdAndUserIdAndStatus(
+      Long contentId, Long userId, SubscriptionStatus status);
 }

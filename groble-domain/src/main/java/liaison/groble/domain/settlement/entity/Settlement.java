@@ -514,6 +514,12 @@ public class Settlement extends BaseTimeEntity {
     BigDecimal netDisplay = BigDecimal.ZERO;
     BigDecimal refund = BigDecimal.ZERO;
     int refundCnt = 0;
+    BigDecimal platformRateWeightedSum = BigDecimal.ZERO;
+    BigDecimal platformRateDisplayWeightedSum = BigDecimal.ZERO;
+    BigDecimal platformRateBaselineWeightedSum = BigDecimal.ZERO;
+    BigDecimal pgRateWeightedSum = BigDecimal.ZERO;
+    BigDecimal pgRateDisplayWeightedSum = BigDecimal.ZERO;
+    BigDecimal pgRateBaselineWeightedSum = BigDecimal.ZERO;
 
     for (SettlementItem item : settlementItems) {
       if (Boolean.TRUE.equals(item.getIsRefunded())) {
@@ -524,7 +530,8 @@ public class Settlement extends BaseTimeEntity {
       }
 
       // 정상 항목
-      gross = gross.add(nullSafeValue(item.getSalesAmount()));
+      BigDecimal salesAmount = nullSafeValue(item.getSalesAmount());
+      gross = gross.add(salesAmount);
       platformFeeSum = platformFeeSum.add(nullSafeValue(item.getPlatformFee()));
       platformFeeForgoneSum =
           platformFeeForgoneSum.add(nullSafeValue(item.getPlatformFeeForgone()));
@@ -540,6 +547,23 @@ public class Settlement extends BaseTimeEntity {
       totalFeeDisplaySum = totalFeeDisplaySum.add(nullSafeValue(item.getTotalFeeDisplay()));
       net = net.add(nullSafeValue(item.getSettlementAmount()));
       netDisplay = netDisplay.add(nullSafeValue(item.getSettlementAmountDisplay()));
+      platformRateWeightedSum =
+          platformRateWeightedSum.add(
+              salesAmount.multiply(nullSafeValue(item.getCapturedPlatformFeeRate())));
+      platformRateDisplayWeightedSum =
+          platformRateDisplayWeightedSum.add(
+              salesAmount.multiply(nullSafeValue(item.getCapturedPlatformFeeRateDisplay())));
+      platformRateBaselineWeightedSum =
+          platformRateBaselineWeightedSum.add(
+              salesAmount.multiply(nullSafeValue(item.getCapturedPlatformFeeRateBaseline())));
+      pgRateWeightedSum =
+          pgRateWeightedSum.add(salesAmount.multiply(nullSafeValue(item.getCapturedPgFeeRate())));
+      pgRateDisplayWeightedSum =
+          pgRateDisplayWeightedSum.add(
+              salesAmount.multiply(nullSafeValue(item.getCapturedPgFeeRateDisplay())));
+      pgRateBaselineWeightedSum =
+          pgRateBaselineWeightedSum.add(
+              salesAmount.multiply(nullSafeValue(item.getCapturedPgFeeRateBaseline())));
     }
 
     // 원화 처리 - 소수점 없음
@@ -558,6 +582,17 @@ public class Settlement extends BaseTimeEntity {
     this.settlementAmountDisplay = netDisplay;
     this.totalRefundAmount = refund;
     this.refundCount = refundCnt;
+
+    if (gross.signum() > 0) {
+      this.platformFeeRate = platformRateWeightedSum.divide(gross, 4, RoundingMode.HALF_UP);
+      this.platformFeeRateDisplay =
+          platformRateDisplayWeightedSum.divide(gross, 4, RoundingMode.HALF_UP);
+      this.platformFeeRateBaseline =
+          platformRateBaselineWeightedSum.divide(gross, 4, RoundingMode.HALF_UP);
+      this.pgFeeRate = pgRateWeightedSum.divide(gross, 4, RoundingMode.HALF_UP);
+      this.pgFeeRateDisplay = pgRateDisplayWeightedSum.divide(gross, 4, RoundingMode.HALF_UP);
+      this.pgFeeRateBaseline = pgRateBaselineWeightedSum.divide(gross, 4, RoundingMode.HALF_UP);
+    }
   }
 
   // 종료일 기준 다음달 1일 계산

@@ -26,6 +26,8 @@ public class QSettlementItem extends EntityPathBase<SettlementItem> {
 
     public final StringPath capturedContentType = createString("capturedContentType");
 
+    public final StringPath capturedPaymentType = createString("capturedPaymentType");
+
     public final NumberPath<java.math.BigDecimal> capturedPgFeeRate = createNumber("capturedPgFeeRate", java.math.BigDecimal.class);
 
     public final NumberPath<java.math.BigDecimal> capturedPgFeeRateBaseline = createNumber("capturedPgFeeRateBaseline", java.math.BigDecimal.class);

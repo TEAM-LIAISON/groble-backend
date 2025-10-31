@@ -59,6 +59,7 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 public class PaymentTransactionService {
+  private static final BigDecimal SUBSCRIPTION_PLATFORM_FEE_RATE = new BigDecimal("0.0250");
   private final OrderReader orderReader;
   private final PurchaseReader purchaseReader;
   private final PaymentReader paymentReader;
@@ -218,6 +219,7 @@ public class PaymentTransactionService {
         .contentTitle(purchase.getContent().getTitle())
         .nickname(order.getUser().getNickname())
         .contentType(purchase.getContent().getContentType().name())
+        .paymentType(purchase.getContent().getPaymentType())
         .optionId(purchase.getSelectedOptionId())
         .selectedOptionName(purchase.getSelectedOptionName())
         .purchasedAt(purchase.getPurchasedAt())
@@ -397,18 +399,39 @@ public class PaymentTransactionService {
       salesAmount = salesAmount.setScale(0, RoundingMode.HALF_UP);
     }
 
+    // 적용할 수수료 정책 스냅샷 조회
+    FeePolicySnapshot feeSnapshot = feePolicyService.resolveForSeller(sellerId);
+
+    BigDecimal platformFeeRate = feeSnapshot.platformFeeRateApplied();
+    BigDecimal platformFeeRateDisplay = feeSnapshot.platformFeeRateDisplay();
+    BigDecimal platformFeeRateBaseline = feeSnapshot.platformFeeRateBaseline();
+    BigDecimal pgFeeRate = feeSnapshot.pgFeeRateApplied();
+    BigDecimal pgFeeRateDisplay = feeSnapshot.pgFeeRateDisplay();
+    BigDecimal pgFeeRateBaseline = feeSnapshot.pgFeeRateBaseline();
+    BigDecimal vatRate = feeSnapshot.vatRate();
+
+    boolean subscriptionPurchase =
+        purchase.getContent() != null
+            && purchase.getContent().getPaymentType() == ContentPaymentType.SUBSCRIPTION;
+
+    if (subscriptionPurchase) {
+      platformFeeRate = SUBSCRIPTION_PLATFORM_FEE_RATE;
+      platformFeeRateDisplay = SUBSCRIPTION_PLATFORM_FEE_RATE;
+      platformFeeRateBaseline = SUBSCRIPTION_PLATFORM_FEE_RATE;
+    }
+
     // SettlementItem 생성
     SettlementItem settlementItem =
         SettlementItem.builder()
             .settlement(settlement)
             .purchase(purchase)
-            .platformFeeRate(settlement.getPlatformFeeRate())
-            .platformFeeRateDisplay(settlement.getPlatformFeeRateDisplay())
-            .platformFeeRateBaseline(settlement.getPlatformFeeRateBaseline())
-            .pgFeeRate(settlement.getPgFeeRate())
-            .pgFeeRateDisplay(settlement.getPgFeeRateDisplay())
-            .pgFeeRateBaseline(settlement.getPgFeeRateBaseline())
-            .vatRate(settlement.getVatRate())
+            .platformFeeRate(platformFeeRate)
+            .platformFeeRateDisplay(platformFeeRateDisplay)
+            .platformFeeRateBaseline(platformFeeRateBaseline)
+            .pgFeeRate(pgFeeRate)
+            .pgFeeRateDisplay(pgFeeRateDisplay)
+            .pgFeeRateBaseline(pgFeeRateBaseline)
+            .vatRate(vatRate)
             .build();
 
     // Settlement에 항목 추가
@@ -712,6 +735,7 @@ public class PaymentTransactionService {
         .contentTitle(purchase.getContent().getTitle())
         .guestUserName(order.getGuestUser().getUsername())
         .contentType(purchase.getContent().getContentType().name())
+        .paymentType(purchase.getContent().getPaymentType())
         .optionId(purchase.getSelectedOptionId())
         .selectedOptionName(purchase.getSelectedOptionName())
         .purchasedAt(purchase.getPurchasedAt())
