@@ -57,6 +57,8 @@ public interface PurchaseMapper extends PageResponseMapper {
         .payType(response.getPayType())
         .payCardName(response.getPayCardName())
         .payCardNum(response.getPayCardNum())
+        .paymentType(response.getPaymentType())
+        .nextPaymentDate(response.getNextPaymentDate())
         .thumbnailUrl(response.getThumbnailUrl())
         .isRefundable(response.getIsRefundable())
         .isCancelable(response.getIsCancelable())

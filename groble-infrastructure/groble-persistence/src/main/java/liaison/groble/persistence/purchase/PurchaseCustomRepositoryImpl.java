@@ -52,6 +52,7 @@ import liaison.groble.domain.purchase.dto.FlatSellManageDetailDTO;
 import liaison.groble.domain.purchase.dto.FlatTopContentStatDTO;
 import liaison.groble.domain.purchase.entity.QPurchase;
 import liaison.groble.domain.purchase.repository.PurchaseCustomRepository;
+import liaison.groble.domain.subscription.entity.QSubscription;
 import liaison.groble.domain.user.entity.QIntegratedAccount;
 import liaison.groble.domain.user.entity.QSocialAccount;
 import liaison.groble.domain.user.entity.QUser;
@@ -74,6 +75,7 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
     QUser qUser = QUser.user;
     QDocumentOption qDocOpt = QDocumentOption.documentOption;
     QPayplePayment qPayplePayment = QPayplePayment.payplePayment;
+    QSubscription qSubscription = QSubscription.subscription;
 
     Expression<String> documentOptionActionUrl =
         ExpressionUtils.as(
@@ -183,6 +185,8 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
                     payTypeExpr,
                     payCardNameExpr,
                     payCardNumExpr,
+                    qContent.paymentType.stringValue().as("paymentType"),
+                    qSubscription.nextBillingDate.as("nextPaymentDate"),
                     qContent.thumbnailUrl.as("thumbnailUrl"),
                     isRefundableExpr,
                     qPurchase.cancelReason.stringValue().as("cancelReason")))
@@ -190,6 +194,8 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
             .leftJoin(qPurchase.content, qContent)
             .leftJoin(qPurchase.order, qOrder)
             .leftJoin(qContent.user, qUser)
+            .leftJoin(qSubscription)
+            .on(qSubscription.purchase.eq(qPurchase))
             .where(qPurchase.user.id.eq(userId).and(qOrder.merchantUid.eq(merchantUid)))
             .fetchOne();
 
@@ -1203,6 +1209,7 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
     QGuestUser qGuestUser = QGuestUser.guestUser;
     QDocumentOption qDocOpt = QDocumentOption.documentOption;
     QPayplePayment qPayplePayment = QPayplePayment.payplePayment;
+    QSubscription qSubscription = QSubscription.subscription;
 
     Expression<String> documentOptionActionUrl =
         ExpressionUtils.as(
@@ -1312,6 +1319,8 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
                     payTypeExpr,
                     payCardNameExpr,
                     payCardNumExpr,
+                    qContent.paymentType.stringValue().as("paymentType"),
+                    qSubscription.nextBillingDate.as("nextPaymentDate"),
                     qContent.thumbnailUrl.as("thumbnailUrl"),
                     isRefundableExpr,
                     qPurchase.cancelReason.stringValue().as("cancelReason")))
@@ -1319,6 +1328,8 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
             .leftJoin(qPurchase.content, qContent)
             .leftJoin(qPurchase.order, qOrder)
             .leftJoin(qPurchase.guestUser, qGuestUser)
+            .leftJoin(qSubscription)
+            .on(qSubscription.purchase.eq(qPurchase))
             .where(qOrder.merchantUid.eq(merchantUid))
             .fetchOne();
 

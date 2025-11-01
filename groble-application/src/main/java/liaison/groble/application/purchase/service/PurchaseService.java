@@ -1,5 +1,6 @@
 package liaison.groble.application.purchase.service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
@@ -17,6 +18,7 @@ import liaison.groble.application.purchase.dto.PurchasedContentDetailDTO;
 import liaison.groble.application.sell.SellerContactReader;
 import liaison.groble.common.exception.ContactNotFoundException;
 import liaison.groble.common.response.PageResponse;
+import liaison.groble.domain.content.enums.ContentPaymentType;
 import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.order.entity.OrderItem;
 import liaison.groble.domain.purchase.dto.FlatPurchaseContentDetailDTO;
@@ -210,6 +212,8 @@ public class PurchaseService {
         .isRefundable(flat.getIsRefundable())
         .isCancelable(isCancelable(flat))
         .cancelReason(flat.getCancelReason())
+        .paymentType(flat.getPaymentType())
+        .nextPaymentDate(resolveNextPaymentDate(flat))
         .build();
   }
 
@@ -229,5 +233,22 @@ public class PurchaseService {
 
     LocalDateTime now = LocalDateTime.now(DEFAULT_TIME_ZONE);
     return now.isBefore(purchasedAt.plusDays(CANCEL_AVAILABLE_DAYS));
+  }
+
+  private LocalDate resolveNextPaymentDate(FlatPurchaseContentDetailDTO flat) {
+    if (flat == null) {
+      return null;
+    }
+
+    boolean isPaid = Order.OrderStatus.PAID.name().equals(flat.getOrderStatus());
+    boolean isSubscription =
+        flat.getPaymentType() != null
+            && ContentPaymentType.SUBSCRIPTION.name().equals(flat.getPaymentType());
+
+    if (!isPaid || !isSubscription) {
+      return null;
+    }
+
+    return flat.getNextPaymentDate();
   }
 }

@@ -1,6 +1,7 @@
 package liaison.groble.api.model.purchase.response;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -151,6 +152,23 @@ public class PurchasedContentDetailResponse {
       type = "string",
       requiredMode = Schema.RequiredMode.NOT_REQUIRED)
   private String payCardNum;
+
+  @Schema(
+      description = "콘텐츠 결제 형태",
+      example = "SUBSCRIPTION",
+      type = "string",
+      allowableValues = {"ONE_TIME", "SUBSCRIPTION"},
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private String paymentType;
+
+  @Schema(
+      description = "다음 결제 예정일 (정기결제 콘텐츠인 경우에만 제공)",
+      example = "2025-05-20",
+      type = "string",
+      format = "date",
+      requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  @JsonFormat(pattern = "yyyy-MM-dd")
+  private LocalDate nextPaymentDate;
 
   // 누락 변수 추가
   @Schema(

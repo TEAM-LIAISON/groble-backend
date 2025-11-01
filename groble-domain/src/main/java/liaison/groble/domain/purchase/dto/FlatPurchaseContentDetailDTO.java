@@ -1,6 +1,7 @@
 package liaison.groble.domain.purchase.dto;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import lombok.AllArgsConstructor;
@@ -35,4 +36,6 @@ public class FlatPurchaseContentDetailDTO {
   private String thumbnailUrl;
   private Boolean isRefundable;
   private String cancelReason;
+  private String paymentType;
+  private LocalDate nextPaymentDate;
 }
