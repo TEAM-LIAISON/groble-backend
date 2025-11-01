@@ -18,6 +18,7 @@ public final class ApiPaths {
     public static final String DASHBOARD_OVERVIEW = "/overview";
     public static final String DASHBOARD_TRENDS = "/trends";
     public static final String DASHBOARD_TOP_CONTENTS = "/top-contents";
+    public static final String DASHBOARD_ACTIVE_VISITORS = "/active-visitors";
 
     // 어드민 사용자 탭
     public static final String ADMIN_USER_SUMMARY_INFO = "/users";

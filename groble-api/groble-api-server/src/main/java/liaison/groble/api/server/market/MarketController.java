@@ -245,8 +245,18 @@ public class MarketController {
     String userAgent = requestUtil.getUserAgent();
     String clientIp = requestUtil.getClientIp();
     String referer = requestUtil.getReferer();
+    Long actorId = accessor != null ? accessor.getUserId() : null;
+    boolean isGuest = accessor != null && accessor.isGuest();
+    boolean isAuthenticated = accessor != null && accessor.isAuthenticated();
     referrerService.recordMarketReferrer(
-        marketLinkUrl, referrerDTO, referer, userAgent, clientIp, accessor.getUserId());
+        marketLinkUrl,
+        referrerDTO,
+        referer,
+        userAgent,
+        clientIp,
+        actorId,
+        isGuest,
+        isAuthenticated);
     return responseHelper.success(null, MARKET_REFERRER_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 }

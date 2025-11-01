@@ -21,6 +21,12 @@ public class QReferrerTracking extends EntityPathBase<ReferrerTracking> {
 
     public final liaison.groble.domain.common.entity.QBaseTimeEntity _super = new liaison.groble.domain.common.entity.QBaseTimeEntity(this);
 
+    public final NumberPath<Long> actorId = createNumber("actorId", Long.class);
+
+    public final StringPath actorType = createString("actorType");
+
+    public final BooleanPath authenticated = createBoolean("authenticated");
+
     public final StringPath contentId = createString("contentId");
 
     //inherited

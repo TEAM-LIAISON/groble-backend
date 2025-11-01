@@ -8,6 +8,8 @@ public final class ResponseMessages {
     public static final String DASHBOARD_OVERVIEW_RETRIEVED = "관리자 대시보드 개요 조회에 성공하였습니다.";
     public static final String DASHBOARD_TRENDS_RETRIEVED = "관리자 대시보드 추세 데이터 조회에 성공하였습니다.";
     public static final String DASHBOARD_TOP_CONTENTS_RETRIEVED = "관리자 대시보드 인기 콘텐츠 조회에 성공하였습니다.";
+    public static final String DASHBOARD_ACTIVE_VISITORS_RETRIEVED =
+        "관리자 대시보드 실시간 방문자 조회에 성공하였습니다.";
     public static final String SETTLEMENT_APPROVAL_SUCCESS = "정산 승인 요청이 성공적으로 처리되었습니다.";
 
     public static final String ALL_USERS_SETTLEMENTS_RETRIEVED = "전체 사용자 정산 내역 조회에 성공하였습니다.";

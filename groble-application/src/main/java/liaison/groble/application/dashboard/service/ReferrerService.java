@@ -127,7 +127,9 @@ public class ReferrerService {
       String refererHeader,
       String userAgent,
       String clientIp,
-      Long userId) {
+      Long userId,
+      boolean isGuest,
+      boolean isAuthenticated) {
     if (referrerDTO == null) {
       log.warn("Received null ReferrerDTO for contentId={}.", contentId);
       return;
@@ -154,11 +156,20 @@ public class ReferrerService {
       }
     }
 
+    String actorType = resolveActorType(userId, isGuest, isAuthenticated);
+
     boolean persisted;
     try {
       persisted =
           persistContentReferrerTracking(
-              contentId, referrerDTO, refererHeader, userAgent, clientIp);
+              contentId,
+              referrerDTO,
+              refererHeader,
+              userAgent,
+              clientIp,
+              userId,
+              actorType,
+              isAuthenticated);
     } catch (Exception e) {
       log.error("Failed to persist content referrer tracking for contentId={}", contentId, e);
       recordMetric("content", "error");
@@ -194,7 +205,9 @@ public class ReferrerService {
       String refererHeader,
       String userAgent,
       String clientIp,
-      Long userId) {
+      Long userId,
+      boolean isGuest,
+      boolean isAuthenticated) {
     if (referrerDTO == null) {
       log.warn("Received null ReferrerDTO for marketLinkUrl={}.", marketLinkUrl);
       return;
@@ -218,11 +231,20 @@ public class ReferrerService {
       return;
     }
 
+    String actorType = resolveActorType(userId, isGuest, isAuthenticated);
+
     boolean persisted;
     try {
       persisted =
           persistMarketReferrerTracking(
-              marketLinkUrl, referrerDTO, refererHeader, userAgent, clientIp);
+              marketLinkUrl,
+              referrerDTO,
+              refererHeader,
+              userAgent,
+              clientIp,
+              userId,
+              actorType,
+              isAuthenticated);
     } catch (Exception e) {
       log.error(
           "Failed to persist market referrer tracking for marketLinkUrl={}", marketLinkUrl, e);
@@ -270,7 +292,10 @@ public class ReferrerService {
       ReferrerDTO referrerDTO,
       String refererHeader,
       String userAgent,
-      String clientIp)
+      String clientIp,
+      Long actorId,
+      String actorType,
+      boolean isAuthenticated)
       throws JsonProcessingException {
 
     String sessionId = referrerDTO.getSessionId();
@@ -417,7 +442,10 @@ public class ReferrerService {
             referrerDomain,
             sanitizedUserAgent,
             maskedIp,
-            eventTimestamp);
+            eventTimestamp,
+            actorId,
+            actorType,
+            isAuthenticated);
 
     referrerTrackingRepository.save(tracking);
 
@@ -431,7 +459,10 @@ public class ReferrerService {
       ReferrerDTO referrerDTO,
       String refererHeader,
       String userAgent,
-      String clientIp)
+      String clientIp,
+      Long actorId,
+      String actorType,
+      boolean isAuthenticated)
       throws JsonProcessingException {
 
     String sessionId = referrerDTO.getSessionId();
@@ -582,13 +613,23 @@ public class ReferrerService {
             referrerDomain,
             sanitizedUserAgent,
             maskedIp,
-            eventTimestamp);
+            eventTimestamp,
+            actorId,
+            actorType,
+            isAuthenticated);
 
     referrerTrackingRepository.save(tracking);
 
     recordMetric("market", "stored");
 
     return true;
+  }
+
+  private String resolveActorType(Long actorId, boolean isGuest, boolean isAuthenticated) {
+    if (!isAuthenticated || actorId == null) {
+      return "ANONYMOUS";
+    }
+    return isGuest ? "GUEST" : "MEMBER";
   }
 
   private boolean hasUtmParameters(ReferrerDTO referrerDTO) {
