@@ -53,6 +53,9 @@ public interface ContentCustomRepository {
 
   Page<FlatAdminContentSummaryInfoDTO> findContentsByPageable(Pageable pageable);
 
+  Page<FlatAdminContentSummaryInfoDTO> searchAdminContentsByTitle(
+      String titleKeyword, Pageable pageable);
+
   Page<FlatContentPreviewDTO> findMyContentsWithStatus(
       Pageable pageable, Long userId, List<ContentStatus> contentStatuses);
 

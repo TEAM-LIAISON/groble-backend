@@ -31,6 +31,7 @@ public final class ApiPaths {
     public static final String ADMIN_USER_BUSINESS_INFO = "/users/{userId}/business-info";
 
     public static final String CONTENTS = "/contents";
+    public static final String CONTENT_SEARCH = "/contents/search";
     public static final String CONTENT_EXAMINE = "/content/{contentId}/examine";
 
     public static final String SETTLEMENT_BASE = BASE + "/settlements";

@@ -26,6 +26,7 @@ public final class ResponseMessages {
     public static final String CONTENT_SUMMARY_INFO_RETRIEVED = "관리자 콘텐츠 목록 조회에 성공하였습니다.";
     public static final String CONTENT_EXAMINE_APPROVED = "콘텐츠 심사 승인에 성공했습니다.";
     public static final String CONTENT_EXAMINE_REJECTED = "콘텐츠 심사 반려에 성공했습니다.";
+    public static final String CONTENT_SEARCH_RETRIEVED = "관리자 콘텐츠 제목 검색에 성공하였습니다.";
     public static final String MAKER_DASHBOARD_OVERVIEW_RETRIEVED = "관리자 마켓 대시보드 개요 조회에 성공하였습니다.";
     public static final String MAKER_DASHBOARD_VIEW_STATS_RETRIEVED =
         "관리자 마켓 대시보드 조회수 요약 조회에 성공하였습니다.";

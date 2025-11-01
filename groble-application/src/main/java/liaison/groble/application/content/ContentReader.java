@@ -86,6 +86,11 @@ public class ContentReader {
     return contentCustomRepository.findContentsByPageable(pageable);
   }
 
+  public Page<FlatAdminContentSummaryInfoDTO> searchAdminContentsByTitle(
+      String titleKeyword, Pageable pageable) {
+    return contentCustomRepository.searchAdminContentsByTitle(titleKeyword, pageable);
+  }
+
   public Page<FlatContentPreviewDTO> findMyContentsWithStatus(
       Pageable pageable, Long userId, List<ContentStatus> contentStatuses) {
     return contentCustomRepository.findMyContentsWithStatus(pageable, userId, contentStatuses);

@@ -4,8 +4,10 @@ import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import liaison.groble.application.admin.dto.AdminContentSummaryInfoDTO;
 import liaison.groble.application.content.ContentReader;
@@ -47,11 +49,24 @@ public class AdminContentService {
     List<AdminContentSummaryInfoDTO> items =
         contentPage.getContent().stream().map(this::convertFlatDTOToInfoResponse).toList();
 
-    PageResponse.MetaData meta =
-        PageResponse.MetaData.builder()
-            .sortBy(pageable.getSort().iterator().next().getProperty())
-            .sortDirection(pageable.getSort().iterator().next().getDirection().name())
-            .build();
+    PageResponse.MetaData meta = resolveSortMeta(pageable);
+
+    return PageResponse.from(contentPage, items, meta);
+  }
+
+  public PageResponse<AdminContentSummaryInfoDTO> searchContentsByTitle(
+      String titleKeyword, Pageable pageable) {
+    if (!StringUtils.hasText(titleKeyword)) {
+      throw new IllegalArgumentException("검색할 콘텐츠 제목을 입력해주세요.");
+    }
+
+    Page<FlatAdminContentSummaryInfoDTO> contentPage =
+        contentReader.searchAdminContentsByTitle(titleKeyword, pageable);
+
+    List<AdminContentSummaryInfoDTO> items =
+        contentPage.getContent().stream().map(this::convertFlatDTOToInfoResponse).toList();
+
+    PageResponse.MetaData meta = resolveSortMeta(pageable);
 
     return PageResponse.from(contentPage, items, meta);
   }
@@ -111,6 +126,17 @@ public class AdminContentService {
         .contentStatus(flat.getContentStatus())
         .adminContentCheckingStatus(flat.getAdminContentCheckingStatus())
         .isSearchExposed(flat.getIsSearchExposed())
+        .build();
+  }
+
+  private PageResponse.MetaData resolveSortMeta(Pageable pageable) {
+    if (pageable == null || pageable.getSort().isUnsorted()) {
+      return PageResponse.MetaData.builder().build();
+    }
+    Sort.Order order = pageable.getSort().iterator().next();
+    return PageResponse.MetaData.builder()
+        .sortBy(order.getProperty())
+        .sortDirection(order.getDirection().name())
         .build();
   }
 }

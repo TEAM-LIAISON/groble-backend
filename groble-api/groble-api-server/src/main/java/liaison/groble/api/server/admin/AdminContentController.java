@@ -95,6 +95,35 @@ public class AdminContentController extends BaseController {
   }
 
   @Operation(
+      summary = AdminContentSwaggerDocs.SEARCH_CONTENTS_SUMMARY,
+      description = AdminContentSwaggerDocs.SEARCH_CONTENTS_DESCRIPTION)
+  @AdminContentSummaryInfo
+  @RequireRole("ROLE_ADMIN")
+  @GetMapping(ApiPaths.Admin.CONTENT_SEARCH)
+  public ResponseEntity<GrobleResponse<PageResponse<AdminContentSummaryInfoResponse>>>
+      searchContentsByTitle(
+          @Auth Accessor accessor,
+          @Parameter(description = "검색할 콘텐츠 제목", example = "프로젝트") @RequestParam("title")
+              String title,
+          @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
+              @RequestParam(value = "page", defaultValue = "0")
+              int page,
+          @Parameter(description = "페이지당 콘텐츠 수", example = "12")
+              @RequestParam(value = "size", defaultValue = "12")
+              int size,
+          @Parameter(description = "정렬 기준 (property,direction)", example = "createdAt,desc")
+              @RequestParam(value = "sort", defaultValue = "createdAt")
+              String sort) {
+    Pageable pageable = PageUtils.createPageable(page, size, sort);
+    PageResponse<AdminContentSummaryInfoDTO> infoDTOPage =
+        adminContentService.searchContentsByTitle(title, pageable);
+    PageResponse<AdminContentSummaryInfoResponse> responsePage =
+        adminContentMapper.toAdminContentSummaryInfoResponsePage(infoDTOPage);
+
+    return success(responsePage, ResponseMessages.Admin.CONTENT_SEARCH_RETRIEVED);
+  }
+
+  @Operation(
       summary = AdminContentSwaggerDocs.MAKER_DASHBOARD_CONTENTS_SUMMARY,
       description = AdminContentSwaggerDocs.MAKER_DASHBOARD_CONTENTS_DESCRIPTION)
   @Logging(

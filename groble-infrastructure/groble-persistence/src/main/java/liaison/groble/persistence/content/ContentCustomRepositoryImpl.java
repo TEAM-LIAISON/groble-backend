@@ -826,6 +826,53 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
   }
 
   @Override
+  public Page<FlatAdminContentSummaryInfoDTO> searchAdminContentsByTitle(
+      String titleKeyword, Pageable pageable) {
+    if (titleKeyword == null || titleKeyword.isBlank()) {
+      return Page.empty(pageable);
+    }
+
+    QContent qContent = QContent.content;
+    QContentOption qContentOption = QContentOption.contentOption;
+
+    BooleanExpression condition = qContent.title.containsIgnoreCase(titleKeyword.trim());
+
+    JPAQuery<FlatAdminContentSummaryInfoDTO> query =
+        queryFactory
+            .select(
+                Projections.constructor(
+                    FlatAdminContentSummaryInfoDTO.class,
+                    qContent.id.as("contentId"),
+                    qContent.createdAt.as("createdAt"),
+                    qContent.contentType.stringValue().as("contentType"),
+                    qContent.user.userProfile.nickname.as("sellerName"),
+                    qContent.title.as("contentTitle"),
+                    ExpressionUtils.as(
+                        select(qContentOption.count().intValue())
+                            .from(qContentOption)
+                            .where(qContentOption.content.eq(qContent)),
+                        "priceOptionLength"),
+                    qContent.lowestPrice.as("minPrice"),
+                    qContent.status.stringValue().as("contentStatus"),
+                    qContent
+                        .adminContentCheckingStatus
+                        .stringValue()
+                        .as("adminContentCheckingStatus"),
+                    qContent.isSearchExposed))
+            .from(qContent)
+            .where(condition)
+            .orderBy(qContent.createdAt.desc())
+            .offset(pageable.getOffset())
+            .limit(pageable.getPageSize());
+
+    List<FlatAdminContentSummaryInfoDTO> content = query.fetch();
+
+    Long total = queryFactory.select(qContent.count()).from(qContent).where(condition).fetchOne();
+
+    return new PageImpl<>(content, pageable, total != null ? total : 0);
+  }
+
+  @Override
   public boolean existsSellingContentByUser(Long userId) {
     QContent qContent = QContent.content;
     return queryFactory
