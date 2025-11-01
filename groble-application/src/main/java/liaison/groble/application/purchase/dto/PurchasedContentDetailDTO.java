@@ -64,4 +64,5 @@ public class PurchasedContentDetailDTO {
   private String thumbnailUrl;
   private Boolean isRefundable;
   private String cancelReason;
+  private Boolean isCancelable;
 }

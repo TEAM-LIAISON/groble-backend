@@ -1,5 +1,7 @@
 package liaison.groble.application.purchase.service;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
@@ -29,6 +31,9 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 public class PurchaseService {
+
+  private static final ZoneId DEFAULT_TIME_ZONE = ZoneId.of("Asia/Seoul");
+  private static final long CANCEL_AVAILABLE_DAYS = 7L;
 
   private final OrderReader orderReader;
   private final PurchaseReader purchaseReader;
@@ -203,7 +208,26 @@ public class PurchaseService {
         .payCardNum(flat.getPayCardNum())
         .thumbnailUrl(flat.getThumbnailUrl())
         .isRefundable(flat.getIsRefundable())
+        .isCancelable(isCancelable(flat))
         .cancelReason(flat.getCancelReason())
         .build();
+  }
+
+  private boolean isCancelable(FlatPurchaseContentDetailDTO flat) {
+    if (flat == null) {
+      return false;
+    }
+
+    if (!Order.OrderStatus.PAID.name().equals(flat.getOrderStatus())) {
+      return false;
+    }
+
+    LocalDateTime purchasedAt = flat.getPurchasedAt();
+    if (purchasedAt == null) {
+      return false;
+    }
+
+    LocalDateTime now = LocalDateTime.now(DEFAULT_TIME_ZONE);
+    return now.isBefore(purchasedAt.plusDays(CANCEL_AVAILABLE_DAYS));
   }
 }

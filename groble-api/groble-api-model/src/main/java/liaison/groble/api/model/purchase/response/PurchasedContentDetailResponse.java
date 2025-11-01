@@ -168,6 +168,13 @@ public class PurchasedContentDetailResponse {
   private Boolean isRefundable;
 
   @Schema(
+      description = "결제 취소 가능 여부 (결제 완료 시점으로부터 7일 이내라면 true)",
+      example = "false",
+      type = "boolean",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private Boolean isCancelable;
+
+  @Schema(
       description =
           "취소 사유 (OTHER_PAYMENT_METHOD - 다른 수단으로 결제할게요, CHANGED_MIND - 마음이 바뀌었어요, FOUND_CHEAPER_CONTENT - 더 저렴한 콘텐츠를 찾았어요, ETC - 기타)",
       example = "구매자 요청",
