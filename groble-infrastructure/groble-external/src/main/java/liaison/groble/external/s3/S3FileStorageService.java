@@ -2,6 +2,8 @@ package liaison.groble.external.s3;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 import jakarta.annotation.PostConstruct;
 
@@ -47,7 +49,7 @@ public class S3FileStorageService implements FileStorageService {
     amazonS3.putObject(new PutObjectRequest(bucketName, rawKey, inputStream, metadata));
 
     // 3) 키를 URL-안전하게 인코딩 (슬래시만 제외)
-    String encodedKey = UriUtils.encodePath(rawKey, StandardCharsets.UTF_8);
+    String encodedKey = encodeKeyPreservingHierarchy(rawKey);
 
     // 4) 퍼블릭 도메인 + 인코딩된 키를 합쳐서 반환
     String resultUrl = cloudDomain + "/" + encodedKey;
@@ -58,5 +60,18 @@ public class S3FileStorageService implements FileStorageService {
   @Override
   public void deleteFile(String fileKey) {
     amazonS3.deleteObject(new DeleteObjectRequest(bucketName, fileKey));
+  }
+
+  private String encodeKeyPreservingHierarchy(String rawKey) {
+    return Arrays.stream(rawKey.split("/"))
+        .map(this::encodePathSegmentStrictly)
+        .collect(Collectors.joining("/"));
+  }
+
+  private String encodePathSegmentStrictly(String segment) {
+    String encoded = UriUtils.encodePathSegment(segment, StandardCharsets.UTF_8);
+    // UriUtils treats '+' as a safe path char; replace explicitly so downstream services
+    // do not interpret it as whitespace.
+    return encoded.replace("+", "%2B");
   }
 }
