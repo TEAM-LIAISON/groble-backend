@@ -2,6 +2,7 @@ package liaison.groble.api.model.admin.response;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 
@@ -79,4 +80,7 @@ public class AdminContentSummaryInfoResponse {
 
   @Schema(description = "검색 엔진 노출 여부", example = "true")
   private Boolean isSearchExposed;
+
+  @Schema(description = "자료 옵션 파일 목록", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  private List<AdminDocumentFileResponse> documentFiles;
 }

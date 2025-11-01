@@ -31,6 +31,7 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 
 import liaison.groble.common.response.CursorResponse;
 import liaison.groble.domain.content.dto.FlatAdminContentSummaryInfoDTO;
+import liaison.groble.domain.content.dto.FlatAdminDocumentFileDTO;
 import liaison.groble.domain.content.dto.FlatContentOverviewDTO;
 import liaison.groble.domain.content.dto.FlatContentPreviewDTO;
 import liaison.groble.domain.content.dto.FlatDynamicContentDTO;
@@ -811,7 +812,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                         .adminContentCheckingStatus
                         .stringValue()
                         .as("adminContentCheckingStatus"),
-                    qContent.isSearchExposed))
+                    qContent.isSearchExposed.as("isSearchExposed")))
             .from(qContent)
             .orderBy(qContent.createdAt.desc())
             .offset(pageable.getOffset())
@@ -858,7 +859,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                         .adminContentCheckingStatus
                         .stringValue()
                         .as("adminContentCheckingStatus"),
-                    qContent.isSearchExposed))
+                    qContent.isSearchExposed.as("isSearchExposed")))
             .from(qContent)
             .where(condition)
             .orderBy(qContent.createdAt.desc())
@@ -870,6 +871,29 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
     Long total = queryFactory.select(qContent.count()).from(qContent).where(condition).fetchOne();
 
     return new PageImpl<>(content, pageable, total != null ? total : 0);
+  }
+
+  @Override
+  public List<FlatAdminDocumentFileDTO> findDocumentFilesByContentIds(List<Long> contentIds) {
+    if (contentIds == null || contentIds.isEmpty()) {
+      return List.of();
+    }
+
+    QDocumentOption qDocumentOption = QDocumentOption.documentOption;
+
+    return queryFactory
+        .select(
+            Projections.constructor(
+                FlatAdminDocumentFileDTO.class,
+                qDocumentOption.content.id.as("contentId"),
+                qDocumentOption.id.as("optionId"),
+                qDocumentOption.name.as("optionName"),
+                qDocumentOption.documentOriginalFileName.as("documentOriginalFileName"),
+                qDocumentOption.documentFileUrl.as("documentFileUrl")))
+        .from(qDocumentOption)
+        .where(qDocumentOption.content.id.in(contentIds).and(qDocumentOption.isActive.isTrue()))
+        .orderBy(qDocumentOption.content.id.asc(), qDocumentOption.createdAt.desc())
+        .fetch();
   }
 
   @Override

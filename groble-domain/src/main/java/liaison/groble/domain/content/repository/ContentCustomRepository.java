@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 
 import liaison.groble.common.response.CursorResponse;
 import liaison.groble.domain.content.dto.FlatAdminContentSummaryInfoDTO;
+import liaison.groble.domain.content.dto.FlatAdminDocumentFileDTO;
 import liaison.groble.domain.content.dto.FlatContentOverviewDTO;
 import liaison.groble.domain.content.dto.FlatContentPreviewDTO;
 import liaison.groble.domain.content.dto.FlatDynamicContentDTO;
@@ -55,6 +56,8 @@ public interface ContentCustomRepository {
 
   Page<FlatAdminContentSummaryInfoDTO> searchAdminContentsByTitle(
       String titleKeyword, Pageable pageable);
+
+  List<FlatAdminDocumentFileDTO> findDocumentFilesByContentIds(List<Long> contentIds);
 
   Page<FlatContentPreviewDTO> findMyContentsWithStatus(
       Pageable pageable, Long userId, List<ContentStatus> contentStatuses);

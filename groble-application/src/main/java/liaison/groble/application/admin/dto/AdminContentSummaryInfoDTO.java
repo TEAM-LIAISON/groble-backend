@@ -2,6 +2,7 @@ package liaison.groble.application.admin.dto;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import lombok.Builder;
 import lombok.Getter;
@@ -19,4 +20,5 @@ public class AdminContentSummaryInfoDTO {
   private String contentStatus;
   private String adminContentCheckingStatus;
   private Boolean isSearchExposed;
+  private List<AdminDocumentFileInfoDTO> documentFiles;
 }
