@@ -89,14 +89,27 @@ public class AdminUserController extends BaseController {
   @AdminUserSummaryInfo
   @RequireRole("ROLE_ADMIN")
   @GetMapping(ApiPaths.Admin.ADMIN_USER_SUMMARY_INFO_SEARCH)
-  public ResponseEntity<GrobleResponse<AdminUserSummaryInfoResponse>> searchUserByNickname(
-      @Parameter(description = "검색할 사용자 닉네임", example = "groble_maker") @RequestParam("nickname")
-          String nickname) {
-    AdminUserSummaryInfoDTO userInfo = adminUserService.getUserByNickname(nickname);
-    AdminUserSummaryInfoResponse response =
-        adminUserMapper.toAdminUserSummaryInfoResponse(userInfo);
+  public ResponseEntity<GrobleResponse<PageResponse<AdminUserSummaryInfoResponse>>>
+      searchUserByNickname(
+          @Parameter(description = "검색할 사용자 닉네임", example = "groble_maker")
+              @RequestParam("nickname")
+              String nickname,
+          @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
+              @RequestParam(value = "page", defaultValue = "0")
+              int page,
+          @Parameter(description = "페이지당 사용자 수", example = "12")
+              @RequestParam(value = "size", defaultValue = "12")
+              int size,
+          @Parameter(description = "정렬 기준 (property,direction)", example = "createdAt,desc")
+              @RequestParam(value = "sort", defaultValue = "createdAt")
+              String sort) {
+    Pageable pageable = PageUtils.createPageable(page, size, sort);
+    PageResponse<AdminUserSummaryInfoDTO> userPage =
+        adminUserService.searchUsersByNickname(nickname, pageable);
+    PageResponse<AdminUserSummaryInfoResponse> responsePage =
+        adminUserMapper.toAdminUserSummaryInfoResponsePage(userPage);
 
-    return success(response, ResponseMessages.Admin.USER_SUMMARY_INFO_SEARCH_RETRIEVED);
+    return success(responsePage, ResponseMessages.Admin.USER_SUMMARY_INFO_SEARCH_RETRIEVED);
   }
 
   @RequireRole("ROLE_ADMIN")

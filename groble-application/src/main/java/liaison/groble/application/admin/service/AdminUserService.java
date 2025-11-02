@@ -14,7 +14,6 @@ import liaison.groble.application.admin.dto.AdminGuestUserSummaryDTO;
 import liaison.groble.application.admin.dto.AdminHomeTestContactDTO;
 import liaison.groble.application.admin.dto.AdminUserStatisticsDTO;
 import liaison.groble.application.admin.dto.AdminUserSummaryInfoDTO;
-import liaison.groble.common.exception.EntityNotFoundException;
 import liaison.groble.common.response.PageResponse;
 import liaison.groble.domain.guest.entity.GuestUser;
 import liaison.groble.domain.guest.repository.GuestUserRepository;
@@ -46,19 +45,21 @@ public class AdminUserService {
     return PageResponse.from(userPage, items, resolveSortMeta(pageable));
   }
 
-  public AdminUserSummaryInfoDTO getUserByNickname(String nickname) {
-    String normalizedNickname = nickname == null ? "" : nickname.trim();
+  public PageResponse<AdminUserSummaryInfoDTO> searchUsersByNickname(
+      String nicknameKeyword, Pageable pageable) {
+    String normalizedKeyword = nicknameKeyword == null ? "" : nicknameKeyword.trim();
 
-    if (!StringUtils.hasText(normalizedNickname)) {
+    if (!StringUtils.hasText(normalizedKeyword)) {
       throw new IllegalArgumentException("검색할 닉네임을 입력해주세요.");
     }
 
-    FlatAdminUserSummaryInfoDTO flatUser =
-        userCustomRepository
-            .findUserByNickname(normalizedNickname)
-            .orElseThrow(() -> new EntityNotFoundException("해당 닉네임의 회원을 찾을 수 없습니다."));
+    Page<FlatAdminUserSummaryInfoDTO> userPage =
+        userCustomRepository.searchUsersByNickname(normalizedKeyword, pageable);
 
-    return convertFlatDTOToInfoResponse(flatUser);
+    List<AdminUserSummaryInfoDTO> items =
+        userPage.getContent().stream().map(this::convertFlatDTOToInfoResponse).toList();
+
+    return PageResponse.from(userPage, items, resolveSortMeta(pageable));
   }
 
   public PageResponse<AdminGuestUserSummaryDTO> getAllGuestUsers(Pageable pageable) {
