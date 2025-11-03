@@ -68,4 +68,5 @@ public class PurchasedContentDetailDTO {
   private Boolean isCancelable;
   private String paymentType;
   private LocalDate nextPaymentDate;
+  private Integer subscriptionRound;
 }

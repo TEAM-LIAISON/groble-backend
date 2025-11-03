@@ -15,4 +15,7 @@ public interface SubscriptionRepository {
 
   Optional<Subscription> findByContentIdAndUserIdAndStatus(
       Long contentId, Long userId, SubscriptionStatus status);
+
+  Optional<Subscription> findByMerchantUidAndUserIdAndStatus(
+      String merchantUid, Long userId, SubscriptionStatus status);
 }

@@ -1,5 +1,6 @@
 package liaison.groble.persistence.purchase;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Repository;
@@ -40,5 +41,11 @@ public class PurchaseRepositoryImpl implements PurchaseRepository {
       String merchantUid, Long guestUserId) {
     return jpaPurchaseRepository.findByMerchantUidAndGuestUserIdWithOrderAndContent(
         merchantUid, guestUserId);
+  }
+
+  @Override
+  public List<Purchase> findByUserIdAndContentId(Long userId, Long contentId) {
+    return jpaPurchaseRepository.findByUser_IdAndContent_IdOrderByPurchasedAtDesc(
+        userId, contentId);
   }
 }

@@ -214,6 +214,7 @@ public class PurchaseService {
         .cancelReason(flat.getCancelReason())
         .paymentType(flat.getPaymentType())
         .nextPaymentDate(resolveNextPaymentDate(flat))
+        .subscriptionRound(flat.getSubscriptionRound())
         .build();
   }
 

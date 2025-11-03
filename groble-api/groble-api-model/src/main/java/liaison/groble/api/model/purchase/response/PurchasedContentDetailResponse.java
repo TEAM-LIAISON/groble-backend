@@ -170,6 +170,13 @@ public class PurchasedContentDetailResponse {
   @JsonFormat(pattern = "yyyy-MM-dd")
   private LocalDate nextPaymentDate;
 
+  @Schema(
+      description = "정기결제 회차 (정기결제인 경우에만 제공)",
+      example = "3",
+      type = "integer",
+      requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  private Integer subscriptionRound;
+
   // 누락 변수 추가
   @Schema(
       description = "콘텐츠 썸네일 URL",

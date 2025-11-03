@@ -9,9 +9,11 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -52,6 +54,7 @@ import liaison.groble.application.payment.service.PaypleBillingAuthService;
 import liaison.groble.application.payment.service.PaypleMobileRedirectService;
 import liaison.groble.application.payment.service.PaypleMobileRedirectService.MobileRedirectContext;
 import liaison.groble.application.payment.service.SubscriptionPaymentService;
+import liaison.groble.application.subscription.service.SubscriptionService;
 import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.annotation.Logging;
 import liaison.groble.common.context.UserContext;
@@ -83,6 +86,7 @@ public class PayplePaymentController extends BaseController {
   private final PaypleMobileRedirectService paypleMobileRedirectService;
   private final BillingKeyService billingKeyService;
   private final SubscriptionPaymentService subscriptionPaymentService;
+  private final SubscriptionService subscriptionService;
   private final ObjectMapper objectMapper;
 
   private static final String BILLING_CHARGE_SUCCESS_MESSAGE = "빌링키 결제가 완료되었습니다.";
@@ -97,6 +101,7 @@ public class PayplePaymentController extends BaseController {
       PaypleMobileRedirectService paypleMobileRedirectService,
       BillingKeyService billingKeyService,
       SubscriptionPaymentService subscriptionPaymentService,
+      SubscriptionService subscriptionService,
       ObjectMapper objectMapper) {
     super(responseHelper);
     this.processorFactory = processorFactory;
@@ -105,6 +110,7 @@ public class PayplePaymentController extends BaseController {
     this.paypleMobileRedirectService = paypleMobileRedirectService;
     this.billingKeyService = billingKeyService;
     this.subscriptionPaymentService = subscriptionPaymentService;
+    this.subscriptionService = subscriptionService;
     this.objectMapper = objectMapper;
   }
 
@@ -166,6 +172,29 @@ public class PayplePaymentController extends BaseController {
     PaypleSubscriptionResultResponse response =
         paymentMapper.toPaypleSubscriptionResultResponse(result);
     return success(response, SUBSCRIPTION_CONFIRM_SUCCESS_MESSAGE);
+  }
+
+  @Operation(
+      summary = PaymentSwaggerDocs.SUBSCRIPTION_CANCEL_SUMMARY,
+      description = PaymentSwaggerDocs.SUBSCRIPTION_CANCEL_DESCRIPTION)
+  @Logging(
+      item = "Payment",
+      action = "cancelSubscription",
+      includeParam = true,
+      includeResult = true)
+  @DeleteMapping(ApiPaths.Payment.SUBSCRIPTION + "/{merchantUid}")
+  public ResponseEntity<GrobleResponse<Void>> cancelSubscription(
+      @Auth(required = true) Accessor accessor, @PathVariable("merchantUid") String merchantUid) {
+
+    UserContext userContext = UserContextFactory.from(accessor);
+    if (!userContext.isMember()) {
+      throw PaymentAuthenticationRequiredException.forPayment();
+    }
+
+    subscriptionService.cancelSubscription(userContext.getId(), merchantUid);
+
+    return responseHelper.success(
+        null, ResponseMessages.Payment.SUBSCRIPTION_CANCELLED, HttpStatus.OK);
   }
 
   @Operation(

@@ -77,6 +77,19 @@ public final class PaymentSwaggerDocs {
             - 결제 승인 전 반드시 선행되어야 합니다
             """;
 
+  // === 정기 결제 해지 API ===
+  public static final String SUBSCRIPTION_CANCEL_SUMMARY = "[⛔ 정기 결제 해지] 활성화된 정기 결제를 해지합니다.";
+  public static final String SUBSCRIPTION_CANCEL_DESCRIPTION =
+      """
+            회원이 구독 중인 정기 결제를 해지합니다. 이후에는 자동 결제가 더 이상 진행되지 않습니다.
+
+            **주의사항:**
+            - 회원 전용 API 입니다
+            - 현재 활성 상태(Active)인 구독만 해지할 수 있습니다
+            - 이미 해지되었거나 존재하지 않는 구독에 대해 요청할 경우 404를 반환합니다
+            - Path parameter로 전달한 `merchantUid` 기준으로 구독을 식별합니다
+            """;
+
   // === 앱카드 결제 취소 API ===
   public static final String CANCEL_SUMMARY = "[❌ 통합 결제 취소] 관리자가 서비스 유형에 한해 회원/비회원 결제를 취소합니다.";
   public static final String CANCEL_DESCRIPTION =

@@ -1,5 +1,6 @@
 package liaison.groble.persistence.purchase;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -34,4 +35,6 @@ public interface JpaPurchaseRepository extends JpaRepository<Purchase, Long> {
       """)
   Optional<Purchase> findByMerchantUidAndGuestUserIdWithOrderAndContent(
       @Param("merchantUid") String merchantUid, @Param("guestUserId") Long guestUserId);
+
+  List<Purchase> findByUser_IdAndContent_IdOrderByPurchasedAtDesc(Long userId, Long contentId);
 }

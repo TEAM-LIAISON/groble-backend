@@ -38,4 +38,5 @@ public class FlatPurchaseContentDetailDTO {
   private String cancelReason;
   private String paymentType;
   private LocalDate nextPaymentDate;
+  private Integer subscriptionRound;
 }

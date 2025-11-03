@@ -107,6 +107,7 @@ public final class ApiPaths {
     public static final String BILLING_AUTH_MO = "/billing/auth/mo";
     public static final String BILLING_AUTH_API = "/billing/auth/api";
     public static final String BILLING_REGISTER = "/billing/register";
+    public static final String SUBSCRIPTION = "/subscription";
 
     private Payment() {}
   }

@@ -7,9 +7,13 @@ import java.time.LocalDateTime;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import liaison.groble.common.exception.EntityNotFoundException;
 import liaison.groble.domain.content.entity.Content;
+import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.payment.entity.Payment;
 import liaison.groble.domain.purchase.entity.Purchase;
+import liaison.groble.domain.purchase.enums.CancelReason;
+import liaison.groble.domain.purchase.repository.PurchaseRepository;
 import liaison.groble.domain.subscription.entity.Subscription;
 import liaison.groble.domain.subscription.enums.SubscriptionStatus;
 import liaison.groble.domain.subscription.repository.SubscriptionRepository;
@@ -24,6 +28,9 @@ import lombok.extern.slf4j.Slf4j;
 public class SubscriptionService {
 
   private final SubscriptionRepository subscriptionRepository;
+  private final PurchaseRepository purchaseRepository;
+
+  private static final String SUBSCRIPTION_CANCEL_REASON = "정기 결제 해지";
 
   @Transactional
   public Subscription createSubscription(Purchase purchase, Payment payment, String billingKey) {
@@ -78,6 +85,49 @@ public class SubscriptionService {
         content.getId(),
         nextBillingDate);
     return saved;
+  }
+
+  @Transactional
+  public void cancelSubscription(Long userId, String merchantUid) {
+    Subscription subscription =
+        subscriptionRepository
+            .findByMerchantUidAndUserIdAndStatus(merchantUid, userId, SubscriptionStatus.ACTIVE)
+            .orElseThrow(() -> new EntityNotFoundException("활성화된 정기결제가 존재하지 않습니다."));
+
+    Long contentId = subscription.getContent().getId();
+
+    purchaseRepository.findByUserIdAndContentId(userId, contentId).stream()
+        .forEach(
+            purchase -> {
+              Order order = purchase.getOrder();
+              if (order != null) {
+                switch (order.getStatus()) {
+                  case PAID:
+                    order.cancelRequestOrder(SUBSCRIPTION_CANCEL_REASON);
+                    order.cancelOrder(SUBSCRIPTION_CANCEL_REASON);
+                    break;
+                  case CANCEL_REQUEST:
+                    order.cancelOrder(SUBSCRIPTION_CANCEL_REASON);
+                    break;
+                  default:
+                    break;
+                }
+              }
+
+              if (purchase.getCancelledAt() == null) {
+                if (purchase.getCancelRequestedAt() == null) {
+                  purchase.cancelRequestPurchase(CancelReason.ETC);
+                }
+                purchase.cancelPayment();
+              }
+            });
+
+    subscription.markCancelled(LocalDateTime.now());
+    log.info(
+        "Subscription cancelled - subscriptionId: {}, userId: {}, merchantUid: {}",
+        subscription.getId(),
+        userId,
+        merchantUid);
   }
 
   private LocalDate resolveNextBillingDate(Subscription existing, LocalDateTime now) {
