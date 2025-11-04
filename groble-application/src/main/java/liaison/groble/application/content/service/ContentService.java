@@ -471,6 +471,9 @@ public class ContentService {
   @Transactional(readOnly = true)
   public PageResponse<ContentCardDTO> getMySellingContents(
       Long userId, Pageable pageable, String state) {
+    User user = userReader.getUserById(userId);
+    boolean hasSellerContacts = !sellerContactReader.getContactsByUser(user).isEmpty();
+
     List<ContentStatus> contentStatuses = parseContentStatuses(state);
     Page<FlatContentPreviewDTO> page =
         contentReader.findMyContentsWithStatus(pageable, userId, contentStatuses);
@@ -481,6 +484,7 @@ public class ContentService {
         PageResponse.MetaData.builder()
             .sortBy(pageable.getSort().iterator().next().getProperty())
             .sortDirection(pageable.getSort().iterator().next().getDirection().name())
+            .hasSellerContacts(hasSellerContacts)
             .build();
 
     return PageResponse.from(page, items, meta);

@@ -15,6 +15,7 @@ import liaison.groble.application.market.dto.MarketEditDTO;
 import liaison.groble.application.market.dto.MarketIntroSectionDTO;
 import liaison.groble.application.sell.SellerContactReader;
 import liaison.groble.application.user.service.UserReader;
+import liaison.groble.common.exception.ContactNotFoundException;
 import liaison.groble.common.exception.DuplicateMarketLinkException;
 import liaison.groble.common.response.PageResponse;
 import liaison.groble.domain.content.dto.FlatContentPreviewDTO;
@@ -149,6 +150,29 @@ public class MarketService {
   public void checkMarketLink(String marketLinkUrl) {
     if (userReader.existsByMarketLinkUrl(marketLinkUrl)) {
       throw new DuplicateMarketLinkException("이미 사용 중인 링크입니다.");
+    }
+  }
+
+  @Transactional
+  public void syncSellerContactEmail(Long userId) {
+    User user = userReader.getUserById(userId);
+    String email = user.getEmail();
+
+    if (email == null || email.isBlank()) {
+      throw new ContactNotFoundException("회원가입 이메일 정보를 찾을 수 없습니다.");
+    }
+
+    String normalizedEmail = email.trim();
+
+    Optional<SellerContact> existingContact =
+        sellerContactReader.findByUserAndContactType(user, ContactType.EMAIL);
+
+    if (existingContact.isPresent()) {
+      SellerContact contact = existingContact.get();
+      contact.changeContactValue(normalizedEmail);
+      sellerContactRepository.save(contact);
+    } else {
+      saveSellerContact(user, ContactType.EMAIL, normalizedEmail);
     }
   }
 
