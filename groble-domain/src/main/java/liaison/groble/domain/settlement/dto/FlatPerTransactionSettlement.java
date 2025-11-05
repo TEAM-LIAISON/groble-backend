@@ -18,4 +18,5 @@ public class FlatPerTransactionSettlement {
   private BigDecimal settlementAmountDisplay;
   private String orderStatus;
   private LocalDateTime purchasedAt;
+  private String paymentType;
 }

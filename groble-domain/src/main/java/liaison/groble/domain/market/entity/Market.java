@@ -56,15 +56,35 @@ public class Market extends BaseTimeEntity {
 
   // 마켓 이름 변경 메소드
   public void changeMarketName(String marketName) {
-    validateMarketName(marketName);
-    this.marketName = marketName;
+    if (marketName == null) {
+      this.marketName = null;
+      return;
+    }
+
+    String normalized = marketName.trim();
+    if (normalized.isEmpty()) {
+      this.marketName = null;
+      return;
+    }
+
+    validateMarketName(normalized);
+    this.marketName = normalized;
   }
 
   // 마켓 링크 URL 변경 메소드
   public void changeMarketLinkUrl(String marketLinkUrl) {
-    if (marketLinkUrl != null && !marketLinkUrl.isBlank()) {
-      this.marketLinkUrl = marketLinkUrl;
+    if (marketLinkUrl == null) {
+      this.marketLinkUrl = null;
+      return;
     }
+
+    String normalized = marketLinkUrl.trim();
+    if (normalized.isEmpty()) {
+      this.marketLinkUrl = null;
+      return;
+    }
+
+    this.marketLinkUrl = normalized;
   }
 
   // 마켓 이름 유효성 검사

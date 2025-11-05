@@ -18,4 +18,7 @@ public interface JpaSubscriptionRepository extends JpaRepository<Subscription, L
 
   Optional<Subscription> findByPurchase_Order_MerchantUidAndUser_IdAndStatus(
       String merchantUid, Long userId, SubscriptionStatus status);
+
+  boolean existsByUserIdAndBillingKeyAndStatus(
+      Long userId, String billingKey, SubscriptionStatus status);
 }

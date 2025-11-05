@@ -13,4 +13,5 @@ public class PerTransactionSettlementOverviewDTO {
   private BigDecimal settlementAmount;
   private String orderStatus;
   private LocalDateTime purchasedAt;
+  private String paymentType;
 }

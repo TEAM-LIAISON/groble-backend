@@ -212,6 +212,7 @@ public class SettlementService {
         .settlementAmount(flat.getSettlementAmountDisplay())
         .orderStatus(flat.getOrderStatus())
         .purchasedAt(flat.getPurchasedAt())
+        .paymentType(flat.getPaymentType())
         .build();
   }
 }

@@ -119,6 +119,7 @@ public final class ApiPaths {
     public static final String MY_PAGE_SUMMARY = BASE + "/me/summary";
     public static final String MY_PAGE_DETAIL = BASE + "/me/detail";
     public static final String UPLOAD_PROFILE_IMAGE = BASE + "/me/profile-image";
+    public static final String MY_PAGE_PAYMENT_METHOD = BASE + "/me/payment-method";
 
     public static final String MY_PAGE = API_V1 + "/me";
 

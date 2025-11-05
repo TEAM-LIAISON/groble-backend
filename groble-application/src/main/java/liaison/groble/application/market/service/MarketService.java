@@ -109,41 +109,25 @@ public class MarketService {
     Market market = userReader.getMarket(userId);
     User user = sellerInfo.getUser();
 
-    try {
-      // 3. 변경 사항 추적을 위한 플래그
-      boolean hasChanges = false;
+    String normalizedMarketName = normalizeToNull(marketEditDTO.getMarketName());
+    market.changeMarketName(normalizedMarketName);
 
-      // 4. 각 필드별 null 체크 후 업데이트
-      if (marketEditDTO.getMarketName() != null && !marketEditDTO.getMarketName().isBlank()) {
-        market.changeMarketName(marketEditDTO.getMarketName());
-        hasChanges = true;
-      }
+    String normalizedProfileImageUrl = normalizeToNull(marketEditDTO.getProfileImageUrl());
+    user.updateProfileImageUrl(normalizedProfileImageUrl);
 
-      if (marketEditDTO.getProfileImageUrl() != null
-          && !marketEditDTO.getProfileImageUrl().isBlank()) {
-        user.updateProfileImageUrl(marketEditDTO.getProfileImageUrl());
-        hasChanges = true;
-      }
+    String normalizedMarketLinkUrl = normalizeToNull(marketEditDTO.getMarketLinkUrl());
+    market.changeMarketLinkUrl(normalizedMarketLinkUrl);
 
-      if (marketEditDTO.getMarketLinkUrl() != null && !marketEditDTO.getMarketLinkUrl().isBlank()) {
-        market.changeMarketLinkUrl(marketEditDTO.getMarketLinkUrl());
-        hasChanges = true;
-      }
+    if (marketEditDTO.getContactInfo() != null) {
+      updateSellerContacts(user, marketEditDTO.getContactInfo());
+    } else {
+      clearSellerContacts(user);
+    }
 
-      if (marketEditDTO.getContactInfo() != null) {
-        updateSellerContacts(user, marketEditDTO.getContactInfo());
-        hasChanges = true;
-      }
-
-      if (marketEditDTO.getRepresentativeContentId() != null) {
-        updateRepresentativeContent(user, marketEditDTO.getRepresentativeContentId());
-        hasChanges = true;
-      } else {
-        clearRepresentativeContent(user); // 또는 null로 설정
-      }
-    } catch (Exception e) {
-      log.error("Error occurred while editing market for user: {}", user.getId(), e);
-      throw new RuntimeException("마켓 수정 중 오류가 발생했습니다.", e);
+    if (marketEditDTO.getRepresentativeContentId() != null) {
+      updateRepresentativeContent(user, marketEditDTO.getRepresentativeContentId());
+    } else {
+      clearRepresentativeContent(user);
     }
   }
 
@@ -156,13 +140,11 @@ public class MarketService {
   @Transactional
   public void syncSellerContactEmail(Long userId) {
     User user = userReader.getUserById(userId);
-    String email = user.getEmail();
+    String normalizedEmail = normalizeToNull(user.getEmail());
 
-    if (email == null || email.isBlank()) {
+    if (normalizedEmail == null) {
       throw new ContactNotFoundException("회원가입 이메일 정보를 찾을 수 없습니다.");
     }
-
-    String normalizedEmail = email.trim();
 
     Optional<SellerContact> existingContact =
         sellerContactReader.findByUserAndContactType(user, ContactType.EMAIL);
@@ -177,38 +159,35 @@ public class MarketService {
   }
 
   private void updateSellerContacts(User user, ContactInfoDTO contactInfo) {
-    // 기존 연락처 모두 삭제
-    sellerContactRepository.deleteAllByUser(user);
+    clearSellerContacts(user);
 
-    // Instagram 처리
-    if (contactInfo.getInstagram() != null && !contactInfo.getInstagram().isBlank()) {
-      saveSellerContact(user, ContactType.INSTAGRAM, contactInfo.getInstagram());
+    if (contactInfo == null) {
+      return;
     }
 
-    // Email 처리
-    if (contactInfo.getEmail() != null && !contactInfo.getEmail().isBlank()) {
-      saveSellerContact(user, ContactType.EMAIL, contactInfo.getEmail());
-    }
-
-    // OpenChat 처리
-    if (contactInfo.getOpenChat() != null && !contactInfo.getOpenChat().isBlank()) {
-      saveSellerContact(user, ContactType.OPENCHAT, contactInfo.getOpenChat());
-    }
-
-    // Etc 처리
-    if (contactInfo.getEtc() != null && !contactInfo.getEtc().isBlank()) {
-      saveSellerContact(user, ContactType.ETC, contactInfo.getEtc());
-    }
+    saveSellerContact(user, ContactType.INSTAGRAM, contactInfo.getInstagram());
+    saveSellerContact(user, ContactType.EMAIL, contactInfo.getEmail());
+    saveSellerContact(user, ContactType.OPENCHAT, contactInfo.getOpenChat());
+    saveSellerContact(user, ContactType.ETC, contactInfo.getEtc());
   }
 
   private void saveSellerContact(User user, ContactType contactType, String contactValue) {
+    String normalizedValue = normalizeToNull(contactValue);
+    if (normalizedValue == null) {
+      return;
+    }
+
     SellerContact sellerContact =
         SellerContact.builder()
             .user(user)
             .contactType(contactType)
-            .contactValue(contactValue)
+            .contactValue(normalizedValue)
             .build();
     sellerContactRepository.save(sellerContact);
+  }
+
+  private void clearSellerContacts(User user) {
+    sellerContactRepository.deleteAllByUser(user);
   }
 
   // TODO : 2회 이상 재사용되는 메서드 MarketService, PurchaseService 2곳에서 사용
@@ -338,5 +317,14 @@ public class MarketService {
           log.info("대표 콘텐츠가 해제되었습니다. User ID: {}, Content ID: {}", user.getId(), content.getId());
         });
     return;
+  }
+
+  private String normalizeToNull(String value) {
+    if (value == null) {
+      return null;
+    }
+
+    String trimmed = value.trim();
+    return trimmed.isEmpty() ? null : trimmed;
   }
 }

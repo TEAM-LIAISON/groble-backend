@@ -9,10 +9,12 @@ import liaison.groble.api.model.user.response.MyPageSummaryResponseBase;
 import liaison.groble.api.model.user.response.SellerMyPageSummaryResponse;
 import liaison.groble.api.model.user.response.UserHeaderResponse;
 import liaison.groble.api.model.user.response.UserMyPageDetailResponse;
+import liaison.groble.api.model.user.response.UserPaymentMethodResponse;
 import liaison.groble.application.user.dto.SocialBasicInfoDTO;
 import liaison.groble.application.user.dto.UserHeaderDTO;
 import liaison.groble.application.user.dto.UserMyPageDetailDTO;
 import liaison.groble.application.user.dto.UserMyPageSummaryDTO;
+import liaison.groble.application.user.dto.UserPaymentMethodDTO;
 import liaison.groble.mapping.config.GrobleMapperConfig;
 
 @Mapper(config = GrobleMapperConfig.class)
@@ -63,4 +65,6 @@ public interface UserMapper {
   @Mapping(target = "accountType", source = "accountTypeName")
   @Mapping(target = "providerType", source = "providerTypeName")
   UserMyPageDetailResponse toApiMyPageDetailResponse(UserMyPageDetailDTO userMyPageDetailDTO);
+
+  UserPaymentMethodResponse toUserPaymentMethodResponse(UserPaymentMethodDTO userPaymentMethodDTO);
 }

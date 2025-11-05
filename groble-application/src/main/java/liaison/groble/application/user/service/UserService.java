@@ -3,6 +3,7 @@ package liaison.groble.application.user.service;
 import liaison.groble.application.user.dto.UserHeaderDTO;
 import liaison.groble.application.user.dto.UserMyPageDetailDTO;
 import liaison.groble.application.user.dto.UserMyPageSummaryDTO;
+import liaison.groble.application.user.dto.UserPaymentMethodDTO;
 
 public interface UserService {
 
@@ -30,6 +31,14 @@ public interface UserService {
    * @return UserMyPageDetailDTO 사용자 마이페이지 상세 정보
    */
   UserMyPageDetailDTO getUserMyPageDetail(Long userId);
+
+  /**
+   * 사용자 마이페이지 결제 수단 조회
+   *
+   * @param userId 사용자 ID
+   * @return UserPaymentMethodDTO 결제 수단 정보
+   */
+  UserPaymentMethodDTO getUserPaymentMethod(Long userId);
 
   /**
    * 사용자 헤더 정보 조회

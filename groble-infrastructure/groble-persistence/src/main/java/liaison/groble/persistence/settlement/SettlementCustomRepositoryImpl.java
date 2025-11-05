@@ -140,7 +140,8 @@ public class SettlementCustomRepositoryImpl implements SettlementCustomRepositor
                     qSettlementItem.settlementAmount.as("settlementAmount"),
                     qSettlementItem.settlementAmountDisplay.as("settlementAmountDisplay"),
                     qSettlementItem.purchase.order.status.stringValue().as("orderStatus"),
-                    qSettlementItem.purchasedAt.as("purchasedAt")))
+                    qSettlementItem.purchasedAt.as("purchasedAt"),
+                    qSettlementItem.capturedPaymentType.as("paymentType")))
             .from(qSettlementItem)
             .leftJoin(qSettlementItem.settlement, qSettlement)
             .leftJoin(qSettlementItem.purchase, qPurchase)
@@ -190,7 +191,8 @@ public class SettlementCustomRepositoryImpl implements SettlementCustomRepositor
                     qSettlementItem.settlementAmount.as("settlementAmount"),
                     qSettlementItem.settlementAmountDisplay.as("settlementAmountDisplay"),
                     qSettlementItem.purchase.order.status.stringValue().as("orderStatus"),
-                    qSettlementItem.purchasedAt.as("purchasedAt")))
+                    qSettlementItem.purchasedAt.as("purchasedAt"),
+                    qSettlementItem.capturedPaymentType.as("paymentType")))
             .from(qSettlementItem)
             .leftJoin(qSettlementItem.settlement, qSettlement)
             .leftJoin(qSettlementItem.purchase, qPurchase)

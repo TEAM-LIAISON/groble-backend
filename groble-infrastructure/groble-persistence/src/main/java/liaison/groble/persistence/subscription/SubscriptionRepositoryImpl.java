@@ -44,4 +44,11 @@ public class SubscriptionRepositoryImpl implements SubscriptionRepository {
     return jpaSubscriptionRepository.findByPurchase_Order_MerchantUidAndUser_IdAndStatus(
         merchantUid, userId, status);
   }
+
+  @Override
+  public boolean existsByUserIdAndBillingKeyAndStatus(
+      Long userId, String billingKey, SubscriptionStatus status) {
+    return jpaSubscriptionRepository.existsByUserIdAndBillingKeyAndStatus(
+        userId, billingKey, status);
+  }
 }

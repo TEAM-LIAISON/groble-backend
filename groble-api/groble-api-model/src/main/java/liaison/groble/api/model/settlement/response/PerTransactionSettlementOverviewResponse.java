@@ -36,6 +36,13 @@ public class PerTransactionSettlementOverviewResponse {
       requiredMode = Schema.RequiredMode.REQUIRED)
   private String orderStatus;
 
+  @Schema(
+      description = "결제 수단 [ONE_TIME - 일반 구매], [SUBSCRIPTION - 정기 구독]",
+      example = "ONE_TIME",
+      type = "string",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private String paymentType;
+
   // 판매일
   @Schema(
       description = "판매일 (YYYY-MM-DDTHH:mm:ss)",
