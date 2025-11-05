@@ -156,6 +156,7 @@ public class AdminContentService {
         .priceOptionLength(flat.getPriceOptionLength())
         .minPrice(flat.getMinPrice())
         .contentStatus(flat.getContentStatus())
+        .paymentType(flat.getPaymentType())
         .adminContentCheckingStatus(flat.getAdminContentCheckingStatus())
         .isSearchExposed(flat.getIsSearchExposed())
         .documentFiles(documentFiles)

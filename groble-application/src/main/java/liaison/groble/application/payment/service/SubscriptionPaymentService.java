@@ -42,7 +42,7 @@ public class SubscriptionPaymentService {
 
   @Transactional
   public SubscriptionPaymentResult chargeWithBillingKey(Long userId, String merchantUid) {
-    Order order = orderReader.getOrderByMerchantUidAndUserId(merchantUid, userId);
+    Order order = orderReader.getOrderByMerchantUidAndUserIdForUpdate(merchantUid, userId);
 
     String billingKey = billingKeyService.getActiveBillingKey(userId).getBillingKey();
 

@@ -87,7 +87,7 @@ public class PaymentTransactionService {
     log.debug("인증 정보 저장 시작 - userId: {}, merchantUid: {}", userId, authResult.getPayOid());
 
     // 1. 주문 조회
-    Order order = orderReader.getOrderByMerchantUid(authResult.getPayOid());
+    Order order = orderReader.getOrderByMerchantUidForUpdate(authResult.getPayOid());
 
     // 2. 검증
     paymentValidator.validateOrderOwnership(order, userId);
@@ -641,7 +641,7 @@ public class PaymentTransactionService {
         "비회원 인증 정보 저장 시작 - guestUserId: {}, merchantUid: {}", guestUserId, authResult.getPayOid());
 
     // 1. 주문 조회
-    Order order = orderReader.getOrderByMerchantUid(authResult.getPayOid());
+    Order order = orderReader.getOrderByMerchantUidForUpdate(authResult.getPayOid());
 
     // 2. 검증
     paymentValidator.validateOrderOwnershipForGuest(order, guestUserId);

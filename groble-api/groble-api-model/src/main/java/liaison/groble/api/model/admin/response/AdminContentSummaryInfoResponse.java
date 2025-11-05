@@ -70,6 +70,13 @@ public class AdminContentSummaryInfoResponse {
   private String contentStatus;
 
   @Schema(
+      description = "결제 수단 [ONE_TIME - 일반 구매], [SUBSCRIPTION - 정기 구독]",
+      example = "ONE_TIME",
+      type = "string",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private String paymentType;
+
+  @Schema(
       description =
           "관리자의 콘텐츠 심사 상태 (예: 'PENDING(심사 필요)', 'VALIDATED(심사 완료 - 판매승인)', 'DISCONTINUED(심사 완료 - 판매중단)'",
       example = "PENDING",

@@ -21,6 +21,7 @@ public class FlatAdminContentSummaryInfoDTO {
   private int priceOptionLength;
   private BigDecimal minPrice;
   private String contentStatus;
+  private String paymentType;
   private String adminContentCheckingStatus;
   private Boolean isSearchExposed;
 }

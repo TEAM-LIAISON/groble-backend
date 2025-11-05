@@ -808,6 +808,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                         "priceOptionLength"),
                     qContent.lowestPrice.as("minPrice"),
                     qContent.status.stringValue().as("contentStatus"),
+                    qContent.paymentType.stringValue().as("paymentType"),
                     qContent
                         .adminContentCheckingStatus
                         .stringValue()
@@ -855,6 +856,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                         "priceOptionLength"),
                     qContent.lowestPrice.as("minPrice"),
                     qContent.status.stringValue().as("contentStatus"),
+                    qContent.paymentType.stringValue().as("paymentType"),
                     qContent
                         .adminContentCheckingStatus
                         .stringValue()

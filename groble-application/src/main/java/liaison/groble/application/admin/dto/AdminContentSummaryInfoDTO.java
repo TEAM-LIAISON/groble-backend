@@ -18,6 +18,7 @@ public class AdminContentSummaryInfoDTO {
   private int priceOptionLength;
   private BigDecimal minPrice;
   private String contentStatus;
+  private String paymentType;
   private String adminContentCheckingStatus;
   private Boolean isSearchExposed;
   private List<AdminDocumentFileInfoDTO> documentFiles;
