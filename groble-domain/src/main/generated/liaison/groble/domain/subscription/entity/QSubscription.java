@@ -28,6 +28,8 @@ public class QSubscription extends EntityPathBase<Subscription> {
 
     public final StringPath billingKey = createString("billingKey");
 
+    public final NumberPath<Integer> billingRetryCount = createNumber("billingRetryCount", Integer.class);
+
     public final DateTimePath<java.time.LocalDateTime> cancelledAt = createDateTime("cancelledAt", java.time.LocalDateTime.class);
 
     public final liaison.groble.domain.content.entity.QContent content;
@@ -36,6 +38,10 @@ public class QSubscription extends EntityPathBase<Subscription> {
     public final DateTimePath<java.time.LocalDateTime> createdAt = _super.createdAt;
 
     public final NumberPath<Long> id = createNumber("id", Long.class);
+
+    public final DateTimePath<java.time.LocalDateTime> lastBillingAttemptAt = createDateTime("lastBillingAttemptAt", java.time.LocalDateTime.class);
+
+    public final DateTimePath<java.time.LocalDateTime> lastBillingSucceededAt = createDateTime("lastBillingSucceededAt", java.time.LocalDateTime.class);
 
     public final DatePath<java.time.LocalDate> nextBillingDate = createDate("nextBillingDate", java.time.LocalDate.class);
 

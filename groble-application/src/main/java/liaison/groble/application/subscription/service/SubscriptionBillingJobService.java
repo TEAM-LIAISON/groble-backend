@@ -1,0 +1,160 @@
+package liaison.groble.application.subscription.service;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Objects;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.support.TransactionTemplate;
+
+import liaison.groble.application.payment.service.SubscriptionPaymentService;
+import liaison.groble.domain.order.entity.Order;
+import liaison.groble.domain.subscription.entity.Subscription;
+import liaison.groble.domain.subscription.enums.SubscriptionStatus;
+import liaison.groble.domain.subscription.repository.SubscriptionRepository;
+
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+@Service
+public class SubscriptionBillingJobService {
+
+  private static final ZoneId BILLING_ZONE_ID = ZoneId.of("Asia/Seoul");
+  private static final EnumSet<SubscriptionStatus> TARGET_STATUSES =
+      EnumSet.of(SubscriptionStatus.ACTIVE, SubscriptionStatus.PAST_DUE);
+
+  private final SubscriptionRepository subscriptionRepository;
+  private final SubscriptionRecurringOrderFactory recurringOrderFactory;
+  private final SubscriptionPaymentService subscriptionPaymentService;
+  private final TransactionTemplate transactionTemplate;
+  private final int batchSize;
+  private final int maxRetryCount;
+
+  public SubscriptionBillingJobService(
+      SubscriptionRepository subscriptionRepository,
+      SubscriptionRecurringOrderFactory recurringOrderFactory,
+      SubscriptionPaymentService subscriptionPaymentService,
+      PlatformTransactionManager transactionManager,
+      @Value("${subscription.billing.batch-size:50}") int batchSize,
+      @Value("${subscription.billing.max-retry-count:3}") int maxRetryCount) {
+    this.subscriptionRepository = subscriptionRepository;
+    this.recurringOrderFactory = recurringOrderFactory;
+    this.subscriptionPaymentService = subscriptionPaymentService;
+    this.batchSize = batchSize;
+    this.maxRetryCount = maxRetryCount;
+
+    TransactionTemplate template = new TransactionTemplate(transactionManager);
+    template.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+    this.transactionTemplate = template;
+  }
+
+  public void processDueSubscriptions() {
+    LocalDate today = LocalDate.now(BILLING_ZONE_ID);
+    Pageable pageable =
+        PageRequest.of(
+            0, batchSize, Sort.by("nextBillingDate").ascending().and(Sort.by("id").ascending()));
+
+    List<Subscription> dueSubscriptions =
+        subscriptionRepository.findByStatusInAndNextBillingDateLessThanEqual(
+            TARGET_STATUSES, today, pageable);
+
+    if (dueSubscriptions.isEmpty()) {
+      log.debug("자동 정기결제 대상 구독이 없습니다. date={}", today);
+      return;
+    }
+
+    log.info("자동 정기결제 대상 {}건 처리 시작 - 기준일 {}", dueSubscriptions.size(), today);
+    dueSubscriptions.stream()
+        .map(Subscription::getId)
+        .filter(Objects::nonNull)
+        .forEach(subscriptionId -> processSingleSubscription(subscriptionId, today));
+  }
+
+  private void processSingleSubscription(Long subscriptionId, LocalDate today) {
+    BillingContext context = prepareBillingContext(subscriptionId, today);
+    if (context == null) {
+      return;
+    }
+
+    try {
+      subscriptionPaymentService.chargeWithBillingKey(context.userId(), context.merchantUid());
+      log.info(
+          "정기결제 자동 청구 성공 - subscriptionId: {}, merchantUid: {}",
+          context.subscriptionId(),
+          context.merchantUid());
+    } catch (Exception ex) {
+      log.error(
+          "정기결제 자동 청구 실패 - subscriptionId: {}, merchantUid: {}",
+          context.subscriptionId(),
+          context.merchantUid(),
+          ex);
+      markBillingFailure(context.subscriptionId());
+    }
+  }
+
+  private BillingContext prepareBillingContext(Long subscriptionId, LocalDate today) {
+    return transactionTemplate.execute(
+        status ->
+            subscriptionRepository
+                .findWithLockingById(subscriptionId)
+                .filter(subscription -> canAttemptBilling(subscription, today))
+                .map(
+                    subscription -> {
+                      LocalDateTime now = LocalDateTime.now(BILLING_ZONE_ID);
+                      subscription.recordBillingAttempt(now);
+                      Order order = recurringOrderFactory.createOrder(subscription);
+                      subscriptionRepository.save(subscription);
+                      return new BillingContext(
+                          subscription.getId(),
+                          subscription.getUser().getId(),
+                          order.getMerchantUid());
+                    })
+                .orElse(null));
+  }
+
+  private boolean canAttemptBilling(Subscription subscription, LocalDate today) {
+    if (!subscription.canAttemptBilling(today)) {
+      log.debug(
+          "정기결제 청구 건너뜀 - subscriptionId: {}, status: {}, nextBillingDate: {}, 오늘 재시도 여부: {}",
+          subscription.getId(),
+          subscription.getStatus(),
+          subscription.getNextBillingDate(),
+          subscription.getLastBillingAttemptAt());
+      return false;
+    }
+    if (subscription.getBillingRetryCount() >= maxRetryCount) {
+      log.warn(
+          "정기결제 재시도 횟수 초과로 청구 건너뜀 - subscriptionId: {}, retryCount: {}, maxRetryCount: {}",
+          subscription.getId(),
+          subscription.getBillingRetryCount(),
+          maxRetryCount);
+      return false;
+    }
+    return true;
+  }
+
+  private void markBillingFailure(Long subscriptionId) {
+    transactionTemplate.execute(
+        status -> {
+          subscriptionRepository
+              .findWithLockingById(subscriptionId)
+              .ifPresent(
+                  subscription -> {
+                    subscription.markBillingFailure(LocalDateTime.now(BILLING_ZONE_ID));
+                    subscriptionRepository.save(subscription);
+                  });
+          return null;
+        });
+  }
+
+  private record BillingContext(Long subscriptionId, Long userId, String merchantUid) {}
+}

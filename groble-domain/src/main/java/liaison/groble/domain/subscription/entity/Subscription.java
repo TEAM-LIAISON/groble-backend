@@ -87,6 +87,15 @@ public class Subscription extends BaseTimeEntity {
   @Column(name = "cancelled_at")
   private LocalDateTime cancelledAt;
 
+  @Column(name = "last_billing_attempt_at")
+  private LocalDateTime lastBillingAttemptAt;
+
+  @Column(name = "last_billing_succeeded_at")
+  private LocalDateTime lastBillingSucceededAt;
+
+  @Column(name = "billing_retry_count", nullable = false)
+  private int billingRetryCount;
+
   @Builder(access = AccessLevel.PRIVATE)
   private Subscription(
       User user,
@@ -131,24 +140,29 @@ public class Subscription extends BaseTimeEntity {
       throw new IllegalArgumentException("Billing key is required for subscription.");
     }
 
-    return Subscription.builder()
-        .user(user)
-        .content(content)
-        .purchase(purchase)
-        .payment(payment)
-        .optionId(optionId)
-        .optionName(optionName)
-        .price(price)
-        .billingKey(billingKey)
-        .status(SubscriptionStatus.ACTIVE)
-        .nextBillingDate(nextBillingDate)
-        .activatedAt(LocalDateTime.now())
-        .build();
+    Subscription subscription =
+        Subscription.builder()
+            .user(user)
+            .content(content)
+            .purchase(purchase)
+            .payment(payment)
+            .optionId(optionId)
+            .optionName(optionName)
+            .price(price)
+            .billingKey(billingKey)
+            .status(SubscriptionStatus.ACTIVE)
+            .nextBillingDate(nextBillingDate)
+            .activatedAt(LocalDateTime.now())
+            .build();
+
+    subscription.initializeBillingState(LocalDateTime.now());
+    return subscription;
   }
 
   public void markCancelled(LocalDateTime cancelledAt) {
     this.status = SubscriptionStatus.CANCELLED;
     this.cancelledAt = cancelledAt != null ? cancelledAt : LocalDateTime.now();
+    this.billingRetryCount = 0;
   }
 
   public void renew(
@@ -175,5 +189,45 @@ public class Subscription extends BaseTimeEntity {
     this.nextBillingDate = nextBillingDate;
     this.status = SubscriptionStatus.ACTIVE;
     this.cancelledAt = null;
+    markBillingSuccess(LocalDateTime.now());
+  }
+
+  private void initializeBillingState(LocalDateTime now) {
+    this.lastBillingAttemptAt = now;
+    this.lastBillingSucceededAt = now;
+    this.billingRetryCount = 0;
+  }
+
+  public void recordBillingAttempt(LocalDateTime attemptAt) {
+    this.lastBillingAttemptAt = attemptAt;
+  }
+
+  public void markBillingSuccess(LocalDateTime successAt) {
+    this.lastBillingSucceededAt = successAt;
+    this.lastBillingAttemptAt = successAt;
+    this.billingRetryCount = 0;
+    this.status = SubscriptionStatus.ACTIVE;
+  }
+
+  public void markBillingFailure(LocalDateTime attemptAt) {
+    this.lastBillingAttemptAt = attemptAt;
+    this.billingRetryCount = this.billingRetryCount + 1;
+    if (this.status != SubscriptionStatus.CANCELLED) {
+      this.status = SubscriptionStatus.PAST_DUE;
+    }
+  }
+
+  public boolean canAttemptBilling(LocalDate today) {
+    if (today == null) {
+      return false;
+    }
+    if (this.status == SubscriptionStatus.CANCELLED) {
+      return false;
+    }
+    if (this.nextBillingDate == null || this.nextBillingDate.isAfter(today)) {
+      return false;
+    }
+    return this.lastBillingAttemptAt == null
+        || !this.lastBillingAttemptAt.toLocalDate().isEqual(today);
   }
 }

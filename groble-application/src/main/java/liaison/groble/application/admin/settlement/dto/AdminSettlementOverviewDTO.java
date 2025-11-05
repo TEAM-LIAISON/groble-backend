@@ -14,6 +14,8 @@ public class AdminSettlementOverviewDTO {
   private String contentType;
   private BigDecimal settlementAmount;
   private String settlementStatus;
+  private String nickname;
+  private String paymentType;
   private String verificationStatus;
   private Boolean isBusinessSeller;
   private String businessType;

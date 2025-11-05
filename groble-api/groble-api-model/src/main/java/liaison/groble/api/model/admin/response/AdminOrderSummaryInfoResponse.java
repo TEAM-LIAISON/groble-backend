@@ -85,4 +85,18 @@ public class AdminOrderSummaryInfoResponse {
       type = "string",
       requiredMode = Schema.RequiredMode.REQUIRED)
   private String orderStatus;
+
+  @Schema(
+      description = "결제 수단 [ONE_TIME - 일반 구매], [SUBSCRIPTION - 정기 구독]",
+      example = "ONE_TIME",
+      type = "string",
+      requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  private String paymentType;
+
+  @Schema(
+      description = "결제 실패 사유 (orderStatus가 FAILED일 때 제공)",
+      example = "결제 승인 실패 [3009]: 한도 초과",
+      type = "string",
+      requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  private String failureReason;
 }

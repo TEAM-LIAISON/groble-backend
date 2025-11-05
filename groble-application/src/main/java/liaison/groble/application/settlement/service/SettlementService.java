@@ -208,6 +208,7 @@ public class SettlementService {
   private PerTransactionSettlementOverviewDTO convertFlatDTOToPerTransactionDTO(
       FlatPerTransactionSettlement flat) {
     return PerTransactionSettlementOverviewDTO.builder()
+        .contentId(flat.getContentId())
         .contentTitle(flat.getContentTitle())
         .settlementAmount(flat.getSettlementAmountDisplay())
         .orderStatus(flat.getOrderStatus())

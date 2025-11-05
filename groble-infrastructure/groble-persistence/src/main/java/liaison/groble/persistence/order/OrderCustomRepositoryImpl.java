@@ -57,7 +57,9 @@ public class OrderCustomRepositoryImpl implements OrderCustomRepository {
                     qOrder.purchaser.name.as("purchaserName"),
                     qContent.title.as("contentTitle"),
                     qOrder.finalPrice.as("finalPrice"),
-                    qOrder.status.stringValue().as("orderStatus")))
+                    qOrder.status.stringValue().as("orderStatus"),
+                    qOrder.orderNote.as("failureReason"),
+                    qContent.paymentType.stringValue().as("paymentType")))
             .from(qOrder)
             .leftJoin(qPurchase)
             .on(qPurchase.order.eq(qOrder))

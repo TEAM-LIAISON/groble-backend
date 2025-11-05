@@ -13,6 +13,13 @@ import lombok.Getter;
 @Builder
 @Schema(description = "[✅ 내 스토어 - 정산 관리] 개별 정산 개요 응답")
 public class PerTransactionSettlementOverviewResponse {
+  @Schema(
+      description = "콘텐츠 ID",
+      example = "123",
+      type = "number",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private Long contentId;
+
   // 상품 제목
   @Schema(
       description = "상품 제목",

@@ -3,6 +3,7 @@ package liaison.groble.application.subscription.service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.EnumSet;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,8 +43,10 @@ public class SubscriptionService {
     Content content = purchase.getContent();
     Subscription existingSubscription =
         subscriptionRepository
-            .findByContentIdAndUserIdAndStatus(
-                content.getId(), user.getId(), SubscriptionStatus.ACTIVE)
+            .findByContentIdAndUserIdAndStatusIn(
+                content.getId(),
+                user.getId(),
+                EnumSet.of(SubscriptionStatus.ACTIVE, SubscriptionStatus.PAST_DUE))
             .orElse(null);
 
     Long optionId = purchase.getSelectedOptionId();
@@ -92,7 +95,12 @@ public class SubscriptionService {
     Subscription subscription =
         subscriptionRepository
             .findByMerchantUidAndUserIdAndStatus(merchantUid, userId, SubscriptionStatus.ACTIVE)
-            .orElseThrow(() -> new EntityNotFoundException("활성화된 정기결제가 존재하지 않습니다."));
+            .orElseGet(
+                () ->
+                    subscriptionRepository
+                        .findByMerchantUidAndUserIdAndStatus(
+                            merchantUid, userId, SubscriptionStatus.PAST_DUE)
+                        .orElseThrow(() -> new EntityNotFoundException("활성화된 정기결제가 존재하지 않습니다.")));
 
     Long contentId = subscription.getContent().getId();
 

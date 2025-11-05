@@ -1,7 +1,11 @@
 package liaison.groble.persistence.subscription;
 
+import java.time.LocalDate;
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import liaison.groble.domain.subscription.entity.Subscription;
@@ -39,6 +43,13 @@ public class SubscriptionRepositoryImpl implements SubscriptionRepository {
   }
 
   @Override
+  public Optional<Subscription> findByContentIdAndUserIdAndStatusIn(
+      Long contentId, Long userId, Collection<SubscriptionStatus> statuses) {
+    return jpaSubscriptionRepository.findByContentIdAndUserIdAndStatusIn(
+        contentId, userId, statuses);
+  }
+
+  @Override
   public Optional<Subscription> findByMerchantUidAndUserIdAndStatus(
       String merchantUid, Long userId, SubscriptionStatus status) {
     return jpaSubscriptionRepository.findByPurchase_Order_MerchantUidAndUser_IdAndStatus(
@@ -50,5 +61,22 @@ public class SubscriptionRepositoryImpl implements SubscriptionRepository {
       Long userId, String billingKey, SubscriptionStatus status) {
     return jpaSubscriptionRepository.existsByUserIdAndBillingKeyAndStatus(
         userId, billingKey, status);
+  }
+
+  @Override
+  public List<Subscription> findByStatusInAndNextBillingDateLessThanEqual(
+      Collection<SubscriptionStatus> statuses, LocalDate billingDate, Pageable pageable) {
+    return jpaSubscriptionRepository.findByStatusInAndNextBillingDateLessThanEqual(
+        statuses, billingDate, pageable);
+  }
+
+  @Override
+  public Optional<Subscription> findWithLockingById(Long id) {
+    return jpaSubscriptionRepository.findWithLockingById(id);
+  }
+
+  @Override
+  public Optional<Subscription> findById(Long id) {
+    return jpaSubscriptionRepository.findById(id);
   }
 }
