@@ -238,6 +238,28 @@ public class PaypleServiceV2 implements PaypleService {
   }
 
   @Override
+  public JSONObject deleteBillingKey(String payerId, String authKey) {
+    log.info("페이플 빌링키 삭제 요청 시작 - payerId: {}", maskSensitiveData(payerId));
+
+    try {
+      HttpResponse response = executeBillingKeyDeletionRequest(payerId, authKey);
+      return parseAndValidateResponse(response);
+
+    } catch (HttpClientException e) {
+      log.error("페이플 빌링키 삭제 HTTP 요청 실패", e);
+      return createErrorResponse("NETWORK_ERROR", "네트워크 오류가 발생했습니다: " + e.getMessage());
+
+    } catch (ParseException e) {
+      log.error("페이플 빌링키 삭제 응답 파싱 실패", e);
+      return createErrorResponse("PARSE_ERROR", "응답 파싱 중 오류가 발생했습니다");
+
+    } catch (Exception e) {
+      log.error("페이플 빌링키 삭제 예상치 못한 오류", e);
+      return createErrorResponse("UNKNOWN_ERROR", "예상치 못한 오류가 발생했습니다");
+    }
+  }
+
+  @Override
   public JSONObject payTransferRequest(Map<String, String> params, String accessToken) {
     log.info(
         "페이플 이체 대기 요청 시작 - 빌링키: {}, 이체금액: {}",
@@ -376,6 +398,27 @@ public class PaypleServiceV2 implements PaypleService {
     HttpRequest httpRequest =
         HttpRequest.postWithHeaders(
             paypleConfig.getSimplePaymentUrl(), headers, requestBody.toJSONString());
+    return httpClient.post(httpRequest);
+  }
+
+  private HttpResponse executeBillingKeyDeletionRequest(String payerId, String authKey)
+      throws HttpClientException {
+    JSONObject requestBody = new JSONObject();
+    requestBody.put("PCD_CST_ID", paypleConfig.getCstId());
+    requestBody.put("PCD_CUST_KEY", paypleConfig.getCustKey());
+    requestBody.put("PCD_AUTH_KEY", authKey);
+    requestBody.put("PCD_PAYER_ID", payerId);
+
+    Map<String, String> headers = new HashMap<>();
+    headers.put("Content-Type", "application/json");
+    headers.put("charset", "UTF-8");
+    headers.put("referer", paypleConfig.getRefererUrl());
+
+    log.debug("페이플 빌링키 삭제 요청 본문: {}", requestBody.toJSONString());
+
+    HttpRequest httpRequest =
+        HttpRequest.postWithHeaders(
+            paypleConfig.getBillingKeyDeleteUrl(), headers, requestBody.toJSONString());
     return httpClient.post(httpRequest);
   }
 

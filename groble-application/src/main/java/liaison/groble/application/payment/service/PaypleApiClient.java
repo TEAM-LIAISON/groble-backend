@@ -14,6 +14,7 @@ import liaison.groble.application.payment.dto.PaypleApprovalResult;
 import liaison.groble.application.payment.dto.PaypleAuthResponseDTO;
 import liaison.groble.application.payment.dto.PaypleAuthResultDTO;
 import liaison.groble.application.payment.dto.PaypleRefundResult;
+import liaison.groble.application.payment.dto.billing.BillingKeyAction;
 import liaison.groble.application.payment.exception.PaypleApiException;
 import liaison.groble.application.payment.util.CardQuotaNormalizer;
 import liaison.groble.external.adapter.payment.PaypleCodeGenerator;
@@ -199,6 +200,29 @@ public class PaypleApiClient {
     } catch (Exception e) {
       log.error("페이플 빌링키 결제 중 오류 발생 - merchantUid: {}", request.getPayOid(), e);
       throw new PaypleApiException("페이플 빌링키 결제 실패", e);
+    }
+  }
+
+  public void deleteBillingKey(String billingKey) {
+    log.info("페이플 빌링키 삭제 요청 - payerId: {}", maskCode(billingKey));
+
+    try {
+      PaypleAuthResponseDTO authResponse = requestAuth(BillingKeyAction.DELETE.getPayWork());
+      JSONObject deleteResult =
+          paypleService.deleteBillingKey(billingKey, authResponse.getAuthKey());
+
+      String payResult = getString(deleteResult, "PCD_PAY_RST");
+      if (!RESULT_SUCCESS.equalsIgnoreCase(payResult)) {
+        String errorMessage = getString(deleteResult, "PCD_PAY_MSG");
+        throw new PaypleApiException(errorMessage != null ? errorMessage : "페이플 빌링키 삭제에 실패했습니다.");
+      }
+
+      log.info("페이플 빌링키 삭제 성공 - payerId: {}", maskCode(billingKey));
+    } catch (PaypleApiException e) {
+      throw e;
+    } catch (Exception e) {
+      log.error("페이플 빌링키 삭제 중 오류 발생", e);
+      throw new PaypleApiException("페이플 빌링키 삭제에 실패했습니다.", e);
     }
   }
 

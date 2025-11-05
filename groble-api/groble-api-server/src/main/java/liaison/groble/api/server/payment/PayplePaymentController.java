@@ -255,6 +255,21 @@ public class PayplePaymentController extends BaseController {
     return success(response, ResponseMessages.Payment.BILLING_KEY_REGISTERED);
   }
 
+  @Operation(summary = "빌링키 삭제", description = "등록된 정기결제 빌링키를 삭제합니다.")
+  @Logging(item = "Payment", action = "deleteBillingKey", includeParam = true, includeResult = true)
+  @DeleteMapping("/billingkey")
+  public ResponseEntity<GrobleResponse<Void>> deleteBillingKey(
+      @Auth(required = true) Accessor accessor) {
+
+    UserContext userContext = UserContextFactory.from(accessor);
+    if (!userContext.isMember()) {
+      throw PaymentAuthenticationRequiredException.forPayment();
+    }
+
+    billingKeyService.deleteBillingKey(userContext.getId());
+    return success(null, ResponseMessages.Payment.BILLING_KEY_DELETED, HttpStatus.OK);
+  }
+
   @Operation(
       summary = PaymentSwaggerDocs.PAYMENT_APP_CARD_SUMMARY,
       description = PaymentSwaggerDocs.PAYMENT_APP_CARD_DESCRIPTION)

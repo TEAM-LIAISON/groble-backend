@@ -16,7 +16,9 @@ public enum BillingKeyAction {
   /** Register a new billing key without charging immediately. */
   REGISTER("LINKREG"),
   /** Register a new billing key and charge the first payment immediately. */
-  REGISTER_AND_CHARGE("CERT");
+  REGISTER_AND_CHARGE("CERT"),
+  /** Delete an existing billing key. */
+  DELETE("LINKDEL");
 
   private final String payWork;
 }

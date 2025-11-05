@@ -12,6 +12,8 @@ import liaison.groble.application.user.service.UserReader;
 import liaison.groble.domain.payment.entity.BillingKey;
 import liaison.groble.domain.payment.enums.BillingKeyStatus;
 import liaison.groble.domain.payment.repository.BillingKeyRepository;
+import liaison.groble.domain.subscription.enums.SubscriptionStatus;
+import liaison.groble.domain.subscription.repository.SubscriptionRepository;
 import liaison.groble.domain.user.entity.User;
 
 import lombok.RequiredArgsConstructor;
@@ -22,6 +24,8 @@ public class BillingKeyService {
 
   private final BillingKeyRepository billingKeyRepository;
   private final UserReader userReader;
+  private final SubscriptionRepository subscriptionRepository;
+  private final PaypleApiClient paypleApiClient;
 
   @Transactional
   public BillingKeyInfoDTO registerBillingKey(Long userId, RegisterBillingKeyCommand command) {
@@ -68,6 +72,29 @@ public class BillingKeyService {
   @Transactional(readOnly = true)
   public List<BillingKey> getBillingKeys(Long userId) {
     return billingKeyRepository.findByUserId(userId);
+  }
+
+  @Transactional
+  public void deleteBillingKey(Long userId) {
+    BillingKey billingKey =
+        billingKeyRepository
+            .findByUserIdAndStatus(userId, BillingKeyStatus.ACTIVE)
+            .orElseThrow(() -> new IllegalStateException("삭제할 빌링키가 존재하지 않습니다."));
+
+    boolean hasActiveSubscription =
+        subscriptionRepository.existsByUserIdAndBillingKeyAndStatus(
+                userId, billingKey.getBillingKey(), SubscriptionStatus.ACTIVE)
+            || subscriptionRepository.existsByUserIdAndBillingKeyAndStatus(
+                userId, billingKey.getBillingKey(), SubscriptionStatus.PAST_DUE);
+
+    if (hasActiveSubscription) {
+      throw new IllegalStateException("정기 결제가 진행 중인 경우 빌링키를 삭제할 수 없습니다.");
+    }
+
+    paypleApiClient.deleteBillingKey(billingKey.getBillingKey());
+
+    billingKey.deactivate();
+    billingKeyRepository.save(billingKey);
   }
 
   private String normalize(String value) {

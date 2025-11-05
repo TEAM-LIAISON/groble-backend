@@ -99,6 +99,7 @@ public final class ResponseMessages {
     public static final String REFUND_SUCCESS = "환불 요청이 성공적으로 처리되었습니다.";
     public static final String BILLING_AUTH_SUCCESS = "정기 결제를 위한 페이플 인증 요청이 성공적으로 처리되었습니다.";
     public static final String BILLING_KEY_REGISTERED = "정기 결제를 위한 카드 정보가 성공적으로 등록되었습니다.";
+    public static final String BILLING_KEY_DELETED = "정기 결제를 위한 카드 정보가 삭제되었습니다.";
     public static final String SUBSCRIPTION_CANCELLED = "정기 결제가 해지되었습니다.";
 
     private Payment() {}

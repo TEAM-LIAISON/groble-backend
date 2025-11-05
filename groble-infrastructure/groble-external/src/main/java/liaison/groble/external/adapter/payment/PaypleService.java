@@ -37,4 +37,7 @@ public interface PaypleService {
 
   /** 빌링키(간편) 결제 API */
   JSONObject paySimplePayment(PaypleSimplePayRequest request, String authKey);
+
+  /** 빌링키 삭제 API */
+  JSONObject deleteBillingKey(String payerId, String authKey);
 }
