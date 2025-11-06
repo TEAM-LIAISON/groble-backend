@@ -177,6 +177,13 @@ public class PurchasedContentDetailResponse {
       requiredMode = Schema.RequiredMode.NOT_REQUIRED)
   private Integer subscriptionRound;
 
+  @Schema(
+      description = "등록된 정기 결제 카드로 구독을 재시작할 수 있는지 여부",
+      example = "true",
+      type = "boolean",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private boolean canResumeSubscription;
+
   // 누락 변수 추가
   @Schema(
       description = "콘텐츠 썸네일 URL",

@@ -90,6 +90,19 @@ public final class PaymentSwaggerDocs {
             - Path parameter로 전달한 `merchantUid` 기준으로 구독을 식별합니다
             """;
 
+  public static final String SUBSCRIPTION_RESUME_SUMMARY =
+      "[🔄 정기 결제 재개] 해지된 정기 결제를 다음 결제일부터 다시 시작합니다.";
+  public static final String SUBSCRIPTION_RESUME_DESCRIPTION =
+      """
+            회원이 해지한 정기 결제를 다시 활성화하여 지정된 다음 결제일부터 자동 결제를 재개합니다.
+
+            **주의사항:**
+            - 회원 전용 API 입니다
+            - 활성화된 정기 결제용 빌링키가 필요합니다
+            - 이미 활성 상태인 구독은 재개할 수 없습니다
+            - Path parameter로 전달한 `merchantUid` 기준으로 구독을 식별합니다
+            """;
+
   // === 앱카드 결제 취소 API ===
   public static final String CANCEL_SUMMARY = "[❌ 통합 결제 취소] 관리자가 서비스 유형에 한해 회원/비회원 결제를 취소합니다.";
   public static final String CANCEL_DESCRIPTION =

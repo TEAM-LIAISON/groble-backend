@@ -92,6 +92,37 @@ public class SubscriptionService {
   }
 
   @Transactional
+  public void resumeSubscription(
+      Long userId, String merchantUid, String billingKey, LocalDate requestedNextBillingDate) {
+    Subscription subscription =
+        subscriptionRepository
+            .findByMerchantUidAndUserId(merchantUid, userId)
+            .orElseThrow(() -> new EntityNotFoundException("구독 정보를 찾을 수 없습니다."));
+
+    if (subscription.getStatus() == SubscriptionStatus.ACTIVE
+        || subscription.getStatus() == SubscriptionStatus.PAST_DUE) {
+      throw new IllegalStateException("이미 활성 상태인 구독입니다.");
+    }
+
+    if (subscription.getStatus() != SubscriptionStatus.CANCELLED) {
+      throw new IllegalStateException("해당 구독은 갱신할 수 없는 상태입니다.");
+    }
+
+    LocalDate nextBillingDate =
+        resolveResumeNextBillingDate(subscription, requestedNextBillingDate, LocalDate.now());
+
+    subscription.resume(billingKey, nextBillingDate);
+    subscriptionRepository.save(subscription);
+
+    log.info(
+        "Subscription resumed - subscriptionId: {}, userId: {}, contentId: {}, nextBillingDate: {}",
+        subscription.getId(),
+        userId,
+        subscription.getContent().getId(),
+        nextBillingDate);
+  }
+
+  @Transactional
   public void cancelSubscription(Long userId, String merchantUid) {
     Subscription subscription =
         subscriptionRepository
@@ -149,6 +180,28 @@ public class SubscriptionService {
       return currentNextBilling.plusMonths(1);
     }
     return now.toLocalDate().plusMonths(1);
+  }
+
+  private LocalDate resolveResumeNextBillingDate(
+      Subscription subscription, LocalDate requestedDate, LocalDate today) {
+    if (requestedDate != null) {
+      if (requestedDate.isBefore(today)) {
+        log.warn(
+            "Requested next billing date is in the past - subscriptionId: {}, requested: {}, today: {}",
+            subscription.getId(),
+            requestedDate,
+            today);
+      } else {
+        return requestedDate;
+      }
+    }
+
+    LocalDate existingNextBilling = subscription.getNextBillingDate();
+    if (existingNextBilling != null && !existingNextBilling.isBefore(today)) {
+      return existingNextBilling;
+    }
+
+    return today.plusMonths(1);
   }
 
   @Transactional

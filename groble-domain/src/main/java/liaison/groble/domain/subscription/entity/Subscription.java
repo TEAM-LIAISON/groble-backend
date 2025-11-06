@@ -192,6 +192,22 @@ public class Subscription extends BaseTimeEntity {
     markBillingSuccess(LocalDateTime.now());
   }
 
+  public void resume(String billingKey, LocalDate nextBillingDate) {
+    if (billingKey == null || billingKey.isBlank()) {
+      throw new IllegalArgumentException("Billing key is required to resume subscription.");
+    }
+    if (nextBillingDate == null) {
+      throw new IllegalArgumentException("Next billing date is required to resume subscription.");
+    }
+
+    this.billingKey = billingKey;
+    this.nextBillingDate = nextBillingDate;
+    this.status = SubscriptionStatus.ACTIVE;
+    this.cancelledAt = null;
+    this.billingRetryCount = 0;
+    this.lastBillingAttemptAt = null;
+  }
+
   private void initializeBillingState(LocalDateTime now) {
     this.lastBillingAttemptAt = now;
     this.lastBillingSucceededAt = now;

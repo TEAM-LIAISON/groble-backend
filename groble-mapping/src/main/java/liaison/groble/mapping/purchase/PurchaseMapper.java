@@ -60,6 +60,7 @@ public interface PurchaseMapper extends PageResponseMapper {
         .paymentType(response.getPaymentType())
         .nextPaymentDate(response.getNextPaymentDate())
         .subscriptionRound(response.getSubscriptionRound())
+        .canResumeSubscription(response.isCanResumeSubscription())
         .thumbnailUrl(response.getThumbnailUrl())
         .isRefundable(response.getIsRefundable())
         .isCancelable(response.getIsCancelable())

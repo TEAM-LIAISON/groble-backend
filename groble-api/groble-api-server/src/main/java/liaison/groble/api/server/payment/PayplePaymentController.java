@@ -198,6 +198,34 @@ public class PayplePaymentController extends BaseController {
   }
 
   @Operation(
+      summary = PaymentSwaggerDocs.SUBSCRIPTION_RESUME_SUMMARY,
+      description = PaymentSwaggerDocs.SUBSCRIPTION_RESUME_DESCRIPTION)
+  @Logging(
+      item = "Payment",
+      action = "resumeSubscription",
+      includeParam = true,
+      includeResult = true)
+  @PostMapping(ApiPaths.Payment.SUBSCRIPTION + "/{merchantUid}/resume")
+  public ResponseEntity<GrobleResponse<Void>> resumeSubscription(
+      @Auth(required = true) Accessor accessor, @PathVariable("merchantUid") String merchantUid) {
+
+    UserContext userContext = UserContextFactory.from(accessor);
+    if (!userContext.isMember()) {
+      throw PaymentAuthenticationRequiredException.forPayment();
+    }
+
+    String billingKey =
+        billingKeyService
+            .findActiveBillingKeyValue(userContext.getId())
+            .orElseThrow(() -> new IllegalStateException("정기 결제를 위해 등록된 결제 수단이 필요합니다."));
+
+    subscriptionService.resumeSubscription(userContext.getId(), merchantUid, billingKey, null);
+
+    return responseHelper.success(
+        null, ResponseMessages.Payment.SUBSCRIPTION_RESUMED, HttpStatus.OK);
+  }
+
+  @Operation(
       summary = PaymentSwaggerDocs.BILLING_AUTH_MO_SUMMARY,
       description = PaymentSwaggerDocs.BILLING_AUTH_MO_DESCRIPTION)
   @PaymentApiResponses.BillingAuthResponses

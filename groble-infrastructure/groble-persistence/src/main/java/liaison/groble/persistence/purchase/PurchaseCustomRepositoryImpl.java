@@ -175,6 +175,9 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
                                 .id
                                 .eq(qPurchase.user.id)
                                 .and(purchaseSubDetail.content.id.eq(qContent.id))
+                                .and(
+                                    purchaseSubDetail.selectedOptionId.eq(
+                                        qPurchase.selectedOptionId))
                                 .and(purchaseSubDetail.purchasedAt.loe(qPurchase.purchasedAt))))
                 .otherwise(Expressions.nullExpression(Integer.class)),
             "subscriptionRound");
@@ -366,6 +369,7 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
                                 .id
                                 .eq(qPurchase.user.id)
                                 .and(purchaseSub.content.id.eq(qContent.id))
+                                .and(purchaseSub.selectedOptionId.eq(qPurchase.selectedOptionId))
                                 .and(purchaseSub.purchasedAt.loe(qPurchase.purchasedAt))))
                 .otherwise(Expressions.nullExpression(Integer.class)),
             "subscriptionRound");
@@ -463,6 +467,7 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
                                 .id
                                 .eq(qPurchase.user.id)
                                 .and(purchaseSub.content.id.eq(qContent.id))
+                                .and(purchaseSub.selectedOptionId.eq(qPurchase.selectedOptionId))
                                 .and(purchaseSub.purchasedAt.loe(qPurchase.purchasedAt))))
                 .otherwise(Expressions.nullExpression(Integer.class)),
             "subscriptionRound");
@@ -542,6 +547,7 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
                             .id
                             .eq(qPurchase.user.id)
                             .and(purchaseSubLatest.content.id.eq(qContent.id))
+                            .and(purchaseSubLatest.selectedOptionId.eq(qPurchase.selectedOptionId))
                             .and(purchaseSubLatest.purchasedAt.gt(qPurchase.purchasedAt)))
                     .notExists());
 
@@ -562,6 +568,7 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
                                 .id
                                 .eq(qPurchase.user.id)
                                 .and(purchaseSub.content.id.eq(qContent.id))
+                                .and(purchaseSub.selectedOptionId.eq(qPurchase.selectedOptionId))
                                 .and(purchaseSub.purchasedAt.loe(qPurchase.purchasedAt))))
                 .otherwise(Expressions.nullExpression(Integer.class)),
             "subscriptionRound");
@@ -665,6 +672,7 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
                             .phoneNumber
                             .eq(guestPhoneNumber)
                             .and(purchaseSubLatest.content.id.eq(qContent.id))
+                            .and(purchaseSubLatest.selectedOptionId.eq(qPurchase.selectedOptionId))
                             .and(purchaseSubLatest.purchasedAt.gt(qPurchase.purchasedAt)))
                     .notExists());
 
@@ -685,6 +693,7 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
                                 .id
                                 .eq(qPurchase.user.id)
                                 .and(purchaseSub.content.id.eq(qContent.id))
+                                .and(purchaseSub.selectedOptionId.eq(qPurchase.selectedOptionId))
                                 .and(purchaseSub.purchasedAt.loe(qPurchase.purchasedAt))))
                 .otherwise(Expressions.nullExpression(Integer.class)),
             "subscriptionRound");

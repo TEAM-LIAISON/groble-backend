@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import liaison.groble.application.guest.reader.GuestUserReader;
 import liaison.groble.application.market.dto.ContactInfoDTO;
 import liaison.groble.application.order.service.OrderReader;
+import liaison.groble.application.payment.service.BillingKeyService;
 import liaison.groble.application.purchase.dto.PurchaseContentCardDTO;
 import liaison.groble.application.purchase.dto.PurchasedContentDetailDTO;
 import liaison.groble.application.sell.SellerContactReader;
@@ -41,6 +42,7 @@ public class PurchaseService {
   private final PurchaseReader purchaseReader;
   private final SellerContactReader sellerContactReader;
   private final GuestUserReader guestUserReader;
+  private final BillingKeyService billingKeyService;
 
   // 내가 구매한 콘텐츠 목록 조회 (회원용)
   @Transactional(readOnly = true)
@@ -93,7 +95,14 @@ public class PurchaseService {
     FlatPurchaseContentDetailDTO flatPurchaseContentDetailDTO =
         purchaseReader.getPurchaseContentDetail(userId, merchantUid);
 
-    return toPurchasedContentDetailDTO(flatPurchaseContentDetailDTO);
+    boolean canResumeSubscription = false;
+    if (ContentPaymentType.SUBSCRIPTION
+        .name()
+        .equals(flatPurchaseContentDetailDTO.getPaymentType())) {
+      canResumeSubscription = billingKeyService.findActiveBillingKey(userId).isPresent();
+    }
+
+    return toPurchasedContentDetailDTO(flatPurchaseContentDetailDTO, canResumeSubscription);
   }
 
   private PurchaseContentCardDTO convertFlatDTOToCardDTO(FlatPurchaseContentPreviewDTO flat) {
@@ -148,7 +157,7 @@ public class PurchaseService {
     FlatPurchaseContentDetailDTO flatPurchaseContentDetailDTO =
         purchaseReader.getPurchaseContentDetailForGuest(merchantUid);
 
-    return toPurchasedContentDetailDTO(flatPurchaseContentDetailDTO);
+    return toPurchasedContentDetailDTO(flatPurchaseContentDetailDTO, false);
   }
 
   private ContactInfoDTO getContactInfo(User user) {
@@ -187,7 +196,8 @@ public class PurchaseService {
     }
   }
 
-  private PurchasedContentDetailDTO toPurchasedContentDetailDTO(FlatPurchaseContentDetailDTO flat) {
+  private PurchasedContentDetailDTO toPurchasedContentDetailDTO(
+      FlatPurchaseContentDetailDTO flat, boolean canResumeSubscription) {
     return PurchasedContentDetailDTO.builder()
         .orderStatus(flat.getOrderStatus())
         .merchantUid(flat.getMerchantUid())
@@ -215,6 +225,7 @@ public class PurchaseService {
         .paymentType(flat.getPaymentType())
         .nextPaymentDate(resolveNextPaymentDate(flat))
         .subscriptionRound(flat.getSubscriptionRound())
+        .canResumeSubscription(canResumeSubscription)
         .build();
   }
 

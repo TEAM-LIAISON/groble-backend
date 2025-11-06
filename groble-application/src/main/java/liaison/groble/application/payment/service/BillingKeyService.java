@@ -80,6 +80,11 @@ public class BillingKeyService {
   }
 
   @Transactional(readOnly = true)
+  public Optional<String> findActiveBillingKeyValue(Long userId) {
+    return findActiveBillingKey(userId).map(BillingKey::getBillingKey);
+  }
+
+  @Transactional(readOnly = true)
   public List<BillingKey> getBillingKeys(Long userId) {
     return billingKeyRepository.findByUserId(userId);
   }

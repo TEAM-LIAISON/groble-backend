@@ -27,6 +27,8 @@ public interface SubscriptionRepository {
   Optional<Subscription> findByMerchantUidAndUserIdAndStatus(
       String merchantUid, Long userId, SubscriptionStatus status);
 
+  Optional<Subscription> findByMerchantUidAndUserId(String merchantUid, Long userId);
+
   boolean existsByUserIdAndBillingKeyAndStatus(
       Long userId, String billingKey, SubscriptionStatus status);
 
