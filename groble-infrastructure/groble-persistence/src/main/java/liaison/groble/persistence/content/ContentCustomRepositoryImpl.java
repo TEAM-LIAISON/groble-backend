@@ -79,6 +79,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     qCategory.code.as("categoryId"),
                     qContent.contentType.stringValue().as("contentType"),
                     qContent.paymentType.stringValue().as("paymentType"),
+                    qContent.subscriptionSellStatus.stringValue().as("subscriptionSellStatus"),
                     ExpressionUtils.as(
                         select(qContentOption.count().intValue())
                             .from(qContentOption)
@@ -117,6 +118,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     qCategory.code.as("categoryId"),
                     qContent.contentType.stringValue().as("contentType"),
                     qContent.paymentType.stringValue().as("paymentType"),
+                    qContent.subscriptionSellStatus.stringValue().as("subscriptionSellStatus"),
                     ExpressionUtils.as(
                         select(qContentOption.count().intValue())
                             .from(qContentOption)
@@ -153,6 +155,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                 qCategory.code.as("categoryId"),
                 qContent.contentType.stringValue().as("contentType"),
                 qContent.paymentType.stringValue().as("paymentType"),
+                qContent.subscriptionSellStatus.stringValue().as("subscriptionSellStatus"),
                 ExpressionUtils.as(
                     select(qContentOption.count().intValue())
                         .from(qContentOption)
@@ -191,6 +194,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                 qCategory.code.as("categoryId"),
                 qContent.contentType.stringValue().as("contentType"),
                 qContent.paymentType.stringValue().as("paymentType"),
+                qContent.subscriptionSellStatus.stringValue().as("subscriptionSellStatus"),
                 ExpressionUtils.as(
                     select(qContentOption.count().intValue())
                         .from(qContentOption)
@@ -1006,6 +1010,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     qCategory.code.as("categoryId"),
                     qContent.contentType.stringValue().as("contentType"),
                     qContent.paymentType.stringValue().as("paymentType"),
+                    qContent.subscriptionSellStatus.stringValue().as("subscriptionSellStatus"),
                     ExpressionUtils.as(
                         JPAExpressions.select(qOption.count().intValue())
                             .from(qOption)

@@ -21,6 +21,8 @@ import liaison.groble.common.context.UserContext;
 import liaison.groble.common.event.EventPublisher;
 import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.content.entity.ContentOption;
+import liaison.groble.domain.content.enums.ContentPaymentType;
+import liaison.groble.domain.content.enums.SubscriptionSellStatus;
 import liaison.groble.domain.coupon.entity.UserCoupon;
 import liaison.groble.domain.coupon.repository.UserCouponRepository;
 import liaison.groble.domain.guest.repository.GuestUserRepository;
@@ -114,6 +116,10 @@ public abstract class BaseOrderProcessor implements OrderProcessorStrategy {
     // 1. 콘텐츠 조회
     final Content content = contentReader.getContentById(createOrderRequestDTO.getContentId());
 
+    if (content.getPaymentType() == ContentPaymentType.SUBSCRIPTION) {
+      validateSubscriptionSellStatus(content);
+    }
+
     // 2. 주문 옵션 검증 및 변환
     final List<ValidatedOrderOptionDTO> validatedOptions =
         validateAndEnrichOptions(content, createOrderRequestDTO.getOptions());
@@ -159,6 +165,16 @@ public abstract class BaseOrderProcessor implements OrderProcessorStrategy {
 
     // 10. 응답 생성 (사용자 타입별 구현)
     return buildCreateOrderResponse(order, userContext, willBeFreePurchase);
+  }
+
+  private void validateSubscriptionSellStatus(Content content) {
+    SubscriptionSellStatus sellStatus = content.getSubscriptionSellStatus();
+    if (sellStatus == SubscriptionSellStatus.PAUSED) {
+      throw new IllegalStateException("정기결제 신규 신청이 일시 중단된 콘텐츠입니다.");
+    }
+    if (sellStatus == SubscriptionSellStatus.TERMINATED) {
+      throw new IllegalStateException("정기결제가 종료된 콘텐츠입니다.");
+    }
   }
 
   @Override

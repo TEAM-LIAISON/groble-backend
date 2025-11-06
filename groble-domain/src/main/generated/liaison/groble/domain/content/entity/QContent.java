@@ -61,6 +61,8 @@ public class QContent extends EntityPathBase<Content> {
 
     public final EnumPath<liaison.groble.domain.content.enums.ContentStatus> status = createEnum("status", liaison.groble.domain.content.enums.ContentStatus.class);
 
+    public final EnumPath<liaison.groble.domain.content.enums.SubscriptionSellStatus> subscriptionSellStatus = createEnum("subscriptionSellStatus", liaison.groble.domain.content.enums.SubscriptionSellStatus.class);
+
     public final StringPath thumbnailUrl = createString("thumbnailUrl");
 
     public final StringPath title = createString("title");

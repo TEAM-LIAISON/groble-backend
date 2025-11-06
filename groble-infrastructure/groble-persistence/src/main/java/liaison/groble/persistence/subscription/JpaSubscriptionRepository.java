@@ -37,6 +37,9 @@ public interface JpaSubscriptionRepository extends JpaRepository<Subscription, L
   List<Subscription> findByStatusInAndNextBillingDateLessThanEqual(
       Collection<SubscriptionStatus> statuses, LocalDate billingDate, Pageable pageable);
 
+  List<Subscription> findByContentIdAndStatusIn(
+      Long contentId, Collection<SubscriptionStatus> statuses);
+
   @Lock(LockModeType.PESSIMISTIC_WRITE)
   @Query("select s from Subscription s where s.id = :id")
   Optional<Subscription> findWithLockingById(@Param("id") Long id);

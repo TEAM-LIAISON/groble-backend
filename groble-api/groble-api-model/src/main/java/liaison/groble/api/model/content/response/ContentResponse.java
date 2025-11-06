@@ -25,6 +25,11 @@ public class ContentResponse {
   @Schema(description = "결제 유형 [ONE_TIME - 단건 결제], [SUBSCRIPTION - 정기 결제]", example = "ONE_TIME")
   private String paymentType;
 
+  @Schema(
+      description = "정기 결제 판매 상태 [OPEN - 판매중], [PAUSED - 신규 구독 중단], [TERMINATED - 정기결제 종료]",
+      example = "OPEN")
+  private String subscriptionSellStatus;
+
   @Schema(description = "카테고리 ID", example = "1")
   private String categoryId;
 

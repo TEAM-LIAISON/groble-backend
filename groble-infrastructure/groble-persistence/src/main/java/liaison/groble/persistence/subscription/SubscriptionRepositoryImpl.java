@@ -64,6 +64,12 @@ public class SubscriptionRepositoryImpl implements SubscriptionRepository {
   }
 
   @Override
+  public List<Subscription> findByContentIdAndStatusIn(
+      Long contentId, Collection<SubscriptionStatus> statuses) {
+    return jpaSubscriptionRepository.findByContentIdAndStatusIn(contentId, statuses);
+  }
+
+  @Override
   public List<Subscription> findByStatusInAndNextBillingDateLessThanEqual(
       Collection<SubscriptionStatus> statuses, LocalDate billingDate, Pageable pageable) {
     return jpaSubscriptionRepository.findByStatusInAndNextBillingDateLessThanEqual(

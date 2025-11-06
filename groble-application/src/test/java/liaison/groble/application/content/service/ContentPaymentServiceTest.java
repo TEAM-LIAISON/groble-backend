@@ -1,6 +1,7 @@
 package liaison.groble.application.content.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
@@ -26,6 +27,7 @@ import liaison.groble.domain.content.entity.CoachingOption;
 import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.content.enums.ContentPaymentType;
 import liaison.groble.domain.content.enums.ContentType;
+import liaison.groble.domain.content.enums.SubscriptionSellStatus;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.vo.UserProfile;
 
@@ -114,6 +116,26 @@ class ContentPaymentServiceTest {
     // then
     assertThat(result.getPaymentType()).isEqualTo(ContentPaymentType.ONE_TIME.name());
     assertThat(result.getNextPaymentDate()).isNull();
+  }
+
+  @Test
+  void getContentPayPage_throwsWhenSubscriptionSalePaused() {
+    // given
+    Long contentId = 102L;
+    Long optionId = 301L;
+
+    Content content = createContent(ContentPaymentType.SUBSCRIPTION);
+    content.setSubscriptionSellStatus(SubscriptionSellStatus.PAUSED);
+    CoachingOption option = createOption(optionId, "월 구독", BigDecimal.valueOf(32000));
+    content.addOption(option);
+    ReflectionTestUtils.setField(content, "id", contentId);
+
+    when(contentReader.getContentById(contentId)).thenReturn(content);
+
+    // when & then
+    assertThatThrownBy(() -> contentPaymentService.getContentPayPage(null, contentId, optionId))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessageContaining("정기결제 신규 신청이 일시 중단된 콘텐츠입니다.");
   }
 
   private Content createContent(ContentPaymentType paymentType) {

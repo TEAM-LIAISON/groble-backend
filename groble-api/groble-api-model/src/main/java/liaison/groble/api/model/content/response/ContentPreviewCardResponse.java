@@ -48,6 +48,9 @@ public class ContentPreviewCardResponse {
   @Schema(description = "결제 유형", example = "SUBSCRIPTION")
   private String paymentType;
 
+  @Schema(description = "정기 결제 판매 상태 [OPEN, PAUSED, TERMINATED]", example = "OPEN", nullable = true)
+  private String subscriptionSellStatus;
+
   @Schema(description = "가격 옵션 개수", example = "3")
   private int priceOptionLength;
 

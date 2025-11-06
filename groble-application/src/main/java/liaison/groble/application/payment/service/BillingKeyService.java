@@ -47,8 +47,18 @@ public class BillingKeyService {
               billingKeyRepository.save(active);
             });
 
-    BillingKey billingKey = BillingKey.active(user, billingKeyValue, cardName, cardNumberMasked);
-    BillingKey saved = billingKeyRepository.save(billingKey);
+    BillingKey saved =
+        billingKeyRepository
+            .findByBillingKey(billingKeyValue)
+            .map(
+                existing -> {
+                  existing.activate(user, cardName, cardNumberMasked);
+                  return billingKeyRepository.save(existing);
+                })
+            .orElseGet(
+                () ->
+                    billingKeyRepository.save(
+                        BillingKey.active(user, billingKeyValue, cardName, cardNumberMasked)));
 
     return BillingKeyInfoDTO.builder()
         .billingKey(saved.getBillingKey())

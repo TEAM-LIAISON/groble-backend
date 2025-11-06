@@ -25,6 +25,7 @@ import liaison.groble.common.event.EventPublisher;
 import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.content.entity.ContentOption;
 import liaison.groble.domain.content.enums.ContentPaymentType;
+import liaison.groble.domain.content.enums.SubscriptionSellStatus;
 import liaison.groble.domain.coupon.entity.UserCoupon;
 import liaison.groble.domain.coupon.repository.UserCouponRepository;
 import liaison.groble.domain.guest.entity.GuestUser;
@@ -123,8 +124,11 @@ public class OrderService {
     // 1. 콘텐츠 조회
     final Content content = contentReader.getContentById(dto.getContentId());
 
-    if (content.getPaymentType() == ContentPaymentType.SUBSCRIPTION && guestUser != null) {
-      throw new IllegalArgumentException("정기결제 상품은 회원만 구매할 수 있습니다.");
+    if (content.getPaymentType() == ContentPaymentType.SUBSCRIPTION) {
+      validateSubscriptionSellStatus(content);
+      if (guestUser != null) {
+        throw new IllegalArgumentException("정기결제 상품은 회원만 구매할 수 있습니다.");
+      }
     }
 
     // 2. 주문 옵션 검증 및 변환
@@ -175,6 +179,16 @@ public class OrderService {
 
     // 9. 응답 생성
     return buildCreateOrderDTOByType(order, user, guestUser, willBeFreePurchase);
+  }
+
+  private void validateSubscriptionSellStatus(Content content) {
+    SubscriptionSellStatus sellStatus = content.getSubscriptionSellStatus();
+    if (sellStatus == SubscriptionSellStatus.PAUSED) {
+      throw new IllegalStateException("정기결제 신규 신청이 일시 중단된 콘텐츠입니다.");
+    }
+    if (sellStatus == SubscriptionSellStatus.TERMINATED) {
+      throw new IllegalStateException("정기결제가 종료된 콘텐츠입니다.");
+    }
   }
 
   /**

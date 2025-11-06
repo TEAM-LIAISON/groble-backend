@@ -20,4 +20,10 @@ public class ContentStatusResponse {
       type = "string",
       requiredMode = Schema.RequiredMode.REQUIRED)
   private String status;
+
+  @Schema(
+      description = "정기 결제 판매 상태 [OPEN, PAUSED, TERMINATED]. 단건 결제 콘텐츠는 null.",
+      example = "PAUSED",
+      nullable = true)
+  private String subscriptionSellStatus;
 }

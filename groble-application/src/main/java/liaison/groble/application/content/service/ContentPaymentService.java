@@ -17,6 +17,7 @@ import liaison.groble.common.exception.EntityNotFoundException;
 import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.content.entity.ContentOption;
 import liaison.groble.domain.content.enums.ContentPaymentType;
+import liaison.groble.domain.content.enums.SubscriptionSellStatus;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,6 +43,10 @@ public class ContentPaymentService {
 
     // 2. 콘텐츠 옵션 조회
     ContentOption contentOption = findContentOptionById(content, optionId);
+
+    if (content.getPaymentType() == ContentPaymentType.SUBSCRIPTION) {
+      validateSubscriptionSellStatus(content);
+    }
 
     boolean isLoggedIn = userId != null;
     List<ContentPayPageDTO.UserCouponDTO> userCoupons =
@@ -98,6 +103,16 @@ public class ContentPaymentService {
                         + content.getId()
                         + ", OptionId: "
                         + optionId));
+  }
+
+  private void validateSubscriptionSellStatus(Content content) {
+    SubscriptionSellStatus sellStatus = content.getSubscriptionSellStatus();
+    if (sellStatus == SubscriptionSellStatus.PAUSED) {
+      throw new IllegalStateException("정기결제 신규 신청이 일시 중단된 콘텐츠입니다.");
+    }
+    if (sellStatus == SubscriptionSellStatus.TERMINATED) {
+      throw new IllegalStateException("정기결제가 종료된 콘텐츠입니다.");
+    }
   }
 
   private LocalDate determineNextPaymentDate(Content content) {

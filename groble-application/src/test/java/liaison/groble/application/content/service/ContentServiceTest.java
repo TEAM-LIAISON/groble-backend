@@ -22,6 +22,7 @@ import liaison.groble.application.content.ContentReviewReader;
 import liaison.groble.application.content.dto.ContentDTO;
 import liaison.groble.application.content.dto.ContentOptionDTO;
 import liaison.groble.application.sell.SellerContactReader;
+import liaison.groble.application.subscription.service.SubscriptionService;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.domain.content.entity.Category;
 import liaison.groble.domain.content.entity.Content;
@@ -47,6 +48,7 @@ class ContentServiceTest {
   @Mock private CategoryRepository categoryRepository;
   @Mock private FileRepository fileRepository;
   @Mock private DiscordContentRegisterReportService discordContentRegisterReportService;
+  @Mock private SubscriptionService subscriptionService;
 
   private ContentService contentService;
 
@@ -62,7 +64,8 @@ class ContentServiceTest {
             contentCustomRepository,
             categoryRepository,
             fileRepository,
-            discordContentRegisterReportService);
+            discordContentRegisterReportService,
+            subscriptionService);
   }
 
   @Test

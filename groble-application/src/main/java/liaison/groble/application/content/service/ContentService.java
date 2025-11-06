@@ -32,6 +32,7 @@ import liaison.groble.application.content.exception.ContentEditException;
 import liaison.groble.application.content.exception.InActiveContentException;
 import liaison.groble.application.market.dto.ContactInfoDTO;
 import liaison.groble.application.sell.SellerContactReader;
+import liaison.groble.application.subscription.service.SubscriptionService;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.common.exception.ContactNotFoundException;
 import liaison.groble.common.exception.EntityNotFoundException;
@@ -49,6 +50,7 @@ import liaison.groble.domain.content.enums.AdminContentCheckingStatus;
 import liaison.groble.domain.content.enums.ContentPaymentType;
 import liaison.groble.domain.content.enums.ContentStatus;
 import liaison.groble.domain.content.enums.ContentType;
+import liaison.groble.domain.content.enums.SubscriptionSellStatus;
 import liaison.groble.domain.content.repository.CategoryRepository;
 import liaison.groble.domain.content.repository.ContentCustomRepository;
 import liaison.groble.domain.content.repository.ContentRepository;
@@ -84,6 +86,7 @@ public class ContentService {
 
   // Service
   private final DiscordContentRegisterReportService discordContentRegisterReportService;
+  private final SubscriptionService subscriptionService;
 
   @Transactional(readOnly = true)
   public ContentReviewDTO getContentReviews(Long contentId, String sort, Long userId) {
@@ -539,6 +542,12 @@ public class ContentService {
     return content;
   }
 
+  private void ensureSubscriptionContent(Content content) {
+    if (content.getPaymentType() != ContentPaymentType.SUBSCRIPTION) {
+      throw new IllegalArgumentException("정기결제 콘텐츠에서만 사용할 수 있는 기능입니다.");
+    }
+  }
+
   /** 카테고리 ID로 카테고리를 조회합니다. */
   private Category findCategoryByCode(String categoryId) {
     if (categoryId == null) {
@@ -684,6 +693,7 @@ public class ContentService {
         .categoryId(flat.getCategoryId())
         .contentType(flat.getContentType())
         .paymentType(flat.getPaymentType())
+        .subscriptionSellStatus(flat.getSubscriptionSellStatus())
         .priceOptionLength(flat.getPriceOptionLength())
         .isAvailableForSale(flat.getIsAvailableForSale())
         .status(flat.getStatus())
@@ -743,6 +753,10 @@ public class ContentService {
 
     if (content.getPaymentType() != null) {
       dtoBuilder.paymentType(content.getPaymentType().name());
+    }
+
+    if (content.getSubscriptionSellStatus() != null) {
+      dtoBuilder.subscriptionSellStatus(content.getSubscriptionSellStatus().name());
     }
 
     if (content.getStatus() != null) {
@@ -851,6 +865,39 @@ public class ContentService {
 
     // 3. 저장 및 변환
     return saveAndConvertToDTO(content);
+  }
+
+  @Transactional
+  public ContentDTO pauseSubscriptionSale(Long userId, Long contentId) {
+    Content content = findAndValidateUserActiveContent(userId, contentId);
+    ensureSubscriptionContent(content);
+
+    SubscriptionSellStatus currentStatus = content.getSubscriptionSellStatus();
+    if (currentStatus == SubscriptionSellStatus.TERMINATED) {
+      throw new IllegalStateException("이미 정기 결제가 종료된 콘텐츠입니다.");
+    }
+    if (currentStatus == SubscriptionSellStatus.PAUSED) {
+      return convertToDTO(content);
+    }
+
+    content.setSubscriptionSellStatus(SubscriptionSellStatus.PAUSED);
+    return saveAndConvertToDTO(content);
+  }
+
+  @Transactional
+  public ContentDTO terminateSubscriptionSale(Long userId, Long contentId) {
+    Content content = findAndValidateUserActiveContent(userId, contentId);
+    ensureSubscriptionContent(content);
+
+    if (content.getSubscriptionSellStatus() == SubscriptionSellStatus.TERMINATED) {
+      return convertToDTO(content);
+    }
+
+    content.setSubscriptionSellStatus(SubscriptionSellStatus.TERMINATED);
+    ContentDTO contentDTO = saveAndConvertToDTO(content);
+
+    subscriptionService.terminateSubscriptionsForContent(contentId);
+    return contentDTO;
   }
 
   @Transactional

@@ -29,6 +29,7 @@ import liaison.groble.domain.content.enums.AdminContentCheckingStatus;
 import liaison.groble.domain.content.enums.ContentPaymentType;
 import liaison.groble.domain.content.enums.ContentStatus;
 import liaison.groble.domain.content.enums.ContentType;
+import liaison.groble.domain.content.enums.SubscriptionSellStatus;
 import liaison.groble.domain.user.entity.User;
 
 import lombok.AccessLevel;
@@ -64,6 +65,10 @@ public class Content extends BaseTimeEntity {
   @Column(name = "payment_type", nullable = false)
   @Enumerated(value = STRING)
   private ContentPaymentType paymentType = ContentPaymentType.ONE_TIME;
+
+  @Column(name = "subscription_sell_status", nullable = false)
+  @Enumerated(value = STRING)
+  private SubscriptionSellStatus subscriptionSellStatus = SubscriptionSellStatus.OPEN;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "user_id", nullable = false)
@@ -161,6 +166,11 @@ public class Content extends BaseTimeEntity {
     this.paymentType = paymentType != null ? paymentType : ContentPaymentType.ONE_TIME;
   }
 
+  public void setSubscriptionSellStatus(SubscriptionSellStatus subscriptionSellStatus) {
+    this.subscriptionSellStatus =
+        subscriptionSellStatus != null ? subscriptionSellStatus : SubscriptionSellStatus.OPEN;
+  }
+
   public void setCategory(Category category) {
     this.category = category;
   }
@@ -226,5 +236,6 @@ public class Content extends BaseTimeEntity {
     this.saleCount = 0;
     this.options = new ArrayList<>();
     this.sortOrder = 0; // 기본값
+    this.subscriptionSellStatus = SubscriptionSellStatus.OPEN;
   }
 }

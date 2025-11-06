@@ -30,6 +30,9 @@ public interface SubscriptionRepository {
   boolean existsByUserIdAndBillingKeyAndStatus(
       Long userId, String billingKey, SubscriptionStatus status);
 
+  List<Subscription> findByContentIdAndStatusIn(
+      Long contentId, Collection<SubscriptionStatus> statuses);
+
   List<Subscription> findByStatusInAndNextBillingDateLessThanEqual(
       Collection<SubscriptionStatus> statuses, LocalDate billingDate, Pageable pageable);
 

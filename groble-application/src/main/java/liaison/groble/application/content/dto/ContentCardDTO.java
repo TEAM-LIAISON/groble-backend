@@ -24,4 +24,5 @@ public class ContentCardDTO {
   private String categoryId;
   private String contentType;
   private String paymentType;
+  private String subscriptionSellStatus;
 }

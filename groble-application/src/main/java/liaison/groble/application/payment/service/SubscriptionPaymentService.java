@@ -18,6 +18,7 @@ import liaison.groble.application.payment.dto.billing.SubscriptionPaymentResult;
 import liaison.groble.application.payment.dto.completion.PaymentCompletionResult;
 import liaison.groble.application.payment.event.PaymentEventPublisher;
 import liaison.groble.application.payment.exception.PaypleApiException;
+import liaison.groble.common.exception.EntityNotFoundException;
 import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.order.entity.Purchaser;
 import liaison.groble.external.adapter.payment.PaypleSimplePayRequest;
@@ -67,7 +68,13 @@ public class SubscriptionPaymentService {
 
     Order updatedOrder = orderReader.getOrderById(completionResult.getOrderId());
     return buildResult(
-        updatedOrder, true, "PAID", approvalResult.getPayMsg(), completionResult.getAmount());
+        userId,
+        updatedOrder,
+        updatedOrder != null ? updatedOrder.getMerchantUid() : order.getMerchantUid(),
+        true,
+        "PAID",
+        approvalResult.getPayMsg(),
+        completionResult.getAmount());
   }
 
   @Transactional
@@ -90,7 +97,8 @@ public class SubscriptionPaymentService {
     Order order = orderReader.getOrderByMerchantUidAndUserId(authResult.getPayOid(), userId);
     BigDecimal amount = toBigDecimal(paymentResult.getPayTotal());
 
-    return buildResult(order, true, "PAID", paymentResult.getPayMsg(), amount);
+    return buildResult(
+        userId, order, authResult.getPayOid(), true, "PAID", paymentResult.getPayMsg(), amount);
   }
 
   @Transactional
@@ -101,17 +109,37 @@ public class SubscriptionPaymentService {
             authResult.getPayerId(), authResult.getPayCardName(), authResult.getPayCardNum());
     billingKeyService.registerBillingKey(userId, command);
 
-    Order order = orderReader.getOrderByMerchantUidAndUserId(authResult.getPayOid(), userId);
+    Order order = findOrder(authResult.getPayOid(), userId);
 
-    return buildResult(order, true, "BILLING_KEY_REGISTERED", authResult.getPayMsg(), null);
+    return buildResult(
+        userId,
+        order,
+        authResult.getPayOid(),
+        true,
+        "BILLING_KEY_REGISTERED",
+        authResult.getPayMsg(),
+        null);
   }
 
   private SubscriptionPaymentResult buildResult(
-      Order order, boolean success, String status, String message, BigDecimal amount) {
-    SubscriptionPaymentMetadata metadata = metadataProvider.buildForOrder(order).orElse(null);
+      Long userId,
+      Order order,
+      String merchantUid,
+      boolean success,
+      String status,
+      String message,
+      BigDecimal amount) {
+    SubscriptionPaymentMetadata metadata = null;
+    String resolvedMerchantUid = merchantUid;
+    if (order != null) {
+      metadata = metadataProvider.buildForOrder(order).orElse(null);
+      resolvedMerchantUid = order.getMerchantUid();
+    } else if (userId != null) {
+      metadata = metadataProvider.buildForUser(userId).orElse(null);
+    }
 
     return SubscriptionPaymentResult.builder()
-        .merchantUid(order.getMerchantUid())
+        .merchantUid(resolvedMerchantUid)
         .success(success)
         .status(status)
         .message(message)
@@ -171,6 +199,18 @@ public class SubscriptionPaymentService {
       return new BigDecimal(value);
     } catch (NumberFormatException ex) {
       log.warn("금액 변환 실패 - value: {}", value, ex);
+      return null;
+    }
+  }
+
+  private Order findOrder(String merchantUid, Long userId) {
+    if (merchantUid == null || merchantUid.isBlank()) {
+      return null;
+    }
+    try {
+      return orderReader.getOrderByMerchantUidAndUserId(merchantUid, userId);
+    } catch (EntityNotFoundException ex) {
+      log.warn("빌링키 등록 확인 중 주문을 찾을 수 없습니다. merchantUid={}, userId={}", merchantUid, userId, ex);
       return null;
     }
   }

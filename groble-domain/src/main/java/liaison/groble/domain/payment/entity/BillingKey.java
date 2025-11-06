@@ -95,6 +95,16 @@ public class BillingKey extends BaseTimeEntity {
     this.status = BillingKeyStatus.INACTIVE;
   }
 
+  public void activate(User user, String cardName, String cardNumberMasked) {
+    if (user == null) {
+      throw new IllegalArgumentException("빌링키 활성화에는 사용자 정보가 필요합니다.");
+    }
+    this.user = user;
+    this.cardName = cardName;
+    this.cardNumberMasked = cardNumberMasked;
+    this.status = BillingKeyStatus.ACTIVE;
+  }
+
   public boolean isActive() {
     return this.status == BillingKeyStatus.ACTIVE;
   }

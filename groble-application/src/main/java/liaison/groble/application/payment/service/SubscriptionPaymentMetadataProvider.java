@@ -59,6 +59,15 @@ public class SubscriptionPaymentMetadataProvider {
     return Optional.of(buildMetadata(userId, finalPrice, nextPaymentDate));
   }
 
+  public Optional<SubscriptionPaymentMetadata> buildForUser(Long userId) {
+    if (userId == null) {
+      return Optional.empty();
+    }
+
+    LocalDate nextPaymentDate = calculateNextPaymentDate();
+    return Optional.of(buildMetadata(userId, null, nextPaymentDate));
+  }
+
   private SubscriptionPaymentMetadata buildMetadata(
       Long userId, BigDecimal amount, LocalDate nextPaymentDate) {
     boolean requiresImmediateCharge = requiresImmediateCharge(amount);

@@ -16,6 +16,7 @@ public class ContentDTO {
   private String status;
   private Boolean isSearchExposed;
   private String paymentType;
+  private String subscriptionSellStatus;
   private List<ContentOptionDTO> options;
   private String contentIntroduction;
   private String serviceTarget;

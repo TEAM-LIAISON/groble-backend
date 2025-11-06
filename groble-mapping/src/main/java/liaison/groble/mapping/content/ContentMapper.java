@@ -31,10 +31,12 @@ public interface ContentMapper extends PageResponseMapper {
   // ====== 📥 Request → DTO 변환 ======
   @Mapping(target = "options", source = ".", qualifiedByName = "mapDraftOptions")
   @Mapping(target = "status", ignore = true)
+  @Mapping(target = "subscriptionSellStatus", ignore = true)
   ContentDTO toContentDTO(ContentDraftRequest contentDraftRequest);
 
   @Mapping(target = "options", source = ".", qualifiedByName = "mapRegisterOptions")
   @Mapping(target = "status", ignore = true)
+  @Mapping(target = "subscriptionSellStatus", ignore = true)
   ContentDTO toContentDTO(ContentRegisterRequest contentRegisterRequest);
 
   @Named("mapDraftOptions")
@@ -136,9 +138,11 @@ public interface ContentMapper extends PageResponseMapper {
   // ====== 📤 DTO → Response 변환 ======
   @Mapping(target = "id", source = "contentId")
   @Mapping(target = "options", source = "options", qualifiedByName = "mapOptionsToResponse")
+  @Mapping(target = "subscriptionSellStatus", source = "subscriptionSellStatus")
   @Mapping(target = "contentDetailImageUrls", ignore = true)
   ContentResponse toContentResponse(ContentDTO contentDTO);
 
+  @Mapping(target = "subscriptionSellStatus", source = "subscriptionSellStatus")
   ContentStatusResponse toContentStatusResponse(ContentDTO contentDTO);
 
   @Named("mapOptionsToResponse")

@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.EnumSet;
+import java.util.List;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -148,5 +149,27 @@ public class SubscriptionService {
       return currentNextBilling.plusMonths(1);
     }
     return now.toLocalDate().plusMonths(1);
+  }
+
+  @Transactional
+  public void terminateSubscriptionsForContent(Long contentId) {
+    EnumSet<SubscriptionStatus> targetStatuses =
+        EnumSet.of(SubscriptionStatus.ACTIVE, SubscriptionStatus.PAST_DUE);
+    List<Subscription> subscriptions =
+        subscriptionRepository.findByContentIdAndStatusIn(contentId, targetStatuses);
+
+    if (subscriptions.isEmpty()) {
+      log.info("No active subscriptions to terminate for contentId: {}", contentId);
+      return;
+    }
+
+    LocalDateTime now = LocalDateTime.now();
+    subscriptions.forEach(
+        subscription -> {
+          subscription.markCancelled(now);
+          subscriptionRepository.save(subscription);
+        });
+
+    log.info("Terminated {} subscriptions for contentId: {}", subscriptions.size(), contentId);
   }
 }
