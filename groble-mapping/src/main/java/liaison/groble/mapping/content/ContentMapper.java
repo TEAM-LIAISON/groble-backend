@@ -160,6 +160,7 @@ public interface ContentMapper extends PageResponseMapper {
                     .name(option.getName())
                     .description(option.getDescription())
                     .price(option.getPrice())
+                    .hasSalesHistory(option.getHasSalesHistory())
                     .documentFileUrl(option.getDocumentFileUrl())
                     .documentLinkUrl(option.getDocumentLinkUrl())
                     .build())
@@ -195,6 +196,7 @@ public interface ContentMapper extends PageResponseMapper {
                     .name(option.getName())
                     .description(option.getDescription())
                     .price(option.getPrice())
+                    .hasSalesHistory(option.getHasSalesHistory())
                     .build();
               } else {
                 return DocumentOptionResponse.builder()
@@ -202,6 +204,7 @@ public interface ContentMapper extends PageResponseMapper {
                     .name(option.getName())
                     .description(option.getDescription())
                     .price(option.getPrice())
+                    .hasSalesHistory(option.getHasSalesHistory())
                     .documentOriginalFileName(option.getDocumentOriginalFileName())
                     .documentFileUrl(option.getDocumentFileUrl())
                     .documentLinkUrl(option.getDocumentLinkUrl())

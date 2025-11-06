@@ -48,4 +48,9 @@ public class PurchaseRepositoryImpl implements PurchaseRepository {
     return jpaPurchaseRepository.findByUser_IdAndContent_IdOrderByPurchasedAtDesc(
         userId, contentId);
   }
+
+  @Override
+  public List<Long> findSoldOptionIdsByContentId(Long contentId) {
+    return jpaPurchaseRepository.findDistinctSelectedOptionIdsByContentId(contentId);
+  }
 }

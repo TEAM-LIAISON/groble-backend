@@ -251,10 +251,13 @@ project(':groble-domain') {
 
 
     // QueryDSL Q클래스 생성 디렉토리 설정
-    def generated = 'src/main/generated'
+    def generated = "${buildDir}/generated/querydsl"
 
     // querydsl QClass 파일 생성 위치를 지정
-    tasks.withType(JavaCompile) {
+    tasks.named('compileJava', JavaCompile) {
+        doFirst {
+            project.delete(generated)
+        }
         options.getGeneratedSourceOutputDirectory().set(file(generated))
     }
 
@@ -272,7 +275,7 @@ project(':groble-domain') {
     spotless {
         java {
             target '**/*.java'
-            targetExclude 'src/main/generated/**'
+            targetExclude 'build/generated/querydsl/**'
         }
     }
 }

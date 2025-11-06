@@ -36,6 +36,9 @@ public abstract class BaseOptionResponse {
   @Schema(description = "옵션 가격", example = "50000")
   private BigDecimal price;
 
+  @Schema(description = "옵션에 판매 이력이 존재하는지 여부", example = "true", nullable = true)
+  private Boolean hasSalesHistory;
+
   @Schema(description = "옵션 유형", example = "COACHING_OPTION", required = true)
   public abstract String getOptionType();
 }

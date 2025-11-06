@@ -78,6 +78,9 @@ public class ContentResponse {
     @Schema(description = "가격", example = "50000")
     private BigDecimal price;
 
+    @Schema(description = "옵션에 판매 이력이 존재하는지 여부", example = "true", nullable = true)
+    private Boolean hasSalesHistory;
+
     // 코칭 옵션 관련 필드
     @Schema(description = "코칭 기간", example = "ONE_WEEK")
     private String coachingPeriod;

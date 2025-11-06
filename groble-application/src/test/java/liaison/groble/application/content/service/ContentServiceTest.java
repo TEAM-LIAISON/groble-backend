@@ -33,6 +33,7 @@ import liaison.groble.domain.content.repository.CategoryRepository;
 import liaison.groble.domain.content.repository.ContentCustomRepository;
 import liaison.groble.domain.content.repository.ContentRepository;
 import liaison.groble.domain.file.repository.FileRepository;
+import liaison.groble.domain.purchase.repository.PurchaseRepository;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.external.discord.service.content.DiscordContentRegisterReportService;
 
@@ -47,6 +48,7 @@ class ContentServiceTest {
   @Mock private ContentCustomRepository contentCustomRepository;
   @Mock private CategoryRepository categoryRepository;
   @Mock private FileRepository fileRepository;
+  @Mock private PurchaseRepository purchaseRepository;
   @Mock private DiscordContentRegisterReportService discordContentRegisterReportService;
   @Mock private SubscriptionService subscriptionService;
 
@@ -64,6 +66,7 @@ class ContentServiceTest {
             contentCustomRepository,
             categoryRepository,
             fileRepository,
+            purchaseRepository,
             discordContentRegisterReportService,
             subscriptionService);
   }

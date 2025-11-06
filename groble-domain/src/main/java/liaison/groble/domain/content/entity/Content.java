@@ -66,9 +66,9 @@ public class Content extends BaseTimeEntity {
   @Enumerated(value = STRING)
   private ContentPaymentType paymentType = ContentPaymentType.ONE_TIME;
 
-  @Column(name = "subscription_sell_status", nullable = false)
+  @Column(name = "subscription_sell_status")
   @Enumerated(value = STRING)
-  private SubscriptionSellStatus subscriptionSellStatus = SubscriptionSellStatus.OPEN;
+  private SubscriptionSellStatus subscriptionSellStatus;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "user_id", nullable = false)
@@ -164,9 +164,18 @@ public class Content extends BaseTimeEntity {
 
   public void setPaymentType(ContentPaymentType paymentType) {
     this.paymentType = paymentType != null ? paymentType : ContentPaymentType.ONE_TIME;
+    if (this.paymentType != ContentPaymentType.SUBSCRIPTION) {
+      this.subscriptionSellStatus = null;
+    } else if (this.subscriptionSellStatus == null) {
+      this.subscriptionSellStatus = SubscriptionSellStatus.OPEN;
+    }
   }
 
   public void setSubscriptionSellStatus(SubscriptionSellStatus subscriptionSellStatus) {
+    if (this.paymentType != ContentPaymentType.SUBSCRIPTION) {
+      this.subscriptionSellStatus = null;
+      return;
+    }
     this.subscriptionSellStatus =
         subscriptionSellStatus != null ? subscriptionSellStatus : SubscriptionSellStatus.OPEN;
   }
@@ -236,6 +245,5 @@ public class Content extends BaseTimeEntity {
     this.saleCount = 0;
     this.options = new ArrayList<>();
     this.sortOrder = 0; // 기본값
-    this.subscriptionSellStatus = SubscriptionSellStatus.OPEN;
   }
 }

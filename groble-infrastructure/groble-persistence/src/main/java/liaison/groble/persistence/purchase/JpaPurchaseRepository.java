@@ -37,4 +37,12 @@ public interface JpaPurchaseRepository extends JpaRepository<Purchase, Long> {
       @Param("merchantUid") String merchantUid, @Param("guestUserId") Long guestUserId);
 
   List<Purchase> findByUser_IdAndContent_IdOrderByPurchasedAtDesc(Long userId, Long contentId);
+
+  @Query(
+      """
+      SELECT DISTINCT p.selectedOptionId
+      FROM Purchase p
+      WHERE p.content.id = :contentId AND p.selectedOptionId IS NOT NULL
+      """)
+  List<Long> findDistinctSelectedOptionIdsByContentId(@Param("contentId") Long contentId);
 }

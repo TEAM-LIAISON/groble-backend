@@ -7,6 +7,7 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -56,6 +57,7 @@ import liaison.groble.domain.content.repository.ContentCustomRepository;
 import liaison.groble.domain.content.repository.ContentRepository;
 import liaison.groble.domain.file.entity.FileInfo;
 import liaison.groble.domain.file.repository.FileRepository;
+import liaison.groble.domain.purchase.repository.PurchaseRepository;
 import liaison.groble.domain.user.entity.SellerContact;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.vo.UserProfile;
@@ -83,6 +85,7 @@ public class ContentService {
   private final ContentCustomRepository contentCustomRepository;
   private final CategoryRepository categoryRepository;
   private final FileRepository fileRepository;
+  private final PurchaseRepository purchaseRepository;
 
   // Service
   private final DiscordContentRegisterReportService discordContentRegisterReportService;
@@ -328,6 +331,9 @@ public class ContentService {
     }
 
     // 옵션 목록 변환 - ContentOptionDTO 사용
+    Set<Long> soldOptionIds =
+        new HashSet<>(purchaseRepository.findSoldOptionIdsByContentId(content.getId()));
+
     List<ContentOptionDTO> optionDTOs =
         content.getOptions().stream()
             .filter(ContentOption::isActive) // is_active = true인 옵션만 필터링
@@ -338,7 +344,9 @@ public class ContentService {
                           .contentOptionId(option.getId())
                           .name(option.getName())
                           .description(option.getDescription())
-                          .price(option.getPrice());
+                          .price(option.getPrice())
+                          .hasSalesHistory(
+                              option.getId() != null && soldOptionIds.contains(option.getId()));
 
                   // 옵션 타입별 필드 설정
                   if (option instanceof DocumentOption) {
@@ -415,6 +423,9 @@ public class ContentService {
     }
 
     // 옵션 목록 변환 - ContentOptionDTO 사용
+    Set<Long> soldOptionIds =
+        new HashSet<>(purchaseRepository.findSoldOptionIdsByContentId(content.getId()));
+
     List<ContentOptionDTO> optionDTOs =
         content.getOptions().stream()
             .filter(ContentOption::isActive) // is_active = true인 옵션만 필터링
@@ -425,7 +436,9 @@ public class ContentService {
                           .contentOptionId(option.getId())
                           .name(option.getName())
                           .description(option.getDescription())
-                          .price(option.getPrice());
+                          .price(option.getPrice())
+                          .hasSalesHistory(
+                              option.getId() != null && soldOptionIds.contains(option.getId()));
 
                   // 옵션 타입별 필드 설정
                   if (option instanceof DocumentOption) {
@@ -682,6 +695,10 @@ public class ContentService {
   }
 
   private ContentCardDTO convertFlatDTOToCardDTO(FlatContentPreviewDTO flat) {
+    String normalizedPaymentType =
+        flat.getPaymentType() != null ? flat.getPaymentType().toUpperCase() : null;
+    boolean isSubscription = ContentPaymentType.SUBSCRIPTION.name().equals(normalizedPaymentType);
+
     return ContentCardDTO.builder()
         .contentId(flat.getContentId())
         .createdAt(flat.getCreatedAt())
@@ -693,7 +710,7 @@ public class ContentService {
         .categoryId(flat.getCategoryId())
         .contentType(flat.getContentType())
         .paymentType(flat.getPaymentType())
-        .subscriptionSellStatus(flat.getSubscriptionSellStatus())
+        .subscriptionSellStatus(isSubscription ? flat.getSubscriptionSellStatus() : null)
         .priceOptionLength(flat.getPriceOptionLength())
         .isAvailableForSale(flat.getIsAvailableForSale())
         .status(flat.getStatus())
@@ -711,6 +728,10 @@ public class ContentService {
 
     // 옵션 변환
     List<ContentOptionDTO> optionDTOs = new ArrayList<>();
+    Set<Long> soldOptionIds =
+        content.getId() == null
+            ? Collections.emptySet()
+            : new HashSet<>(purchaseRepository.findSoldOptionIdsByContentId(content.getId()));
     if (content.getOptions() != null) {
       for (ContentOption option : content.getOptions()) {
         if (option == null) continue;
@@ -720,7 +741,8 @@ public class ContentService {
                 .contentOptionId(option.getId())
                 .name(option.getName())
                 .description(option.getDescription())
-                .price(option.getPrice());
+                .price(option.getPrice())
+                .hasSalesHistory(option.getId() != null && soldOptionIds.contains(option.getId()));
 
         if (option instanceof DocumentOption documentOption) {
           builder
@@ -753,10 +775,10 @@ public class ContentService {
 
     if (content.getPaymentType() != null) {
       dtoBuilder.paymentType(content.getPaymentType().name());
-    }
-
-    if (content.getSubscriptionSellStatus() != null) {
-      dtoBuilder.subscriptionSellStatus(content.getSubscriptionSellStatus().name());
+      if (content.getPaymentType() == ContentPaymentType.SUBSCRIPTION
+          && content.getSubscriptionSellStatus() != null) {
+        dtoBuilder.subscriptionSellStatus(content.getSubscriptionSellStatus().name());
+      }
     }
 
     if (content.getStatus() != null) {
@@ -1041,6 +1063,15 @@ public class ContentService {
       Content content, List<ContentOptionDTO> newOptions) {
     List<ContentOption> activeOptions =
         content.getOptions().stream().filter(ContentOption::isActive).collect(Collectors.toList());
+
+    if (content.getPaymentType() == ContentPaymentType.SUBSCRIPTION) {
+      boolean hasSoldOptions =
+          !purchaseRepository.findSoldOptionIdsByContentId(content.getId()).isEmpty();
+      if (hasSoldOptions) {
+        log.info("정기결제 판매 이력 있는 콘텐츠의 옵션 변경 요청 무시: contentId={}", content.getId());
+        return;
+      }
+    }
 
     // 새 옵션이 없으면 종료
     if (newOptions == null || newOptions.isEmpty()) {

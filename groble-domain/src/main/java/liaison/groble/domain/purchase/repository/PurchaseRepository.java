@@ -18,4 +18,6 @@ public interface PurchaseRepository {
       String merchantUid, Long guestUserId);
 
   List<Purchase> findByUserIdAndContentId(Long userId, Long contentId);
+
+  List<Long> findSoldOptionIdsByContentId(Long contentId);
 }
