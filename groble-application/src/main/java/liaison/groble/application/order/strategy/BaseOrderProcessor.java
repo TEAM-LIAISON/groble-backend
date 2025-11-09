@@ -2,6 +2,7 @@ package liaison.groble.application.order.strategy;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,6 +20,7 @@ import liaison.groble.common.context.UserContext;
 import liaison.groble.common.event.EventPublisher;
 import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.content.entity.ContentOption;
+import liaison.groble.domain.content.entity.DocumentOption;
 import liaison.groble.domain.coupon.entity.UserCoupon;
 import liaison.groble.domain.coupon.repository.UserCouponRepository;
 import liaison.groble.domain.guest.repository.GuestUserRepository;
@@ -404,6 +406,7 @@ public abstract class BaseOrderProcessor implements OrderProcessorStrategy {
         .selectedOptionType(
             orderItem.getOptionType() != null ? orderItem.getOptionType().name() : null)
         .selectedOptionName(purchase.getSelectedOptionName())
+        .documentOptionActionUrl(resolveDocumentOptionActionUrl(orderItem, content))
         // 가격 정보
         .originalPrice(order.getOriginalPrice())
         .discountPrice(order.getDiscountPrice())
@@ -475,5 +478,29 @@ public abstract class BaseOrderProcessor implements OrderProcessorStrategy {
   /** 사용자 타입 문자열 반환 */
   protected String getUserTypeString(UserContext userContext) {
     return userContext.isMember() ? "회원" : "비회원";
+  }
+
+  private String resolveDocumentOptionActionUrl(OrderItem orderItem, Content content) {
+    if (orderItem.getOptionType() != OrderItem.OptionType.DOCUMENT_OPTION) {
+      return null;
+    }
+
+    Long optionId = orderItem.getOptionId();
+    if (optionId == null) {
+      return null;
+    }
+
+    return content.getOptions().stream()
+        .filter(option -> optionId.equals(option.getId()))
+        .filter(DocumentOption.class::isInstance)
+        .map(DocumentOption.class::cast)
+        .map(
+            option -> {
+              String fileUrl = option.getDocumentFileUrl();
+              return fileUrl != null ? fileUrl : option.getDocumentLinkUrl();
+            })
+        .filter(Objects::nonNull)
+        .findFirst()
+        .orElse(null);
   }
 }
