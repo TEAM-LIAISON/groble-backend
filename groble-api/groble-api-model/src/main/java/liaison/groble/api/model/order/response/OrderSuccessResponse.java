@@ -99,6 +99,12 @@ public class OrderSuccessResponse {
   private String selectedOptionName;
 
   @Schema(
+      description = "자료 옵션일 때 다운로드 파일 URL 또는 링크 URL",
+      example = "https://cdn.example.com/template.pdf",
+      type = "string")
+  private final String documentOptionActionUrl;
+
+  @Schema(
       description = "원래 가격",
       example = "99000",
       type = "number",

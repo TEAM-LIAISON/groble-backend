@@ -39,6 +39,7 @@ public class OrderSuccessDTO {
   private final Long selectedOptionId;
   private final String selectedOptionType;
   private final String selectedOptionName;
+  private final String documentOptionActionUrl;
 
   private final BigDecimal originalPrice;
   private final BigDecimal discountPrice;
