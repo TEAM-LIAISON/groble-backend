@@ -41,9 +41,7 @@ import liaison.groble.external.discord.dto.DeleteReviewRequestReportDTO;
 import liaison.groble.external.discord.service.content.DiscordDeleteReviewRequestReportService;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class SellContentService {
@@ -326,8 +324,6 @@ public class SellContentService {
 
   /** FlatContentSellDetailDTO ContentSellDetailDTO로 변환합니다. */
   private ContentSellDetailDTO convertFlatDTOToDetailDTO(FlatContentSellDetailDTO flat) {
-    log.info("▶ convertFlatDTOToDetailDTO: purchasedAt={}", flat.getPurchasedAt());
-
     return ContentSellDetailDTO.builder()
         .purchaseId(flat.getPurchaseId())
         .contentTitle(flat.getContentTitle())
