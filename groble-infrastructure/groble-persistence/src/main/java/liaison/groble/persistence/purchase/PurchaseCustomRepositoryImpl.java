@@ -386,7 +386,12 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
 
     // 조건: contentId + 소유자
     BooleanExpression conditions =
-        qPurchase.content.id.eq(contentId).and(qPurchase.content.user.id.eq(userId));
+        qPurchase
+            .content
+            .id
+            .eq(contentId)
+            .and(qPurchase.content.user.id.eq(userId))
+            .and(qPurchase.purchasedAt.isNotNull());
 
     // 데이터 조회 쿼리 구성
     JPAQuery<FlatContentSellDetailDTO> dataQuery =
