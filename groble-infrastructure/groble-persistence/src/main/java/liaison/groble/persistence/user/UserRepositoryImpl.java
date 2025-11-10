@@ -28,6 +28,11 @@ public class UserRepositoryImpl implements UserRepository {
   }
 
   @Override
+  public Optional<User> findByNicknameAndStatus(String nickname, UserStatus status) {
+    return jpaUserRepository.findByUserProfileNicknameAndUserStatusInfo_Status(nickname, status);
+  }
+
+  @Override
   public User save(User user) {
     return jpaUserRepository.save(user);
   }
