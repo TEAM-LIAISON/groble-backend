@@ -2,12 +2,21 @@ package liaison.groble.application.notification.template;
 
 import org.springframework.stereotype.Component;
 
-import lombok.Getter;
+import liaison.groble.application.notification.enums.KakaoNotificationType;
 
-@Getter
 @Component
 public class NotificationUrlBuilder {
-  private final String baseUrl = "https://www.groble.im/";
+  private static final String BASE_URL = "https://www.groble.im/";
+  private static final String SIGN_IN_PATH = "auth/sign-in";
 
-  // TODO: 개별 템플릿코드에 대한 버튼 URL 매핑 필요
+  public String getBaseUrl() {
+    return BASE_URL;
+  }
+
+  public String resolveButtonUrl(KakaoNotificationType type) {
+    if (type == KakaoNotificationType.GUEST_PURCHASE_COMPLETE) {
+      return BASE_URL + SIGN_IN_PATH;
+    }
+    return BASE_URL;
+  }
 }

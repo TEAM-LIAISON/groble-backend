@@ -147,7 +147,7 @@ public class PaymentNotificationService {
         GuestUser guestUser = guestUserReader.getGuestUserById(event.getGuestUserId());
         kakaoNotificationService.sendNotification(
             KakaoNotificationDTO.builder()
-                .type(KakaoNotificationType.PURCHASE_COMPLETE)
+                .type(KakaoNotificationType.GUEST_PURCHASE_COMPLETE)
                 .phoneNumber(guestUser.getPhoneNumber())
                 .buyerName(resolveGuestBuyerName(event, guestUser))
                 .contentTitle(event.getContentTitle())
