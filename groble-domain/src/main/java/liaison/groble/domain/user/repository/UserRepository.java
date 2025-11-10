@@ -10,6 +10,8 @@ public interface UserRepository {
 
   Optional<User> findByNickname(String nickname);
 
+  Optional<User> findByNicknameAndStatus(String nickname, UserStatus status);
+
   User save(User user);
 
   boolean existsByNicknameAndStatus(String nickname, UserStatus status);
