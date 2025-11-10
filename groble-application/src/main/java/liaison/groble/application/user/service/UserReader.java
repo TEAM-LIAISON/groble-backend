@@ -74,7 +74,7 @@ public class UserReader {
 
   public User getUserByNickname(String nickname) {
     return userRepository
-        .findByNickname(nickname)
+        .findByNicknameAndStatus(nickname, UserStatus.ACTIVE)
         .orElseThrow(
             () -> new EntityNotFoundException("해당 닉네임을 가진 사용자를 찾을 수 없습니다. 닉네임: " + nickname));
   }
