@@ -25,6 +25,14 @@ public class MessageFormatter {
         buyerName, contentTitle, formatCurrency(price));
   }
 
+  // [Groble] 비회원 결제 알림
+  public static String guestPurchaseComplete(
+      String buyerName, String contentTitle, BigDecimal price) {
+    return String.format(
+        "%s님, 구매가 완료되었어요!\n" + "\n" + "- 상품명: %s\n" + "- 결제금액: %s원\n",
+        buyerName, contentTitle, formatCurrency(price));
+  }
+
   // [Groble] 판매 알림
   public static String saleComplete(String buyerName, String contentTitle, BigDecimal price) {
     return String.format(
