@@ -252,15 +252,24 @@ public class PurchaseService {
       return null;
     }
 
-    boolean isPaid = Order.OrderStatus.PAID.name().equals(flat.getOrderStatus());
     boolean isSubscription =
         flat.getPaymentType() != null
             && ContentPaymentType.SUBSCRIPTION.name().equals(flat.getPaymentType());
 
-    if (!isPaid || !isSubscription) {
+    if (!isSubscription) {
       return null;
     }
 
-    return flat.getNextPaymentDate();
+    if (flat.getNextPaymentDate() != null) {
+      return flat.getNextPaymentDate();
+    }
+
+    LocalDateTime purchasedAt = flat.getPurchasedAt();
+    if (purchasedAt == null) {
+      return null;
+    }
+
+    // 기본적으로 한 달 뒤 결제 예정일을 계산해 반환 (DB 값이 사라진 경우 대비)
+    return purchasedAt.toLocalDate().plusMonths(1);
   }
 }
