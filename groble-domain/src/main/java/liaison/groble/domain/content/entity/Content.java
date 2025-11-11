@@ -109,7 +109,7 @@ public class Content extends BaseTimeEntity {
   private Integer saleCount = 0;
 
   // 콘텐츠 상태
-  // DRAFT, ACTIVE, DELETED, DISCONTINUED
+  // DRAFT, ACTIVE, PAUSED, DELETED, DISCONTINUED
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
   private ContentStatus status = ContentStatus.DRAFT;

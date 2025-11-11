@@ -15,7 +15,8 @@ public class ContentStatusResponse {
   private Long contentId;
 
   @Schema(
-      description = "변경된 콘텐츠 상태 [DRAFT - 작성 중], [ACTIVE - 판매중], [DISCONTINUED - 판매중단]",
+      description =
+          "변경된 콘텐츠 상태 [DRAFT - 작성 중], [ACTIVE - 판매중], [PAUSED - 판매정지], [DISCONTINUED - 판매중단]",
       example = "ACTIVE",
       type = "string",
       requiredMode = Schema.RequiredMode.REQUIRED)

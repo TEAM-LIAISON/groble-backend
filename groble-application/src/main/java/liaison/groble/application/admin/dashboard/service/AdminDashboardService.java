@@ -82,7 +82,11 @@ public class AdminDashboardService {
 
     // 콘텐츠 통계 조회
     List<ContentStatus> allStatuses =
-        Arrays.asList(ContentStatus.DRAFT, ContentStatus.ACTIVE, ContentStatus.DISCONTINUED);
+        Arrays.asList(
+            ContentStatus.DRAFT,
+            ContentStatus.ACTIVE,
+            ContentStatus.PAUSED,
+            ContentStatus.DISCONTINUED);
     List<ContentStatus> activeStatuses = Arrays.asList(ContentStatus.ACTIVE);
 
     long totalContentCount = contentRepository.countByStatusIn(allStatuses);

@@ -12,8 +12,10 @@ import liaison.groble.domain.content.dto.FlatAdminDocumentFileDTO;
 import liaison.groble.domain.content.dto.FlatContentOverviewDTO;
 import liaison.groble.domain.content.dto.FlatContentPreviewDTO;
 import liaison.groble.domain.content.dto.FlatDynamicContentDTO;
+import liaison.groble.domain.content.enums.ContentPaymentType;
 import liaison.groble.domain.content.enums.ContentStatus;
 import liaison.groble.domain.content.enums.ContentType;
+import liaison.groble.domain.content.enums.SubscriptionSellStatus;
 
 public interface ContentCustomRepository {
 
@@ -60,7 +62,14 @@ public interface ContentCustomRepository {
   List<FlatAdminDocumentFileDTO> findDocumentFilesByContentIds(List<Long> contentIds);
 
   Page<FlatContentPreviewDTO> findMyContentsWithStatus(
-      Pageable pageable, Long userId, List<ContentStatus> contentStatuses);
+      Pageable pageable,
+      Long userId,
+      List<ContentStatus> contentStatuses,
+      ContentPaymentType paymentTypeFilter,
+      SubscriptionSellStatus subscriptionSellStatusFilter,
+      boolean excludeTerminatedSubscriptions,
+      boolean excludePausedSubscriptions,
+      boolean includePausedSubscriptions);
 
   Page<FlatContentOverviewDTO> findMyContentsBySellerId(Long sellerId, Pageable pageable);
 

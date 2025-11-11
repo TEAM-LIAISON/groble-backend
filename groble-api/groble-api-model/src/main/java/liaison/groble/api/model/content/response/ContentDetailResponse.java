@@ -22,9 +22,10 @@ public class ContentDetailResponse {
   private Long contentId;
 
   @Schema(
-      description = "콘텐츠 상태 [ACTIVE - 판매중], [DRAFT - 작성중], [DELETED - 삭제됨], [DISCONTINUED - 판매중단]",
+      description =
+          "콘텐츠 상태 [ACTIVE - 판매중], [PAUSED - 판매정지], [DRAFT - 작성중], [DELETED - 삭제됨], [DISCONTINUED - 판매중단]",
       example = "DRAFT",
-      allowableValues = {"ACTIVE", "DRAFT", "DELETED", "DISCONTINUED"})
+      allowableValues = {"ACTIVE", "PAUSED", "DRAFT", "DELETED", "DISCONTINUED"})
   private String status;
 
   @Schema(description = "썸네일 이미지 URL", example = "https://example.com/thumbnail1.jpg")

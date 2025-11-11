@@ -41,8 +41,10 @@ import liaison.groble.domain.content.entity.QCoachingOption;
 import liaison.groble.domain.content.entity.QContent;
 import liaison.groble.domain.content.entity.QContentOption;
 import liaison.groble.domain.content.entity.QDocumentOption;
+import liaison.groble.domain.content.enums.ContentPaymentType;
 import liaison.groble.domain.content.enums.ContentStatus;
 import liaison.groble.domain.content.enums.ContentType;
+import liaison.groble.domain.content.enums.SubscriptionSellStatus;
 import liaison.groble.domain.content.repository.ContentCustomRepository;
 import liaison.groble.domain.purchase.entity.QPurchase;
 import liaison.groble.domain.user.entity.QUser;
@@ -915,7 +917,14 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
 
   @Override
   public Page<FlatContentPreviewDTO> findMyContentsWithStatus(
-      Pageable pageable, Long userId, List<ContentStatus> statuses) {
+      Pageable pageable,
+      Long userId,
+      List<ContentStatus> statuses,
+      ContentPaymentType paymentTypeFilter,
+      SubscriptionSellStatus subscriptionSellStatusFilter,
+      boolean excludeTerminatedSubscriptions,
+      boolean excludePausedSubscriptions,
+      boolean includePausedSubscriptions) {
 
     QContent qContent = QContent.content;
     QContentOption qOption = QContentOption.contentOption;
@@ -926,18 +935,56 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
     QCategory qCategory = QCategory.category;
 
     // 1) 상태 + 사용자 필터
-    BooleanExpression statusFilter =
-        (statuses != null && !statuses.isEmpty()) ? qContent.status.in(statuses) : null;
-    BooleanExpression userFilter = qContent.user.id.eq(userId);
-    BooleanExpression whereClause =
-        statusFilter != null ? userFilter.and(statusFilter) : userFilter;
+    BooleanExpression whereClause = qContent.user.id.eq(userId);
+    BooleanExpression filterExpr = null;
+    if (statuses != null && !statuses.isEmpty()) {
+      filterExpr = qContent.status.in(statuses);
+    }
+    if (paymentTypeFilter != null) {
+      BooleanExpression paymentExpr = qContent.paymentType.eq(paymentTypeFilter);
+      filterExpr = filterExpr == null ? paymentExpr : filterExpr.and(paymentExpr);
+    }
+    if (subscriptionSellStatusFilter != null) {
+      BooleanExpression subStatusExpr =
+          qContent.subscriptionSellStatus.eq(subscriptionSellStatusFilter);
+      filterExpr = filterExpr == null ? subStatusExpr : filterExpr.and(subStatusExpr);
+    }
+    if (includePausedSubscriptions) {
+      BooleanExpression pausedExpr =
+          qContent
+              .paymentType
+              .eq(ContentPaymentType.SUBSCRIPTION)
+              .and(qContent.subscriptionSellStatus.eq(SubscriptionSellStatus.PAUSED));
+      filterExpr = filterExpr == null ? pausedExpr : filterExpr.or(pausedExpr);
+    }
+    if (filterExpr != null) {
+      whereClause = whereClause.and(filterExpr);
+    }
+    if (excludeTerminatedSubscriptions) {
+      BooleanExpression notTerminatedSubscription =
+          qContent
+              .paymentType
+              .ne(ContentPaymentType.SUBSCRIPTION)
+              .or(qContent.subscriptionSellStatus.isNull())
+              .or(qContent.subscriptionSellStatus.ne(SubscriptionSellStatus.TERMINATED));
+      whereClause = whereClause.and(notTerminatedSubscription);
+    }
+    if (excludePausedSubscriptions) {
+      BooleanExpression notPausedSubscription =
+          qContent
+              .paymentType
+              .ne(ContentPaymentType.SUBSCRIPTION)
+              .or(qContent.subscriptionSellStatus.isNull())
+              .or(qContent.subscriptionSellStatus.ne(SubscriptionSellStatus.PAUSED));
+      whereClause = whereClause.and(notPausedSubscription);
+    }
 
     // 2) 콘텐츠 필드 유효 검사 (isAvailableForSale과 동일)
     BooleanExpression contentValid =
         qContent
             .thumbnailUrl
             .isNotNull()
-            .and(qContent.status.eq(ContentStatus.DRAFT))
+            .and(qContent.status.in(ContentStatus.DRAFT, ContentStatus.PAUSED))
             .and(qContent.title.isNotNull())
             .and(qContent.makerIntro.isNotNull())
             .and(qContent.serviceProcess.isNotNull())
@@ -1096,7 +1143,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
         qContent
             .thumbnailUrl
             .isNotNull()
-            .and(qContent.status.eq(ContentStatus.DRAFT))
+            .and(qContent.status.in(ContentStatus.DRAFT, ContentStatus.PAUSED))
             .and(qContent.title.isNotNull())
             .and(qContent.makerIntro.isNotNull())
             .and(qContent.serviceProcess.isNotNull())

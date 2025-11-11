@@ -114,7 +114,7 @@ public class AdminContentService {
   public void rejectContent(Long contentId, String rejectReason) {
     Content content = contentReader.getContentById(contentId);
     content.setAdminContentCheckingStatus(AdminContentCheckingStatus.REJECTED);
-    content.setStatus(ContentStatus.DISCONTINUED);
+    content.setStatus(ContentStatus.PAUSED);
     content.setRejectReason(rejectReason);
     contentRepository.save(content);
 

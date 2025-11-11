@@ -2,6 +2,8 @@ package liaison.groble.application.content.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.*;
 
 import java.math.BigDecimal;
@@ -15,6 +17,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import liaison.groble.application.content.ContentReader;
@@ -24,17 +31,21 @@ import liaison.groble.application.content.dto.ContentOptionDTO;
 import liaison.groble.application.sell.SellerContactReader;
 import liaison.groble.application.subscription.service.SubscriptionService;
 import liaison.groble.application.user.service.UserReader;
+import liaison.groble.domain.content.dto.FlatContentPreviewDTO;
 import liaison.groble.domain.content.entity.Category;
 import liaison.groble.domain.content.entity.Content;
+import liaison.groble.domain.content.enums.AdminContentCheckingStatus;
 import liaison.groble.domain.content.enums.ContentPaymentType;
 import liaison.groble.domain.content.enums.ContentStatus;
 import liaison.groble.domain.content.enums.ContentType;
+import liaison.groble.domain.content.enums.SubscriptionSellStatus;
 import liaison.groble.domain.content.repository.CategoryRepository;
 import liaison.groble.domain.content.repository.ContentCustomRepository;
 import liaison.groble.domain.content.repository.ContentRepository;
 import liaison.groble.domain.file.repository.FileRepository;
 import liaison.groble.domain.purchase.repository.PurchaseRepository;
 import liaison.groble.domain.user.entity.User;
+import liaison.groble.domain.user.vo.UserProfile;
 import liaison.groble.external.discord.service.content.DiscordContentRegisterReportService;
 
 @ExtendWith(MockitoExtension.class)
@@ -188,5 +199,189 @@ class ContentServiceTest {
     ArgumentCaptor<Content> captor = ArgumentCaptor.forClass(Content.class);
     verify(contentRepository).save(captor.capture());
     assertThat(captor.getValue().getPaymentType()).isEqualTo(ContentPaymentType.SUBSCRIPTION);
+  }
+
+  @Test
+  void stopContent_transitionsActiveContentToPaused() {
+    // given
+    Long userId = 11L;
+    Long contentId = 42L;
+    User user = User.builder().id(userId).build();
+    Content content = new Content(user);
+    ReflectionTestUtils.setField(content, "id", contentId);
+    content.setStatus(ContentStatus.ACTIVE);
+    content.setAdminContentCheckingStatus(AdminContentCheckingStatus.VALIDATED);
+
+    when(contentReader.getContentByStatusAndId(contentId, ContentStatus.ACTIVE))
+        .thenReturn(content);
+    when(contentRepository.save(any(Content.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
+    when(purchaseRepository.findSoldOptionIdsByContentId(contentId))
+        .thenReturn(Collections.emptyList());
+
+    // when
+    ContentDTO result = contentService.stopContent(userId, contentId);
+
+    // then
+    assertThat(content.getStatus()).isEqualTo(ContentStatus.PAUSED);
+    assertThat(content.getAdminContentCheckingStatus())
+        .isEqualTo(AdminContentCheckingStatus.PENDING);
+    assertThat(result.getStatus()).isEqualTo(ContentStatus.PAUSED.name());
+  }
+
+  @Test
+  void convertToSale_allowsPausedContent() {
+    // given
+    Long userId = 7L;
+    Long contentId = 88L;
+    User user =
+        User.builder()
+            .id(userId)
+            .userProfile(UserProfile.builder().nickname("테스터").build())
+            .build();
+    Content content = new Content(user);
+    ReflectionTestUtils.setField(content, "id", contentId);
+    content.setStatus(ContentStatus.PAUSED);
+    content.setContentType(ContentType.COACHING);
+    content.setTitle("Paused Content");
+
+    when(contentReader.getContentWithSeller(contentId)).thenReturn(content);
+    when(contentReader.isAvailableForSale(contentId)).thenReturn(true);
+
+    // when
+    contentService.convertToSale(userId, contentId);
+
+    // then
+    assertThat(content.getStatus()).isEqualTo(ContentStatus.ACTIVE);
+    verify(discordContentRegisterReportService).sendCreateContentRegisterReport(any());
+  }
+
+  @Test
+  void getMySellingContents_activeStateIncludesPaused() {
+    Long userId = 99L;
+    User user = User.builder().id(userId).build();
+    Pageable pageable = PageRequest.of(0, 12, Sort.by("createdAt").descending());
+    when(userReader.getUserById(userId)).thenReturn(user);
+    when(sellerContactReader.getContactsByUser(user)).thenReturn(Collections.emptyList());
+    Page<FlatContentPreviewDTO> emptyPage = new PageImpl<>(Collections.emptyList(), pageable, 0);
+    when(contentReader.findMyContentsWithStatus(
+            any(Pageable.class),
+            eq(userId),
+            anyList(),
+            any(),
+            any(),
+            anyBoolean(),
+            anyBoolean(),
+            anyBoolean()))
+        .thenReturn(emptyPage);
+
+    contentService.getMySellingContents(userId, pageable, "ACTIVE");
+
+    ArgumentCaptor<List<ContentStatus>> statusesCaptor = ArgumentCaptor.forClass(List.class);
+    ArgumentCaptor<Boolean> excludeTerminatedCaptor = ArgumentCaptor.forClass(Boolean.class);
+    ArgumentCaptor<Boolean> excludePausedCaptor = ArgumentCaptor.forClass(Boolean.class);
+    ArgumentCaptor<Boolean> includePausedCaptor = ArgumentCaptor.forClass(Boolean.class);
+    verify(contentReader)
+        .findMyContentsWithStatus(
+            any(Pageable.class),
+            eq(userId),
+            statusesCaptor.capture(),
+            isNull(),
+            isNull(),
+            excludeTerminatedCaptor.capture(),
+            excludePausedCaptor.capture(),
+            includePausedCaptor.capture());
+
+    assertThat(statusesCaptor.getValue())
+        .containsExactlyInAnyOrder(ContentStatus.ACTIVE, ContentStatus.PAUSED);
+    assertThat(excludeTerminatedCaptor.getValue()).isTrue();
+    assertThat(excludePausedCaptor.getValue()).isTrue();
+    assertThat(includePausedCaptor.getValue()).isFalse();
+  }
+
+  @Test
+  void getMySellingContents_discontinuedFiltersSubscriptionTermination() {
+    Long userId = 77L;
+    User user = User.builder().id(userId).build();
+    Pageable pageable = PageRequest.of(0, 12, Sort.by("createdAt"));
+    when(userReader.getUserById(userId)).thenReturn(user);
+    when(sellerContactReader.getContactsByUser(user)).thenReturn(Collections.emptyList());
+    Page<FlatContentPreviewDTO> emptyPage = new PageImpl<>(Collections.emptyList(), pageable, 0);
+    when(contentReader.findMyContentsWithStatus(
+            any(Pageable.class),
+            eq(userId),
+            anyList(),
+            any(),
+            any(),
+            anyBoolean(),
+            anyBoolean(),
+            anyBoolean()))
+        .thenReturn(emptyPage);
+
+    contentService.getMySellingContents(userId, pageable, "DISCONTINUED");
+
+    ArgumentCaptor<List<ContentStatus>> statusesCaptor = ArgumentCaptor.forClass(List.class);
+    ArgumentCaptor<ContentPaymentType> paymentCaptor =
+        ArgumentCaptor.forClass(ContentPaymentType.class);
+    ArgumentCaptor<SubscriptionSellStatus> subscriptionCaptor =
+        ArgumentCaptor.forClass(SubscriptionSellStatus.class);
+    ArgumentCaptor<Boolean> excludeTerminatedCaptor = ArgumentCaptor.forClass(Boolean.class);
+    ArgumentCaptor<Boolean> excludePausedCaptor = ArgumentCaptor.forClass(Boolean.class);
+    ArgumentCaptor<Boolean> includePausedCaptor = ArgumentCaptor.forClass(Boolean.class);
+
+    verify(contentReader)
+        .findMyContentsWithStatus(
+            any(Pageable.class),
+            eq(userId),
+            statusesCaptor.capture(),
+            paymentCaptor.capture(),
+            subscriptionCaptor.capture(),
+            excludeTerminatedCaptor.capture(),
+            excludePausedCaptor.capture(),
+            includePausedCaptor.capture());
+
+    assertThat(statusesCaptor.getValue())
+        .containsExactlyInAnyOrder(ContentStatus.ACTIVE, ContentStatus.PAUSED);
+    assertThat(paymentCaptor.getValue()).isEqualTo(ContentPaymentType.SUBSCRIPTION);
+    assertThat(subscriptionCaptor.getValue()).isEqualTo(SubscriptionSellStatus.TERMINATED);
+    assertThat(excludeTerminatedCaptor.getValue()).isFalse();
+    assertThat(excludePausedCaptor.getValue()).isFalse();
+    assertThat(includePausedCaptor.getValue()).isFalse();
+  }
+
+  @Test
+  void getMySellingContents_draftStateIncludesSubscriptionPaused() {
+    Long userId = 55L;
+    User user = User.builder().id(userId).build();
+    Pageable pageable = PageRequest.of(0, 12, Sort.by("createdAt"));
+    when(userReader.getUserById(userId)).thenReturn(user);
+    when(sellerContactReader.getContactsByUser(user)).thenReturn(Collections.emptyList());
+    Page<FlatContentPreviewDTO> emptyPage = new PageImpl<>(Collections.emptyList(), pageable, 0);
+    when(contentReader.findMyContentsWithStatus(
+            any(Pageable.class),
+            eq(userId),
+            anyList(),
+            any(),
+            any(),
+            anyBoolean(),
+            anyBoolean(),
+            anyBoolean()))
+        .thenReturn(emptyPage);
+
+    contentService.getMySellingContents(userId, pageable, "DRAFT");
+
+    ArgumentCaptor<Boolean> includePausedCaptor = ArgumentCaptor.forClass(Boolean.class);
+    verify(contentReader)
+        .findMyContentsWithStatus(
+            any(Pageable.class),
+            eq(userId),
+            any(),
+            isNull(),
+            isNull(),
+            anyBoolean(),
+            anyBoolean(),
+            includePausedCaptor.capture());
+
+    assertThat(includePausedCaptor.getValue()).isTrue();
   }
 }

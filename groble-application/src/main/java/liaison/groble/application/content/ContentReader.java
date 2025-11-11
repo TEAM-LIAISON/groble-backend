@@ -14,7 +14,9 @@ import liaison.groble.domain.content.dto.FlatAdminDocumentFileDTO;
 import liaison.groble.domain.content.dto.FlatContentOverviewDTO;
 import liaison.groble.domain.content.dto.FlatContentPreviewDTO;
 import liaison.groble.domain.content.entity.Content;
+import liaison.groble.domain.content.enums.ContentPaymentType;
 import liaison.groble.domain.content.enums.ContentStatus;
+import liaison.groble.domain.content.enums.SubscriptionSellStatus;
 import liaison.groble.domain.content.repository.ContentCustomRepository;
 import liaison.groble.domain.content.repository.ContentRepository;
 import liaison.groble.domain.user.entity.User;
@@ -97,8 +99,23 @@ public class ContentReader {
   }
 
   public Page<FlatContentPreviewDTO> findMyContentsWithStatus(
-      Pageable pageable, Long userId, List<ContentStatus> contentStatuses) {
-    return contentCustomRepository.findMyContentsWithStatus(pageable, userId, contentStatuses);
+      Pageable pageable,
+      Long userId,
+      List<ContentStatus> contentStatuses,
+      ContentPaymentType paymentTypeFilter,
+      SubscriptionSellStatus subscriptionSellStatusFilter,
+      boolean excludeTerminatedSubscriptions,
+      boolean excludePausedSubscriptions,
+      boolean includePausedSubscriptions) {
+    return contentCustomRepository.findMyContentsWithStatus(
+        pageable,
+        userId,
+        contentStatuses,
+        paymentTypeFilter,
+        subscriptionSellStatusFilter,
+        excludeTerminatedSubscriptions,
+        excludePausedSubscriptions,
+        includePausedSubscriptions);
   }
 
   public Page<FlatContentOverviewDTO> findMyContentsBySellerId(Long sellerId, Pageable pageable) {

@@ -176,7 +176,8 @@ public class ContentService {
 
       // 판매 중일 경우 DRAFT 상태로 변경하여 수정 가능하게 처리
       if (content.getStatus() != ContentStatus.DRAFT) {
-        if (content.getStatus() == ContentStatus.ACTIVE) {
+        if (content.getStatus() == ContentStatus.ACTIVE
+            || content.getStatus() == ContentStatus.PAUSED) {
           content.setStatus(ContentStatus.DRAFT); // 상태 수동 변경
           // 대표 콘텐츠였다면 대표 콘텐츠 해제되도록 수정
           if (content.getIsRepresentative()) {
@@ -490,9 +491,17 @@ public class ContentService {
     User user = userReader.getUserById(userId);
     boolean hasSellerContacts = !sellerContactReader.getContactsByUser(user).isEmpty();
 
-    List<ContentStatus> contentStatuses = parseContentStatuses(state);
+    ContentStateFilter filter = resolveContentStateFilter(state);
     Page<FlatContentPreviewDTO> page =
-        contentReader.findMyContentsWithStatus(pageable, userId, contentStatuses);
+        contentReader.findMyContentsWithStatus(
+            pageable,
+            userId,
+            filter.statuses(),
+            filter.paymentTypeFilter(),
+            filter.subscriptionSellStatusFilter(),
+            filter.excludeTerminatedSubscriptions(),
+            filter.excludePausedSubscriptions(),
+            filter.includePausedSubscriptions());
     List<ContentCardDTO> items =
         page.getContent().stream().map(this::convertFlatDTOToCardDTO).toList();
 
@@ -882,7 +891,7 @@ public class ContentService {
     Content content = findAndValidateUserActiveContent(userId, contentId);
 
     // 2. 상태 업데이트
-    content.setStatus(ContentStatus.DRAFT);
+    content.setStatus(ContentStatus.PAUSED);
     content.setAdminContentCheckingStatus(AdminContentCheckingStatus.PENDING);
 
     // 3. 저장 및 변환
@@ -963,8 +972,9 @@ public class ContentService {
     Content content = findAndValidateUserContent(userId, contentId);
     if (contentReader.isAvailableForSale(contentId)) {
       // 2. 상태 업데이트
-      if (content.getStatus() != ContentStatus.DRAFT) {
-        throw new IllegalArgumentException("콘텐츠는 DRAFT 상태여야 판매 가능 상태로 전환할 수 있습니다.");
+      if (content.getStatus() != ContentStatus.DRAFT
+          && content.getStatus() != ContentStatus.PAUSED) {
+        throw new IllegalArgumentException("콘텐츠는 DRAFT 또는 PAUSED 상태여야 판매 가능 상태로 전환할 수 있습니다.");
       }
 
       content.setStatus(ContentStatus.ACTIVE);
@@ -1041,23 +1051,49 @@ public class ContentService {
     return e != null ? e.name() : null;
   }
 
-  // 콘텐츠 상태 파싱 메서드 (DRAFT, ACTIVE → ACTIVE+DISCONTINUED)
-  private List<ContentStatus> parseContentStatuses(String state) {
+  private ContentStateFilter resolveContentStateFilter(String state) {
     if (state == null || state.isBlank()) {
-      return Collections.emptyList();
+      return new ContentStateFilter(Collections.emptyList(), null, null, false, false, false);
     }
 
-    try {
-      ContentStatus contentStatus = ContentStatus.valueOf(state.toUpperCase());
-      if (contentStatus == ContentStatus.ACTIVE) {
-        // ACTIVE 검색 시에는 ACTIVE + DISCONTINUED 둘 다 조회
-        return List.of(ContentStatus.ACTIVE, ContentStatus.DISCONTINUED);
-      }
-      return List.of(contentStatus);
-    } catch (IllegalArgumentException e) {
-      return Collections.emptyList();
+    String normalized = state.toUpperCase();
+    switch (normalized) {
+      case "DRAFT":
+        return new ContentStateFilter(
+            List.of(ContentStatus.DRAFT, ContentStatus.DISCONTINUED),
+            null,
+            null,
+            false,
+            false,
+            true);
+      case "ACTIVE":
+        return new ContentStateFilter(
+            List.of(ContentStatus.ACTIVE, ContentStatus.PAUSED), null, null, true, true, false);
+      case "DISCONTINUED":
+        return new ContentStateFilter(
+            List.of(ContentStatus.ACTIVE, ContentStatus.PAUSED),
+            ContentPaymentType.SUBSCRIPTION,
+            SubscriptionSellStatus.TERMINATED,
+            false,
+            false,
+            false);
+      default:
+        try {
+          ContentStatus contentStatus = ContentStatus.valueOf(normalized);
+          return new ContentStateFilter(List.of(contentStatus), null, null, false, false, false);
+        } catch (IllegalArgumentException e) {
+          return new ContentStateFilter(Collections.emptyList(), null, null, false, false, false);
+        }
     }
   }
+
+  private record ContentStateFilter(
+      List<ContentStatus> statuses,
+      ContentPaymentType paymentTypeFilter,
+      SubscriptionSellStatus subscriptionSellStatusFilter,
+      boolean excludeTerminatedSubscriptions,
+      boolean excludePausedSubscriptions,
+      boolean includePausedSubscriptions) {}
 
   private void handleOptionsWithSalesHistorySmartly(
       Content content, List<ContentOptionDTO> newOptions) {
