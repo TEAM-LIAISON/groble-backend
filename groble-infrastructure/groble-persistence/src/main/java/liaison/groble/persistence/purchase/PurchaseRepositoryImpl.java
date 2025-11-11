@@ -53,4 +53,10 @@ public class PurchaseRepositoryImpl implements PurchaseRepository {
   public List<Long> findSoldOptionIdsByContentId(Long contentId) {
     return jpaPurchaseRepository.findDistinctSelectedOptionIdsByContentId(contentId);
   }
+
+  @Override
+  public int countSubscriptionRound(
+      Long userId, Long contentId, Long optionId, java.time.LocalDateTime purchasedAt) {
+    return jpaPurchaseRepository.countSubscriptionRound(userId, contentId, optionId, purchasedAt);
+  }
 }

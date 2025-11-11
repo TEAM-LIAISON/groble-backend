@@ -238,6 +238,11 @@ public class PaymentNotificationService {
       return;
     }
     try {
+      if (event.getPaymentType() == ContentPaymentType.SUBSCRIPTION && event.getUserId() != null) {
+        sendSellerSubscriptionATNotification(event);
+        return;
+      }
+
       User seller = userReader.getUserById(event.getSellerId());
       String buyerName = "비회원 구매자";
       if (event.getUserId() != null) {
@@ -258,6 +263,27 @@ public class PaymentNotificationService {
     } catch (Exception e) {
       log.error("판매자 알림 발송 실패 - sellerId: {}", event.getSellerId(), e);
     }
+  }
+
+  private void sendSellerSubscriptionATNotification(PaymentCompletedEvent event) {
+    User seller = userReader.getUserById(event.getSellerId());
+    User buyer = userReader.getUserById(event.getUserId());
+    KakaoNotificationType type =
+        event.isSubscriptionRenewal()
+            ? KakaoNotificationType.SELLER_SUBSCRIPTION_RENEWAL_PAYMENT
+            : KakaoNotificationType.SELLER_SUBSCRIPTION_FIRST_PAYMENT;
+
+    kakaoNotificationService.sendNotification(
+        KakaoNotificationDTO.builder()
+            .type(type)
+            .phoneNumber(seller.getPhoneNumber())
+            .sellerName(seller.getNickname())
+            .buyerName(buyer.getNickname())
+            .contentTitle(event.getContentTitle())
+            .price(event.getAmount())
+            .nextBillingDate(event.getSubscriptionNextBillingDate())
+            .subscriptionRound(event.getSubscriptionRound())
+            .build());
   }
 
   /** 판매자 무료 결제 알림 발송 */

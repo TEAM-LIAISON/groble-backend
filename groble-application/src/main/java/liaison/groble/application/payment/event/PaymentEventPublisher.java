@@ -52,6 +52,7 @@ public class PaymentEventPublisher {
               .subscriptionRenewal(completionResult.isSubscriptionRenewal())
               .subscriptionId(completionResult.getSubscriptionId())
               .subscriptionNextBillingDate(completionResult.getSubscriptionNextBillingDate())
+              .subscriptionRound(completionResult.getSubscriptionRound())
               .build();
 
       eventPublisher.publish(event);
@@ -94,6 +95,7 @@ public class PaymentEventPublisher {
               .subscriptionRenewal(completionResult.isSubscriptionRenewal())
               .subscriptionId(completionResult.getSubscriptionId())
               .subscriptionNextBillingDate(completionResult.getSubscriptionNextBillingDate())
+              .subscriptionRound(completionResult.getSubscriptionRound())
               .build();
 
       eventPublisher.publish(event);

@@ -203,8 +203,17 @@ public class PaymentTransactionService {
         purchase.getId());
 
     SubscriptionCreationResult subscriptionResult = null;
+    Integer subscriptionRound = null;
     if (purchase.getContent().getPaymentType() == ContentPaymentType.SUBSCRIPTION) {
       subscriptionResult = registerSubscription(purchase, payment, payplePayment);
+      if (order.getUser() != null) {
+        subscriptionRound =
+            purchaseRepository.countSubscriptionRound(
+                order.getUser().getId(),
+                purchase.getContent().getId(),
+                purchase.getSelectedOptionId(),
+                purchase.getPurchasedAt());
+      }
     }
 
     return PaymentCompletionResult.builder()
@@ -232,6 +241,7 @@ public class PaymentTransactionService {
             subscriptionResult != null
                 ? subscriptionResult.subscription().getNextBillingDate()
                 : null)
+        .subscriptionRound(subscriptionRound)
         .build();
   }
 

@@ -96,11 +96,7 @@ public class MessageFormatter {
   public static String subscriptionFirstPayment(
       String buyerName, String contentTitle, BigDecimal price, LocalDate nextBillingDate) {
     return String.format(
-        "%s님, 정기결제를 시작했어요 \uD83C\uDF89\n"
-            + "\n"
-            + "- 상품명: %s\n"
-            + "- 결제금액: 월 %s원\n"
-            + "- 다음 결제일: %s\n",
+        "%s님, 정기결제를 시작했어요 🎉\n" + "\n" + "- 상품명: %s\n" + "- 결제금액: 월 %s원\n" + "- 다음 결제일: %s\n",
         buyerName, contentTitle, formatCurrency(price), formatDate(nextBillingDate));
   }
 
@@ -110,6 +106,24 @@ public class MessageFormatter {
     return String.format(
         "%s님, 정기결제가 완료되었어요!\n" + "\n" + "- 상품명: %s\n" + "- 결제금액: %s원\n" + "- 다음 결제일: %s\n",
         buyerName, contentTitle, formatCurrency(price), formatDate(nextBillingDate));
+  }
+
+  // [Groble] 판매자 정기결제 최초 안내
+  public static String sellerSubscriptionFirstPayment(
+      String buyerName, String contentTitle, BigDecimal price, Integer subscriptionRound) {
+    int round = subscriptionRound != null ? subscriptionRound : 1;
+    return String.format(
+        "%s님이 정기결제를 시작했어요 🎉\n" + "\n" + "- 상품명: %s\n" + "- 가격: 월 %s원\n" + "- 회차: %d회차",
+        buyerName, contentTitle, formatCurrency(price), round);
+  }
+
+  // [Groble] 판매자 정기결제 재결제 안내
+  public static String sellerSubscriptionRenewalPayment(
+      String buyerName, String contentTitle, BigDecimal price, Integer subscriptionRound) {
+    int round = subscriptionRound != null ? subscriptionRound : 1;
+    return String.format(
+        "%s님이 %d회차 결제했어요 ✨\n" + "\n" + "- 상품명: %s\n" + "- 가격: 월 %s원\n" + "- 회차: %d회차",
+        buyerName, round, contentTitle, formatCurrency(price), round);
   }
 
   // 원화 표기법 포맷팅

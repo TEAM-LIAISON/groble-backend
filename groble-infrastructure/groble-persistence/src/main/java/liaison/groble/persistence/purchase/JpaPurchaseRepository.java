@@ -45,4 +45,19 @@ public interface JpaPurchaseRepository extends JpaRepository<Purchase, Long> {
       WHERE p.content.id = :contentId AND p.selectedOptionId IS NOT NULL
       """)
   List<Long> findDistinctSelectedOptionIdsByContentId(@Param("contentId") Long contentId);
+
+  @Query(
+      """
+      SELECT COUNT(p)
+      FROM Purchase p
+      WHERE p.user.id = :userId
+        AND p.content.id = :contentId
+        AND (:optionId IS NULL OR p.selectedOptionId = :optionId)
+        AND p.purchasedAt <= :purchasedAt
+      """)
+  int countSubscriptionRound(
+      @Param("userId") Long userId,
+      @Param("contentId") Long contentId,
+      @Param("optionId") Long optionId,
+      @Param("purchasedAt") java.time.LocalDateTime purchasedAt);
 }

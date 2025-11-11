@@ -20,4 +20,7 @@ public interface PurchaseRepository {
   List<Purchase> findByUserIdAndContentId(Long userId, Long contentId);
 
   List<Long> findSoldOptionIdsByContentId(Long contentId);
+
+  int countSubscriptionRound(
+      Long userId, Long contentId, Long optionId, java.time.LocalDateTime purchasedAt);
 }

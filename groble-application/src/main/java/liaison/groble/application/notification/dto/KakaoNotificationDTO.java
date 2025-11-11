@@ -40,4 +40,5 @@ public class KakaoNotificationDTO {
 
   // Subscription templates
   private LocalDate nextBillingDate;
+  private Integer subscriptionRound;
 }

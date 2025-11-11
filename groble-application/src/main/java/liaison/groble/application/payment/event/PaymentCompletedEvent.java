@@ -41,4 +41,5 @@ public class PaymentCompletedEvent {
   private boolean subscriptionRenewal;
   private Long subscriptionId;
   private LocalDate subscriptionNextBillingDate;
+  private Integer subscriptionRound;
 }

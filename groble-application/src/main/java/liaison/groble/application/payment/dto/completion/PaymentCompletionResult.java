@@ -37,4 +37,5 @@ public class PaymentCompletionResult {
   private final boolean subscriptionRenewal;
   private final Long subscriptionId;
   private final LocalDate subscriptionNextBillingDate;
+  private final Integer subscriptionRound;
 }
