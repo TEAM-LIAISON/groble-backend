@@ -75,7 +75,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequestMapping(ApiPaths.Payment.PAYPLE_BASE)
 @Tag(name = PaymentSwaggerDocs.TAG_NAME, description = PaymentSwaggerDocs.TAG_DESCRIPTION)
 public class PayplePaymentController extends BaseController {
-  // Factory
+
   private final PaymentProcessorFactory processorFactory;
 
   // Mapper
