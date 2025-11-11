@@ -37,4 +37,7 @@ public class KakaoNotificationDTO {
   private LocalDate settlementDate;
   private BigDecimal settlementAmount;
   private String contentTypeLabel;
+
+  // Subscription templates
+  private LocalDate nextBillingDate;
 }

@@ -92,9 +92,33 @@ public class MessageFormatter {
         sellerName, dateText, contentTypeLabel, formatCurrency(amount));
   }
 
+  // [Groble] 정기결제 최초 결제 안내
+  public static String subscriptionFirstPayment(
+      String buyerName, String contentTitle, BigDecimal price, LocalDate nextBillingDate) {
+    return String.format(
+        "%s님, 정기결제를 시작했어요 \uD83C\uDF89\n"
+            + "\n"
+            + "- 상품명: %s\n"
+            + "- 결제금액: 월 %s원\n"
+            + "- 다음 결제일: %s\n",
+        buyerName, contentTitle, formatCurrency(price), formatDate(nextBillingDate));
+  }
+
+  // [Groble] 정기결제 재결제 안내
+  public static String subscriptionRenewalPayment(
+      String buyerName, String contentTitle, BigDecimal price, LocalDate nextBillingDate) {
+    return String.format(
+        "%s님, 정기결제가 완료되었어요!\n" + "\n" + "- 상품명: %s\n" + "- 결제금액: %s원\n" + "- 다음 결제일: %s\n",
+        buyerName, contentTitle, formatCurrency(price), formatDate(nextBillingDate));
+  }
+
   // 원화 표기법 포맷팅
   private static String formatCurrency(BigDecimal amount) {
     BigDecimal value = amount != null ? amount : BigDecimal.ZERO;
     return CURRENCY_FORMAT.format(value);
+  }
+
+  private static String formatDate(LocalDate date) {
+    return date != null ? date.format(DATE_FORMATTER) : "-";
   }
 }

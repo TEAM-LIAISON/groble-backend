@@ -97,7 +97,18 @@ public class SubscriptionBillingJobService {
           context.subscriptionId(),
           context.merchantUid(),
           ex);
-      markBillingFailure(context.subscriptionId());
+      BillingFailureResult failureResult = markBillingFailure(context.subscriptionId());
+      if (!failureResult.subscriptionFound()) {
+        log.warn("정기결제 청구 실패 처리 중 구독을 찾을 수 없습니다. subscriptionId={}", context.subscriptionId());
+        return;
+      }
+      if (failureResult.cancelled()) {
+        log.warn(
+            "정기결제 자동 청구 재시도 {}회 실패로 구독 해지 - subscriptionId: {}, merchantUid: {}",
+            failureResult.retryCount(),
+            context.subscriptionId(),
+            context.merchantUid());
+      }
     }
   }
 
@@ -142,19 +153,29 @@ public class SubscriptionBillingJobService {
     return true;
   }
 
-  private void markBillingFailure(Long subscriptionId) {
-    transactionTemplate.execute(
-        status -> {
-          subscriptionRepository
-              .findWithLockingById(subscriptionId)
-              .ifPresent(
-                  subscription -> {
-                    subscription.markBillingFailure(LocalDateTime.now(BILLING_ZONE_ID));
-                    subscriptionRepository.save(subscription);
-                  });
-          return null;
-        });
+  private BillingFailureResult markBillingFailure(Long subscriptionId) {
+    return transactionTemplate.execute(
+        status ->
+            subscriptionRepository
+                .findWithLockingById(subscriptionId)
+                .map(
+                    subscription -> {
+                      LocalDateTime now = LocalDateTime.now(BILLING_ZONE_ID);
+                      subscription.markBillingFailure(now);
+                      int retryCount = subscription.getBillingRetryCount();
+                      boolean cancelled = false;
+                      if (retryCount >= maxRetryCount) {
+                        subscription.markCancelled(now);
+                        cancelled = true;
+                      }
+                      subscriptionRepository.save(subscription);
+                      return new BillingFailureResult(true, cancelled, retryCount);
+                    })
+                .orElseGet(() -> new BillingFailureResult(false, false, 0)));
   }
 
   private record BillingContext(Long subscriptionId, Long userId, String merchantUid) {}
+
+  private record BillingFailureResult(
+      boolean subscriptionFound, boolean cancelled, int retryCount) {}
 }

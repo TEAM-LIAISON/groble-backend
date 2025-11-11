@@ -35,7 +35,8 @@ public class SubscriptionService {
   private static final String SUBSCRIPTION_CANCEL_REASON = "정기 결제 해지";
 
   @Transactional
-  public Subscription createSubscription(Purchase purchase, Payment payment, String billingKey) {
+  public SubscriptionCreationResult createSubscription(
+      Purchase purchase, Payment payment, String billingKey) {
     User user = purchase.getUser();
     if (user == null) {
       throw new IllegalArgumentException("Subscriptions are only supported for members.");
@@ -66,7 +67,7 @@ public class SubscriptionService {
           user.getId(),
           content.getId(),
           nextBillingDate);
-      return existingSubscription;
+      return SubscriptionCreationResult.renewed(existingSubscription);
     }
 
     Subscription subscription =
@@ -88,7 +89,7 @@ public class SubscriptionService {
         user.getId(),
         content.getId(),
         nextBillingDate);
-    return saved;
+    return SubscriptionCreationResult.created(saved);
   }
 
   @Transactional

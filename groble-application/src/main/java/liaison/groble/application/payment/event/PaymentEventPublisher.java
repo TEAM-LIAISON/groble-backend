@@ -49,6 +49,9 @@ public class PaymentEventPublisher {
               .optionId(completionResult.getOptionId())
               .selectedOptionName(completionResult.getSelectedOptionName())
               .purchasedAt(completionResult.getPurchasedAt())
+              .subscriptionRenewal(completionResult.isSubscriptionRenewal())
+              .subscriptionId(completionResult.getSubscriptionId())
+              .subscriptionNextBillingDate(completionResult.getSubscriptionNextBillingDate())
               .build();
 
       eventPublisher.publish(event);
@@ -88,6 +91,9 @@ public class PaymentEventPublisher {
               .optionId(completionResult.getOptionId())
               .selectedOptionName(completionResult.getSelectedOptionName())
               .purchasedAt(completionResult.getPurchasedAt())
+              .subscriptionRenewal(completionResult.isSubscriptionRenewal())
+              .subscriptionId(completionResult.getSubscriptionId())
+              .subscriptionNextBillingDate(completionResult.getSubscriptionNextBillingDate())
               .build();
 
       eventPublisher.publish(event);

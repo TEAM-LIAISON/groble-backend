@@ -24,6 +24,7 @@ import liaison.groble.application.purchase.service.PurchaseReader;
 import liaison.groble.application.settlement.policy.FeePolicyService;
 import liaison.groble.application.settlement.reader.SettlementReader;
 import liaison.groble.application.settlement.writer.SettlementWriter;
+import liaison.groble.application.subscription.service.SubscriptionCreationResult;
 import liaison.groble.application.subscription.service.SubscriptionService;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.domain.content.entity.Content;
@@ -201,8 +202,9 @@ public class PaymentTransactionService {
         payment.getId(),
         purchase.getId());
 
+    SubscriptionCreationResult subscriptionResult = null;
     if (purchase.getContent().getPaymentType() == ContentPaymentType.SUBSCRIPTION) {
-      registerSubscription(purchase, payment, payplePayment);
+      subscriptionResult = registerSubscription(purchase, payment, payplePayment);
     }
 
     return PaymentCompletionResult.builder()
@@ -223,6 +225,13 @@ public class PaymentTransactionService {
         .optionId(purchase.getSelectedOptionId())
         .selectedOptionName(purchase.getSelectedOptionName())
         .purchasedAt(purchase.getPurchasedAt())
+        .subscriptionRenewal(subscriptionResult != null && subscriptionResult.renewed())
+        .subscriptionId(
+            subscriptionResult != null ? subscriptionResult.subscription().getId() : null)
+        .subscriptionNextBillingDate(
+            subscriptionResult != null
+                ? subscriptionResult.subscription().getNextBillingDate()
+                : null)
         .build();
   }
 
@@ -264,13 +273,13 @@ public class PaymentTransactionService {
         .build();
   }
 
-  private void registerSubscription(
+  private SubscriptionCreationResult registerSubscription(
       Purchase purchase, Payment payment, PayplePayment payplePayment) {
     String billingKey = payplePayment.getPcdPayerId();
     if (billingKey == null || billingKey.isBlank()) {
       throw new IllegalStateException("정기결제에는 빌링키가 필요합니다.");
     }
-    subscriptionService.createSubscription(purchase, payment, billingKey);
+    return subscriptionService.createSubscription(purchase, payment, billingKey);
   }
 
   /** PayplePayment 생성 */

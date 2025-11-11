@@ -1,6 +1,7 @@
 package liaison.groble.application.payment.event;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import liaison.groble.domain.content.enums.ContentPaymentType;
@@ -37,4 +38,7 @@ public class PaymentCompletedEvent {
   private Long optionId;
   private String selectedOptionName;
   private LocalDateTime purchasedAt;
+  private boolean subscriptionRenewal;
+  private Long subscriptionId;
+  private LocalDate subscriptionNextBillingDate;
 }
