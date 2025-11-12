@@ -256,6 +256,12 @@ project(':groble-domain') {
     }
 
     tasks.named('compileJava', JavaCompile).configure {
+        // IntelliJ의 Gradle 미위임 빌드에서도 중복 생성 오류가 발생하지 않도록 매번 생성 디렉터리를 정리
+        doFirst {
+            if (querydslDir.exists()) {
+                project.delete(querydslDir)
+            }
+        }
         options.annotationProcessorGeneratedSourcesDirectory = querydslDir
     }
 
