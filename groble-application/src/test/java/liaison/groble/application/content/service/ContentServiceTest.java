@@ -202,7 +202,7 @@ class ContentServiceTest {
   }
 
   @Test
-  void stopContent_transitionsActiveContentToPaused() {
+  void stopContent_transitionsActiveContentToDiscontinued() {
     // given
     Long userId = 11L;
     Long contentId = 42L;
@@ -223,10 +223,10 @@ class ContentServiceTest {
     ContentDTO result = contentService.stopContent(userId, contentId);
 
     // then
-    assertThat(content.getStatus()).isEqualTo(ContentStatus.PAUSED);
+    assertThat(content.getStatus()).isEqualTo(ContentStatus.DISCONTINUED);
     assertThat(content.getAdminContentCheckingStatus())
         .isEqualTo(AdminContentCheckingStatus.PENDING);
-    assertThat(result.getStatus()).isEqualTo(ContentStatus.PAUSED.name());
+    assertThat(result.getStatus()).isEqualTo(ContentStatus.DISCONTINUED.name());
   }
 
   @Test
@@ -370,18 +370,21 @@ class ContentServiceTest {
 
     contentService.getMySellingContents(userId, pageable, "DRAFT");
 
+    ArgumentCaptor<List<ContentStatus>> statusesCaptor = ArgumentCaptor.forClass(List.class);
     ArgumentCaptor<Boolean> includePausedCaptor = ArgumentCaptor.forClass(Boolean.class);
     verify(contentReader)
         .findMyContentsWithStatus(
             any(Pageable.class),
             eq(userId),
-            any(),
+            statusesCaptor.capture(),
             isNull(),
             isNull(),
             anyBoolean(),
             anyBoolean(),
             includePausedCaptor.capture());
 
+    assertThat(statusesCaptor.getValue())
+        .containsExactlyInAnyOrder(ContentStatus.DRAFT, ContentStatus.DISCONTINUED);
     assertThat(includePausedCaptor.getValue()).isTrue();
   }
 }

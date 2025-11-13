@@ -220,6 +220,7 @@ public class ContentService {
       }
     }
 
+    enforceSubscriptionSellStatus(content);
     return saveAndConvertToDTO(content);
   }
 
@@ -290,6 +291,7 @@ public class ContentService {
     discordContentRegisterReportService.sendCreateContentRegisterReport(
         contentRegisterCreateReportDTO);
 
+    enforceSubscriptionSellStatus(content);
     return saveAndConvertToDTO(content);
   }
 
@@ -567,6 +569,16 @@ public class ContentService {
   private void ensureSubscriptionContent(Content content) {
     if (content.getPaymentType() != ContentPaymentType.SUBSCRIPTION) {
       throw new IllegalArgumentException("정기결제 콘텐츠에서만 사용할 수 있는 기능입니다.");
+    }
+  }
+
+  private void enforceSubscriptionSellStatus(Content content) {
+    if (content == null) {
+      return;
+    }
+
+    if (content.getPaymentType() == ContentPaymentType.SUBSCRIPTION) {
+      content.setSubscriptionSellStatus(SubscriptionSellStatus.OPEN);
     }
   }
 
@@ -891,7 +903,7 @@ public class ContentService {
     Content content = findAndValidateUserActiveContent(userId, contentId);
 
     // 2. 상태 업데이트
-    content.setStatus(ContentStatus.PAUSED);
+    content.setStatus(ContentStatus.DISCONTINUED);
     content.setAdminContentCheckingStatus(AdminContentCheckingStatus.PENDING);
 
     // 3. 저장 및 변환
