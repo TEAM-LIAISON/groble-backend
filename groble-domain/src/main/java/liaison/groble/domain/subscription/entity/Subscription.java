@@ -233,8 +233,8 @@ public class Subscription extends BaseTimeEntity {
     }
   }
 
-  public boolean canAttemptBilling(LocalDate today) {
-    if (today == null) {
+  public boolean canAttemptBilling(LocalDate today, LocalDateTime now, long retryIntervalMinutes) {
+    if (today == null || now == null) {
       return false;
     }
     if (this.status == SubscriptionStatus.CANCELLED) {
@@ -243,7 +243,12 @@ public class Subscription extends BaseTimeEntity {
     if (this.nextBillingDate == null || this.nextBillingDate.isAfter(today)) {
       return false;
     }
-    return this.lastBillingAttemptAt == null
-        || !this.lastBillingAttemptAt.toLocalDate().isEqual(today);
+
+    if (retryIntervalMinutes <= 0 || this.lastBillingAttemptAt == null) {
+      return true;
+    }
+
+    return java.time.Duration.between(this.lastBillingAttemptAt, now).toMinutes()
+        >= retryIntervalMinutes;
   }
 }

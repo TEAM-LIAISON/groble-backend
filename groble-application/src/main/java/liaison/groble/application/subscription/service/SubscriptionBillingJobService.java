@@ -38,6 +38,7 @@ public class SubscriptionBillingJobService {
   private final TransactionTemplate transactionTemplate;
   private final int batchSize;
   private final int maxRetryCount;
+  private final long retryIntervalMinutes;
 
   public SubscriptionBillingJobService(
       SubscriptionRepository subscriptionRepository,
@@ -45,12 +46,14 @@ public class SubscriptionBillingJobService {
       SubscriptionPaymentService subscriptionPaymentService,
       PlatformTransactionManager transactionManager,
       @Value("${subscription.billing.batch-size:50}") int batchSize,
-      @Value("${subscription.billing.max-retry-count:3}") int maxRetryCount) {
+      @Value("${subscription.billing.max-retry-count:3}") int maxRetryCount,
+      @Value("${subscription.billing.retry-interval-minutes:1440}") long retryIntervalMinutes) {
     this.subscriptionRepository = subscriptionRepository;
     this.recurringOrderFactory = recurringOrderFactory;
     this.subscriptionPaymentService = subscriptionPaymentService;
     this.batchSize = batchSize;
     this.maxRetryCount = maxRetryCount;
+    this.retryIntervalMinutes = retryIntervalMinutes;
 
     TransactionTemplate template = new TransactionTemplate(transactionManager);
     template.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
@@ -58,7 +61,8 @@ public class SubscriptionBillingJobService {
   }
 
   public void processDueSubscriptions() {
-    LocalDate today = LocalDate.now(BILLING_ZONE_ID);
+    LocalDateTime now = now();
+    LocalDate today = now.toLocalDate();
     Pageable pageable =
         PageRequest.of(
             0, batchSize, Sort.by("nextBillingDate").ascending().and(Sort.by("id").ascending()));
@@ -76,11 +80,13 @@ public class SubscriptionBillingJobService {
     dueSubscriptions.stream()
         .map(Subscription::getId)
         .filter(Objects::nonNull)
-        .forEach(subscriptionId -> processSingleSubscription(subscriptionId, today));
+        .forEach(subscriptionId -> processSingleSubscription(subscriptionId));
   }
 
-  private void processSingleSubscription(Long subscriptionId, LocalDate today) {
-    BillingContext context = prepareBillingContext(subscriptionId, today);
+  private void processSingleSubscription(Long subscriptionId) {
+    LocalDateTime now = now();
+    LocalDate today = now.toLocalDate();
+    BillingContext context = prepareBillingContext(subscriptionId, today, now);
     if (context == null) {
       return;
     }
@@ -112,15 +118,15 @@ public class SubscriptionBillingJobService {
     }
   }
 
-  private BillingContext prepareBillingContext(Long subscriptionId, LocalDate today) {
+  private BillingContext prepareBillingContext(
+      Long subscriptionId, LocalDate today, LocalDateTime now) {
     return transactionTemplate.execute(
         status ->
             subscriptionRepository
                 .findWithLockingById(subscriptionId)
-                .filter(subscription -> canAttemptBilling(subscription, today))
+                .filter(subscription -> canAttemptBilling(subscription, today, now))
                 .map(
                     subscription -> {
-                      LocalDateTime now = LocalDateTime.now(BILLING_ZONE_ID);
                       subscription.recordBillingAttempt(now);
                       Order order = recurringOrderFactory.createOrder(subscription);
                       subscriptionRepository.save(subscription);
@@ -132,10 +138,10 @@ public class SubscriptionBillingJobService {
                 .orElse(null));
   }
 
-  private boolean canAttemptBilling(Subscription subscription, LocalDate today) {
-    if (!subscription.canAttemptBilling(today)) {
+  private boolean canAttemptBilling(Subscription subscription, LocalDate today, LocalDateTime now) {
+    if (!subscription.canAttemptBilling(today, now, retryIntervalMinutes)) {
       log.debug(
-          "정기결제 청구 건너뜀 - subscriptionId: {}, status: {}, nextBillingDate: {}, 오늘 재시도 여부: {}",
+          "정기결제 청구 건너뜀 - subscriptionId: {}, status: {}, nextBillingDate: {}, lastAttempt: {}",
           subscription.getId(),
           subscription.getStatus(),
           subscription.getNextBillingDate(),
@@ -160,7 +166,7 @@ public class SubscriptionBillingJobService {
                 .findWithLockingById(subscriptionId)
                 .map(
                     subscription -> {
-                      LocalDateTime now = LocalDateTime.now(BILLING_ZONE_ID);
+                      LocalDateTime now = now();
                       subscription.markBillingFailure(now);
                       int retryCount = subscription.getBillingRetryCount();
                       boolean cancelled = false;
@@ -178,4 +184,8 @@ public class SubscriptionBillingJobService {
 
   private record BillingFailureResult(
       boolean subscriptionFound, boolean cancelled, int retryCount) {}
+
+  private LocalDateTime now() {
+    return LocalDateTime.now(BILLING_ZONE_ID);
+  }
 }
