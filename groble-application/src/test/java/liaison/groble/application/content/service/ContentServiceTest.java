@@ -33,6 +33,7 @@ import liaison.groble.application.subscription.service.SubscriptionService;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.domain.content.dto.FlatContentPreviewDTO;
 import liaison.groble.domain.content.entity.Category;
+import liaison.groble.domain.content.entity.CoachingOption;
 import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.content.enums.AdminContentCheckingStatus;
 import liaison.groble.domain.content.enums.ContentPaymentType;
@@ -199,6 +200,74 @@ class ContentServiceTest {
     ArgumentCaptor<Content> captor = ArgumentCaptor.forClass(Content.class);
     verify(contentRepository).save(captor.capture());
     assertThat(captor.getValue().getPaymentType()).isEqualTo(ContentPaymentType.SUBSCRIPTION);
+  }
+
+  @Test
+  void draftContent_subscriptionWithSoldOptionsAddsNewOnes() {
+    // given
+    Long userId = 3L;
+    Long contentId = 40L;
+    Long soldOptionId = 100L;
+
+    User user = User.builder().id(userId).build();
+    Content content = new Content(user);
+    ReflectionTestUtils.setField(content, "id", contentId);
+    content.setStatus(ContentStatus.DRAFT);
+    content.setContentType(ContentType.COACHING);
+    content.setPaymentType(ContentPaymentType.SUBSCRIPTION);
+    content.incrementSaleCount();
+
+    CoachingOption soldOption = new CoachingOption();
+    soldOption.updateCommonFields("기존옵션", "판매 이력 있음", BigDecimal.ONE);
+    content.addOption(soldOption);
+    ReflectionTestUtils.setField(soldOption, "id", soldOptionId);
+
+    CoachingOption unsoldOption = new CoachingOption();
+    unsoldOption.updateCommonFields("임시옵션", "판매 이력 없음", BigDecimal.valueOf(5));
+    content.addOption(unsoldOption);
+    ReflectionTestUtils.setField(unsoldOption, "id", soldOptionId + 1);
+
+    when(userReader.getUserById(userId)).thenReturn(user);
+    when(contentReader.getContentWithSeller(contentId)).thenReturn(content);
+    when(contentRepository.save(any(Content.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
+    when(purchaseRepository.findSoldOptionIdsByContentId(contentId))
+        .thenReturn(List.of(soldOptionId));
+
+    ContentDTO requestDto =
+        ContentDTO.builder()
+            .contentId(contentId)
+            .paymentType(ContentPaymentType.SUBSCRIPTION.name())
+            .contentType(ContentType.COACHING.name())
+            .options(
+                List.of(
+                    ContentOptionDTO.builder()
+                        .contentOptionId(soldOptionId)
+                        .name("기존옵션")
+                        .description("판매 이력 있음")
+                        .price(BigDecimal.ONE)
+                        .build(),
+                    ContentOptionDTO.builder()
+                        .name("새 캔디 옵션")
+                        .description("판매 이력 없음")
+                        .price(BigDecimal.valueOf(20))
+                        .build()))
+            .build();
+
+    // when
+    ContentDTO result = contentService.draftContent(userId, requestDto);
+
+    // then
+    assertThat(soldOption.isActive()).isTrue();
+    assertThat(unsoldOption.isActive()).isFalse();
+    assertThat(
+            content.getOptions().stream()
+                .filter(option -> option.isActive() && "새 캔디 옵션".equals(option.getName()))
+                .count())
+        .isEqualTo(1);
+    assertThat(result.getOptions())
+        .extracting(ContentOptionDTO::getName)
+        .contains("기존옵션", "새 캔디 옵션");
   }
 
   @Test

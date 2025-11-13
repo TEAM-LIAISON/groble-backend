@@ -1112,18 +1112,25 @@ public class ContentService {
     List<ContentOption> activeOptions =
         content.getOptions().stream().filter(ContentOption::isActive).collect(Collectors.toList());
 
-    if (content.getPaymentType() == ContentPaymentType.SUBSCRIPTION) {
-      boolean hasSoldOptions =
-          !purchaseRepository.findSoldOptionIdsByContentId(content.getId()).isEmpty();
-      if (hasSoldOptions) {
-        log.info("정기결제 판매 이력 있는 콘텐츠의 옵션 변경 요청 무시: contentId={}", content.getId());
-        return;
-      }
-    }
-
     // 새 옵션이 없으면 종료
     if (newOptions == null || newOptions.isEmpty()) {
       log.info("새 옵션 데이터가 없음, 스킵: contentId={}", content.getId());
+      return;
+    }
+
+    boolean subscriptionWithSalesHistory = false;
+    Set<Long> soldOptionIds = Collections.emptySet();
+    if (content.getPaymentType() == ContentPaymentType.SUBSCRIPTION) {
+      List<Long> soldIds = purchaseRepository.findSoldOptionIdsByContentId(content.getId());
+      if (!soldIds.isEmpty()) {
+        soldOptionIds = new HashSet<>(soldIds);
+        subscriptionWithSalesHistory = true;
+      }
+    }
+
+    if (subscriptionWithSalesHistory) {
+      preserveSoldOptionsAndAppendNew(content, activeOptions, newOptions, soldOptionIds);
+      updateLowestPriceFromActiveOptions(content);
       return;
     }
 
@@ -1154,6 +1161,44 @@ public class ContentService {
         });
 
     updateLowestPriceFromActiveOptions(content);
+  }
+
+  private void preserveSoldOptionsAndAppendNew(
+      Content content,
+      List<ContentOption> activeOptions,
+      List<ContentOptionDTO> newOptions,
+      Set<Long> soldOptionIds) {
+
+    activeOptions.stream()
+        .filter(option -> option.getId() == null || !soldOptionIds.contains(option.getId()))
+        .forEach(
+            option -> {
+              option.deactivate();
+              log.info("판매 이력 없는 기존 옵션 비활성화: optionId={}", option.getId());
+            });
+
+    for (ContentOptionDTO dto : newOptions) {
+      if (dto == null) {
+        continue;
+      }
+
+      Long optionId = dto.getContentOptionId();
+      if (optionId != null && soldOptionIds.contains(optionId)) {
+        log.info("판매 이력 있는 옵션 변경 요청 무시: optionId={}", optionId);
+        continue;
+      }
+
+      if (content.getContentType() == null) {
+        log.warn("콘텐츠 유형이 지정되지 않았습니다. 기본값으로 DOCUMENT 설정");
+        content.setContentType(ContentType.DOCUMENT);
+      }
+
+      ContentOption newOption = createOptionByContentType(content.getContentType(), dto);
+      if (newOption != null) {
+        content.addOption(newOption);
+        log.info("새 옵션 추가: name={}, price={}", newOption.getName(), newOption.getPrice());
+      }
+    }
   }
 
   private void updateLowestPriceFromActiveOptions(Content content) {

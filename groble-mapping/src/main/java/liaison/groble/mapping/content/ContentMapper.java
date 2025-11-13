@@ -51,7 +51,7 @@ public interface ContentMapper extends PageResponseMapper {
               coachingOption -> {
                 options.add(
                     ContentOptionDTO.builder()
-                        .contentOptionId(null) // Draft 단계에서는 ID가 없음
+                        .contentOptionId(coachingOption.getContentOptionId())
                         .name(coachingOption.getName())
                         .description(coachingOption.getDescription())
                         .price(coachingOption.getPrice())
@@ -68,7 +68,7 @@ public interface ContentMapper extends PageResponseMapper {
               documentOption -> {
                 options.add(
                     ContentOptionDTO.builder()
-                        .contentOptionId(null)
+                        .contentOptionId(documentOption.getContentOptionId())
                         .name(documentOption.getName())
                         .description(documentOption.getDescription())
                         .price(documentOption.getPrice())
@@ -95,7 +95,7 @@ public interface ContentMapper extends PageResponseMapper {
               coachingOption -> {
                 options.add(
                     ContentOptionDTO.builder()
-                        .contentOptionId(null) // Draft 단계에서는 ID가 없음
+                        .contentOptionId(coachingOption.getContentOptionId())
                         .name(coachingOption.getName())
                         .description(coachingOption.getDescription())
                         .price(coachingOption.getPrice())
@@ -112,7 +112,7 @@ public interface ContentMapper extends PageResponseMapper {
               documentOption -> {
                 options.add(
                     ContentOptionDTO.builder()
-                        .contentOptionId(null)
+                        .contentOptionId(documentOption.getContentOptionId())
                         .name(documentOption.getName())
                         .description(documentOption.getDescription())
                         .price(documentOption.getPrice())
