@@ -6,12 +6,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.math.BigDecimal;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.transaction.annotation.Transactional;
 
 /** 테스트 케이스 - 원화 반올림 검증 */
-@SpringBootTest(classes = liaison.groble.api.server.GrobleApiServerApplication.class)
-@Transactional
 public class SettlementRoundingTest {
   private static BigDecimal bd(String s) {
     return new BigDecimal(s);

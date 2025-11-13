@@ -76,7 +76,12 @@ public class SubscriptionBillingJobService {
       return;
     }
 
-    log.info("자동 정기결제 대상 {}건 처리 시작 - 기준일 {}", dueSubscriptions.size(), today);
+    log.info(
+        "정기결제 배치 시작 - 기준일 {}, 대상 건수 {}, 재시도 간격 {}분, 최대 재시도 {}회",
+        today,
+        dueSubscriptions.size(),
+        retryIntervalMinutes,
+        maxRetryCount);
     dueSubscriptions.stream()
         .map(Subscription::getId)
         .filter(Objects::nonNull)
@@ -86,8 +91,10 @@ public class SubscriptionBillingJobService {
   private void processSingleSubscription(Long subscriptionId) {
     LocalDateTime now = now();
     LocalDate today = now.toLocalDate();
+    log.info("정기결제 청구 준비 시작 - subscriptionId: {}", subscriptionId);
     BillingContext context = prepareBillingContext(subscriptionId, today, now);
     if (context == null) {
+      log.info("정기결제 청구 준비 실패(조건 미충족) - subscriptionId: {}", subscriptionId);
       return;
     }
 
@@ -130,6 +137,11 @@ public class SubscriptionBillingJobService {
                       subscription.recordBillingAttempt(now);
                       Order order = recurringOrderFactory.createOrder(subscription);
                       subscriptionRepository.save(subscription);
+                      log.info(
+                          "정기결제 청구 준비 완료 - subscriptionId: {}, userId: {}, merchantUid: {}",
+                          subscription.getId(),
+                          subscription.getUser().getId(),
+                          order.getMerchantUid());
                       return new BillingContext(
                           subscription.getId(),
                           subscription.getUser().getId(),

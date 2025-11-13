@@ -47,8 +47,8 @@ spring:
     database-platform: org.hibernate.dialect.MySQL8Dialect
     properties:
       hibernate:
-        format_sql: true
-        show_sql: true
+        format_sql: false
+        show_sql: false
         use_sql_comments: true
         default_batch_fetch_size: 100
         generate_statistics: false   # 성능 모니터링 설정
@@ -140,6 +140,8 @@ logging:
     liaison: INFO
     org.springdoc: INFO
     io.swagger.v3: INFO
+    org.hibernate.SQL: OFF
+    org.hibernate.type.descriptor.sql: OFF
     software.amazon.awssdk: INFO
     org.apache.http: WARN
     org.apache.hc: WARN

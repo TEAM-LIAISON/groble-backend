@@ -124,7 +124,7 @@ public class ContentService {
                           userId != null && userId.equals(firstRow.getReviewerId()) ? true : false)
                       .createdAt(firstRow.getReviewCreatedAt())
                       .reviewerProfileImageUrl(firstRow.getReviewerProfileImageUrl())
-                      .reviewerNickname(firstRow.getReviewerNickname())
+                      .reviewerNickname(maskNickname(firstRow.getReviewerNickname()))
                       .reviewContent(firstRow.getReviewContent())
                       .selectedOptionName(firstRow.getSelectedOptionName())
                       .rating(firstRow.getRating())
@@ -526,6 +526,18 @@ public class ContentService {
   public List<ContentCardDTO> getHomeContents() {
     List<FlatContentPreviewDTO> flatDTOs = contentCustomRepository.findHomeContents();
     return flatDTOs.stream().map(this::convertFlatDTOToCardDTO).collect(Collectors.toList());
+  }
+
+  private static final String REVIEWER_NICKNAME_MASK_SUFFIX = "*****";
+
+  private String maskNickname(String nickname) {
+    if (nickname == null || nickname.isBlank()) {
+      return REVIEWER_NICKNAME_MASK_SUFFIX;
+    }
+
+    int firstCodePoint = nickname.codePointAt(0);
+    String firstCharacter = new String(Character.toChars(firstCodePoint));
+    return firstCharacter + REVIEWER_NICKNAME_MASK_SUFFIX;
   }
 
   @Transactional(readOnly = true)
