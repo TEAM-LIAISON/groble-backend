@@ -1,6 +1,8 @@
 package liaison.groble.application.purchase.service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.EnumSet;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
@@ -20,6 +22,8 @@ import liaison.groble.domain.purchase.dto.FlatTopContentStatDTO;
 import liaison.groble.domain.purchase.entity.Purchase;
 import liaison.groble.domain.purchase.repository.PurchaseCustomRepository;
 import liaison.groble.domain.purchase.repository.PurchaseRepository;
+import liaison.groble.domain.subscription.enums.SubscriptionStatus;
+import liaison.groble.domain.subscription.repository.SubscriptionRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 public class PurchaseReader {
   private final PurchaseRepository purchaseRepository;
   private final PurchaseCustomRepository purchaseCustomRepository;
+  private final SubscriptionRepository subscriptionRepository;
 
   // 주문 번호로 내가 구매한 구매 정보를 Order Fetch Join 단일 조회
   public Purchase getPurchaseWithOrderAndContent(String merchantUid, Long userId) {
@@ -132,6 +137,61 @@ public class PurchaseReader {
   }
 
   public boolean isContentPurchasedByGuestUser(Long guestUserId, Long contentId) {
+    return purchaseCustomRepository.existsByGuestUserAndContent(guestUserId, contentId);
+  }
+
+  /**
+   * 유저가 콘텐츠에 접근 가능한지 확인 (구독 및 유예기간 포함)
+   *
+   * <p>다음 경우에 접근 가능:
+   *
+   * <ul>
+   *   <li>구매 기록이 있고 취소되지 않은 경우
+   *   <li>구독이 활성화(ACTIVE, PAST_DUE) 상태인 경우
+   *   <li>구독이 유예기간 중(CANCELLED + grace_period_ends_at > now)인 경우
+   * </ul>
+   *
+   * @param userId 사용자 ID
+   * @param contentId 콘텐츠 ID
+   * @return 접근 가능하면 true
+   */
+  public boolean hasAccessToContent(Long userId, Long contentId) {
+    // 1. 구독 확인 (ACTIVE, PAST_DUE, 유예기간 중 CANCELLED)
+    return subscriptionRepository
+        .findByContentIdAndUserId(contentId, userId)
+        .map(
+            subscription -> {
+              SubscriptionStatus status = subscription.getStatus();
+
+              // ACTIVE 또는 PAST_DUE 상태면 접근 가능
+              if (EnumSet.of(SubscriptionStatus.ACTIVE, SubscriptionStatus.PAST_DUE)
+                  .contains(status)) {
+                return true;
+              }
+
+              // CANCELLED이지만 유예기간 중이면 접근 가능
+              if (status == SubscriptionStatus.CANCELLED
+                  && subscription.isGracePeriodActive(LocalDateTime.now())) {
+                return true;
+              }
+
+              return false;
+            })
+        .orElseGet(
+            () -> {
+              // 2. 구독이 없으면 일반 구매 확인
+              return purchaseCustomRepository.existsByUserAndContent(userId, contentId);
+            });
+  }
+
+  /**
+   * 비회원이 콘텐츠에 접근 가능한지 확인 (비회원은 구독이 없으므로 구매 기록만 확인)
+   *
+   * @param guestUserId 비회원 사용자 ID
+   * @param contentId 콘텐츠 ID
+   * @return 접근 가능하면 true
+   */
+  public boolean hasAccessToContentForGuest(Long guestUserId, Long contentId) {
     return purchaseCustomRepository.existsByGuestUserAndContent(guestUserId, contentId);
   }
 }

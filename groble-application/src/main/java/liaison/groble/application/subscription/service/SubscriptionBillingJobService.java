@@ -16,11 +16,15 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import liaison.groble.application.notification.dto.KakaoNotificationDTO;
+import liaison.groble.application.notification.enums.KakaoNotificationType;
+import liaison.groble.application.notification.service.KakaoNotificationService;
 import liaison.groble.application.payment.service.SubscriptionPaymentService;
 import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.subscription.entity.Subscription;
 import liaison.groble.domain.subscription.enums.SubscriptionStatus;
 import liaison.groble.domain.subscription.repository.SubscriptionRepository;
+import liaison.groble.domain.user.entity.User;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -35,25 +39,31 @@ public class SubscriptionBillingJobService {
   private final SubscriptionRepository subscriptionRepository;
   private final SubscriptionRecurringOrderFactory recurringOrderFactory;
   private final SubscriptionPaymentService subscriptionPaymentService;
+  private final KakaoNotificationService kakaoNotificationService;
   private final TransactionTemplate transactionTemplate;
   private final int batchSize;
   private final int maxRetryCount;
   private final long retryIntervalMinutes;
+  private final int gracePeriodDays;
 
   public SubscriptionBillingJobService(
       SubscriptionRepository subscriptionRepository,
       SubscriptionRecurringOrderFactory recurringOrderFactory,
       SubscriptionPaymentService subscriptionPaymentService,
+      KakaoNotificationService kakaoNotificationService,
       PlatformTransactionManager transactionManager,
       @Value("${subscription.billing.batch-size:50}") int batchSize,
       @Value("${subscription.billing.max-retry-count:3}") int maxRetryCount,
-      @Value("${subscription.billing.retry-interval-minutes:1440}") long retryIntervalMinutes) {
+      @Value("${subscription.billing.retry-interval-minutes:1440}") long retryIntervalMinutes,
+      @Value("${subscription.billing.grace-period-days:7}") int gracePeriodDays) {
     this.subscriptionRepository = subscriptionRepository;
     this.recurringOrderFactory = recurringOrderFactory;
     this.subscriptionPaymentService = subscriptionPaymentService;
+    this.kakaoNotificationService = kakaoNotificationService;
     this.batchSize = batchSize;
     this.maxRetryCount = maxRetryCount;
     this.retryIntervalMinutes = retryIntervalMinutes;
+    this.gracePeriodDays = gracePeriodDays;
 
     TransactionTemplate template = new TransactionTemplate(transactionManager);
     template.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
@@ -110,17 +120,34 @@ public class SubscriptionBillingJobService {
           context.subscriptionId(),
           context.merchantUid(),
           ex);
+      String failureReason = extractFailureReason(ex);
       BillingFailureResult failureResult = markBillingFailure(context.subscriptionId());
       if (!failureResult.subscriptionFound()) {
         log.warn("정기결제 청구 실패 처리 중 구독을 찾을 수 없습니다. subscriptionId={}", context.subscriptionId());
         return;
       }
+
+      // 1차 실패 시 구매자에게 알림톡 전송
+      if (failureResult.retryCount() == 1 && failureResult.subscription() != null) {
+        sendPaymentFailedNotification(failureResult.subscription(), failureReason);
+      }
+
+      // 3회 실패로 해지 시 구매자에게 알림톡 전송
       if (failureResult.cancelled()) {
         log.warn(
             "정기결제 자동 청구 재시도 {}회 실패로 구독 해지 - subscriptionId: {}, merchantUid: {}",
             failureResult.retryCount(),
             context.subscriptionId(),
             context.merchantUid());
+        if (gracePeriodDays > 0) {
+          log.info(
+              "정기결제 유예기간 시작 - subscriptionId: {}, gracePeriodDays: {}",
+              context.subscriptionId(),
+              gracePeriodDays);
+        }
+        if (failureResult.subscription() != null) {
+          sendSubscriptionCancelledNotification(failureResult.subscription(), failureReason);
+        }
       }
     }
   }
@@ -184,18 +211,105 @@ public class SubscriptionBillingJobService {
                       boolean cancelled = false;
                       if (retryCount >= maxRetryCount) {
                         subscription.markCancelled(now);
+                        subscription.startGracePeriod(now, gracePeriodDays);
                         cancelled = true;
                       }
-                      subscriptionRepository.save(subscription);
-                      return new BillingFailureResult(true, cancelled, retryCount);
+                      Subscription saved = subscriptionRepository.save(subscription);
+                      return new BillingFailureResult(true, cancelled, retryCount, saved);
                     })
-                .orElseGet(() -> new BillingFailureResult(false, false, 0)));
+                .orElseGet(() -> new BillingFailureResult(false, false, 0, null)));
+  }
+
+  /** 정기결제 1차 실패 시 구매자에게 알림톡 전송 */
+  private void sendPaymentFailedNotification(Subscription subscription, String failureReason) {
+    try {
+      User user = subscription.getUser();
+      if (user == null || user.getPhoneNumber() == null) {
+        log.warn("정기결제 실패 알림톡 전송 실패 - 사용자 정보 없음. subscriptionId: {}", subscription.getId());
+        return;
+      }
+
+      kakaoNotificationService.sendNotification(
+          KakaoNotificationDTO.builder()
+              .type(KakaoNotificationType.SUBSCRIPTION_PAYMENT_FAILED)
+              .buyerName(user.getNickname())
+              .phoneNumber(user.getPhoneNumber())
+              .contentTitle(subscription.getContent().getTitle())
+              .price(subscription.getPrice())
+              .failureReason(failureReason)
+              .build());
+
+      log.info(
+          "정기결제 실패 알림톡 전송 완료 - subscriptionId: {}, retryCount: {}",
+          subscription.getId(),
+          subscription.getBillingRetryCount());
+    } catch (Exception e) {
+      log.error("정기결제 실패 알림톡 전송 중 오류 발생 - subscriptionId: {}", subscription.getId(), e);
+    }
+  }
+
+  /** 정기결제 3회 실패로 해지 시 구매자에게 알림톡 전송 */
+  private void sendSubscriptionCancelledNotification(
+      Subscription subscription, String failureReason) {
+    try {
+      User user = subscription.getUser();
+      if (user == null || user.getPhoneNumber() == null) {
+        log.warn("구독 해지 알림톡 전송 실패 - 사용자 정보 없음. subscriptionId: {}", subscription.getId());
+        return;
+      }
+
+      kakaoNotificationService.sendNotification(
+          KakaoNotificationDTO.builder()
+              .type(KakaoNotificationType.SUBSCRIPTION_CANCELLED)
+              .buyerName(user.getNickname())
+              .phoneNumber(user.getPhoneNumber())
+              .contentTitle(subscription.getContent().getTitle())
+              .price(subscription.getPrice())
+              .failureReason(failureReason)
+              .build());
+
+      log.info("구독 해지 알림톡 전송 완료 - subscriptionId: {}", subscription.getId());
+    } catch (Exception e) {
+      log.error("구독 해지 알림톡 전송 중 오류 발생 - subscriptionId: {}", subscription.getId(), e);
+    }
+  }
+
+  /** 예외로부터 사용자에게 표시할 실패 사유 추출 */
+  private String extractFailureReason(Exception ex) {
+    if (ex == null) {
+      return null;
+    }
+
+    String message = ex.getMessage();
+    if (message == null || message.isBlank()) {
+      return null;
+    }
+
+    // 페이플 결제 오류 메시지에서 의미 있는 부분 추출
+    if (message.contains("한도초과") || message.contains("한도 초과")) {
+      return "카드 한도 초과";
+    }
+    if (message.contains("잔액부족") || message.contains("잔액 부족")) {
+      return "카드 잔액 부족";
+    }
+    if (message.contains("정지") || message.contains("해지")) {
+      return "카드 정지 또는 해지";
+    }
+    if (message.contains("유효기간")) {
+      return "카드 유효기간 만료";
+    }
+    if (message.contains("승인거절") || message.contains("승인 거절")) {
+      return "카드사 승인 거절";
+    }
+
+    // 기본 실패 사유
+    return null;
   }
 
   private record BillingContext(Long subscriptionId, Long userId, String merchantUid) {}
 
   private record BillingFailureResult(
-      boolean subscriptionFound, boolean cancelled, int retryCount) {}
+      boolean subscriptionFound, boolean cancelled, int retryCount, Subscription subscription) {}
 
   private LocalDateTime now() {
     return LocalDateTime.now(BILLING_ZONE_ID);

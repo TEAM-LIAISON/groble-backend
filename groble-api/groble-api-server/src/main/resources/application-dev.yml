@@ -85,9 +85,9 @@ app:
   frontend-url: https://dev.groble.im
   backend-url: https://api.dev.groble.im
   cookie:
-    domain: 
+    domain:
     domain.dev: dev.groble.im
-    admin-domain: 
+    admin-domain:
     admin-domain.dev: admin.dev.groble.im
   jwt:
     environment: dev
@@ -95,6 +95,17 @@ app:
     base-url: https://dev.groble.im
     path: /reset-password
     expiration-ms: 200000 # 2 minutes
+
+subscription:
+  billing:
+    cron: "0 */5 * * * ?"
+    batch-size: 50
+    max-retry-count: 3
+    retry-interval-minutes: 5
+    grace-period-days: 7
+  grace-period:
+    cron: "0 */30 * * * ?"
+    batch-size: 50
 
 # Springdoc OpenAPI Configuration
 springdoc:

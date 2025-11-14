@@ -111,6 +111,17 @@ app:
     path: /reset-password
     expiration-minutes: 200000
 
+subscription:
+  billing:
+    cron: "0 */1 * * * ?"
+    batch-size: 10
+    max-retry-count: 3
+    retry-interval-minutes: 1
+    grace-period-days: 1
+  grace-period:
+    cron: "0 */30 * * * ?"
+    batch-size: 50
+
 # Springdoc OpenAPI Configuration
 springdoc:
   swagger-ui:

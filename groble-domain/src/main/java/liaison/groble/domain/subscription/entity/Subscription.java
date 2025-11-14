@@ -96,6 +96,9 @@ public class Subscription extends BaseTimeEntity {
   @Column(name = "billing_retry_count", nullable = false)
   private int billingRetryCount;
 
+  @Column(name = "grace_period_ends_at")
+  private LocalDateTime gracePeriodEndsAt;
+
   @Builder(access = AccessLevel.PRIVATE)
   private Subscription(
       User user,
@@ -163,6 +166,7 @@ public class Subscription extends BaseTimeEntity {
     this.status = SubscriptionStatus.CANCELLED;
     this.cancelledAt = cancelledAt != null ? cancelledAt : LocalDateTime.now();
     this.billingRetryCount = 0;
+    this.gracePeriodEndsAt = null;
   }
 
   public void renew(
@@ -206,6 +210,7 @@ public class Subscription extends BaseTimeEntity {
     this.cancelledAt = null;
     this.billingRetryCount = 0;
     this.lastBillingAttemptAt = null;
+    clearGracePeriod();
   }
 
   private void initializeBillingState(LocalDateTime now) {
@@ -223,6 +228,7 @@ public class Subscription extends BaseTimeEntity {
     this.lastBillingAttemptAt = successAt;
     this.billingRetryCount = 0;
     this.status = SubscriptionStatus.ACTIVE;
+    clearGracePeriod();
   }
 
   public void markBillingFailure(LocalDateTime attemptAt) {
@@ -250,5 +256,25 @@ public class Subscription extends BaseTimeEntity {
 
     return java.time.Duration.between(this.lastBillingAttemptAt, now).toMinutes()
         >= retryIntervalMinutes;
+  }
+
+  public void startGracePeriod(LocalDateTime startAt, int gracePeriodDays) {
+    if (startAt == null || gracePeriodDays <= 0) {
+      this.gracePeriodEndsAt = null;
+      return;
+    }
+
+    this.gracePeriodEndsAt = startAt.plusDays(gracePeriodDays);
+  }
+
+  public boolean isGracePeriodActive(LocalDateTime now) {
+    if (now == null || gracePeriodEndsAt == null) {
+      return false;
+    }
+    return !now.isAfter(gracePeriodEndsAt);
+  }
+
+  public void clearGracePeriod() {
+    this.gracePeriodEndsAt = null;
   }
 }

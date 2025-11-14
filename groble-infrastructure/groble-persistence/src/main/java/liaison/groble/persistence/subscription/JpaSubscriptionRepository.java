@@ -1,6 +1,7 @@
 package liaison.groble.persistence.subscription;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -46,4 +47,9 @@ public interface JpaSubscriptionRepository extends JpaRepository<Subscription, L
   @Lock(LockModeType.PESSIMISTIC_WRITE)
   @Query("select s from Subscription s where s.id = :id")
   Optional<Subscription> findWithLockingById(@Param("id") Long id);
+
+  Optional<Subscription> findByContentIdAndUserId(Long contentId, Long userId);
+
+  List<Subscription> findByStatusAndGracePeriodEndsAtBefore(
+      SubscriptionStatus status, LocalDateTime dateTime, Pageable pageable);
 }

@@ -1,6 +1,7 @@
 package liaison.groble.domain.subscription.repository;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -41,4 +42,9 @@ public interface SubscriptionRepository {
   Optional<Subscription> findWithLockingById(Long id);
 
   Optional<Subscription> findById(Long id);
+
+  Optional<Subscription> findByContentIdAndUserId(Long contentId, Long userId);
+
+  List<Subscription> findByStatusAndGracePeriodEndsAtBefore(
+      SubscriptionStatus status, LocalDateTime dateTime, Pageable pageable);
 }

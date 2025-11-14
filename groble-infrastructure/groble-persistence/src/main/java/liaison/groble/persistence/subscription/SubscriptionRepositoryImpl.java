@@ -1,6 +1,7 @@
 package liaison.groble.persistence.subscription;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -90,5 +91,17 @@ public class SubscriptionRepositoryImpl implements SubscriptionRepository {
   @Override
   public Optional<Subscription> findById(Long id) {
     return jpaSubscriptionRepository.findById(id);
+  }
+
+  @Override
+  public Optional<Subscription> findByContentIdAndUserId(Long contentId, Long userId) {
+    return jpaSubscriptionRepository.findByContentIdAndUserId(contentId, userId);
+  }
+
+  @Override
+  public List<Subscription> findByStatusAndGracePeriodEndsAtBefore(
+      SubscriptionStatus status, LocalDateTime dateTime, Pageable pageable) {
+    return jpaSubscriptionRepository.findByStatusAndGracePeriodEndsAtBefore(
+        status, dateTime, pageable);
   }
 }
