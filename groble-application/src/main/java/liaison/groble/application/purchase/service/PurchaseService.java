@@ -1,5 +1,8 @@
 package liaison.groble.application.purchase.service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
@@ -10,11 +13,13 @@ import org.springframework.transaction.annotation.Transactional;
 import liaison.groble.application.guest.reader.GuestUserReader;
 import liaison.groble.application.market.dto.ContactInfoDTO;
 import liaison.groble.application.order.service.OrderReader;
+import liaison.groble.application.payment.service.BillingKeyService;
 import liaison.groble.application.purchase.dto.PurchaseContentCardDTO;
 import liaison.groble.application.purchase.dto.PurchasedContentDetailDTO;
 import liaison.groble.application.sell.SellerContactReader;
 import liaison.groble.common.exception.ContactNotFoundException;
 import liaison.groble.common.response.PageResponse;
+import liaison.groble.domain.content.enums.ContentPaymentType;
 import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.order.entity.OrderItem;
 import liaison.groble.domain.purchase.dto.FlatPurchaseContentDetailDTO;
@@ -30,10 +35,14 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class PurchaseService {
 
+  private static final ZoneId DEFAULT_TIME_ZONE = ZoneId.of("Asia/Seoul");
+  private static final long CANCEL_AVAILABLE_DAYS = 7L;
+
   private final OrderReader orderReader;
   private final PurchaseReader purchaseReader;
   private final SellerContactReader sellerContactReader;
   private final GuestUserReader guestUserReader;
+  private final BillingKeyService billingKeyService;
 
   // 내가 구매한 콘텐츠 목록 조회 (회원용)
   @Transactional(readOnly = true)
@@ -86,7 +95,14 @@ public class PurchaseService {
     FlatPurchaseContentDetailDTO flatPurchaseContentDetailDTO =
         purchaseReader.getPurchaseContentDetail(userId, merchantUid);
 
-    return toPurchasedContentDetailDTO(flatPurchaseContentDetailDTO);
+    boolean canResumeSubscription = false;
+    if (ContentPaymentType.SUBSCRIPTION
+        .name()
+        .equals(flatPurchaseContentDetailDTO.getPaymentType())) {
+      canResumeSubscription = billingKeyService.findActiveBillingKey(userId).isPresent();
+    }
+
+    return toPurchasedContentDetailDTO(flatPurchaseContentDetailDTO, canResumeSubscription);
   }
 
   private PurchaseContentCardDTO convertFlatDTOToCardDTO(FlatPurchaseContentPreviewDTO flat) {
@@ -102,6 +118,8 @@ public class PurchaseService {
         .finalPrice(flat.getFinalPrice())
         .priceOptionLength(flat.getPriceOptionLength())
         .orderStatus(flat.getOrderStatus())
+        .paymentType(flat.getPaymentType())
+        .subscriptionRound(flat.getSubscriptionRound())
         .build();
   }
 
@@ -139,7 +157,7 @@ public class PurchaseService {
     FlatPurchaseContentDetailDTO flatPurchaseContentDetailDTO =
         purchaseReader.getPurchaseContentDetailForGuest(merchantUid);
 
-    return toPurchasedContentDetailDTO(flatPurchaseContentDetailDTO);
+    return toPurchasedContentDetailDTO(flatPurchaseContentDetailDTO, false);
   }
 
   private ContactInfoDTO getContactInfo(User user) {
@@ -178,7 +196,8 @@ public class PurchaseService {
     }
   }
 
-  private PurchasedContentDetailDTO toPurchasedContentDetailDTO(FlatPurchaseContentDetailDTO flat) {
+  private PurchasedContentDetailDTO toPurchasedContentDetailDTO(
+      FlatPurchaseContentDetailDTO flat, boolean canResumeSubscription) {
     return PurchasedContentDetailDTO.builder()
         .orderStatus(flat.getOrderStatus())
         .merchantUid(flat.getMerchantUid())
@@ -201,7 +220,56 @@ public class PurchaseService {
         .payCardNum(flat.getPayCardNum())
         .thumbnailUrl(flat.getThumbnailUrl())
         .isRefundable(flat.getIsRefundable())
+        .isCancelable(isCancelable(flat))
         .cancelReason(flat.getCancelReason())
+        .paymentType(flat.getPaymentType())
+        .nextPaymentDate(resolveNextPaymentDate(flat))
+        .subscriptionRound(flat.getSubscriptionRound())
+        .canResumeSubscription(canResumeSubscription)
         .build();
+  }
+
+  private boolean isCancelable(FlatPurchaseContentDetailDTO flat) {
+    if (flat == null) {
+      return false;
+    }
+
+    if (!Order.OrderStatus.PAID.name().equals(flat.getOrderStatus())) {
+      return false;
+    }
+
+    LocalDateTime purchasedAt = flat.getPurchasedAt();
+    if (purchasedAt == null) {
+      return false;
+    }
+
+    LocalDateTime now = LocalDateTime.now(DEFAULT_TIME_ZONE);
+    return now.isBefore(purchasedAt.plusDays(CANCEL_AVAILABLE_DAYS));
+  }
+
+  private LocalDate resolveNextPaymentDate(FlatPurchaseContentDetailDTO flat) {
+    if (flat == null) {
+      return null;
+    }
+
+    boolean isSubscription =
+        flat.getPaymentType() != null
+            && ContentPaymentType.SUBSCRIPTION.name().equals(flat.getPaymentType());
+
+    if (!isSubscription) {
+      return null;
+    }
+
+    if (flat.getNextPaymentDate() != null) {
+      return flat.getNextPaymentDate();
+    }
+
+    LocalDateTime purchasedAt = flat.getPurchasedAt();
+    if (purchasedAt == null) {
+      return null;
+    }
+
+    // 기본적으로 한 달 뒤 결제 예정일을 계산해 반환 (DB 값이 사라진 경우 대비)
+    return purchasedAt.toLocalDate().plusMonths(1);
   }
 }

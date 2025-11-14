@@ -67,4 +67,10 @@ public class ContentSellDetailResponse {
       format = "decimal",
       requiredMode = Schema.RequiredMode.REQUIRED)
   private BigDecimal finalPrice;
+
+  @Schema(description = "결제 타입 (ONE_TIME / SUBSCRIPTION)", example = "SUBSCRIPTION")
+  private String paymentType;
+
+  @Schema(description = "정기결제 회차 (정기결제가 아니면 null)", example = "2", nullable = true)
+  private Integer subscriptionRound;
 }

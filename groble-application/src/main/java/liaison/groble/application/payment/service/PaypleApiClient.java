@@ -7,16 +7,20 @@ import org.json.simple.JSONObject;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import liaison.groble.application.payment.dto.PaymentCancelInfo;
 import liaison.groble.application.payment.dto.PaypleApprovalResult;
 import liaison.groble.application.payment.dto.PaypleAuthResponseDTO;
 import liaison.groble.application.payment.dto.PaypleAuthResultDTO;
 import liaison.groble.application.payment.dto.PaypleRefundResult;
+import liaison.groble.application.payment.dto.billing.BillingKeyAction;
 import liaison.groble.application.payment.exception.PaypleApiException;
+import liaison.groble.application.payment.util.CardQuotaNormalizer;
 import liaison.groble.external.adapter.payment.PaypleCodeGenerator;
 import liaison.groble.external.adapter.payment.PaypleRefundRequest;
 import liaison.groble.external.adapter.payment.PaypleService;
+import liaison.groble.external.adapter.payment.PaypleSimplePayRequest;
 import liaison.groble.external.config.PaypleConfig;
 
 import lombok.RequiredArgsConstructor;
@@ -148,42 +152,77 @@ public class PaypleApiClient {
     params.put("PCD_AUTH_KEY", authResult.getAuthKey());
     params.put("PCD_PAY_REQKEY", authResult.getPayReqKey());
     params.put("PCD_PAY_COFURL", authResult.getPayCofUrl());
+    params.put("PCD_PAY_CARDQUOTA", CardQuotaNormalizer.normalize(authResult.getPayCardQuota()));
+    if (StringUtils.hasText(authResult.getPayerId())) {
+      params.put("PCD_PAYER_ID", authResult.getPayerId());
+    }
+    if (StringUtils.hasText(authResult.getPayType())) {
+      params.put("PCD_PAY_TYPE", authResult.getPayType());
+    }
+    if (StringUtils.hasText(authResult.getPayGoods())) {
+      params.put("PCD_PAY_GOODS", authResult.getPayGoods());
+    }
+    if (StringUtils.hasText(authResult.getPayTotal())) {
+      params.put("PCD_PAY_TOTAL", authResult.getPayTotal());
+    }
+    if (StringUtils.hasText(authResult.getSimpleFlag())) {
+      params.put("PCD_SIMPLE_FLAG", authResult.getSimpleFlag());
+    }
 
     try {
       JSONObject approvalResult = paypleService.payAppCard(params);
+      PaypleApprovalResult result = buildApprovalResult(approvalResult);
 
-      String payRst = getString(approvalResult, "PCD_PAY_RST");
-      boolean isSuccess = RESULT_SUCCESS.equalsIgnoreCase(payRst);
+      log.info(
+          "페이플 승인 응답 - merchantUid: {}, result: {}", authResult.getPayOid(), result.getPayRst());
 
-      log.info("페이플 승인 응답 - merchantUid: {}, result: {}", authResult.getPayOid(), payRst);
-
-      return PaypleApprovalResult.builder()
-          .success(isSuccess)
-          .payRst(payRst)
-          .payCode(getString(approvalResult, "PCD_PAY_CODE"))
-          .payMsg(getString(approvalResult, "PCD_PAY_MSG"))
-          .payOid(getString(approvalResult, "PCD_PAY_OID"))
-          .payType(getString(approvalResult, "PCD_PAY_TYPE"))
-          .payTime(getString(approvalResult, "PCD_PAY_TIME"))
-          .payTotal(getString(approvalResult, "PCD_PAY_TOTAL"))
-          .payTaxTotal(getString(approvalResult, "PCD_PAY_TAXTOTAL"))
-          .payIsTax(getString(approvalResult, "PCD_PAY_ISTAX"))
-          .payGoods(getString(approvalResult, "PCD_PAY_GOODS"))
-          .payerName(getString(approvalResult, "PCD_PAYER_NAME"))
-          .payerHp(getString(approvalResult, "PCD_PAYER_HP"))
-          .payCardName(getString(approvalResult, "PCD_PAY_CARDNAME"))
-          .payCardNum(getString(approvalResult, "PCD_PAY_CARDNUM"))
-          .payCardQuota(getString(approvalResult, "PCD_PAY_CARDQUOTA"))
-          .payCardTradeNum(getString(approvalResult, "PCD_PAY_CARDTRADENUM"))
-          .payCardAuthNo(getString(approvalResult, "PCD_PAY_CARDAUTHNO"))
-          .payCardReceipt(getString(approvalResult, "PCD_CARD_RECEIPT"))
-          .errorCode(isSuccess ? null : getString(approvalResult, "PCD_PAY_CODE"))
-          .errorMessage(isSuccess ? null : getString(approvalResult, "PCD_PAY_MSG"))
-          .build();
+      return result;
 
     } catch (Exception e) {
       log.error("페이플 승인 요청 중 오류 발생 - merchantUid: {}", authResult.getPayOid(), e);
       throw new PaypleApiException("페이플 승인 요청 실패", e);
+    }
+  }
+
+  public PaypleApprovalResult requestSimplePayment(PaypleSimplePayRequest request) {
+    log.info("페이플 빌링키 결제 요청 - merchantUid: {}", request.getPayOid());
+
+    try {
+      PaypleAuthResponseDTO authResponse = requestAuth("PAY");
+      JSONObject approvalResult =
+          paypleService.paySimplePayment(request, authResponse.getAuthKey());
+      PaypleApprovalResult result = buildApprovalResult(approvalResult);
+      log.info(
+          "페이플 빌링키 결제 응답 - merchantUid: {}, result: {}", request.getPayOid(), result.getPayRst());
+      return result;
+    } catch (PaypleApiException e) {
+      throw e;
+    } catch (Exception e) {
+      log.error("페이플 빌링키 결제 중 오류 발생 - merchantUid: {}", request.getPayOid(), e);
+      throw new PaypleApiException("페이플 빌링키 결제 실패", e);
+    }
+  }
+
+  public void deleteBillingKey(String billingKey) {
+    log.info("페이플 빌링키 삭제 요청 - payerId: {}", maskCode(billingKey));
+
+    try {
+      PaypleAuthResponseDTO authResponse = requestAuth(BillingKeyAction.DELETE.getPayWork());
+      JSONObject deleteResult =
+          paypleService.deleteBillingKey(billingKey, authResponse.getAuthKey());
+
+      String payResult = getString(deleteResult, "PCD_PAY_RST");
+      if (!RESULT_SUCCESS.equalsIgnoreCase(payResult)) {
+        String errorMessage = getString(deleteResult, "PCD_PAY_MSG");
+        throw new PaypleApiException(errorMessage != null ? errorMessage : "페이플 빌링키 삭제에 실패했습니다.");
+      }
+
+      log.info("페이플 빌링키 삭제 성공 - payerId: {}", maskCode(billingKey));
+    } catch (PaypleApiException e) {
+      throw e;
+    } catch (Exception e) {
+      log.error("페이플 빌링키 삭제 중 오류 발생", e);
+      throw new PaypleApiException("페이플 빌링키 삭제에 실패했습니다.", e);
     }
   }
 
@@ -284,6 +323,35 @@ public class PaypleApiClient {
       log.error("페이플 계정 등록 요청 중 오류 발생", e);
       throw new PaypleApiException("페이플 계정 등록 요청 실패", e);
     }
+  }
+
+  private PaypleApprovalResult buildApprovalResult(JSONObject approvalResult) {
+    String payRst = getString(approvalResult, "PCD_PAY_RST");
+    boolean isSuccess = RESULT_SUCCESS.equalsIgnoreCase(payRst);
+
+    return PaypleApprovalResult.builder()
+        .success(isSuccess)
+        .payRst(payRst)
+        .payCode(getString(approvalResult, "PCD_PAY_CODE"))
+        .payMsg(getString(approvalResult, "PCD_PAY_MSG"))
+        .payOid(getString(approvalResult, "PCD_PAY_OID"))
+        .payType(getString(approvalResult, "PCD_PAY_TYPE"))
+        .payTime(getString(approvalResult, "PCD_PAY_TIME"))
+        .payTotal(getString(approvalResult, "PCD_PAY_TOTAL"))
+        .payTaxTotal(getString(approvalResult, "PCD_PAY_TAXTOTAL"))
+        .payIsTax(getString(approvalResult, "PCD_PAY_ISTAX"))
+        .payGoods(getString(approvalResult, "PCD_PAY_GOODS"))
+        .payerName(getString(approvalResult, "PCD_PAYER_NAME"))
+        .payerHp(getString(approvalResult, "PCD_PAYER_HP"))
+        .payCardName(getString(approvalResult, "PCD_PAY_CARDNAME"))
+        .payCardNum(getString(approvalResult, "PCD_PAY_CARDNUM"))
+        .payCardQuota(getString(approvalResult, "PCD_PAY_CARDQUOTA"))
+        .payCardTradeNum(getString(approvalResult, "PCD_PAY_CARDTRADENUM"))
+        .payCardAuthNo(getString(approvalResult, "PCD_PAY_CARDAUTHNO"))
+        .payCardReceipt(getString(approvalResult, "PCD_CARD_RECEIPT"))
+        .errorCode(isSuccess ? null : getString(approvalResult, "PCD_PAY_CODE"))
+        .errorMessage(isSuccess ? null : getString(approvalResult, "PCD_PAY_MSG"))
+        .build();
   }
 
   /** 공통 인증 응답 빌더 */

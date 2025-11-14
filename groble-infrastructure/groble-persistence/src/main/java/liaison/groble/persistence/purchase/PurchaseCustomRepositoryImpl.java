@@ -37,6 +37,7 @@ import liaison.groble.domain.content.entity.QContent;
 import liaison.groble.domain.content.entity.QContentOption;
 import liaison.groble.domain.content.entity.QContentReview;
 import liaison.groble.domain.content.entity.QDocumentOption;
+import liaison.groble.domain.content.enums.ContentPaymentType;
 import liaison.groble.domain.content.enums.ContentType;
 import liaison.groble.domain.dashboard.dto.FlatDashboardOverviewDTO;
 import liaison.groble.domain.guest.entity.QGuestUser;
@@ -51,6 +52,7 @@ import liaison.groble.domain.purchase.dto.FlatSellManageDetailDTO;
 import liaison.groble.domain.purchase.dto.FlatTopContentStatDTO;
 import liaison.groble.domain.purchase.entity.QPurchase;
 import liaison.groble.domain.purchase.repository.PurchaseCustomRepository;
+import liaison.groble.domain.subscription.entity.QSubscription;
 import liaison.groble.domain.user.entity.QIntegratedAccount;
 import liaison.groble.domain.user.entity.QSocialAccount;
 import liaison.groble.domain.user.entity.QUser;
@@ -69,10 +71,12 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
       Long userId, String merchantUid) {
     QContent qContent = QContent.content;
     QPurchase qPurchase = QPurchase.purchase;
+    QPurchase purchaseSubDetail = new QPurchase("purchaseSubDetail");
     QOrder qOrder = QOrder.order;
     QUser qUser = QUser.user;
     QDocumentOption qDocOpt = QDocumentOption.documentOption;
     QPayplePayment qPayplePayment = QPayplePayment.payplePayment;
+    QSubscription qSubscription = QSubscription.subscription;
 
     Expression<String> documentOptionActionUrl =
         ExpressionUtils.as(
@@ -154,6 +158,30 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
                 .limit(1),
             "payCardNum");
 
+    var subscriptionRoundExpr =
+        ExpressionUtils.as(
+            Expressions.cases()
+                .when(
+                    qContent
+                        .paymentType
+                        .eq(ContentPaymentType.SUBSCRIPTION)
+                        .and(qPurchase.user.id.isNotNull()))
+                .then(
+                    JPAExpressions.select(purchaseSubDetail.count().intValue())
+                        .from(purchaseSubDetail)
+                        .where(
+                            purchaseSubDetail
+                                .user
+                                .id
+                                .eq(qPurchase.user.id)
+                                .and(purchaseSubDetail.content.id.eq(qContent.id))
+                                .and(
+                                    purchaseSubDetail.selectedOptionId.eq(
+                                        qPurchase.selectedOptionId))
+                                .and(purchaseSubDetail.purchasedAt.loe(qPurchase.purchasedAt))))
+                .otherwise(Expressions.nullExpression(Integer.class)),
+            "subscriptionRound");
+
     FlatPurchaseContentDetailDTO result =
         queryFactory
             .select(
@@ -182,6 +210,9 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
                     payTypeExpr,
                     payCardNameExpr,
                     payCardNumExpr,
+                    qContent.paymentType.stringValue().as("paymentType"),
+                    qSubscription.nextBillingDate.as("nextPaymentDate"),
+                    subscriptionRoundExpr,
                     qContent.thumbnailUrl.as("thumbnailUrl"),
                     isRefundableExpr,
                     qPurchase.cancelReason.stringValue().as("cancelReason")))
@@ -189,6 +220,8 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
             .leftJoin(qPurchase.content, qContent)
             .leftJoin(qPurchase.order, qOrder)
             .leftJoin(qContent.user, qUser)
+            .leftJoin(qSubscription)
+            .on(qSubscription.purchase.eq(qPurchase))
             .where(qPurchase.user.id.eq(userId).and(qOrder.merchantUid.eq(merchantUid)))
             .fetchOne();
 
@@ -313,9 +346,33 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
     QGuestUser qGuestUser = QGuestUser.guestUser;
     QIntegratedAccount qIntegratedAccount = QIntegratedAccount.integratedAccount;
     QSocialAccount qSocialAccount = QSocialAccount.socialAccount;
+    QOrder qOrder = QOrder.order;
+    QPurchase purchaseSub = new QPurchase("purchaseSubForSellDetail");
 
     BooleanExpression conditions =
         qContent.id.eq(contentId).and(qContent.user.id.eq(userId)).and(qPurchase.id.eq(purchaseId));
+
+    var subscriptionRoundExpr =
+        ExpressionUtils.as(
+            Expressions.cases()
+                .when(
+                    qContent
+                        .paymentType
+                        .eq(ContentPaymentType.SUBSCRIPTION)
+                        .and(qPurchase.user.id.isNotNull()))
+                .then(
+                    JPAExpressions.select(purchaseSub.count().intValue())
+                        .from(purchaseSub)
+                        .where(
+                            purchaseSub
+                                .user
+                                .id
+                                .eq(qPurchase.user.id)
+                                .and(purchaseSub.content.id.eq(qContent.id))
+                                .and(purchaseSub.selectedOptionId.eq(qPurchase.selectedOptionId))
+                                .and(purchaseSub.purchasedAt.loe(qPurchase.purchasedAt))))
+                .otherwise(Expressions.nullExpression(Integer.class)),
+            "subscriptionRound");
 
     FlatContentSellDetailDTO result =
         queryFactory
@@ -360,13 +417,16 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
                         .otherwise(Expressions.nullExpression(String.class))
                         .as("purchaserPhoneNumber"),
                     qPurchase.selectedOptionName.as("selectedOptionName"),
-                    qPurchase.finalPrice.as("finalPrice")))
+                    qPurchase.finalPrice.as("finalPrice"),
+                    qContent.paymentType.stringValue().as("paymentType"),
+                    subscriptionRoundExpr))
             .from(qPurchase)
             .leftJoin(qPurchase.user, qUser)
             .leftJoin(qPurchase.guestUser, qGuestUser)
             .leftJoin(qUser.integratedAccount, qIntegratedAccount)
             .leftJoin(qUser.socialAccount, qSocialAccount)
             .leftJoin(qPurchase.content, qContent)
+            .leftJoin(qPurchase.order, qOrder)
             .where(conditions)
             .fetchOne();
 
@@ -383,10 +443,39 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
     QGuestUser qGuestUser = QGuestUser.guestUser;
     QIntegratedAccount qIntegratedAcc = QIntegratedAccount.integratedAccount;
     QSocialAccount qSocialAcc = QSocialAccount.socialAccount;
+    QOrder qOrder = QOrder.order;
+    QPurchase purchaseSub = new QPurchase("purchaseSubForSellPage");
 
     // 조건: contentId + 소유자
     BooleanExpression conditions =
-        qPurchase.content.id.eq(contentId).and(qPurchase.content.user.id.eq(userId));
+        qPurchase
+            .content
+            .id
+            .eq(contentId)
+            .and(qPurchase.content.user.id.eq(userId))
+            .and(qPurchase.purchasedAt.isNotNull());
+
+    var subscriptionRoundExpr =
+        ExpressionUtils.as(
+            Expressions.cases()
+                .when(
+                    qContent
+                        .paymentType
+                        .eq(ContentPaymentType.SUBSCRIPTION)
+                        .and(qPurchase.user.id.isNotNull()))
+                .then(
+                    JPAExpressions.select(purchaseSub.count().intValue())
+                        .from(purchaseSub)
+                        .where(
+                            purchaseSub
+                                .user
+                                .id
+                                .eq(qPurchase.user.id)
+                                .and(purchaseSub.content.id.eq(qContent.id))
+                                .and(purchaseSub.selectedOptionId.eq(qPurchase.selectedOptionId))
+                                .and(purchaseSub.purchasedAt.loe(qPurchase.purchasedAt))))
+                .otherwise(Expressions.nullExpression(Integer.class)),
+            "subscriptionRound");
 
     // 데이터 조회 쿼리 구성
     JPAQuery<FlatContentSellDetailDTO> dataQuery =
@@ -406,13 +495,16 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
                     ExpressionUtils.as(
                         buildPhoneExpression(qPurchase, qUser, qGuestUser), "purchaserPhoneNumber"),
                     qPurchase.selectedOptionName.as("selectedOptionName"),
-                    qPurchase.finalPrice.as("finalPrice")))
+                    qPurchase.finalPrice.as("finalPrice"),
+                    qContent.paymentType.stringValue().as("paymentType"),
+                    subscriptionRoundExpr))
             .from(qPurchase)
             .leftJoin(qPurchase.user, qUser)
             .leftJoin(qPurchase.guestUser, qGuestUser)
             .leftJoin(qUser.integratedAccount, qIntegratedAcc)
             .leftJoin(qUser.socialAccount, qSocialAcc)
             .leftJoin(qPurchase.content, qContent)
+            .leftJoin(qPurchase.order, qOrder)
             .where(conditions);
 
     // 정렬 적용
@@ -439,11 +531,52 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
     QContent qContent = QContent.content;
     QContentOption qContentOption = QContentOption.contentOption;
     QUser qUser = QUser.user;
+    QPurchase purchaseSub = new QPurchase("purchaseSub");
+    QPurchase purchaseSubLatest = new QPurchase("purchaseSubLatest");
 
     BooleanExpression conditions = qPurchase.user.id.eq(userId);
     if (orderStatuses != null) {
       conditions = conditions.and(qOrder.status.in(orderStatuses));
     }
+
+    BooleanExpression isLatestSubscription =
+        qContent
+            .paymentType
+            .ne(ContentPaymentType.SUBSCRIPTION)
+            .or(
+                JPAExpressions.selectOne()
+                    .from(purchaseSubLatest)
+                    .where(
+                        purchaseSubLatest
+                            .user
+                            .id
+                            .eq(qPurchase.user.id)
+                            .and(purchaseSubLatest.content.id.eq(qContent.id))
+                            .and(purchaseSubLatest.selectedOptionId.eq(qPurchase.selectedOptionId))
+                            .and(purchaseSubLatest.purchasedAt.gt(qPurchase.purchasedAt)))
+                    .notExists());
+
+    var subscriptionRoundExpr =
+        ExpressionUtils.as(
+            Expressions.cases()
+                .when(
+                    qContent
+                        .paymentType
+                        .eq(ContentPaymentType.SUBSCRIPTION)
+                        .and(qPurchase.user.id.isNotNull()))
+                .then(
+                    JPAExpressions.select(purchaseSub.count().intValue())
+                        .from(purchaseSub)
+                        .where(
+                            purchaseSub
+                                .user
+                                .id
+                                .eq(qPurchase.user.id)
+                                .and(purchaseSub.content.id.eq(qContent.id))
+                                .and(purchaseSub.selectedOptionId.eq(qPurchase.selectedOptionId))
+                                .and(purchaseSub.purchasedAt.loe(qPurchase.purchasedAt))))
+                .otherwise(Expressions.nullExpression(Integer.class)),
+            "subscriptionRound");
 
     JPAQuery<FlatPurchaseContentPreviewDTO> query =
         queryFactory
@@ -464,12 +597,14 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
                             .from(qContentOption)
                             .where(qContentOption.content.eq(qContent)),
                         "priceOptionLength"),
-                    qOrder.status.stringValue().as("orderStatus")))
+                    qOrder.status.stringValue().as("orderStatus"),
+                    qContent.paymentType.stringValue().as("paymentType"),
+                    subscriptionRoundExpr))
             .from(qPurchase)
             .leftJoin(qPurchase.user, qUser)
             .leftJoin(qPurchase.content, qContent)
             .leftJoin(qPurchase.order, qOrder)
-            .where(conditions);
+            .where(conditions.and(isLatestSubscription));
 
     // 3) Pageable의 Sort 적용
     if (pageable.getSort().isUnsorted()) {
@@ -504,8 +639,9 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
                 queryFactory
                     .select(qPurchase.count())
                     .from(qPurchase)
+                    .leftJoin(qPurchase.content, qContent)
                     .leftJoin(qPurchase.order, qOrder) // 이 라인 추가
-                    .where(conditions)
+                    .where(conditions.and(isLatestSubscription))
                     .fetchOne())
             .orElse(0L);
 
@@ -520,11 +656,52 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
     QContent qContent = QContent.content;
     QContentOption qContentOption = QContentOption.contentOption;
     QGuestUser qGuestUser = QGuestUser.guestUser;
+    QPurchase purchaseSub = new QPurchase("guestPurchaseSub");
+    QPurchase purchaseSubLatest = new QPurchase("guestPurchaseSubLatest");
 
     BooleanExpression conditions = qGuestUser.phoneNumber.eq(guestPhoneNumber);
     if (orderStatuses != null) {
       conditions = conditions.and(qOrder.status.in(orderStatuses));
     }
+
+    BooleanExpression isLatestSubscription =
+        qContent
+            .paymentType
+            .ne(ContentPaymentType.SUBSCRIPTION)
+            .or(
+                JPAExpressions.selectOne()
+                    .from(purchaseSubLatest)
+                    .where(
+                        purchaseSubLatest
+                            .guestUser
+                            .phoneNumber
+                            .eq(guestPhoneNumber)
+                            .and(purchaseSubLatest.content.id.eq(qContent.id))
+                            .and(purchaseSubLatest.selectedOptionId.eq(qPurchase.selectedOptionId))
+                            .and(purchaseSubLatest.purchasedAt.gt(qPurchase.purchasedAt)))
+                    .notExists());
+
+    var subscriptionRoundExpr =
+        ExpressionUtils.as(
+            Expressions.cases()
+                .when(
+                    qContent
+                        .paymentType
+                        .eq(ContentPaymentType.SUBSCRIPTION)
+                        .and(qPurchase.user.id.isNotNull()))
+                .then(
+                    JPAExpressions.select(purchaseSub.count().intValue())
+                        .from(purchaseSub)
+                        .where(
+                            purchaseSub
+                                .user
+                                .id
+                                .eq(qPurchase.user.id)
+                                .and(purchaseSub.content.id.eq(qContent.id))
+                                .and(purchaseSub.selectedOptionId.eq(qPurchase.selectedOptionId))
+                                .and(purchaseSub.purchasedAt.loe(qPurchase.purchasedAt))))
+                .otherwise(Expressions.nullExpression(Integer.class)),
+            "subscriptionRound");
 
     JPAQuery<FlatPurchaseContentPreviewDTO> query =
         queryFactory
@@ -545,12 +722,14 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
                             .from(qContentOption)
                             .where(qContentOption.content.eq(qContent)),
                         "priceOptionLength"),
-                    qOrder.status.stringValue().as("orderStatus")))
+                    qOrder.status.stringValue().as("orderStatus"),
+                    qContent.paymentType.stringValue().as("paymentType"),
+                    subscriptionRoundExpr))
             .from(qPurchase)
             .leftJoin(qPurchase.guestUser, qGuestUser)
             .leftJoin(qPurchase.content, qContent)
             .leftJoin(qPurchase.order, qOrder)
-            .where(conditions);
+            .where(conditions.and(isLatestSubscription));
 
     // 3) Pageable의 Sort 적용
     if (pageable.getSort().isUnsorted()) {
@@ -586,8 +765,9 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
                     .select(qPurchase.count())
                     .from(qPurchase)
                     .leftJoin(qPurchase.guestUser, qGuestUser)
+                    .leftJoin(qPurchase.content, qContent)
                     .leftJoin(qPurchase.order, qOrder)
-                    .where(conditions)
+                    .where(conditions.and(isLatestSubscription))
                     .fetchOne())
             .orElse(0L);
 
@@ -1098,6 +1278,7 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
     QGuestUser qGuestUser = QGuestUser.guestUser;
     QDocumentOption qDocOpt = QDocumentOption.documentOption;
     QPayplePayment qPayplePayment = QPayplePayment.payplePayment;
+    QSubscription qSubscription = QSubscription.subscription;
 
     Expression<String> documentOptionActionUrl =
         ExpressionUtils.as(
@@ -1207,6 +1388,8 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
                     payTypeExpr,
                     payCardNameExpr,
                     payCardNumExpr,
+                    qContent.paymentType.stringValue().as("paymentType"),
+                    qSubscription.nextBillingDate.as("nextPaymentDate"),
                     qContent.thumbnailUrl.as("thumbnailUrl"),
                     isRefundableExpr,
                     qPurchase.cancelReason.stringValue().as("cancelReason")))
@@ -1214,6 +1397,8 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
             .leftJoin(qPurchase.content, qContent)
             .leftJoin(qPurchase.order, qOrder)
             .leftJoin(qPurchase.guestUser, qGuestUser)
+            .leftJoin(qSubscription)
+            .on(qSubscription.purchase.eq(qPurchase))
             .where(qOrder.merchantUid.eq(merchantUid))
             .fetchOne();
 

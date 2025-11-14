@@ -1,13 +1,19 @@
 package liaison.groble.application.admin.service;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import liaison.groble.application.admin.dto.AdminContentSummaryInfoDTO;
+import liaison.groble.application.admin.dto.AdminDocumentFileInfoDTO;
 import liaison.groble.application.content.ContentReader;
 import liaison.groble.application.notification.dto.KakaoNotificationDTO;
 import liaison.groble.application.notification.enums.KakaoNotificationType;
@@ -16,6 +22,7 @@ import liaison.groble.application.notification.service.KakaoNotificationService;
 import liaison.groble.application.notification.service.NotificationService;
 import liaison.groble.common.response.PageResponse;
 import liaison.groble.domain.content.dto.FlatAdminContentSummaryInfoDTO;
+import liaison.groble.domain.content.dto.FlatAdminDocumentFileDTO;
 import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.content.enums.AdminContentCheckingStatus;
 import liaison.groble.domain.content.enums.ContentStatus;
@@ -44,14 +51,54 @@ public class AdminContentService {
     Page<FlatAdminContentSummaryInfoDTO> contentPage =
         contentReader.findContentsByPageable(pageable);
 
-    List<AdminContentSummaryInfoDTO> items =
-        contentPage.getContent().stream().map(this::convertFlatDTOToInfoResponse).toList();
+    List<Long> contentIds =
+        contentPage.getContent().stream()
+            .map(FlatAdminContentSummaryInfoDTO::getContentId)
+            .toList();
 
-    PageResponse.MetaData meta =
-        PageResponse.MetaData.builder()
-            .sortBy(pageable.getSort().iterator().next().getProperty())
-            .sortDirection(pageable.getSort().iterator().next().getDirection().name())
-            .build();
+    Map<Long, List<AdminDocumentFileInfoDTO>> documentFilesMap = buildDocumentFileMap(contentIds);
+
+    List<AdminContentSummaryInfoDTO> items =
+        contentPage.getContent().stream()
+            .map(
+                flat ->
+                    convertFlatDTOToInfoResponse(
+                        flat,
+                        documentFilesMap.getOrDefault(
+                            flat.getContentId(), Collections.emptyList())))
+            .toList();
+
+    PageResponse.MetaData meta = resolveSortMeta(pageable);
+
+    return PageResponse.from(contentPage, items, meta);
+  }
+
+  public PageResponse<AdminContentSummaryInfoDTO> searchContentsByTitle(
+      String titleKeyword, Pageable pageable) {
+    if (!StringUtils.hasText(titleKeyword)) {
+      throw new IllegalArgumentException("검색할 콘텐츠 제목을 입력해주세요.");
+    }
+
+    Page<FlatAdminContentSummaryInfoDTO> contentPage =
+        contentReader.searchAdminContentsByTitle(titleKeyword, pageable);
+
+    List<Long> contentIds =
+        contentPage.getContent().stream()
+            .map(FlatAdminContentSummaryInfoDTO::getContentId)
+            .toList();
+    Map<Long, List<AdminDocumentFileInfoDTO>> documentFilesMap = buildDocumentFileMap(contentIds);
+
+    List<AdminContentSummaryInfoDTO> items =
+        contentPage.getContent().stream()
+            .map(
+                flat ->
+                    convertFlatDTOToInfoResponse(
+                        flat,
+                        documentFilesMap.getOrDefault(
+                            flat.getContentId(), Collections.emptyList())))
+            .toList();
+
+    PageResponse.MetaData meta = resolveSortMeta(pageable);
 
     return PageResponse.from(contentPage, items, meta);
   }
@@ -67,7 +114,7 @@ public class AdminContentService {
   public void rejectContent(Long contentId, String rejectReason) {
     Content content = contentReader.getContentById(contentId);
     content.setAdminContentCheckingStatus(AdminContentCheckingStatus.REJECTED);
-    content.setStatus(ContentStatus.DISCONTINUED);
+    content.setStatus(ContentStatus.PAUSED);
     content.setRejectReason(rejectReason);
     contentRepository.save(content);
 
@@ -99,7 +146,7 @@ public class AdminContentService {
   }
 
   private AdminContentSummaryInfoDTO convertFlatDTOToInfoResponse(
-      FlatAdminContentSummaryInfoDTO flat) {
+      FlatAdminContentSummaryInfoDTO flat, List<AdminDocumentFileInfoDTO> documentFiles) {
     return AdminContentSummaryInfoDTO.builder()
         .contentId(flat.getContentId())
         .createdAt(flat.getCreatedAt())
@@ -109,8 +156,45 @@ public class AdminContentService {
         .priceOptionLength(flat.getPriceOptionLength())
         .minPrice(flat.getMinPrice())
         .contentStatus(flat.getContentStatus())
+        .paymentType(flat.getPaymentType())
         .adminContentCheckingStatus(flat.getAdminContentCheckingStatus())
         .isSearchExposed(flat.getIsSearchExposed())
+        .documentFiles(documentFiles)
+        .build();
+  }
+
+  private Map<Long, List<AdminDocumentFileInfoDTO>> buildDocumentFileMap(List<Long> contentIds) {
+    if (contentIds == null || contentIds.isEmpty()) {
+      return Collections.emptyMap();
+    }
+    List<FlatAdminDocumentFileDTO> flatFiles =
+        contentReader.findDocumentFilesByContentIds(contentIds);
+
+    return flatFiles.stream()
+        .collect(
+            Collectors.groupingBy(
+                FlatAdminDocumentFileDTO::getContentId,
+                Collectors.mapping(this::convertToDocumentFileInfoDTO, Collectors.toList())));
+  }
+
+  private AdminDocumentFileInfoDTO convertToDocumentFileInfoDTO(
+      FlatAdminDocumentFileDTO documentFileDTO) {
+    return AdminDocumentFileInfoDTO.builder()
+        .optionId(documentFileDTO.getOptionId())
+        .optionName(documentFileDTO.getOptionName())
+        .documentOriginalFileName(documentFileDTO.getDocumentOriginalFileName())
+        .documentFileUrl(documentFileDTO.getDocumentFileUrl())
+        .build();
+  }
+
+  private PageResponse.MetaData resolveSortMeta(Pageable pageable) {
+    if (pageable == null || pageable.getSort().isUnsorted()) {
+      return PageResponse.MetaData.builder().build();
+    }
+    Sort.Order order = pageable.getSort().iterator().next();
+    return PageResponse.MetaData.builder()
+        .sortBy(order.getProperty())
+        .sortDirection(order.getDirection().name())
         .build();
   }
 }

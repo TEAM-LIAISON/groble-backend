@@ -75,6 +75,19 @@ public class UserCustomRepositoryImpl implements UserCustomRepository {
   }
 
   @Override
+  public Page<FlatAdminUserSummaryInfoDTO> searchUsersByNickname(
+      String nicknameKeyword, Pageable pageable) {
+    if (nicknameKeyword == null || nicknameKeyword.isBlank()) {
+      return Page.empty(pageable);
+    }
+
+    BooleanExpression predicate =
+        QUser.user.userProfile.nickname.containsIgnoreCase(nicknameKeyword.trim());
+
+    return fetchAdminUserPage(pageable, predicate);
+  }
+
+  @Override
   public AdminUserStatisticsAggregate fetchUserStatistics(
       LocalDateTime sevenDaysAgo, LocalDateTime thirtyDaysAgo) {
     QUser qUser = QUser.user;

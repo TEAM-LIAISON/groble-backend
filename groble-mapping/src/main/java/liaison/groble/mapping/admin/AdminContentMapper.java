@@ -3,7 +3,9 @@ package liaison.groble.mapping.admin;
 import org.mapstruct.Mapper;
 
 import liaison.groble.api.model.admin.response.AdminContentSummaryInfoResponse;
+import liaison.groble.api.model.admin.response.AdminDocumentFileResponse;
 import liaison.groble.application.admin.dto.AdminContentSummaryInfoDTO;
+import liaison.groble.application.admin.dto.AdminDocumentFileInfoDTO;
 import liaison.groble.common.response.PageResponse;
 import liaison.groble.mapping.common.PageResponseMapper;
 import liaison.groble.mapping.config.GrobleMapperConfig;
@@ -18,4 +20,7 @@ public interface AdminContentMapper extends PageResponseMapper {
 
   AdminContentSummaryInfoResponse toAdminContentSummaryInfoResponse(
       AdminContentSummaryInfoDTO adminContentSummaryInfoDTO);
+
+  AdminDocumentFileResponse toAdminDocumentFileResponse(
+      AdminDocumentFileInfoDTO adminDocumentFileInfoDTO);
 }

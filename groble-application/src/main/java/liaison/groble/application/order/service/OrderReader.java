@@ -35,10 +35,26 @@ public class OrderReader {
             () -> new EntityNotFoundException("주문을 찾을 수 없습니다. Merchant UID: " + merchantUid));
   }
 
+  public Order getOrderByMerchantUidForUpdate(String merchantUid) {
+    return orderRepository
+        .findByMerchantUidForUpdate(merchantUid)
+        .orElseThrow(
+            () -> new EntityNotFoundException("주문을 찾을 수 없습니다. Merchant UID: " + merchantUid));
+  }
+
   // 특정 사용자, 특정 주문 조회
   public Order getOrderByMerchantUidAndUserId(String merchantUid, Long userId) {
     return orderCustomRepository
         .findByMerchantUidAndUserId(merchantUid, userId)
+        .orElseThrow(
+            () ->
+                new EntityNotFoundException(
+                    "주문을 찾을 수 없습니다. Merchant UID: " + merchantUid + ", User ID: " + userId));
+  }
+
+  public Order getOrderByMerchantUidAndUserIdForUpdate(String merchantUid, Long userId) {
+    return orderRepository
+        .findByMerchantUidAndUserIdForUpdate(merchantUid, userId)
         .orElseThrow(
             () ->
                 new EntityNotFoundException(

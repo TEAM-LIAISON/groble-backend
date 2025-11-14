@@ -141,6 +141,9 @@ public class AdminOrderService {
   }
 
   private AdminOrderSummaryInfoDTO convertFlatDTOToInfoResponse(FlatAdminOrderSummaryInfoDTO flat) {
+    String failureReason =
+        "FAILED".equalsIgnoreCase(flat.getOrderStatus()) ? flat.getFailureReason() : null;
+
     return AdminOrderSummaryInfoDTO.builder()
         .contentId(flat.getContentId())
         .merchantUid(flat.getMerchantUid())
@@ -151,6 +154,8 @@ public class AdminOrderService {
         .contentTitle(flat.getContentTitle())
         .finalPrice(flat.getFinalPrice())
         .orderStatus(flat.getOrderStatus())
+        .paymentType(flat.getPaymentType())
+        .failureReason(failureReason)
         .build();
   }
 }

@@ -14,11 +14,13 @@ import liaison.groble.application.payment.event.PaymentCompletedEvent;
 import liaison.groble.application.payment.event.PaymentRefundedEvent;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.domain.content.entity.Content;
+import liaison.groble.domain.content.enums.ContentPaymentType;
 import liaison.groble.domain.guest.entity.GuestUser;
 import liaison.groble.domain.port.EmailSenderPort;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.external.discord.dto.payment.ContentPaymentSuccessReportDTO;
 import liaison.groble.external.discord.service.payment.ContentPaymentSuccessReportService;
+import liaison.groble.external.discord.service.payment.SubscriptionPaymentSuccessReportService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +35,7 @@ public class PaymentNotificationService {
   private final GuestUserReader guestUserReader;
   private final ContentReader contentReader;
   private final ContentPaymentSuccessReportService contentPaymentSuccessReportService;
+  private final SubscriptionPaymentSuccessReportService subscriptionPaymentSuccessReportService;
   private final KakaoNotificationService kakaoNotificationService;
 
   @Async("defaultAsyncExecutor") // 명시적으로 Executor 지정
@@ -129,6 +132,11 @@ public class PaymentNotificationService {
 
   private void sendBuyerATNotification(PaymentCompletedEvent event) {
     try {
+      if (event.getPaymentType() == ContentPaymentType.SUBSCRIPTION && event.getUserId() != null) {
+        sendSubscriptionBuyerATNotification(event);
+        return;
+      }
+
       if (event.getUserId() != null) {
         User buyer = userReader.getUserById(event.getUserId());
         kakaoNotificationService.sendNotification(
@@ -147,7 +155,7 @@ public class PaymentNotificationService {
         GuestUser guestUser = guestUserReader.getGuestUserById(event.getGuestUserId());
         kakaoNotificationService.sendNotification(
             KakaoNotificationDTO.builder()
-                .type(KakaoNotificationType.PURCHASE_COMPLETE)
+                .type(KakaoNotificationType.GUEST_PURCHASE_COMPLETE)
                 .phoneNumber(guestUser.getPhoneNumber())
                 .buyerName(resolveGuestBuyerName(event, guestUser))
                 .contentTitle(event.getContentTitle())
@@ -165,6 +173,25 @@ public class PaymentNotificationService {
           event.getGuestUserId(),
           e);
     }
+  }
+
+  private void sendSubscriptionBuyerATNotification(PaymentCompletedEvent event) {
+    User buyer = userReader.getUserById(event.getUserId());
+    KakaoNotificationType type =
+        event.isSubscriptionRenewal()
+            ? KakaoNotificationType.SUBSCRIPTION_RENEWAL_PAYMENT
+            : KakaoNotificationType.SUBSCRIPTION_FIRST_PAYMENT;
+
+    kakaoNotificationService.sendNotification(
+        KakaoNotificationDTO.builder()
+            .type(type)
+            .phoneNumber(buyer.getPhoneNumber())
+            .buyerName(buyer.getNickname())
+            .contentTitle(event.getContentTitle())
+            .price(event.getAmount())
+            .merchantUid(event.getMerchantUid())
+            .nextBillingDate(event.getSubscriptionNextBillingDate())
+            .build());
   }
 
   /** 구매자 무료 결제 알림 발송 */
@@ -211,6 +238,11 @@ public class PaymentNotificationService {
       return;
     }
     try {
+      if (event.getPaymentType() == ContentPaymentType.SUBSCRIPTION && event.getUserId() != null) {
+        sendSellerSubscriptionATNotification(event);
+        return;
+      }
+
       User seller = userReader.getUserById(event.getSellerId());
       String buyerName = "비회원 구매자";
       if (event.getUserId() != null) {
@@ -231,6 +263,27 @@ public class PaymentNotificationService {
     } catch (Exception e) {
       log.error("판매자 알림 발송 실패 - sellerId: {}", event.getSellerId(), e);
     }
+  }
+
+  private void sendSellerSubscriptionATNotification(PaymentCompletedEvent event) {
+    User seller = userReader.getUserById(event.getSellerId());
+    User buyer = userReader.getUserById(event.getUserId());
+    KakaoNotificationType type =
+        event.isSubscriptionRenewal()
+            ? KakaoNotificationType.SELLER_SUBSCRIPTION_RENEWAL_PAYMENT
+            : KakaoNotificationType.SELLER_SUBSCRIPTION_FIRST_PAYMENT;
+
+    kakaoNotificationService.sendNotification(
+        KakaoNotificationDTO.builder()
+            .type(type)
+            .phoneNumber(seller.getPhoneNumber())
+            .sellerName(seller.getNickname())
+            .buyerName(buyer.getNickname())
+            .contentTitle(event.getContentTitle())
+            .price(event.getAmount())
+            .nextBillingDate(event.getSubscriptionNextBillingDate())
+            .subscriptionRound(event.getSubscriptionRound())
+            .build());
   }
 
   /** 판매자 무료 결제 알림 발송 */
@@ -302,8 +355,13 @@ public class PaymentNotificationService {
               .purchasedAt(event.getPurchasedAt())
               .build();
 
-      contentPaymentSuccessReportService.sendContentPaymentSuccessReport(
-          contentPaymentSuccessReportDTO);
+      if (event.getPaymentType() == ContentPaymentType.SUBSCRIPTION) {
+        subscriptionPaymentSuccessReportService.sendSubscriptionPaymentSuccessReport(
+            contentPaymentSuccessReportDTO);
+      } else {
+        contentPaymentSuccessReportService.sendContentPaymentSuccessReport(
+            contentPaymentSuccessReportDTO);
+      }
 
       log.debug("디스코드 결제 성사 알림 발송");
     } catch (Exception e) {

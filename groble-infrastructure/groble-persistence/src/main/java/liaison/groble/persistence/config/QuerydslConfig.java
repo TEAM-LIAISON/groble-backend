@@ -1,7 +1,6 @@
 package liaison.groble.persistence.config;
 
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -10,7 +9,12 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 
 @Configuration
 public class QuerydslConfig {
-  @PersistenceContext private EntityManager entityManager;
+
+  private final EntityManager entityManager;
+
+  public QuerydslConfig(EntityManager entityManager) {
+    this.entityManager = entityManager;
+  }
 
   @Bean
   public JPAQueryFactory jpaQueryFactory() {

@@ -18,6 +18,8 @@ public class ContentOptionDTO {
   // enum OptionType { COACHING, DOCUMENT }
   private ContentType contentType;
 
+  private Boolean hasSalesHistory;
+
   // document 전용
   private String documentOriginalFileName;
   private String documentFileUrl;

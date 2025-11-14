@@ -41,9 +41,7 @@ import liaison.groble.external.discord.dto.DeleteReviewRequestReportDTO;
 import liaison.groble.external.discord.service.content.DiscordDeleteReviewRequestReportService;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class SellContentService {
@@ -287,6 +285,8 @@ public class SellContentService {
         .purchaserPhoneNumber(contentSellDetailDTO.getPurchaserPhoneNumber())
         .selectedOptionName(contentSellDetailDTO.getSelectedOptionName())
         .finalPrice(contentSellDetailDTO.getFinalPrice())
+        .paymentType(contentSellDetailDTO.getPaymentType())
+        .subscriptionRound(contentSellDetailDTO.getSubscriptionRound())
         .build();
   }
 
@@ -326,8 +326,6 @@ public class SellContentService {
 
   /** FlatContentSellDetailDTO ContentSellDetailDTO로 변환합니다. */
   private ContentSellDetailDTO convertFlatDTOToDetailDTO(FlatContentSellDetailDTO flat) {
-    log.info("▶ convertFlatDTOToDetailDTO: purchasedAt={}", flat.getPurchasedAt());
-
     return ContentSellDetailDTO.builder()
         .purchaseId(flat.getPurchaseId())
         .contentTitle(flat.getContentTitle())
@@ -337,6 +335,8 @@ public class SellContentService {
         .purchaserPhoneNumber(flat.getPurchaserPhoneNumber())
         .selectedOptionName(flat.getSelectedOptionName())
         .finalPrice(flat.getFinalPrice())
+        .paymentType(flat.getPaymentType())
+        .subscriptionRound(flat.getSubscriptionRound())
         .build();
   }
 

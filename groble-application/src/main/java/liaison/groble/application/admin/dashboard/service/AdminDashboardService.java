@@ -2,27 +2,43 @@ package liaison.groble.application.admin.dashboard.service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import liaison.groble.application.admin.dashboard.dto.AdminActiveGuestSessionDTO;
+import liaison.groble.application.admin.dashboard.dto.AdminActiveMemberSessionDTO;
+import liaison.groble.application.admin.dashboard.dto.AdminActiveVisitorsDTO;
 import liaison.groble.application.admin.dashboard.dto.AdminDashboardOverviewDTO;
 import liaison.groble.application.admin.dashboard.dto.AdminDashboardTopContentDTO;
 import liaison.groble.application.admin.dashboard.dto.AdminDashboardTopContentsDTO;
 import liaison.groble.application.admin.dashboard.dto.AdminDashboardTrendDTO;
 import liaison.groble.application.admin.dashboard.dto.AdminDashboardTrendPointDTO;
 import liaison.groble.application.purchase.service.PurchaseReader;
+import liaison.groble.application.session.ActiveSessionService;
 import liaison.groble.application.settlement.reader.SettlementReader;
 import liaison.groble.domain.content.enums.ContentStatus;
 import liaison.groble.domain.content.repository.ContentRepository;
 import liaison.groble.domain.dashboard.dto.FlatDashboardOverviewDTO;
+import liaison.groble.domain.guest.entity.GuestUser;
 import liaison.groble.domain.guest.repository.GuestUserRepository;
 import liaison.groble.domain.purchase.dto.FlatDailyTransactionStatDTO;
 import liaison.groble.domain.purchase.dto.FlatTopContentStatDTO;
+import liaison.groble.domain.session.GuestActiveSession;
+import liaison.groble.domain.session.MemberActiveSession;
+import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.enums.UserStatus;
 import liaison.groble.domain.user.repository.UserRepository;
 
@@ -48,6 +64,7 @@ public class AdminDashboardService {
   // Reader
   private final PurchaseReader purchaseReader;
   private final SettlementReader settlementReader;
+  private final ActiveSessionService activeSessionService;
 
   private static final int DEFAULT_TOP_CONTENT_LIMIT = 5;
 
@@ -65,7 +82,11 @@ public class AdminDashboardService {
 
     // 콘텐츠 통계 조회
     List<ContentStatus> allStatuses =
-        Arrays.asList(ContentStatus.DRAFT, ContentStatus.ACTIVE, ContentStatus.DISCONTINUED);
+        Arrays.asList(
+            ContentStatus.DRAFT,
+            ContentStatus.ACTIVE,
+            ContentStatus.PAUSED,
+            ContentStatus.DISCONTINUED);
     List<ContentStatus> activeStatuses = Arrays.asList(ContentStatus.ACTIVE);
 
     long totalContentCount = contentRepository.countByStatusIn(allStatuses);
@@ -171,6 +192,149 @@ public class AdminDashboardService {
         .limit(effectiveLimit)
         .contents(contents)
         .build();
+  }
+
+  @Transactional(readOnly = true)
+  public AdminActiveVisitorsDTO getActiveVisitors(Duration window, int limit) {
+    Duration effectiveWindow =
+        (window == null || window.isZero() || window.isNegative()) ? Duration.ofMinutes(5) : window;
+    if (effectiveWindow.compareTo(Duration.ofHours(6)) > 0) {
+      effectiveWindow = Duration.ofHours(6);
+    }
+
+    int effectiveLimit = limit <= 0 ? 50 : Math.min(limit, 200);
+
+    var snapshot = activeSessionService.getActiveSessions(effectiveWindow, effectiveLimit);
+
+    List<MemberActiveSession> memberSessions = snapshot.getMemberSessions();
+    List<GuestActiveSession> guestSessions = snapshot.getGuestSessions();
+
+    Map<Long, User> memberMap = fetchActiveUsers(memberSessions);
+    Map<Long, GuestUser> guestMap = fetchActiveGuestUsers(guestSessions);
+
+    List<AdminActiveMemberSessionDTO> memberDtos =
+        memberSessions.stream()
+            .map(session -> toAdminMemberSessionDTO(session, memberMap.get(session.getUserId())))
+            .collect(Collectors.toList());
+
+    List<AdminActiveGuestSessionDTO> guestDtos =
+        guestSessions.stream()
+            .map(session -> toAdminGuestSessionDTO(session, guestMap.get(session.getGuestId())))
+            .collect(Collectors.toList());
+
+    return AdminActiveVisitorsDTO.builder()
+        .windowMinutes((int) effectiveWindow.toMinutes())
+        .limit(effectiveLimit)
+        .generatedAt(toLocalDateTime(snapshot.getGeneratedAt()))
+        .memberSessions(memberDtos)
+        .guestSessions(guestDtos)
+        .memberCount(memberDtos.size())
+        .guestCount(guestDtos.size())
+        .build();
+  }
+
+  private Map<Long, User> fetchActiveUsers(List<MemberActiveSession> sessions) {
+    Map<Long, User> users = new java.util.HashMap<>();
+    if (sessions == null || sessions.isEmpty()) {
+      return users;
+    }
+
+    Set<Long> userIds =
+        sessions.stream()
+            .map(MemberActiveSession::getUserId)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toCollection(LinkedHashSet::new));
+
+    for (Long userId : userIds) {
+      userRepository.findById(userId).ifPresent(user -> users.put(userId, user));
+    }
+
+    return users;
+  }
+
+  private Map<Long, GuestUser> fetchActiveGuestUsers(List<GuestActiveSession> sessions) {
+    Map<Long, GuestUser> guests = new java.util.HashMap<>();
+    if (sessions == null || sessions.isEmpty()) {
+      return guests;
+    }
+
+    Set<Long> guestIds =
+        sessions.stream()
+            .map(GuestActiveSession::getGuestId)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toCollection(LinkedHashSet::new));
+
+    for (Long guestId : guestIds) {
+      guestUserRepository.findById(guestId).ifPresent(guest -> guests.put(guestId, guest));
+    }
+
+    return guests;
+  }
+
+  private AdminActiveMemberSessionDTO toAdminMemberSessionDTO(
+      MemberActiveSession session, User user) {
+    String nickname = null;
+    String phoneNumber = null;
+    if (user != null && user.getUserProfile() != null) {
+      nickname = user.getUserProfile().getNickname();
+      phoneNumber = user.getUserProfile().getPhoneNumber();
+    }
+
+    String email = user != null ? user.getEmail() : null;
+
+    return AdminActiveMemberSessionDTO.builder()
+        .sessionKey(session.getSessionKey())
+        .userId(session.getUserId())
+        .nickname(nickname)
+        .email(email)
+        .phoneNumber(phoneNumber)
+        .accountType(session.getAccountType())
+        .lastUserType(session.getLastUserType())
+        .roles(session.getRoles())
+        .requestUri(session.getRequestUri())
+        .httpMethod(session.getHttpMethod())
+        .queryString(session.getQueryString())
+        .referer(session.getReferer())
+        .clientIp(session.getClientIp())
+        .userAgent(session.getUserAgent())
+        .lastSeenAt(toLocalDateTime(session.getLastSeenAt()))
+        .build();
+  }
+
+  private AdminActiveGuestSessionDTO toAdminGuestSessionDTO(
+      GuestActiveSession session, GuestUser guest) {
+    String displayName = null;
+    String email = null;
+    String phoneNumber = null;
+    if (guest != null) {
+      displayName = guest.getUsername();
+      email = guest.getEmail();
+      phoneNumber = guest.getPhoneNumber();
+    }
+
+    return AdminActiveGuestSessionDTO.builder()
+        .sessionKey(session.getSessionKey())
+        .guestId(session.getGuestId())
+        .authenticated(session.isAuthenticated())
+        .displayName(displayName)
+        .email(email)
+        .phoneNumber(phoneNumber)
+        .anonymousId(session.getAnonymousId())
+        .requestUri(session.getRequestUri())
+        .httpMethod(session.getHttpMethod())
+        .queryString(session.getQueryString())
+        .referer(session.getReferer())
+        .clientIp(session.getClientIp())
+        .userAgent(session.getUserAgent())
+        .lastSeenAt(toLocalDateTime(session.getLastSeenAt()))
+        .build();
+  }
+
+  private LocalDateTime toLocalDateTime(Instant instant) {
+    if (instant == null) {
+      return null;
+    }
+    return LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
   }
 
   private void validateDateRange(LocalDate startDate, LocalDate endDate) {

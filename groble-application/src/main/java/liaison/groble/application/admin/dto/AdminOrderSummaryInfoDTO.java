@@ -26,4 +26,6 @@ public class AdminOrderSummaryInfoDTO {
   private String contentTitle;
   private BigDecimal finalPrice;
   private String orderStatus;
+  private String failureReason;
+  private String paymentType;
 }

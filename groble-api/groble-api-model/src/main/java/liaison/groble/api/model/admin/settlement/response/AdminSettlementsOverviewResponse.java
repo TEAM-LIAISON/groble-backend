@@ -64,6 +64,20 @@ public class AdminSettlementsOverviewResponse {
       requiredMode = Schema.RequiredMode.REQUIRED)
   private String settlementStatus;
 
+  @Schema(
+      description = "판매자 닉네임",
+      example = "메이커홍길동",
+      type = "string",
+      requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  private String nickname;
+
+  @Schema(
+      description = "결제 수단 [ONE_TIME - 일반 구매], [SUBSCRIPTION - 정기 구독]",
+      example = "ONE_TIME",
+      type = "string",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private String paymentType;
+
   // 5. 메이커 인증 여부
   @Schema(
       description = "메이커 인증 상태 (isSellerInfo가 true라는 전제 하에 사용됩니다.)",

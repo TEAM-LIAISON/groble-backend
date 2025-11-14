@@ -465,8 +465,11 @@ public class ContentController {
     String userAgent = requestUtil.getUserAgent();
     String clientIp = requestUtil.getClientIp();
     String referer = requestUtil.getReferer();
+    Long actorId = accessor != null ? accessor.getUserId() : null;
+    boolean isGuest = accessor != null && accessor.isGuest();
+    boolean isAuthenticated = accessor != null && accessor.isAuthenticated();
     referrerService.recordContentReferrer(
-        contentId, referrerDTO, referer, userAgent, clientIp, accessor.getUserId());
+        contentId, referrerDTO, referer, userAgent, clientIp, actorId, isGuest, isAuthenticated);
     return responseHelper.success(null, CONTENT_REFERRAL_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 }

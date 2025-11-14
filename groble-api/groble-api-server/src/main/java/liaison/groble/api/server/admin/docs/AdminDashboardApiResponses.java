@@ -137,4 +137,46 @@ public final class AdminDashboardApiResponses {
                         value = CommonSwaggerDocs.SERVER_ERROR_EXAMPLE)))
   })
   public @interface GetAdminDashboardTopContentsApiResponses {}
+
+  /** 관리자 대시보드 실시간 방문자 API 응답 */
+  @Target(ElementType.METHOD)
+  @Retention(RetentionPolicy.RUNTIME)
+  @ApiResponses({
+    @ApiResponse(
+        responseCode = "200",
+        description = CommonSwaggerDocs.SUCCESS_200,
+        content =
+            @Content(
+                mediaType = "application/json",
+                schema =
+                    @Schema(
+                        implementation =
+                            GenericResponseSchemas.ApiAdminActiveVisitorsResponse.class),
+                examples =
+                    @ExampleObject(
+                        name = "성공 응답 예시",
+                        description = "관리자 대시보드 실시간 방문자 조회 성공 시 응답 예시",
+                        value =
+                            AdminDashboardExamples
+                                .ADMIN_DASHBOARD_ACTIVE_VISITORS_SUCCESS_EXAMPLE))),
+    @ApiResponse(
+        responseCode = "403",
+        description = CommonSwaggerDocs.FORBIDDEN,
+        content =
+            @Content(
+                mediaType = "application/json",
+                examples =
+                    @io.swagger.v3.oas.annotations.media.ExampleObject(
+                        value = CommonSwaggerDocs.FORBIDDEN_EXAMPLE))),
+    @ApiResponse(
+        responseCode = "500",
+        description = CommonSwaggerDocs.SERVER_ERROR,
+        content =
+            @Content(
+                mediaType = "application/json",
+                examples =
+                    @io.swagger.v3.oas.annotations.media.ExampleObject(
+                        value = CommonSwaggerDocs.SERVER_ERROR_EXAMPLE)))
+  })
+  public @interface GetAdminActiveVisitorsApiResponses {}
 }

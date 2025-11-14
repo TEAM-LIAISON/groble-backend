@@ -19,8 +19,10 @@ import liaison.groble.domain.guest.repository.GuestUserRepository;
 import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.order.repository.OrderRepository;
 import liaison.groble.domain.order.vo.OrderOptionInfo;
+import liaison.groble.domain.payment.repository.BillingKeyRepository;
 import liaison.groble.domain.payment.repository.PaymentRepository;
 import liaison.groble.domain.purchase.repository.PurchaseRepository;
+import liaison.groble.domain.subscription.repository.SubscriptionRepository;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -38,6 +40,8 @@ public class GuestOrderProcessor extends BaseOrderProcessor {
       PurchaseRepository purchaseRepository,
       PaymentRepository paymentRepository,
       GuestUserRepository guestUserRepository,
+      SubscriptionRepository subscriptionRepository,
+      BillingKeyRepository billingKeyRepository,
       EventPublisher eventPublisher) {
     super(
         contentReader,
@@ -48,6 +52,8 @@ public class GuestOrderProcessor extends BaseOrderProcessor {
         purchaseRepository,
         paymentRepository,
         guestUserRepository, // ← 추가!
+        subscriptionRepository,
+        billingKeyRepository,
         eventPublisher);
   }
 

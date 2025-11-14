@@ -19,8 +19,10 @@ public class FlatAdminSettlementsDTO {
   private BigDecimal settlementAmount;
   private BigDecimal settlementAmountDisplay;
   private String settlementStatus;
+  private String paymentType;
 
   // SellerInfo 존재
+  private String nickname;
   private String verificationStatus;
   private Boolean isBusinessSeller;
   private String businessType;

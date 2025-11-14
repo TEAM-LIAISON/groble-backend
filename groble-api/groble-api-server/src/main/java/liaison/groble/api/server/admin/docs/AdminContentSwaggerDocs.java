@@ -19,6 +19,14 @@ public final class AdminContentSwaggerDocs {
           \n- 콘텐츠 상태, 가격 옵션, 판매자 정보 등의 요약 데이터를 제공합니다.
           """;
 
+  // === 콘텐츠 제목 검색 ===
+  public static final String SEARCH_CONTENTS_SUMMARY = "[🔍 관리자 콘텐츠] 제목으로 콘텐츠 검색";
+  public static final String SEARCH_CONTENTS_DESCRIPTION =
+      """
+          콘텐츠 제목 키워드를 기준으로 관리자용 콘텐츠 목록을 검색합니다.
+          \n- 부분 일치(contains) 기준으로 검색하며, 기존 목록과 동일한 요약 정보를 제공합니다.
+          """;
+
   // === 콘텐츠 심사 처리 ===
   public static final String EXAMINE_CONTENT_SUMMARY = "[✅ 관리자 콘텐츠] 콘텐츠 심사 처리";
   public static final String EXAMINE_CONTENT_DESCRIPTION =

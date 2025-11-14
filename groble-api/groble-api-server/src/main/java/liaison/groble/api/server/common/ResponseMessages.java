@@ -8,6 +8,8 @@ public final class ResponseMessages {
     public static final String DASHBOARD_OVERVIEW_RETRIEVED = "관리자 대시보드 개요 조회에 성공하였습니다.";
     public static final String DASHBOARD_TRENDS_RETRIEVED = "관리자 대시보드 추세 데이터 조회에 성공하였습니다.";
     public static final String DASHBOARD_TOP_CONTENTS_RETRIEVED = "관리자 대시보드 인기 콘텐츠 조회에 성공하였습니다.";
+    public static final String DASHBOARD_ACTIVE_VISITORS_RETRIEVED =
+        "관리자 대시보드 실시간 방문자 조회에 성공하였습니다.";
     public static final String SETTLEMENT_APPROVAL_SUCCESS = "정산 승인 요청이 성공적으로 처리되었습니다.";
 
     public static final String ALL_USERS_SETTLEMENTS_RETRIEVED = "전체 사용자 정산 내역 조회에 성공하였습니다.";
@@ -24,6 +26,7 @@ public final class ResponseMessages {
     public static final String CONTENT_SUMMARY_INFO_RETRIEVED = "관리자 콘텐츠 목록 조회에 성공하였습니다.";
     public static final String CONTENT_EXAMINE_APPROVED = "콘텐츠 심사 승인에 성공했습니다.";
     public static final String CONTENT_EXAMINE_REJECTED = "콘텐츠 심사 반려에 성공했습니다.";
+    public static final String CONTENT_SEARCH_RETRIEVED = "관리자 콘텐츠 제목 검색에 성공하였습니다.";
     public static final String MAKER_DASHBOARD_OVERVIEW_RETRIEVED = "관리자 마켓 대시보드 개요 조회에 성공하였습니다.";
     public static final String MAKER_DASHBOARD_VIEW_STATS_RETRIEVED =
         "관리자 마켓 대시보드 조회수 요약 조회에 성공하였습니다.";
@@ -94,6 +97,11 @@ public final class ResponseMessages {
     public static final String CANCEL_SUCCESS = "결제 취소 요청이 성공적으로 처리되었습니다.";
     public static final String VERIFICATION_SUCCESS = "결제 검증이 성공적으로 완료되었습니다.";
     public static final String REFUND_SUCCESS = "환불 요청이 성공적으로 처리되었습니다.";
+    public static final String BILLING_AUTH_SUCCESS = "정기 결제를 위한 페이플 인증 요청이 성공적으로 처리되었습니다.";
+    public static final String BILLING_KEY_REGISTERED = "정기 결제를 위한 카드 정보가 성공적으로 등록되었습니다.";
+    public static final String BILLING_KEY_DELETED = "정기 결제를 위한 카드 정보가 삭제되었습니다.";
+    public static final String SUBSCRIPTION_CANCELLED = "정기 결제가 해지되었습니다.";
+    public static final String SUBSCRIPTION_RESUMED = "정기 결제가 재개되었습니다.";
 
     private Payment() {}
   }
@@ -126,6 +134,7 @@ public final class ResponseMessages {
     public static final String USER_HEADER_INFORM_SUCCESS = "사용자 헤더 정보 조회에 성공했습니다.";
     public static final String MY_PAGE_SUMMARY_SUCCESS = "마이페이지 요약 정보 조회에 성공했습니다.";
     public static final String MY_PAGE_DETAIL_SUCCESS = "마이페이지 상세 정보 조회에 성공했습니다.";
+    public static final String MY_PAGE_PAYMENT_METHOD_SUCCESS = "등록된 결제 수단 조회에 성공했습니다.";
     public static final String PROFILE_IMAGE_UPLOAD_SUCCESS = "프로필 이미지가 성공적으로 업로드되었습니다.";
     public static final String PROFILE_UPDATED = "프로필이 성공적으로 수정되었습니다.";
     public static final String ROLE_SWITCHED = "가입 유형이 전환되었습니다.";

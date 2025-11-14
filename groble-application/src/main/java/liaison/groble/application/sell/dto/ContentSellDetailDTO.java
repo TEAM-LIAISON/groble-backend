@@ -17,4 +17,6 @@ public class ContentSellDetailDTO {
   private String purchaserPhoneNumber; // Purchase.user.userProfile.phoneNumber
   private String selectedOptionName; // Purchase.selectedOptionName
   private BigDecimal finalPrice; // Purchase.finalPrice
+  private String paymentType; // Content.paymentType
+  private Integer subscriptionRound; // 정기결제 회차 (null 가능)
 }

@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 import liaison.groble.application.payment.dto.PaypleApprovalResult;
 import liaison.groble.application.payment.exception.PaymentValidationException;
 import liaison.groble.application.payment.exception.UnauthorizedPaymentException;
+import liaison.groble.application.payment.util.CardQuotaNormalizer;
 import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.payment.entity.PayplePayment;
 
@@ -137,7 +138,7 @@ public class PaymentValidator {
     }
 
     // 결제 금액 검증
-    if (!Objects.equals(payment.getPcdPayTotal(), approvalResult.getPayTotal())) {
+    if (!amountEquals(payment.getPcdPayTotal(), approvalResult.getPayTotal())) {
       throw new PaymentValidationException(
           String.format(
               "결제금액 불일치 - DB: %s, 승인결과: %s",
@@ -176,12 +177,13 @@ public class PaymentValidator {
     }
 
     // 할부개월수
-    if (payment.getPcdPayCardQuota() != null && approvalResult.getPayCardQuota() != null) {
-      if (!Objects.equals(payment.getPcdPayCardQuota(), approvalResult.getPayCardQuota())) {
-        log.warn(
-            "할부개월수 불일치 - DB: {}, 승인결과: {}",
-            payment.getPcdPayCardQuota(),
-            approvalResult.getPayCardQuota());
+    if (payment.getPcdPayCardQuota() != null || approvalResult.getPayCardQuota() != null) {
+      String normalizedPaymentQuota = CardQuotaNormalizer.normalize(payment.getPcdPayCardQuota());
+      String normalizedApprovalQuota =
+          CardQuotaNormalizer.normalize(approvalResult.getPayCardQuota());
+
+      if (!Objects.equals(normalizedPaymentQuota, normalizedApprovalQuota)) {
+        log.warn("할부개월수 불일치 - DB: {}, 승인결과: {}", normalizedPaymentQuota, normalizedApprovalQuota);
       }
     }
   }
@@ -190,6 +192,20 @@ public class PaymentValidator {
   private void validateIfNotNull(String dbValue, String approvalValue, String fieldName) {
     if (dbValue != null && approvalValue != null && !dbValue.equals(approvalValue)) {
       log.warn("{} 불일치 - DB: {}, 승인결과: {}", fieldName, dbValue, approvalValue);
+    }
+  }
+
+  private boolean amountEquals(String lhs, String rhs) {
+    if (lhs == null || rhs == null) {
+      return Objects.equals(lhs, rhs);
+    }
+    try {
+      BigDecimal lhsAmount = new BigDecimal(lhs);
+      BigDecimal rhsAmount = new BigDecimal(rhs);
+      return lhsAmount.compareTo(rhsAmount) == 0;
+    } catch (NumberFormatException ex) {
+      log.warn("금액 비교 실패 - lhs: {}, rhs: {}", lhs, rhs, ex);
+      return Objects.equals(lhs, rhs);
     }
   }
 }

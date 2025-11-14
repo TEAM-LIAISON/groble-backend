@@ -249,30 +249,31 @@ project(':groble-domain') {
         annotationProcessor 'jakarta.persistence:jakarta.persistence-api'
     }
 
+    def querydslDir = layout.buildDirectory.dir("generated/querydsl").get().asFile
 
-    // QueryDSL Q클래스 생성 디렉토리 설정
-    def generated = 'src/main/generated'
-
-    // querydsl QClass 파일 생성 위치를 지정
-    tasks.withType(JavaCompile) {
-        options.getGeneratedSourceOutputDirectory().set(file(generated))
-    }
-
-    // java source set에 querydsl QClass 위치 추가
     sourceSets {
-        main.java.srcDirs += [generated]
+        main.java.srcDir(querydslDir)
     }
 
-    // gradle clean 시에 QClass 디렉토리 삭제
-    clean {
-        delete file(generated)
+    tasks.named('compileJava', JavaCompile).configure {
+        // IntelliJ의 Gradle 미위임 빌드에서도 중복 생성 오류가 발생하지 않도록 매번 생성 디렉터리를 정리
+        doFirst {
+            if (querydslDir.exists()) {
+                project.delete(querydslDir)
+            }
+        }
+        options.annotationProcessorGeneratedSourcesDirectory = querydslDir
     }
-    
+
+    tasks.named('clean') {
+        doLast { delete(querydslDir) }
+    }
+
     // 생성된 QueryDSL 파일은 Spotless 검사에서 제외
     spotless {
         java {
             target '**/*.java'
-            targetExclude 'src/main/generated/**'
+            targetExclude 'build/generated/querydsl/**'
         }
     }
 }
@@ -286,9 +287,6 @@ project(':groble-infrastructure:groble-persistence') {
 
         // QueryDSL 의존성
         implementation "com.querydsl:querydsl-jpa:${queryDslVersion}:jakarta"
-        annotationProcessor "com.querydsl:querydsl-apt:${queryDslVersion}:jakarta"
-        annotationProcessor 'jakarta.annotation:jakarta.annotation-api'
-        annotationProcessor 'jakarta.persistence:jakarta.persistence-api'
 
         // MySQL Driver
         runtimeOnly 'com.mysql:mysql-connector-j'

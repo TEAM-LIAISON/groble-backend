@@ -1,5 +1,6 @@
 package liaison.groble.persistence.purchase;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -34,4 +35,29 @@ public interface JpaPurchaseRepository extends JpaRepository<Purchase, Long> {
       """)
   Optional<Purchase> findByMerchantUidAndGuestUserIdWithOrderAndContent(
       @Param("merchantUid") String merchantUid, @Param("guestUserId") Long guestUserId);
+
+  List<Purchase> findByUser_IdAndContent_IdOrderByPurchasedAtDesc(Long userId, Long contentId);
+
+  @Query(
+      """
+      SELECT DISTINCT p.selectedOptionId
+      FROM Purchase p
+      WHERE p.content.id = :contentId AND p.selectedOptionId IS NOT NULL
+      """)
+  List<Long> findDistinctSelectedOptionIdsByContentId(@Param("contentId") Long contentId);
+
+  @Query(
+      """
+      SELECT COUNT(p)
+      FROM Purchase p
+      WHERE p.user.id = :userId
+        AND p.content.id = :contentId
+        AND (:optionId IS NULL OR p.selectedOptionId = :optionId)
+        AND p.purchasedAt <= :purchasedAt
+      """)
+  int countSubscriptionRound(
+      @Param("userId") Long userId,
+      @Param("contentId") Long contentId,
+      @Param("optionId") Long optionId,
+      @Param("purchasedAt") java.time.LocalDateTime purchasedAt);
 }

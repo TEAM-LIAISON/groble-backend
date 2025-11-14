@@ -11,4 +11,8 @@ public interface OrderRepository {
   Optional<Order> findById(Long orderId);
 
   Optional<Order> findByMerchantUid(String merchantUid);
+
+  Optional<Order> findByMerchantUidForUpdate(String merchantUid);
+
+  Optional<Order> findByMerchantUidAndUserIdForUpdate(String merchantUid, Long userId);
 }

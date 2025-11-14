@@ -1,6 +1,7 @@
 package liaison.groble.api.model.order.response;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -49,6 +50,22 @@ public class OrderSuccessResponse {
   private final String contentTitle;
 
   @Schema(
+      description = "결제 타입 (단건결제: ONE_TIME, 정기결제: SUBSCRIPTION)",
+      example = "SUBSCRIPTION",
+      type = "string")
+  private final String paymentType;
+
+  @Schema(description = "다음 결제 예정일", example = "2025-12-20", type = "string")
+  @JsonFormat(pattern = "yyyy-MM-dd", timezone = "Asia/Seoul")
+  private final LocalDate nextPaymentDate;
+
+  @Schema(description = "결제 카드 명", example = "우리카드", type = "string")
+  private final String cardName;
+
+  @Schema(description = "마스킹된 카드번호의 뒤 4자리", example = "1234", type = "string")
+  private final String cardNumberLast4;
+
+  @Schema(
       description =
           "구매 상태 (결제대기: PENDING, 결제완료: PAID, 결제취소: CANCEL_REQUEST, 환불완료: CANCELLED, 결제실패: FAILED)",
       example = "PAID",
@@ -80,6 +97,12 @@ public class OrderSuccessResponse {
       type = "string",
       requiredMode = Schema.RequiredMode.REQUIRED)
   private String selectedOptionName;
+
+  @Schema(
+      description = "자료 옵션일 때 다운로드 파일 URL 또는 링크 URL",
+      example = "https://cdn.example.com/template.pdf",
+      type = "string")
+  private final String documentOptionActionUrl;
 
   @Schema(
       description = "원래 가격",

@@ -1,7 +1,10 @@
 package liaison.groble.application.order.service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -13,13 +16,18 @@ import liaison.groble.application.order.dto.CreateOrderRequestDTO;
 import liaison.groble.application.order.dto.CreateOrderSuccessDTO;
 import liaison.groble.application.order.dto.OrderSuccessDTO;
 import liaison.groble.application.order.dto.ValidatedOrderOptionDTO;
+import liaison.groble.application.payment.dto.billing.SubscriptionPaymentMetadata;
 import liaison.groble.application.payment.dto.completion.FreePaymentCompletionResult;
 import liaison.groble.application.payment.event.FreePaymentCompletedEvent;
+import liaison.groble.application.payment.service.SubscriptionPaymentMetadataProvider;
 import liaison.groble.application.purchase.service.PurchaseReader;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.common.event.EventPublisher;
 import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.content.entity.ContentOption;
+import liaison.groble.domain.content.entity.DocumentOption;
+import liaison.groble.domain.content.enums.ContentPaymentType;
+import liaison.groble.domain.content.enums.SubscriptionSellStatus;
 import liaison.groble.domain.coupon.entity.UserCoupon;
 import liaison.groble.domain.coupon.repository.UserCouponRepository;
 import liaison.groble.domain.guest.entity.GuestUser;
@@ -28,10 +36,14 @@ import liaison.groble.domain.order.entity.OrderItem;
 import liaison.groble.domain.order.entity.Purchaser;
 import liaison.groble.domain.order.repository.OrderRepository;
 import liaison.groble.domain.order.vo.OrderOptionInfo;
+import liaison.groble.domain.payment.entity.BillingKey;
 import liaison.groble.domain.payment.entity.Payment;
+import liaison.groble.domain.payment.repository.BillingKeyRepository;
 import liaison.groble.domain.payment.repository.PaymentRepository;
 import liaison.groble.domain.purchase.entity.Purchase;
 import liaison.groble.domain.purchase.repository.PurchaseRepository;
+import liaison.groble.domain.subscription.entity.Subscription;
+import liaison.groble.domain.subscription.repository.SubscriptionRepository;
 import liaison.groble.domain.user.entity.User;
 
 import lombok.RequiredArgsConstructor;
@@ -69,9 +81,12 @@ public class OrderService {
   private final UserCouponRepository userCouponRepository;
   private final PurchaseRepository purchaseRepository;
   private final PaymentRepository paymentRepository;
+  private final SubscriptionRepository subscriptionRepository;
+  private final BillingKeyRepository billingKeyRepository;
 
   // Event Publisher
   private final EventPublisher eventPublisher;
+  private final SubscriptionPaymentMetadataProvider subscriptionPaymentMetadataProvider;
 
   @Transactional
   public CreateOrderSuccessDTO createOrderForUser(CreateOrderRequestDTO dto, Long userId) {
@@ -111,10 +126,28 @@ public class OrderService {
     // 1. 콘텐츠 조회
     final Content content = contentReader.getContentById(dto.getContentId());
 
+    if (content.getPaymentType() == ContentPaymentType.SUBSCRIPTION) {
+      validateSubscriptionSellStatus(content);
+      if (guestUser != null) {
+        throw new IllegalArgumentException("정기결제 상품은 회원만 구매할 수 있습니다.");
+      }
+    }
+
     // 2. 주문 옵션 검증 및 변환
     final List<ValidatedOrderOptionDTO> validatedOptions =
         validateAndEnrichOptions(content, dto.getOptions());
     final List<OrderOptionInfo> orderOptions = convertToDomainOptions(validatedOptions);
+
+    if (content.getPaymentType() == ContentPaymentType.SUBSCRIPTION) {
+      if (validatedOptions.size() != 1) {
+        throw new IllegalArgumentException("정기결제 상품은 하나의 옵션만 선택할 수 있습니다.");
+      }
+
+      ValidatedOrderOptionDTO option = validatedOptions.get(0);
+      if (option.getQuantity() == null || option.getQuantity() != 1) {
+        throw new IllegalArgumentException("정기결제 상품은 옵션 수량 1개만 구매할 수 있습니다.");
+      }
+    }
 
     // 3. 주문 객체 생성
     Order order = createOrderByUserType(user, guestUser, content, orderOptions);
@@ -148,6 +181,16 @@ public class OrderService {
 
     // 9. 응답 생성
     return buildCreateOrderDTOByType(order, user, guestUser, willBeFreePurchase);
+  }
+
+  private void validateSubscriptionSellStatus(Content content) {
+    SubscriptionSellStatus sellStatus = content.getSubscriptionSellStatus();
+    if (sellStatus == SubscriptionSellStatus.PAUSED) {
+      throw new IllegalStateException("정기결제 신규 신청이 일시 중단된 콘텐츠입니다.");
+    }
+    if (sellStatus == SubscriptionSellStatus.TERMINATED) {
+      throw new IllegalStateException("정기결제가 종료된 콘텐츠입니다.");
+    }
   }
 
   /**
@@ -675,12 +718,38 @@ public class OrderService {
     log.info(
         "주문 성공 응답 생성 - orderId: {}, purchasedAt: {}", order.getId(), purchase.getPurchasedAt());
 
+    LocalDate nextPaymentDate =
+        subscriptionRepository
+            .findByPurchaseId(purchase.getId())
+            .map(Subscription::getNextBillingDate)
+            .orElse(null);
+
+    String cardName = null;
+    String cardNumberLast4 = null;
+    Payment payment = purchase.getPayment();
+    if (payment != null) {
+      String billingKeyValue = payment.getBillingKey();
+      if (billingKeyValue != null && !billingKeyValue.isBlank()) {
+        Optional<BillingKey> billingKeyOptional =
+            billingKeyRepository.findByBillingKey(billingKeyValue);
+        if (billingKeyOptional.isPresent()) {
+          BillingKey billingKey = billingKeyOptional.get();
+          cardName = billingKey.getCardName();
+          cardNumberLast4 = extractCardLast4(billingKey.getCardNumberMasked());
+        }
+      }
+    }
+
     return OrderSuccessDTO.builder()
         // 주문 기본 정보
         .merchantUid(order.getMerchantUid())
         .purchasedAt(purchase.getPurchasedAt())
         .contentId(content.getId())
         .contentTitle(content.getTitle())
+        .paymentType(content.getPaymentType() != null ? content.getPaymentType().name() : null)
+        .nextPaymentDate(nextPaymentDate)
+        .cardName(cardName)
+        .cardNumberLast4(cardNumberLast4)
         .sellerName(content.getUser().getNickname())
         .orderStatus(order.getStatus().name())
 
@@ -693,6 +762,7 @@ public class OrderService {
         .selectedOptionType(
             orderItem.getOptionType() != null ? orderItem.getOptionType().name() : null)
         .selectedOptionName(purchase.getSelectedOptionName())
+        .documentOptionActionUrl(resolveDocumentOptionActionUrl(orderItem, content))
         // 가격 정보
         .originalPrice(order.getOriginalPrice())
         .discountPrice(order.getDiscountPrice())
@@ -702,6 +772,41 @@ public class OrderService {
 
         .isFreePurchase(order.getFinalPrice().compareTo(BigDecimal.ZERO) == 0)
         .build();
+  }
+
+  private String extractCardLast4(String masked) {
+    if (masked == null || masked.isBlank()) {
+      return null;
+    }
+    String digitsOnly = masked.replaceAll("\\D", "");
+    if (digitsOnly.length() < 4) {
+      return digitsOnly.isEmpty() ? null : digitsOnly;
+    }
+    return digitsOnly.substring(digitsOnly.length() - 4);
+  }
+
+  private String resolveDocumentOptionActionUrl(OrderItem orderItem, Content content) {
+    if (orderItem.getOptionType() != OrderItem.OptionType.DOCUMENT_OPTION) {
+      return null;
+    }
+
+    Long optionId = orderItem.getOptionId();
+    if (optionId == null) {
+      return null;
+    }
+
+    return content.getOptions().stream()
+        .filter(option -> optionId.equals(option.getId()))
+        .filter(DocumentOption.class::isInstance)
+        .map(DocumentOption.class::cast)
+        .map(
+            option -> {
+              String fileUrl = option.getDocumentFileUrl();
+              return fileUrl != null ? fileUrl : option.getDocumentLinkUrl();
+            })
+        .filter(Objects::nonNull)
+        .findFirst()
+        .orElse(null);
   }
 
   /**
@@ -855,6 +960,28 @@ public class OrderService {
         .contentTitle(contentTitle)
         .totalPrice(order.getTotalPrice())
         .isPurchasedContent(isPurchasedContent)
+        .paypleOptions(
+            subscriptionPaymentMetadataProvider
+                .buildForOrder(order)
+                .map(this::toPaypleOptionsDTO)
+                .orElse(null))
+        .build();
+  }
+
+  private CreateOrderSuccessDTO.PaypleOptionsDTO toPaypleOptionsDTO(
+      SubscriptionPaymentMetadata metadata) {
+    return CreateOrderSuccessDTO.PaypleOptionsDTO.builder()
+        .billingKeyAction(metadata.getBillingKeyAction().name())
+        .payWork(metadata.getPayWork())
+        .cardVer(metadata.getCardVer())
+        .regularFlag(metadata.getRegularFlag())
+        .defaultPayMethod(metadata.getDefaultPayMethod())
+        .merchantUserKey(metadata.getMerchantUserKey())
+        .billingKeyId(metadata.getBillingKeyId())
+        .nextPaymentDate(metadata.getNextPaymentDate())
+        .payYear(metadata.getPayYear())
+        .payMonth(metadata.getPayMonth())
+        .payDay(metadata.getPayDay())
         .build();
   }
 

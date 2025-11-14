@@ -21,6 +21,7 @@ import liaison.groble.api.model.user.request.UserTypeRequest;
 import liaison.groble.api.model.user.response.MyPageSummaryResponseBase;
 import liaison.groble.api.model.user.response.UserHeaderResponse;
 import liaison.groble.api.model.user.response.UserMyPageDetailResponse;
+import liaison.groble.api.model.user.response.UserPaymentMethodResponse;
 import liaison.groble.api.model.user.response.swagger.MyPageDetail;
 import liaison.groble.api.model.user.response.swagger.SwitchRole;
 import liaison.groble.api.model.user.response.swagger.UploadUserProfileImage;
@@ -35,6 +36,7 @@ import liaison.groble.application.file.dto.FileUploadDTO;
 import liaison.groble.application.user.dto.UserHeaderDTO;
 import liaison.groble.application.user.dto.UserMyPageDetailDTO;
 import liaison.groble.application.user.dto.UserMyPageSummaryDTO;
+import liaison.groble.application.user.dto.UserPaymentMethodDTO;
 import liaison.groble.application.user.service.UserService;
 import liaison.groble.application.user.strategy.UserHeaderProcessorFactory;
 import liaison.groble.application.user.strategy.UserHeaderStrategy;
@@ -45,9 +47,9 @@ import liaison.groble.common.factory.UserContextFactory;
 import liaison.groble.common.model.Accessor;
 import liaison.groble.common.response.GrobleResponse;
 import liaison.groble.common.response.ResponseHelper;
-import liaison.groble.common.utils.TokenCookieService;
 import liaison.groble.mapping.user.UserMapper;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -66,7 +68,6 @@ public class UserController extends BaseController {
   // Service
   private final UserService userService;
   private final FileService fileService;
-  private final TokenCookieService tokenCookieService;
 
   // Mapper
   private final UserMapper userMapper;
@@ -80,7 +81,6 @@ public class UserController extends BaseController {
       UserHeaderProcessorFactory userHeaderProcessorFactory,
       UserService userService,
       FileService fileService,
-      TokenCookieService tokenCookieService,
       UserMapper userMapper,
       FileUtil fileUtil,
       FileValidationUtil fileValidationUtil) {
@@ -88,7 +88,6 @@ public class UserController extends BaseController {
     this.userHeaderProcessorFactory = userHeaderProcessorFactory;
     this.userService = userService;
     this.fileService = fileService;
-    this.tokenCookieService = tokenCookieService;
     this.userMapper = userMapper;
     this.fileUtil = fileUtil;
     this.fileValidationUtil = fileValidationUtil;
@@ -140,6 +139,15 @@ public class UserController extends BaseController {
     return success(
         userMapper.toApiMyPageDetailResponse(detailDTO),
         ResponseMessages.User.MY_PAGE_DETAIL_SUCCESS);
+  }
+
+  @Operation(summary = "[✅ 마이페이지] 등록된 결제 수단 조회", description = "정기 결제에 등록된 카드 정보를 조회합니다.")
+  @GetMapping(ApiPaths.User.MY_PAGE_PAYMENT_METHOD)
+  public ResponseEntity<GrobleResponse<UserPaymentMethodResponse>> getUserPaymentMethod(
+      @Auth Accessor accessor) {
+    UserPaymentMethodDTO paymentMethodDTO = userService.getUserPaymentMethod(accessor.getUserId());
+    UserPaymentMethodResponse response = userMapper.toUserPaymentMethodResponse(paymentMethodDTO);
+    return success(response, ResponseMessages.User.MY_PAGE_PAYMENT_METHOD_SUCCESS);
   }
 
   @UserHeader

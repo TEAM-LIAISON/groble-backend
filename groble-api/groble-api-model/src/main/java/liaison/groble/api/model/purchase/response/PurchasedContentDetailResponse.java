@@ -1,6 +1,7 @@
 package liaison.groble.api.model.purchase.response;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -152,6 +153,37 @@ public class PurchasedContentDetailResponse {
       requiredMode = Schema.RequiredMode.NOT_REQUIRED)
   private String payCardNum;
 
+  @Schema(
+      description = "콘텐츠 결제 형태",
+      example = "SUBSCRIPTION",
+      type = "string",
+      allowableValues = {"ONE_TIME", "SUBSCRIPTION"},
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private String paymentType;
+
+  @Schema(
+      description = "다음 결제 예정일 (정기결제 콘텐츠인 경우에만 제공)",
+      example = "2025-05-20",
+      type = "string",
+      format = "date",
+      requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  @JsonFormat(pattern = "yyyy-MM-dd")
+  private LocalDate nextPaymentDate;
+
+  @Schema(
+      description = "정기결제 회차 (정기결제인 경우에만 제공)",
+      example = "3",
+      type = "integer",
+      requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  private Integer subscriptionRound;
+
+  @Schema(
+      description = "등록된 정기 결제 카드로 구독을 재시작할 수 있는지 여부",
+      example = "true",
+      type = "boolean",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private boolean canResumeSubscription;
+
   // 누락 변수 추가
   @Schema(
       description = "콘텐츠 썸네일 URL",
@@ -166,6 +198,13 @@ public class PurchasedContentDetailResponse {
       type = "boolean",
       requiredMode = Schema.RequiredMode.REQUIRED)
   private Boolean isRefundable;
+
+  @Schema(
+      description = "결제 취소 가능 여부 (결제 완료 시점으로부터 7일 이내라면 true)",
+      example = "false",
+      type = "boolean",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private Boolean isCancelable;
 
   @Schema(
       description =

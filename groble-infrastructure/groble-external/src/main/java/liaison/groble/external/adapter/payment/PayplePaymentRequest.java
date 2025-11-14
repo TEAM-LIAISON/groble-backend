@@ -19,6 +19,12 @@ public class PayplePaymentRequest {
   private final String custKey; // 고객사 키
   private final String authKey; // 인증 키
   private final String payReqKey; // 결제 요청 키
+  private final String cardQuota; // 할부 개월수 (00: 일시불)
+  private final String payType; // 결제 타입 (card 등)
+  private final String payerId; // 빌링키/구매자 ID
+  private final String payGoods; // 상품명
+  private final String payTotal; // 결제 금액
+  private final String simpleFlag; // 간편결제 플래그
 
   /**
    * 요청 데이터의 유효성을 검증합니다.
@@ -35,7 +41,9 @@ public class PayplePaymentRequest {
         && authKey != null
         && !authKey.trim().isEmpty()
         && payReqKey != null
-        && !payReqKey.trim().isEmpty();
+        && !payReqKey.trim().isEmpty()
+        && cardQuota != null
+        && !cardQuota.trim().isEmpty();
   }
 
   /**
@@ -46,8 +54,8 @@ public class PayplePaymentRequest {
   @Override
   public String toString() {
     return String.format(
-        "PayplePaymentRequest{url='%s', cstId='%s', custKey='***', authKey='***', payReqKey='%s'}",
-        url, cstId, maskKey(payReqKey));
+        "PayplePaymentRequest{url='%s', cstId='%s', custKey='***', authKey='***', payReqKey='%s', cardQuota='%s', payType='%s', payerId='***'}",
+        url, cstId, maskKey(payReqKey), cardQuota, payType);
   }
 
   private String maskKey(String key) {

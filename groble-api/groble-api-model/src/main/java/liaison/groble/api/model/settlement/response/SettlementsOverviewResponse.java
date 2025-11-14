@@ -53,6 +53,14 @@ public class SettlementsOverviewResponse {
   private String contentType;
 
   @Schema(
+      description = "결제 유형 (ONE_TIME: 단건 결제, SUBSCRIPTION: 정기 결제)",
+      example = "SUBSCRIPTION",
+      type = "string",
+      allowableValues = {"ONE_TIME", "SUBSCRIPTION"},
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private String paymentType;
+
+  @Schema(
       description = "정산(예정)금액 (표시 수수료 기준)",
       example = "1000000",
       type = "number",

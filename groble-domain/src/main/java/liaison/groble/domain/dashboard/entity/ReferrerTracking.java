@@ -103,6 +103,18 @@ public class ReferrerTracking extends BaseTimeEntity {
   @Comment("세션 ID")
   private String sessionId;
 
+  @Column(name = "actor_id")
+  @Comment("행위자 ID (회원 ID 또는 게스트 ID)")
+  private Long actorId;
+
+  @Column(name = "actor_type", length = 16)
+  @Comment("행위자 유형: MEMBER, GUEST, ANONYMOUS")
+  private String actorType;
+
+  @Column(name = "is_authenticated")
+  @Comment("인증 여부")
+  private Boolean authenticated;
+
   @Column(name = "user_agent", columnDefinition = "text")
   @Comment("사용자 에이전트")
   private String userAgent;
@@ -130,7 +142,10 @@ public class ReferrerTracking extends BaseTimeEntity {
       String referrerDomain,
       String userAgent,
       String ipAddress,
-      LocalDateTime eventTimestamp) {
+      LocalDateTime eventTimestamp,
+      Long actorId,
+      String actorType,
+      Boolean authenticated) {
     this.pageUrl = pageUrl;
     this.referrerUrl = referrerUrl;
     this.referrerDomain = referrerDomain;
@@ -146,6 +161,9 @@ public class ReferrerTracking extends BaseTimeEntity {
     this.userAgent = userAgent;
     this.ipAddress = ipAddress;
     this.eventTimestamp = eventTimestamp;
+    this.actorId = actorId;
+    this.actorType = actorType;
+    this.authenticated = authenticated;
   }
 
   public static ReferrerTracking forContent(
@@ -165,7 +183,10 @@ public class ReferrerTracking extends BaseTimeEntity {
       String referrerDomain,
       String userAgent,
       String ipAddress,
-      LocalDateTime eventTimestamp) {
+      LocalDateTime eventTimestamp,
+      Long actorId,
+      String actorType,
+      Boolean authenticated) {
     return ReferrerTracking.builder()
         .contentId(contentId == null ? null : contentId.toString())
         .pageUrl(pageUrl)
@@ -181,6 +202,9 @@ public class ReferrerTracking extends BaseTimeEntity {
         .referrerChain(referrerChain)
         .referrerMetadata(referrerMetadata)
         .sessionId(sessionId)
+        .actorId(actorId)
+        .actorType(actorType)
+        .authenticated(authenticated)
         .userAgent(userAgent)
         .ipAddress(ipAddress)
         .eventTimestamp(eventTimestamp)
@@ -204,7 +228,10 @@ public class ReferrerTracking extends BaseTimeEntity {
       String referrerDomain,
       String userAgent,
       String ipAddress,
-      LocalDateTime eventTimestamp) {
+      LocalDateTime eventTimestamp,
+      Long actorId,
+      String actorType,
+      Boolean authenticated) {
     return ReferrerTracking.builder()
         .marketLinkUrl(marketLinkUrl)
         .pageUrl(pageUrl)
@@ -220,6 +247,9 @@ public class ReferrerTracking extends BaseTimeEntity {
         .referrerChain(referrerChain)
         .referrerMetadata(referrerMetadata)
         .sessionId(sessionId)
+        .actorId(actorId)
+        .actorType(actorType)
+        .authenticated(authenticated)
         .userAgent(userAgent)
         .ipAddress(ipAddress)
         .eventTimestamp(eventTimestamp)

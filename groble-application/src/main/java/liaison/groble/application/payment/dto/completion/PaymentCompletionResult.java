@@ -1,7 +1,10 @@
 package liaison.groble.application.payment.dto.completion;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+
+import liaison.groble.domain.content.enums.ContentPaymentType;
 
 import lombok.Builder;
 import lombok.Getter;
@@ -27,7 +30,12 @@ public class PaymentCompletionResult {
   private final String nickname;
   private final String guestUserName;
   private final String contentType;
+  private final ContentPaymentType paymentType;
   private final Long optionId;
   private final String selectedOptionName;
   private final LocalDateTime purchasedAt;
+  private final boolean subscriptionRenewal;
+  private final Long subscriptionId;
+  private final LocalDate subscriptionNextBillingDate;
+  private final Integer subscriptionRound;
 }

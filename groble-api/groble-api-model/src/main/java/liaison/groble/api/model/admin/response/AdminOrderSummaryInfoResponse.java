@@ -45,10 +45,11 @@ public class AdminOrderSummaryInfoResponse {
   private String contentType;
 
   @Schema(
-      description = "콘텐츠 상태 (예: 'DRAFT(작성중)', 'ACTIVE(판매중)', 'DELETED(삭제됨)', 'DISCONTINUED(판매중단)')",
+      description =
+          "콘텐츠 상태 (예: 'DRAFT(작성중)', 'ACTIVE(판매중)', 'PAUSED(판매정지)', 'DELETED(삭제됨)', 'DISCONTINUED(판매중단)')",
       example = "DRAFT",
       type = "string",
-      allowableValues = {"ACTIVE", "DRAFT", "DISCONTINUED", "DELETED"},
+      allowableValues = {"ACTIVE", "PAUSED", "DRAFT", "DISCONTINUED", "DELETED"},
       requiredMode = Schema.RequiredMode.REQUIRED)
   private String contentStatus;
 
@@ -85,4 +86,18 @@ public class AdminOrderSummaryInfoResponse {
       type = "string",
       requiredMode = Schema.RequiredMode.REQUIRED)
   private String orderStatus;
+
+  @Schema(
+      description = "결제 수단 [ONE_TIME - 일반 구매], [SUBSCRIPTION - 정기 구독]",
+      example = "ONE_TIME",
+      type = "string",
+      requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  private String paymentType;
+
+  @Schema(
+      description = "결제 실패 사유 (orderStatus가 FAILED일 때 제공)",
+      example = "결제 승인 실패 [3009]: 한도 초과",
+      type = "string",
+      requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  private String failureReason;
 }

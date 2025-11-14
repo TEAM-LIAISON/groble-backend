@@ -65,6 +65,7 @@ public class MarketController {
   private static final String MARKET_LINK_CHECK_PATH = "/link-check";
   private static final String MARKET_VIEW_PATH = "/view/{marketLinkUrl}";
   private static final String MARKET_REFERRER_PATH = "/referrer/{marketLinkUrl}";
+  private static final String MARKET_CONTACT_EMAIL_SYNC_PATH = "/contact/email/sync";
 
   // 응답 메시지 상수화
   private static final String MARKET_EDIT_INTRO_SUCCESS_MESSAGE =
@@ -77,6 +78,8 @@ public class MarketController {
   private static final String MARKET_VIEW_SUCCESS_MESSAGE = "마켓 뷰어 화면을 성공적으로 조회했습니다.";
   private static final String MARKET_REFERRER_SUCCESS_MESSAGE = "마켓 유입경로 저장에 성공하였습니다.";
   private static final String MARKET_MAKER_INFO_SUCCESS_MESSAGE = "마켓 메이커 정보 조회에 성공했습니다.";
+  private static final String MARKET_CONTACT_EMAIL_SYNC_SUCCESS_MESSAGE =
+      "회원가입 이메일을 판매자 연락처 이메일로 저장했습니다.";
 
   // Service
   private final MarketService marketService;
@@ -231,6 +234,20 @@ public class MarketController {
     return responseHelper.success(null, MARKET_VIEW_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 
+  @Operation(
+      summary = "[✅ 마켓 관리] 회원가입 이메일을 판매자 연락처 이메일로 저장",
+      description = "회원가입 시 사용한 이메일을 판매자 연락처 이메일 항목에 저장합니다.")
+  @Logging(
+      item = "Market",
+      action = "syncSellerContactEmail",
+      includeParam = true,
+      includeResult = true)
+  @PostMapping(MARKET_CONTACT_EMAIL_SYNC_PATH)
+  public ResponseEntity<GrobleResponse<Void>> syncSellerContactEmail(@Auth Accessor accessor) {
+    marketService.syncSellerContactEmail(accessor.getUserId());
+    return responseHelper.success(null, MARKET_CONTACT_EMAIL_SYNC_SUCCESS_MESSAGE, HttpStatus.OK);
+  }
+
   @Logging(
       item = "Market",
       action = "recordMarketReferrer",
@@ -245,8 +262,18 @@ public class MarketController {
     String userAgent = requestUtil.getUserAgent();
     String clientIp = requestUtil.getClientIp();
     String referer = requestUtil.getReferer();
+    Long actorId = accessor != null ? accessor.getUserId() : null;
+    boolean isGuest = accessor != null && accessor.isGuest();
+    boolean isAuthenticated = accessor != null && accessor.isAuthenticated();
     referrerService.recordMarketReferrer(
-        marketLinkUrl, referrerDTO, referer, userAgent, clientIp, accessor.getUserId());
+        marketLinkUrl,
+        referrerDTO,
+        referer,
+        userAgent,
+        clientIp,
+        actorId,
+        isGuest,
+        isAuthenticated);
     return responseHelper.success(null, MARKET_REFERRER_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 }

@@ -22,4 +22,6 @@ public class FlatAdminOrderSummaryInfoDTO {
   private String contentTitle;
   private BigDecimal finalPrice;
   private String orderStatus;
+  private String failureReason;
+  private String paymentType;
 }

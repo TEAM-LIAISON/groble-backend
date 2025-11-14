@@ -14,6 +14,7 @@ public class SettlementsOverviewDTO {
   private LocalDate settlementEndDate;
   private LocalDate scheduledSettlementDate;
   private String contentType;
+  private String paymentType;
   private BigDecimal settlementAmount;
   private String settlementStatus;
 }

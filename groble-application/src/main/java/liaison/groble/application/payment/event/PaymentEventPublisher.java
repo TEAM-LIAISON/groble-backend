@@ -45,9 +45,14 @@ public class PaymentEventPublisher {
               .contentTitle(completionResult.getContentTitle())
               .nickname(completionResult.getNickname())
               .contentType(completionResult.getContentType())
+              .paymentType(completionResult.getPaymentType())
               .optionId(completionResult.getOptionId())
               .selectedOptionName(completionResult.getSelectedOptionName())
               .purchasedAt(completionResult.getPurchasedAt())
+              .subscriptionRenewal(completionResult.isSubscriptionRenewal())
+              .subscriptionId(completionResult.getSubscriptionId())
+              .subscriptionNextBillingDate(completionResult.getSubscriptionNextBillingDate())
+              .subscriptionRound(completionResult.getSubscriptionRound())
               .build();
 
       eventPublisher.publish(event);
@@ -83,9 +88,14 @@ public class PaymentEventPublisher {
               .contentTitle(completionResult.getContentTitle())
               .guestUserName(completionResult.getGuestUserName())
               .contentType(completionResult.getContentType())
+              .paymentType(completionResult.getPaymentType())
               .optionId(completionResult.getOptionId())
               .selectedOptionName(completionResult.getSelectedOptionName())
               .purchasedAt(completionResult.getPurchasedAt())
+              .subscriptionRenewal(completionResult.isSubscriptionRenewal())
+              .subscriptionId(completionResult.getSubscriptionId())
+              .subscriptionNextBillingDate(completionResult.getSubscriptionNextBillingDate())
+              .subscriptionRound(completionResult.getSubscriptionRound())
               .build();
 
       eventPublisher.publish(event);

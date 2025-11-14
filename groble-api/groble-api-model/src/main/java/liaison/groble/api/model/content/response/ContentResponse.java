@@ -22,6 +22,14 @@ public class ContentResponse {
   @Schema(description = "콘텐츠 유형 [COACHING - 코칭], [DOCUMENT - 자료]", example = "COACHING")
   private String contentType;
 
+  @Schema(description = "결제 유형 [ONE_TIME - 단건 결제], [SUBSCRIPTION - 정기 결제]", example = "ONE_TIME")
+  private String paymentType;
+
+  @Schema(
+      description = "정기 결제 판매 상태 [OPEN - 판매중], [PAUSED - 신규 구독 중단], [TERMINATED - 정기결제 종료]",
+      example = "OPEN")
+  private String subscriptionSellStatus;
+
   @Schema(description = "카테고리 ID", example = "1")
   private String categoryId;
 
@@ -69,6 +77,9 @@ public class ContentResponse {
 
     @Schema(description = "가격", example = "50000")
     private BigDecimal price;
+
+    @Schema(description = "옵션에 판매 이력이 존재하는지 여부", example = "true", nullable = true)
+    private Boolean hasSalesHistory;
 
     // 코칭 옵션 관련 필드
     @Schema(description = "코칭 기간", example = "ONE_WEEK")

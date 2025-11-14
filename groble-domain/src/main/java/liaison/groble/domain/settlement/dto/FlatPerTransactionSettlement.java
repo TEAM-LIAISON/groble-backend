@@ -13,9 +13,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class FlatPerTransactionSettlement {
+  private Long contentId;
   private String contentTitle;
   private BigDecimal settlementAmount;
   private BigDecimal settlementAmountDisplay;
   private String orderStatus;
   private LocalDateTime purchasedAt;
+  private String paymentType;
 }
