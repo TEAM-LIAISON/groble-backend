@@ -99,6 +99,9 @@ public class Subscription extends BaseTimeEntity {
   @Column(name = "grace_period_ends_at")
   private LocalDateTime gracePeriodEndsAt;
 
+  @Column(name = "last_billing_failure_reason", length = 255)
+  private String lastBillingFailureReason;
+
   @Builder(access = AccessLevel.PRIVATE)
   private Subscription(
       User user,
@@ -227,6 +230,7 @@ public class Subscription extends BaseTimeEntity {
     this.lastBillingSucceededAt = successAt;
     this.lastBillingAttemptAt = successAt;
     this.billingRetryCount = 0;
+    this.lastBillingFailureReason = null;
     this.status = SubscriptionStatus.ACTIVE;
     clearGracePeriod();
   }
@@ -234,6 +238,15 @@ public class Subscription extends BaseTimeEntity {
   public void markBillingFailure(LocalDateTime attemptAt) {
     this.lastBillingAttemptAt = attemptAt;
     this.billingRetryCount = this.billingRetryCount + 1;
+    if (this.status != SubscriptionStatus.CANCELLED) {
+      this.status = SubscriptionStatus.PAST_DUE;
+    }
+  }
+
+  public void markBillingFailure(LocalDateTime attemptAt, String failureReason) {
+    this.lastBillingAttemptAt = attemptAt;
+    this.billingRetryCount = this.billingRetryCount + 1;
+    this.lastBillingFailureReason = failureReason;
     if (this.status != SubscriptionStatus.CANCELLED) {
       this.status = SubscriptionStatus.PAST_DUE;
     }

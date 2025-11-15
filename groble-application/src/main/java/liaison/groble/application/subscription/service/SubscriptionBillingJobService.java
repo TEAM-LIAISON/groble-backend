@@ -121,7 +121,8 @@ public class SubscriptionBillingJobService {
           context.merchantUid(),
           ex);
       String failureReason = extractFailureReason(ex);
-      BillingFailureResult failureResult = markBillingFailure(context.subscriptionId());
+      BillingFailureResult failureResult =
+          markBillingFailure(context.subscriptionId(), failureReason);
       if (!failureResult.subscriptionFound()) {
         log.warn("정기결제 청구 실패 처리 중 구독을 찾을 수 없습니다. subscriptionId={}", context.subscriptionId());
         return;
@@ -198,7 +199,7 @@ public class SubscriptionBillingJobService {
     return true;
   }
 
-  private BillingFailureResult markBillingFailure(Long subscriptionId) {
+  private BillingFailureResult markBillingFailure(Long subscriptionId, String failureReason) {
     return transactionTemplate.execute(
         status ->
             subscriptionRepository
@@ -206,7 +207,7 @@ public class SubscriptionBillingJobService {
                 .map(
                     subscription -> {
                       LocalDateTime now = now();
-                      subscription.markBillingFailure(now);
+                      subscription.markBillingFailure(now, failureReason);
                       int retryCount = subscription.getBillingRetryCount();
                       boolean cancelled = false;
                       if (retryCount >= maxRetryCount) {

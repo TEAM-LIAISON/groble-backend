@@ -73,4 +73,20 @@ public class ContentSellDetailResponse {
 
   @Schema(description = "정기결제 회차 (정기결제가 아니면 null)", example = "2", nullable = true)
   private Integer subscriptionRound;
+
+  @Schema(
+      description = "구독 상태 (정기결제가 아니면 null)",
+      example = "ACTIVE",
+      nullable = true,
+      allowableValues = {"ACTIVE", "CANCELLED", "PAST_DUE"})
+  private String subscriptionStatus;
+
+  @Schema(
+      description = "구독 완전 해지 여부 - 유예기간 만료됨 (정기결제가 아니면 null)",
+      example = "false",
+      nullable = true)
+  private Boolean isSubscriptionTerminated;
+
+  @Schema(description = "결제 실패 사유 (결제 실패한 경우만)", example = "카드 한도 초과", nullable = true)
+  private String billingFailureReason;
 }
