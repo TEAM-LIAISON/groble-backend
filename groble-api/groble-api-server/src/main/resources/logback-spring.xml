@@ -5,23 +5,11 @@
     <springProperty scope="context" name="springAppName" source="spring.application.name" defaultValue="groble-api-server"/>
     <springProperty scope="context" name="activeProfiles" source="spring.profiles.active" defaultValue="local"/>
 
-    <!-- 주요 환경 프로파일만 추출 (dev, prod, local 중 하나) -->
-    <if condition='property("activeProfiles").contains("prod")'>
-        <then>
-            <property name="mainProfile" value="prod"/>
-        </then>
-    </if>
-    <if condition='property("activeProfiles").contains("dev")'>
-        <then>
-            <property name="mainProfile" value="dev"/>
-        </then>
-    </if>
-    <if condition='property("activeProfiles").contains("local")'>
-        <then>
-            <property name="mainProfile" value="local"/>
-        </then>
-    </if>
-    <property name="mainProfile" value="${mainProfile:-unknown}"/>
+    <!-- 환경변수 ENV 또는 주요 프로파일 추출 (우선순위: ENV > 프로파일 파싱) -->
+    <springProperty scope="context" name="mainEnv" source="ENV" defaultValue="local"/>
+
+    <!-- 호스트명 -->
+    <property name="hostname" value="${HOSTNAME:-unknown}"/>
 
     <property name="LOGS_PATH" value="${LOG_PATH:-${user.dir}/logs}"/>
     <property name="LOG_FILE_NAME" value="${LOGS_PATH}/application.log"/>
@@ -49,9 +37,9 @@
                     <pattern>
                         {
                           "service":"${springAppName}",
-                          "env":"${mainProfile}",
+                          "env":"${mainEnv}",
                           "profiles":"${activeProfiles}",
-                          "host":"${HOSTNAME:-unknown}",
+                          "host":"${hostname}",
                           "traceId":"%X{traceId:-}",
                           "spanId":"%X{spanId:-}",
                           "httpMethod":"%X{httpMethod:-}",
@@ -88,9 +76,9 @@
                     <pattern>
                         {
                           "service":"${springAppName}",
-                          "env":"${mainProfile}",
+                          "env":"${mainEnv}",
                           "profiles":"${activeProfiles}",
-                          "host":"${HOSTNAME:-unknown}",
+                          "host":"${hostname}",
                           "traceId":"%X{traceId:-}",
                           "spanId":"%X{spanId:-}",
                           "httpMethod":"%X{httpMethod:-}",
@@ -124,7 +112,7 @@
             <label>
                 <!-- Loki 라벨 - 필터링 및 검색에 사용 -->
                 <!-- app: 애플리케이션 이름, env: 환경(dev/prod/local), host: 서버 호스트명, level: 로그 레벨 -->
-                <pattern>app=${springAppName};env=${mainProfile};host=${HOSTNAME:-unknown};level=%level</pattern>
+                <pattern>app=${springAppName};env=${mainEnv};host=${hostname};level=%level</pattern>
                 <readMarkers>true</readMarkers>
                 <!-- 라벨 구분자를 세미콜론으로 변경하여 쉼표가 포함된 값과 충돌 방지 -->
                 <pairSeparator>;</pairSeparator>
@@ -144,9 +132,9 @@
                       "requestUri": "%X{requestUri:-}",
                       "clientIp": "%X{clientIp:-}",
                       "service": "${springAppName}",
-                      "env": "${mainProfile}",
+                      "env": "${mainEnv}",
                       "profiles": "${activeProfiles}",
-                      "host": "${HOSTNAME:-unknown}"
+                      "host": "${hostname}"
                       %ex{full}
                     }
                 </pattern>
