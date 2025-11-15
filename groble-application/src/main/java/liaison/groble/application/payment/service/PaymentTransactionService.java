@@ -97,6 +97,19 @@ public class PaymentTransactionService {
 
     Content content =
         order.getOrderItems().isEmpty() ? null : order.getOrderItems().get(0).getContent();
+
+    // 3. 정기결제 상품 검증 (일반 결제 엔드포인트 차단)
+    if (content != null && content.getPaymentType() == ContentPaymentType.SUBSCRIPTION) {
+      String payWork = authResult.getPayWork();
+      // 정기결제 상품인데 빌링키 관련 payWork가 아니면 차단
+      if (payWork == null
+          || (!BillingKeyAction.REUSE.getPayWork().equalsIgnoreCase(payWork)
+              && !BillingKeyAction.REGISTER.getPayWork().equalsIgnoreCase(payWork)
+              && !BillingKeyAction.REGISTER_AND_CHARGE.getPayWork().equalsIgnoreCase(payWork))) {
+        paymentValidator.validateNotSubscriptionProduct(order);
+      }
+    }
+
     String overrideBillingKey = resolveSubscriptionBillingKey(userId, authResult, content);
 
     // 3. PayplePayment 저장
@@ -205,6 +218,39 @@ public class PaymentTransactionService {
     SubscriptionCreationResult subscriptionResult = null;
     Integer subscriptionRound = null;
     if (purchase.getContent().getPaymentType() == ContentPaymentType.SUBSCRIPTION) {
+      // 빌링키 자동 저장 (정기결제 상품)
+      String billingKey = payplePayment.getPcdPayerId();
+      if (billingKey != null && !billingKey.isBlank() && order.getUser() != null) {
+        try {
+          liaison.groble.application.payment.dto.billing.RegisterBillingKeyCommand command =
+              new liaison.groble.application.payment.dto.billing.RegisterBillingKeyCommand(
+                  billingKey, payplePayment.getPcdPayCardName(), payplePayment.getPcdPayCardNum());
+          billingKeyService.registerBillingKey(order.getUser().getId(), command);
+          log.info(
+              "빌링키 자동 저장 완료 - billingKey: {}, userId: {}", billingKey, order.getUser().getId());
+        } catch (IllegalArgumentException e) {
+          // 빌링키가 이미 등록되어 있거나 유효하지 않은 경우
+          log.warn(
+              "빌링키 자동 저장 건너뜀 - userId: {}, billingKey: {}, reason: {}",
+              order.getUser().getId(),
+              billingKey,
+              e.getMessage());
+        } catch (Exception e) {
+          // 빌링키 저장 실패 시에도 결제는 계속 진행 (보상 트랜잭션 또는 수동 처리)
+          log.error(
+              "빌링키 자동 저장 실패 - userId: {}, billingKey: {}, error: {}",
+              order.getUser().getId(),
+              billingKey,
+              e.getMessage(),
+              e);
+        }
+      } else {
+        log.warn(
+            "빌링키 정보 부족으로 자동 저장 불가 - billingKey: {}, userId: {}",
+            billingKey,
+            order.getUser() != null ? order.getUser().getId() : null);
+      }
+
       subscriptionResult = registerSubscription(purchase, payment, payplePayment);
       if (order.getUser() != null) {
         subscriptionRound =

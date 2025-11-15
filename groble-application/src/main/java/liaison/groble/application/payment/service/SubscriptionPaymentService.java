@@ -80,6 +80,12 @@ public class SubscriptionPaymentService {
   @Transactional
   public SubscriptionPaymentResult confirmSubscriptionPayment(
       Long userId, PaypleAuthResultDTO authResult) {
+    // 빌링키 사전 검증
+    String billingKey = authResult.getPayerId();
+    if (billingKey == null || billingKey.isBlank()) {
+      throw new IllegalArgumentException("정기결제에는 빌링키가 필요합니다.");
+    }
+
     AppCardPayplePaymentDTO paymentResult =
         paymentCommandExecutor.execute(
             paymentCommandExecutor.createAppCardPaymentCommand(authResult, userId, null));
@@ -91,7 +97,7 @@ public class SubscriptionPaymentService {
 
     RegisterBillingKeyCommand command =
         new RegisterBillingKeyCommand(
-            authResult.getPayerId(), paymentResult.getPayCardName(), paymentResult.getPayCardNum());
+            billingKey, paymentResult.getPayCardName(), paymentResult.getPayCardNum());
     billingKeyService.registerBillingKey(userId, command);
 
     Order order = orderReader.getOrderByMerchantUidAndUserId(authResult.getPayOid(), userId);
