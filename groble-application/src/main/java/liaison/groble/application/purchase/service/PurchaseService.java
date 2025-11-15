@@ -225,6 +225,9 @@ public class PurchaseService {
         .paymentType(flat.getPaymentType())
         .nextPaymentDate(resolveNextPaymentDate(flat))
         .subscriptionRound(flat.getSubscriptionRound())
+        .subscriptionStatus(flat.getSubscriptionStatus())
+        .isSubscriptionTerminated(flat.getIsSubscriptionTerminated())
+        .billingFailureReason(flat.getBillingFailureReason())
         .canResumeSubscription(canResumeSubscription)
         .build();
   }

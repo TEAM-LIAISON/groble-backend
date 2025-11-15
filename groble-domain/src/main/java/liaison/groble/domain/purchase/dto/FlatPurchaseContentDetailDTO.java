@@ -39,4 +39,7 @@ public class FlatPurchaseContentDetailDTO {
   private String paymentType;
   private LocalDate nextPaymentDate;
   private Integer subscriptionRound;
+  private String subscriptionStatus;
+  private Boolean isSubscriptionTerminated;
+  private String billingFailureReason;
 }

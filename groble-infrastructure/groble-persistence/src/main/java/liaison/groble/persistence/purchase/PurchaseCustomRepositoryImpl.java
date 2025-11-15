@@ -182,6 +182,20 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
                 .otherwise(Expressions.nullExpression(Integer.class)),
             "subscriptionRound");
 
+    var currentTime = LocalDateTime.now();
+    var isSubscriptionTerminatedExpr =
+        ExpressionUtils.as(
+            Expressions.cases()
+                .when(
+                    qContent
+                        .paymentType
+                        .eq(ContentPaymentType.SUBSCRIPTION)
+                        .and(qSubscription.gracePeriodEndsAt.isNotNull())
+                        .and(qSubscription.gracePeriodEndsAt.before(currentTime)))
+                .then(true)
+                .otherwise(false),
+            "isSubscriptionTerminated");
+
     FlatPurchaseContentDetailDTO result =
         queryFactory
             .select(
@@ -213,6 +227,9 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
                     qContent.paymentType.stringValue().as("paymentType"),
                     qSubscription.nextBillingDate.as("nextPaymentDate"),
                     subscriptionRoundExpr,
+                    qSubscription.status.stringValue().as("subscriptionStatus"),
+                    isSubscriptionTerminatedExpr,
+                    qSubscription.lastBillingFailureReason.as("billingFailureReason"),
                     qContent.thumbnailUrl.as("thumbnailUrl"),
                     isRefundableExpr,
                     qPurchase.cancelReason.stringValue().as("cancelReason")))

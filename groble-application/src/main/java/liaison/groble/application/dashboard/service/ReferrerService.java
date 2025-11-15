@@ -807,6 +807,30 @@ public class ReferrerService {
         }
         return "https://www.threads.com/";
       }
+      if ("l.facebook.com".equals(lowerHost) || "lm.facebook.com".equals(lowerHost)) {
+        String redirected =
+            firstNonBlank(
+                getQueryParameter(uri, "u"),
+                getQueryParameter(uri, "url"),
+                getQueryParameter(uri, "target"),
+                getQueryParameter(uri, "redirect"));
+        if (StringUtils.hasText(redirected)) {
+          return redirected;
+        }
+        return "https://www.facebook.com/";
+      }
+      if ("l.instagram.com".equals(lowerHost)) {
+        String redirected =
+            firstNonBlank(
+                getQueryParameter(uri, "u"),
+                getQueryParameter(uri, "url"),
+                getQueryParameter(uri, "target"),
+                getQueryParameter(uri, "redirect"));
+        if (StringUtils.hasText(redirected)) {
+          return redirected;
+        }
+        return "https://www.instagram.com/";
+      }
       return url;
     } catch (URISyntaxException e) {
       return url;
