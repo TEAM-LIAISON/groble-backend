@@ -80,11 +80,6 @@ public abstract class BaseOrderProcessor implements OrderProcessorStrategy {
       SubscriptionRepository subscriptionRepository,
       BillingKeyRepository billingKeyRepository,
       EventPublisher eventPublisher) {
-    log.info("=== BaseOrderProcessor 생성자 호출 시작 ===");
-    log.info("contentReader: {}", contentReader);
-    log.info("purchaseReader: {}", purchaseReader);
-    log.info("guestUserReader: {}", guestUserReader);
-
     this.contentReader = contentReader;
     this.purchaseReader = purchaseReader;
     this.guestUserReader = guestUserReader;
@@ -97,7 +92,7 @@ public abstract class BaseOrderProcessor implements OrderProcessorStrategy {
     this.billingKeyRepository = billingKeyRepository;
     this.eventPublisher = eventPublisher;
 
-    log.info("=== BaseOrderProcessor 생성자 완료 - this.contentReader: {} ===", this.contentReader);
+    log.debug("BaseOrderProcessor initialized for {}", this.getClass().getSimpleName());
   }
 
   @Override

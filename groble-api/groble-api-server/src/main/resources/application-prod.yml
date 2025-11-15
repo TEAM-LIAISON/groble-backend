@@ -122,46 +122,50 @@ springdoc:
   show-actuator: false
   model-and-view-allowed: true
 
-# Logging - 운영 환경 (더 많은 로그 확보)
+# Logging - 운영 환경 (필요한 로그만 효율적으로 수집)
 logging:
   level:
     root: INFO
-    liaison: INFO                              # 애플리케이션 로그
+    liaison: INFO                              # 애플리케이션 로그 (운영 환경)
 
-    # Spring 주요 컴포넌트 - INFO로 상향
+    # Spring 주요 컴포넌트
     org.springframework: INFO                 # Spring 기본 로그
     org.springframework.web: INFO             # HTTP 요청/응답 로그
     org.springframework.security: INFO        # 보안 관련 로그
     org.springframework.boot: INFO            # 부트 관련 로그
     org.springframework.context: INFO         # 컨텍스트 로그
 
-    # HTTP 상세 로그 (필요시)
-    org.springframework.http: DEBUG           # HTTP 상세 디버그
+    # HTTP 상세 로그 - 운영 환경에서는 INFO로 제한
+    org.springframework.http: INFO            # HTTP 로그 (DEBUG에서 INFO로 변경)
     org.springframework.web.client: INFO      # RestTemplate 로그
     org.springframework.web.reactive.function.client: INFO  # WebClient
-    reactor.netty.http.client: INFO
+    reactor.netty.http.client: WARN           # Netty 클라이언트 (WARN으로 제한)
 
-    # DB 쿼리 - 운영에서도 최소 INFO
-    org.springframework.jdbc.core: INFO       # JDBC 작업 로그
-    org.springframework.transaction: INFO     # 트랜잭션 로그
-    org.hibernate: INFO                       # Hibernate 일반 로그
-    org.hibernate.SQL: WARN                   # SQL 쿼리는 WARN (성능 이슈시만)
+    # DB 쿼리 - 운영에서는 WARN으로 제한
+    org.springframework.jdbc.core: WARN       # JDBC 작업 로그 (INFO에서 WARN으로)
+    org.springframework.transaction: WARN     # 트랜잭션 로그 (INFO에서 WARN으로)
+    org.hibernate: WARN                       # Hibernate 일반 로그 (INFO에서 WARN으로)
+    org.hibernate.SQL: WARN                   # SQL 쿼리는 WARN
     org.hibernate.orm.jdbc.bind: WARN         # 바인딩 파라미터 숨김
-    org.hibernate.stat: INFO                  # 통계 정보
+    org.hibernate.stat: WARN                  # 통계 정보 (INFO에서 WARN으로)
 
     # HTTP 클라이언트
-    org.apache.http: INFO
+    org.apache.http: WARN                     # Apache HTTP 클라이언트 (INFO에서 WARN으로)
     org.apache.http.wire: WARN                # 상세 wire 로그는 WARN
 
     # 문서/외부
-    org.springdoc: INFO
-    io.swagger.v3: INFO
-    com.amazonaws: INFO                        # AWS SDK 로그
+    org.springdoc: WARN                       # Springdoc (INFO에서 WARN으로)
+    io.swagger.v3: WARN                       # Swagger (INFO에서 WARN으로)
+    com.amazonaws: WARN                       # AWS SDK 로그 (INFO에서 WARN으로)
 
-    # 애플리케이션 특정 패키지 (더 상세히)
-    liaison.groble: DEBUG                     # 애플리케이션 코드는 DEBUG로
-    com.sun.mail: WARN                             # JavaMail SMTP 디버그 로그 축약
-    javax.mail: WARN                               # JavaMail 로그 축약
+    # 애플리케이션 특정 패키지 - 운영 환경에서는 INFO로 제한
+    liaison.groble: INFO                      # 애플리케이션 코드 (DEBUG에서 INFO로 변경)
+    liaison.groble.security: INFO             # 보안 관련은 INFO 유지
+    liaison.groble.external.adapter.payment: INFO  # 결제 관련은 INFO 유지 (중요)
+
+    # 외부 라이브러리 로그 축약
+    com.sun.mail: WARN                        # JavaMail SMTP 디버그 로그 축약
+    javax.mail: WARN                          # JavaMail 로그 축약
   file:
     path: ${user.dir}/logs
 
