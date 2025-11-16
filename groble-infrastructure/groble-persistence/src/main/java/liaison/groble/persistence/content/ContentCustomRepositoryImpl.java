@@ -256,7 +256,9 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                 qContent
                     .paymentType
                     .ne(ContentPaymentType.SUBSCRIPTION)
-                    .or(qContent.subscriptionSellStatus.eq(SubscriptionSellStatus.OPEN)));
+                    .or(
+                        qContent.subscriptionSellStatus.in(
+                            SubscriptionSellStatus.OPEN, SubscriptionSellStatus.PAUSED)));
 
     // 6) 판매/구매 가능 여부 식
     Expression<Boolean> availableForSale =
@@ -1029,6 +1031,9 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
             .exists();
 
     // 5) 구매 가능 여부 (현재 ACTIVE + 정기결제 판매 가능 조건)
+    BooleanExpression subscriptionPurchasableExpr =
+        qContent.subscriptionSellStatus.in(
+            SubscriptionSellStatus.OPEN, SubscriptionSellStatus.PAUSED);
     BooleanExpression purchasable =
         qContent
             .status
@@ -1037,7 +1042,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                 qContent
                     .paymentType
                     .ne(ContentPaymentType.SUBSCRIPTION)
-                    .or(qContent.subscriptionSellStatus.eq(SubscriptionSellStatus.OPEN)));
+                    .or(subscriptionPurchasableExpr));
 
     // 6) ContentType별 판매 가능 여부 or 구매 가능 여부
     Expression<Boolean> availableForSale =
@@ -1213,6 +1218,9 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     .and(hasValidCoachingOpt));
 
     // 4) 현재 구매 가능 여부 (ACTIVE + 정기결제 판매 가능 조건)
+    BooleanExpression subscriptionPurchasableExpr =
+        qContent.subscriptionSellStatus.in(
+            SubscriptionSellStatus.OPEN, SubscriptionSellStatus.PAUSED);
     BooleanExpression purchasable =
         qContent
             .status
@@ -1221,7 +1229,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                 qContent
                     .paymentType
                     .ne(ContentPaymentType.SUBSCRIPTION)
-                    .or(qContent.subscriptionSellStatus.eq(SubscriptionSellStatus.OPEN)));
+                    .or(subscriptionPurchasableExpr));
 
     // 5) 최종 쿼리
     Boolean result =
