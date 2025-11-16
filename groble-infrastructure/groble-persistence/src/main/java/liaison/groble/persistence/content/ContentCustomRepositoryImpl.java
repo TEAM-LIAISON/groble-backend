@@ -951,7 +951,8 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
     QCategory qCategory = QCategory.category;
 
     // 1) 상태 + 사용자 필터
-    BooleanExpression whereClause = qContent.user.id.eq(userId);
+    BooleanExpression whereClause =
+        qContent.user.id.eq(userId).and(qContent.status.ne(ContentStatus.DELETED));
     BooleanExpression filterExpr = null;
     if (statuses != null && !statuses.isEmpty()) {
       filterExpr = qContent.status.in(statuses);
