@@ -225,7 +225,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
     BooleanExpression condition =
         qContent.status.eq(ContentStatus.ACTIVE).and(qContent.user.id.eq(userId));
 
-    // 2) 콘텐츠 필드 유효 검사
+    // 2) 콘텐츠 필드 유효 검사 (판매 전환 가능 판단)
     BooleanExpression contentValid =
         qContent
             .title
@@ -247,9 +247,25 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
 
     log.info("Has Valid DocOpt Check: {}", hasValidDocOpt);
 
-    // 5) 판매 가능 여부 식
+    // 5) 구매 가능 여부 (ACTIVE + 정기결제 판매 가능 여부)
+    BooleanExpression purchasable =
+        qContent
+            .status
+            .eq(ContentStatus.ACTIVE)
+            .and(
+                qContent
+                    .paymentType
+                    .ne(ContentPaymentType.SUBSCRIPTION)
+                    .or(qContent.subscriptionSellStatus.eq(SubscriptionSellStatus.OPEN)));
+
+    // 6) 판매/구매 가능 여부 식
     Expression<Boolean> availableForSale =
-        new CaseBuilder().when(contentValid.and(hasValidDocOpt)).then(true).otherwise(false);
+        new CaseBuilder()
+            .when(contentValid.and(hasValidDocOpt))
+            .then(true)
+            .when(purchasable)
+            .then(true)
+            .otherwise(false);
 
     log.info("Available For Sale Check: {}", availableForSale);
 
@@ -979,16 +995,13 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
       whereClause = whereClause.and(notPausedSubscription);
     }
 
-    // 2) 콘텐츠 필드 유효 검사 (isAvailableForSale과 동일)
+    // 2) 콘텐츠 필드 유효 검사 (판매 전환 가능 여부)
     BooleanExpression contentValid =
         qContent
             .thumbnailUrl
             .isNotNull()
-            .and(qContent.status.in(ContentStatus.DRAFT, ContentStatus.PAUSED))
-            .and(qContent.title.isNotNull())
-            .and(qContent.makerIntro.isNotNull())
-            .and(qContent.serviceProcess.isNotNull())
-            .and(qContent.serviceTarget.isNotNull());
+            .and(qContent.status.in(ContentStatus.DRAFT, ContentStatus.DISCONTINUED))
+            .and(qContent.title.isNotNull());
 
     // 3) DOCUMENT 옵션 검사
     BooleanExpression hasValidDocOpt =
@@ -1015,9 +1028,22 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                 qCoachOpt.description.isNotNull())
             .exists();
 
-    // 5) ContentType별 판매 가능 여부
+    // 5) 구매 가능 여부 (현재 ACTIVE + 정기결제 판매 가능 조건)
+    BooleanExpression purchasable =
+        qContent
+            .status
+            .eq(ContentStatus.ACTIVE)
+            .and(
+                qContent
+                    .paymentType
+                    .ne(ContentPaymentType.SUBSCRIPTION)
+                    .or(qContent.subscriptionSellStatus.eq(SubscriptionSellStatus.OPEN)));
+
+    // 6) ContentType별 판매 가능 여부 or 구매 가능 여부
     Expression<Boolean> availableForSale =
         new CaseBuilder()
+            .when(qContent.paymentType.eq(ContentPaymentType.SUBSCRIPTION).and(contentValid))
+            .then(true)
             .when(
                 qContent.contentType.eq(ContentType.DOCUMENT).and(contentValid).and(hasValidDocOpt))
             .then(true)
@@ -1028,9 +1054,11 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     .and(contentValid)
                     .and(hasValidCoachingOpt))
             .then(true)
+            .when(purchasable)
+            .then(true)
             .otherwise(false);
 
-    // 6) 삭제 가능 여부
+    // 7) 삭제 가능 여부
     Expression<Boolean> isDeletableExpr =
         new CaseBuilder()
             .when(
@@ -1041,7 +1069,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
             .then(false)
             .otherwise(true);
 
-    // 7) 메인 쿼리
+    // 8) 메인 쿼리
     JPAQuery<FlatContentPreviewDTO> query =
         queryFactory
             .select(
@@ -1072,7 +1100,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
             .leftJoin(qContent.category, qCategory)
             .where(whereClause);
 
-    // 8) 정렬 적용
+    // 9) 정렬 적용
     if (pageable.getSort().isUnsorted()) {
       query.orderBy(qContent.createdAt.desc());
     } else {
@@ -1084,7 +1112,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
       }
     }
 
-    // 9) 페이징 & 결과
+    // 10) 페이징 & 결과
     List<FlatContentPreviewDTO> items =
         query.offset(pageable.getOffset()).limit(pageable.getPageSize()).fetch();
 
@@ -1138,23 +1166,20 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
     QDocumentOption qDocumentOption = QDocumentOption.documentOption;
     QCoachingOption qCoachingOption = QCoachingOption.coachingOption;
 
-    // 1) 콘텐츠 필수 필드 검사
+    // 1) 판매 전환이 가능한지 판별 (DRAFT/PAUSED + 필수 필드 + 옵션)
     BooleanExpression contentValid =
         qContent
             .thumbnailUrl
             .isNotNull()
-            .and(qContent.status.in(ContentStatus.DRAFT, ContentStatus.PAUSED))
-            .and(qContent.title.isNotNull())
-            .and(qContent.makerIntro.isNotNull())
-            .and(qContent.serviceProcess.isNotNull())
-            .and(qContent.serviceTarget.isNotNull());
+            .and(qContent.status.in(ContentStatus.DRAFT, ContentStatus.DISCONTINUED))
+            .and(qContent.title.isNotNull());
 
     // 2) DOCUMENT 타입일 때 옵션 검사
     BooleanExpression hasValidDocOpt =
         JPAExpressions.selectOne()
             .from(qDocumentOption)
             .where(
-                qDocumentOption.content.id.eq(contentId),
+                qDocumentOption.content.eq(qContent),
                 qDocumentOption.name.isNotNull(),
                 qDocumentOption.description.isNotNull(),
                 // 파일(URL+이름) 또는 링크 중 하나는 필수
@@ -1170,39 +1195,41 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
         JPAExpressions.selectOne()
             .from(qCoachingOption)
             .where(
-                qCoachingOption.content.id.eq(contentId),
+                qCoachingOption.content.eq(qContent),
                 qCoachingOption.name.isNotNull(),
                 qCoachingOption.description.isNotNull())
             .exists();
 
-    // 4) ContentType 가져오기
-    ContentType contentType =
-        queryFactory
-            .select(qContent.contentType)
-            .from(qContent)
-            .where(qContent.id.eq(contentId))
-            .fetchOne();
+    BooleanExpression readyForActivation =
+        qContent
+            .paymentType
+            .eq(ContentPaymentType.SUBSCRIPTION)
+            .and(contentValid)
+            .or(qContent.contentType.eq(ContentType.DOCUMENT).and(contentValid).and(hasValidDocOpt))
+            .or(
+                qContent
+                    .contentType
+                    .eq(ContentType.COACHING)
+                    .and(contentValid)
+                    .and(hasValidCoachingOpt));
 
-    if (contentType == null) {
-      return false;
-    }
+    // 4) 현재 구매 가능 여부 (ACTIVE + 정기결제 판매 가능 조건)
+    BooleanExpression purchasable =
+        qContent
+            .status
+            .eq(ContentStatus.ACTIVE)
+            .and(
+                qContent
+                    .paymentType
+                    .ne(ContentPaymentType.SUBSCRIPTION)
+                    .or(qContent.subscriptionSellStatus.eq(SubscriptionSellStatus.OPEN)));
 
-    // 5) 타입별 조건 검사
-    BooleanExpression finalCondition;
-    if (contentType == ContentType.DOCUMENT) {
-      finalCondition = contentValid.and(hasValidDocOpt);
-    } else if (contentType == ContentType.COACHING) {
-      finalCondition = contentValid.and(hasValidCoachingOpt);
-    } else {
-      return false;
-    }
-
-    // 6) 최종 쿼리
+    // 5) 최종 쿼리
     Boolean result =
         queryFactory
             .select(Expressions.constant(true))
             .from(qContent)
-            .where(qContent.id.eq(contentId), finalCondition)
+            .where(qContent.id.eq(contentId), readyForActivation.or(purchasable))
             .fetchFirst();
 
     return result != null;

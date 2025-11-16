@@ -299,7 +299,7 @@ class ContentServiceTest {
   }
 
   @Test
-  void convertToSale_allowsPausedContent() {
+  void convertToSale_allowsDiscontinuedContent() {
     // given
     Long userId = 7L;
     Long contentId = 88L;
@@ -310,7 +310,7 @@ class ContentServiceTest {
             .build();
     Content content = new Content(user);
     ReflectionTestUtils.setField(content, "id", contentId);
-    content.setStatus(ContentStatus.PAUSED);
+    content.setStatus(ContentStatus.DISCONTINUED);
     content.setContentType(ContentType.COACHING);
     content.setTitle("Paused Content");
 

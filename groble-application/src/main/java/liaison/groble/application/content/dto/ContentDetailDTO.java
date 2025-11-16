@@ -14,6 +14,7 @@ public class ContentDetailDTO {
   private String thumbnailUrl;
   private String contentType;
   private String paymentType;
+  private String subscriptionSellStatus;
   private String categoryId;
   private String title;
   private Boolean isSearchExposed;
