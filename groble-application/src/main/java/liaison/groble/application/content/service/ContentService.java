@@ -220,6 +220,7 @@ public class ContentService {
       }
     }
 
+    applyDefaultThumbnailIfMissing(content);
     enforceSubscriptionSellStatus(content);
     return saveAndConvertToDTO(content);
   }
@@ -270,9 +271,7 @@ public class ContentService {
 
     // 5. Content 필드 업데이트
     updateContentFromDTO(content, contentDTO);
-    if (content.getThumbnailUrl() == null) {
-      content.setThumbnailUrl(DEFAULT_THUMBNAIL_URL);
-    }
+    applyDefaultThumbnailIfMissing(content);
     content.setCategory(category); // 카테고리 설정
     content.setStatus(ContentStatus.ACTIVE); // 심사중으로 설정
 
@@ -590,6 +589,16 @@ public class ContentService {
 
     if (content.getPaymentType() == ContentPaymentType.SUBSCRIPTION) {
       content.setSubscriptionSellStatus(SubscriptionSellStatus.OPEN);
+    }
+  }
+
+  private void applyDefaultThumbnailIfMissing(Content content) {
+    if (content == null) {
+      return;
+    }
+
+    if (content.getThumbnailUrl() == null) {
+      content.setThumbnailUrl(DEFAULT_THUMBNAIL_URL);
     }
   }
 
@@ -1000,6 +1009,7 @@ public class ContentService {
         throw new IllegalArgumentException("콘텐츠는 DRAFT 또는 DISCONTINUED 상태여야 판매 가능 상태로 전환할 수 있습니다.");
       }
 
+      applyDefaultThumbnailIfMissing(content);
       content.setStatus(ContentStatus.ACTIVE);
 
       final LocalDateTime nowInSeoul = LocalDateTime.now(ZoneId.of("Asia/Seoul"));
