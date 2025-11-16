@@ -120,6 +120,9 @@ public class PurchaseService {
         .orderStatus(flat.getOrderStatus())
         .paymentType(flat.getPaymentType())
         .subscriptionRound(flat.getSubscriptionRound())
+        .subscriptionStatus(flat.getSubscriptionStatus())
+        .isSubscriptionTerminated(flat.getIsSubscriptionTerminated())
+        .billingFailureReason(flat.getBillingFailureReason())
         .build();
   }
 

@@ -26,4 +26,7 @@ public class FlatPurchaseContentPreviewDTO {
   private String orderStatus;
   private String paymentType;
   private Integer subscriptionRound;
+  private String subscriptionStatus;
+  private Boolean isSubscriptionTerminated;
+  private String billingFailureReason;
 }

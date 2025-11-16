@@ -254,6 +254,8 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
     QUser qUser = QUser.user;
     QContentOption qContentOption = QContentOption.contentOption;
     QOrder qOrder = QOrder.order;
+    QPurchase purchaseSub = new QPurchase("purchaseSubForPreview");
+    QSubscription qSubscription = QSubscription.subscription;
 
     // 기본 조건 설정
     BooleanExpression conditions = qPurchase.user.id.eq(userId);
@@ -270,6 +272,44 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
 
     // 조회할 개수 + 1 (다음 페이지 존재 여부 확인용)
     int fetchSize = size + 1;
+
+    // 정기결제 회차 계산
+    var subscriptionRoundExpr =
+        ExpressionUtils.as(
+            Expressions.cases()
+                .when(
+                    qContent
+                        .paymentType
+                        .eq(ContentPaymentType.SUBSCRIPTION)
+                        .and(qPurchase.user.id.isNotNull()))
+                .then(
+                    JPAExpressions.select(purchaseSub.count().intValue())
+                        .from(purchaseSub)
+                        .where(
+                            purchaseSub
+                                .user
+                                .id
+                                .eq(qPurchase.user.id)
+                                .and(purchaseSub.content.id.eq(qContent.id))
+                                .and(purchaseSub.selectedOptionId.eq(qPurchase.selectedOptionId))
+                                .and(purchaseSub.purchasedAt.loe(qPurchase.purchasedAt))))
+                .otherwise(Expressions.nullExpression(Integer.class)),
+            "subscriptionRound");
+
+    // 유예기간 만료 여부
+    var currentTime = LocalDateTime.now();
+    var isSubscriptionTerminatedExpr =
+        ExpressionUtils.as(
+            Expressions.cases()
+                .when(
+                    qContent
+                        .paymentType
+                        .eq(ContentPaymentType.SUBSCRIPTION)
+                        .and(qSubscription.gracePeriodEndsAt.isNotNull())
+                        .and(qSubscription.gracePeriodEndsAt.before(currentTime)))
+                .then(true)
+                .otherwise(false),
+            "isSubscriptionTerminated");
 
     // 쿼리 실행
     List<FlatPurchaseContentPreviewDTO> results =
@@ -292,11 +332,17 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
                             .where(qContentOption.content.eq(qContent)),
                         "priceOptionLength"),
                     qOrder.status.stringValue().as("orderStatus"),
-                    qContent.status.stringValue().as("status")))
+                    qContent.paymentType.stringValue().as("paymentType"),
+                    subscriptionRoundExpr,
+                    qSubscription.status.stringValue().as("subscriptionStatus"),
+                    isSubscriptionTerminatedExpr,
+                    qSubscription.lastBillingFailureReason.as("billingFailureReason")))
             .from(qPurchase)
             .leftJoin(qPurchase.content, qContent)
             .leftJoin(qPurchase.user, qUser)
             .leftJoin(qPurchase.order, qOrder)
+            .leftJoin(qSubscription)
+            .on(qSubscription.purchase.eq(qPurchase))
             .where(conditions)
             .orderBy(qContent.id.desc())
             .limit(fetchSize)
