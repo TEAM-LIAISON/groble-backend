@@ -1,6 +1,5 @@
 package liaison.groble.external.adapter.payment.aspect;
 
-import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -9,8 +8,6 @@ import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.json.simple.JSONObject;
 import org.springframework.stereotype.Component;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -23,10 +20,6 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @Slf4j
 public class PaypleApiLoggingAspect {
-
-  private final ObjectMapper objectMapper = new ObjectMapper();
-  private final DateTimeFormatter formatter =
-      DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
 
   /** PaypleService의 모든 메서드 호출을 가로채서 간소한 로깅 */
   @Around("execution(* liaison.groble.external.adapter.payment.PaypleService.*(..))")
