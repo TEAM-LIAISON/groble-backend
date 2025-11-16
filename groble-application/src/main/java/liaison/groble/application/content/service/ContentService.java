@@ -1002,15 +1002,20 @@ public class ContentService {
   public void convertToSale(Long userId, Long contentId) {
     // 1. Content 조회 및 권한 검증
     Content content = findAndValidateUserContent(userId, contentId);
+    boolean isSubscription = content.getPaymentType() == ContentPaymentType.SUBSCRIPTION;
     if (contentReader.isAvailableForSale(contentId)) {
       // 2. 상태 업데이트
-      if (content.getStatus() != ContentStatus.DRAFT
+      if (!isSubscription
+          && content.getStatus() != ContentStatus.DRAFT
           && content.getStatus() != ContentStatus.DISCONTINUED) {
         throw new IllegalArgumentException("콘텐츠는 DRAFT 또는 DISCONTINUED 상태여야 판매 가능 상태로 전환할 수 있습니다.");
       }
 
       applyDefaultThumbnailIfMissing(content);
       content.setStatus(ContentStatus.ACTIVE);
+      if (isSubscription) {
+        content.setSubscriptionSellStatus(SubscriptionSellStatus.OPEN);
+      }
 
       final LocalDateTime nowInSeoul = LocalDateTime.now(ZoneId.of("Asia/Seoul"));
 

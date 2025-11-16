@@ -326,6 +326,35 @@ class ContentServiceTest {
   }
 
   @Test
+  void convertToSale_subscriptionReopensEvenWhenActive() {
+    // given
+    Long userId = 9L;
+    Long contentId = 99L;
+    User user =
+        User.builder()
+            .id(userId)
+            .userProfile(UserProfile.builder().nickname("정기결제 메이커").build())
+            .build();
+    Content content = new Content(user);
+    ReflectionTestUtils.setField(content, "id", contentId);
+    content.setStatus(ContentStatus.ACTIVE);
+    content.setPaymentType(ContentPaymentType.SUBSCRIPTION);
+    content.setSubscriptionSellStatus(SubscriptionSellStatus.PAUSED);
+    content.setTitle("Subscription Content");
+
+    when(contentReader.getContentWithSeller(contentId)).thenReturn(content);
+    when(contentReader.isAvailableForSale(contentId)).thenReturn(true);
+
+    // when
+    contentService.convertToSale(userId, contentId);
+
+    // then
+    assertThat(content.getStatus()).isEqualTo(ContentStatus.ACTIVE);
+    assertThat(content.getSubscriptionSellStatus()).isEqualTo(SubscriptionSellStatus.OPEN);
+    verify(discordContentRegisterReportService).sendCreateContentRegisterReport(any());
+  }
+
+  @Test
   void getMySellingContents_activeStateIncludesPaused() {
     Long userId = 99L;
     User user = User.builder().id(userId).build();
