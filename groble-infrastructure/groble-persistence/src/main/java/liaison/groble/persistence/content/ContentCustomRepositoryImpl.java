@@ -999,9 +999,8 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
     // 2) 콘텐츠 필드 유효 검사 (판매 전환 가능 여부)
     BooleanExpression contentValid =
         qContent
-            .thumbnailUrl
-            .isNotNull()
-            .and(qContent.status.in(ContentStatus.DRAFT, ContentStatus.DISCONTINUED))
+            .status
+            .in(ContentStatus.DRAFT, ContentStatus.DISCONTINUED)
             .and(qContent.title.isNotNull());
 
     // 3) DOCUMENT 옵션 검사
@@ -1167,12 +1166,11 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
     QDocumentOption qDocumentOption = QDocumentOption.documentOption;
     QCoachingOption qCoachingOption = QCoachingOption.coachingOption;
 
-    // 1) 판매 전환이 가능한지 판별 (DRAFT/PAUSED + 필수 필드 + 옵션)
+    // 1) 판매 전환이 가능한지 판별 (DRAFT/DISCONTINUED + 필수 필드 + 옵션)
     BooleanExpression contentValid =
         qContent
-            .thumbnailUrl
-            .isNotNull()
-            .and(qContent.status.in(ContentStatus.DRAFT, ContentStatus.DISCONTINUED))
+            .status
+            .in(ContentStatus.DRAFT, ContentStatus.DISCONTINUED)
             .and(qContent.title.isNotNull());
 
     // 2) DOCUMENT 타입일 때 옵션 검사
