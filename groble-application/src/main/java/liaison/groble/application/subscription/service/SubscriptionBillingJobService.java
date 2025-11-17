@@ -121,6 +121,12 @@ public class SubscriptionBillingJobService {
           context.merchantUid(),
           ex);
       String failureReason = extractFailureReason(ex);
+      if (failureReason == null || failureReason.isBlank()) {
+        failureReason =
+            ex.getMessage() != null
+                ? ex.getMessage()
+                : (ex.getCause() != null ? ex.getCause().getMessage() : null);
+      }
       BillingFailureResult failureResult =
           markBillingFailure(context.subscriptionId(), failureReason);
       if (!failureResult.subscriptionFound()) {

@@ -182,7 +182,6 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
                 .otherwise(Expressions.nullExpression(Integer.class)),
             "subscriptionRound");
 
-    var currentTime = LocalDateTime.now();
     var isSubscriptionTerminatedExpr =
         ExpressionUtils.as(
             Expressions.cases()
@@ -190,8 +189,7 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
                     qContent
                         .paymentType
                         .eq(ContentPaymentType.SUBSCRIPTION)
-                        .and(qSubscription.gracePeriodEndsAt.isNotNull())
-                        .and(qSubscription.gracePeriodEndsAt.before(currentTime)))
+                        .and(qSubscription.gracePeriodEndsAt.isNotNull()))
                 .then(true)
                 .otherwise(false),
             "isSubscriptionTerminated");
@@ -298,7 +296,6 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
             "subscriptionRound");
 
     // 유예기간 만료 여부
-    var currentTime = LocalDateTime.now();
     var isSubscriptionTerminatedExpr =
         ExpressionUtils.as(
             Expressions.cases()
@@ -306,8 +303,7 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
                     qContent
                         .paymentType
                         .eq(ContentPaymentType.SUBSCRIPTION)
-                        .and(qSubscription.gracePeriodEndsAt.isNotNull())
-                        .and(qSubscription.gracePeriodEndsAt.before(currentTime)))
+                        .and(qSubscription.gracePeriodEndsAt.isNotNull()))
                 .then(true)
                 .otherwise(false),
             "isSubscriptionTerminated");
@@ -440,7 +436,6 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
                 .otherwise(Expressions.nullExpression(Integer.class)),
             "subscriptionRound");
 
-    var currentTime = LocalDateTime.now();
     var isSubscriptionTerminatedExpr =
         ExpressionUtils.as(
             Expressions.cases()
@@ -448,8 +443,7 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
                     qContent
                         .paymentType
                         .eq(ContentPaymentType.SUBSCRIPTION)
-                        .and(qSubscription.gracePeriodEndsAt.isNotNull())
-                        .and(qSubscription.gracePeriodEndsAt.before(currentTime)))
+                        .and(qSubscription.gracePeriodEndsAt.isNotNull()))
                 .then(true)
                 .otherwise(false),
             "isSubscriptionTerminated");
@@ -563,7 +557,6 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
                 .otherwise(Expressions.nullExpression(Integer.class)),
             "subscriptionRound");
 
-    var currentTime = LocalDateTime.now();
     var isSubscriptionTerminatedExpr =
         ExpressionUtils.as(
             Expressions.cases()
@@ -571,8 +564,7 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
                     qContent
                         .paymentType
                         .eq(ContentPaymentType.SUBSCRIPTION)
-                        .and(qSubscription.gracePeriodEndsAt.isNotNull())
-                        .and(qSubscription.gracePeriodEndsAt.before(currentTime)))
+                        .and(qSubscription.gracePeriodEndsAt.isNotNull()))
                 .then(true)
                 .otherwise(false),
             "isSubscriptionTerminated");
