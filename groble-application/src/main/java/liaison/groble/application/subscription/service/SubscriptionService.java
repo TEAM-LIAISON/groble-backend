@@ -5,11 +5,13 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Objects;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import liaison.groble.application.subscription.dto.SubscriptionCancelDTO;
 import liaison.groble.common.exception.EntityNotFoundException;
 import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.order.entity.Order;
@@ -35,8 +37,6 @@ public class SubscriptionService {
 
   @Value("${subscription.billing.grace-period-days:7}")
   private int gracePeriodDays;
-
-  private static final String SUBSCRIPTION_CANCEL_REASON = "정기 결제 해지";
 
   @Transactional
   public SubscriptionCreationResult createSubscription(
@@ -136,7 +136,9 @@ public class SubscriptionService {
   }
 
   @Transactional
-  public void cancelSubscription(Long userId, String merchantUid) {
+  public void cancelSubscription(Long userId, String merchantUid, SubscriptionCancelDTO request) {
+    log.info("request cancel reason: {}", request.getCancelReason());
+
     Subscription subscription =
         subscriptionRepository
             .findByMerchantUidAndUserIdAndStatus(merchantUid, userId, SubscriptionStatus.ACTIVE)
@@ -147,32 +149,28 @@ public class SubscriptionService {
                             merchantUid, userId, SubscriptionStatus.PAST_DUE)
                         .orElseThrow(() -> new EntityNotFoundException("활성화된 정기결제가 존재하지 않습니다.")));
 
+    CancelReason cancelReason = parseCancelReason(request.getCancelReason());
+
     Long contentId = subscription.getContent().getId();
 
-    purchaseRepository.findByUserIdAndContentId(userId, contentId).stream()
+    purchaseRepository
+        .findByUserIdAndContentId(userId, contentId)
         .forEach(
             purchase -> {
               Order order = purchase.getOrder();
-              if (order != null) {
-                switch (order.getStatus()) {
-                  case PAID:
-                    order.cancelRequestOrder(SUBSCRIPTION_CANCEL_REASON);
-                    order.cancelOrder(SUBSCRIPTION_CANCEL_REASON);
-                    break;
-                  case CANCEL_REQUEST:
-                    order.cancelOrder(SUBSCRIPTION_CANCEL_REASON);
-                    break;
-                  default:
-                    break;
-                }
+              if (order == null) {
+                purchase.updateCancelReason(cancelReason);
+                return;
               }
 
-              if (purchase.getCancelledAt() == null) {
-                if (purchase.getCancelRequestedAt() == null) {
-                  purchase.cancelRequestPurchase(CancelReason.ETC);
-                }
-                purchase.cancelPayment();
+              Order.OrderStatus status = Objects.requireNonNull(order.getStatus());
+              if (status == Order.OrderStatus.PAID || status == Order.OrderStatus.CANCEL_REQUEST) {
+                order.cancelOrder(request.getDetailReason());
+                purchase.cancelSubscriptionPurchase(cancelReason);
+                return;
               }
+
+              purchase.updateCancelReason(cancelReason);
             });
 
     subscription.markCancelled(LocalDateTime.now());
@@ -294,5 +292,13 @@ public class SubscriptionService {
         });
 
     log.info("Terminated {} subscriptions for contentId: {}", subscriptions.size(), contentId);
+  }
+
+  private CancelReason parseCancelReason(String cancelReason) {
+    try {
+      return CancelReason.valueOf(cancelReason.toUpperCase());
+    } catch (IllegalArgumentException | NullPointerException e) {
+      throw new IllegalArgumentException("유효하지 않은 취소 사유 유형입니다: " + cancelReason);
+    }
   }
 }
