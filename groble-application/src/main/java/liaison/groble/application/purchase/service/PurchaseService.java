@@ -24,6 +24,8 @@ import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.order.entity.OrderItem;
 import liaison.groble.domain.purchase.dto.FlatPurchaseContentDetailDTO;
 import liaison.groble.domain.purchase.dto.FlatPurchaseContentPreviewDTO;
+import liaison.groble.domain.subscription.entity.Subscription;
+import liaison.groble.domain.subscription.repository.SubscriptionRepository;
 import liaison.groble.domain.user.entity.SellerContact;
 import liaison.groble.domain.user.entity.User;
 
@@ -43,6 +45,7 @@ public class PurchaseService {
   private final SellerContactReader sellerContactReader;
   private final GuestUserReader guestUserReader;
   private final BillingKeyService billingKeyService;
+  private final SubscriptionRepository subscriptionRepository;
 
   // 내가 구매한 콘텐츠 목록 조회 (회원용)
   @Transactional(readOnly = true)
@@ -94,6 +97,7 @@ public class PurchaseService {
 
     FlatPurchaseContentDetailDTO flatPurchaseContentDetailDTO =
         purchaseReader.getPurchaseContentDetail(userId, merchantUid);
+    populateSubscriptionFields(flatPurchaseContentDetailDTO, userId);
 
     boolean canResumeSubscription = false;
     if (ContentPaymentType.SUBSCRIPTION
@@ -159,6 +163,7 @@ public class PurchaseService {
       Long guestUserId, String merchantUid) {
     FlatPurchaseContentDetailDTO flatPurchaseContentDetailDTO =
         purchaseReader.getPurchaseContentDetailForGuest(merchantUid);
+    populateSubscriptionFields(flatPurchaseContentDetailDTO, null);
 
     return toPurchasedContentDetailDTO(flatPurchaseContentDetailDTO, false);
   }
@@ -277,5 +282,59 @@ public class PurchaseService {
 
     // 기본적으로 한 달 뒤 결제 예정일을 계산해 반환 (DB 값이 사라진 경우 대비)
     return purchasedAt.toLocalDate().plusMonths(1);
+  }
+
+  private void populateSubscriptionFields(FlatPurchaseContentDetailDTO flat, Long fallbackUserId) {
+    if (flat == null
+        || flat.getPaymentType() == null
+        || !ContentPaymentType.SUBSCRIPTION.name().equals(flat.getPaymentType())
+        || flat.getMerchantUid() == null) {
+      return;
+    }
+
+    boolean needsStatus = flat.getSubscriptionStatus() == null;
+    boolean needsTermination = flat.getIsSubscriptionTerminated() == null;
+    boolean needsFailureReason = flat.getBillingFailureReason() == null;
+
+    if (!needsStatus && !needsTermination && !needsFailureReason) {
+      return;
+    }
+
+    Long resolvedUserId = flat.getUserId() != null ? flat.getUserId() : fallbackUserId;
+    if (resolvedUserId == null) {
+      return;
+    }
+
+    Subscription subscription =
+        subscriptionRepository
+            .findByMerchantUidAndUserId(flat.getMerchantUid(), resolvedUserId)
+            .orElseGet(
+                () ->
+                    subscriptionRepository
+                        .findByContentIdAndUserId(flat.getContentId(), resolvedUserId)
+                        .orElse(null));
+
+    if (subscription != null) {
+      applySubscriptionDetails(flat, subscription);
+    }
+  }
+
+  private void applySubscriptionDetails(
+      FlatPurchaseContentDetailDTO flat, Subscription subscription) {
+
+    if (flat.getSubscriptionStatus() == null) {
+      flat.setSubscriptionStatus(subscription.getStatus().name());
+    }
+
+    if (flat.getIsSubscriptionTerminated() == null) {
+      boolean terminated =
+          subscription.getGracePeriodEndsAt() != null
+              && LocalDateTime.now(DEFAULT_TIME_ZONE).isAfter(subscription.getGracePeriodEndsAt());
+      flat.setSubscriptionTerminated(terminated);
+    }
+
+    if (flat.getBillingFailureReason() == null) {
+      flat.setBillingFailureReason(subscription.getLastBillingFailureReason());
+    }
   }
 }
