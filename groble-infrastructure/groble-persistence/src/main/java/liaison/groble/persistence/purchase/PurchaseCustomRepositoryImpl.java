@@ -319,6 +319,7 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
                 Projections.fields(
                     FlatPurchaseContentPreviewDTO.class,
                     qPurchase.order.merchantUid.as("merchantUid"),
+                    qPurchase.user.id.as("userId"),
                     qContent.id.as("contentId"),
                     qContent.contentType.stringValue().as("contentType"),
                     qPurchase.purchasedAt.as("purchasedAt"),

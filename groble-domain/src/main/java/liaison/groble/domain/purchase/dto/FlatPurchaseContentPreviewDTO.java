@@ -15,6 +15,7 @@ import lombok.NoArgsConstructor;
 public class FlatPurchaseContentPreviewDTO {
   private String merchantUid;
   private Long contentId;
+  private Long userId;
   private String contentType;
   private LocalDateTime purchasedAt;
   private String title;
@@ -29,4 +30,20 @@ public class FlatPurchaseContentPreviewDTO {
   private String subscriptionStatus;
   private Boolean isSubscriptionTerminated;
   private String billingFailureReason;
+
+  public void setSubscriptionStatus(String subscriptionStatus) {
+    this.subscriptionStatus = subscriptionStatus;
+  }
+
+  public void setSubscriptionTerminated(Boolean subscriptionTerminated) {
+    this.isSubscriptionTerminated = subscriptionTerminated;
+  }
+
+  public void setIsSubscriptionTerminated(Boolean subscriptionTerminated) {
+    this.isSubscriptionTerminated = subscriptionTerminated;
+  }
+
+  public void setBillingFailureReason(String billingFailureReason) {
+    this.billingFailureReason = billingFailureReason;
+  }
 }
