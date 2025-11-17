@@ -25,7 +25,6 @@ import liaison.groble.domain.order.entity.OrderItem;
 import liaison.groble.domain.purchase.dto.FlatPurchaseContentDetailDTO;
 import liaison.groble.domain.purchase.dto.FlatPurchaseContentPreviewDTO;
 import liaison.groble.domain.subscription.entity.Subscription;
-import liaison.groble.domain.subscription.enums.SubscriptionStatus;
 import liaison.groble.domain.subscription.repository.SubscriptionRepository;
 import liaison.groble.domain.user.entity.SellerContact;
 import liaison.groble.domain.user.entity.User;
@@ -109,11 +108,7 @@ public class PurchaseService {
       boolean hasActiveBillingKey = billingKeyService.findActiveBillingKey(userId).isPresent();
       boolean terminated =
           Boolean.TRUE.equals(flatPurchaseContentDetailDTO.getIsSubscriptionTerminated());
-      String subscriptionStatus = flatPurchaseContentDetailDTO.getSubscriptionStatus();
-      boolean cancellableStatus =
-          subscriptionStatus != null
-              && SubscriptionStatus.CANCELLED.name().equalsIgnoreCase(subscriptionStatus);
-      canResumeSubscription = hasActiveBillingKey && !terminated && cancellableStatus;
+      canResumeSubscription = hasActiveBillingKey && !terminated;
     }
 
     return toPurchasedContentDetailDTO(flatPurchaseContentDetailDTO, canResumeSubscription);
@@ -381,7 +376,9 @@ public class PurchaseService {
     }
 
     if (flat.getIsSubscriptionTerminated() == null) {
-      boolean terminated = subscription.getGracePeriodEndsAt() != null;
+      boolean terminated =
+          subscription.getGracePeriodEndsAt() != null
+              && LocalDateTime.now(DEFAULT_TIME_ZONE).isAfter(subscription.getGracePeriodEndsAt());
       flat.setSubscriptionTerminated(terminated);
     }
 
@@ -398,7 +395,9 @@ public class PurchaseService {
     }
 
     if (flat.getIsSubscriptionTerminated() == null) {
-      boolean terminated = subscription.getGracePeriodEndsAt() != null;
+      boolean terminated =
+          subscription.getGracePeriodEndsAt() != null
+              && LocalDateTime.now(DEFAULT_TIME_ZONE).isAfter(subscription.getGracePeriodEndsAt());
       flat.setSubscriptionTerminated(terminated);
     }
 

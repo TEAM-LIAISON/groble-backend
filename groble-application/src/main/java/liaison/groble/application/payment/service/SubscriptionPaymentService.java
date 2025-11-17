@@ -18,9 +18,12 @@ import liaison.groble.application.payment.dto.billing.SubscriptionPaymentResult;
 import liaison.groble.application.payment.dto.completion.PaymentCompletionResult;
 import liaison.groble.application.payment.event.PaymentEventPublisher;
 import liaison.groble.application.payment.exception.PaypleApiException;
+import liaison.groble.application.subscription.service.SubscriptionRecurringOrderFactory;
 import liaison.groble.common.exception.EntityNotFoundException;
 import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.order.entity.Purchaser;
+import liaison.groble.domain.subscription.entity.Subscription;
+import liaison.groble.domain.subscription.repository.SubscriptionRepository;
 import liaison.groble.external.adapter.payment.PaypleSimplePayRequest;
 
 import lombok.RequiredArgsConstructor;
@@ -40,10 +43,12 @@ public class SubscriptionPaymentService {
   private final PaypleApiClient paypleApiClient;
   private final PaymentTransactionService paymentTransactionService;
   private final PaymentEventPublisher paymentEventPublisher;
+  private final SubscriptionRepository subscriptionRepository;
+  private final SubscriptionRecurringOrderFactory subscriptionRecurringOrderFactory;
 
   @Transactional
   public SubscriptionPaymentResult chargeWithBillingKey(Long userId, String merchantUid) {
-    Order order = orderReader.getOrderByMerchantUidAndUserIdForUpdate(merchantUid, userId);
+    Order order = resolveChargeOrder(userId, merchantUid);
 
     String billingKey = billingKeyService.getActiveBillingKey(userId).getBillingKey();
 
@@ -152,6 +157,31 @@ public class SubscriptionPaymentService {
         .totalAmount(amount)
         .metadata(metadata)
         .build();
+  }
+
+  private Order resolveChargeOrder(Long userId, String merchantUid) {
+    try {
+      Order existing = orderReader.getOrderByMerchantUidAndUserIdForUpdate(merchantUid, userId);
+      if (existing.getStatus() == Order.OrderStatus.PENDING) {
+        return existing;
+      }
+      log.info(
+          "기존 주문 상태가 PENDING이 아니므로 새 주문을 생성합니다. merchantUid: {}, status: {}",
+          merchantUid,
+          existing.getStatus());
+      return recreateOrderFromSubscription(userId, merchantUid);
+    } catch (EntityNotFoundException ex) {
+      log.info("merchantUid={} 주문을 찾을 수 없어 새 주문을 생성합니다. userId={}", merchantUid, userId);
+      return recreateOrderFromSubscription(userId, merchantUid);
+    }
+  }
+
+  private Order recreateOrderFromSubscription(Long userId, String merchantUid) {
+    Subscription subscription =
+        subscriptionRepository
+            .findByMerchantUidAndUserId(merchantUid, userId)
+            .orElseThrow(() -> new EntityNotFoundException("정기결제를 찾을 수 없습니다."));
+    return subscriptionRecurringOrderFactory.createOrder(subscription);
   }
 
   private PaypleAuthResultDTO buildAuthPayload(Order order, Long userId, String billingKey) {
