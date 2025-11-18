@@ -1094,7 +1094,7 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                     ExpressionUtils.as(
                         JPAExpressions.select(qOption.count().intValue())
                             .from(qOption)
-                            .where(qOption.content.eq(qContent)),
+                            .where(qOption.content.eq(qContent), qOption.isActive.eq(true)),
                         "priceOptionLength"),
                     ExpressionUtils.as(availableForSale, "isAvailableForSale"),
                     qContent.status.stringValue().as("status"),
