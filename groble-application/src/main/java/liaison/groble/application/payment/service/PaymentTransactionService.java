@@ -28,9 +28,11 @@ import liaison.groble.application.subscription.service.SubscriptionCreationResul
 import liaison.groble.application.subscription.service.SubscriptionService;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.domain.content.entity.Content;
+import liaison.groble.domain.content.entity.ContentOption;
 import liaison.groble.domain.content.enums.ContentPaymentType;
 import liaison.groble.domain.content.repository.ContentRepository;
 import liaison.groble.domain.order.entity.Order;
+import liaison.groble.domain.order.entity.OrderItem;
 import liaison.groble.domain.payment.entity.Payment;
 import liaison.groble.domain.payment.entity.PayplePayment;
 import liaison.groble.domain.payment.repository.PaymentRepository;
@@ -45,6 +47,8 @@ import liaison.groble.domain.settlement.enums.SettlementType;
 import liaison.groble.domain.settlement.vo.FeePolicySnapshot;
 import liaison.groble.domain.user.entity.SellerInfo;
 import liaison.groble.domain.user.entity.User;
+import liaison.groble.external.discord.dto.payment.PaymentFailureReportDTO;
+import liaison.groble.external.discord.service.payment.PaymentFailureReportService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -75,6 +79,7 @@ public class PaymentTransactionService {
   private final FeePolicyService feePolicyService;
   private final UserReader userReader;
   private final SubscriptionService subscriptionService;
+  private final PaymentFailureReportService paymentFailureReportService;
 
   /**
    * 인증 정보 저장 및 검증
@@ -148,6 +153,71 @@ public class PaymentTransactionService {
     return null;
   }
 
+  private String buildFailureReason(String errorCode, String errorMessage) {
+    String code = errorCode != null && !errorCode.isBlank() ? errorCode : "UNKNOWN";
+    String message = errorMessage != null && !errorMessage.isBlank() ? errorMessage : "사유 미상";
+    return String.format("결제 승인 실패 [%s]: %s", code, message);
+  }
+
+  private void sendPaymentFailureNotification(Order order, String failureReason) {
+    if (paymentFailureReportService == null || order == null) {
+      return;
+    }
+    try {
+      OrderItem primaryOrderItem = resolvePrimaryOrderItem(order);
+      PaymentFailureReportDTO dto =
+          PaymentFailureReportDTO.builder()
+              .buyerName(resolveBuyerName(order))
+              .productName(resolveProductName(primaryOrderItem))
+              .productOptionName(resolveProductOptionName(primaryOrderItem))
+              .price(order.getFinalPrice())
+              .failureReason(failureReason)
+              .build();
+      paymentFailureReportService.sendPaymentFailureReport(dto);
+    } catch (Exception e) {
+      log.error("결제 실패 디스코드 알림 발송 실패 - orderId: {}", order.getId(), e);
+    }
+  }
+
+  private OrderItem resolvePrimaryOrderItem(Order order) {
+    if (order.getOrderItems().isEmpty()) {
+      return null;
+    }
+    return order.getOrderItems().get(0);
+  }
+
+  private String resolveBuyerName(Order order) {
+    if (order.getPurchaser() != null && order.getPurchaser().getName() != null) {
+      return order.getPurchaser().getName();
+    }
+    if (order.getUser() != null && order.getUser().getNickname() != null) {
+      return order.getUser().getNickname();
+    }
+    if (order.getGuestUser() != null && order.getGuestUser().getUsername() != null) {
+      return order.getGuestUser().getUsername();
+    }
+    return null;
+  }
+
+  private String resolveProductName(OrderItem orderItem) {
+    if (orderItem == null || orderItem.getContent() == null) {
+      return null;
+    }
+    return orderItem.getContent().getTitle();
+  }
+
+  private String resolveProductOptionName(OrderItem orderItem) {
+    if (orderItem == null || orderItem.getContent() == null) {
+      return null;
+    }
+
+    return orderItem.getContent().getOptions().stream()
+        .filter(option -> option.getId().equals(orderItem.getOptionId()))
+        .map(ContentOption::getName)
+        .findFirst()
+        .orElse(null);
+  }
+
   /**
    * 결제 승인 실패 처리
    *
@@ -160,7 +230,9 @@ public class PaymentTransactionService {
     log.info("결제 승인 실패 처리 - orderId: {}, errorCode: {}", orderId, errorCode);
 
     Order order = orderReader.getOrderById(orderId);
-    order.failOrder(String.format("결제 승인 실패 [%s]: %s", errorCode, errorMessage));
+    String failureReason = buildFailureReason(errorCode, errorMessage);
+    order.failOrder(failureReason);
+    sendPaymentFailureNotification(order, failureReason);
 
     log.info("주문 실패 처리 완료 - orderId: {}, status: {}", orderId, order.getStatus());
   }
