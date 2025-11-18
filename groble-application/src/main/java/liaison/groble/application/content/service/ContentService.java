@@ -334,6 +334,8 @@ public class ContentService {
     Set<Long> soldOptionIds =
         new HashSet<>(purchaseRepository.findSoldOptionIdsByContentId(content.getId()));
 
+    boolean hasSalesHistoryEnabled = content.getPaymentType() != ContentPaymentType.ONE_TIME;
+
     List<ContentOptionDTO> optionDTOs =
         content.getOptions().stream()
             .filter(ContentOption::isActive) // is_active = true인 옵션만 필터링
@@ -346,7 +348,9 @@ public class ContentService {
                           .description(option.getDescription())
                           .price(option.getPrice())
                           .hasSalesHistory(
-                              option.getId() != null && soldOptionIds.contains(option.getId()));
+                              hasSalesHistoryEnabled
+                                  && option.getId() != null
+                                  && soldOptionIds.contains(option.getId()));
 
                   // 옵션 타입별 필드 설정
                   if (option instanceof DocumentOption) {
@@ -426,6 +430,8 @@ public class ContentService {
     Set<Long> soldOptionIds =
         new HashSet<>(purchaseRepository.findSoldOptionIdsByContentId(content.getId()));
 
+    boolean hasSalesHistoryEnabled = content.getPaymentType() != ContentPaymentType.ONE_TIME;
+
     List<ContentOptionDTO> optionDTOs =
         content.getOptions().stream()
             .filter(ContentOption::isActive) // is_active = true인 옵션만 필터링
@@ -438,7 +444,9 @@ public class ContentService {
                           .description(option.getDescription())
                           .price(option.getPrice())
                           .hasSalesHistory(
-                              option.getId() != null && soldOptionIds.contains(option.getId()));
+                              hasSalesHistoryEnabled
+                                  && option.getId() != null
+                                  && soldOptionIds.contains(option.getId()));
 
                   // 옵션 타입별 필드 설정
                   if (option instanceof DocumentOption) {
@@ -773,6 +781,7 @@ public class ContentService {
         content.getId() == null
             ? Collections.emptySet()
             : new HashSet<>(purchaseRepository.findSoldOptionIdsByContentId(content.getId()));
+    boolean hasSalesHistoryEnabled = content.getPaymentType() != ContentPaymentType.ONE_TIME;
     if (content.getOptions() != null) {
       for (ContentOption option : content.getOptions()) {
         if (option == null) continue;
@@ -783,7 +792,10 @@ public class ContentService {
                 .name(option.getName())
                 .description(option.getDescription())
                 .price(option.getPrice())
-                .hasSalesHistory(option.getId() != null && soldOptionIds.contains(option.getId()));
+                .hasSalesHistory(
+                    hasSalesHistoryEnabled
+                        && option.getId() != null
+                        && soldOptionIds.contains(option.getId()));
 
         if (option instanceof DocumentOption documentOption) {
           builder
