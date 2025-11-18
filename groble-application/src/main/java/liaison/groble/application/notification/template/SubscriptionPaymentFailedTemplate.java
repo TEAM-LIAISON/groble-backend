@@ -47,8 +47,8 @@ public class SubscriptionPaymentFailedTemplate implements KakaoTemplate {
         ButtonInfo.builder()
             .name("결제 수단 확인하기")
             .type("WL")
-            .urlMobile(urlBuilder.resolveButtonUrl(getType()))
-            .urlPc(urlBuilder.resolveButtonUrl(getType()))
+            .urlMobile(urlBuilder.getBaseUrl())
+            .urlPc(urlBuilder.getBaseUrl())
             .build());
   }
 }

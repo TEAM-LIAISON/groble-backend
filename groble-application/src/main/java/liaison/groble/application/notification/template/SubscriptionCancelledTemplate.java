@@ -47,8 +47,8 @@ public class SubscriptionCancelledTemplate implements KakaoTemplate {
         ButtonInfo.builder()
             .name("재결제하기")
             .type("WL")
-            .urlMobile(urlBuilder.resolveButtonUrl(getType()))
-            .urlPc(urlBuilder.resolveButtonUrl(getType()))
+            .urlMobile(urlBuilder.getBaseUrl())
+            .urlPc(urlBuilder.getBaseUrl())
             .build());
   }
 }
