@@ -915,7 +915,10 @@ public class ContentCustomRepositoryImpl implements ContentCustomRepository {
                 qDocumentOption.id.as("optionId"),
                 qDocumentOption.name.as("optionName"),
                 qDocumentOption.documentOriginalFileName.as("documentOriginalFileName"),
-                qDocumentOption.documentFileUrl.as("documentFileUrl")))
+                qDocumentOption
+                    .documentFileUrl
+                    .coalesce(qDocumentOption.documentLinkUrl)
+                    .as("documentFileUrl")))
         .from(qDocumentOption)
         .where(qDocumentOption.content.id.in(contentIds).and(qDocumentOption.isActive.isTrue()))
         .orderBy(qDocumentOption.content.id.asc(), qDocumentOption.createdAt.desc())
