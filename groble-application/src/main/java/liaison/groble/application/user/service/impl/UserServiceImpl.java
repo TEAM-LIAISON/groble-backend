@@ -1,5 +1,7 @@
 package liaison.groble.application.user.service.impl;
 
+import java.util.EnumSet;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -163,22 +165,22 @@ public class UserServiceImpl implements UserService {
   @Override
   @Transactional(readOnly = true)
   public UserPaymentMethodDTO getUserPaymentMethod(Long userId) {
+    boolean hasNonCancelledSubscription =
+        subscriptionRepository.existsByUserIdAndStatusIn(
+            userId, EnumSet.of(SubscriptionStatus.ACTIVE, SubscriptionStatus.PAST_DUE));
+
     return billingKeyService
         .findActiveBillingKey(userId)
         .map(
             billingKey -> {
-              boolean hasActiveSubscription =
-                  subscriptionRepository.existsByUserIdAndBillingKeyAndStatus(
-                      userId, billingKey.getBillingKey(), SubscriptionStatus.ACTIVE);
-
               return UserPaymentMethodDTO.builder()
                   .hasPaymentMethod(true)
                   .cardName(billingKey.getCardName())
                   .cardNumberSuffix(extractCardNumberSuffix(billingKey.getCardNumberMasked()))
-                  .hasActiveSubscription(hasActiveSubscription)
+                  .hasActiveSubscription(hasNonCancelledSubscription)
                   .build();
             })
-        .orElse(UserPaymentMethodDTO.empty());
+        .orElse(UserPaymentMethodDTO.empty(hasNonCancelledSubscription));
   }
 
   @Override

@@ -71,6 +71,11 @@ public class SubscriptionRepositoryImpl implements SubscriptionRepository {
   }
 
   @Override
+  public boolean existsByUserIdAndStatusIn(Long userId, Collection<SubscriptionStatus> statuses) {
+    return jpaSubscriptionRepository.existsByUserIdAndStatusIn(userId, statuses);
+  }
+
+  @Override
   public List<Subscription> findByContentIdAndStatusIn(
       Long contentId, Collection<SubscriptionStatus> statuses) {
     return jpaSubscriptionRepository.findByContentIdAndStatusIn(contentId, statuses);

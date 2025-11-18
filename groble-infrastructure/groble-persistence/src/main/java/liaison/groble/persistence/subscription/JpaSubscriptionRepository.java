@@ -38,6 +38,8 @@ public interface JpaSubscriptionRepository extends JpaRepository<Subscription, L
   boolean existsByUserIdAndBillingKeyAndStatus(
       Long userId, String billingKey, SubscriptionStatus status);
 
+  boolean existsByUserIdAndStatusIn(Long userId, Collection<SubscriptionStatus> statuses);
+
   List<Subscription> findByStatusInAndNextBillingDateLessThanEqual(
       Collection<SubscriptionStatus> statuses, LocalDate billingDate, Pageable pageable);
 

@@ -33,6 +33,8 @@ public interface SubscriptionRepository {
   boolean existsByUserIdAndBillingKeyAndStatus(
       Long userId, String billingKey, SubscriptionStatus status);
 
+  boolean existsByUserIdAndStatusIn(Long userId, Collection<SubscriptionStatus> statuses);
+
   List<Subscription> findByContentIdAndStatusIn(
       Long contentId, Collection<SubscriptionStatus> statuses);
 
