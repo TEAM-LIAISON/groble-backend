@@ -44,8 +44,8 @@ public class SubscriptionGracePeriodExpiredTemplate implements KakaoTemplate {
         ButtonInfo.builder()
             .name("다시 구매하기")
             .type("WL")
-            .urlMobile(urlBuilder.resolveButtonUrl(getType()))
-            .urlPc(urlBuilder.resolveButtonUrl(getType()))
+            .urlMobile(urlBuilder.getBaseUrl())
+            .urlPc(urlBuilder.getBaseUrl())
             .build());
   }
 }

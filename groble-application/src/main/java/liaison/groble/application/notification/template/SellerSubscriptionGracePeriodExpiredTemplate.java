@@ -44,8 +44,8 @@ public class SellerSubscriptionGracePeriodExpiredTemplate implements KakaoTempla
         ButtonInfo.builder()
             .name("판매 현황 확인하기")
             .type("WL")
-            .urlMobile(urlBuilder.resolveButtonUrl(getType()))
-            .urlPc(urlBuilder.resolveButtonUrl(getType()))
+            .urlMobile(urlBuilder.getBaseUrl())
+            .urlPc(urlBuilder.getBaseUrl())
             .build());
   }
 }
