@@ -287,6 +287,10 @@ public class SellContentService {
         .finalPrice(contentSellDetailDTO.getFinalPrice())
         .paymentType(contentSellDetailDTO.getPaymentType())
         .subscriptionRound(contentSellDetailDTO.getSubscriptionRound())
+        .subscriptionStatus(contentSellDetailDTO.getSubscriptionStatus())
+        .isSubscriptionTerminated(contentSellDetailDTO.getIsSubscriptionTerminated())
+        .billingFailureReason(contentSellDetailDTO.getBillingFailureReason())
+        .hasBillingFailure(contentSellDetailDTO.getHasBillingFailure())
         .build();
   }
 
@@ -337,6 +341,10 @@ public class SellContentService {
         .finalPrice(flat.getFinalPrice())
         .paymentType(flat.getPaymentType())
         .subscriptionRound(flat.getSubscriptionRound())
+        .subscriptionStatus(flat.getSubscriptionStatus())
+        .isSubscriptionTerminated(flat.getIsSubscriptionTerminated())
+        .billingFailureReason(flat.getBillingFailureReason())
+        .hasBillingFailure(flat.getHasBillingFailure())
         .build();
   }
 

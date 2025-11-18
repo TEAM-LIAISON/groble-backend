@@ -28,7 +28,9 @@ import liaison.groble.application.payment.dto.billing.RegisterBillingKeyCommand;
 import liaison.groble.application.payment.dto.billing.SubscriptionPaymentMetadata;
 import liaison.groble.application.payment.dto.billing.SubscriptionPaymentResult;
 import liaison.groble.application.payment.event.PaymentEventPublisher;
+import liaison.groble.application.subscription.service.SubscriptionRecurringOrderFactory;
 import liaison.groble.domain.order.entity.Order;
+import liaison.groble.domain.subscription.repository.SubscriptionRepository;
 
 @ExtendWith(MockitoExtension.class)
 class SubscriptionPaymentServiceTest {
@@ -40,6 +42,8 @@ class SubscriptionPaymentServiceTest {
   @Mock private PaypleApiClient paypleApiClient;
   @Mock private PaymentTransactionService paymentTransactionService;
   @Mock private PaymentEventPublisher paymentEventPublisher;
+  @Mock private SubscriptionRepository subscriptionRepository;
+  @Mock private SubscriptionRecurringOrderFactory subscriptionRecurringOrderFactory;
 
   private SubscriptionPaymentService service;
 
@@ -53,7 +57,9 @@ class SubscriptionPaymentServiceTest {
             orderReader,
             paypleApiClient,
             paymentTransactionService,
-            paymentEventPublisher);
+            paymentEventPublisher,
+            subscriptionRepository,
+            subscriptionRecurringOrderFactory);
   }
 
   @Test

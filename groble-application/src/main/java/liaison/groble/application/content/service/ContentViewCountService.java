@@ -41,6 +41,13 @@ public class ContentViewCountService {
       return;
     }
 
+    // 관리자 페이지(admin.groble.im)에서의 유입은 조회수 집계를 하지 않음
+    String referer = contentViewCountDTO.getReferer();
+    if (referer != null && referer.contains("admin.groble.im")) {
+      log.debug("Skipping content view counting for admin page access. contentId={}", contentId);
+      return;
+    }
+
     Long viewerId = contentViewCountDTO.getUserId();
     if (viewerId != null) {
       try {

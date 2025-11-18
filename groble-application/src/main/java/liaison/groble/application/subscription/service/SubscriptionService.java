@@ -5,10 +5,13 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Objects;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import liaison.groble.application.subscription.dto.SubscriptionCancelDTO;
 import liaison.groble.common.exception.EntityNotFoundException;
 import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.order.entity.Order;
@@ -32,7 +35,8 @@ public class SubscriptionService {
   private final SubscriptionRepository subscriptionRepository;
   private final PurchaseRepository purchaseRepository;
 
-  private static final String SUBSCRIPTION_CANCEL_REASON = "정기 결제 해지";
+  @Value("${subscription.billing.grace-period-days:7}")
+  private int gracePeriodDays;
 
   @Transactional
   public SubscriptionCreationResult createSubscription(
@@ -43,6 +47,7 @@ public class SubscriptionService {
     }
 
     Content content = purchase.getContent();
+    LocalDateTime now = LocalDateTime.now();
     Subscription existingSubscription =
         subscriptionRepository
             .findByContentIdAndUserIdAndStatusIn(
@@ -51,11 +56,13 @@ public class SubscriptionService {
                 EnumSet.of(SubscriptionStatus.ACTIVE, SubscriptionStatus.PAST_DUE))
             .orElse(null);
 
+    if (existingSubscription == null) {
+      existingSubscription = findGracePeriodSubscription(content.getId(), user.getId(), now);
+    }
+
     Long optionId = purchase.getSelectedOptionId();
     String optionName = purchase.getSelectedOptionName();
     BigDecimal price = purchase.getFinalPrice();
-
-    LocalDateTime now = LocalDateTime.now();
     LocalDate nextBillingDate = resolveNextBillingDate(existingSubscription, now);
 
     if (existingSubscription != null) {
@@ -109,8 +116,13 @@ public class SubscriptionService {
       throw new IllegalStateException("해당 구독은 갱신할 수 없는 상태입니다.");
     }
 
+    if (subscription.getGracePeriodEndsAt() != null) {
+      throw new IllegalStateException("결제 실패로 정지된 구독은 재결제가 필요합니다.");
+    }
+
+    LocalDateTime now = LocalDateTime.now();
     LocalDate nextBillingDate =
-        resolveResumeNextBillingDate(subscription, requestedNextBillingDate, LocalDate.now());
+        resolveResumeNextBillingDate(subscription, requestedNextBillingDate, LocalDate.now(), now);
 
     subscription.resume(billingKey, nextBillingDate);
     subscriptionRepository.save(subscription);
@@ -124,7 +136,9 @@ public class SubscriptionService {
   }
 
   @Transactional
-  public void cancelSubscription(Long userId, String merchantUid) {
+  public void cancelSubscription(Long userId, String merchantUid, SubscriptionCancelDTO request) {
+    log.info("request cancel reason: {}", request.getCancelReason());
+
     Subscription subscription =
         subscriptionRepository
             .findByMerchantUidAndUserIdAndStatus(merchantUid, userId, SubscriptionStatus.ACTIVE)
@@ -135,32 +149,28 @@ public class SubscriptionService {
                             merchantUid, userId, SubscriptionStatus.PAST_DUE)
                         .orElseThrow(() -> new EntityNotFoundException("활성화된 정기결제가 존재하지 않습니다.")));
 
+    CancelReason cancelReason = parseCancelReason(request.getCancelReason());
+
     Long contentId = subscription.getContent().getId();
 
-    purchaseRepository.findByUserIdAndContentId(userId, contentId).stream()
+    purchaseRepository
+        .findByUserIdAndContentId(userId, contentId)
         .forEach(
             purchase -> {
               Order order = purchase.getOrder();
-              if (order != null) {
-                switch (order.getStatus()) {
-                  case PAID:
-                    order.cancelRequestOrder(SUBSCRIPTION_CANCEL_REASON);
-                    order.cancelOrder(SUBSCRIPTION_CANCEL_REASON);
-                    break;
-                  case CANCEL_REQUEST:
-                    order.cancelOrder(SUBSCRIPTION_CANCEL_REASON);
-                    break;
-                  default:
-                    break;
-                }
+              if (order == null) {
+                purchase.updateCancelReason(cancelReason);
+                return;
               }
 
-              if (purchase.getCancelledAt() == null) {
-                if (purchase.getCancelRequestedAt() == null) {
-                  purchase.cancelRequestPurchase(CancelReason.ETC);
-                }
-                purchase.cancelPayment();
+              Order.OrderStatus status = Objects.requireNonNull(order.getStatus());
+              if (status == Order.OrderStatus.PAID || status == Order.OrderStatus.CANCEL_REQUEST) {
+                order.cancelOrder(request.getDetailReason());
+                purchase.cancelSubscriptionPurchase(cancelReason);
+                return;
               }
+
+              purchase.updateCancelReason(cancelReason);
             });
 
     subscription.markCancelled(LocalDateTime.now());
@@ -171,20 +181,52 @@ public class SubscriptionService {
         merchantUid);
   }
 
+  /**
+   * 다음 결제일 결정 로직
+   *
+   * <p>기존 구독의 상태에 따라 다음 결제일을 계산합니다:
+   *
+   * <ul>
+   *   <li>유예기간 관련 구독: 원래 결제일 + 1개월
+   *   <li>미래 결제일이 있는 구독: 기존 결제일 + 1개월
+   *   <li>그 외: 오늘 + 1개월
+   * </ul>
+   *
+   * @param existing 기존 구독 (없으면 null)
+   * @param now 현재 시간
+   * @return 다음 결제일
+   */
   private LocalDate resolveNextBillingDate(Subscription existing, LocalDateTime now) {
     if (existing == null) {
       return now.toLocalDate().plusMonths(1);
     }
 
     LocalDate currentNextBilling = existing.getNextBillingDate();
-    if (currentNextBilling != null && !currentNextBilling.isBefore(now.toLocalDate())) {
+    if (currentNextBilling == null) {
+      return now.toLocalDate().plusMonths(1);
+    }
+
+    // 유예기간 관련 구독 (만료 포함) - 원래 결제일 유지하고 1개월 추가
+    if (existing.getGracePeriodEndsAt() != null) {
+      log.info(
+          "유예기간 구독 갱신 - subscriptionId: {}, originalNextBillingDate: {}, newNextBillingDate: {}",
+          existing.getId(),
+          currentNextBilling,
+          currentNextBilling.plusMonths(1));
       return currentNextBilling.plusMonths(1);
     }
+
+    // 미래 결제일이 있으면 그대로 유지하고 1개월 추가
+    if (!currentNextBilling.isBefore(now.toLocalDate())) {
+      return currentNextBilling.plusMonths(1);
+    }
+
+    // 과거 결제일이면 오늘 기준으로 재설정
     return now.toLocalDate().plusMonths(1);
   }
 
   private LocalDate resolveResumeNextBillingDate(
-      Subscription subscription, LocalDate requestedDate, LocalDate today) {
+      Subscription subscription, LocalDate requestedDate, LocalDate today, LocalDateTime now) {
     if (requestedDate != null) {
       if (requestedDate.isBefore(today)) {
         log.warn(
@@ -198,11 +240,36 @@ public class SubscriptionService {
     }
 
     LocalDate existingNextBilling = subscription.getNextBillingDate();
+    if (subscription.isGracePeriodActive(now) && existingNextBilling != null) {
+      return existingNextBilling.plusMonths(1);
+    }
+
     if (existingNextBilling != null && !existingNextBilling.isBefore(today)) {
       return existingNextBilling;
     }
 
     return today.plusMonths(1);
+  }
+
+  /**
+   * 유예기간 관련 구독 검색 (유예기간 만료 포함)
+   *
+   * <p>유예기간이 설정된 CANCELLED 구독을 찾습니다. 유예기간이 만료되었어도 재결제로 복원할 수 있도록 합니다.
+   *
+   * @param contentId 콘텐츠 ID
+   * @param userId 사용자 ID
+   * @param now 현재 시간
+   * @return 유예기간 관련 구독 (만료 포함)
+   */
+  private Subscription findGracePeriodSubscription(Long contentId, Long userId, LocalDateTime now) {
+    if (gracePeriodDays <= 0) {
+      return null;
+    }
+
+    return subscriptionRepository
+        .findByContentIdAndUserIdAndStatus(contentId, userId, SubscriptionStatus.CANCELLED)
+        .filter(subscription -> subscription.getGracePeriodEndsAt() != null)
+        .orElse(null);
   }
 
   @Transactional
@@ -225,5 +292,13 @@ public class SubscriptionService {
         });
 
     log.info("Terminated {} subscriptions for contentId: {}", subscriptions.size(), contentId);
+  }
+
+  private CancelReason parseCancelReason(String cancelReason) {
+    try {
+      return CancelReason.valueOf(cancelReason.toUpperCase());
+    } catch (IllegalArgumentException | NullPointerException e) {
+      throw new IllegalArgumentException("유효하지 않은 취소 사유 유형입니다: " + cancelReason);
+    }
   }
 }

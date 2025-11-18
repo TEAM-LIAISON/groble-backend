@@ -299,7 +299,7 @@ class ContentServiceTest {
   }
 
   @Test
-  void convertToSale_allowsPausedContent() {
+  void convertToSale_allowsDiscontinuedContent() {
     // given
     Long userId = 7L;
     Long contentId = 88L;
@@ -310,7 +310,7 @@ class ContentServiceTest {
             .build();
     Content content = new Content(user);
     ReflectionTestUtils.setField(content, "id", contentId);
-    content.setStatus(ContentStatus.PAUSED);
+    content.setStatus(ContentStatus.DISCONTINUED);
     content.setContentType(ContentType.COACHING);
     content.setTitle("Paused Content");
 
@@ -322,6 +322,35 @@ class ContentServiceTest {
 
     // then
     assertThat(content.getStatus()).isEqualTo(ContentStatus.ACTIVE);
+    verify(discordContentRegisterReportService).sendCreateContentRegisterReport(any());
+  }
+
+  @Test
+  void convertToSale_subscriptionReopensEvenWhenActive() {
+    // given
+    Long userId = 9L;
+    Long contentId = 99L;
+    User user =
+        User.builder()
+            .id(userId)
+            .userProfile(UserProfile.builder().nickname("정기결제 메이커").build())
+            .build();
+    Content content = new Content(user);
+    ReflectionTestUtils.setField(content, "id", contentId);
+    content.setStatus(ContentStatus.ACTIVE);
+    content.setPaymentType(ContentPaymentType.SUBSCRIPTION);
+    content.setSubscriptionSellStatus(SubscriptionSellStatus.PAUSED);
+    content.setTitle("Subscription Content");
+
+    when(contentReader.getContentWithSeller(contentId)).thenReturn(content);
+    when(contentReader.isAvailableForSale(contentId)).thenReturn(true);
+
+    // when
+    contentService.convertToSale(userId, contentId);
+
+    // then
+    assertThat(content.getStatus()).isEqualTo(ContentStatus.ACTIVE);
+    assertThat(content.getSubscriptionSellStatus()).isEqualTo(SubscriptionSellStatus.OPEN);
     verify(discordContentRegisterReportService).sendCreateContentRegisterReport(any());
   }
 

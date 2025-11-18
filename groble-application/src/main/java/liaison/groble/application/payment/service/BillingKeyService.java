@@ -1,5 +1,6 @@
 package liaison.groble.application.payment.service;
 
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
 
@@ -97,10 +98,8 @@ public class BillingKeyService {
             .orElseThrow(() -> new IllegalStateException("삭제할 빌링키가 존재하지 않습니다."));
 
     boolean hasActiveSubscription =
-        subscriptionRepository.existsByUserIdAndBillingKeyAndStatus(
-                userId, billingKey.getBillingKey(), SubscriptionStatus.ACTIVE)
-            || subscriptionRepository.existsByUserIdAndBillingKeyAndStatus(
-                userId, billingKey.getBillingKey(), SubscriptionStatus.PAST_DUE);
+        subscriptionRepository.existsByUserIdAndStatusIn(
+            userId, EnumSet.of(SubscriptionStatus.ACTIVE, SubscriptionStatus.PAST_DUE));
 
     if (hasActiveSubscription) {
       throw new IllegalStateException("정기 결제가 진행 중인 경우 빌링키를 삭제할 수 없습니다.");

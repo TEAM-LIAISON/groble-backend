@@ -1,6 +1,7 @@
 package liaison.groble.application.admin.settlement.service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -382,7 +383,7 @@ public class AdminSettlementService {
 
     BigDecimal approvedAmount =
         validItems.stream()
-            .map(SettlementItem::getSettlementAmount)
+            .map(SettlementItem::getSettlementAmountDisplay)
             .reduce(BigDecimal.ZERO, BigDecimal::add);
 
     log.info(
@@ -417,7 +418,7 @@ public class AdminSettlementService {
 
     BigDecimal approvedAmount =
         validItems.stream()
-            .map(SettlementItem::getSettlementAmount)
+            .map(SettlementItem::getSettlementAmountDisplay)
             .reduce(BigDecimal.ZERO, BigDecimal::add);
 
     // Settlement 상태를 승인으로 변경
@@ -461,11 +462,8 @@ public class AdminSettlementService {
       // 3. 각 정산 항목에 대해 이체 대기 요청
       String groupKey = null;
       for (SettlementItem item : validItems) {
-        // 환경에 따른 이체 금액 결정
-        String transferAmount =
-            paypleConfig.isTestMode()
-                ? paypleConfig.getTestTransferAmount() // 테스트: 설정값 (기본 1000원)
-                : String.valueOf(item.getSettlementAmount().intValue()); // 운영: 실제 정산 금액
+        // 환경에 따른 이체 금액 결정 (운영은 1.7% 노출 수수료 기준)
+        String transferAmount = resolveTransferAmount(item);
 
         log.info(
             "정산 항목 {} 이체 대기 요청 - 금액: {}원 (테스트모드: {})",
@@ -540,6 +538,16 @@ public class AdminSettlementService {
   private PaypleAccountVerificationRequest buildAccountVerificationRequest(
       SettlementItem settlementItem) {
     return paypleAccountVerificationFactory.buildForSettlementItem(settlementItem);
+  }
+
+  private String resolveTransferAmount(SettlementItem item) {
+    if (paypleConfig.isTestMode()) {
+      return paypleConfig.getTestTransferAmount();
+    }
+
+    BigDecimal settlementAmountDisplay =
+        Optional.ofNullable(item.getSettlementAmountDisplay()).orElse(BigDecimal.ZERO);
+    return settlementAmountDisplay.setScale(0, RoundingMode.HALF_UP).toPlainString();
   }
 
   /**

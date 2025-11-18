@@ -28,9 +28,11 @@ import liaison.groble.application.subscription.service.SubscriptionCreationResul
 import liaison.groble.application.subscription.service.SubscriptionService;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.domain.content.entity.Content;
+import liaison.groble.domain.content.entity.ContentOption;
 import liaison.groble.domain.content.enums.ContentPaymentType;
 import liaison.groble.domain.content.repository.ContentRepository;
 import liaison.groble.domain.order.entity.Order;
+import liaison.groble.domain.order.entity.OrderItem;
 import liaison.groble.domain.payment.entity.Payment;
 import liaison.groble.domain.payment.entity.PayplePayment;
 import liaison.groble.domain.payment.repository.PaymentRepository;
@@ -45,6 +47,8 @@ import liaison.groble.domain.settlement.enums.SettlementType;
 import liaison.groble.domain.settlement.vo.FeePolicySnapshot;
 import liaison.groble.domain.user.entity.SellerInfo;
 import liaison.groble.domain.user.entity.User;
+import liaison.groble.external.discord.dto.payment.PaymentFailureReportDTO;
+import liaison.groble.external.discord.service.payment.PaymentFailureReportService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -75,6 +79,7 @@ public class PaymentTransactionService {
   private final FeePolicyService feePolicyService;
   private final UserReader userReader;
   private final SubscriptionService subscriptionService;
+  private final PaymentFailureReportService paymentFailureReportService;
 
   /**
    * 인증 정보 저장 및 검증
@@ -97,6 +102,19 @@ public class PaymentTransactionService {
 
     Content content =
         order.getOrderItems().isEmpty() ? null : order.getOrderItems().get(0).getContent();
+
+    // 3. 정기결제 상품 검증 (일반 결제 엔드포인트 차단)
+    if (content != null && content.getPaymentType() == ContentPaymentType.SUBSCRIPTION) {
+      String payWork = authResult.getPayWork();
+      // 정기결제 상품인데 빌링키 관련 payWork가 아니면 차단
+      if (payWork == null
+          || (!BillingKeyAction.REUSE.getPayWork().equalsIgnoreCase(payWork)
+              && !BillingKeyAction.REGISTER.getPayWork().equalsIgnoreCase(payWork)
+              && !BillingKeyAction.REGISTER_AND_CHARGE.getPayWork().equalsIgnoreCase(payWork))) {
+        paymentValidator.validateNotSubscriptionProduct(order);
+      }
+    }
+
     String overrideBillingKey = resolveSubscriptionBillingKey(userId, authResult, content);
 
     // 3. PayplePayment 저장
@@ -135,6 +153,71 @@ public class PaymentTransactionService {
     return null;
   }
 
+  private String buildFailureReason(String errorCode, String errorMessage) {
+    String code = errorCode != null && !errorCode.isBlank() ? errorCode : "UNKNOWN";
+    String message = errorMessage != null && !errorMessage.isBlank() ? errorMessage : "사유 미상";
+    return String.format("결제 승인 실패 [%s]: %s", code, message);
+  }
+
+  private void sendPaymentFailureNotification(Order order, String failureReason) {
+    if (paymentFailureReportService == null || order == null) {
+      return;
+    }
+    try {
+      OrderItem primaryOrderItem = resolvePrimaryOrderItem(order);
+      PaymentFailureReportDTO dto =
+          PaymentFailureReportDTO.builder()
+              .buyerName(resolveBuyerName(order))
+              .productName(resolveProductName(primaryOrderItem))
+              .productOptionName(resolveProductOptionName(primaryOrderItem))
+              .price(order.getFinalPrice())
+              .failureReason(failureReason)
+              .build();
+      paymentFailureReportService.sendPaymentFailureReport(dto);
+    } catch (Exception e) {
+      log.error("결제 실패 디스코드 알림 발송 실패 - orderId: {}", order.getId(), e);
+    }
+  }
+
+  private OrderItem resolvePrimaryOrderItem(Order order) {
+    if (order.getOrderItems().isEmpty()) {
+      return null;
+    }
+    return order.getOrderItems().get(0);
+  }
+
+  private String resolveBuyerName(Order order) {
+    if (order.getPurchaser() != null && order.getPurchaser().getName() != null) {
+      return order.getPurchaser().getName();
+    }
+    if (order.getUser() != null && order.getUser().getNickname() != null) {
+      return order.getUser().getNickname();
+    }
+    if (order.getGuestUser() != null && order.getGuestUser().getUsername() != null) {
+      return order.getGuestUser().getUsername();
+    }
+    return null;
+  }
+
+  private String resolveProductName(OrderItem orderItem) {
+    if (orderItem == null || orderItem.getContent() == null) {
+      return null;
+    }
+    return orderItem.getContent().getTitle();
+  }
+
+  private String resolveProductOptionName(OrderItem orderItem) {
+    if (orderItem == null || orderItem.getContent() == null) {
+      return null;
+    }
+
+    return orderItem.getContent().getOptions().stream()
+        .filter(option -> option.getId().equals(orderItem.getOptionId()))
+        .map(ContentOption::getName)
+        .findFirst()
+        .orElse(null);
+  }
+
   /**
    * 결제 승인 실패 처리
    *
@@ -147,7 +230,9 @@ public class PaymentTransactionService {
     log.info("결제 승인 실패 처리 - orderId: {}, errorCode: {}", orderId, errorCode);
 
     Order order = orderReader.getOrderById(orderId);
-    order.failOrder(String.format("결제 승인 실패 [%s]: %s", errorCode, errorMessage));
+    String failureReason = buildFailureReason(errorCode, errorMessage);
+    order.failOrder(failureReason);
+    sendPaymentFailureNotification(order, failureReason);
 
     log.info("주문 실패 처리 완료 - orderId: {}, status: {}", orderId, order.getStatus());
   }
@@ -205,6 +290,39 @@ public class PaymentTransactionService {
     SubscriptionCreationResult subscriptionResult = null;
     Integer subscriptionRound = null;
     if (purchase.getContent().getPaymentType() == ContentPaymentType.SUBSCRIPTION) {
+      // 빌링키 자동 저장 (정기결제 상품)
+      String billingKey = payplePayment.getPcdPayerId();
+      if (billingKey != null && !billingKey.isBlank() && order.getUser() != null) {
+        try {
+          liaison.groble.application.payment.dto.billing.RegisterBillingKeyCommand command =
+              new liaison.groble.application.payment.dto.billing.RegisterBillingKeyCommand(
+                  billingKey, payplePayment.getPcdPayCardName(), payplePayment.getPcdPayCardNum());
+          billingKeyService.registerBillingKey(order.getUser().getId(), command);
+          log.info(
+              "빌링키 자동 저장 완료 - billingKey: {}, userId: {}", billingKey, order.getUser().getId());
+        } catch (IllegalArgumentException e) {
+          // 빌링키가 이미 등록되어 있거나 유효하지 않은 경우
+          log.warn(
+              "빌링키 자동 저장 건너뜀 - userId: {}, billingKey: {}, reason: {}",
+              order.getUser().getId(),
+              billingKey,
+              e.getMessage());
+        } catch (Exception e) {
+          // 빌링키 저장 실패 시에도 결제는 계속 진행 (보상 트랜잭션 또는 수동 처리)
+          log.error(
+              "빌링키 자동 저장 실패 - userId: {}, billingKey: {}, error: {}",
+              order.getUser().getId(),
+              billingKey,
+              e.getMessage(),
+              e);
+        }
+      } else {
+        log.warn(
+            "빌링키 정보 부족으로 자동 저장 불가 - billingKey: {}, userId: {}",
+            billingKey,
+            order.getUser() != null ? order.getUser().getId() : null);
+      }
+
       subscriptionResult = registerSubscription(purchase, payment, payplePayment);
       if (order.getUser() != null) {
         subscriptionRound =

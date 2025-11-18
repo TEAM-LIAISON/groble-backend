@@ -30,6 +30,7 @@ import liaison.groble.api.model.payment.request.PaymentCancelRequest;
 import liaison.groble.api.model.payment.request.PaypleAuthResultRequest;
 import liaison.groble.api.model.payment.request.PaypleBillingChargeRequest;
 import liaison.groble.api.model.payment.request.PaypleBillingRegistrationRequest;
+import liaison.groble.api.model.payment.request.SubscriptionCancelRequest;
 import liaison.groble.api.model.payment.response.AppCardPayplePaymentResponse;
 import liaison.groble.api.model.payment.response.BillingKeyResponse;
 import liaison.groble.api.model.payment.response.PaypleBillingAuthResponse;
@@ -54,6 +55,7 @@ import liaison.groble.application.payment.service.PaypleBillingAuthService;
 import liaison.groble.application.payment.service.PaypleMobileRedirectService;
 import liaison.groble.application.payment.service.PaypleMobileRedirectService.MobileRedirectContext;
 import liaison.groble.application.payment.service.SubscriptionPaymentService;
+import liaison.groble.application.subscription.dto.SubscriptionCancelDTO;
 import liaison.groble.application.subscription.service.SubscriptionService;
 import liaison.groble.common.annotation.Auth;
 import liaison.groble.common.annotation.Logging;
@@ -182,16 +184,20 @@ public class PayplePaymentController extends BaseController {
       action = "cancelSubscription",
       includeParam = true,
       includeResult = true)
-  @DeleteMapping(ApiPaths.Payment.SUBSCRIPTION + "/{merchantUid}")
+  @PostMapping(ApiPaths.Payment.SUBSCRIPTION + "/{merchantUid}")
   public ResponseEntity<GrobleResponse<Void>> cancelSubscription(
-      @Auth(required = true) Accessor accessor, @PathVariable("merchantUid") String merchantUid) {
+      @Auth(required = true) Accessor accessor,
+      @PathVariable("merchantUid") String merchantUid,
+      @Valid @RequestBody SubscriptionCancelRequest request) {
 
     UserContext userContext = UserContextFactory.from(accessor);
     if (!userContext.isMember()) {
       throw PaymentAuthenticationRequiredException.forPayment();
     }
 
-    subscriptionService.cancelSubscription(userContext.getId(), merchantUid);
+    SubscriptionCancelDTO subscriptionCancelDTO = paymentMapper.toSubscriptionCancelDTO(request);
+
+    subscriptionService.cancelSubscription(userContext.getId(), merchantUid, subscriptionCancelDTO);
 
     return responseHelper.success(
         null, ResponseMessages.Payment.SUBSCRIPTION_CANCELLED, HttpStatus.OK);

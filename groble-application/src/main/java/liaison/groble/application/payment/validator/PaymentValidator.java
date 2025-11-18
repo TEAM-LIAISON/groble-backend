@@ -208,4 +208,31 @@ public class PaymentValidator {
       return Objects.equals(lhs, rhs);
     }
   }
+
+  /**
+   * 일반 결제 전용 검증 (정기결제 상품 차단)
+   *
+   * <p>일반 결제 엔드포인트(/app-card/request)는 일회성 결제(ONE_TIME) 전용입니다. 정기결제 상품은 전용
+   * 엔드포인트(/subscription/confirm)를 사용해야 합니다.
+   *
+   * @param order 주문
+   * @throws PaymentValidationException 정기결제 상품인 경우
+   */
+  public void validateNotSubscriptionProduct(Order order) {
+    boolean hasSubscriptionProduct =
+        order.getOrderItems().stream()
+            .anyMatch(
+                item ->
+                    item.getContent() != null
+                        && item.getContent().getPaymentType()
+                            == liaison.groble.domain.content.enums.ContentPaymentType.SUBSCRIPTION);
+
+    if (hasSubscriptionProduct) {
+      log.warn(
+          "정기결제 상품이 일반 결제 엔드포인트로 요청됨 - merchantUid: {}, orderId: {}",
+          order.getMerchantUid(),
+          order.getId());
+      throw new PaymentValidationException("정기결제 상품은 정기결제 전용 API를 사용해야 합니다. 프론트엔드 결제 플로우를 확인해주세요.");
+    }
+  }
 }

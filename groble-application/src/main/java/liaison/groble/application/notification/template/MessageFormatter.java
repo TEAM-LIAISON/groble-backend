@@ -126,6 +126,53 @@ public class MessageFormatter {
         buyerName, round, contentTitle, formatCurrency(price), round);
   }
 
+  // [Groble] 정기결제 실패 알림 (1차 실패)
+  public static String subscriptionPaymentFailed(
+      String buyerName, String contentTitle, BigDecimal price, String failureReason) {
+    String reason = (failureReason == null || failureReason.isBlank()) ? "결제 처리 실패" : failureReason;
+    return String.format(
+        "%s님의 정기결제가 정상 처리되지 않았어요.\n"
+            + "\n"
+            + "- 상품명: %s\n"
+            + "- 결제 금액: %s원\n"
+            + "- 실패 사유: %s\n"
+            + "\n"
+            + "카드 잔액을 확인하거나 등록된 결제 수단을 변경해 주세요.",
+        buyerName, contentTitle, formatCurrency(price), reason);
+  }
+
+  // [Groble] 정기결제 해지 알림 (3회 실패)
+  public static String subscriptionCancelled(
+      String buyerName, String contentTitle, BigDecimal price, String failureReason) {
+    String reason = (failureReason == null || failureReason.isBlank()) ? "결제 처리 실패" : failureReason;
+    return String.format(
+        "%s님의 정기결제가 정상 처리되지 않았어요.\n"
+            + "\n"
+            + "- 상품명: %s\n"
+            + "- 결제 금액: %s원\n"
+            + "- 실패 사유: %s\n"
+            + "\n"
+            + "7일 이내 결제를 진행하지 않을 경우 완전히 해지됩니다.",
+        buyerName, contentTitle, formatCurrency(price), reason);
+  }
+
+  // [Groble] 유예기간 만료 알림 (구매자)
+  public static String subscriptionGracePeriodExpired(String buyerName, String contentTitle) {
+    return String.format(
+        "%s님의 정기결제가 복구되지 않아, 자동으로 해지되었습니다.\n"
+            + "\n"
+            + "- 상품명: %s\n"
+            + "\n"
+            + "다시 이용하시려면 정기결제를 새로 시작해 주세요.",
+        buyerName, contentTitle);
+  }
+
+  // [Groble] 유예기간 만료 알림 (판매자)
+  public static String sellerSubscriptionGracePeriodExpired(String buyerName, String contentTitle) {
+    return String.format(
+        "%s님의 정기결제가 복구되지 않아 자동 해지 처리되었습니다.\n" + "\n" + "- 상품명: %s", buyerName, contentTitle);
+  }
+
   // 원화 표기법 포맷팅
   private static String formatCurrency(BigDecimal amount) {
     BigDecimal value = amount != null ? amount : BigDecimal.ZERO;

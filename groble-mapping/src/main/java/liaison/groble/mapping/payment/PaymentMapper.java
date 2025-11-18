@@ -8,6 +8,7 @@ import liaison.groble.api.model.order.response.CreateOrderResponse;
 import liaison.groble.api.model.payment.request.PaymentCancelRequest;
 import liaison.groble.api.model.payment.request.PaypleAuthResultRequest;
 import liaison.groble.api.model.payment.request.PaypleBillingRegistrationRequest;
+import liaison.groble.api.model.payment.request.SubscriptionCancelRequest;
 import liaison.groble.api.model.payment.response.AppCardPayplePaymentResponse;
 import liaison.groble.api.model.payment.response.BillingKeyResponse;
 import liaison.groble.api.model.payment.response.PaymentCancelInfoResponse;
@@ -22,6 +23,7 @@ import liaison.groble.application.payment.dto.billing.SubscriptionPaymentMetadat
 import liaison.groble.application.payment.dto.billing.SubscriptionPaymentResult;
 import liaison.groble.application.payment.dto.cancel.PaymentCancelDTO;
 import liaison.groble.application.payment.dto.cancel.PaymentCancelInfoDTO;
+import liaison.groble.application.subscription.dto.SubscriptionCancelDTO;
 import liaison.groble.mapping.config.GrobleMapperConfig;
 
 @Mapper(config = GrobleMapperConfig.class)
@@ -91,4 +93,7 @@ public interface PaymentMapper {
         .payDay(metadata.getPayDay())
         .build();
   }
+
+  SubscriptionCancelDTO toSubscriptionCancelDTO(
+      SubscriptionCancelRequest subscriptionCancelRequest);
 }

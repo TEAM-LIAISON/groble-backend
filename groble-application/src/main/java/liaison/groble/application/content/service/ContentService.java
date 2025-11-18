@@ -220,6 +220,7 @@ public class ContentService {
       }
     }
 
+    applyDefaultThumbnailIfMissing(content);
     enforceSubscriptionSellStatus(content);
     return saveAndConvertToDTO(content);
   }
@@ -270,9 +271,7 @@ public class ContentService {
 
     // 5. Content 필드 업데이트
     updateContentFromDTO(content, contentDTO);
-    if (content.getThumbnailUrl() == null) {
-      content.setThumbnailUrl(DEFAULT_THUMBNAIL_URL);
-    }
+    applyDefaultThumbnailIfMissing(content);
     content.setCategory(category); // 카테고리 설정
     content.setStatus(ContentStatus.ACTIVE); // 심사중으로 설정
 
@@ -305,25 +304,23 @@ public class ContentService {
     // 2. 콘텐츠 소유권 확인 (쿼리 추가 발생하지 않나?)
     boolean isOwner = content.getUser().getId().equals(userId);
 
-    if (isOwner) {
-      // 내 콘텐츠인 경우: 모든 상태 조회 가능, 조회수 증가 안함
-      log.info("내 콘텐츠 조회: contentId={}, status={}", contentId, content.getStatus());
-    } else {
-      // 다른 사용자의 콘텐츠인 경우: ACTIVE 상태만 조회 가능
-      if (!ContentStatus.ACTIVE.equals(content.getStatus())) {
-        log.warn(
-            "비활성 콘텐츠 접근 시도: userId={}, contentId={}, status={}",
-            userId,
-            contentId,
-            content.getStatus());
-        throw new InActiveContentException("현재 판매 중이지 않은 콘텐츠입니다.");
-      }
+    if (!isOwner && !isViewableByPublic(content)) {
+      log.warn(
+          "비활성 콘텐츠 접근 시도: userId={}, contentId={}, status={}",
+          userId,
+          contentId,
+          content.getStatus());
+      throw new InActiveContentException("현재 판매 중이지 않은 콘텐츠입니다.");
+    }
 
+    if (!isOwner) {
       // 조회수 증가 (다른 사용자의 콘텐츠 조회 시에만)
       content.incrementViewCount();
       contentRepository.save(content);
 
       log.info("다른 사용자 콘텐츠 조회: contentId={}, newViewCount={}", contentId, content.getViewCount());
+    } else {
+      log.info("내 콘텐츠 조회: contentId={}, status={}", contentId, content.getStatus());
     }
 
     // 3. getPublicContentDetail과 동일한 방식으로 DTO 변환
@@ -383,6 +380,7 @@ public class ContentService {
         .thumbnailUrl(content.getThumbnailUrl())
         .contentType(safeEnumName(content.getContentType()))
         .paymentType(safeEnumName(content.getPaymentType()))
+        .subscriptionSellStatus(safeEnumName(content.getSubscriptionSellStatus()))
         .categoryId(content.getCategory() != null ? content.getCategory().getCode() : null)
         .title(content.getTitle())
         .isSearchExposed(content.getIsSearchExposed())
@@ -407,8 +405,7 @@ public class ContentService {
   public ContentDetailDTO getPublicContentDetail(Long contentId) {
     Content content = contentReader.getContentById(contentId);
 
-    // ACTIVE 상태인지 확인
-    if (!ContentStatus.ACTIVE.equals(content.getStatus())) {
+    if (!isViewableByPublic(content)) {
       log.warn("비활성 콘텐츠 접근 시도 (비로그인): contentId={}, status={}", contentId, content.getStatus());
       throw new InActiveContentException("현재 판매 중이지 않은 콘텐츠입니다.");
     }
@@ -473,6 +470,7 @@ public class ContentService {
         .thumbnailUrl(content.getThumbnailUrl())
         .contentType(safeEnumName(content.getContentType()))
         .paymentType(safeEnumName(content.getPaymentType()))
+        .subscriptionSellStatus(safeEnumName(content.getSubscriptionSellStatus()))
         .categoryId(content.getCategory() != null ? content.getCategory().getCode() : null)
         .title(content.getTitle())
         .isSearchExposed(content.getIsSearchExposed())
@@ -591,6 +589,16 @@ public class ContentService {
 
     if (content.getPaymentType() == ContentPaymentType.SUBSCRIPTION) {
       content.setSubscriptionSellStatus(SubscriptionSellStatus.OPEN);
+    }
+  }
+
+  private void applyDefaultThumbnailIfMissing(Content content) {
+    if (content == null) {
+      return;
+    }
+
+    if (content.getThumbnailUrl() == null) {
+      content.setThumbnailUrl(DEFAULT_THUMBNAIL_URL);
     }
   }
 
@@ -994,14 +1002,20 @@ public class ContentService {
   public void convertToSale(Long userId, Long contentId) {
     // 1. Content 조회 및 권한 검증
     Content content = findAndValidateUserContent(userId, contentId);
+    boolean isSubscription = content.getPaymentType() == ContentPaymentType.SUBSCRIPTION;
     if (contentReader.isAvailableForSale(contentId)) {
       // 2. 상태 업데이트
-      if (content.getStatus() != ContentStatus.DRAFT
-          && content.getStatus() != ContentStatus.PAUSED) {
-        throw new IllegalArgumentException("콘텐츠는 DRAFT 또는 PAUSED 상태여야 판매 가능 상태로 전환할 수 있습니다.");
+      if (!isSubscription
+          && content.getStatus() != ContentStatus.DRAFT
+          && content.getStatus() != ContentStatus.DISCONTINUED) {
+        throw new IllegalArgumentException("콘텐츠는 DRAFT 또는 DISCONTINUED 상태여야 판매 가능 상태로 전환할 수 있습니다.");
       }
 
+      applyDefaultThumbnailIfMissing(content);
       content.setStatus(ContentStatus.ACTIVE);
+      if (isSubscription) {
+        content.setSubscriptionSellStatus(SubscriptionSellStatus.OPEN);
+      }
 
       final LocalDateTime nowInSeoul = LocalDateTime.now(ZoneId.of("Asia/Seoul"));
 
@@ -1069,6 +1083,28 @@ public class ContentService {
         .thumbnailUrl(flat.getThumbnailUrl())
         .updatedAt(flat.getUpdatedAt())
         .build();
+  }
+
+  private boolean isViewableByPublic(Content content) {
+    if (content == null) {
+      return false;
+    }
+
+    ContentStatus status = content.getStatus();
+    boolean statusAllowsView =
+        ContentStatus.ACTIVE.equals(status) || ContentStatus.DISCONTINUED.equals(status);
+    if (!statusAllowsView) {
+      return false;
+    }
+
+    if (content.getPaymentType() == ContentPaymentType.SUBSCRIPTION) {
+      SubscriptionSellStatus sellStatus = content.getSubscriptionSellStatus();
+      if (sellStatus == SubscriptionSellStatus.TERMINATED) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   private String safeEnumName(Enum<?> e) {

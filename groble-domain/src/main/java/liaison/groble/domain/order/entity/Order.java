@@ -225,8 +225,8 @@ public class Order extends BaseTimeEntity {
         }
         break;
       case PAID:
-        if (newStatus != OrderStatus.CANCEL_REQUEST) {
-          throw new IllegalStateException("결제 완료 상태에서는 결제 취소 요청 상태로만 변경 가능합니다.");
+        if (newStatus != OrderStatus.CANCEL_REQUEST && newStatus != OrderStatus.CANCELLED) {
+          throw new IllegalStateException("결제 완료 상태에서는 결제 취소 요청 또는 환불 완료 상태로만 변경 가능합니다.");
         }
         break;
       case CANCELLED:

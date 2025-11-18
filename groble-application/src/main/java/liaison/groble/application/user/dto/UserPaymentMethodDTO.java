@@ -14,11 +14,15 @@ public class UserPaymentMethodDTO {
   private final boolean hasActiveSubscription;
 
   public static UserPaymentMethodDTO empty() {
+    return empty(false);
+  }
+
+  public static UserPaymentMethodDTO empty(boolean hasActiveSubscription) {
     return UserPaymentMethodDTO.builder()
         .hasPaymentMethod(false)
         .cardName(null)
         .cardNumberSuffix(null)
-        .hasActiveSubscription(false)
+        .hasActiveSubscription(hasActiveSubscription)
         .build();
   }
 }

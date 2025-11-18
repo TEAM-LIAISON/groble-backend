@@ -178,6 +178,28 @@ public class PurchasedContentDetailResponse {
   private Integer subscriptionRound;
 
   @Schema(
+      description = "구독 상태 (정기결제가 아니면 null)",
+      example = "ACTIVE",
+      type = "string",
+      allowableValues = {"ACTIVE", "CANCELLED", "PAST_DUE"},
+      requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  private String subscriptionStatus;
+
+  @Schema(
+      description = "구독 완전 해지 여부 - 유예기간 만료됨 (정기결제가 아니면 null)",
+      example = "false",
+      type = "boolean",
+      requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  private Boolean isSubscriptionTerminated;
+
+  @Schema(
+      description = "결제 실패 사유 (결제 실패한 경우만)",
+      example = "카드 한도 초과",
+      type = "string",
+      requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  private String billingFailureReason;
+
+  @Schema(
       description = "등록된 정기 결제 카드로 구독을 재시작할 수 있는지 여부",
       example = "true",
       type = "boolean",

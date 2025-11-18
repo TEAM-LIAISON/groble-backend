@@ -41,6 +41,14 @@ public class MarketViewCountService {
       return;
     }
 
+    // 관리자 페이지(admin.groble.im)에서의 유입은 조회수 집계를 하지 않음
+    String referer = marketViewCountDTO.getReferer();
+    if (referer != null && referer.contains("admin.groble.im")) {
+      log.debug(
+          "Skipping market view counting for admin page access. marketLinkUrl={}", marketLinkUrl);
+      return;
+    }
+
     Market market = userReader.getMarketWithUser(marketLinkUrl);
 
     Long viewerId = marketViewCountDTO.getUserId();
