@@ -1,15 +1,21 @@
 package liaison.groble.application.user.service.impl;
 
+import java.util.EnumSet;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import liaison.groble.application.content.ContentReader;
 import liaison.groble.application.notification.service.NotificationReader;
+import liaison.groble.application.payment.service.BillingKeyService;
 import liaison.groble.application.user.dto.UserHeaderDTO;
 import liaison.groble.application.user.dto.UserMyPageDetailDTO;
 import liaison.groble.application.user.dto.UserMyPageSummaryDTO;
+import liaison.groble.application.user.dto.UserPaymentMethodDTO;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.application.user.service.UserService;
+import liaison.groble.domain.subscription.enums.SubscriptionStatus;
+import liaison.groble.domain.subscription.repository.SubscriptionRepository;
 import liaison.groble.domain.terms.enums.TermsType;
 import liaison.groble.domain.user.entity.IntegratedAccount;
 import liaison.groble.domain.user.entity.SellerInfo;
@@ -34,6 +40,8 @@ public class UserServiceImpl implements UserService {
   private final UserReader userReader;
   private final ContentReader contentReader;
   private final NotificationReader notificationReader;
+  private final BillingKeyService billingKeyService;
+  private final SubscriptionRepository subscriptionRepository;
 
   /**
    * 사용자 역할 전환 (판매자/구매자 모드 전환)
@@ -155,6 +163,27 @@ public class UserServiceImpl implements UserService {
   }
 
   @Override
+  @Transactional(readOnly = true)
+  public UserPaymentMethodDTO getUserPaymentMethod(Long userId) {
+    boolean hasNonCancelledSubscription =
+        subscriptionRepository.existsByUserIdAndStatusIn(
+            userId, EnumSet.of(SubscriptionStatus.ACTIVE, SubscriptionStatus.PAST_DUE));
+
+    return billingKeyService
+        .findActiveBillingKey(userId)
+        .map(
+            billingKey -> {
+              return UserPaymentMethodDTO.builder()
+                  .hasPaymentMethod(true)
+                  .cardName(billingKey.getCardName())
+                  .cardNumberSuffix(extractCardNumberSuffix(billingKey.getCardNumberMasked()))
+                  .hasActiveSubscription(hasNonCancelledSubscription)
+                  .build();
+            })
+        .orElse(UserPaymentMethodDTO.empty(hasNonCancelledSubscription));
+  }
+
+  @Override
   public UserHeaderDTO getUserHeaderInform(Long userId) {
     User user = userReader.getUserById(userId);
     long unreadNotificationCount = notificationReader.countUnreadNotificationsByUserId(userId);
@@ -213,5 +242,18 @@ public class UserServiceImpl implements UserService {
     User user = userReader.getUserById(userId);
 
     return !contentReader.hasActiveContent(user);
+  }
+
+  private String extractCardNumberSuffix(String cardNumberMasked) {
+    if (cardNumberMasked == null) {
+      return null;
+    }
+
+    String digits = cardNumberMasked.replaceAll("\\D", "");
+    if (digits.isEmpty()) {
+      return null;
+    }
+
+    return digits.length() <= 4 ? digits : digits.substring(digits.length() - 4);
   }
 }

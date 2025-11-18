@@ -23,6 +23,7 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 
 import liaison.groble.domain.common.entity.BaseTimeEntity;
+import liaison.groble.domain.content.enums.ContentPaymentType;
 import liaison.groble.domain.purchase.entity.Purchase;
 
 import lombok.AccessLevel;
@@ -128,6 +129,9 @@ public class SettlementItem extends BaseTimeEntity {
 
   @Column(name = "content_type", length = 20)
   private String capturedContentType;
+
+  @Column(name = "captured_payment_type", length = 20)
+  private String capturedPaymentType;
 
   @Column(name = "option_name", length = 255)
   private String optionName;
@@ -261,6 +265,9 @@ public class SettlementItem extends BaseTimeEntity {
     if (purchase.getContent() != null && purchase.getContent().getContentType() != null) {
       // ContentType enum을 문자열로 저장
       this.capturedContentType = purchase.getContent().getContentType().name();
+    }
+    if (purchase.getContent() != null && purchase.getContent().getPaymentType() != null) {
+      this.capturedPaymentType = purchase.getContent().getPaymentType().name();
     }
     this.optionName = purchase.getSelectedOptionName();
     this.purchaserName =
@@ -398,6 +405,11 @@ public class SettlementItem extends BaseTimeEntity {
     if (settlement != null) {
       settlement.recalcFromItems();
     }
+  }
+
+  public boolean isSubscriptionSettlement() {
+    return capturedPaymentType != null
+        && ContentPaymentType.SUBSCRIPTION.name().equalsIgnoreCase(capturedPaymentType);
   }
 
   public void recalculateWithNewFeeRates(

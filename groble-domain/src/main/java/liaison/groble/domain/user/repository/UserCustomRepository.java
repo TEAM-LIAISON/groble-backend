@@ -14,6 +14,9 @@ public interface UserCustomRepository {
 
   Optional<FlatAdminUserSummaryInfoDTO> findUserByNickname(String nickname);
 
+  Page<FlatAdminUserSummaryInfoDTO> searchUsersByNickname(
+      String nicknameKeyword, Pageable pageable);
+
   boolean existsByIntegratedAccountEmailAndPhoneNumber(String integratedAccountEmail);
 
   AdminUserStatisticsAggregate fetchUserStatistics(

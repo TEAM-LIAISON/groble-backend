@@ -38,7 +38,12 @@ public class ContentDraftRequest {
   @Schema(description = "검색 엔진 노출 여부", example = "true")
   private Boolean isSearchExposed;
 
-  @Valid
+  @Schema(description = "결제 유형 [ONE_TIME - 단건 결제], [SUBSCRIPTION - 정기 결제]", example = "ONE_TIME")
+  @Pattern(
+      regexp = "^(ONE_TIME|SUBSCRIPTION)$",
+      message = "결제 유형은 ONE_TIME 또는 SUBSCRIPTION만 가능합니다.")
+  private String paymentType;
+
   @Schema(description = "코칭 옵션 목록 (contentType이 COACHING인 경우)")
   private List<BaseOptionDraftRequest> coachingOptions;
 

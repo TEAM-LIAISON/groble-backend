@@ -104,6 +104,7 @@ public class Payment extends AggregateRoot {
       BigDecimal price,
       PaymentMethod paymentMethod,
       String paymentKey,
+      String billingKey,
       String purchaserName,
       String purchaserEmail,
       String purchaserPhoneNumber) {
@@ -114,6 +115,7 @@ public class Payment extends AggregateRoot {
             : PaymentAmount.zero();
     this.paymentMethod = paymentMethod != null ? paymentMethod : PaymentMethod.FREE;
     this.paymentKey = paymentKey;
+    this.billingKey = billingKey;
     this.purchaserName = purchaserName;
     this.purchaserEmail = purchaserEmail;
     this.purchaserPhoneNumber = purchaserPhoneNumber;
@@ -171,12 +173,14 @@ public class Payment extends AggregateRoot {
    * @param paymentKey PG 결제 키
    * @return 빌링 결제 엔티티
    */
-  public static Payment createBillingPayment(Order order, PaymentAmount amount, String paymentKey) {
+  public static Payment createBillingPayment(
+      Order order, PaymentAmount amount, String paymentKey, String billingKey) {
     return Payment.builder()
         .order(order)
         .price(amount.getValue())
         .paymentMethod(PaymentMethod.BILLING)
         .paymentKey(paymentKey)
+        .billingKey(billingKey)
         .purchaserName(order.getPurchaser().getName())
         .purchaserEmail(order.getPurchaser().getEmail())
         .purchaserPhoneNumber(order.getPurchaser().getPhone())

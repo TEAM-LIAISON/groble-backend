@@ -9,6 +9,7 @@ import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import liaison.groble.api.server.interceptor.ActiveSessionTrackingInterceptor;
 import liaison.groble.security.interceptor.RoleCheckInterceptor;
 import liaison.groble.security.resolver.AuthArgumentResolver;
 
@@ -21,6 +22,7 @@ public class WebConfig implements WebMvcConfigurer {
 
   private final AuthArgumentResolver authArgumentResolver;
   private final RoleCheckInterceptor roleCheckInterceptor;
+  private final ActiveSessionTrackingInterceptor activeSessionTrackingInterceptor;
 
   @Override
   public void addArgumentResolvers(List<HandlerMethodArgumentResolver> resolvers) {
@@ -29,6 +31,7 @@ public class WebConfig implements WebMvcConfigurer {
 
   @Override
   public void addInterceptors(InterceptorRegistry registry) {
+    registry.addInterceptor(activeSessionTrackingInterceptor).addPathPatterns("/api/v1/**");
     registry.addInterceptor(roleCheckInterceptor).addPathPatterns("/api/v1/**");
   }
 

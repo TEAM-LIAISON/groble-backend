@@ -22,9 +22,10 @@ public class ContentDetailResponse {
   private Long contentId;
 
   @Schema(
-      description = "콘텐츠 상태 [ACTIVE - 판매중], [DRAFT - 작성중], [DELETED - 삭제됨], [DISCONTINUED - 판매중단]",
+      description =
+          "콘텐츠 상태 [ACTIVE - 판매중], [PAUSED - 판매정지], [DRAFT - 작성중], [DELETED - 삭제됨], [DISCONTINUED - 판매중단]",
       example = "DRAFT",
-      allowableValues = {"ACTIVE", "DRAFT", "DELETED", "DISCONTINUED"})
+      allowableValues = {"ACTIVE", "PAUSED", "DRAFT", "DELETED", "DISCONTINUED"})
   private String status;
 
   @Schema(description = "썸네일 이미지 URL", example = "https://example.com/thumbnail1.jpg")
@@ -32,6 +33,15 @@ public class ContentDetailResponse {
 
   @Schema(description = "콘텐츠 유형 [COACHING - 코칭], [DOCUMENT - 자료]", example = "COACHING")
   private String contentType;
+
+  @Schema(description = "결제 유형 [ONE_TIME - 단건 결제], [SUBSCRIPTION - 정기 결제]", example = "ONE_TIME")
+  private String paymentType;
+
+  @Schema(
+      description = "정기결제 판매 상태 (정기결제 콘텐츠가 아닌 경우 null)",
+      example = "OPEN",
+      allowableValues = {"OPEN", "PAUSED", "TERMINATED"})
+  private String subscriptionSellStatus;
 
   @Schema(description = "카테고리 ID", example = "1")
   private String categoryId;

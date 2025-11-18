@@ -27,4 +27,6 @@ public class FlatContentPreviewDTO {
   private Boolean isSearchExposed;
   private String categoryId;
   private String contentType;
+  private String paymentType;
+  private String subscriptionSellStatus;
 }

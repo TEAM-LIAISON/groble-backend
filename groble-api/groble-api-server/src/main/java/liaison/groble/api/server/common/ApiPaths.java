@@ -18,6 +18,7 @@ public final class ApiPaths {
     public static final String DASHBOARD_OVERVIEW = "/overview";
     public static final String DASHBOARD_TRENDS = "/trends";
     public static final String DASHBOARD_TOP_CONTENTS = "/top-contents";
+    public static final String DASHBOARD_ACTIVE_VISITORS = "/active-visitors";
 
     // 어드민 사용자 탭
     public static final String ADMIN_USER_SUMMARY_INFO = "/users";
@@ -30,6 +31,7 @@ public final class ApiPaths {
     public static final String ADMIN_USER_BUSINESS_INFO = "/users/{userId}/business-info";
 
     public static final String CONTENTS = "/contents";
+    public static final String CONTENT_SEARCH = "/contents/search";
     public static final String CONTENT_EXAMINE = "/content/{contentId}/examine";
 
     public static final String SETTLEMENT_BASE = BASE + "/settlements";
@@ -102,6 +104,10 @@ public final class ApiPaths {
     public static final String CANCEL = "/{merchantUid}/cancel";
     public static final String VERIFICATION = "/verification";
     public static final String REFUND = "/refund";
+    public static final String BILLING_AUTH_MO = "/billing/auth/mo";
+    public static final String BILLING_AUTH_API = "/billing/auth/api";
+    public static final String BILLING_REGISTER = "/billing/register";
+    public static final String SUBSCRIPTION = "/subscription";
 
     private Payment() {}
   }
@@ -113,6 +119,7 @@ public final class ApiPaths {
     public static final String MY_PAGE_SUMMARY = BASE + "/me/summary";
     public static final String MY_PAGE_DETAIL = BASE + "/me/detail";
     public static final String UPLOAD_PROFILE_IMAGE = BASE + "/me/profile-image";
+    public static final String MY_PAGE_PAYMENT_METHOD = BASE + "/me/payment-method";
 
     public static final String MY_PAGE = API_V1 + "/me";
 

@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
+import org.springframework.util.StringUtils;
 
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
@@ -57,7 +58,9 @@ public class OrderCustomRepositoryImpl implements OrderCustomRepository {
                     qOrder.purchaser.name.as("purchaserName"),
                     qContent.title.as("contentTitle"),
                     qOrder.finalPrice.as("finalPrice"),
-                    qOrder.status.stringValue().as("orderStatus")))
+                    qOrder.status.stringValue().as("orderStatus"),
+                    qOrder.orderNote.as("failureReason"),
+                    qContent.paymentType.stringValue().as("paymentType")))
             .from(qOrder)
             .leftJoin(qPurchase)
             .on(qPurchase.order.eq(qOrder))
@@ -93,6 +96,10 @@ public class OrderCustomRepositoryImpl implements OrderCustomRepository {
 
   @Override
   public Optional<Order> findByMerchantUidAndUserId(String merchantUid, Long userId) {
+    if (!StringUtils.hasText(merchantUid) || userId == null) {
+      return Optional.empty();
+    }
+
     QOrder qOrder = QOrder.order;
 
     Order order =
@@ -106,6 +113,10 @@ public class OrderCustomRepositoryImpl implements OrderCustomRepository {
 
   @Override
   public Optional<Order> findByMerchantUidAndGuestUserId(String merchantUid, Long guestUserId) {
+    if (!StringUtils.hasText(merchantUid) || guestUserId == null) {
+      return Optional.empty();
+    }
+
     QOrder qOrder = QOrder.order;
 
     Order order =

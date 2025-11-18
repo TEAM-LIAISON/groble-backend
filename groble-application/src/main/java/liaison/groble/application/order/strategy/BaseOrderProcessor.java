@@ -1,8 +1,10 @@
 package liaison.groble.application.order.strategy;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -21,6 +23,8 @@ import liaison.groble.common.event.EventPublisher;
 import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.content.entity.ContentOption;
 import liaison.groble.domain.content.entity.DocumentOption;
+import liaison.groble.domain.content.enums.ContentPaymentType;
+import liaison.groble.domain.content.enums.SubscriptionSellStatus;
 import liaison.groble.domain.coupon.entity.UserCoupon;
 import liaison.groble.domain.coupon.repository.UserCouponRepository;
 import liaison.groble.domain.guest.repository.GuestUserRepository;
@@ -28,10 +32,14 @@ import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.order.entity.OrderItem;
 import liaison.groble.domain.order.repository.OrderRepository;
 import liaison.groble.domain.order.vo.OrderOptionInfo;
+import liaison.groble.domain.payment.entity.BillingKey;
 import liaison.groble.domain.payment.entity.Payment;
+import liaison.groble.domain.payment.repository.BillingKeyRepository;
 import liaison.groble.domain.payment.repository.PaymentRepository;
 import liaison.groble.domain.purchase.entity.Purchase;
 import liaison.groble.domain.purchase.repository.PurchaseRepository;
+import liaison.groble.domain.subscription.entity.Subscription;
+import liaison.groble.domain.subscription.repository.SubscriptionRepository;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -54,6 +62,8 @@ public abstract class BaseOrderProcessor implements OrderProcessorStrategy {
   protected PurchaseRepository purchaseRepository;
   protected PaymentRepository paymentRepository;
   protected GuestUserRepository guestUserRepository;
+  protected SubscriptionRepository subscriptionRepository;
+  protected BillingKeyRepository billingKeyRepository;
 
   // Event Publisher
   protected EventPublisher eventPublisher;
@@ -67,12 +77,9 @@ public abstract class BaseOrderProcessor implements OrderProcessorStrategy {
       PurchaseRepository purchaseRepository,
       PaymentRepository paymentRepository,
       GuestUserRepository guestUserRepository,
+      SubscriptionRepository subscriptionRepository,
+      BillingKeyRepository billingKeyRepository,
       EventPublisher eventPublisher) {
-    log.info("=== BaseOrderProcessor 생성자 호출 시작 ===");
-    log.info("contentReader: {}", contentReader);
-    log.info("purchaseReader: {}", purchaseReader);
-    log.info("guestUserReader: {}", guestUserReader);
-
     this.contentReader = contentReader;
     this.purchaseReader = purchaseReader;
     this.guestUserReader = guestUserReader;
@@ -81,9 +88,11 @@ public abstract class BaseOrderProcessor implements OrderProcessorStrategy {
     this.purchaseRepository = purchaseRepository;
     this.paymentRepository = paymentRepository;
     this.guestUserRepository = guestUserRepository;
+    this.subscriptionRepository = subscriptionRepository;
+    this.billingKeyRepository = billingKeyRepository;
     this.eventPublisher = eventPublisher;
 
-    log.info("=== BaseOrderProcessor 생성자 완료 - this.contentReader: {} ===", this.contentReader);
+    log.debug("BaseOrderProcessor initialized for {}", this.getClass().getSimpleName());
   }
 
   @Override
@@ -103,6 +112,10 @@ public abstract class BaseOrderProcessor implements OrderProcessorStrategy {
 
     // 1. 콘텐츠 조회
     final Content content = contentReader.getContentById(createOrderRequestDTO.getContentId());
+
+    if (content.getPaymentType() == ContentPaymentType.SUBSCRIPTION) {
+      validateSubscriptionSellStatus(content);
+    }
 
     // 2. 주문 옵션 검증 및 변환
     final List<ValidatedOrderOptionDTO> validatedOptions =
@@ -149,6 +162,16 @@ public abstract class BaseOrderProcessor implements OrderProcessorStrategy {
 
     // 10. 응답 생성 (사용자 타입별 구현)
     return buildCreateOrderResponse(order, userContext, willBeFreePurchase);
+  }
+
+  private void validateSubscriptionSellStatus(Content content) {
+    SubscriptionSellStatus sellStatus = content.getSubscriptionSellStatus();
+    if (sellStatus == SubscriptionSellStatus.PAUSED) {
+      throw new IllegalStateException("정기결제 신규 신청이 일시 중단된 콘텐츠입니다.");
+    }
+    if (sellStatus == SubscriptionSellStatus.TERMINATED) {
+      throw new IllegalStateException("정기결제가 종료된 콘텐츠입니다.");
+    }
   }
 
   @Override
@@ -391,12 +414,38 @@ public abstract class BaseOrderProcessor implements OrderProcessorStrategy {
     log.info(
         "주문 성공 응답 생성 - orderId: {}, purchasedAt: {}", order.getId(), purchase.getPurchasedAt());
 
+    LocalDate nextPaymentDate =
+        subscriptionRepository
+            .findByPurchaseId(purchase.getId())
+            .map(Subscription::getNextBillingDate)
+            .orElse(null);
+
+    String cardName = null;
+    String cardNumberLast4 = null;
+    Payment payment = purchase.getPayment();
+    if (payment != null) {
+      String billingKeyValue = payment.getBillingKey();
+      if (billingKeyValue != null && !billingKeyValue.isBlank()) {
+        Optional<BillingKey> billingKeyOptional =
+            billingKeyRepository.findByBillingKey(billingKeyValue);
+        if (billingKeyOptional.isPresent()) {
+          var billingKey = billingKeyOptional.get();
+          cardName = billingKey.getCardName();
+          cardNumberLast4 = extractCardLast4(billingKey.getCardNumberMasked());
+        }
+      }
+    }
+
     return OrderSuccessDTO.builder()
         // 주문 기본 정보
         .merchantUid(order.getMerchantUid())
         .purchasedAt(purchase.getPurchasedAt())
         .contentId(content.getId())
         .contentTitle(content.getTitle())
+        .paymentType(content.getPaymentType() != null ? content.getPaymentType().name() : null)
+        .nextPaymentDate(nextPaymentDate)
+        .cardName(cardName)
+        .cardNumberLast4(cardNumberLast4)
         .sellerName(content.getUser().getNickname())
         .orderStatus(order.getStatus().name())
         // 콘텐츠 정보
@@ -414,6 +463,17 @@ public abstract class BaseOrderProcessor implements OrderProcessorStrategy {
         // 구매 정보
         .isFreePurchase(order.getFinalPrice().compareTo(BigDecimal.ZERO) == 0)
         .build();
+  }
+
+  private String extractCardLast4(String masked) {
+    if (masked == null || masked.isBlank()) {
+      return null;
+    }
+    String digitsOnly = masked.replaceAll("\\D", "");
+    if (digitsOnly.length() < 4) {
+      return digitsOnly.isEmpty() ? null : digitsOnly;
+    }
+    return digitsOnly.substring(digitsOnly.length() - 4);
   }
 
   /** 주문 생성 로그 기록 */

@@ -40,4 +40,17 @@ public final class AdminDashboardSwaggerDocs {
                       - 요청 기간 및 조회 개수(limit)
                       - 콘텐츠 정보(콘텐츠 ID, 타이틀, 메이커, 매출, 판매건수, 객단가)
                       """;
+
+  public static final String DASHBOARD_ACTIVE_VISITORS_SUMMARY =
+      "[👀 실시간 방문자 조회] 관리자가 실시간으로 서비스 이용 중인 방문자를 확인합니다.";
+  public static final String DASHBOARD_ACTIVE_VISITORS_DESCRIPTION =
+      """
+                      설정한 시간 창 안에서 활동 중인 세션을 조회합니다.
+
+                      **응답 데이터:**
+                      - 관측 윈도우(분) 및 조회 제한(limit)
+                      - 활성 회원 세션 목록(memberSessions)과 개수(memberCount)
+                      - 활성 게스트/비로그인 세션 목록(guestSessions)과 개수(guestCount)
+                      - 각 세션의 요청 URI, User-Agent, IP 등 실시간 메타데이터
+                      """;
 }

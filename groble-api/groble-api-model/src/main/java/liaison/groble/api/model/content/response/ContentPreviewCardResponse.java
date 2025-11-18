@@ -45,6 +45,12 @@ public class ContentPreviewCardResponse {
   @Schema(description = "콘텐츠 유형", example = "COACHING")
   private String contentType;
 
+  @Schema(description = "결제 유형", example = "SUBSCRIPTION")
+  private String paymentType;
+
+  @Schema(description = "정기 결제 판매 상태 [OPEN, PAUSED, TERMINATED]", example = "OPEN", nullable = true)
+  private String subscriptionSellStatus;
+
   @Schema(description = "가격 옵션 개수", example = "3")
   private int priceOptionLength;
 
@@ -56,9 +62,10 @@ public class ContentPreviewCardResponse {
   private Boolean isAvailableForSale;
 
   @Schema(
-      description = "콘텐츠 상태 [ACTIVE - 판매중], [DRAFT - 작성중], [DELETED - 삭제됨], [DISCONTINUED - 판매중단]",
+      description =
+          "콘텐츠 상태 [ACTIVE - 판매중], [PAUSED - 판매정지], [DRAFT - 작성중], [DELETED - 삭제됨], [DISCONTINUED - 판매중단]",
       example = "DRAFT",
-      allowableValues = {"ACTIVE", "DRAFT", "DELETED", "DISCONTINUED"})
+      allowableValues = {"ACTIVE", "PAUSED", "DRAFT", "DELETED", "DISCONTINUED"})
   private String status;
 
   @Schema(

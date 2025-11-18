@@ -1,25 +1,20 @@
 plugins {
-	id 'java'
-    id 'java-library'
-	id 'org.springframework.boot' version '3.3.10'
-	id 'io.spring.dependency-management' version '1.1.7'
-    id 'com.diffplug.spotless' version '6.21.0'
-}
-
-// 루트 프로젝트 자체는 빌드되지 않음
-tasks.named('bootJar') {
-    enabled = false
-}
-tasks.named('jar') {
-    enabled = false
+    id 'org.springframework.boot' version '3.3.10' apply false
+    id 'io.spring.dependency-management' version '1.1.7' apply false
+    id 'com.diffplug.spotless' version '6.21.0' apply false
 }
 
 // 의존성 버전 관리
 ext {
+    springBootVersion = '3.3.10'
     queryDslVersion = '5.0.0'
     jwtVersion = '0.11.5'
     springdocVersion = '2.4.0'
     guavaVersion = '32.1.3-jre'
+    mapstructVersion = '1.5.5.Final'
+    httpClientVersion = '4.5.13'
+    jsonSimpleVersion = '1.1'
+    springRetryVersion = '2.0.6'
 }
 
 allprojects {
@@ -33,11 +28,15 @@ allprojects {
 }
 
 subprojects {
-    apply plugin: 'java'
     apply plugin: 'java-library'
-    apply plugin: 'org.springframework.boot'
     apply plugin: 'io.spring.dependency-management'
     apply plugin: 'com.diffplug.spotless'
+
+    dependencyManagement {
+        imports {
+            mavenBom "org.springframework.boot:spring-boot-dependencies:${springBootVersion}"
+        }
+    }
 
     // 모든 모듈에 Java 17 적용
     java {
@@ -63,14 +62,6 @@ subprojects {
         testAnnotationProcessor 'org.projectlombok:lombok'
     }
 
-    // 기본적으로 모든 서브프로젝트의 bootJar 비활성화, jar 활성화
-    tasks.named('bootJar') {
-        enabled = false
-    }
-    tasks.named('jar') {
-        enabled = true
-    }
-
     // 테스트 설정
     tasks.named('test') {
         useJUnitPlatform()
@@ -94,37 +85,22 @@ subprojects {
 }
 
 project(':groble-common') {
-    tasks.named('bootJar') {
-        enabled = false
-    }
-
-    tasks.named('jar') {
-        enabled = true
-    }
-
     dependencies {
         // Spring Web
-        implementation 'org.springframework.boot:spring-boot-starter-web'
-        implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${springdocVersion}"
+        api 'org.springframework.boot:spring-boot-starter-web'
+        api "org.springdoc:springdoc-openapi-starter-webmvc-ui:${springdocVersion}"
 
         // Spring Data Commons - 페이지네이션 관련 클래스 사용을 위해 명시적 추가
-        implementation 'org.springframework.data:spring-data-commons'
+        api 'org.springframework.data:spring-data-commons'
 
         // Jackson 명시적 추가 (JsonInclude 등의 어노테이션 사용)
-        implementation 'com.fasterxml.jackson.core:jackson-annotations'
-        implementation 'com.fasterxml.jackson.core:jackson-databind'
+        api 'com.fasterxml.jackson.core:jackson-annotations'
+        api 'com.fasterxml.jackson.core:jackson-databind'
     }
 }
 
 // API 모듈 설정 (API 컴포넌트를 위한 상위 모듈)
 project(':groble-api') {
-    tasks.named('bootJar') {
-        enabled = false
-    }
-    tasks.named('jar') {
-        enabled = false
-    }
-    
     // API 하위 모듈 공통 의존성
     subprojects {
         dependencies {
@@ -133,13 +109,14 @@ project(':groble-api') {
             implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${springdocVersion}"
             implementation 'org.springframework.boot:spring-boot-starter-validation'
             runtimeOnly 'com.mysql:mysql-connector-j'
-            developmentOnly 'org.springframework.boot:spring-boot-devtools'
         }
     }
 }
 
 // 모듈 간 의존성 설정 - 클린 아키텍처 원칙에 따라 의존성 방향 설정
 project(':groble-api:groble-api-server') {
+    apply plugin: 'org.springframework.boot'
+
     dependencies {
         implementation project(':groble-common')
         implementation project(':groble-api:groble-api-model')
@@ -151,17 +128,17 @@ project(':groble-api:groble-api-server') {
         implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
         
         // MapStruct 의존성 추가
-        implementation 'org.mapstruct:mapstruct:1.5.5.Final'
-        annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
+        implementation "org.mapstruct:mapstruct:${mapstructVersion}"
+        annotationProcessor "org.mapstruct:mapstruct-processor:${mapstructVersion}"
 
         implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
 
         // Payple 결제 연동을 위한 의존성
-        implementation 'org.apache.httpcomponents:httpclient:4.5.13'
-        implementation 'com.googlecode.json-simple:json-simple:1.1'
+        implementation "org.apache.httpcomponents:httpclient:${httpClientVersion}"
+        implementation "com.googlecode.json-simple:json-simple:${jsonSimpleVersion}"
 
         // Retry
-        implementation 'org.springframework.retry:spring-retry'
+        implementation "org.springframework.retry:spring-retry:${springRetryVersion}"
 
         // OpenTelemetry 추가 - 버전 통일 및 로깅 지원 추가
         implementation 'io.opentelemetry.instrumentation:opentelemetry-spring-boot-starter:2.6.0'
@@ -171,6 +148,8 @@ project(':groble-api:groble-api-server') {
 
         // Structured logging (JSON) encoder
         implementation 'net.logstash.logback:logstash-logback-encoder:7.4'
+
+        developmentOnly 'org.springframework.boot:spring-boot-devtools'
     }
 
     tasks.named('bootJar') {
@@ -207,8 +186,8 @@ project(':groble-application') {
         implementation 'org.springframework.data:spring-data-commons'
 
         // Payple 결제 연동을 위한 의존성
-        implementation 'org.apache.httpcomponents:httpclient:4.5.13'
-        implementation 'com.googlecode.json-simple:json-simple:1.1'
+        implementation "org.apache.httpcomponents:httpclient:${httpClientVersion}"
+        implementation "com.googlecode.json-simple:json-simple:${jsonSimpleVersion}"
 
         // Actuator (Micrometer 포함)
         implementation 'org.springframework.boot:spring-boot-starter-actuator'
@@ -220,7 +199,7 @@ project(':groble-application') {
         implementation 'com.github.loki4j:loki-logback-appender:1.5.1'
 
         // Retry
-        implementation 'org.springframework.retry:spring-retry'
+        implementation "org.springframework.retry:spring-retry:${springRetryVersion}"
 
         testImplementation(project(":groble-api:groble-api-server")) // 메인 앱 모듈
     }
@@ -233,12 +212,6 @@ project(':groble-domain') {
         // JPA
         implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 
-        // Spring Web
-        implementation 'org.springframework.boot:spring-boot-starter-web'
-
-        // Security
-        implementation 'org.springframework.boot:spring-boot-starter-security'
-
         // Apache Commons Codec
         implementation 'commons-codec:commons-codec:1.15'
 
@@ -249,30 +222,31 @@ project(':groble-domain') {
         annotationProcessor 'jakarta.persistence:jakarta.persistence-api'
     }
 
+    def querydslDir = layout.buildDirectory.dir("generated/querydsl").get().asFile
 
-    // QueryDSL Q클래스 생성 디렉토리 설정
-    def generated = 'src/main/generated'
-
-    // querydsl QClass 파일 생성 위치를 지정
-    tasks.withType(JavaCompile) {
-        options.getGeneratedSourceOutputDirectory().set(file(generated))
-    }
-
-    // java source set에 querydsl QClass 위치 추가
     sourceSets {
-        main.java.srcDirs += [generated]
+        main.java.srcDir(querydslDir)
     }
 
-    // gradle clean 시에 QClass 디렉토리 삭제
-    clean {
-        delete file(generated)
+    tasks.named('compileJava', JavaCompile).configure {
+        // IntelliJ의 Gradle 미위임 빌드에서도 중복 생성 오류가 발생하지 않도록 매번 생성 디렉터리를 정리
+        doFirst {
+            if (querydslDir.exists()) {
+                project.delete(querydslDir)
+            }
+        }
+        options.annotationProcessorGeneratedSourcesDirectory = querydslDir
     }
-    
+
+    tasks.named('clean') {
+        doLast { delete(querydslDir) }
+    }
+
     // 생성된 QueryDSL 파일은 Spotless 검사에서 제외
     spotless {
         java {
             target '**/*.java'
-            targetExclude 'src/main/generated/**'
+            targetExclude 'build/generated/querydsl/**'
         }
     }
 }
@@ -286,9 +260,6 @@ project(':groble-infrastructure:groble-persistence') {
 
         // QueryDSL 의존성
         implementation "com.querydsl:querydsl-jpa:${queryDslVersion}:jakarta"
-        annotationProcessor "com.querydsl:querydsl-apt:${queryDslVersion}:jakarta"
-        annotationProcessor 'jakarta.annotation:jakarta.annotation-api'
-        annotationProcessor 'jakarta.persistence:jakarta.persistence-api'
 
         // MySQL Driver
         runtimeOnly 'com.mysql:mysql-connector-j'
@@ -324,14 +295,14 @@ project(':groble-infrastructure:groble-external') {
         implementation 'com.github.iamport:iamport-rest-client-java:0.2.21'
         
         // Payple 결제 연동을 위한 의존성
-        implementation 'org.apache.httpcomponents:httpclient:4.5.13'
-        implementation 'com.googlecode.json-simple:json-simple:1.1'
+        implementation "org.apache.httpcomponents:httpclient:${httpClientVersion}"
+        implementation "com.googlecode.json-simple:json-simple:${jsonSimpleVersion}"
         
         // JSON 라이브러리 (org.json.JSONObject 지원)
         implementation 'org.json:json:20240303'
 
         // Retry
-        implementation 'org.springframework.retry:spring-retry'
+        implementation "org.springframework.retry:spring-retry:${springRetryVersion}"
         // Flyway
         implementation 'org.flywaydb:flyway-core'
         implementation 'org.flywaydb:flyway-mysql'
@@ -374,8 +345,8 @@ project(':groble-mapping') {
         implementation project(':groble-common')
         
         // MapStruct
-        implementation 'org.mapstruct:mapstruct:1.5.5.Final'
-        annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
+        implementation "org.mapstruct:mapstruct:${mapstructVersion}"
+        annotationProcessor "org.mapstruct:mapstruct-processor:${mapstructVersion}"
         
         // Lombok과 MapStruct 함께 사용 시 필요
         annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'

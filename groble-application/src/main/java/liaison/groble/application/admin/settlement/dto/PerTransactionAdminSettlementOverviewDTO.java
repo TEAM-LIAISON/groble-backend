@@ -9,8 +9,10 @@ import lombok.Getter;
 @Getter
 @Builder
 public class PerTransactionAdminSettlementOverviewDTO {
+  private Long contentId;
   private String contentTitle;
   private BigDecimal settlementAmount;
   private String orderStatus;
   private LocalDateTime purchasedAt;
+  private String paymentType;
 }

@@ -28,4 +28,14 @@ public class OrderRepositoryImpl implements OrderRepository {
   public Optional<Order> findByMerchantUid(String merchantUid) {
     return jpaOrderRepository.findByMerchantUid(merchantUid);
   }
+
+  @Override
+  public Optional<Order> findByMerchantUidForUpdate(String merchantUid) {
+    return jpaOrderRepository.findWithLockByMerchantUid(merchantUid);
+  }
+
+  @Override
+  public Optional<Order> findByMerchantUidAndUserIdForUpdate(String merchantUid, Long userId) {
+    return jpaOrderRepository.findWithLockByMerchantUidAndUserId(merchantUid, userId);
+  }
 }

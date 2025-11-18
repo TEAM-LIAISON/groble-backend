@@ -213,6 +213,53 @@ public class PaypleServiceV2 implements PaypleService {
   }
 
   @Override
+  public JSONObject paySimplePayment(PaypleSimplePayRequest request, String authKey) {
+    log.info(
+        "페이플 빌링키 결제 요청 시작 - merchantUid: {}, payerId: {}",
+        request.getPayOid(),
+        maskSensitiveData(request.getPayerId()));
+
+    try {
+      HttpResponse response = executeSimplePaymentRequest(request, authKey);
+      return parseAndValidateResponse(response);
+
+    } catch (HttpClientException e) {
+      log.error("페이플 빌링키 결제 HTTP 요청 실패", e);
+      return createErrorResponse("NETWORK_ERROR", "네트워크 오류가 발생했습니다: " + e.getMessage());
+
+    } catch (ParseException e) {
+      log.error("페이플 빌링키 결제 응답 파싱 실패", e);
+      return createErrorResponse("PARSE_ERROR", "응답 파싱 중 오류가 발생했습니다");
+
+    } catch (Exception e) {
+      log.error("페이플 빌링키 결제 예상치 못한 오류", e);
+      return createErrorResponse("UNKNOWN_ERROR", "예상치 못한 오류가 발생했습니다");
+    }
+  }
+
+  @Override
+  public JSONObject deleteBillingKey(String payerId, String authKey) {
+    log.info("페이플 빌링키 삭제 요청 시작 - payerId: {}", maskSensitiveData(payerId));
+
+    try {
+      HttpResponse response = executeBillingKeyDeletionRequest(payerId, authKey);
+      return parseAndValidateResponse(response);
+
+    } catch (HttpClientException e) {
+      log.error("페이플 빌링키 삭제 HTTP 요청 실패", e);
+      return createErrorResponse("NETWORK_ERROR", "네트워크 오류가 발생했습니다: " + e.getMessage());
+
+    } catch (ParseException e) {
+      log.error("페이플 빌링키 삭제 응답 파싱 실패", e);
+      return createErrorResponse("PARSE_ERROR", "응답 파싱 중 오류가 발생했습니다");
+
+    } catch (Exception e) {
+      log.error("페이플 빌링키 삭제 예상치 못한 오류", e);
+      return createErrorResponse("UNKNOWN_ERROR", "예상치 못한 오류가 발생했습니다");
+    }
+  }
+
+  @Override
   public JSONObject payTransferRequest(Map<String, String> params, String accessToken) {
     log.info(
         "페이플 이체 대기 요청 시작 - 빌링키: {}, 이체금액: {}",
@@ -295,6 +342,11 @@ public class PaypleServiceV2 implements PaypleService {
         .authKey(params.get("PCD_AUTH_KEY"))
         .payReqKey(params.get("PCD_PAY_REQKEY"))
         .cardQuota(params.get("PCD_PAY_CARDQUOTA"))
+        .payType(params.get("PCD_PAY_TYPE"))
+        .payerId(params.get("PCD_PAYER_ID"))
+        .payGoods(params.get("PCD_PAY_GOODS"))
+        .payTotal(params.get("PCD_PAY_TOTAL"))
+        .simpleFlag(params.get("PCD_SIMPLE_FLAG"))
         .build();
   }
 
@@ -311,6 +363,65 @@ public class PaypleServiceV2 implements PaypleService {
         .build();
   }
 
+  private HttpResponse executeSimplePaymentRequest(PaypleSimplePayRequest request, String authKey)
+      throws HttpClientException {
+    JSONObject requestBody = new JSONObject();
+    requestBody.put("PCD_CST_ID", paypleConfig.getCstId());
+    requestBody.put("PCD_CUST_KEY", paypleConfig.getCustKey());
+    requestBody.put("PCD_AUTH_KEY", authKey);
+    requestBody.put("PCD_PAY_TYPE", request.getPayType());
+    requestBody.put("PCD_PAYER_ID", request.getPayerId());
+    requestBody.put("PCD_PAY_GOODS", request.getPayGoods());
+    requestBody.put("PCD_PAY_TOTAL", request.getPayTotal());
+    requestBody.put("PCD_PAY_OID", request.getPayOid());
+    requestBody.put("PCD_PAYER_NO", request.getPayerNo());
+    requestBody.put("PCD_PAYER_NAME", request.getPayerName());
+    requestBody.put("PCD_PAYER_HP", request.getPayerHp());
+    requestBody.put("PCD_PAYER_EMAIL", request.getPayerEmail());
+
+    if (request.getPayIstax() != null) {
+      requestBody.put("PCD_PAY_ISTAX", request.getPayIstax());
+    }
+    if (request.getPayTaxtotal() != null) {
+      requestBody.put("PCD_PAY_TAXTOTAL", request.getPayTaxtotal());
+    }
+    requestBody.put(
+        "PCD_SIMPLE_FLAG", request.getSimpleFlag() != null ? request.getSimpleFlag() : "Y");
+
+    Map<String, String> headers = new HashMap<>();
+    headers.put("Content-Type", "application/json");
+    headers.put("charset", "UTF-8");
+    headers.put("referer", paypleConfig.getRefererUrl());
+
+    log.debug("페이플 빌링키 결제 요청 본문: {}", requestBody.toJSONString());
+
+    HttpRequest httpRequest =
+        HttpRequest.postWithHeaders(
+            paypleConfig.getSimplePaymentUrl(), headers, requestBody.toJSONString());
+    return httpClient.post(httpRequest);
+  }
+
+  private HttpResponse executeBillingKeyDeletionRequest(String payerId, String authKey)
+      throws HttpClientException {
+    JSONObject requestBody = new JSONObject();
+    requestBody.put("PCD_CST_ID", paypleConfig.getCstId());
+    requestBody.put("PCD_CUST_KEY", paypleConfig.getCustKey());
+    requestBody.put("PCD_AUTH_KEY", authKey);
+    requestBody.put("PCD_PAYER_ID", payerId);
+
+    Map<String, String> headers = new HashMap<>();
+    headers.put("Content-Type", "application/json");
+    headers.put("charset", "UTF-8");
+    headers.put("referer", paypleConfig.getRefererUrl());
+
+    log.debug("페이플 빌링키 삭제 요청 본문: {}", requestBody.toJSONString());
+
+    HttpRequest httpRequest =
+        HttpRequest.postWithHeaders(
+            paypleConfig.getBillingKeyDeleteUrl(), headers, requestBody.toJSONString());
+    return httpClient.post(httpRequest);
+  }
+
   private HttpResponse executePaymentRequest(PayplePaymentRequest request)
       throws HttpClientException {
     JSONObject requestBody = new JSONObject();
@@ -319,6 +430,20 @@ public class PaypleServiceV2 implements PaypleService {
     requestBody.put("PCD_AUTH_KEY", request.getAuthKey());
     requestBody.put("PCD_PAY_REQKEY", request.getPayReqKey());
     requestBody.put("PCD_PAY_CARDQUOTA", request.getCardQuota());
+    if (request.getPayType() != null && !request.getPayType().isBlank()) {
+      requestBody.put("PCD_PAY_TYPE", request.getPayType());
+    }
+    if (request.getPayerId() != null && !request.getPayerId().isBlank()) {
+      requestBody.put("PCD_PAYER_ID", request.getPayerId());
+    }
+    if (request.getPayGoods() != null && !request.getPayGoods().isBlank()) {
+      requestBody.put("PCD_PAY_GOODS", request.getPayGoods());
+    }
+    if (request.getPayTotal() != null && !request.getPayTotal().isBlank()) {
+      requestBody.put("PCD_PAY_TOTAL", request.getPayTotal());
+    }
+    String simpleFlag = request.getSimpleFlag() != null ? request.getSimpleFlag() : "Y";
+    requestBody.put("PCD_SIMPLE_FLAG", simpleFlag);
 
     log.debug("페이플 결제 요청 본문: {}", requestBody.toJSONString());
 

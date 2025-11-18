@@ -9,6 +9,8 @@ import liaison.groble.application.content.ContentReader;
 import liaison.groble.application.guest.reader.GuestUserReader;
 import liaison.groble.application.order.dto.CreateOrderRequestDTO;
 import liaison.groble.application.order.dto.CreateOrderSuccessDTO;
+import liaison.groble.application.payment.dto.billing.SubscriptionPaymentMetadata;
+import liaison.groble.application.payment.service.SubscriptionPaymentMetadataProvider;
 import liaison.groble.application.purchase.service.PurchaseReader;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.common.context.UserContext;
@@ -21,8 +23,10 @@ import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.order.entity.Purchaser;
 import liaison.groble.domain.order.repository.OrderRepository;
 import liaison.groble.domain.order.vo.OrderOptionInfo;
+import liaison.groble.domain.payment.repository.BillingKeyRepository;
 import liaison.groble.domain.payment.repository.PaymentRepository;
 import liaison.groble.domain.purchase.repository.PurchaseRepository;
+import liaison.groble.domain.subscription.repository.SubscriptionRepository;
 import liaison.groble.domain.user.entity.User;
 
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +37,7 @@ import lombok.extern.slf4j.Slf4j;
 public class MemberOrderProcessor extends BaseOrderProcessor {
 
   private final UserReader userReader;
+  private final SubscriptionPaymentMetadataProvider subscriptionPaymentMetadataProvider;
 
   public MemberOrderProcessor(
       ContentReader contentReader,
@@ -44,7 +49,10 @@ public class MemberOrderProcessor extends BaseOrderProcessor {
       PurchaseRepository purchaseRepository,
       PaymentRepository paymentRepository,
       GuestUserRepository guestUserRepository,
-      EventPublisher eventPublisher) {
+      SubscriptionRepository subscriptionRepository,
+      BillingKeyRepository billingKeyRepository,
+      EventPublisher eventPublisher,
+      SubscriptionPaymentMetadataProvider subscriptionPaymentMetadataProvider) {
     super(
         contentReader,
         purchaseReader,
@@ -54,8 +62,11 @@ public class MemberOrderProcessor extends BaseOrderProcessor {
         purchaseRepository,
         paymentRepository,
         guestUserRepository,
+        subscriptionRepository,
+        billingKeyRepository,
         eventPublisher);
     this.userReader = userReader; // 이제 정상적으로 초기화됨
+    this.subscriptionPaymentMetadataProvider = subscriptionPaymentMetadataProvider;
   }
 
   @Override
@@ -97,6 +108,11 @@ public class MemberOrderProcessor extends BaseOrderProcessor {
         .contentTitle(contentTitle)
         .totalPrice(order.getTotalPrice())
         .isPurchasedContent(isPurchasedContent)
+        .paypleOptions(
+            subscriptionPaymentMetadataProvider
+                .buildForOrder(order)
+                .map(this::toPaypleOptionsDTO)
+                .orElse(null))
         .build();
   }
 
@@ -193,5 +209,22 @@ public class MemberOrderProcessor extends BaseOrderProcessor {
   /** 쿠폰 할인 금액 계산 */
   private BigDecimal calculateCouponDiscount(UserCoupon coupon, BigDecimal orderPrice) {
     return coupon.getCouponTemplate().calculateDiscountPrice(orderPrice);
+  }
+
+  private CreateOrderSuccessDTO.PaypleOptionsDTO toPaypleOptionsDTO(
+      SubscriptionPaymentMetadata metadata) {
+    return CreateOrderSuccessDTO.PaypleOptionsDTO.builder()
+        .billingKeyAction(metadata.getBillingKeyAction().name())
+        .payWork(metadata.getPayWork())
+        .cardVer(metadata.getCardVer())
+        .regularFlag(metadata.getRegularFlag())
+        .defaultPayMethod(metadata.getDefaultPayMethod())
+        .merchantUserKey(metadata.getMerchantUserKey())
+        .billingKeyId(metadata.getBillingKeyId())
+        .nextPaymentDate(metadata.getNextPaymentDate())
+        .payYear(metadata.getPayYear())
+        .payMonth(metadata.getPayMonth())
+        .payDay(metadata.getPayDay())
+        .build();
   }
 }

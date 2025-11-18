@@ -27,8 +27,8 @@ public class S3Config {
 
   @PostConstruct
   public void validateProperties() {
-    log.debug("▶ S3Config loaded with accessKeyId='{}', region='{}'", accessKey, region);
-    // (secretKey는 노출 금지)
+    log.info("▶ S3Config loaded successfully - region='{}'", region);
+    // Access Key 및 Secret Key는 보안상 로그에 남기지 않음
   }
 
   @Bean

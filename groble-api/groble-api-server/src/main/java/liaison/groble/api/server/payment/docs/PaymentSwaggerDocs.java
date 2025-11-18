@@ -40,6 +40,69 @@ public final class PaymentSwaggerDocs {
             - 매달 자동 결제되는 구독형 콘텐츠에 한해 결제가 진행됩니다
             """;
 
+  // === 빌링 파트너 인증 API ===
+  public static final String BILLING_AUTH_MO_SUMMARY =
+      "[✅ 빌링 파트너 인증 - MO] 페이플 빌링 등록(MO) 결제창 호출 정보를 발급합니다.";
+  public static final String BILLING_AUTH_MO_DESCRIPTION =
+      """
+            페이플 MO(redirect) 방식 빌링 결제창을 호출하기 위한 인증 정보를 제공합니다.
+
+            **주요 응답 값**
+            - `authKey`: 이후 결제 승인에 사용하는 인증 키
+            - `payUrl`: MO 방식 결제창 URL
+            - `returnUrl`: 결제 완료 후 리다이렉트 URL
+            """;
+
+  public static final String BILLING_AUTH_API_SUMMARY =
+      "[✅ 빌링 파트너 인증 - API] 페이플 빌링 API 호출용 인증 정보를 발급합니다.";
+  public static final String BILLING_AUTH_API_DESCRIPTION =
+      """
+            페이플 API(절대경로) 방식으로 빌링 결제를 요청할 때 필요한 인증 정보를 제공합니다.
+
+            **주요 응답 값**
+            - `authKey`: 빌링 결제 승인 시 사용할 인증 키
+            - `custKey`: 서버 간 통신 시 필요한 파트너 키
+            """;
+
+  // === 빌링키 등록 API ===
+  public static final String BILLING_REGISTER_SUMMARY =
+      "[💳 빌링키 등록] 정기 결제를 위한 회원 카드 정보를 등록하고 빌링키를 저장합니다.";
+  public static final String BILLING_REGISTER_DESCRIPTION =
+      """
+            페이플 빌링 등록 완료 콜백으로 전달되는 정보를 받아 회원의 빌링키를 저장합니다.
+
+            **주의사항:**
+            - 회원 전용 API 입니다 (비회원/미로그인 불가)
+            - 동일 회원이 다시 등록하면 기존 빌링키는 비활성화됩니다
+            - 결제 승인 전 반드시 선행되어야 합니다
+            """;
+
+  // === 정기 결제 해지 API ===
+  public static final String SUBSCRIPTION_CANCEL_SUMMARY = "[⛔ 정기 결제 해지] 활성화된 정기 결제를 해지합니다.";
+  public static final String SUBSCRIPTION_CANCEL_DESCRIPTION =
+      """
+            회원이 구독 중인 정기 결제를 해지합니다. 이후에는 자동 결제가 더 이상 진행되지 않습니다.
+
+            **주의사항:**
+            - 회원 전용 API 입니다
+            - 현재 활성 상태(Active)인 구독만 해지할 수 있습니다
+            - 이미 해지되었거나 존재하지 않는 구독에 대해 요청할 경우 404를 반환합니다
+            - Path parameter로 전달한 `merchantUid` 기준으로 구독을 식별합니다
+            """;
+
+  public static final String SUBSCRIPTION_RESUME_SUMMARY =
+      "[🔄 정기 결제 재개] 해지된 정기 결제를 다음 결제일부터 다시 시작합니다.";
+  public static final String SUBSCRIPTION_RESUME_DESCRIPTION =
+      """
+            회원이 해지한 정기 결제를 다시 활성화하여 지정된 다음 결제일부터 자동 결제를 재개합니다.
+
+            **주의사항:**
+            - 회원 전용 API 입니다
+            - 활성화된 정기 결제용 빌링키가 필요합니다
+            - 이미 활성 상태인 구독은 재개할 수 없습니다
+            - Path parameter로 전달한 `merchantUid` 기준으로 구독을 식별합니다
+            """;
+
   // === 앱카드 결제 취소 API ===
   public static final String CANCEL_SUMMARY = "[❌ 통합 결제 취소] 관리자가 서비스 유형에 한해 회원/비회원 결제를 취소합니다.";
   public static final String CANCEL_DESCRIPTION =

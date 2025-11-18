@@ -15,6 +15,8 @@ public class SettlementDetailDTO {
   private LocalDate settlementEndDate;
   // 정산(예정)일
   private LocalDate scheduledSettlementDate;
+  // 정산 결제 유형 (ONE_TIME / SUBSCRIPTION)
+  private String paymentType;
   // 정산(예정)금액
   private BigDecimal settlementAmount; // 사용자 노출용 정산 예정 금액 (표시 수수료 기준)
   // PG사 수수료(표시용 1.7%)

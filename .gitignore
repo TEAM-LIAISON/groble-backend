@@ -42,6 +42,7 @@ out/
 
 ### MapStruct Generated Files ###
 **/src/main/generated/**/mapping/**
+groble-domain/src/main/generated/
 
 ### .yml ###
 application-secret.yml

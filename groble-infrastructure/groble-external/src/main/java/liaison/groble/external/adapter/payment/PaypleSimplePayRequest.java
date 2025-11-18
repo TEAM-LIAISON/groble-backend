@@ -17,4 +17,5 @@ public class PaypleSimplePayRequest {
   private String payerEmail; // 결제자 이메일
   private String payIstax; // 과세여부
   private String payTaxtotal; // 부가세
+  private String simpleFlag; // 정기결제 여부 (Y/N)
 }

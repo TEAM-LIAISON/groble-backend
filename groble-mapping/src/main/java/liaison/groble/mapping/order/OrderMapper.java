@@ -41,5 +41,8 @@ public interface OrderMapper {
   // ====== 📤 DTO → Response 변환 ======
   CreateOrderResponse toCreateOrderResponse(CreateOrderSuccessDTO createOrderSuccessDTO);
 
+  CreateOrderResponse.PaypleOptionsResponse toPaypleOptionsResponse(
+      CreateOrderSuccessDTO.PaypleOptionsDTO paypleOptionsDTO);
+
   OrderSuccessResponse toOrderSuccessResponse(OrderSuccessDTO orderSuccessDTO);
 }

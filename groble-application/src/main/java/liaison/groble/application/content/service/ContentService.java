@@ -7,6 +7,7 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -32,6 +33,7 @@ import liaison.groble.application.content.exception.ContentEditException;
 import liaison.groble.application.content.exception.InActiveContentException;
 import liaison.groble.application.market.dto.ContactInfoDTO;
 import liaison.groble.application.sell.SellerContactReader;
+import liaison.groble.application.subscription.service.SubscriptionService;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.common.exception.ContactNotFoundException;
 import liaison.groble.common.exception.EntityNotFoundException;
@@ -46,13 +48,16 @@ import liaison.groble.domain.content.entity.Content;
 import liaison.groble.domain.content.entity.ContentOption;
 import liaison.groble.domain.content.entity.DocumentOption;
 import liaison.groble.domain.content.enums.AdminContentCheckingStatus;
+import liaison.groble.domain.content.enums.ContentPaymentType;
 import liaison.groble.domain.content.enums.ContentStatus;
 import liaison.groble.domain.content.enums.ContentType;
+import liaison.groble.domain.content.enums.SubscriptionSellStatus;
 import liaison.groble.domain.content.repository.CategoryRepository;
 import liaison.groble.domain.content.repository.ContentCustomRepository;
 import liaison.groble.domain.content.repository.ContentRepository;
 import liaison.groble.domain.file.entity.FileInfo;
 import liaison.groble.domain.file.repository.FileRepository;
+import liaison.groble.domain.purchase.repository.PurchaseRepository;
 import liaison.groble.domain.user.entity.SellerContact;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.vo.UserProfile;
@@ -66,6 +71,9 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 public class ContentService {
+  private static final String DEFAULT_THUMBNAIL_URL =
+      "https://image.groble.im/contents/thumbnail/groble_default_img.png";
+
   // Reader
   private final UserReader userReader;
   private final ContentReader contentReader;
@@ -77,9 +85,11 @@ public class ContentService {
   private final ContentCustomRepository contentCustomRepository;
   private final CategoryRepository categoryRepository;
   private final FileRepository fileRepository;
+  private final PurchaseRepository purchaseRepository;
 
   // Service
   private final DiscordContentRegisterReportService discordContentRegisterReportService;
+  private final SubscriptionService subscriptionService;
 
   @Transactional(readOnly = true)
   public ContentReviewDTO getContentReviews(Long contentId, String sort, Long userId) {
@@ -114,7 +124,7 @@ public class ContentService {
                           userId != null && userId.equals(firstRow.getReviewerId()) ? true : false)
                       .createdAt(firstRow.getReviewCreatedAt())
                       .reviewerProfileImageUrl(firstRow.getReviewerProfileImageUrl())
-                      .reviewerNickname(firstRow.getReviewerNickname())
+                      .reviewerNickname(maskNickname(firstRow.getReviewerNickname()))
                       .reviewContent(firstRow.getReviewContent())
                       .selectedOptionName(firstRow.getSelectedOptionName())
                       .rating(firstRow.getRating())
@@ -166,7 +176,8 @@ public class ContentService {
 
       // 판매 중일 경우 DRAFT 상태로 변경하여 수정 가능하게 처리
       if (content.getStatus() != ContentStatus.DRAFT) {
-        if (content.getStatus() == ContentStatus.ACTIVE) {
+        if (content.getStatus() == ContentStatus.ACTIVE
+            || content.getStatus() == ContentStatus.PAUSED) {
           content.setStatus(ContentStatus.DRAFT); // 상태 수동 변경
           // 대표 콘텐츠였다면 대표 콘텐츠 해제되도록 수정
           if (content.getIsRepresentative()) {
@@ -178,6 +189,9 @@ public class ContentService {
       }
 
       updateContentFromDTO(content, contentDTO);
+      if (contentDTO.getTitle() == null) {
+        content.setTitle(null);
+      }
 
       // 옵션 처리 - 옵션 데이터가 전달된 경우에만
       if (contentDTO.getOptions() != null && !contentDTO.getOptions().isEmpty()) {
@@ -206,6 +220,8 @@ public class ContentService {
       }
     }
 
+    applyDefaultThumbnailIfMissing(content);
+    enforceSubscriptionSellStatus(content);
     return saveAndConvertToDTO(content);
   }
 
@@ -255,6 +271,7 @@ public class ContentService {
 
     // 5. Content 필드 업데이트
     updateContentFromDTO(content, contentDTO);
+    applyDefaultThumbnailIfMissing(content);
     content.setCategory(category); // 카테고리 설정
     content.setStatus(ContentStatus.ACTIVE); // 심사중으로 설정
 
@@ -273,6 +290,7 @@ public class ContentService {
     discordContentRegisterReportService.sendCreateContentRegisterReport(
         contentRegisterCreateReportDTO);
 
+    enforceSubscriptionSellStatus(content);
     return saveAndConvertToDTO(content);
   }
 
@@ -286,25 +304,23 @@ public class ContentService {
     // 2. 콘텐츠 소유권 확인 (쿼리 추가 발생하지 않나?)
     boolean isOwner = content.getUser().getId().equals(userId);
 
-    if (isOwner) {
-      // 내 콘텐츠인 경우: 모든 상태 조회 가능, 조회수 증가 안함
-      log.info("내 콘텐츠 조회: contentId={}, status={}", contentId, content.getStatus());
-    } else {
-      // 다른 사용자의 콘텐츠인 경우: ACTIVE 상태만 조회 가능
-      if (!ContentStatus.ACTIVE.equals(content.getStatus())) {
-        log.warn(
-            "비활성 콘텐츠 접근 시도: userId={}, contentId={}, status={}",
-            userId,
-            contentId,
-            content.getStatus());
-        throw new InActiveContentException("현재 판매 중이지 않은 콘텐츠입니다.");
-      }
+    if (!isOwner && !isViewableByPublic(content)) {
+      log.warn(
+          "비활성 콘텐츠 접근 시도: userId={}, contentId={}, status={}",
+          userId,
+          contentId,
+          content.getStatus());
+      throw new InActiveContentException("현재 판매 중이지 않은 콘텐츠입니다.");
+    }
 
+    if (!isOwner) {
       // 조회수 증가 (다른 사용자의 콘텐츠 조회 시에만)
       content.incrementViewCount();
       contentRepository.save(content);
 
       log.info("다른 사용자 콘텐츠 조회: contentId={}, newViewCount={}", contentId, content.getViewCount());
+    } else {
+      log.info("내 콘텐츠 조회: contentId={}, status={}", contentId, content.getStatus());
     }
 
     // 3. getPublicContentDetail과 동일한 방식으로 DTO 변환
@@ -315,6 +331,9 @@ public class ContentService {
     }
 
     // 옵션 목록 변환 - ContentOptionDTO 사용
+    Set<Long> soldOptionIds =
+        new HashSet<>(purchaseRepository.findSoldOptionIdsByContentId(content.getId()));
+
     List<ContentOptionDTO> optionDTOs =
         content.getOptions().stream()
             .filter(ContentOption::isActive) // is_active = true인 옵션만 필터링
@@ -325,7 +344,9 @@ public class ContentService {
                           .contentOptionId(option.getId())
                           .name(option.getName())
                           .description(option.getDescription())
-                          .price(option.getPrice());
+                          .price(option.getPrice())
+                          .hasSalesHistory(
+                              option.getId() != null && soldOptionIds.contains(option.getId()));
 
                   // 옵션 타입별 필드 설정
                   if (option instanceof DocumentOption) {
@@ -358,6 +379,8 @@ public class ContentService {
         .status(safeEnumName(content.getStatus()))
         .thumbnailUrl(content.getThumbnailUrl())
         .contentType(safeEnumName(content.getContentType()))
+        .paymentType(safeEnumName(content.getPaymentType()))
+        .subscriptionSellStatus(safeEnumName(content.getSubscriptionSellStatus()))
         .categoryId(content.getCategory() != null ? content.getCategory().getCode() : null)
         .title(content.getTitle())
         .isSearchExposed(content.getIsSearchExposed())
@@ -382,8 +405,7 @@ public class ContentService {
   public ContentDetailDTO getPublicContentDetail(Long contentId) {
     Content content = contentReader.getContentById(contentId);
 
-    // ACTIVE 상태인지 확인
-    if (!ContentStatus.ACTIVE.equals(content.getStatus())) {
+    if (!isViewableByPublic(content)) {
       log.warn("비활성 콘텐츠 접근 시도 (비로그인): contentId={}, status={}", contentId, content.getStatus());
       throw new InActiveContentException("현재 판매 중이지 않은 콘텐츠입니다.");
     }
@@ -401,6 +423,9 @@ public class ContentService {
     }
 
     // 옵션 목록 변환 - ContentOptionDTO 사용
+    Set<Long> soldOptionIds =
+        new HashSet<>(purchaseRepository.findSoldOptionIdsByContentId(content.getId()));
+
     List<ContentOptionDTO> optionDTOs =
         content.getOptions().stream()
             .filter(ContentOption::isActive) // is_active = true인 옵션만 필터링
@@ -411,7 +436,9 @@ public class ContentService {
                           .contentOptionId(option.getId())
                           .name(option.getName())
                           .description(option.getDescription())
-                          .price(option.getPrice());
+                          .price(option.getPrice())
+                          .hasSalesHistory(
+                              option.getId() != null && soldOptionIds.contains(option.getId()));
 
                   // 옵션 타입별 필드 설정
                   if (option instanceof DocumentOption) {
@@ -442,6 +469,8 @@ public class ContentService {
         .status(safeEnumName(content.getStatus()))
         .thumbnailUrl(content.getThumbnailUrl())
         .contentType(safeEnumName(content.getContentType()))
+        .paymentType(safeEnumName(content.getPaymentType()))
+        .subscriptionSellStatus(safeEnumName(content.getSubscriptionSellStatus()))
         .categoryId(content.getCategory() != null ? content.getCategory().getCode() : null)
         .title(content.getTitle())
         .isSearchExposed(content.getIsSearchExposed())
@@ -459,9 +488,20 @@ public class ContentService {
   @Transactional(readOnly = true)
   public PageResponse<ContentCardDTO> getMySellingContents(
       Long userId, Pageable pageable, String state) {
-    List<ContentStatus> contentStatuses = parseContentStatuses(state);
+    User user = userReader.getUserById(userId);
+    boolean hasSellerContacts = !sellerContactReader.getContactsByUser(user).isEmpty();
+
+    ContentStateFilter filter = resolveContentStateFilter(state);
     Page<FlatContentPreviewDTO> page =
-        contentReader.findMyContentsWithStatus(pageable, userId, contentStatuses);
+        contentReader.findMyContentsWithStatus(
+            pageable,
+            userId,
+            filter.statuses(),
+            filter.paymentTypeFilter(),
+            filter.subscriptionSellStatusFilter(),
+            filter.excludeTerminatedSubscriptions(),
+            filter.excludePausedSubscriptions(),
+            filter.includePausedSubscriptions());
     List<ContentCardDTO> items =
         page.getContent().stream().map(this::convertFlatDTOToCardDTO).toList();
 
@@ -469,6 +509,7 @@ public class ContentService {
         PageResponse.MetaData.builder()
             .sortBy(pageable.getSort().iterator().next().getProperty())
             .sortDirection(pageable.getSort().iterator().next().getDirection().name())
+            .hasSellerContacts(hasSellerContacts)
             .build();
 
     return PageResponse.from(page, items, meta);
@@ -483,6 +524,18 @@ public class ContentService {
   public List<ContentCardDTO> getHomeContents() {
     List<FlatContentPreviewDTO> flatDTOs = contentCustomRepository.findHomeContents();
     return flatDTOs.stream().map(this::convertFlatDTOToCardDTO).collect(Collectors.toList());
+  }
+
+  private static final String REVIEWER_NICKNAME_MASK_SUFFIX = "*****";
+
+  private String maskNickname(String nickname) {
+    if (nickname == null || nickname.isBlank()) {
+      return REVIEWER_NICKNAME_MASK_SUFFIX;
+    }
+
+    int firstCodePoint = nickname.codePointAt(0);
+    String firstCharacter = new String(Character.toChars(firstCodePoint));
+    return firstCharacter + REVIEWER_NICKNAME_MASK_SUFFIX;
   }
 
   @Transactional(readOnly = true)
@@ -523,6 +576,32 @@ public class ContentService {
     return content;
   }
 
+  private void ensureSubscriptionContent(Content content) {
+    if (content.getPaymentType() != ContentPaymentType.SUBSCRIPTION) {
+      throw new IllegalArgumentException("정기결제 콘텐츠에서만 사용할 수 있는 기능입니다.");
+    }
+  }
+
+  private void enforceSubscriptionSellStatus(Content content) {
+    if (content == null) {
+      return;
+    }
+
+    if (content.getPaymentType() == ContentPaymentType.SUBSCRIPTION) {
+      content.setSubscriptionSellStatus(SubscriptionSellStatus.OPEN);
+    }
+  }
+
+  private void applyDefaultThumbnailIfMissing(Content content) {
+    if (content == null) {
+      return;
+    }
+
+    if (content.getThumbnailUrl() == null) {
+      content.setThumbnailUrl(DEFAULT_THUMBNAIL_URL);
+    }
+  }
+
   /** 카테고리 ID로 카테고리를 조회합니다. */
   private Category findCategoryByCode(String categoryId) {
     if (categoryId == null) {
@@ -550,6 +629,14 @@ public class ContentService {
       }
     }
 
+    if (dto.getPaymentType() != null) {
+      try {
+        content.setPaymentType(ContentPaymentType.valueOf(dto.getPaymentType()));
+      } catch (IllegalArgumentException e) {
+        log.warn("유효하지 않은 결제 유형: {}", dto.getPaymentType());
+      }
+    }
+
     // 썸네일 URL 업데이트
     if (dto.getThumbnailUrl() != null) {
       content.setThumbnailUrl(dto.getThumbnailUrl());
@@ -566,19 +653,11 @@ public class ContentService {
     }
 
     // 콘텐츠 소개
-    if (dto.getContentIntroduction() != null) {
-      content.setContentIntroduction(dto.getContentIntroduction());
-    }
+    content.setContentIntroduction(dto.getContentIntroduction());
     // 서비스 타겟, 프로세스, 제작자 소개 업데이트
-    if (dto.getServiceTarget() != null) {
-      content.setServiceTarget(dto.getServiceTarget());
-    }
-    if (dto.getServiceProcess() != null) {
-      content.setServiceProcess(dto.getServiceProcess());
-    }
-    if (dto.getMakerIntro() != null) {
-      content.setMakerIntro(dto.getMakerIntro());
-    }
+    content.setServiceTarget(dto.getServiceTarget());
+    content.setServiceProcess(dto.getServiceProcess());
+    content.setMakerIntro(dto.getMakerIntro());
 
     if (dto.getIsSearchExposed() != null) {
       content.setSearchExposed(dto.getIsSearchExposed());
@@ -657,6 +736,10 @@ public class ContentService {
   }
 
   private ContentCardDTO convertFlatDTOToCardDTO(FlatContentPreviewDTO flat) {
+    String normalizedPaymentType =
+        flat.getPaymentType() != null ? flat.getPaymentType().toUpperCase() : null;
+    boolean isSubscription = ContentPaymentType.SUBSCRIPTION.name().equals(normalizedPaymentType);
+
     return ContentCardDTO.builder()
         .contentId(flat.getContentId())
         .createdAt(flat.getCreatedAt())
@@ -667,6 +750,8 @@ public class ContentService {
         .lowestPrice(flat.getLowestPrice())
         .categoryId(flat.getCategoryId())
         .contentType(flat.getContentType())
+        .paymentType(flat.getPaymentType())
+        .subscriptionSellStatus(isSubscription ? flat.getSubscriptionSellStatus() : null)
         .priceOptionLength(flat.getPriceOptionLength())
         .isAvailableForSale(flat.getIsAvailableForSale())
         .status(flat.getStatus())
@@ -684,6 +769,10 @@ public class ContentService {
 
     // 옵션 변환
     List<ContentOptionDTO> optionDTOs = new ArrayList<>();
+    Set<Long> soldOptionIds =
+        content.getId() == null
+            ? Collections.emptySet()
+            : new HashSet<>(purchaseRepository.findSoldOptionIdsByContentId(content.getId()));
     if (content.getOptions() != null) {
       for (ContentOption option : content.getOptions()) {
         if (option == null) continue;
@@ -693,7 +782,8 @@ public class ContentService {
                 .contentOptionId(option.getId())
                 .name(option.getName())
                 .description(option.getDescription())
-                .price(option.getPrice());
+                .price(option.getPrice())
+                .hasSalesHistory(option.getId() != null && soldOptionIds.contains(option.getId()));
 
         if (option instanceof DocumentOption documentOption) {
           builder
@@ -722,6 +812,14 @@ public class ContentService {
     // Enum을 안전하게 문자열로 변환
     if (content.getContentType() != null) {
       dtoBuilder.contentType(content.getContentType().name());
+    }
+
+    if (content.getPaymentType() != null) {
+      dtoBuilder.paymentType(content.getPaymentType().name());
+      if (content.getPaymentType() == ContentPaymentType.SUBSCRIPTION
+          && content.getSubscriptionSellStatus() != null) {
+        dtoBuilder.subscriptionSellStatus(content.getSubscriptionSellStatus().name());
+      }
     }
 
     if (content.getStatus() != null) {
@@ -776,12 +874,12 @@ public class ContentService {
       missingFields.add("콘텐츠 유형");
     }
 
-    if (contentDTO.getCategoryId() == null) {
-      missingFields.add("카테고리");
+    if (contentDTO.getPaymentType() == null || contentDTO.getPaymentType().trim().isEmpty()) {
+      missingFields.add("결제 유형");
     }
 
-    if (contentDTO.getThumbnailUrl() == null || contentDTO.getThumbnailUrl().trim().isEmpty()) {
-      missingFields.add("썸네일 이미지");
+    if (contentDTO.getCategoryId() == null) {
+      missingFields.add("카테고리");
     }
 
     //    if (contentDTO.getContentDetailImageUrls() == null
@@ -825,11 +923,44 @@ public class ContentService {
     Content content = findAndValidateUserActiveContent(userId, contentId);
 
     // 2. 상태 업데이트
-    content.setStatus(ContentStatus.DRAFT);
+    content.setStatus(ContentStatus.DISCONTINUED);
     content.setAdminContentCheckingStatus(AdminContentCheckingStatus.PENDING);
 
     // 3. 저장 및 변환
     return saveAndConvertToDTO(content);
+  }
+
+  @Transactional
+  public ContentDTO pauseSubscriptionSale(Long userId, Long contentId) {
+    Content content = findAndValidateUserActiveContent(userId, contentId);
+    ensureSubscriptionContent(content);
+
+    SubscriptionSellStatus currentStatus = content.getSubscriptionSellStatus();
+    if (currentStatus == SubscriptionSellStatus.TERMINATED) {
+      throw new IllegalStateException("이미 정기 결제가 종료된 콘텐츠입니다.");
+    }
+    if (currentStatus == SubscriptionSellStatus.PAUSED) {
+      return convertToDTO(content);
+    }
+
+    content.setSubscriptionSellStatus(SubscriptionSellStatus.PAUSED);
+    return saveAndConvertToDTO(content);
+  }
+
+  @Transactional
+  public ContentDTO terminateSubscriptionSale(Long userId, Long contentId) {
+    Content content = findAndValidateUserActiveContent(userId, contentId);
+    ensureSubscriptionContent(content);
+
+    if (content.getSubscriptionSellStatus() == SubscriptionSellStatus.TERMINATED) {
+      return convertToDTO(content);
+    }
+
+    content.setSubscriptionSellStatus(SubscriptionSellStatus.TERMINATED);
+    ContentDTO contentDTO = saveAndConvertToDTO(content);
+
+    subscriptionService.terminateSubscriptionsForContent(contentId);
+    return contentDTO;
   }
 
   @Transactional
@@ -871,13 +1002,20 @@ public class ContentService {
   public void convertToSale(Long userId, Long contentId) {
     // 1. Content 조회 및 권한 검증
     Content content = findAndValidateUserContent(userId, contentId);
+    boolean isSubscription = content.getPaymentType() == ContentPaymentType.SUBSCRIPTION;
     if (contentReader.isAvailableForSale(contentId)) {
       // 2. 상태 업데이트
-      if (content.getStatus() != ContentStatus.DRAFT) {
-        throw new IllegalArgumentException("콘텐츠는 DRAFT 상태여야 판매 가능 상태로 전환할 수 있습니다.");
+      if (!isSubscription
+          && content.getStatus() != ContentStatus.DRAFT
+          && content.getStatus() != ContentStatus.DISCONTINUED) {
+        throw new IllegalArgumentException("콘텐츠는 DRAFT 또는 DISCONTINUED 상태여야 판매 가능 상태로 전환할 수 있습니다.");
       }
 
+      applyDefaultThumbnailIfMissing(content);
       content.setStatus(ContentStatus.ACTIVE);
+      if (isSubscription) {
+        content.setSubscriptionSellStatus(SubscriptionSellStatus.OPEN);
+      }
 
       final LocalDateTime nowInSeoul = LocalDateTime.now(ZoneId.of("Asia/Seoul"));
 
@@ -947,27 +1085,75 @@ public class ContentService {
         .build();
   }
 
+  private boolean isViewableByPublic(Content content) {
+    if (content == null) {
+      return false;
+    }
+
+    ContentStatus status = content.getStatus();
+    boolean statusAllowsView =
+        ContentStatus.ACTIVE.equals(status) || ContentStatus.DISCONTINUED.equals(status);
+    if (!statusAllowsView) {
+      return false;
+    }
+
+    if (content.getPaymentType() == ContentPaymentType.SUBSCRIPTION) {
+      SubscriptionSellStatus sellStatus = content.getSubscriptionSellStatus();
+      if (sellStatus == SubscriptionSellStatus.TERMINATED) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
   private String safeEnumName(Enum<?> e) {
     return e != null ? e.name() : null;
   }
 
-  // 콘텐츠 상태 파싱 메서드 (DRAFT, ACTIVE → ACTIVE+DISCONTINUED)
-  private List<ContentStatus> parseContentStatuses(String state) {
+  private ContentStateFilter resolveContentStateFilter(String state) {
     if (state == null || state.isBlank()) {
-      return Collections.emptyList();
+      return new ContentStateFilter(Collections.emptyList(), null, null, false, false, false);
     }
 
-    try {
-      ContentStatus contentStatus = ContentStatus.valueOf(state.toUpperCase());
-      if (contentStatus == ContentStatus.ACTIVE) {
-        // ACTIVE 검색 시에는 ACTIVE + DISCONTINUED 둘 다 조회
-        return List.of(ContentStatus.ACTIVE, ContentStatus.DISCONTINUED);
-      }
-      return List.of(contentStatus);
-    } catch (IllegalArgumentException e) {
-      return Collections.emptyList();
+    String normalized = state.toUpperCase();
+    switch (normalized) {
+      case "DRAFT":
+        return new ContentStateFilter(
+            List.of(ContentStatus.DRAFT, ContentStatus.DISCONTINUED),
+            null,
+            null,
+            false,
+            false,
+            true);
+      case "ACTIVE":
+        return new ContentStateFilter(
+            List.of(ContentStatus.ACTIVE, ContentStatus.PAUSED), null, null, true, true, false);
+      case "DISCONTINUED":
+        return new ContentStateFilter(
+            List.of(ContentStatus.ACTIVE, ContentStatus.PAUSED),
+            ContentPaymentType.SUBSCRIPTION,
+            SubscriptionSellStatus.TERMINATED,
+            false,
+            false,
+            false);
+      default:
+        try {
+          ContentStatus contentStatus = ContentStatus.valueOf(normalized);
+          return new ContentStateFilter(List.of(contentStatus), null, null, false, false, false);
+        } catch (IllegalArgumentException e) {
+          return new ContentStateFilter(Collections.emptyList(), null, null, false, false, false);
+        }
     }
   }
+
+  private record ContentStateFilter(
+      List<ContentStatus> statuses,
+      ContentPaymentType paymentTypeFilter,
+      SubscriptionSellStatus subscriptionSellStatusFilter,
+      boolean excludeTerminatedSubscriptions,
+      boolean excludePausedSubscriptions,
+      boolean includePausedSubscriptions) {}
 
   private void handleOptionsWithSalesHistorySmartly(
       Content content, List<ContentOptionDTO> newOptions) {
@@ -977,6 +1163,22 @@ public class ContentService {
     // 새 옵션이 없으면 종료
     if (newOptions == null || newOptions.isEmpty()) {
       log.info("새 옵션 데이터가 없음, 스킵: contentId={}", content.getId());
+      return;
+    }
+
+    boolean subscriptionWithSalesHistory = false;
+    Set<Long> soldOptionIds = Collections.emptySet();
+    if (content.getPaymentType() == ContentPaymentType.SUBSCRIPTION) {
+      List<Long> soldIds = purchaseRepository.findSoldOptionIdsByContentId(content.getId());
+      if (!soldIds.isEmpty()) {
+        soldOptionIds = new HashSet<>(soldIds);
+        subscriptionWithSalesHistory = true;
+      }
+    }
+
+    if (subscriptionWithSalesHistory) {
+      preserveSoldOptionsAndAppendNew(content, activeOptions, newOptions, soldOptionIds);
+      updateLowestPriceFromActiveOptions(content);
       return;
     }
 
@@ -1007,6 +1209,44 @@ public class ContentService {
         });
 
     updateLowestPriceFromActiveOptions(content);
+  }
+
+  private void preserveSoldOptionsAndAppendNew(
+      Content content,
+      List<ContentOption> activeOptions,
+      List<ContentOptionDTO> newOptions,
+      Set<Long> soldOptionIds) {
+
+    activeOptions.stream()
+        .filter(option -> option.getId() == null || !soldOptionIds.contains(option.getId()))
+        .forEach(
+            option -> {
+              option.deactivate();
+              log.info("판매 이력 없는 기존 옵션 비활성화: optionId={}", option.getId());
+            });
+
+    for (ContentOptionDTO dto : newOptions) {
+      if (dto == null) {
+        continue;
+      }
+
+      Long optionId = dto.getContentOptionId();
+      if (optionId != null && soldOptionIds.contains(optionId)) {
+        log.info("판매 이력 있는 옵션 변경 요청 무시: optionId={}", optionId);
+        continue;
+      }
+
+      if (content.getContentType() == null) {
+        log.warn("콘텐츠 유형이 지정되지 않았습니다. 기본값으로 DOCUMENT 설정");
+        content.setContentType(ContentType.DOCUMENT);
+      }
+
+      ContentOption newOption = createOptionByContentType(content.getContentType(), dto);
+      if (newOption != null) {
+        content.addOption(newOption);
+        log.info("새 옵션 추가: name={}, price={}", newOption.getName(), newOption.getPrice());
+      }
+    }
   }
 
   private void updateLowestPriceFromActiveOptions(Content content) {

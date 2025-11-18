@@ -11,13 +11,18 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
+import com.querydsl.core.types.ExpressionUtils;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.NumberExpression;
+import com.querydsl.core.types.dsl.SimpleExpression;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
+import liaison.groble.domain.content.entity.QContent;
+import liaison.groble.domain.content.enums.ContentPaymentType;
 import liaison.groble.domain.order.entity.QOrder;
 import liaison.groble.domain.purchase.entity.QPurchase;
 import liaison.groble.domain.settlement.dto.FlatAdminSettlementsDTO;
@@ -45,8 +50,25 @@ public class SettlementCustomRepositoryImpl implements SettlementCustomRepositor
   public Page<FlatSettlementsDTO> findSettlementsByUserId(Long userId, Pageable pageable) {
     QSettlement qSettlement = QSettlement.settlement;
     QUser user = QUser.user;
+    QSettlementItem settlementItemSub = new QSettlementItem("settlementItemSub");
 
     BooleanExpression cond = qSettlement.user.id.eq(userId);
+
+    SimpleExpression<String> paymentTypeExpression =
+        new CaseBuilder()
+            .when(
+                JPAExpressions.selectOne()
+                    .from(settlementItemSub)
+                    .where(
+                        settlementItemSub
+                            .settlement
+                            .eq(qSettlement)
+                            .and(
+                                settlementItemSub.capturedPaymentType.eq(
+                                    ContentPaymentType.SUBSCRIPTION.name())))
+                    .exists())
+            .then(ContentPaymentType.SUBSCRIPTION.name())
+            .otherwise(ContentPaymentType.ONE_TIME.name());
 
     // settlementType에 따른 정렬 우선순위 설정 (COACHING = 0, DOCUMENT = 1)
     NumberExpression<Integer> typeOrder =
@@ -67,6 +89,7 @@ public class SettlementCustomRepositoryImpl implements SettlementCustomRepositor
                     qSettlement.settlementEndDate.as("settlementEndDate"),
                     qSettlement.scheduledSettlementDate.as("scheduledSettlementDate"),
                     qSettlement.settlementType.stringValue().as("contentType"),
+                    ExpressionUtils.as(paymentTypeExpression, "paymentType"),
                     qSettlement.settlementAmount.as("settlementAmount"),
                     qSettlement.settlementAmountDisplay.as("settlementAmountDisplay"),
                     qSettlement.status.stringValue().as("settlementStatus")))
@@ -103,6 +126,7 @@ public class SettlementCustomRepositoryImpl implements SettlementCustomRepositor
     QSettlement qSettlement = QSettlement.settlement;
     QPurchase qPurchase = QPurchase.purchase;
     QOrder qOrder = QOrder.order;
+    QContent qContent = QContent.content;
 
     // [기간] purchasedAt ∈ [periodStart 00:00, periodEnd+1 00:00)
     BooleanExpression cond =
@@ -114,15 +138,18 @@ public class SettlementCustomRepositoryImpl implements SettlementCustomRepositor
             .select(
                 Projections.fields(
                     FlatPerTransactionSettlement.class,
+                    qContent.id.as("contentId"),
                     qSettlementItem.contentTitle.as("contentTitle"),
                     qSettlementItem.settlementAmount.as("settlementAmount"),
                     qSettlementItem.settlementAmountDisplay.as("settlementAmountDisplay"),
                     qSettlementItem.purchase.order.status.stringValue().as("orderStatus"),
-                    qSettlementItem.purchasedAt.as("purchasedAt")))
+                    qSettlementItem.purchasedAt.as("purchasedAt"),
+                    qSettlementItem.capturedPaymentType.as("paymentType")))
             .from(qSettlementItem)
             .leftJoin(qSettlementItem.settlement, qSettlement)
             .leftJoin(qSettlementItem.purchase, qPurchase)
             .leftJoin(qPurchase.order, qOrder)
+            .leftJoin(qPurchase.content, qContent)
             .where(cond)
             .orderBy(qSettlementItem.purchasedAt.desc());
 
@@ -154,6 +181,7 @@ public class SettlementCustomRepositoryImpl implements SettlementCustomRepositor
     QSettlement qSettlement = QSettlement.settlement;
     QPurchase qPurchase = QPurchase.purchase;
     QOrder qOrder = QOrder.order;
+    QContent qContent = QContent.content;
 
     // [기간] purchasedAt ∈ [periodStart 00:00, periodEnd+1 00:00)
     BooleanExpression cond = qSettlement.id.eq(settlementId);
@@ -164,15 +192,18 @@ public class SettlementCustomRepositoryImpl implements SettlementCustomRepositor
             .select(
                 Projections.fields(
                     FlatPerTransactionSettlement.class,
+                    qContent.id.as("contentId"),
                     qSettlementItem.contentTitle.as("contentTitle"),
                     qSettlementItem.settlementAmount.as("settlementAmount"),
                     qSettlementItem.settlementAmountDisplay.as("settlementAmountDisplay"),
                     qSettlementItem.purchase.order.status.stringValue().as("orderStatus"),
-                    qSettlementItem.purchasedAt.as("purchasedAt")))
+                    qSettlementItem.purchasedAt.as("purchasedAt"),
+                    qSettlementItem.capturedPaymentType.as("paymentType")))
             .from(qSettlementItem)
             .leftJoin(qSettlementItem.settlement, qSettlement)
             .leftJoin(qSettlementItem.purchase, qPurchase)
             .leftJoin(qPurchase.order, qOrder)
+            .leftJoin(qPurchase.content, qContent)
             .where(cond)
             .orderBy(qSettlementItem.purchasedAt.desc());
 
@@ -202,6 +233,7 @@ public class SettlementCustomRepositoryImpl implements SettlementCustomRepositor
     QSettlement qSettlement = QSettlement.settlement;
     QUser qUser = QUser.user;
     QSellerInfo qSellerInfo = QSellerInfo.sellerInfo;
+    QSettlementItem settlementItemSub = new QSettlementItem("settlementItemSubAdmin");
 
     // settlementType에 따른 정렬 우선순위 설정 (COACHING = 0, DOCUMENT = 1)
     NumberExpression<Integer> typeOrder =
@@ -211,6 +243,22 @@ public class SettlementCustomRepositoryImpl implements SettlementCustomRepositor
             .when(qSettlement.settlementType.eq(SettlementType.DOCUMENT))
             .then(1)
             .otherwise(2);
+
+    SimpleExpression<String> paymentTypeExpression =
+        new CaseBuilder()
+            .when(
+                JPAExpressions.selectOne()
+                    .from(settlementItemSub)
+                    .where(
+                        settlementItemSub
+                            .settlement
+                            .eq(qSettlement)
+                            .and(
+                                settlementItemSub.capturedPaymentType.eq(
+                                    ContentPaymentType.SUBSCRIPTION.name())))
+                    .exists())
+            .then(ContentPaymentType.SUBSCRIPTION.name())
+            .otherwise(ContentPaymentType.ONE_TIME.name());
 
     JPAQuery<FlatAdminSettlementsDTO> query =
         jpaQueryFactory
@@ -223,7 +271,9 @@ public class SettlementCustomRepositoryImpl implements SettlementCustomRepositor
                     qSettlement.settlementAmount.as("settlementAmount"),
                     qSettlement.settlementAmountDisplay.as("settlementAmountDisplay"),
                     qSettlement.status.stringValue().as("settlementStatus"),
+                    paymentTypeExpression.as("paymentType"),
                     // SellerInfo 필드들
+                    qUser.userProfile.nickname.as("nickname"),
                     qSellerInfo.verificationStatus.stringValue().as("verificationStatus"),
                     qSellerInfo.isBusinessSeller.as("isBusinessSeller"),
                     qSellerInfo.businessType.stringValue().as("businessType"),

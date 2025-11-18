@@ -1,6 +1,7 @@
 package liaison.groble.application.content.dto;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -22,6 +23,12 @@ public class ContentPayPageDTO {
   private final String title;
   // 콘텐츠 유형
   private final String contentType;
+  // 결제 유형
+  private final String paymentType;
+  // 다음 결제 예정일 (정기 결제 시)
+  private final LocalDate nextPaymentDate;
+  // 정기결제 관련 정보
+  private final SubscriptionMetaDTO subscriptionMeta;
   // 옵션 이름
   private final String optionName;
   // 옵션에 속하는 가격
@@ -41,5 +48,22 @@ public class ContentPayPageDTO {
     private final LocalDateTime validUntil;
 
     private final BigDecimal minOrderPrice;
+  }
+
+  @Getter
+  @Builder
+  public static class SubscriptionMetaDTO {
+    private final boolean hasActiveBillingKey;
+    private final String billingKeyId;
+    private final String merchantUserKey;
+    private final String defaultPayMethod;
+    private final String payWork;
+    private final String cardVer;
+    private final String regularFlag;
+    private final LocalDate nextPaymentDate;
+    private final String payYear;
+    private final String payMonth;
+    private final String payDay;
+    private final boolean requiresImmediateCharge;
   }
 }

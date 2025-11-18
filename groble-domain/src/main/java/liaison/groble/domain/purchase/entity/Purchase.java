@@ -182,6 +182,19 @@ public class Purchase extends BaseTimeEntity {
     this.cancelledAt = LocalDateTime.now();
   }
 
+  public void cancelSubscriptionPurchase(CancelReason reason) {
+    if (this.cancelledAt != null) {
+      throw new IllegalStateException("이미 취소된 구매입니다.");
+    }
+    this.cancelRequestedAt = LocalDateTime.now();
+    this.cancelledAt = LocalDateTime.now();
+    this.cancelReason = reason;
+  }
+
+  public void updateCancelReason(CancelReason reason) {
+    this.cancelReason = reason;
+  }
+
   // 유틸리티 메서드들
   /**
    * 회원 구매인지 확인

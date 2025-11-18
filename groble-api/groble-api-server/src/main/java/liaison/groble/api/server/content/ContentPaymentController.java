@@ -61,8 +61,9 @@ public class ContentPaymentController {
       @PathVariable("contentId") Long contentId,
       @PathVariable("optionId") Long optionId) {
     // 기본 컨텐츠 결제 페이지 정보 조회
+    Long userId = accessor != null ? accessor.getUserId() : null;
     ContentPayPageDTO contentPayPageDTO =
-        contentPaymentService.getContentPayPage(accessor.getUserId(), contentId, optionId);
+        contentPaymentService.getContentPayPage(userId, contentId, optionId);
 
     ContentPayPageResponse contentPayPageResponse =
         contentPaymentMapper.toContentPayPageResponse(contentPayPageDTO);

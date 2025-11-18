@@ -92,4 +92,58 @@ public final class AdminDashboardExamples {
         "timestamp": "2025-08-31T07:06:06.312Z"
       }
       """;
+
+  public static final String ADMIN_DASHBOARD_ACTIVE_VISITORS_SUCCESS_EXAMPLE =
+      """
+      {
+        "status": "SUCCESS",
+        "code": 200,
+        "message": "관리자 대시보드 실시간 방문자 조회에 성공하였습니다.",
+        "data": {
+          "windowMinutes": 5,
+          "limit": 50,
+          "generatedAt": "2025-01-08 14:23:12",
+          "memberCount": 1,
+          "guestCount": 1,
+          "memberSessions": [
+            {
+              "sessionKey": "member:42:abcd1234",
+              "userId": 42,
+              "nickname": "growth_maker",
+              "email": "maker@example.com",
+              "phoneNumber": "010-1234-5678",
+              "accountType": "INTEGRATED",
+              "lastUserType": "SELLER",
+              "roles": ["ROLE_USER", "ROLE_SELLER"],
+              "requestUri": "/api/v1/market/contents/growth",
+              "httpMethod": "GET",
+              "queryString": "page=1",
+              "referer": "https://groble.im/",
+              "clientIp": "203.0.113.10",
+              "userAgent": "Mozilla/5.0 ...",
+              "lastSeenAt": "2025-01-08 14:23:10"
+            }
+          ],
+          "guestSessions": [
+            {
+              "sessionKey": "guest:314:efgh5678",
+              "guestId": 314,
+              "authenticated": true,
+              "displayName": "체험중 사용자",
+              "email": "guest@example.com",
+              "phoneNumber": "010-0000-0000",
+              "anonymousId": "anon-1234",
+              "requestUri": "/api/v1/home/contents",
+              "httpMethod": "GET",
+              "queryString": null,
+              "referer": null,
+              "clientIp": "198.51.100.4",
+              "userAgent": "Mozilla/5.0 ...",
+              "lastSeenAt": "2025-01-08 14:23:05"
+            }
+          ]
+        },
+        "timestamp": "2025-08-31T07:06:06.312Z"
+      }
+      """;
 }

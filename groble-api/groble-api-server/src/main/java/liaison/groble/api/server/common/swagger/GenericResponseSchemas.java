@@ -1,5 +1,6 @@
 package liaison.groble.api.server.common.swagger;
 
+import liaison.groble.api.model.admin.dashboard.response.AdminActiveVisitorsResponse;
 import liaison.groble.api.model.admin.dashboard.response.AdminDashboardOverviewResponse;
 import liaison.groble.api.model.admin.dashboard.response.AdminDashboardTopContentsResponse;
 import liaison.groble.api.model.admin.dashboard.response.AdminDashboardTrendResponse;
@@ -134,6 +135,27 @@ public final class GenericResponseSchemas {
 
     @Schema(description = "관리자 대시보드 인기 콘텐츠 리스트")
     public AdminDashboardTopContentsResponse data;
+
+    @Schema(description = "응답 시간", example = "2025-08-31T07:06:06.312Z")
+    public String timestamp;
+  }
+
+  @Schema(description = CommonSwaggerDocs.GROBLE_RESPONSE_DESC + " - 관리자 대시보드 실시간 방문자 응답")
+  public static class ApiAdminActiveVisitorsResponse {
+
+    @Schema(description = "응답 상태", example = CommonSwaggerDocs.STATUS_SUCCESS)
+    public String status;
+
+    @Schema(description = "HTTP 상태 코드", example = "200")
+    public int code;
+
+    @Schema(
+        description = "응답 메시지",
+        example = ResponseMessages.Admin.DASHBOARD_ACTIVE_VISITORS_RETRIEVED)
+    public String message;
+
+    @Schema(description = "실시간 방문자 데이터")
+    public AdminActiveVisitorsResponse data;
 
     @Schema(description = "응답 시간", example = "2025-08-31T07:06:06.312Z")
     public String timestamp;

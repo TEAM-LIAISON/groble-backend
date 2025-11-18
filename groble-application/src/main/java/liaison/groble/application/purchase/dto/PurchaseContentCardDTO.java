@@ -20,4 +20,9 @@ public class PurchaseContentCardDTO {
   private BigDecimal finalPrice;
   private int priceOptionLength;
   private String orderStatus;
+  private String paymentType;
+  private Integer subscriptionRound;
+  private String subscriptionStatus;
+  private Boolean isSubscriptionTerminated;
+  private String billingFailureReason;
 }

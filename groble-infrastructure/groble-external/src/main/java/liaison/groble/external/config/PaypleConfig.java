@@ -55,6 +55,12 @@ public class PaypleConfig {
         : "https://cpay.payple.kr/php/SimplePayCardAct.php?ACT_=PAYM";
   }
 
+  public String getBillingKeyDeleteUrl() {
+    return testMode
+        ? "https://democpay.payple.kr/php/cPayUser/api/cPayUserAct.php?ACT_=PUSERDEL"
+        : "https://cpay.payple.kr/php/cPayUser/api/cPayUserAct.php?ACT_=PUSERDEL";
+  }
+
   public String getCancelApiUrl() {
     return testMode
         ? "https://democpay.payple.kr/php/account/api/cPayCAct.php"

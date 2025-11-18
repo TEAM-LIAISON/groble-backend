@@ -16,6 +16,7 @@ import liaison.groble.application.payment.dto.PaymentCancelInfo;
 import liaison.groble.application.payment.dto.PaymentCancelResult;
 import liaison.groble.application.payment.dto.PaypleApprovalResult;
 import liaison.groble.application.payment.dto.PaypleAuthResultDTO;
+import liaison.groble.application.payment.dto.billing.BillingKeyAction;
 import liaison.groble.application.payment.dto.completion.PaymentCompletionResult;
 import liaison.groble.application.payment.util.CardQuotaNormalizer;
 import liaison.groble.application.payment.validator.PaymentValidator;
@@ -23,11 +24,15 @@ import liaison.groble.application.purchase.service.PurchaseReader;
 import liaison.groble.application.settlement.policy.FeePolicyService;
 import liaison.groble.application.settlement.reader.SettlementReader;
 import liaison.groble.application.settlement.writer.SettlementWriter;
+import liaison.groble.application.subscription.service.SubscriptionCreationResult;
+import liaison.groble.application.subscription.service.SubscriptionService;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.domain.content.entity.Content;
+import liaison.groble.domain.content.entity.ContentOption;
+import liaison.groble.domain.content.enums.ContentPaymentType;
 import liaison.groble.domain.content.repository.ContentRepository;
 import liaison.groble.domain.order.entity.Order;
-import liaison.groble.domain.order.repository.OrderRepository;
+import liaison.groble.domain.order.entity.OrderItem;
 import liaison.groble.domain.payment.entity.Payment;
 import liaison.groble.domain.payment.entity.PayplePayment;
 import liaison.groble.domain.payment.repository.PaymentRepository;
@@ -42,6 +47,8 @@ import liaison.groble.domain.settlement.enums.SettlementType;
 import liaison.groble.domain.settlement.vo.FeePolicySnapshot;
 import liaison.groble.domain.user.entity.SellerInfo;
 import liaison.groble.domain.user.entity.User;
+import liaison.groble.external.discord.dto.payment.PaymentFailureReportDTO;
+import liaison.groble.external.discord.service.payment.PaymentFailureReportService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -57,12 +64,13 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 public class PaymentTransactionService {
+  private static final BigDecimal SUBSCRIPTION_PLATFORM_FEE_RATE = new BigDecimal("0.0250");
   private final OrderReader orderReader;
   private final PurchaseReader purchaseReader;
   private final PaymentReader paymentReader;
+  private final BillingKeyService billingKeyService;
   private final PaymentValidator paymentValidator;
   private final PayplePaymentRepository payplePaymentRepository;
-  private final OrderRepository orderRepository;
   private final ContentRepository contentRepository;
   private final PaymentRepository paymentRepository;
   private final PurchaseRepository purchaseRepository;
@@ -70,6 +78,8 @@ public class PaymentTransactionService {
   private final SettlementWriter settlementWriter;
   private final FeePolicyService feePolicyService;
   private final UserReader userReader;
+  private final SubscriptionService subscriptionService;
+  private final PaymentFailureReportService paymentFailureReportService;
 
   /**
    * 인증 정보 저장 및 검증
@@ -83,15 +93,32 @@ public class PaymentTransactionService {
     log.debug("인증 정보 저장 시작 - userId: {}, merchantUid: {}", userId, authResult.getPayOid());
 
     // 1. 주문 조회
-    Order order = orderReader.getOrderByMerchantUid(authResult.getPayOid());
+    Order order = orderReader.getOrderByMerchantUidForUpdate(authResult.getPayOid());
 
     // 2. 검증
     paymentValidator.validateOrderOwnership(order, userId);
     paymentValidator.validateOrderStatus(order, Order.OrderStatus.PENDING);
     paymentValidator.validatePaymentAmount(order.getFinalPrice(), authResult.getPayTotal());
 
+    Content content =
+        order.getOrderItems().isEmpty() ? null : order.getOrderItems().get(0).getContent();
+
+    // 3. 정기결제 상품 검증 (일반 결제 엔드포인트 차단)
+    if (content != null && content.getPaymentType() == ContentPaymentType.SUBSCRIPTION) {
+      String payWork = authResult.getPayWork();
+      // 정기결제 상품인데 빌링키 관련 payWork가 아니면 차단
+      if (payWork == null
+          || (!BillingKeyAction.REUSE.getPayWork().equalsIgnoreCase(payWork)
+              && !BillingKeyAction.REGISTER.getPayWork().equalsIgnoreCase(payWork)
+              && !BillingKeyAction.REGISTER_AND_CHARGE.getPayWork().equalsIgnoreCase(payWork))) {
+        paymentValidator.validateNotSubscriptionProduct(order);
+      }
+    }
+
+    String overrideBillingKey = resolveSubscriptionBillingKey(userId, authResult, content);
+
     // 3. PayplePayment 저장
-    PayplePayment payplePayment = createPayplePayment(order, authResult);
+    PayplePayment payplePayment = createPayplePayment(order, authResult, overrideBillingKey);
     payplePaymentRepository.save(payplePayment);
 
     log.info(
@@ -108,6 +135,89 @@ public class PaymentTransactionService {
         .build();
   }
 
+  private String resolveSubscriptionBillingKey(
+      Long userId, PaypleAuthResultDTO authResult, Content content) {
+    if (content == null || content.getPaymentType() != ContentPaymentType.SUBSCRIPTION) {
+      return null;
+    }
+
+    String payWork = authResult.getPayWork();
+    if (payWork == null) {
+      return null;
+    }
+
+    if (BillingKeyAction.REUSE.getPayWork().equalsIgnoreCase(payWork)) {
+      return billingKeyService.getActiveBillingKey(userId).getBillingKey();
+    }
+
+    return null;
+  }
+
+  private String buildFailureReason(String errorCode, String errorMessage) {
+    String code = errorCode != null && !errorCode.isBlank() ? errorCode : "UNKNOWN";
+    String message = errorMessage != null && !errorMessage.isBlank() ? errorMessage : "사유 미상";
+    return String.format("결제 승인 실패 [%s]: %s", code, message);
+  }
+
+  private void sendPaymentFailureNotification(Order order, String failureReason) {
+    if (paymentFailureReportService == null || order == null) {
+      return;
+    }
+    try {
+      OrderItem primaryOrderItem = resolvePrimaryOrderItem(order);
+      PaymentFailureReportDTO dto =
+          PaymentFailureReportDTO.builder()
+              .buyerName(resolveBuyerName(order))
+              .productName(resolveProductName(primaryOrderItem))
+              .productOptionName(resolveProductOptionName(primaryOrderItem))
+              .price(order.getFinalPrice())
+              .failureReason(failureReason)
+              .build();
+      paymentFailureReportService.sendPaymentFailureReport(dto);
+    } catch (Exception e) {
+      log.error("결제 실패 디스코드 알림 발송 실패 - orderId: {}", order.getId(), e);
+    }
+  }
+
+  private OrderItem resolvePrimaryOrderItem(Order order) {
+    if (order.getOrderItems().isEmpty()) {
+      return null;
+    }
+    return order.getOrderItems().get(0);
+  }
+
+  private String resolveBuyerName(Order order) {
+    if (order.getPurchaser() != null && order.getPurchaser().getName() != null) {
+      return order.getPurchaser().getName();
+    }
+    if (order.getUser() != null && order.getUser().getNickname() != null) {
+      return order.getUser().getNickname();
+    }
+    if (order.getGuestUser() != null && order.getGuestUser().getUsername() != null) {
+      return order.getGuestUser().getUsername();
+    }
+    return null;
+  }
+
+  private String resolveProductName(OrderItem orderItem) {
+    if (orderItem == null || orderItem.getContent() == null) {
+      return null;
+    }
+    return orderItem.getContent().getTitle();
+  }
+
+  private String resolveProductOptionName(OrderItem orderItem) {
+    if (orderItem == null || orderItem.getContent() == null) {
+      return null;
+    }
+
+    return orderItem.getContent().getOptions().stream()
+        .filter(option -> option.getId().equals(orderItem.getOptionId()))
+        .map(ContentOption::getName)
+        .findFirst()
+        .orElse(null);
+  }
+
   /**
    * 결제 승인 실패 처리
    *
@@ -120,7 +230,9 @@ public class PaymentTransactionService {
     log.info("결제 승인 실패 처리 - orderId: {}, errorCode: {}", orderId, errorCode);
 
     Order order = orderReader.getOrderById(orderId);
-    order.failOrder(String.format("결제 승인 실패 [%s]: %s", errorCode, errorMessage));
+    String failureReason = buildFailureReason(errorCode, errorMessage);
+    order.failOrder(failureReason);
+    sendPaymentFailureNotification(order, failureReason);
 
     log.info("주문 실패 처리 완료 - orderId: {}, status: {}", orderId, order.getStatus());
   }
@@ -149,7 +261,7 @@ public class PaymentTransactionService {
     updatePayplePaymentApproval(payplePayment, approvalResult);
 
     // 4. Payment 생성 및 저장
-    Payment payment = createPayment(order);
+    Payment payment = createPayment(order, payplePayment);
 
     // 5. Order 결제 완료 처리
     order.completePayment();
@@ -175,6 +287,53 @@ public class PaymentTransactionService {
         payment.getId(),
         purchase.getId());
 
+    SubscriptionCreationResult subscriptionResult = null;
+    Integer subscriptionRound = null;
+    if (purchase.getContent().getPaymentType() == ContentPaymentType.SUBSCRIPTION) {
+      // 빌링키 자동 저장 (정기결제 상품)
+      String billingKey = payplePayment.getPcdPayerId();
+      if (billingKey != null && !billingKey.isBlank() && order.getUser() != null) {
+        try {
+          liaison.groble.application.payment.dto.billing.RegisterBillingKeyCommand command =
+              new liaison.groble.application.payment.dto.billing.RegisterBillingKeyCommand(
+                  billingKey, payplePayment.getPcdPayCardName(), payplePayment.getPcdPayCardNum());
+          billingKeyService.registerBillingKey(order.getUser().getId(), command);
+          log.info(
+              "빌링키 자동 저장 완료 - billingKey: {}, userId: {}", billingKey, order.getUser().getId());
+        } catch (IllegalArgumentException e) {
+          // 빌링키가 이미 등록되어 있거나 유효하지 않은 경우
+          log.warn(
+              "빌링키 자동 저장 건너뜀 - userId: {}, billingKey: {}, reason: {}",
+              order.getUser().getId(),
+              billingKey,
+              e.getMessage());
+        } catch (Exception e) {
+          // 빌링키 저장 실패 시에도 결제는 계속 진행 (보상 트랜잭션 또는 수동 처리)
+          log.error(
+              "빌링키 자동 저장 실패 - userId: {}, billingKey: {}, error: {}",
+              order.getUser().getId(),
+              billingKey,
+              e.getMessage(),
+              e);
+        }
+      } else {
+        log.warn(
+            "빌링키 정보 부족으로 자동 저장 불가 - billingKey: {}, userId: {}",
+            billingKey,
+            order.getUser() != null ? order.getUser().getId() : null);
+      }
+
+      subscriptionResult = registerSubscription(purchase, payment, payplePayment);
+      if (order.getUser() != null) {
+        subscriptionRound =
+            purchaseRepository.countSubscriptionRound(
+                order.getUser().getId(),
+                purchase.getContent().getId(),
+                purchase.getSelectedOptionId(),
+                purchase.getPurchasedAt());
+      }
+    }
+
     return PaymentCompletionResult.builder()
         .orderId(order.getId())
         .merchantUid(order.getMerchantUid())
@@ -189,9 +348,18 @@ public class PaymentTransactionService {
         .contentTitle(purchase.getContent().getTitle())
         .nickname(order.getUser().getNickname())
         .contentType(purchase.getContent().getContentType().name())
+        .paymentType(purchase.getContent().getPaymentType())
         .optionId(purchase.getSelectedOptionId())
         .selectedOptionName(purchase.getSelectedOptionName())
         .purchasedAt(purchase.getPurchasedAt())
+        .subscriptionRenewal(subscriptionResult != null && subscriptionResult.renewed())
+        .subscriptionId(
+            subscriptionResult != null ? subscriptionResult.subscription().getId() : null)
+        .subscriptionNextBillingDate(
+            subscriptionResult != null
+                ? subscriptionResult.subscription().getNextBillingDate()
+                : null)
+        .subscriptionRound(subscriptionRound)
         .build();
   }
 
@@ -233,8 +401,27 @@ public class PaymentTransactionService {
         .build();
   }
 
+  private SubscriptionCreationResult registerSubscription(
+      Purchase purchase, Payment payment, PayplePayment payplePayment) {
+    String billingKey = payplePayment.getPcdPayerId();
+    if (billingKey == null || billingKey.isBlank()) {
+      throw new IllegalStateException("정기결제에는 빌링키가 필요합니다.");
+    }
+    return subscriptionService.createSubscription(purchase, payment, billingKey);
+  }
+
   /** PayplePayment 생성 */
-  private PayplePayment createPayplePayment(Order order, PaypleAuthResultDTO dto) {
+  private PayplePayment createPayplePayment(
+      Order order, PaypleAuthResultDTO dto, String overrideBillingKey) {
+    if (order.getUser() == null) {
+      throw new IllegalStateException("회원 정보가 존재하지 않는 주문입니다.");
+    }
+
+    String payerId =
+        overrideBillingKey != null && !overrideBillingKey.isBlank()
+            ? overrideBillingKey
+            : dto.getPayerId();
+
     return PayplePayment.builder()
         .pcdPayRst(dto.getPayRst())
         .pcdPayCode(dto.getPayCode())
@@ -246,6 +433,7 @@ public class PaymentTransactionService {
         .pcdPayReqKey(dto.getPayReqKey())
         .pcdPayHost(dto.getPayHost())
         .pcdPayCofUrl(dto.getPayCofUrl())
+        .pcdPayerId(payerId)
         .pcdPayerNo(order.getUser().getId().toString())
         .pcdPayerName(dto.getPayerName())
         .pcdPayerHp(dto.getPayerHp())
@@ -287,13 +475,18 @@ public class PaymentTransactionService {
   }
 
   /** Payment 생성 */
-  private Payment createPayment(Order order) {
+  private Payment createPayment(Order order, PayplePayment payplePayment) {
+    PaymentAmount amount = PaymentAmount.of(order.getFinalPrice());
+
+    boolean hasBillingKey =
+        payplePayment.getPcdPayerId() != null && !payplePayment.getPcdPayerId().isBlank();
+
     Payment payment =
-        Payment.createPgPayment(
-            order,
-            PaymentAmount.of(order.getFinalPrice()),
-            Payment.PaymentMethod.CARD,
-            order.getMerchantUid());
+        hasBillingKey
+            ? Payment.createBillingPayment(
+                order, amount, order.getMerchantUid(), payplePayment.getPcdPayerId())
+            : Payment.createPgPayment(
+                order, amount, Payment.PaymentMethod.CARD, order.getMerchantUid());
     Payment savedPayment = paymentRepository.save(payment);
     savedPayment.publishPaymentCreatedEvent();
     return savedPayment;
@@ -343,18 +536,39 @@ public class PaymentTransactionService {
       salesAmount = salesAmount.setScale(0, RoundingMode.HALF_UP);
     }
 
+    // 적용할 수수료 정책 스냅샷 조회
+    FeePolicySnapshot feeSnapshot = feePolicyService.resolveForSeller(sellerId);
+
+    BigDecimal platformFeeRate = feeSnapshot.platformFeeRateApplied();
+    BigDecimal platformFeeRateDisplay = feeSnapshot.platformFeeRateDisplay();
+    BigDecimal platformFeeRateBaseline = feeSnapshot.platformFeeRateBaseline();
+    BigDecimal pgFeeRate = feeSnapshot.pgFeeRateApplied();
+    BigDecimal pgFeeRateDisplay = feeSnapshot.pgFeeRateDisplay();
+    BigDecimal pgFeeRateBaseline = feeSnapshot.pgFeeRateBaseline();
+    BigDecimal vatRate = feeSnapshot.vatRate();
+
+    boolean subscriptionPurchase =
+        purchase.getContent() != null
+            && purchase.getContent().getPaymentType() == ContentPaymentType.SUBSCRIPTION;
+
+    if (subscriptionPurchase) {
+      platformFeeRate = SUBSCRIPTION_PLATFORM_FEE_RATE;
+      platformFeeRateDisplay = SUBSCRIPTION_PLATFORM_FEE_RATE;
+      platformFeeRateBaseline = SUBSCRIPTION_PLATFORM_FEE_RATE;
+    }
+
     // SettlementItem 생성
     SettlementItem settlementItem =
         SettlementItem.builder()
             .settlement(settlement)
             .purchase(purchase)
-            .platformFeeRate(settlement.getPlatformFeeRate())
-            .platformFeeRateDisplay(settlement.getPlatformFeeRateDisplay())
-            .platformFeeRateBaseline(settlement.getPlatformFeeRateBaseline())
-            .pgFeeRate(settlement.getPgFeeRate())
-            .pgFeeRateDisplay(settlement.getPgFeeRateDisplay())
-            .pgFeeRateBaseline(settlement.getPgFeeRateBaseline())
-            .vatRate(settlement.getVatRate())
+            .platformFeeRate(platformFeeRate)
+            .platformFeeRateDisplay(platformFeeRateDisplay)
+            .platformFeeRateBaseline(platformFeeRateBaseline)
+            .pgFeeRate(pgFeeRate)
+            .pgFeeRateDisplay(pgFeeRateDisplay)
+            .pgFeeRateBaseline(pgFeeRateBaseline)
+            .vatRate(vatRate)
             .build();
 
     // Settlement에 항목 추가
@@ -564,7 +778,7 @@ public class PaymentTransactionService {
         "비회원 인증 정보 저장 시작 - guestUserId: {}, merchantUid: {}", guestUserId, authResult.getPayOid());
 
     // 1. 주문 조회
-    Order order = orderReader.getOrderByMerchantUid(authResult.getPayOid());
+    Order order = orderReader.getOrderByMerchantUidForUpdate(authResult.getPayOid());
 
     // 2. 검증
     paymentValidator.validateOrderOwnershipForGuest(order, guestUserId);
@@ -613,7 +827,7 @@ public class PaymentTransactionService {
     updatePayplePaymentApproval(payplePayment, approvalResult);
 
     // 4. Payment 생성 및 저장
-    Payment payment = createPayment(order);
+    Payment payment = createPayment(order, payplePayment);
 
     // 5. Order 결제 완료 처리
     order.completePayment();
@@ -640,6 +854,10 @@ public class PaymentTransactionService {
         payment.getId(),
         purchase.getId());
 
+    if (purchase.getContent().getPaymentType() == ContentPaymentType.SUBSCRIPTION) {
+      throw new IllegalStateException("정기결제는 비회원 결제를 지원하지 않습니다.");
+    }
+
     return PaymentCompletionResult.builder()
         .orderId(order.getId())
         .merchantUid(order.getMerchantUid())
@@ -654,6 +872,7 @@ public class PaymentTransactionService {
         .contentTitle(purchase.getContent().getTitle())
         .guestUserName(order.getGuestUser().getUsername())
         .contentType(purchase.getContent().getContentType().name())
+        .paymentType(purchase.getContent().getPaymentType())
         .optionId(purchase.getSelectedOptionId())
         .selectedOptionName(purchase.getSelectedOptionName())
         .purchasedAt(purchase.getPurchasedAt())
@@ -752,6 +971,7 @@ public class PaymentTransactionService {
         .pcdPayReqKey(dto.getPayReqKey())
         .pcdPayHost(dto.getPayHost())
         .pcdPayCofUrl(dto.getPayCofUrl())
+        .pcdPayerId(dto.getPayerId())
         .pcdPayerNo(order.getGuestUser().getId().toString())
         .pcdPayerName(dto.getPayerName())
         .pcdPayerHp(dto.getPayerHp())

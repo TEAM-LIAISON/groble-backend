@@ -2,6 +2,7 @@ package liaison.groble.api.model.admin.response;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 
@@ -61,12 +62,20 @@ public class AdminContentSummaryInfoResponse {
   private int priceOptionLength;
 
   @Schema(
-      description = "콘텐츠 상태 (예: 'DRAFT(작성중)', 'ACTIVE(판매중)', 'DELETED(삭제됨)', 'DISCONTINUED(판매중단)')",
+      description =
+          "콘텐츠 상태 (예: 'DRAFT(작성중)', 'ACTIVE(판매중)', 'PAUSED(판매정지)', 'DELETED(삭제됨)', 'DISCONTINUED(판매중단)')",
       example = "DRAFT",
       type = "string",
-      allowableValues = {"ACTIVE", "DRAFT", "DISCONTINUED", "DELETED"},
+      allowableValues = {"ACTIVE", "PAUSED", "DRAFT", "DISCONTINUED", "DELETED"},
       requiredMode = Schema.RequiredMode.REQUIRED)
   private String contentStatus;
+
+  @Schema(
+      description = "결제 수단 [ONE_TIME - 일반 구매], [SUBSCRIPTION - 정기 구독]",
+      example = "ONE_TIME",
+      type = "string",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private String paymentType;
 
   @Schema(
       description =
@@ -79,4 +88,7 @@ public class AdminContentSummaryInfoResponse {
 
   @Schema(description = "검색 엔진 노출 여부", example = "true")
   private Boolean isSearchExposed;
+
+  @Schema(description = "자료 옵션 파일 목록", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  private List<AdminDocumentFileResponse> documentFiles;
 }

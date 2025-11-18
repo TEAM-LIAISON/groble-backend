@@ -1,6 +1,10 @@
 package liaison.groble.api.server.admin;
 
+import java.time.Duration;
 import java.time.LocalDate;
+
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -10,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import liaison.groble.api.model.admin.dashboard.response.AdminActiveVisitorsResponse;
 import liaison.groble.api.model.admin.dashboard.response.AdminDashboardOverviewResponse;
 import liaison.groble.api.model.admin.dashboard.response.AdminDashboardTopContentsResponse;
 import liaison.groble.api.model.admin.dashboard.response.AdminDashboardTrendResponse;
@@ -18,6 +23,7 @@ import liaison.groble.api.server.admin.docs.AdminDashboardSwaggerDocs;
 import liaison.groble.api.server.common.ApiPaths;
 import liaison.groble.api.server.common.BaseController;
 import liaison.groble.api.server.common.ResponseMessages;
+import liaison.groble.application.admin.dashboard.dto.AdminActiveVisitorsDTO;
 import liaison.groble.application.admin.dashboard.dto.AdminDashboardOverviewDTO;
 import liaison.groble.application.admin.dashboard.dto.AdminDashboardTopContentsDTO;
 import liaison.groble.application.admin.dashboard.dto.AdminDashboardTrendDTO;
@@ -139,5 +145,35 @@ public class AdminDashboardController extends BaseController {
     AdminDashboardTopContentsResponse response =
         adminDashboardMapper.toAdminDashboardTopContentsResponse(topContentsDTO);
     return success(response, ResponseMessages.Admin.DASHBOARD_TOP_CONTENTS_RETRIEVED);
+  }
+
+  @Operation(
+      summary = AdminDashboardSwaggerDocs.DASHBOARD_ACTIVE_VISITORS_SUMMARY,
+      description = AdminDashboardSwaggerDocs.DASHBOARD_ACTIVE_VISITORS_DESCRIPTION)
+  @AdminDashboardApiResponses.GetAdminActiveVisitorsApiResponses
+  @Logging(
+      item = "AdminDashboard",
+      action = "getAdminActiveVisitors",
+      includeParam = true,
+      includeResult = true)
+  @RequireRole("ROLE_ADMIN")
+  @GetMapping(ApiPaths.Admin.DASHBOARD_ACTIVE_VISITORS)
+  public ResponseEntity<GrobleResponse<AdminActiveVisitorsResponse>> getAdminActiveVisitors(
+      @Auth Accessor accessor,
+      @RequestParam(value = "windowMinutes", required = false) @Min(1) @Max(360)
+          Integer windowMinutes,
+      @RequestParam(value = "limit", required = false) @Min(1) @Max(200) Integer limit) {
+    int effectiveWindowMinutes = windowMinutes != null ? windowMinutes : 5;
+    int safeWindowMinutes = Math.max(1, Math.min(effectiveWindowMinutes, 360));
+    Duration window = Duration.ofMinutes(safeWindowMinutes);
+
+    int effectiveLimit = limit != null ? limit : 50;
+    int safeLimit = Math.max(1, Math.min(effectiveLimit, 200));
+
+    AdminActiveVisitorsDTO visitorsDTO = adminDashboardService.getActiveVisitors(window, safeLimit);
+    AdminActiveVisitorsResponse response =
+        adminDashboardMapper.toAdminActiveVisitorsResponse(visitorsDTO);
+
+    return success(response, ResponseMessages.Admin.DASHBOARD_ACTIVE_VISITORS_RETRIEVED);
   }
 }

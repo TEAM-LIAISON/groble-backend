@@ -52,6 +52,9 @@ public class SellController {
   private static final String DRAFT_CONTENT_PATH = "/draft";
   private static final String REGISTER_CONTENT_PATH = "/register";
   private static final String STOP_CONTENT_PATH = "/{contentId}/stop";
+  private static final String PAUSE_SUBSCRIPTION_SALE_PATH = "/{contentId}/subscription/pause";
+  private static final String TERMINATE_SUBSCRIPTION_SALE_PATH =
+      "/{contentId}/subscription/terminate";
   private static final String DELETE_CONTENT_PATH = "/{contentId}/delete";
   private static final String EXAMINE_REJECT_REASON_PATH = "/{contentId}/examine/reject";
   private static final String MY_SELLING_CONTENTS_PATH = "/my/selling-contents";
@@ -62,6 +65,8 @@ public class SellController {
   private static final String CONTENT_DRAFT_SUCCESS_MESSAGE = "콘텐츠 임시 저장에 성공하였습니다.";
   private static final String CONTENT_REGISTER_SUCCESS_MESSAGE = "콘텐츠 판매하기에 성공하였습니다.";
   private static final String STOP_CONTENT_SUCCESS_MESSAGE = "콘텐츠 판매 중단에 성공하였습니다.";
+  private static final String PAUSE_SUBSCRIPTION_SALE_SUCCESS_MESSAGE = "정기 결제 신규 판매 중단에 성공하였습니다.";
+  private static final String TERMINATE_SUBSCRIPTION_SALE_SUCCESS_MESSAGE = "정기 결제 종료에 성공하였습니다.";
   private static final String DELETE_CONTENT_SUCCESS_MESSAGE = "콘텐츠 삭제에 성공하였습니다.";
   private static final String EXAMINE_REJECT_REASON_SUCCESS_MESSAGE = "콘텐츠 심사 거절 사유 조회에 성공하였습니다.";
   private static final String CONVERT_TO_SALE_SUCCESS_MESSAGE = "콘텐츠 판매하기 전환에 성공하였습니다.";
@@ -114,6 +119,44 @@ public class SellController {
     ContentDTO contentDTO = contentService.stopContent(accessor.getUserId(), contentId);
     ContentStatusResponse response = contentMapper.toContentStatusResponse(contentDTO);
     return responseHelper.success(response, STOP_CONTENT_SUCCESS_MESSAGE, HttpStatus.OK);
+  }
+
+  @Operation(
+      summary = "[✅ 정기 결제 판매 정책] 정기 결제 신규 판매 중단",
+      description = "정기 결제 콘텐츠의 신규 구독을 중단합니다. 기존 구독자는 계속 결제됩니다.")
+  @RequireRole("ROLE_SELLER")
+  @Logging(
+      item = "Sell",
+      action = "pauseSubscriptionSale",
+      includeParam = true,
+      includeResult = true)
+  @PostMapping(PAUSE_SUBSCRIPTION_SALE_PATH)
+  public ResponseEntity<GrobleResponse<ContentStatusResponse>> pauseSubscriptionSale(
+      @Auth Accessor accessor, @PathVariable("contentId") Long contentId) {
+
+    ContentDTO contentDTO = contentService.pauseSubscriptionSale(accessor.getUserId(), contentId);
+    ContentStatusResponse response = contentMapper.toContentStatusResponse(contentDTO);
+    return responseHelper.success(response, PAUSE_SUBSCRIPTION_SALE_SUCCESS_MESSAGE, HttpStatus.OK);
+  }
+
+  @Operation(
+      summary = "[✅ 정기 결제 판매 정책] 정기 결제 종료",
+      description = "정기 결제 콘텐츠의 모든 구독을 종료합니다. 기존 구독자는 결제된 기간까지만 이용할 수 있습니다.")
+  @RequireRole("ROLE_SELLER")
+  @Logging(
+      item = "Sell",
+      action = "terminateSubscriptionSale",
+      includeParam = true,
+      includeResult = true)
+  @PostMapping(TERMINATE_SUBSCRIPTION_SALE_PATH)
+  public ResponseEntity<GrobleResponse<ContentStatusResponse>> terminateSubscriptionSale(
+      @Auth Accessor accessor, @PathVariable("contentId") Long contentId) {
+
+    ContentDTO contentDTO =
+        contentService.terminateSubscriptionSale(accessor.getUserId(), contentId);
+    ContentStatusResponse response = contentMapper.toContentStatusResponse(contentDTO);
+    return responseHelper.success(
+        response, TERMINATE_SUBSCRIPTION_SALE_SUCCESS_MESSAGE, HttpStatus.OK);
   }
 
   @Operation(

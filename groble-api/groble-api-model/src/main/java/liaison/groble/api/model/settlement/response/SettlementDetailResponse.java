@@ -40,6 +40,14 @@ public class SettlementDetailResponse {
   @JsonFormat(pattern = "yyyy-MM-dd")
   private LocalDate scheduledSettlementDate;
 
+  @Schema(
+      description = "정산 결제 유형 (ONE_TIME: 단건 결제, SUBSCRIPTION: 정기 결제)",
+      example = "SUBSCRIPTION",
+      allowableValues = {"ONE_TIME", "SUBSCRIPTION"},
+      type = "string",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private String paymentType;
+
   // 정산(예정)금액
   @Schema(
       description = "정산(예정)금액 (원화 표기)",

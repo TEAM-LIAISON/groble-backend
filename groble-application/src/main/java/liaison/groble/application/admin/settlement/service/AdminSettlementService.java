@@ -732,6 +732,8 @@ public class AdminSettlementService {
         .settlementAmount(displayAmount)
         .settlementStatus(
             resolveDisplayStatus(flatAdminSettlementsDTO.getSettlementStatus(), displayAmount))
+        .nickname(flatAdminSettlementsDTO.getNickname())
+        .paymentType(flatAdminSettlementsDTO.getPaymentType())
         .verificationStatus(flatAdminSettlementsDTO.getVerificationStatus())
         .isBusinessSeller(flatAdminSettlementsDTO.getIsBusinessSeller())
         .businessType(flatAdminSettlementsDTO.getBusinessType())
@@ -740,6 +742,7 @@ public class AdminSettlementService {
         .bankAccountNumber(flatAdminSettlementsDTO.getBankAccountNumber())
         .copyOfBankbookUrl(flatAdminSettlementsDTO.getCopyOfBankbookUrl())
         .businessLicenseFileUrl(flatAdminSettlementsDTO.getBusinessLicenseFileUrl())
+        .taxInvoiceEmail(flatAdminSettlementsDTO.getTaxInvoiceEmail())
         .build();
   }
 
@@ -776,10 +779,12 @@ public class AdminSettlementService {
   private PerTransactionAdminSettlementOverviewDTO convertFlatDTOToPerTransactionDTO(
       FlatPerTransactionSettlement flat) {
     return PerTransactionAdminSettlementOverviewDTO.builder()
+        .contentId(flat.getContentId())
         .contentTitle(flat.getContentTitle())
         .settlementAmount(flat.getSettlementAmountDisplay())
         .orderStatus(flat.getOrderStatus())
         .purchasedAt(flat.getPurchasedAt())
+        .paymentType(flat.getPaymentType())
         .build();
   }
 

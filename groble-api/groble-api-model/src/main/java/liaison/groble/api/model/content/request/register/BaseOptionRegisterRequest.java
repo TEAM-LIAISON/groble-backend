@@ -21,6 +21,9 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @AllArgsConstructor
 public class BaseOptionRegisterRequest {
+  @Schema(description = "옵션 ID (기존 옵션 식별용)", example = "101", nullable = true)
+  private Long contentOptionId;
+
   @Size(max = 20, message = "옵션 이름은 최대 20자까지 입력할 수 있습니다.")
   @NotBlank(message = "옵션 이름은 필수 입력 항목입니다")
   @Schema(description = "옵션 이름", example = "사업계획서 컨설팅 1회")
