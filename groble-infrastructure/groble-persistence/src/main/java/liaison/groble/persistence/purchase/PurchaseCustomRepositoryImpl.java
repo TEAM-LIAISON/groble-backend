@@ -312,6 +312,13 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
                 .otherwise(false),
             "isSubscriptionTerminated");
 
+    var hasBillingFailureExpr =
+        ExpressionUtils.as(
+            Expressions.cases()
+                .when(qSubscription.lastBillingFailureReason.isNotNull())
+                .then(true)
+                .otherwise(false),
+            "hasBillingFailure");
     // 쿼리 실행
     List<FlatPurchaseContentPreviewDTO> results =
         queryFactory
@@ -338,7 +345,8 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
                     subscriptionRoundExpr,
                     qSubscription.status.stringValue().as("subscriptionStatus"),
                     isSubscriptionTerminatedExpr,
-                    qSubscription.lastBillingFailureReason.as("billingFailureReason")))
+                    qSubscription.lastBillingFailureReason.as("billingFailureReason"),
+                    hasBillingFailureExpr))
             .from(qPurchase)
             .leftJoin(qPurchase.content, qContent)
             .leftJoin(qPurchase.user, qUser)
@@ -454,6 +462,13 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
                 .otherwise(false),
             "isSubscriptionTerminated");
 
+    var hasBillingFailureExpr =
+        ExpressionUtils.as(
+            Expressions.cases()
+                .when(qSubscription.lastBillingFailureReason.isNotNull())
+                .then(true)
+                .otherwise(false),
+            "hasBillingFailure");
     FlatContentSellDetailDTO result =
         queryFactory
             .select(
@@ -502,7 +517,8 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
                     subscriptionRoundExpr,
                     qSubscription.status.stringValue().as("subscriptionStatus"),
                     isSubscriptionTerminatedExpr,
-                    qSubscription.lastBillingFailureReason.as("billingFailureReason")))
+                    qSubscription.lastBillingFailureReason.as("billingFailureReason"),
+                    hasBillingFailureExpr))
             .from(qPurchase)
             .leftJoin(qPurchase.user, qUser)
             .leftJoin(qPurchase.guestUser, qGuestUser)
@@ -578,6 +594,14 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
                 .otherwise(false),
             "isSubscriptionTerminated");
 
+    var hasBillingFailureExpr =
+        ExpressionUtils.as(
+            Expressions.cases()
+                .when(qSubscription.lastBillingFailureReason.isNotNull())
+                .then(true)
+                .otherwise(false),
+            "hasBillingFailure");
+
     BooleanExpression nonSubscription = qContent.paymentType.ne(ContentPaymentType.SUBSCRIPTION);
 
     BooleanExpression latestSubscription =
@@ -617,7 +641,8 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
                     subscriptionRoundExpr,
                     qSubscription.status.stringValue().as("subscriptionStatus"),
                     isSubscriptionTerminatedExpr,
-                    qSubscription.lastBillingFailureReason.as("billingFailureReason")))
+                    qSubscription.lastBillingFailureReason.as("billingFailureReason"),
+                    hasBillingFailureExpr))
             .from(qPurchase)
             .leftJoin(qPurchase.user, qUser)
             .leftJoin(qPurchase.guestUser, qGuestUser)

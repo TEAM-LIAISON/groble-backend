@@ -290,6 +290,7 @@ public class SellContentService {
         .subscriptionStatus(contentSellDetailDTO.getSubscriptionStatus())
         .isSubscriptionTerminated(contentSellDetailDTO.getIsSubscriptionTerminated())
         .billingFailureReason(contentSellDetailDTO.getBillingFailureReason())
+        .hasBillingFailure(contentSellDetailDTO.getHasBillingFailure())
         .build();
   }
 
@@ -343,6 +344,7 @@ public class SellContentService {
         .subscriptionStatus(flat.getSubscriptionStatus())
         .isSubscriptionTerminated(flat.getIsSubscriptionTerminated())
         .billingFailureReason(flat.getBillingFailureReason())
+        .hasBillingFailure(flat.getHasBillingFailure())
         .build();
   }
 

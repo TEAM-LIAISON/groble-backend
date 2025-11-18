@@ -89,4 +89,7 @@ public class ContentSellDetailResponse {
 
   @Schema(description = "결제 실패 사유 (결제 실패한 경우만)", example = "카드 한도 초과", nullable = true)
   private String billingFailureReason;
+
+  @Schema(description = "결제 실패 경험 여부 (정기결제가 아니면 null)", example = "true", nullable = true)
+  private Boolean hasBillingFailure;
 }

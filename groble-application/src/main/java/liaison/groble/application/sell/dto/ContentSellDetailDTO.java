@@ -22,4 +22,5 @@ public class ContentSellDetailDTO {
   private String subscriptionStatus; // Subscription.status (정기결제가 아니면 null)
   private Boolean isSubscriptionTerminated; // 유예기간 만료 여부 (정기결제가 아니면 null)
   private String billingFailureReason; // Subscription.lastBillingFailureReason (정기결제가 아니면 null)
+  private Boolean hasBillingFailure;
 }
