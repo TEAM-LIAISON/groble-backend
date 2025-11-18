@@ -530,6 +530,7 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
     QSocialAccount qSocialAcc = QSocialAccount.socialAccount;
     QOrder qOrder = QOrder.order;
     QPurchase purchaseSub = new QPurchase("purchaseSubForSellPage");
+    QPurchase purchaseSubLatest = new QPurchase("purchaseSubLatestForSellPage");
     QSubscription qSubscription = QSubscription.subscription;
 
     // 조건: contentId + 소유자
@@ -577,6 +578,22 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
                 .otherwise(false),
             "isSubscriptionTerminated");
 
+    BooleanExpression nonSubscription = qContent.paymentType.ne(ContentPaymentType.SUBSCRIPTION);
+
+    BooleanExpression latestSubscription =
+        JPAExpressions.selectOne()
+            .from(purchaseSubLatest)
+            .where(
+                purchaseSubLatest
+                    .user
+                    .id
+                    .eq(qPurchase.user.id)
+                    .and(purchaseSubLatest.selectedOptionId.eq(qPurchase.selectedOptionId))
+                    .and(purchaseSubLatest.purchasedAt.gt(qPurchase.purchasedAt)))
+            .notExists();
+
+    BooleanExpression isLatestSubscription = nonSubscription.or(latestSubscription);
+
     // 데이터 조회 쿼리 구성
     JPAQuery<FlatContentSellDetailDTO> dataQuery =
         queryFactory
@@ -610,7 +627,7 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
             .leftJoin(qPurchase.order, qOrder)
             .leftJoin(qSubscription)
             .on(qSubscription.purchase.eq(qPurchase))
-            .where(conditions);
+            .where(conditions.and(isLatestSubscription));
 
     // 정렬 적용
     dataQuery = applySorting(dataQuery, pageable, qPurchase, qContent);
@@ -622,7 +639,11 @@ public class PurchaseCustomRepositoryImpl implements PurchaseCustomRepository {
     // 전체 개수 조회
     long total =
         Optional.ofNullable(
-                queryFactory.select(qPurchase.count()).from(qPurchase).where(conditions).fetchOne())
+                queryFactory
+                    .select(qPurchase.count())
+                    .from(qPurchase)
+                    .where(conditions.and(isLatestSubscription))
+                    .fetchOne())
             .orElse(0L);
 
     return new PageImpl<>(items, pageable, total);
