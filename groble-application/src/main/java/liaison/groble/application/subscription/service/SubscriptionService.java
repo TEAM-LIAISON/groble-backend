@@ -48,21 +48,21 @@ public class SubscriptionService {
 
     Content content = purchase.getContent();
     LocalDateTime now = LocalDateTime.now();
+    Long optionId = purchase.getSelectedOptionId();
+    String optionName = purchase.getSelectedOptionName();
+    BigDecimal price = purchase.getFinalPrice();
     Subscription existingSubscription =
         subscriptionRepository
-            .findByContentIdAndUserIdAndStatusIn(
-                content.getId(),
+            .findByUserIdAndOptionIdAndStatusIn(
                 user.getId(),
+                optionId,
                 EnumSet.of(SubscriptionStatus.ACTIVE, SubscriptionStatus.PAST_DUE))
             .orElse(null);
 
     if (existingSubscription == null) {
-      existingSubscription = findGracePeriodSubscription(content.getId(), user.getId(), now);
+      existingSubscription = findGracePeriodSubscription(user.getId(), optionId, now);
     }
 
-    Long optionId = purchase.getSelectedOptionId();
-    String optionName = purchase.getSelectedOptionName();
-    BigDecimal price = purchase.getFinalPrice();
     LocalDate nextBillingDate = resolveNextBillingDate(existingSubscription, now);
 
     if (existingSubscription != null) {
@@ -256,18 +256,18 @@ public class SubscriptionService {
    *
    * <p>유예기간이 설정된 CANCELLED 구독을 찾습니다. 유예기간이 만료되었어도 재결제로 복원할 수 있도록 합니다.
    *
-   * @param contentId 콘텐츠 ID
    * @param userId 사용자 ID
+   * @param optionId 옵션 ID
    * @param now 현재 시간
    * @return 유예기간 관련 구독 (만료 포함)
    */
-  private Subscription findGracePeriodSubscription(Long contentId, Long userId, LocalDateTime now) {
+  private Subscription findGracePeriodSubscription(Long userId, Long optionId, LocalDateTime now) {
     if (gracePeriodDays <= 0) {
       return null;
     }
 
     return subscriptionRepository
-        .findByContentIdAndUserIdAndStatus(contentId, userId, SubscriptionStatus.CANCELLED)
+        .findByUserIdAndOptionIdAndStatus(userId, optionId, SubscriptionStatus.CANCELLED)
         .filter(subscription -> subscription.getGracePeriodEndsAt() != null)
         .orElse(null);
   }

@@ -21,6 +21,7 @@ public class FlatPurchaseContentDetailDTO {
   private LocalDateTime cancelRequestedAt;
   private LocalDateTime cancelledAt;
   private Long contentId;
+  private Long selectedOptionId;
   private String sellerName;
   private String contentTitle;
   private String selectedOptionName;

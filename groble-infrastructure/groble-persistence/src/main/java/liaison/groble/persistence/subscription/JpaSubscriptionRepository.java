@@ -20,20 +20,19 @@ import liaison.groble.domain.subscription.enums.SubscriptionStatus;
 public interface JpaSubscriptionRepository extends JpaRepository<Subscription, Long> {
   Optional<Subscription> findByPurchaseId(Long purchaseId);
 
-  boolean existsByContentIdAndUserIdAndStatus(
-      Long contentId, Long userId, SubscriptionStatus status);
+  Optional<Subscription> findByUserIdAndOptionIdAndStatus(
+      Long userId, Long optionId, SubscriptionStatus status);
 
-  Optional<Subscription> findByContentIdAndUserIdAndStatus(
-      Long contentId, Long userId, SubscriptionStatus status);
-
-  Optional<Subscription> findByContentIdAndUserIdAndStatusIn(
-      Long contentId, Long userId, Collection<SubscriptionStatus> statuses);
+  Optional<Subscription> findByUserIdAndOptionIdAndStatusIn(
+      Long userId, Long optionId, Collection<SubscriptionStatus> statuses);
 
   Optional<Subscription> findByPurchase_Order_MerchantUidAndUser_IdAndStatus(
       String merchantUid, Long userId, SubscriptionStatus status);
 
   Optional<Subscription> findByPurchase_Order_MerchantUidAndUser_Id(
       String merchantUid, Long userId);
+
+  Optional<Subscription> findTopByUserIdAndOptionIdOrderByIdDesc(Long userId, Long optionId);
 
   boolean existsByUserIdAndBillingKeyAndStatus(
       Long userId, String billingKey, SubscriptionStatus status);
@@ -50,7 +49,7 @@ public interface JpaSubscriptionRepository extends JpaRepository<Subscription, L
   @Query("select s from Subscription s where s.id = :id")
   Optional<Subscription> findWithLockingById(@Param("id") Long id);
 
-  Optional<Subscription> findByContentIdAndUserId(Long contentId, Long userId);
+  List<Subscription> findAllByContentIdAndUserIdOrderByIdDesc(Long contentId, Long userId);
 
   List<Subscription> findByStatusAndGracePeriodEndsAtBefore(
       SubscriptionStatus status, LocalDateTime dateTime, Pageable pageable);

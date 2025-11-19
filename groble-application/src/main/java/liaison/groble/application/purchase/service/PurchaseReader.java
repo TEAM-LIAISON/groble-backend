@@ -22,6 +22,7 @@ import liaison.groble.domain.purchase.dto.FlatTopContentStatDTO;
 import liaison.groble.domain.purchase.entity.Purchase;
 import liaison.groble.domain.purchase.repository.PurchaseCustomRepository;
 import liaison.groble.domain.purchase.repository.PurchaseRepository;
+import liaison.groble.domain.subscription.entity.Subscription;
 import liaison.groble.domain.subscription.enums.SubscriptionStatus;
 import liaison.groble.domain.subscription.repository.SubscriptionRepository;
 
@@ -33,6 +34,8 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class PurchaseReader {
+  private static final EnumSet<SubscriptionStatus> ACTIVE_SUBSCRIPTION_STATUSES =
+      EnumSet.of(SubscriptionStatus.ACTIVE, SubscriptionStatus.PAST_DUE);
   private final PurchaseRepository purchaseRepository;
   private final PurchaseCustomRepository purchaseCustomRepository;
   private final SubscriptionRepository subscriptionRepository;
@@ -156,32 +159,33 @@ public class PurchaseReader {
    * @return 접근 가능하면 true
    */
   public boolean hasAccessToContent(Long userId, Long contentId) {
-    // 1. 구독 확인 (ACTIVE, PAST_DUE, 유예기간 중 CANCELLED)
-    return subscriptionRepository
-        .findByContentIdAndUserId(contentId, userId)
-        .map(
-            subscription -> {
-              SubscriptionStatus status = subscription.getStatus();
+    List<Subscription> subscriptions =
+        subscriptionRepository.findAllByContentIdAndUserId(contentId, userId);
 
-              // ACTIVE 또는 PAST_DUE 상태면 접근 가능
-              if (EnumSet.of(SubscriptionStatus.ACTIVE, SubscriptionStatus.PAST_DUE)
-                  .contains(status)) {
-                return true;
-              }
+    if (!subscriptions.isEmpty()) {
+      LocalDateTime now = LocalDateTime.now();
 
-              // CANCELLED이지만 유예기간 중이면 접근 가능
-              if (status == SubscriptionStatus.CANCELLED
-                  && subscription.isGracePeriodActive(LocalDateTime.now())) {
-                return true;
-              }
+      boolean hasActive =
+          subscriptions.stream()
+              .anyMatch(
+                  subscription -> ACTIVE_SUBSCRIPTION_STATUSES.contains(subscription.getStatus()));
+      if (hasActive) {
+        return true;
+      }
 
-              return false;
-            })
-        .orElseGet(
-            () -> {
-              // 2. 구독이 없으면 일반 구매 확인
-              return purchaseCustomRepository.existsByUserAndContent(userId, contentId);
-            });
+      boolean withinGracePeriod =
+          subscriptions.stream()
+              .anyMatch(
+                  subscription ->
+                      subscription.getStatus() == SubscriptionStatus.CANCELLED
+                          && subscription.isGracePeriodActive(now));
+
+      if (withinGracePeriod) {
+        return true;
+      }
+    }
+
+    return purchaseCustomRepository.existsByUserAndContent(userId, contentId);
   }
 
   /**

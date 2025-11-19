@@ -42,7 +42,7 @@ public class SellerSubscriptionGracePeriodExpiredTemplate implements KakaoTempla
       KakaoNotificationDTO kakaoNotificationDTO, NotificationUrlBuilder urlBuilder) {
     return Collections.singletonList(
         ButtonInfo.builder()
-            .name("판매 현황 확인하기")
+            .name("확인하러 가기")
             .type("WL")
             .urlMobile(urlBuilder.getBaseClearPath())
             .urlPc(urlBuilder.getBaseClearPath())

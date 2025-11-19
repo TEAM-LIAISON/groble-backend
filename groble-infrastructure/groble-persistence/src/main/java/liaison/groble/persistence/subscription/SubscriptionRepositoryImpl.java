@@ -32,22 +32,15 @@ public class SubscriptionRepositoryImpl implements SubscriptionRepository {
   }
 
   @Override
-  public boolean existsByContentIdAndUserIdAndStatus(
-      Long contentId, Long userId, SubscriptionStatus status) {
-    return jpaSubscriptionRepository.existsByContentIdAndUserIdAndStatus(contentId, userId, status);
+  public Optional<Subscription> findByUserIdAndOptionIdAndStatus(
+      Long userId, Long optionId, SubscriptionStatus status) {
+    return jpaSubscriptionRepository.findByUserIdAndOptionIdAndStatus(userId, optionId, status);
   }
 
   @Override
-  public Optional<Subscription> findByContentIdAndUserIdAndStatus(
-      Long contentId, Long userId, SubscriptionStatus status) {
-    return jpaSubscriptionRepository.findByContentIdAndUserIdAndStatus(contentId, userId, status);
-  }
-
-  @Override
-  public Optional<Subscription> findByContentIdAndUserIdAndStatusIn(
-      Long contentId, Long userId, Collection<SubscriptionStatus> statuses) {
-    return jpaSubscriptionRepository.findByContentIdAndUserIdAndStatusIn(
-        contentId, userId, statuses);
+  public Optional<Subscription> findByUserIdAndOptionIdAndStatusIn(
+      Long userId, Long optionId, Collection<SubscriptionStatus> statuses) {
+    return jpaSubscriptionRepository.findByUserIdAndOptionIdAndStatusIn(userId, optionId, statuses);
   }
 
   @Override
@@ -61,6 +54,11 @@ public class SubscriptionRepositoryImpl implements SubscriptionRepository {
   public Optional<Subscription> findByMerchantUidAndUserId(String merchantUid, Long userId) {
     return jpaSubscriptionRepository.findByPurchase_Order_MerchantUidAndUser_Id(
         merchantUid, userId);
+  }
+
+  @Override
+  public Optional<Subscription> findMostRecentByUserIdAndOptionId(Long userId, Long optionId) {
+    return jpaSubscriptionRepository.findTopByUserIdAndOptionIdOrderByIdDesc(userId, optionId);
   }
 
   @Override
@@ -99,8 +97,8 @@ public class SubscriptionRepositoryImpl implements SubscriptionRepository {
   }
 
   @Override
-  public Optional<Subscription> findByContentIdAndUserId(Long contentId, Long userId) {
-    return jpaSubscriptionRepository.findByContentIdAndUserId(contentId, userId);
+  public List<Subscription> findAllByContentIdAndUserId(Long contentId, Long userId) {
+    return jpaSubscriptionRepository.findAllByContentIdAndUserIdOrderByIdDesc(contentId, userId);
   }
 
   @Override
