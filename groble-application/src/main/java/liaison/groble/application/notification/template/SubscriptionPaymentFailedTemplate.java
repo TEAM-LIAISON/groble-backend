@@ -45,10 +45,10 @@ public class SubscriptionPaymentFailedTemplate implements KakaoTemplate {
       KakaoNotificationDTO kakaoNotificationDTO, NotificationUrlBuilder urlBuilder) {
     return Collections.singletonList(
         ButtonInfo.builder()
-            .name("결제 수단 확인하기")
+            .name("확인하러 가기")
             .type("WL")
-            .urlMobile(urlBuilder.getBaseUrl())
-            .urlPc(urlBuilder.getBaseUrl())
+            .urlMobile(urlBuilder.getBaseClearPath())
+            .urlPc(urlBuilder.getBaseClearPath())
             .build());
   }
 }
