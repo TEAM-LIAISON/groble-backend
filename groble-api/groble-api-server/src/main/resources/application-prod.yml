@@ -94,7 +94,7 @@ app:
 
 subscription:
   billing:
-    cron: "0 0 4 * * ?"
+    cron: "0 0 9 * * ?"
     batch-size: 100
     max-retry-count: 3
     retry-interval-minutes: 1440
