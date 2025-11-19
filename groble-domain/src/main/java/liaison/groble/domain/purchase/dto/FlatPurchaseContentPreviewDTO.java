@@ -15,6 +15,7 @@ import lombok.NoArgsConstructor;
 public class FlatPurchaseContentPreviewDTO {
   private String merchantUid;
   private Long contentId;
+  private Long selectedOptionId;
   private Long userId;
   private String contentType;
   private LocalDateTime purchasedAt;

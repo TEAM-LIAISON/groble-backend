@@ -16,19 +16,18 @@ public interface SubscriptionRepository {
 
   Optional<Subscription> findByPurchaseId(Long purchaseId);
 
-  boolean existsByContentIdAndUserIdAndStatus(
-      Long contentId, Long userId, SubscriptionStatus status);
+  Optional<Subscription> findByUserIdAndOptionIdAndStatus(
+      Long userId, Long optionId, SubscriptionStatus status);
 
-  Optional<Subscription> findByContentIdAndUserIdAndStatus(
-      Long contentId, Long userId, SubscriptionStatus status);
-
-  Optional<Subscription> findByContentIdAndUserIdAndStatusIn(
-      Long contentId, Long userId, Collection<SubscriptionStatus> statuses);
+  Optional<Subscription> findByUserIdAndOptionIdAndStatusIn(
+      Long userId, Long optionId, Collection<SubscriptionStatus> statuses);
 
   Optional<Subscription> findByMerchantUidAndUserIdAndStatus(
       String merchantUid, Long userId, SubscriptionStatus status);
 
   Optional<Subscription> findByMerchantUidAndUserId(String merchantUid, Long userId);
+
+  Optional<Subscription> findMostRecentByUserIdAndOptionId(Long userId, Long optionId);
 
   boolean existsByUserIdAndBillingKeyAndStatus(
       Long userId, String billingKey, SubscriptionStatus status);
@@ -45,7 +44,7 @@ public interface SubscriptionRepository {
 
   Optional<Subscription> findById(Long id);
 
-  Optional<Subscription> findByContentIdAndUserId(Long contentId, Long userId);
+  List<Subscription> findAllByContentIdAndUserId(Long contentId, Long userId);
 
   List<Subscription> findByStatusAndGracePeriodEndsAtBefore(
       SubscriptionStatus status, LocalDateTime dateTime, Pageable pageable);

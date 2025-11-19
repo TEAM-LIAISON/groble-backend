@@ -3,7 +3,9 @@ package liaison.groble.application.purchase.service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -25,6 +27,7 @@ import liaison.groble.domain.order.entity.OrderItem;
 import liaison.groble.domain.purchase.dto.FlatPurchaseContentDetailDTO;
 import liaison.groble.domain.purchase.dto.FlatPurchaseContentPreviewDTO;
 import liaison.groble.domain.subscription.entity.Subscription;
+import liaison.groble.domain.subscription.enums.SubscriptionStatus;
 import liaison.groble.domain.subscription.repository.SubscriptionRepository;
 import liaison.groble.domain.user.entity.SellerContact;
 import liaison.groble.domain.user.entity.User;
@@ -39,6 +42,8 @@ public class PurchaseService {
 
   private static final ZoneId DEFAULT_TIME_ZONE = ZoneId.of("Asia/Seoul");
   private static final long CANCEL_AVAILABLE_DAYS = 7L;
+  private static final EnumSet<SubscriptionStatus> ACTIVE_SUBSCRIPTION_STATUSES =
+      EnumSet.of(SubscriptionStatus.ACTIVE, SubscriptionStatus.PAST_DUE);
 
   private final OrderReader orderReader;
   private final PurchaseReader purchaseReader;
@@ -342,7 +347,8 @@ public class PurchaseService {
       return;
     }
 
-    resolveSubscription(flat.getMerchantUid(), flat.getContentId(), resolvedUserId)
+    resolveSubscription(
+            flat.getMerchantUid(), flat.getContentId(), flat.getSelectedOptionId(), resolvedUserId)
         .ifPresent(subscription -> applySubscriptionDetails(flat, subscription));
   }
 
@@ -364,7 +370,8 @@ public class PurchaseService {
       return;
     }
 
-    resolveSubscription(flat.getMerchantUid(), flat.getContentId(), resolvedUserId)
+    resolveSubscription(
+            flat.getMerchantUid(), flat.getContentId(), flat.getSelectedOptionId(), resolvedUserId)
         .ifPresent(subscription -> applySubscriptionDetails(flat, subscription));
   }
 
@@ -406,15 +413,43 @@ public class PurchaseService {
     }
   }
 
-  private java.util.Optional<Subscription> resolveSubscription(
-      String merchantUid, Long contentId, Long userId) {
-    if (merchantUid == null || userId == null) {
-      return java.util.Optional.empty();
+  private Optional<Subscription> resolveSubscription(
+      String merchantUid, Long contentId, Long optionId, Long userId) {
+    if (userId == null) {
+      return Optional.empty();
     }
 
-    return subscriptionRepository
-        .findByMerchantUidAndUserId(merchantUid, userId)
-        .or(() -> subscriptionRepository.findByContentIdAndUserId(contentId, userId));
+    if (merchantUid != null) {
+      Optional<Subscription> byMerchant =
+          subscriptionRepository.findByMerchantUidAndUserId(merchantUid, userId);
+      if (byMerchant.isPresent()) {
+        return byMerchant;
+      }
+    }
+
+    if (optionId != null) {
+      Optional<Subscription> byOption =
+          subscriptionRepository.findMostRecentByUserIdAndOptionId(userId, optionId);
+      if (byOption.isPresent()) {
+        return byOption;
+      }
+    }
+
+    if (contentId == null) {
+      return Optional.empty();
+    }
+
+    List<Subscription> subscriptions =
+        subscriptionRepository.findAllByContentIdAndUserId(contentId, userId);
+
+    if (subscriptions.isEmpty()) {
+      return Optional.empty();
+    }
+
+    return subscriptions.stream()
+        .filter(subscription -> ACTIVE_SUBSCRIPTION_STATUSES.contains(subscription.getStatus()))
+        .findFirst()
+        .or(() -> subscriptions.stream().findFirst());
   }
 
   private String resolveDisplayOrderStatus(
