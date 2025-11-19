@@ -40,7 +40,7 @@ public class SellerSubscriptionRenewalTemplate implements KakaoTemplate {
   @Override
   public List<ButtonInfo> buildButtons(
       KakaoNotificationDTO kakaoNotificationDTO, NotificationUrlBuilder urlBuilder) {
-    String url = urlBuilder.getBaseUrl();
+    String url = urlBuilder.getBaseClearPath();
     return Collections.singletonList(
         ButtonInfo.builder().name("확인하러 가기").type("WL").urlMobile(url).urlPc(url).build());
   }

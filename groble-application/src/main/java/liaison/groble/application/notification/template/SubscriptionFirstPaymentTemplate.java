@@ -47,8 +47,8 @@ public class SubscriptionFirstPaymentTemplate implements KakaoTemplate {
         ButtonInfo.builder()
             .name("확인하러 가기")
             .type("WL")
-            .urlMobile(urlBuilder.getBaseUrl())
-            .urlPc(urlBuilder.getBaseUrl())
+            .urlMobile(urlBuilder.getBaseClearPath())
+            .urlPc(urlBuilder.getBaseClearPath())
             .build());
   }
 }
