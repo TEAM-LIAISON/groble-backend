@@ -314,8 +314,8 @@ public class SubscriptionBillingJobService {
       return "카드사 승인 거절";
     }
 
-    // 기본 실패 사유
-    return null;
+    // 기본 실패 사유: 앞쪽 에러 코드 제거 후 메시지 반환
+    return removeLeadingErrorCode(message);
   }
 
   private record BillingContext(Long subscriptionId, Long userId, String merchantUid) {}
@@ -353,6 +353,14 @@ public class SubscriptionBillingJobService {
       String contentTitle,
       BigDecimal price,
       int retryCount) {}
+
+  /** 메시지 앞에 붙은 [ERROR_CODE] 패턴 제거 */
+  private String removeLeadingErrorCode(String message) {
+    if (message == null) {
+      return null;
+    }
+    return message.replaceFirst("^\\[[^\\]]+\\]\\s*", "").trim();
+  }
 
   private LocalDateTime now() {
     return LocalDateTime.now(BILLING_ZONE_ID);
