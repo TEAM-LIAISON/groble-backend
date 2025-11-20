@@ -104,7 +104,7 @@ public class MessageFormatter {
   public static String subscriptionRenewalPayment(
       String buyerName, String contentTitle, BigDecimal price, LocalDate nextBillingDate) {
     return String.format(
-        "%s님, 정기결제가 완료되었어요!\n" + "\n" + "- 상품명: %s\n" + "- 결제금액: %s원\n" + "- 다음 결제일: %s\n",
+        "%s님, 정기결제가 완료되었어요!\n" + "\n" + "- 상품명: %s\n" + "- 결제 금액: %s원\n" + "- 다음 결제일: %s\n",
         buyerName, contentTitle, formatCurrency(price), formatDate(nextBillingDate));
   }
 
