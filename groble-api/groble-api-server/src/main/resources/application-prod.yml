@@ -92,17 +92,6 @@ app:
     path: /reset-password
     expiration-ms: 200000 # 2 minutes
 
-subscription:
-  billing:
-    cron: "0 0 9 * * ?"
-    batch-size: 100
-    max-retry-count: 3
-    retry-interval-minutes: 1440
-    grace-period-days: 7
-  grace-period:
-    cron: "0 0 */6 * * ?"
-    batch-size: 100
-
 # Springdoc OpenAPI Configuration
 springdoc:
   swagger-ui:
@@ -168,5 +157,3 @@ logging:
     javax.mail: WARN                          # JavaMail 로그 축약
   file:
     path: ${user.dir}/logs
-
-
