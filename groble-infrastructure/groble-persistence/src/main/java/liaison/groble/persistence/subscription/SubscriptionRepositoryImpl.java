@@ -97,6 +97,11 @@ public class SubscriptionRepositoryImpl implements SubscriptionRepository {
   }
 
   @Override
+  public Optional<Subscription> findByIdWithUserAndContent(Long id) {
+    return jpaSubscriptionRepository.findWithUserAndContentById(id);
+  }
+
+  @Override
   public List<Subscription> findAllByContentIdAndUserId(Long contentId, Long userId) {
     return jpaSubscriptionRepository.findAllByContentIdAndUserIdOrderByIdDesc(contentId, userId);
   }

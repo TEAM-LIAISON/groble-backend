@@ -9,6 +9,7 @@ import java.util.Optional;
 import jakarta.persistence.LockModeType;
 
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
@@ -44,6 +45,9 @@ public interface JpaSubscriptionRepository extends JpaRepository<Subscription, L
 
   List<Subscription> findByContentIdAndStatusIn(
       Long contentId, Collection<SubscriptionStatus> statuses);
+
+  @EntityGraph(attributePaths = {"user", "content"})
+  Optional<Subscription> findWithUserAndContentById(Long id);
 
   @Lock(LockModeType.PESSIMISTIC_WRITE)
   @Query("select s from Subscription s where s.id = :id")

@@ -44,6 +44,8 @@ public interface SubscriptionRepository {
 
   Optional<Subscription> findById(Long id);
 
+  Optional<Subscription> findByIdWithUserAndContent(Long id);
+
   List<Subscription> findAllByContentIdAndUserId(Long contentId, Long userId);
 
   List<Subscription> findByStatusAndGracePeriodEndsAtBefore(
