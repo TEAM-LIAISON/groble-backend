@@ -1,5 +1,6 @@
 package liaison.groble.application.subscription.service;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -24,7 +25,6 @@ import liaison.groble.domain.order.entity.Order;
 import liaison.groble.domain.subscription.entity.Subscription;
 import liaison.groble.domain.subscription.enums.SubscriptionStatus;
 import liaison.groble.domain.subscription.repository.SubscriptionRepository;
-import liaison.groble.domain.user.entity.User;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -135,8 +135,8 @@ public class SubscriptionBillingJobService {
       }
 
       // 1차 실패 시 구매자에게 알림톡 전송
-      if (failureResult.retryCount() == 1 && failureResult.subscription() != null) {
-        sendPaymentFailedNotification(failureResult.subscription(), failureReason);
+      if (failureResult.retryCount() == 1) {
+        sendPaymentFailedNotification(context.subscriptionId(), failureReason);
       }
 
       // 3회 실패로 해지 시 구매자에게 알림톡 전송
@@ -152,9 +152,7 @@ public class SubscriptionBillingJobService {
               context.subscriptionId(),
               gracePeriodDays);
         }
-        if (failureResult.subscription() != null) {
-          sendSubscriptionCancelledNotification(failureResult.subscription(), failureReason);
-        }
+        sendSubscriptionCancelledNotification(context.subscriptionId(), failureReason);
       }
     }
   }
@@ -221,63 +219,70 @@ public class SubscriptionBillingJobService {
                         subscription.startGracePeriod(now, gracePeriodDays);
                         cancelled = true;
                       }
-                      Subscription saved = subscriptionRepository.save(subscription);
-                      return new BillingFailureResult(true, cancelled, retryCount, saved);
+                      subscriptionRepository.save(subscription);
+                      return new BillingFailureResult(true, cancelled, retryCount);
                     })
-                .orElseGet(() -> new BillingFailureResult(false, false, 0, null)));
+                .orElseGet(() -> new BillingFailureResult(false, false, 0)));
   }
 
   /** 정기결제 1차 실패 시 구매자에게 알림톡 전송 */
-  private void sendPaymentFailedNotification(Subscription subscription, String failureReason) {
+  private void sendPaymentFailedNotification(Long subscriptionId, String failureReason) {
+    SubscriptionNotificationInfo info = loadNotificationInfo(subscriptionId);
+    if (info == null) {
+      log.warn("정기결제 실패 알림톡 전송 실패 - 구독 정보를 찾을 수 없습니다. subscriptionId: {}", subscriptionId);
+      return;
+    }
     try {
-      User user = subscription.getUser();
-      if (user == null || user.getPhoneNumber() == null) {
-        log.warn("정기결제 실패 알림톡 전송 실패 - 사용자 정보 없음. subscriptionId: {}", subscription.getId());
+      if (info.buyerPhoneNumber() == null) {
+        log.warn("정기결제 실패 알림톡 전송 실패 - 사용자 정보 없음. subscriptionId: {}", info.subscriptionId());
         return;
       }
 
       kakaoNotificationService.sendNotification(
           KakaoNotificationDTO.builder()
               .type(KakaoNotificationType.SUBSCRIPTION_PAYMENT_FAILED)
-              .buyerName(user.getNickname())
-              .phoneNumber(user.getPhoneNumber())
-              .contentTitle(subscription.getContent().getTitle())
-              .price(subscription.getPrice())
+              .buyerName(info.buyerName())
+              .phoneNumber(info.buyerPhoneNumber())
+              .contentTitle(info.contentTitle())
+              .price(info.price())
               .failureReason(failureReason)
               .build());
 
       log.info(
           "정기결제 실패 알림톡 전송 완료 - subscriptionId: {}, retryCount: {}",
-          subscription.getId(),
-          subscription.getBillingRetryCount());
+          info.subscriptionId(),
+          info.retryCount());
     } catch (Exception e) {
-      log.error("정기결제 실패 알림톡 전송 중 오류 발생 - subscriptionId: {}", subscription.getId(), e);
+      log.error("정기결제 실패 알림톡 전송 중 오류 발생 - subscriptionId: {}", info.subscriptionId(), e);
     }
   }
 
   /** 정기결제 3회 실패로 해지 시 구매자에게 알림톡 전송 */
-  private void sendSubscriptionCancelledNotification(
-      Subscription subscription, String failureReason) {
+  private void sendSubscriptionCancelledNotification(Long subscriptionId, String failureReason) {
+    SubscriptionNotificationInfo info = loadNotificationInfo(subscriptionId);
+    if (info == null) {
+      log.warn("구독 해지 알림톡 전송 실패 - 구독 정보를 찾을 수 없습니다. subscriptionId: {}", subscriptionId);
+      return;
+    }
     try {
-      User user = subscription.getUser();
-      if (user == null || user.getPhoneNumber() == null) {
-        log.warn("구독 해지 알림톡 전송 실패 - 사용자 정보 없음. subscriptionId: {}", subscription.getId());
+      if (info.buyerPhoneNumber() == null) {
+        log.warn("구독 해지 알림톡 전송 실패 - 사용자 정보 없음. subscriptionId: {}", info.subscriptionId());
         return;
       }
 
       kakaoNotificationService.sendNotification(
           KakaoNotificationDTO.builder()
               .type(KakaoNotificationType.SUBSCRIPTION_CANCELLED)
-              .buyerName(user.getNickname())
-              .phoneNumber(user.getPhoneNumber())
-              .contentTitle(subscription.getContent().getTitle())
-              .price(subscription.getPrice())
+              .buyerName(info.buyerName())
+              .phoneNumber(info.buyerPhoneNumber())
+              .contentTitle(info.contentTitle())
+              .price(info.price())
               .failureReason(failureReason)
               .build());
 
-      log.info("구독 해지 알림톡 전송 완료 - subscriptionId: {}", subscription.getId());
+      log.info("구독 해지 알림톡 전송 완료 - subscriptionId: {}", info.subscriptionId());
     } catch (Exception e) {
-      log.error("구독 해지 알림톡 전송 중 오류 발생 - subscriptionId: {}", subscription.getId(), e);
+      log.error("구독 해지 알림톡 전송 중 오류 발생 - subscriptionId: {}", info.subscriptionId(), e);
     }
   }
 
@@ -315,8 +320,39 @@ public class SubscriptionBillingJobService {
 
   private record BillingContext(Long subscriptionId, Long userId, String merchantUid) {}
 
+  private SubscriptionNotificationInfo loadNotificationInfo(Long subscriptionId) {
+    return transactionTemplate.execute(
+        status ->
+            subscriptionRepository
+                .findByIdWithUserAndContent(subscriptionId)
+                .map(
+                    subscription ->
+                        new SubscriptionNotificationInfo(
+                            subscription.getId(),
+                            subscription.getUser() != null
+                                ? subscription.getUser().getNickname()
+                                : null,
+                            subscription.getUser() != null
+                                ? subscription.getUser().getPhoneNumber()
+                                : null,
+                            subscription.getContent() != null
+                                ? subscription.getContent().getTitle()
+                                : null,
+                            subscription.getPrice(),
+                            subscription.getBillingRetryCount()))
+                .orElse(null));
+  }
+
   private record BillingFailureResult(
-      boolean subscriptionFound, boolean cancelled, int retryCount, Subscription subscription) {}
+      boolean subscriptionFound, boolean cancelled, int retryCount) {}
+
+  private record SubscriptionNotificationInfo(
+      Long subscriptionId,
+      String buyerName,
+      String buyerPhoneNumber,
+      String contentTitle,
+      BigDecimal price,
+      int retryCount) {}
 
   private LocalDateTime now() {
     return LocalDateTime.now(BILLING_ZONE_ID);
