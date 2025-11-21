@@ -92,36 +92,42 @@ public class SubscriptionGracePeriodJobService {
     transactionTemplate.execute(
         status -> {
           return subscriptionRepository
-              .findById(subscriptionId)
-              .map(
-                  subscription -> {
-                    // 유예기간이 실제로 만료되었는지 재확인
-                    if (!subscription.isGracePeriodActive(now)) {
-                      log.info(
-                          "유예기간 만료 처리 시작 - subscriptionId: {}, gracePeriodEndsAt: {}",
-                          subscription.getId(),
-                          subscription.getGracePeriodEndsAt());
-
-                      processPurchaseCancellation(subscription);
-
-                      // 구매자와 판매자에게 알림톡 전송
-                      sendGracePeriodExpiredNotifications(subscription);
-
-                      log.info("유예기간 만료 처리 완료 - subscriptionId: {}", subscription.getId());
-                    } else {
-                      log.debug(
-                          "유예기간이 아직 활성화되어 있어 처리 건너뜀 - subscriptionId: {}, gracePeriodEndsAt: {}",
-                          subscription.getId(),
-                          subscription.getGracePeriodEndsAt());
-                    }
-                    return null;
-                  })
+              .findWithLockingById(subscriptionId)
+              .map(subscription -> processGracePeriodExpiration(subscription, now))
               .orElseGet(
                   () -> {
                     log.warn("유예기간 만료 처리 중 구독을 찾을 수 없습니다. subscriptionId={}", subscriptionId);
-                    return null;
+                    return false;
                   });
         });
+  }
+
+  private boolean processGracePeriodExpiration(Subscription subscription, LocalDateTime now) {
+    // 유예기간이 실제로 만료되었는지 재확인
+    if (!subscription.isGracePeriodActive(now)) {
+      log.info(
+          "유예기간 만료 처리 시작 - subscriptionId: {}, gracePeriodEndsAt: {}",
+          subscription.getId(),
+          subscription.getGracePeriodEndsAt());
+
+      processPurchaseCancellation(subscription);
+
+      // 구매자와 판매자에게 알림톡 전송
+      sendGracePeriodExpiredNotifications(subscription);
+
+      // 한 번 처리 후 재처리되지 않도록 유예기간 정보를 정리
+      subscription.clearGracePeriod();
+      subscriptionRepository.save(subscription);
+
+      log.info("유예기간 만료 처리 완료 - subscriptionId: {}", subscription.getId());
+      return true;
+    }
+
+    log.debug(
+        "유예기간이 아직 활성화되어 있어 처리 건너뜀 - subscriptionId: {}, gracePeriodEndsAt: {}",
+        subscription.getId(),
+        subscription.getGracePeriodEndsAt());
+    return false;
   }
 
   /**
