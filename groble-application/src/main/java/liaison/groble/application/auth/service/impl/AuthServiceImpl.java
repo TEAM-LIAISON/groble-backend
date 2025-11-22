@@ -12,6 +12,7 @@ import liaison.groble.application.auth.service.AuthService;
 import liaison.groble.application.content.ContentReader;
 import liaison.groble.application.user.service.UserReader;
 import liaison.groble.common.port.security.SecurityPort;
+import liaison.groble.domain.market.repository.MarketRepository;
 import liaison.groble.domain.user.entity.IntegratedAccount;
 import liaison.groble.domain.user.entity.User;
 import liaison.groble.domain.user.entity.UserWithdrawalHistory;
@@ -31,6 +32,7 @@ public class AuthServiceImpl implements AuthService {
   private final UserRepository userRepository;
   private final SecurityPort securityPort;
   private final UserWithdrawalHistoryRepository userWithdrawalHistoryRepository;
+  private final MarketRepository marketRepository;
 
   @Override
   @Transactional
@@ -87,11 +89,22 @@ public class AuthServiceImpl implements AuthService {
     WithdrawalReason reason = parseWithdrawalReason(userWithdrawalDTO.getReason());
 
     // 3. 회원 탈퇴 처리 (User 엔티티에 캡슐화)
+    clearMarketInfo(user);
     user.withdraw();
     user.anonymize();
 
     // 4. 탈퇴 이력 저장
     saveWithdrawalHistory(user, reason, userWithdrawalDTO.getAdditionalComment());
+  }
+
+  private void clearMarketInfo(User user) {
+    marketRepository
+        .findByUserId(user.getId())
+        .ifPresent(
+            market -> {
+              market.changeMarketName(null);
+              market.changeMarketLinkUrl(null);
+            });
   }
 
   private void validateWithdrawalEligibility(User user) {
